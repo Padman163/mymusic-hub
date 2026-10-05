@@ -1,3 +1,6 @@
 # mymusic-hub
 
-## Create Repository
+## Create Repository in GitHub 
+## Create Astro Starlight-Template
+
+npm create astro@latest -- --template starlight
