@@ -11,14 +11,17 @@ export default defineConfig({
 				{
 					label: 'Audio & Music',
 					items: [
-						{ label: 'Hardware & Routing', slug: 'audio/hardware' },
-						{ label: 'Software', slug: 'audio/software' },
+						{ label: 'Hardware Audio', slug: 'audio/hardware' },
+						{ label: 'Software Audio', slug: 'audio/software' },
 					
 					],
 				},
 				{
-					label: 'Reference',
-					items: [{ autogenerate: { directory: 'reference' } }],
+					label: 'Video & Streaming', 
+					items: [
+						{ label: 'Hardware Video', slug: 'video/hardware' },
+						{ label: 'Software Video', slug: 'video/software' },
+					],
 				},
 			],
 		}),
