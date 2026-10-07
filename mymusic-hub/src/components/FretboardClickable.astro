@@ -1,0 +1,285 @@
+---
+// FretboardClickable.astro
+// Auf 150% vergrößerte Version für optimale Lesbarkeit bei Standard-Zoom.
+
+const tuning = ['e', 'B', 'G', 'D', 'A', 'E'];
+// Saitenabstand um 150% vergrößert (Abstand 45px statt 30px)
+const stringPositions = [37.5, 82.5, 127.5, 172.5, 217.5, 262.5];
+const fretWidth = 75; 
+const nutX = 50; // Dein Wunschwert beibehalten
+
+const fretboardNotes = [
+  ['E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E'],
+  ['B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'],
+  ['G', 'G#', 'A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G'],
+  ['D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'C', 'C#', 'D'],
+  ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A'],
+  ['E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E']
+];
+
+const noteColors: Record<string, string> = {
+  'C': '#f87171',
+  'C#': '#fb923c',
+  'D': '#fbbf24',
+  'D#': '#f472b6',
+  'E': '#a3e635',
+  'F': '#e879f9',
+  'F#': '#2dd4bf',
+  'G': '#60a5fa',
+  'G#': '#38bdf8',
+  'A': '#c084fc',
+  'A#': '#4ade80',
+  'B': '#facc15'
+};
+---
+
+<div class="fretboard-container" id="fretboard-widget">
+  <!-- ViewBox-Höhe von 220 auf 330 skaliert (150%) -->
+  <svg viewBox="0 0 1000 330" class="fretboard-svg" preserveAspectRatio="xMidYMid meet">
+    
+    <!-- 1. Griffbrett-Holz (Höhe 270 statt 180) -->
+    <rect 
+      x={nutX} 
+      y="15" 
+      width={12 * fretWidth} 
+      height="270" 
+      rx="4" 
+      fill="#18181b" 
+      stroke="#27272a" 
+      stroke-width="2" 
+    />
+
+    <!-- 2. Bund-Marker (Inlays - r=9 statt r=6) -->
+    {[3, 5, 7, 9].map((fret) => {
+      const centerX = nutX + (fret - 0.5) * fretWidth;
+      return <circle cx={centerX} cy="150" r="9" fill="#76767c" />;
+    })}
+
+    <!-- Doppel-Inlay bei Bund 12 -->
+    {(() => {
+      const centerX12 = nutX + (12 - 0.5) * fretWidth;
+      return (
+        <>
+          <circle cx={centerX12} cy="60" r="9" fill="#76767c" />
+          <circle cx={centerX12} cy="240" r="9" fill="#76767c" />
+        </>
+      );
+    })()}
+
+    <!-- 3. Der weiße Sattel (Nut) -->
+    <rect x={nutX - 6} y="12" width="6" height="276" rx="2" fill="#f4f4f5" />
+
+    <!-- 4. Bundstäbchen (Bünde 1 bis 12) -->
+    {Array.from({ length: 12 }).map((_, i) => {
+      const x = nutX + (i + 1) * fretWidth;
+      return (
+        <line x1={x} y1="15" x2={x} y2="285" stroke="#3f3f46" stroke-width="3" />
+      );
+    })}
+
+    <!-- 5. Bund-Zahlen unter dem Griffbrett -->
+    {Array.from({ length: 12 }).map((_, i) => {
+      const fret = i + 1;
+      const x = nutX + (i * fretWidth) + (fretWidth / 2);
+      return (
+        <text 
+          x={x} 
+          y="318" 
+          text-anchor="middle" 
+          fill="#71717a" 
+          font-size="18" 
+          font-family="system-ui, sans-serif"
+        >
+          {fret}
+        </text>
+      );
+    })}
+
+    <!-- 6. Die 6 Saiten (Stärken um 150% skaliert) -->
+    {stringPositions.map((y, index) => (
+      <line 
+        x1={nutX} 
+        y1={y} 
+        x2={nutX + 12 * fretWidth} 
+        y2={y} 
+        stroke="#a1a1aa" 
+        stroke-width={1.8 + (index * 0.6)} 
+      />
+    ))}
+
+    <!-- 7. Klickbare Noten-Ebene -->
+    
+    <!-- Bund 0 (Offene Saiten / Stimmung links) -->
+    {tuning.map((_, sIndex) => {
+      const noteName = fretboardNotes[sIndex][0];
+      const color = noteColors[noteName] || '#fff';
+      const y = stringPositions[sIndex];
+      const x = 22; 
+      return (
+        <g class="note-node" data-fret="0" data-string={sIndex}>
+          <circle cx={x} cy={y} r="25" fill="transparent" />
+          <circle class="note-circle" cx={x} cy={y} r="19.5" fill={color} />
+          <text class="note-text-active" x={x} y={y} text-anchor="middle" dominant-baseline="central">
+            {noteName}
+          </text>
+          <text class="tuning-default" x={x} y={y} text-anchor="middle" dominant-baseline="central">
+            {tuning[sIndex]}
+          </text>
+        </g>
+      );
+    })}
+
+    <!-- Bünde 1 bis 12 -->
+    {Array.from({ length: 12 }).map((_, fIndex) => {
+      const fret = fIndex + 1;
+      const x = nutX + (fret - 0.5) * fretWidth;
+      return (
+        <>
+          {stringPositions.map((y, sIndex) => {
+            const noteName = fretboardNotes[sIndex][fret];
+            const color = noteColors[noteName] || '#fff';
+            return (
+              <g class="note-node" data-fret={fret} data-string={sIndex}>
+                <circle cx={x} cy={y} r="25" fill="transparent" />
+                <circle class="note-circle" cx={x} cy={y} r="19.5" fill={color} />
+                <text class="note-text-active" x={x} y={y} text-anchor="middle" dominant-baseline="central">
+                  {noteName}
+                </text>
+              </g>
+            );
+          })}
+        </>
+      );
+    })}
+
+  </svg>
+
+  <div class="controls-footer">
+    <button class="btn-clear-all" type="button">Alle löschen</button>
+  </div>
+</div>
+
+<style>
+  .fretboard-container {
+    width: 100%;
+    margin: 2rem 0;
+    padding: 1.75rem;
+    background-color: #121212;
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+
+  .fretboard-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+    user-select: none;
+  }
+
+  /* --- Noten-Nodes (Interaktion & Animation) --- */
+  .note-node {
+    cursor: pointer;
+  }
+
+  .note-circle {
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+  }
+
+  .note-text-active {
+    font-size: 16px;
+    font-weight: 800;
+    fill: #000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+  }
+
+  .tuning-default {
+    font-size: 20px;
+    font-weight: bold;
+    fill: #f4f4f5;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+  }
+
+  /* Hover-Zustand */
+  .note-node:hover .note-circle {
+    opacity: 0.35;
+  }
+  .note-node:hover .note-text-active {
+    opacity: 0.6;
+  }
+
+  .note-node[data-fret="0"]:hover .tuning-default {
+    opacity: 0;
+  }
+
+  /* Aktiver (geklickter) Zustand */
+  .note-node.active .note-circle,
+  .note-node.active .note-text-active {
+    opacity: 1;
+  }
+
+  .note-node[data-fret="0"].active .tuning-default {
+    opacity: 0;
+  }
+
+  /* Footer Controls */
+  .controls-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.75rem;
+  }
+
+  .btn-clear-all {
+    background: transparent;
+    color: #a1a1aa;
+    border: 1px solid #3f3f46;
+    padding: 0.5rem 1.1rem;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-clear-all:hover {
+    background: #27272a;
+    color: #ffffff;
+  }
+</style>
+
+<script>
+  function setupFretboard() {
+    const container = document.getElementById('fretboard-widget');
+    if (!container) return;
+
+    const nodes = container.querySelectorAll('.note-node');
+    const clearBtn = container.querySelector('.btn-clear-all');
+
+    nodes.forEach((node) => {
+      const cleanNode = node.cloneNode(true);
+      node.parentNode.replaceChild(cleanNode, node);
+
+      cleanNode.addEventListener('click', () => {
+        cleanNode.classList.toggle('active');
+      });
+    });
+
+    if (clearBtn) {
+      const cleanBtn = clearBtn.cloneNode(true);
+      clearBtn.parentNode.replaceChild(cleanBtn, clearBtn);
+
+      cleanBtn.addEventListener('click', () => {
+        container.querySelectorAll('.note-node.active').forEach((activeNode) => {
+          activeNode.classList.remove('active');
+        });
+      });
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', setupFretboard);
+  document.addEventListener('astro:page-load', setupFretboard);
+</script>

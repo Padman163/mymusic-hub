@@ -13,6 +13,7 @@ export default defineConfig({
 					items: [
 						{ label: 'Hardware Audio', slug: 'audio/hardware' },
 						{ label: 'Software Audio', slug: 'audio/software' },
+						{ label: 'Theory', slug: 'audio/theory' },
 					
 					],
 				},
