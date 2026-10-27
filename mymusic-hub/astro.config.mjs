@@ -1,9 +1,18 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import { unified } from '@astrojs/markdown-remark';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 
 // https://astro.build/config
 export default defineConfig({
+	markdown: {
+		processor: unified({
+			remarkPlugins: [remarkMath],
+			rehypePlugins: [rehypeKatex],
+		}),
+	},
 	integrations: [
 		starlight({
 			title: 'Mein Musik-Hub',
@@ -14,7 +23,7 @@ export default defineConfig({
 				},
 			},
 			defaultLocale: 'root',
-			customCss: ['/src/styles/sidebar.css'],
+			customCss: ['/src/styles/sidebar.css', 'katex/dist/katex.min.css'],
 			sidebar: [
 				{
 					label: 'Audio & Musik',

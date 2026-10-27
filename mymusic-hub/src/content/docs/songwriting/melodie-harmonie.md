@@ -15,7 +15,7 @@ Dieses Dokument dient als systematisches Nachschlagewerk und Konstruktionsleitfa
   * *Moll:* Dunkel, introspektiv, melancholisch, ernst oder aggressiv. Basiert auf der kleinen Terz.
   * *Modalität:* Kirchentonarten (Dorisch, Mixolydisch, Lydisch etc.), die über spezifische charakteristische Intervalle abseits von reinem Dur/Moll verfügen.
 * **Tonale Hierarchie:** 
-  * Tonika ($I$ bzw. $i$): Maximaler Ruhepol.
+  * Tonika ( $I$ bzw. $i$ ): Maximaler Ruhepol.
   * Dominante ($V$): Maximale Spannung mit Drang zur Tonika.
   * Subdominante ($IV$ bzw. $iv$): Wegführende Funktion, öffnend.
 
