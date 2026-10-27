@@ -1,35 +1,34 @@
 ---
-title: Hardware Audio
+title: Audio-Hardware
 ---
 
-## Instruments
+## Instrumente
 
-#### Guitars
+#### Gitarren
 
 * Solar 1.6 ATG
 * VAG Guitar
 * JN Acoustic
 
-#### Drums
-#### Keys
-#### Sample Pad
-#### Brass
+#### Schlagzeug
+#### Tasteninstrumente
+#### Sample-Pad
+#### Blasinstrumente
 
 
 
-## Studio/Live
+## Studio & Live
 #### Computer
-#### Audio Interface
+#### Audiointerface
 * PreSonus 1810c
-#### Mixer
+#### Mischpult
 * Yamaha MG10XU
-#### Studio Monitoring
+#### Studiomonitore
 * 2x Amadeus Speaker
 * 1x Amadeus Subwoofer
-#### Amp Modeler
+#### Amp-Modeller
 * Quad Cortex Mini
-#### Effects & Pedals
+#### Effekte und Pedale
 * Hotone Ampero 2
 * Hotone Expression Pedal
-
 

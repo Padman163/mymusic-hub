@@ -1,13 +1,13 @@
-# mymusic-hub
+# Mein Musik-Hub
 
-## Create Repository in GitHub 
-## Create Astro Starlight-Template
+## GitHub-Repository erstellen
+## Astro-Starlight-Vorlage erstellen
 
-### In Terminal:
+### Im Terminal:
 
 ```npm create astro@latest -- --template starlight```
 
-## Start App
+## Anwendung starten
 
 1. ```cd mymusic-hub```
 

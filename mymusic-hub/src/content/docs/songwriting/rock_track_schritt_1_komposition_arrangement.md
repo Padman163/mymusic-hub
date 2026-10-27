@@ -1,174 +1,174 @@
 ---
-title: "Basic Rock Track - Schritt 0: Komposition & Arrangement"
+title: "Einfacher Rocksong – Schritt 0: Komposition & Arrangement"
 ---
 
-# Basic Rock Track - Schritt 0: Komposition & Arrangement
+# Einfacher Rocksong – Schritt 0: Komposition & Arrangement
 
-Dieses Dokument wendet das theoretische Framework 1:1 auf das konkrete Fundament unseres Rock-Tracks an. Alle Spuren sind strikt auf dem Beat verankert (keine Synkopen, keine Auftakte), um ein stabiles Basis-Skelett zu etablieren.
+Dieses Dokument überträgt den theoretischen Leitfaden direkt auf das konkrete Fundament unseres Rocksongs. Alle Spuren sind strikt auf dem Schlag verankert (keine Synkopen, keine Auftakte), um ein stabiles Grundgerüst zu schaffen.
 
 ---
 
-## 1. Harmonisches Fundament (Harmonic Canvas)
+## 1. Harmonisches Fundament
 
-### 1.1 Tonales Zentrum & Tonalität (Tonal Center & Modality)
-* **Tonales Zentrum / Key:** E-Moll ($E\text{ Minor}$).
-* **Tongeschlecht & Charakter:** Dunkel, erdig, rau und treibend. E-Moll ist die Ur-Tonart der Rockgitarre (tiefe leere E-Saite als Gravitationsanker).
-* **Funktionale Rollen im Song:**
+### 1.1 Tonales Zentrum & Tongeschlecht
+* **Tonales Zentrum / Tonart:** E-Moll.
+* **Tongeschlecht und Charakter:** Dunkel, erdig, rau und treibend. E-Moll ist eine typische Tonart für die Rockgitarre (tiefe leere E-Saite als Gravitationsanker).
+* **Funktion der Akkorde im Stück:**
   * $Em$ = Tonika ($i$): Maximales Gravitationszentrum.
   * $C$ = Subdominant-Parallele ($VI$): Kraftvolle Öffnung nach oben.
   * $G$ = Tonika-Parallele ($III$): Heller Dur-Klang, energiereich.
   * $D$ = Subdominant-Dominante ($VII$): Klassischer Rock-Akkord mit Drang zurück nach $Em$.
 
-### 1.2 Akkordpalette & Voicings (Chord Palette & Voicings)
-* **Akkordtyp:** Reine Powerchords ($5\text{th Chords}$), bestehend ausschließlich aus Grundton und reiner Quinte ($1 - 5$).
-* **Voicing-Tabelle für Gitarre & Bass:**
+### 1.2 Akkordpalette & Klangaussetzungen
+* **Akkordtyp:** Reine Powerchords (Quintakkorde), bestehend ausschließlich aus Grundton und reiner Quinte ($1 - 5$).
+* **Tabelle der Klangaussetzungen für Gitarre und Bass:**
   * **E5:** $E2 - B2$ (Gitarre: $0-2-x-x-x-x$) – Maximal tiefe, schwere Resonanz.
   * **C5:** $C2 - G2$ (Gitarre: $x-3-5-x-x-x$) – Druckvoller Anschlag auf der A-Saite.
   * **G5:** $G2 - D3$ (Gitarre: $3-5-x-x-x-x$) – Breit und wuchtig.
   * **D5:** $D2 - A2$ (Gitarre: $x-5-7-x-x-x$) – Straff und drückend.
-* **Umkehrungen (Inversions):** Keine. Alle Akkorde verbleiben in der **Grundstellung (Root Position)** für maximalen Punch im Tieftonbereich.
+* **Umkehrungen:** Keine. Alle Akkorde verbleiben in der **Grundstellung** für maximalen Druck im Tieftonbereich.
 
-### 1.3 Progressionsdynamik & Harmonischer Rhythmus (Progression Dynamics & Harmonic Rhythm)
+### 1.3 Dynamik der Akkordfolge & harmonischer Rhythmus
 * **Akkordfolge:** $Em - C - G - D$ ($i - VI - III - VII$).
 * **Harmonischer Rhythmus:** Streng statisch – exakt **1 Akkord pro Takt** ($4$ Schläge pro Harmonie).
-* **Tempo:** $132.00\text{ BPM}$ (Straight Forward Rock-Tempo).
+* **Tempo:** $132.00\text{ BPM}$ (gerades Rocktempo).
 * **Dynamische Wirkung:** Die Folge baut über $Em \rightarrow C \rightarrow G$ stetig an Helligkeit auf und entlädt sich auf $D$, um zyklisch wieder in das dunkle $Em$ zu fallen.
 
-### 1.4 Stimmführung & Konnektivität (Voice Leading & Connectivity)
+### 1.4 Stimmführung & Verbindung
 * **Bassbewegung:** $E \rightarrow C \rightarrow G \rightarrow D$ (stabile Terz- und Quartsprünge, die die Tonart unmissverständlich abstecken).
-* **Common Tones (Gitarre):** Der Ton $G$ fungiert als harmonischer Anker (Terz in Em, Quinte in C, Grundton in G).
+* **Gemeinsame Töne (Gitarre):** Der Ton $G$ fungiert als harmonischer Anker (Terz in Em, Quinte in C, Grundton in G).
 * **Frequenz-Staffelung:** Rhythmusgitarren spielen im Mittenbereich ($E2-D3$), während der Bass die Sub-Oktave ($E1-D2$) dominiert. Dadurch entsteht kein Frequenzmatsch.
 
 ---
 
-## 2. Tonhöhenarchitektur (Pitch Architecture)
+## 2. Tonhöhenarchitektur
 
-### 2.1 Tonvorrat & Skalensysteme (Pitch Reservoirs & Scale Systems)
-* **Basis-Skala:** E-Moll Pentatonik ($E - G - A - B - D$).
+### 2.1 Tonvorrat & Tonleitersysteme
+* **Grundtonleiter:** E-Moll-Pentatonik ($E - G - A - B - D$).
 * **Erweiterung:** Diatonisches E-Moll für Leittöne ($F\sharp$).
-* **Tonumfang (Range):** $E3$ bis $D4$ (genau eine Septime). Liegt optimal im druckvollen Tenor-Register – singbar, fokussiert und ohne stimmliche Überdehnung.
+* **Tonumfang:** $E3$ bis $D4$ (genau eine Septime). Liegt optimal im druckvollen Tenorregister – singbar, fokussiert und ohne stimmliche Überdehnung.
 
-### 2.2 Zielakkordtöne & Arpeggien (Target Tones & Arpeggiation)
+### 2.2 Zielakkordtöne & Arpeggien
 * **Takt 1 (Em):** Zielton auf Schlag $1$ ist das **E3** (Grundton $1$ $\rightarrow$ absolut stabil und geerdet).
 * **Takt 2 (C):** Zielton auf Schlag $1$ ist das **G3** (Akkordquinte $5$ von C $\rightarrow$ offener Schwebezustand).
 * **Takt 3 (G):** Zielton auf Schlag $1$ ist das **D4** (Akkordquinte $5$ von G $\rightarrow$ strahlend, Spitzenton).
 * **Takt 4 (D):** Zielton auf Schlag $1$ ist das **F#3** (Akkordterz $3$ von D $\rightarrow$ melodischer Zug zurück zur Tonika).
 
-### 2.3 Tendenznoten & Musikalische Schwerkraft (Tendency Tones & Pitch Gravity)
+### 2.3 Spannungstöne & musikalische Schwerkraft
 * **Leitton-Spannung:** Das $F\sharp 3$ in Takt 4 (über D5) verlangt nach einer schrittweisen Auflösung nach unten zum Grundton $D3$ bzw. nach oben in das tonale Zentrum $E3$ auf Takt 1 des nächsten Durchgangs.
 * **Ruhepol:** Das tiefe $E3$ in Takt 1 beendet jegliche Instabilität.
 
-### 2.4 Dissonanzen & Verzierungen (Non-Chord Tones & Tension)
-* **Schritt 1 Purismus:** Es werden **keine** Bends, Slides, Suspensions oder Blue Notes verwendet.
+### 2.4 Dissonanzen & Verzierungen
+* **Purismus in Schritt 0:** Es werden **keine** Bendings, Slides, Vorhalte oder Blue Notes verwendet.
 * Jeder Ton ist ein direkter Skalen- oder Akkordton, um das tonale Fundament lupenrein darzustellen.
 
-### 2.5 Intervallführung, Kontur & Climax (Linear Motion, Contour & Climax)
-* **Kontur:** Bogenform mit anschließender fallender Kaskade.
-* **Steps vs. Leaps:**
+### 2.5 Intervallführung, Kontur & Höhepunkt
+* **Kontur:** Bogenform mit anschließender absteigender Tonfolge.
+* **Schritte und Sprünge:**
   * Takt 1: Schritte aufwärts ($E3 \rightarrow G3 \rightarrow A3 \rightarrow B3$).
-  * Takt 3: **Der Intervallsprung / The Climax** auf das hohe **D4** auf Schlag 1.
-  * **Gap-Fill-Reaktion:** Nach dem Peak auf $D4$ folgt sofort ein stufenweiser Abstieg ($D4 \rightarrow B3 \rightarrow A3 \rightarrow G3$).
+  * Takt 3: **Der Intervallsprung und melodische Höhepunkt** auf das hohe **D4** auf Schlag 1.
+  * **Ausgleichsbewegung:** Auf den Höhepunkt $D4$ folgt sofort ein stufenweiser Abstieg ($D4 \rightarrow B3 \rightarrow A3 \rightarrow G3$).
 
 ---
 
-## 3. Rhythmik & Zeitarchitektur (Temporal Architecture)
+## 3. Rhythmik & Zeitgestaltung
 
-### 3.1 Taktart, Metrum & Subdivision (Grid, Meter & Subdivision)
-* **Taktart:** $4/4$-Takt (Straight Rock Meter).
-* **Subdivision:** Straight 8ths (gerade Achtelnoten). Keine Triolen, kein Shuffle, kein ternäres Feeling.
+### 3.1 Taktart, Metrum & Unterteilung
+* **Taktart:** $4/4$-Takt (gerader Rockrhythmus).
+* **Unterteilung:** Gerade Achtelnoten. Keine Triolen, kein Shuffle, kein ternäres Rhythmusgefühl.
 
-### 3.2 Phrasierung & Einsatzpunkte (Phrase Placement & Entry)
-* **Einsatz:** Strenger **Downbeat-Start auf Schlag 1**.
-* Weder Lead-Gitarre noch Gesang nutzen Auftakte (Anacrusis) oder verspätete Upbeats. Jeder Taktanfang wird direkt attackiert.
+### 3.2 Phrasierung & Einsätze
+* **Einsatz:** Strenger **Beginn auf Schlag 1**.
+* Weder Leadgitarre noch Gesang nutzen Auftakte oder verspätete Einsätze. Jeder Taktanfang wird direkt angeschlagen beziehungsweise gesungen.
 
-### 3.3 Notendauern, Dichte & Artikulation (Duration, Density & Articulation)
+### 3.3 Notendauern, Dichte & Artikulation
 * **Rhythmisches Motiv der Melodie:**
   * Takt 1: Viertel ($1$) – Zwei Achtel ($2, 2+$) – Viertel ($3$) – Viertel ($4$).
   * Takt 2: Halbe Note ($1-2$) – Halbe Pause ($3-4$).
   * Takt 3: Viertel ($1$) – Zwei Achtel ($2, 2+$) – Viertel ($3$) – Viertel ($4$).
   * Takt 4: Halbe Note ($1-2$) – Halbe Note ($3-4$).
 * **Artikulation:**
-  * Lead-Gitarre: Alternate Picking (lebendig, dynamisch).
-  * Gesang: Legato mit natürlichen Vektorglides und Vibrato.
-  * Rhythmusgitarre: Durchgängige, druckvolle Downstrokes (Abschläge).
+  * Leadgitarre: Wechselschlag (lebendig, dynamisch).
+  * Gesang: Gebunden mit natürlichen Tonhöhenübergängen und Vibrato.
+  * Rhythmusgitarre: Durchgängige, druckvolle Abschläge.
 
-### 3.4 Metrische Spannung & Groove (Metric Tension & Groove)
-* **Betonung:** Reine On-Beat-Architektur. Betonungen liegen auf den schweren Zählzeiten $1$ und $3$ (Kick) sowie $2$ und $4$ (Snare).
+### 3.4 Metrische Spannung & Groove
+* **Betonung:** Ausschließlich auf den Zählzeiten. Die Betonungen liegen auf den schweren Zählzeiten $1$ und $3$ (Bassdrum) sowie $2$ und $4$ (Snare).
 * Keine Synkopen, keine verschobenen Phrasen.
 
-### 3.5 Pausensetzung & Atmung (Space & Silence)
+### 3.5 Pausensetzung & Atmung
 * **Takt 2:** Schlag $3$ und $4$ sind vollständige Pausen für Leadgitarre und Gesang.
-* Diese Pause erzeugt die nötige Luft für das Ohr (und die AI-Atemberechnung), bevor in Takt 3 der Climax-Einsatz erfolgt.
+* Diese Pause schafft den nötigen Freiraum für das Ohr (und die Atemberechnung der KI), bevor in Takt 3 der Höhepunkt einsetzt.
 
 ---
 
-## 4. Motivik & Formbau (Motive Engineering & Form)
+## 4. Motivgestaltung & Form
 
-### 4.1 Kernmotiv & DNA (The Core Motive)
-* **Motiv-Umfang:** $5$ Töne in Takt 1 ($E3 - G3 - A3 - B3 - B3$).
-* **Rhythmische Signatur:** `[Viertel] - [Achtel + Achtel] - [Viertel] - [Viertel]`.
+### 4.1 Kernmotiv & Wiedererkennungsmerkmal
+* **Motivumfang:** $5$ Töne in Takt 1 ($E3 - G3 - A3 - B3 - B3$).
+* **Rhythmisches Erkennungsmerkmal:** `[Viertel] - [Achtel + Achtel] - [Viertel] - [Viertel]`.
 
-### 4.2 Entwicklungstechniken (Development & Variation)
-* **Pitch Variation:** Takt 3 nutzt exakt dieselbe rhythmische DNA wie Takt 1, tauscht die Töne jedoch komplett gegen die absteigende Climax-Linie aus ($D4 - B3 - A3 - G3 - G3$).
+### 4.2 Entwicklungstechniken & Variation
+* **Tonhöhenvariation:** Takt 3 nutzt exakt denselben Rhythmus wie Takt 1, ersetzt die Töne jedoch vollständig durch die absteigende Höhepunktlinie ($D4 - B3 - A3 - G3 - G3$).
 * **Rhythmische Dehnung:** Takt 4 schließt die Bewegung mit zwei ruhigen Halben Noten ($F\sharp 3 - D3$) ab.
 
-### 4.3 Phrasenarchitektur & Periodik (Period Form & Question/Answer)
-* **Vordersatz (Antecedent / Frage – Takt 1 & 2):**
+### 4.3 Phrasenaufbau & Periodik
+* **Vordersatz (Frage – Takt 1 und 2):**
   * Steigt auf und landet auf dem $G3$ über dem C-Akkord. Klingt offen und unvollendet.
-* **Nachsatz (Consequent / Antwort – Takt 3 & 4):**
-  * Startet auf dem Peak $D4$, fällt stufenweise ab und landet über das $F\sharp 3$ stabil auf dem $D3$. Schließt die 4-Takt-Periode harmonisch ab.
+* **Nachsatz (Antwort – Takt 3 und 4):**
+  * Startet auf dem Höhepunkt $D4$, fällt stufenweise ab und landet über das $F\sharp 3$ stabil auf dem $D3$. Schließt die viertaktige Periode harmonisch ab.
 
-### 4.4 Songform & Abschnittsfunktion (Song Structure & Sectional Design)
-* **Abschnittsrolle:** Dieses 4-Takt-Pattern fungiert als **Main-Riff / Chorus-Fundament**.
-* Es ist so konstruiert, dass es nahtlos als 4-Takt-Loop wiederholt werden kann.
+### 4.4 Songform & Funktion des Abschnitts
+* **Funktion des Abschnitts:** Dieses viertaktige Muster dient als **Hauptriff und Refrainfundament**.
+* Es ist so aufgebaut, dass es nahtlos als viertaktige Schleife wiederholt werden kann.
 
 ---
 
-## 5. Arrangement & Instrumentation (Arrangement & Score Matrix)
+## 5. Arrangement & Instrumentierung
 
-### 5.1 Rhythmusgruppe: Schlagzeug (Drums)
+### 5.1 Rhythmusgruppe: Schlagzeug
 * **Hi-Hat:** Durchgehende Achtelnoten ($1, +, 2, +, 3, +, 4, +$), geschlossen.
-* **Snare-Drum:** Knochentrockener Backbeat exakt auf Schlag **2** und **4**.
-* **Kick-Drum (Bassdrum):** Felsenfester Punch auf Schlag **1** und **3** (synchron zum Puls).
+* **Snare:** Knochentrockener Rückschlag exakt auf Schlag **2** und **4**.
+* **Bassdrum:** Felsenfester Schlag auf Zählzeit **1** und **3** (synchron zum Puls).
 
 ```text
-Beat:     | 1   +   2   +   3   +   4   +   |
+Zählzeit: | 1   +   2   +   3   +   4   +   |
 Hi-Hat:   | x   x   x   x   x   x   x   x   |
 Snare:    |         X               X       |
-Kick:     | X               X               |
+Bassdrum: | X               X               |
 ```
 
-### 5.2 Fundament: Bass (Bassline)
-* **Sound & Lage:** Fetter Rock-Pick-Bass im tiefen Register ($E1 - D2$).
-* **Rhythmus:** Durchgehende, pumpende Achtelnoten zur Bindung an die Rhythmusgitarre (Velocity: 102).
+### 5.2 Fundament: Basslinie
+* **Klang und Lage:** Satter Rock-Pick-Bass im tiefen Register ($E1 - D2$).
+* **Rhythmus:** Durchgehende, pumpende Achtelnoten zur Bindung an die Rhythmusgitarre (Anschlagstärke: 102).
 * **Töne:**
   * Takt 1 (Em): 8x **E1**
   * Takt 2 (C):  8x **C1**
   * Takt 3 (G):  8x **G1**
   * Takt 4 (D):  8x **D1**
 
-### 5.3 Harmonische Rhythmusgitarre (Rhythm Guitar)
-* **Sound:** Verzerrt (Overdrive/Crunch), mittenbetont.
-* **Spieltechnik:** Durchgehende Achtel-Downstrokes (Down-Picking).
+### 5.3 Harmonische Rhythmusgitarre
+* **Klang:** Verzerrt (Overdrive/Crunch), mittenbetont.
+* **Spieltechnik:** Durchgehende Achtel-Abschläge.
 * **Töne:**
   * Takt 1: 8x **E5**-Powerchord ($E2 + B2$)
   * Takt 2: 8x **C5**-Powerchord ($C2 + G2$)
   * Takt 3: 8x **G5**-Powerchord ($G2 + D3$)
   * Takt 4: 8x **D5**-Powerchord ($D2 + A2$)
 
-### 5.4 Melodische Leadgitarre (Lead Guitar)
-* **Sound:** Breiter Crunch / singender Lead-Sustain, klare Mitten.
-* **Notenverlauf:**
+### 5.4 Melodische Leadgitarre
+* **Klang:** Breiter Crunch / singender, anhaltender Leadton mit klaren Mitten.
+* **Notenfolge:**
   * Takt 1: $E3$ (Viertel), $G3$ (Achtel), $A3$ (Achtel), $B3$ (Viertel), $B3$ (Viertel)
   * Takt 2: $G3$ (Halbe Note auf 1-2), *Pausen auf 3 und 4*
   * Takt 3: $D4$ (Viertel), $B3$ (Achtel), $A3$ (Achtel), $G3$ (Viertel), $G3$ (Viertel)
   * Takt 4: $F\sharp 3$ (Halbe Note auf 1-2), $D3$ (Halbe Note auf 3-4)
 
-### 5.5 Gesangsmelodie & Textskizze (Lead Vocals & Lyrics)
+### 5.5 Gesangsmelodie & Textskizze
 * **Klangcharakter:** Druckvoll, direkt, moderne Rock-Attitüde (Dreamtonics Synthesizer V – Liam AI).
-* **Text & Rhythmik (synchron zur Leadgitarre, mit ARPAbet-Phonemen):**
+* **Text und Rhythmus (synchron zur Leadgitarre, mit ARPAbet-Lautschrift):**
 
-| Takt | Schlag | Note | Textsilbe | ARPAbet | Emotionale Aussage |
+| Takt | Schlag | Note | Textsilbe | ARPAbet-Lautschrift | Emotionale Aussage |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Takt 1** | 1 | E3 | **We** | `[w iy]` | Erdung, entschlossener Start |
 | | 2 | G3 | **start** | `[s t aa]` | Vorwärtsdrang, Zischlaut |
@@ -176,8 +176,8 @@ Kick:     | X               X               |
 | | 3 | B3 | **fi-** | `[f ay]` | Akzentuierte Quinte |
 | | 4 | B3 | **re** | `[er]` | Nachdruck |
 | **Takt 2** | 1–2 | G3 | **to-night** | `[t uw n ay t]` | Gehaltener Vokal, offener Ruheraum |
-| | 3–4 | – | *(Atemholen)* | – | Phrasenatmung der AI |
-| **Takt 3** | 1 | D4 | **turn-** | `[t er n]` | **The Climax:** Maximaler Druck |
+| | 3–4 | – | *(Atemholen)* | – | Atemraum für die KI-Stimme |
+| **Takt 3** | 1 | D4 | **turn-** | `[t er n]` | **Melodischer Höhepunkt:** maximaler Druck |
 | | 2 | B3 | **ing** | `[ih n]` | Fallender Ausgleich |
 | | 2+ | A3 | **the** | `[dh]` | Kurze Silbe |
 | | 3 | G3 | **dark** | `[d aa r k]` | Fester Akkordton |
@@ -185,57 +185,57 @@ Kick:     | X               X               |
 | **Takt 4** | 1–2 | F#3 | **to** | `[t uw]` | Melancholischer Leitton |
 | | 3–4 | D3 | **light** | `[l ay t]` | Befreiender Abschluss |
 
-### 5.6 Taktweise Gesamtpartitur (Full Bar-by-Bar Score Matrix)
+### 5.6 Taktweise Gesamtpartitur
 
 ```text
 ========================================================================================================
-TAKT 1: E-Moll (Em / E5) - "Die Basis & das Entfachen"
+TAKT 1: E-Moll (Em / E5) – "Die Basis und das Entfachen"
 Zählzeit:     | 1          +          2          +          3          +          4          +          |
-Drums:        | Kick+HiHat   HiHat    Snare+HiHat HiHat     Kick+HiHat   HiHat    Snare+HiHat HiHat     |
+Schlagzeug:   | Bassdrum+HiHat HiHat  Snare+HiHat HiHat     Bassdrum+HiHat HiHat Snare+HiHat HiHat     |
 Bass:         | E1         E1         E1         E1         E1         E1         E1         E1         |
-Rhythm Gtr:   | E5         E5         E5         E5         E5         E5         E5         E5         |
-Lead Gtr:     | E3 (Viertel)          G3 (8tel)  A3 (8tel)  B3 (Viertel)          B3 (Viertel)          |
-Vocals:       | "We"                  "start"    "the"      "fi-"                 "re"                  |
+Rhythmusgit.: | E5         E5         E5         E5         E5         E5         E5         E5         |
+Leadgitarre:  | E3 (Viertel)          G3 (8tel)  A3 (8tel)  B3 (Viertel)          B3 (Viertel)          |
+Gesang:       | "We"                  "start"    "the"      "fi-"                 "re"                  |
 ========================================================================================================
-TAKT 2: C-Dur (C / C5) - "Die Öffnung & der Ruheraum"
+TAKT 2: C-Dur (C / C5) – "Die Öffnung und der Ruheraum"
 Zählzeit:     | 1          +          2          +          3          +          4          +          |
-Drums:        | Kick+HiHat   HiHat    Snare+HiHat HiHat     Kick+HiHat   HiHat    Snare+HiHat HiHat     |
+Schlagzeug:   | Bassdrum+HiHat HiHat  Snare+HiHat HiHat     Bassdrum+HiHat HiHat Snare+HiHat HiHat     |
 Bass:         | C1         C1         C1         C1         C1         C1         C1         C1         |
-Rhythm Gtr:   | C5         C5         C5         C5         C5         C5         C5         C5         |
-Lead Gtr:     | G3 (Halbe Note gehalten)                    [PAUSE]               [PAUSE]               |
-Vocals:       | "to-night" -------------------------------> [AI-ATMEN]            [AI-ATMEN]            |
+Rhythmusgit.: | C5         C5         C5         C5         C5         C5         C5         C5         |
+Leadgitarre:  | G3 (Halbe Note gehalten)                    [PAUSE]               [PAUSE]               |
+Gesang:       | "to-night" -------------------------------> [KI-ATEMPAUSE]        [KI-ATEMPAUSE]        |
 ========================================================================================================
-TAKT 3: G-Dur (G / G5) - "Der Zenit / The Climax"
+TAKT 3: G-Dur (G / G5) – "Der Höhepunkt"
 Zählzeit:     | 1          +          2          +          3          +          4          +          |
-Drums:        | Kick+HiHat   HiHat    Snare+HiHat HiHat     Kick+HiHat   HiHat    Snare+HiHat HiHat     |
+Schlagzeug:   | Bassdrum+HiHat HiHat  Snare+HiHat HiHat     Bassdrum+HiHat HiHat Snare+HiHat HiHat     |
 Bass:         | G1         G1         G1         G1         G1         G1         G1         G1         |
-Rhythm Gtr:   | G5         G5         G5         G5         G5         G5         G5         G5         |
-Lead Gtr:     | D4 (Viertel Peak!)    B3 (8tel)  A3 (8tel)  G3 (Viertel)          G3 (Viertel)          |
-Vocals:       | "turn-" (Peak!)       "ing"      "the"      "dark"                "in-"                 |
+Rhythmusgit.: | G5         G5         G5         G5         G5         G5         G5         G5         |
+Leadgitarre:  | D4 (Viertel, Höhepunkt!) B3 (8tel) A3 (8tel) G3 (Viertel)          G3 (Viertel)          |
+Gesang:       | "turn-" (Höhepunkt!)   "ing"      "the"      "dark"                "in-"                 |
 ========================================================================================================
-TAKT 4: D-Dur (D / D5) - "Der Abstieg & Vorbereitung auf Loop"
+TAKT 4: D-Dur (D / D5) – "Der Abstieg und die Vorbereitung auf die Wiederholung"
 Zählzeit:     | 1          +          2          +          3          +          4          +          |
-Drums:        | Kick+HiHat   HiHat    Snare+HiHat HiHat     Kick+HiHat   HiHat    Snare+HiHat HiHat     |
+Schlagzeug:   | Bassdrum+HiHat HiHat  Snare+HiHat HiHat     Bassdrum+HiHat HiHat Snare+HiHat HiHat     |
 Bass:         | D1         D1         D1         D1         D1         D1         D1         D1         |
-Rhythm Gtr:   | D5         D5         D5         D5         D5         D5         D5         D5         |
-Lead Gtr:     | F#3 (Halbe Note)                            D3 (Halbe Note)                             |
-Vocals:       | "to" -------------------------------------> "light" ----------------------------------->|
+Rhythmusgit.: | D5         D5         D5         D5         D5         D5         D5         D5         |
+Leadgitarre:  | F#3 (Halbe Note)                            D3 (Halbe Note)                             |
+Gesang:       | "to" -------------------------------------> "light" ----------------------------------->|
 ========================================================================================================
 ```
 
 ---
 
-## 6. Diagnostisches Audit & Ranking (Diagnostic Audit & Quality Check)
+## 6. Prüfung & Qualitätsbewertung
 
-### 6.1 Kriterienkatalog (Audit Criteria Checklist)
+### 6.1 Kriterienkatalog
 * [x] **Harmonische Stabilität:** E-Moll unverrückbar etabliert.
 * [x] **Rhythmische Synchronität:** Kick, Bass und Rhythmusgitarre greifen exakt ineinander.
-* [x] **Gap-Fill-Regel:** Intervallsprung auf $D4$ in Takt 3 wird sofort durch stufenweisen Abstieg abgefangen.
-* [x] **Climax-Definition:** Genau ein Peak auf Schlag 1 von Takt 3.
+* [x] **Ausgleichsregel:** Intervallsprung auf $D4$ in Takt 3 wird sofort durch stufenweisen Abstieg abgefangen.
+* [x] **Höhepunkt:** Genau ein melodischer Höhepunkt auf Schlag 1 von Takt 3.
 * [x] **Atmung:** Klare 2-Schlag-Pause in Takt 2 vorhanden.
-* [x] **Straight-Faktor:** Keine störenden Synkopen oder Ghostnotes in Step 1.
+* [x] **Geradlinigkeit:** Keine störenden Synkopen oder Ghostnotes in Schritt 0.
 
-### 6.2 Reifegrad-Bewertung (Tier Ranking & Evaluation)
-* **Einstufung:** **Tier 2 (Perfektes Basis-Fundament / Solides Core-Thema)**.
+### 6.2 Reifegradbewertung
+* **Einstufung:** **Stufe 2 (Solides Grundgerüst und tragfähiges Hauptthema)**.
 * **Begründung:** Alle handwerklichen und theoretischen Kriterien für ein treibendes Rock-Fundament sind erfüllt. Der Track ist stabil, singbar und druckvoll.
-* **Bereit für Step 2:** Durch die absolute rhythmische Geradlinigkeit ist dieses Arrangement die ideale Absprungbasis, um in Schritt 2 gezielt mit **Auftakten, Synkopen (Pushes) und rhythmischer Verschiebung** veredelt zu werden.
+* **Bereit für Schritt 1:** Durch die absolute rhythmische Geradlinigkeit ist dieses Arrangement die ideale Grundlage, um es im nächsten Schritt gezielt mit **Auftakten, Synkopen und rhythmischen Verschiebungen** weiterzuentwickeln.

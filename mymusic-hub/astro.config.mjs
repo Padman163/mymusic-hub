@@ -6,32 +6,39 @@ import starlight from '@astrojs/starlight';
 export default defineConfig({
 	integrations: [
 		starlight({
-			title: 'MyMusic Hub',
+			title: 'Mein Musik-Hub',
+			locales: {
+				root: {
+					label: 'Deutsch',
+					lang: 'de',
+				},
+			},
+			defaultLocale: 'root',
 			sidebar: [
 				{
-					label: 'Audio & Music',
+					label: 'Audio & Musik',
 					items: [
-						{ label: 'Hardware Audio', slug: 'audio/hardware' },
-						{ label: 'Software Audio', slug: 'audio/software' },
-						{ label: 'Theory', slug: 'audio/theory' },
+						{ label: 'Audio-Hardware', slug: 'audio/hardware' },
+						{ label: 'Audio-Software', slug: 'audio/software' },
+						{ label: 'Musiktheorie', slug: 'audio/theory' },
 						{
 							label: 'Songwriting',
 							collapsed: true,
 							items: [
 								{
-									label: 'Melodie & Harmonie Framework',
+									label: 'Melodie- und Harmonieleitfaden',
 									slug: 'songwriting/melodie_und_harmonie_framework_theorie_referenz',
 								},
 								{
-									label: 'Projekt: Basic Rock Track',
+									label: 'Projekt: Einfacher Rocksong',
 									collapsed: true,
 									items: [
 										{
-											label: 'Basic Rock Track - Schritt 0: Komposition & Arrangement',
+											label: 'Einfacher Rocksong – Schritt 0: Komposition & Arrangement',
 											slug: 'songwriting/rock_track_schritt_1_komposition_arrangement',
 										},
 										{
-											label: 'Basic Rock Track - Schritt 1: DAW Produktion & Setup',
+											label: 'Einfacher Rocksong – Schritt 1: DAW-Produktion & Einrichtung',
 											slug: 'songwriting/rock_track_1_daw_production_setup_log',
 										},
 									],
@@ -41,10 +48,10 @@ export default defineConfig({
 					],
 				},
 				{
-					label: 'Video & Streaming', 
+					label: 'Video & Streaming',
 					items: [
-						{ label: 'Hardware Video', slug: 'video/hardware' },
-						{ label: 'Software Video', slug: 'video/software' },
+						{ label: 'Video-Hardware', slug: 'video/hardware' },
+						{ label: 'Video-Software', slug: 'video/software' },
 					],
 				},
 			],
