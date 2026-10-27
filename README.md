@@ -9,4 +9,6 @@
 
 ## Start App
 
-```cd mymusic-hub```
+1. ```cd mymusic-hub```
+
+2. ```npm run dev```
