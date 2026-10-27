@@ -26,20 +26,20 @@ export default defineConfig({
 							collapsed: true,
 							items: [
 								{
-									label: 'Melodie- und Harmonieleitfaden',
-									slug: 'songwriting/melodie_und_harmonie_framework_theorie_referenz',
+									label: 'Melodie & Harmonie',
+									slug: 'songwriting/melodie-harmonie',
 								},
 								{
-									label: 'Projekt: Einfacher Rocksong',
+									label: 'Rocksong',
 									collapsed: true,
 									items: [
 										{
-											label: 'Einfacher Rocksong – Schritt 0: Komposition & Arrangement',
-											slug: 'songwriting/rock_track_schritt_1_komposition_arrangement',
+											label: 'Schritt 0: Komposition',
+											slug: 'songwriting/rock-komposition',
 										},
 										{
-											label: 'Einfacher Rocksong – Schritt 1: DAW-Produktion & Einrichtung',
-											slug: 'songwriting/rock_track_1_daw_production_setup_log',
+											label: 'Schritt 1: Produktion',
+											slug: 'songwriting/rock-produktion',
 										},
 									],
 								},

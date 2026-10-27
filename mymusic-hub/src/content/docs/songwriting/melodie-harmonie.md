@@ -1,16 +1,16 @@
 ---
-title: Melodie- und Harmonieleitfaden
+title: Melodie & Harmonie
 ---
 
-# Melodie- und Harmonieleitfaden
+# Melodie & Harmonie
 
 Dieses Dokument dient als systematisches Nachschlagewerk und Konstruktionsleitfaden für die Komposition und das Arrangement moderner Musikstücke. Alle Abschnitte sind modular aufgebaut und greifen systematisch ineinander.
 
 ---
 
-## 1. Harmonisches Fundament
+## 1. Harmonie
 
-### 1.1 Tonales Zentrum & Tongeschlecht
+### 1.1 Tonart
 * **Tonales Zentrum (Tonart und Grundton):** Der tonale Ruhepunkt und Gravitationsanker einer Komposition. Bestimmt, auf welcher Tonhöhe das Gehör Entspannung erfährt.
 * **Tongeschlecht:**
   * *Dur:* Grundsätzlich offen, kraftvoll, hell oder heroisch. Basiert auf der großen Terz.
@@ -21,7 +21,7 @@ Dieses Dokument dient als systematisches Nachschlagewerk und Konstruktionsleitfa
   * Dominante ($V$): Maximale Spannung mit Drang zur Tonika.
   * Subdominante ($IV$ bzw. $iv$): Wegführende Funktion, öffnend.
 
-### 1.2 Akkordpalette & Stimmverlauf
+### 1.2 Akkorde und Stimmverlauf
 * **Diatonische Dreiklänge:**
   * Werden aus den leitereigenen Tönen im Terzabstand geschichtet ($1 - 3 - 5$).
   * Vier Grundtypen: Dur (große + kleine Terz), Moll (kleine + große Terz), Vermindert (zwei kleine Terzen), Übermäßig (zwei große Terzen).
@@ -38,7 +38,7 @@ Dieses Dokument dient als systematisches Nachschlagewerk und Konstruktionsleitfa
   * *Sus-Akkorde ($sus2, sus4$):* Die Terz wird durch die Sekunde oder Quarte ersetzt – erzeugt offene, schwebende Spannung ohne festes Tongeschlecht.
   * *Add-Akkorde ($add9$):* Farbnote wird ergänzt, während die klangbestimmende Terz erhalten bleibt.
 
-### 1.3 Dynamik der Akkordfolgen & harmonischer Rhythmus
+### 1.3 Akkordfolgen und Rhythmus
 * **Akkordfolgen und Kadenzen:**
   * Festlegung funktionaler Spannungsbögen (z. B. $i - VI - III - VII$ oder $ii - V - I$).
   * *Zyklische Kadenzen:* Vier-Akkord-Folgen, die endlos wiederholt werden können und moderne Songstrukturen dominieren.
@@ -50,7 +50,7 @@ Dieses Dokument dient als systematisches Nachschlagewerk und Konstruktionsleitfa
   * *Modaler Austausch:* Ausleihen von Akkorden aus der parallelen Tonart (z. B. Moll-$iv$ im Dur-Kontext).
   * *Reharmonisierung:* Melodie bleibt identisch, während die Begleitakkorde darunter variiert werden.
 
-### 1.4 Stimmführung & Verbindung
+### 1.4 Stimmführung
 * **Prinzip des kürzesten Weges:** Einzelne Stimmen innerhalb der Akkordwechsel bewegen sich idealerweise in Sekundschritten oder bleiben liegen. Vermeidung von parallelen Quint- und Oktavsprüngen im klassischen Satz.
 * **Leittonlinien:**
   * Terzen und Septimen definieren die Akkordqualität. Eine stufenweise fallende oder steigende Linie dieser Töne verbindet Akkorde nahtlos.
@@ -59,9 +59,9 @@ Dieses Dokument dient als systematisches Nachschlagewerk und Konstruktionsleitfa
 
 ---
 
-## 2. Tonhöhenarchitektur
+## 2. Melodie
 
-### 2.1 Tonvorrat & Tonleitersysteme
+### 2.1 Tonleitern
 * **Pentatonik (5-Ton-System):**
   * *Moll-Pentatonik:* $1 - \flat 3 - 4 - 5 - \flat 7$.
   * *Dur-Pentatonik:* $1 - 2 - 3 - 5 - 6$.
@@ -76,7 +76,7 @@ Dieses Dokument dient als systematisches Nachschlagewerk und Konstruktionsleitfa
   * *Dorisch:* Moll mit großer Sexte (treibend, funkig, Rock-Soli).
   * *Mixolydisch:* Dur mit kleiner Septime (Classic Rock, Southern Rock).
 
-### 2.2 Zielakkordtöne & Arpeggien
+### 2.2 Zielnoten
 * **Rangfolge der Akkordtöne als Zielnoten:**
   * *Grundton ($1$):* Schwerer Ankerpunkt, vollkommene Ruhe, maximale Erdung.
   * *Terz ($3$ / $\flat 3$):* Klangfarbenträger, emotionaler Kern des Akkords.
@@ -87,7 +87,7 @@ Dieses Dokument dient als systematisches Nachschlagewerk und Konstruktionsleitfa
   * *Aufsteigend:* Baut Energie und Helligkeit auf.
   * *Absteigend:* Baut Spannung ab, wirkt beruhigend oder schwer.
 
-### 2.3 Spannungstöne & musikalische Schwerkraft
+### 2.3 Spannung und Auflösung
 * **Stabile Töne (Ruhetöne):** Stufen $1, 3, 5$ fungieren als tonale Ruhezonen.
 * **Instabile Tendenznoten:**
   * Stufe $7$ drängt mit hoher Gravitation nach oben zur $1$ (Leitton).
@@ -95,7 +95,7 @@ Dieses Dokument dient als systematisches Nachschlagewerk und Konstruktionsleitfa
   * Stufe $6$ strebt abwärts zur $5$.
 * **Tritonus-Spannung:** Das Intervall der übermäßigen Quarte (z. B. zwischen $4$ & $7$) erzeugt maximale Instabilität, die sich zwingend in eine Terz auflösen will.
 
-### 2.4 Dissonanzen & Verzierungen
+### 2.4 Dissonanzen
 * **Durchgangston:** Verbindet zwei verschiedene Akkordtöne stufenweise im Vorbeigehen auf unbetonter Zählzeit.
 * **Wechselnote:** Verlässt einen Akkordton um eine Sekunde nach oben oder unten und kehrt sofort zurück.
 * **Vorhalt:** Ton des vorherigen Akkords wird gehalten, erzeugt eine Dissonanz auf betonter Zählzeit und löst sich schrittweise abwärts auf.
@@ -103,7 +103,7 @@ Dieses Dokument dient als systematisches Nachschlagewerk und Konstruktionsleitfa
 * **Appoggiatura (betonter Vorschlag):** Unvorbereiteter Sprung in eine Dissonanz auf betonter Zählzeit mit anschließender schrittweiser Auflösung.
 * **Orgelpunkt:** Ein Ton bleibt als melodischer oder harmonischer Anker über wechselnden Akkorden liegen.
 
-### 2.5 Intervallführung, Kontur & Höhepunkt
+### 2.5 Kontur und Höhepunkt
 * **Schritte und Sprünge:**
   * *Sekundschritte:* Sorgen für Gesanglichkeit, melodischen Fluss und Nachvollziehbarkeit.
   * *Sprünge (Terzen, Quarten, Quinten, Oktaven):* Bringen Dramatik und Energie.
@@ -113,20 +113,20 @@ Dieses Dokument dient als systematisches Nachschlagewerk und Konstruktionsleitfa
 
 ---
 
-## 3. Rhythmik & Zeitgestaltung
+## 3. Rhythmus
 
-### 3.1 Taktart, Metrum & Unterteilung
+### 3.1 Metrum und Taktart
 * **Taktart:** $4/4$ (Standard, geradlinig), $3/4$ (Walzer), $6/8$ (balladenhaft, wiegend).
 * **Pulsunterteilung (rhythmisches Raster):**
   * *Gerade Achtel und Sechzehntel:* Exakte mathematische Teilung der Zählzeiten in Hälften beziehungsweise Viertel.
   * *Swing und Shuffle:* Triolische Färbung, Zählzeiten rollen ungleichmäßig (Gefühl von $2+1$).
 
-### 3.2 Phrasierung & Einsätze
+### 3.2 Phrasierung und Einsätze
 * **Beginn auf der Eins:** Beginn direkt auf Zählzeit $1$. Wirkt entschlossen, stabil, geerdet und kraftvoll.
 * **Auftakt:** Phrasenbeginn vor dem Taktstrich (z. B. auf $4$ oder $4+$). Erzeugt Vorwärtsdrang und Schwung.
 * **Beginn nach der Eins:** Beginn nach Zählzeit $1$ (z. B. auf $1+$ oder $2$). Klingt entspannt, locker oder zögerlich.
 
-### 3.3 Notendauern, Dichte & Artikulation
+### 3.3 Noten und Artikulation
 * **Notenwert-Dichte:** Wechselspiel aus kurzen Noten (Transport von Silben/Bewegung) und langen Noten (Ruhe- und Ankerpunkte).
 * **Rhythmischer Kontrast:** Schnelle Tondichte zu Phrasenbeginn $\rightarrow$ Aushalten des Zieltons auf dem Akkordwechsel.
 * **Artikulation:**
@@ -134,26 +134,26 @@ Dieses Dokument dient als systematisches Nachschlagewerk und Konstruktionsleitfa
   * *Staccato:* Perkussiv, abgehackt, rhythmisch akzentuiert.
   * *Abdämpfen mit der Handkante & Akzente:* Anschlagsdynamik zur Formung von Rhythmusmustern.
 
-### 3.4 Metrische Spannung & Groove
+### 3.4 Groove
 * **Betonte und unbetonte Zählzeiten:**
   * *Betonte Zählzeiten (Schläge $1, 2, 3, 4$):* Geben Sicherheit und Fundament.
   * *Zwischenzählzeiten (die „$+$“-Zählzeiten):* Bringen Leichtigkeit, Schub und rhythmische Bewegung.
 * **Synkopen:** Vorziehen einer schweren Note auf eine unbetonte Zählzeit mit Übergang in die schwere Zählzeit. Entzieht dem Hörer kurzzeitig den festen Boden.
 * **Metrische Verschiebung:** Das bewusste Verschieben eines identischen rhythmischen Motivs um einen Schlag im Takt.
 
-### 3.5 Pausensetzung & Atmung
+### 3.5 Pausen und Atmung
 * **Phrasenatmung:** Musik braucht Leerräume. Mindestens $1-2$ Schläge Pause am Phrasenende erhalten die Fassbarkeit.
 * **Klanglicher Freiraum:** Die Pause nach einer musikalischen Aussage definiert deren Gewichtung. Ohne Pause gibt es kein Motiv, sondern nur einen Tonstrom.
 
 ---
 
-## 4. Motivgestaltung & Form
+## 4. Motive und Form
 
-### 4.1 Kernmotiv & Wiedererkennungsmerkmal
+### 4.1 Kernmotiv
 * **Motivumfang:** Idealerweise $4-7$ Töne. Entspricht der Kapazität des menschlichen Kurzzeitgedächtnisses.
 * **Rhythmische Clave:** Das rhythmische Profil eines Motivs muss so markant sein, dass man den Song allein durch Klatschen identifizieren kann.
 
-### 4.2 Entwicklungstechniken & Variation
+### 4.2 Variation
 * **Wiederholung:** Direkte Wiederholung zur Festigung des Erkennungswerts (Ohrwurm-Motiv).
 * **Sequenzierung:** Das Motiv wird in seiner Intervallgestalt auf eine andere Tonstufe versetzt.
 * **Tonhöhenvariation:** Der Rhythmus bleibt identisch, die Tonhöhen ändern sich.
@@ -161,13 +161,13 @@ Dieses Dokument dient als systematisches Nachschlagewerk und Konstruktionsleitfa
 * **Umkehrung:** Intervalle werden gespiegelt (Aufwärtssprung wird zum Abwärtssprung).
 * **Krebs:** Das Motiv wird von hinten nach vorne gespielt.
 
-### 4.3 Phrasenaufbau & Periodik
+### 4.3 Frage und Antwort
 * **Frage-und-Antwort-Prinzip:**
   * *Vordersatz (Frage):* Die erste Phrase öffnet den Bogen und endet instabil oder offen (Halbschluss auf $V$ oder instabilem Akkordton).
   * *Nachsatz (Antwort):* Die zweite Phrase greift das Motiv auf, variiert es und landet stabil auf der Tonika ($I$).
 * **Satzform:** Motiv $\rightarrow$ Wiederholung $\rightarrow$ Fragmentierung und Verdichtung $\rightarrow$ Kadenzabschluss.
 
-### 4.4 Songform & Funktion der Abschnitte
+### 4.4 Songabschnitte
 * **A-B-A-B-C-B (gängiger Pop- und Rock-Aufbau):**
   * *Intro:* Etabliert Tempo, Sound und harmonischen Raum.
   * *Strophe:* Erzählt die Geschichte, hat einen engeren Tonumfang und ist rhythmisch kleinteiliger.
@@ -177,37 +177,37 @@ Dieses Dokument dient als systematisches Nachschlagewerk und Konstruktionsleitfa
 
 ---
 
-## 5. Arrangement & Instrumentierung
+## 5. Arrangement
 
-### 5.1 Rhythmusgruppe: Schlagzeug
+### 5.1 Schlagzeug
 * **Bassdrum:** Treibt das Fundament an und ist eng mit dem Bass verzahnt.
 * **Snare:** Setzt den Rückschlag (meist auf $2$ und $4$) und markiert den Vorwärtsdrang.
 * **Hi-Hat und Becken:** Definieren die Unterteilung (Achtel oder Sechzehntel) und die Dynamik.
 
-### 5.2 Fundament: Basslinie
+### 5.2 Bass
 * Verbindet harmonische Akkordgrundtöne mit dem rhythmischen Puls der Bassdrum.
 * Bleibt im Fundament meist tief ($E1 - E2$), sorgt für tonale Eindeutigkeit.
 
-### 5.3 Harmonische Rhythmusgitarre
+### 5.3 Rhythmusgitarre
 * Füllt das Frequenzmittenspektrum.
 * Liefert harmonische Klangfülle und rhythmischen Schub durch Powerchords, Akkordanschläge oder Abdämpfen mit der Handkante.
 
-### 5.4 Melodische Leadgitarre
+### 5.4 Leadgitarre
 * Führt Themen ein, setzt Riffs, Gegenmelodien, Fills in Phrasenpausen oder Soli.
 * Nutzt den Frequenzbereich oberhalb der Rhythmusgitarre ($E3 - E5$).
 
-### 5.5 Gesangsmelodie & Textskizze
+### 5.5 Gesang
 * Oberste Hierarchieebene für das menschliche Gehör.
 * Folgt der Sprachmelodie und dem rhythmischen Metrum des Textes.
 
-### 5.6 Taktweise Gesamtpartitur
+### 5.6 Gesamtpartitur
 * Synchrone, tabellarische Darstellung aller Spuren über das Taktraster zur Überprüfung von Phasen, Kollisionen und rhythmischem Zusammenspiel.
 
 ---
 
-## 6. Prüfung & Qualitätsbewertung
+## 6. Qualitätscheck
 
-### 6.1 Kriterienkatalog
+### 6.1 Prüffragen
 * [ ] Sitzt das harmonische Zentrum unverrückbar fest?
 * [ ] Besitzt das Motiv eine eindeutige rhythmische Clave?
 * [ ] Wurde die Ausgleichsregel nach großen Intervallsprüngen eingehalten?
@@ -215,7 +215,7 @@ Dieses Dokument dient als systematisches Nachschlagewerk und Konstruktionsleitfa
 * [ ] Ist ausreichend Raum für Pausen und Atmung vorhanden?
 * [ ] Arbeiten Kick, Bass und Begleitung rhythmisch synchron?
 
-### 6.2 Reifegradbewertung
+### 6.2 Bewertung
 * **Stufe 1 (Ohrwurm- und Hitniveau):** Vollkommene Balance aus Wiederholung und Überraschung, unverwechselbare Rhythmik, klarer dynamischer Höhepunkt.
 * **Stufe 2 (Solides musikalisches Material):** Handwerklich sauber, stimmig, eignet sich ideal als Strophe oder Bindeglied, jedoch ohne besonders einprägsame Melodie.
 * **Stufe 3 (Überarbeitungsbedürftig):** Überladene Notendichte ohne Pausen, planlose Sprünge ohne tonale Gravitation, rhythmische Unschärfe.

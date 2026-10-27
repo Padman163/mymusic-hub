@@ -1,14 +1,14 @@
 ---
-title: "Einfacher Rocksong – Schritt 1: DAW-Produktion & Einrichtung"
+title: "Rocksong – Schritt 1: Produktion"
 ---
 
-# Einfacher Rocksong – Schritt 1: DAW-Produktion & Einrichtung
+# Rocksong – Schritt 1: Produktion
 
 Dieses Dokument beschreibt die vollständige Einrichtung und MIDI-/VST-Programmierung des Grundarrangements in Fender Studio Pro.
 
 ---
 
-## 0. DAW-Projekteinrichtung
+## 0. Projekteinstellungen
 
 | Parameter | Wert | Funktion / Produktionshinweis |
 | :--- | :--- | :--- |
@@ -30,7 +30,7 @@ Dieses Dokument beschreibt die vollständige Einrichtung und MIDI-/VST-Programmi
 
 ---
 
-## 1. Projekteinstellungen & Audioverarbeitung
+## 1. Audioeinstellungen
 
 * **Abtastrate und Auflösung:** 44,1 kHz bei 24 Bit (48:15 Tage Aufnahmezeit-Puffer, 0,8 ms Latenz bei 44,1 kHz).
 * **Transport und Raster:** 132,00 BPM im 4/4-Takt, globale Tonart Em (Transponierung: 0).
@@ -41,7 +41,7 @@ Dieses Dokument beschreibt die vollständige Einrichtung und MIDI-/VST-Programmi
 
 ---
 
-## 2. VST-Instrumente & Signalrouting
+## 2. Instrumente und Routing
 
 | Spur-Nr. | Name | Klangerzeuger / Plugin | Klangbibliothek / Voreinstellung | Funktion im Arrangement |
 | :---: | :--- | :--- | :--- | :--- |
@@ -53,16 +53,16 @@ Dieses Dokument beschreibt die vollständige Einrichtung und MIDI-/VST-Programmi
 
 ---
 
-## 3. Schlagzeug: Rhythmusmuster & PreSonus-Exchange-Integration
+## 3. Schlagzeug
 
-### Schlagzeugbelegung und Tonhöhennamen
+### Schlagzeugbelegung
 * **Quelle:** PreSonus Exchange / Cloud Search (`ezdrummer 3`)
 * **Paket:** `EZdrummer 3 - Main Room` (Tonhöhennamen von michaelmacasiano)
 * **Funktion:** Eindeutige Bezeichnung aller Spielweisen im Editor statt allgemeiner Tastennummern
 
 ![Herunterladen der Schlagzeugbelegung aus PreSonus Exchange](/mymusic-hub/src/img/03_exchange_pitch_names.png)
 
-### Einstellungen des Muster-Editors
+### Rhythmusmuster
 * **Modus:** Studio-Pro-Schrittmuster (8 Schritte, 1/8-Auflösung pro Takt)
 * **Groove-Parameter:** Swing: 0 % | Gate: 100 % | Akzent / Betonung: 30 %
 * **Spurfilter:** Alle nicht verwendeten Zeilen (Toms, Becken, Sidesticks) für bessere Übersicht ausgeblendet
@@ -75,15 +75,15 @@ Dieses Dokument beschreibt die vollständige Einrichtung und MIDI-/VST-Programmi
 
 ---
 
-## 4. Bass: MIDI-Programmierung mit EZbass
+## 4. Bass
 
-### Spurparameter & Editoreinstellungen
+### Spureinstellungen
 * **Quantisierung:** 1/8 | Zeitformat: Takte | Raster: quantisiert
 * **Tonleitersperre:** `E Natural Minor` im linken Inspektor aktiviert
 * **Farbprofil:** Notenfarbe nach Tonhöhe (E = Grün, C = Rot, G = Blau, D = Gelb)
 * **Anschlagstärke:** Einheitlich auf **102** festgelegt für ein druckvolles Tiefenfundament
 
-### Harmonische Belegung (viertaktige Schleife)
+### Viertaktige Akkordfolge
 * **Takt 1 (Em):** `E1` – 8x Achtelnoten (durchgehend auf Zählzeiten 1 bis 4+)
 * **Takt 2 (C):**  `C1` – 8x Achtelnoten (durchgehend auf Zählzeiten 1 bis 4+)
 * **Takt 3 (G):**  `G1` – 8x Achtelnoten (durchgehend auf Zählzeiten 1 bis 4+)
@@ -93,9 +93,9 @@ Dieses Dokument beschreibt die vollständige Einrichtung und MIDI-/VST-Programmi
 
 ---
 
-## 5. Rhythmusgitarre: Shreddage 3 Hydra & eigene Klangvariationen
+## 5. Rhythmusgitarre
 
-### Akkorderzeugung & Frequenzstaffelung
+### Akkorde und Frequenzstaffelung
 * **Makroablauf in Studio Pro:** Grundtöne einzeichnen $\rightarrow$ `Aktion` $\rightarrow$ `Pitch` $\rightarrow$ `Double` $\rightarrow$ `5th above` (automatische Erzeugung von Powerchords)
 * **Frequenztrennung:** Tiefe Suboktaven bereinigen, um Frequenzmaskierungen mit dem Bass (EZbass) im Bereich 40–100 Hz zu vermeiden
 * **Notenbelegung (viertaktige Schleife):**
@@ -106,7 +106,7 @@ Dieses Dokument beschreibt die vollständige Einrichtung und MIDI-/VST-Programmi
 
 ![PreSonus-Studio-Pro-Makro zur Tonhöhenverdopplung](/mymusic-hub/src/img/06_pitch_double_macro.png)
 
-### Spielweisen & eigene Klangvariationen für Shreddage 3 Hydra
+### Spielweisen
 * **Eigene Klangvariationen:** Eigenes Profil `Rhythm Guitar - Shreddage 3 Hydra` zur Steuerung aller Spieltechniken über Klartextbezeichnungen
 * **Tastenumschaltung:** Durchgehende Steuernote auf `C-1` über alle vier Takte (Takt 1.01 bis 5.01) zur dauerhaften Aktivierung von `Sustain/Rake/Pinch Harmonic`
 * **Anschlagstärkebereiche:**
@@ -128,9 +128,9 @@ Dieses Dokument beschreibt die vollständige Einrichtung und MIDI-/VST-Programmi
 
 ---
 
-## 6. Leadgitarre: Melodieführung, Höhepunkt & Phrasierung
+## 6. Leadgitarre
 
-### Melodischer Aufbau & Stimmführung
+### Melodie und Phrasierung
 * **Tonaler Rahmen:** E-Moll diatonisch / pentatonisch im mittleren Register ($E3$ bis $D4$)
 * **Periodischer Aufbau (Frage und Antwort):**
   * **Phrase 1 (Takt 1–2 / Vordersatz):** Beginnt auf dem Grundton $E3$, steigt schrittweise zur Quinte $B3$ auf und ruht auf der Quinte $G3$ über C-Dur. Die zweite Takthälfte von Takt 2 bleibt als Phrasenatmung vollständig frei.
@@ -147,7 +147,7 @@ Dieses Dokument beschreibt die vollständige Einrichtung und MIDI-/VST-Programmi
 
 ![MIDI-Editor der Leadgitarre mit Melodiekontur & Höhepunkt](/mymusic-hub/src/img/09_lead_guitar_midi_contour.png)
 
-### Einrichtung und Klangvariationen für Shreddage 3 Hydra
+### Spielweisen
 * **Klangerzeuger / Voreinstellung:** Native Instruments Kontakt 8 $\rightarrow$ *Impact Soundworks Shreddage 3 Hydra* (`Hydra 3.5 Lion Song`)
 * **Tastenumschaltung:** `C-1` (rastende Tastenumschaltung) ist als durchgehende Steuernote im Subbereich aktiviert, um den Sustain-Modus zu verwenden.
 * **Klangvariationen (Anschlagart):** Für den gesamten viertaktigen Abschnitt ist `43 - Picking Mode: Alternate` aktiviert, damit einzelne Töne dynamischer klingen.
@@ -157,15 +157,15 @@ Dieses Dokument beschreibt die vollständige Einrichtung und MIDI-/VST-Programmi
 
 ---
 
-## 7. Leadgesang: Dreamtonics Synthesizer V AI (Stimme: Liam)
+## 7. Gesang
 
-### Klangerzeuger, Stimmdatenbank & Projekteinstellungen
+### Stimmeinstellungen
 * **Plugin-Instanz:** Dreamtonics Synthesizer V Studio Pro-Plugin (VST3)
 * **Stimmdatenbank:** `Liam` (Synthesizer V AI – englisch, Version `201`, Voreinstellung `Default*`)
 * **Stimmparameter:** Dynamische Parameter (Bright, Heavy, Rounded, Whispery, Soft, Hoarse) in neutraler Grundeinstellung
 * **Raster und Tonart:** 132,00 BPM | 4/4 | 1/8-Raster | Tonleitersperre `E Natural Minor` aktiviert
 
-### Textgestaltung & Silbentrennung
+### Text und Silbentrennung
 * **Mehrzeilige Texteingabe (`Strg + L`):**
   ```text
   We start the fi- re to-night turn- ing the dark in- to light
@@ -174,7 +174,7 @@ Dieses Dokument beschreibt die vollständige Einrichtung und MIDI-/VST-Programmi
 
 ![Mehrzeilige Texteingabe in Synthesizer V](/mymusic-hub/src/img/11_synth_v_lyrics_dialog.png)
 
-### Matrix aus Noten, Silben & Lautschrift (13 Noten)
+### Noten und Silben
 
 | Takt | Zählzeit | Tonhöhe | Silbe | Lautschrift (ARPAbet) | Funktion / Phrasierung |
 | :---: | :---: | :---: | :--- | :--- | :--- |
@@ -195,7 +195,7 @@ Dieses Dokument beschreibt die vollständige Einrichtung und MIDI-/VST-Programmi
 
 ![Lautschrift- und Tonhöhenkurve im Synthesizer-V-Editor für Liam](/mymusic-hub/src/img/12_synth_v_liam_piano_roll.png)
 
-### KI-Gesangsinterpretation & Tonhöhenkurven
+### Gesang und Tonhöhen
 * **Automatische Tonhöhenbearbeitung:** Synthesizer V modelliert kontinuierliche Tonhöhenkurven (grüne Vektorkurve) statt starrer Notenstufen.
 * **Gebundene Töne und Portamento:** Realistische kleine Übergänge (Glissandi) bei Intervallsprüngen.
 * **Vibrato-Modellierung:** Natürlich einsetzendes Vibrato auf den gehaltenen Tönen (`to-night`, `to`, `light`).
