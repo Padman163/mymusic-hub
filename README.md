@@ -7,8 +7,8 @@
 
 ```npm create astro@latest -- --template starlight```
 
-## Anwendung starten
+## Anwendung starten 
 
 1. ```cd mymusic-hub```
-
-2. ```npm run dev```
+2. ```npm install```
+3. ```npm run dev```
