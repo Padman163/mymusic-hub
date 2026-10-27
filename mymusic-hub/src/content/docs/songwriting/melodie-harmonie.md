@@ -2,8 +2,6 @@
 title: Melodie & Harmonie
 ---
 
-# Melodie & Harmonie
-
 Dieses Dokument dient als systematisches Nachschlagewerk und Konstruktionsleitfaden für die Komposition und das Arrangement moderner Musikstücke. Alle Abschnitte sind modular aufgebaut und greifen systematisch ineinander.
 
 ---

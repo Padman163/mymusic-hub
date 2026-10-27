@@ -14,6 +14,7 @@ export default defineConfig({
 				},
 			},
 			defaultLocale: 'root',
+			customCss: ['/src/styles/sidebar.css'],
 			sidebar: [
 				{
 					label: 'Audio & Musik',
@@ -30,7 +31,7 @@ export default defineConfig({
 									slug: 'songwriting/melodie-harmonie',
 								},
 								{
-									label: 'Rocksong',
+									label: 'Projekt: Rock-Arrangement',
 									collapsed: true,
 									items: [
 										{

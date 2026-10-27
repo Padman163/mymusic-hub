@@ -2,8 +2,6 @@
 title: "Rocksong – Schritt 0: Komposition"
 ---
 
-# Rocksong – Schritt 0: Komposition
-
 Dieses Dokument überträgt den theoretischen Leitfaden direkt auf das konkrete Fundament unseres Rocksongs. Alle Spuren sind strikt auf dem Schlag verankert (keine Synkopen, keine Auftakte), um ein stabiles Grundgerüst zu schaffen.
 
 ---

@@ -2,8 +2,6 @@
 title: "Rocksong – Schritt 1: Produktion"
 ---
 
-# Rocksong – Schritt 1: Produktion
-
 Dieses Dokument beschreibt die vollständige Einrichtung und MIDI-/VST-Programmierung des Grundarrangements in Fender Studio Pro.
 
 ---
@@ -14,7 +12,7 @@ Dieses Dokument beschreibt die vollständige Einrichtung und MIDI-/VST-Programmi
 | :--- | :--- | :--- |
 | **DAW / Umgebung** | Fender Studio Pro | Session-Format (`.song`) |
 | **Projektname** | `Einfacher Rocksong` | Zentrales Kompositions- und Aufnahmeprojekt |
-| **Speicherpfad** | `C:\Users\p-moo\OneDrive\Dokumente\Studio One\Songs\Writing` | Standardordner für Songs |
+| **Speicherpfad** | `\Dokumente\Studio One\Songs\Writing` | Standardordner für Songs |
 | **Abtastrate** | 44,1 kHz | Standard für Streaming und Rockmischungen |
 | **Auflösung** | 24 Bit | Professioneller Dynamikumfang (144 dB) |
 | **Zeitformat** | Takte | Takt- und Beat-basiertes Arbeiten |
@@ -26,7 +24,7 @@ Dieses Dokument beschreibt die vollständige Einrichtung und MIDI-/VST-Programmi
 | **Anpassung anwenden** | Vollständig | Volle Funktions- und Menüdarstellung in Studio Pro |
 | **Dateityp** | Studio Pro-Projekt | Projektdatei im Studio-Pro-Format |
 
-![Dialog zur Projekteinstellung](/mymusic-hub/src/img/01_session_setup.png)
+![Dialog zur Projekteinstellung](../../../img/01_session_setup.png)
 
 ---
 
@@ -37,7 +35,7 @@ Dieses Dokument beschreibt die vollständige Einrichtung und MIDI-/VST-Programmi
 * **Schleifenbereich:** Takt 1.01 bis Takt 5.01 (`L 00001.01.01.00` bis `R 00005.01.01.00`) – geschlossene viertaktige Schleife.
 * **Quantisierung:** 1/16 adaptiv im Hauptfenster, 1/8 quantisiert im MIDI-Editor.
 
-![DAW-Projekteinrichtung & VST-Routing](/mymusic-hub/src/img/02_daw_routing_vst.png)
+![DAW-Projekteinrichtung & VST-Routing](../../../img/02_daw_routing_vst.png)
 
 ---
 
@@ -60,7 +58,7 @@ Dieses Dokument beschreibt die vollständige Einrichtung und MIDI-/VST-Programmi
 * **Paket:** `EZdrummer 3 - Main Room` (Tonhöhennamen von michaelmacasiano)
 * **Funktion:** Eindeutige Bezeichnung aller Spielweisen im Editor statt allgemeiner Tastennummern
 
-![Herunterladen der Schlagzeugbelegung aus PreSonus Exchange](/mymusic-hub/src/img/03_exchange_pitch_names.png)
+![Herunterladen der Schlagzeugbelegung aus PreSonus Exchange](../../../img/03_exchange_pitch_names.png)
 
 ### Rhythmusmuster
 * **Modus:** Studio-Pro-Schrittmuster (8 Schritte, 1/8-Auflösung pro Takt)
@@ -71,7 +69,7 @@ Dieses Dokument beschreibt die vollständige Einrichtung und MIDI-/VST-Programmi
   * `Snare - Center` (D1): Schritte 3 und 7 (Zählzeiten 2 und 4)
   * `Hi-Hat - Closed Tip` (C#3): Schritte 1–8 durchgehend (Zählzeiten 1 bis 4+)
 
-![Fokuseinstellung des Muster-Editors](/mymusic-hub/src/img/04_pattern_editor_drums.png)
+![Fokuseinstellung des Muster-Editors](../../../img/04_pattern_editor_drums.png)
 
 ---
 
@@ -89,7 +87,7 @@ Dieses Dokument beschreibt die vollständige Einrichtung und MIDI-/VST-Programmi
 * **Takt 3 (G):**  `G1` – 8x Achtelnoten (durchgehend auf Zählzeiten 1 bis 4+)
 * **Takt 4 (D):**  `D1` – 8x Achtelnoten (durchgehend auf Zählzeiten 1 bis 4+)
 
-![Einrichtung des Bass-Editors und Tonleiterquantisierung](/mymusic-hub/src/img/05_bass_midi_editor.png)
+![Einrichtung des Bass-Editors und Tonleiterquantisierung](../../../img/05_bass_midi_editor.png)
 
 ---
 
@@ -104,7 +102,7 @@ Dieses Dokument beschreibt die vollständige Einrichtung und MIDI-/VST-Programmi
   * **Takt 3 (G / G5):** `G2 + D3` (8x durchgehende Achtelnoten)
   * **Takt 4 (D / D5):** `D2 + A2` (8x durchgehende Achtelnoten)
 
-![PreSonus-Studio-Pro-Makro zur Tonhöhenverdopplung](/mymusic-hub/src/img/06_pitch_double_macro.png)
+![PreSonus-Studio-Pro-Makro zur Tonhöhenverdopplung](../../../img/06_pitch_double_macro.png)
 
 ### Spielweisen
 * **Eigene Klangvariationen:** Eigenes Profil `Rhythm Guitar - Shreddage 3 Hydra` zur Steuerung aller Spieltechniken über Klartextbezeichnungen
@@ -116,8 +114,8 @@ Dieses Dokument beschreibt die vollständige Einrichtung und MIDI-/VST-Programmi
 * **Projekt-Anschlagstärke:** Einheitlich auf **102** festgelegt (oberer Sustain-Bereich mit maximalem Druck, ohne Nebengeräusche auszulösen)
 * **Anschlagart:** Unterhalb der Notenmatrix ist über die gesamte Länge `42 - Picking Mode: Down` gesetzt. Dadurch werden ausschließlich Abschläge für den typischen kompakten Rock-/Punk-Klang verwendet.
 
-![Spielweisenmatrix für Kontakt 8 Shreddage 3](/mymusic-hub/src/img/07_shreddage_articulation_matrix.png)
-![Studio-Pro-MIDI-Spur der Rhythmusgitarre mit C-1-Sustain und Abschlägen](/mymusic-hub/src/img/08_rhythm_guitar_downstroke_sustain.png)
+![Spielweisenmatrix für Kontakt 8 Shreddage 3](../../../img/07_shreddage_articulation_matrix.png)
+![Studio-Pro-MIDI-Spur der Rhythmusgitarre mit C-1-Sustain und Abschlägen](../../../img/08_rhythm_guitar_downstroke_sustain.png)
 
 > [!IMPORTANT]
 > **ERINNERUNG: DOKUMENTATION UND DOWNLOAD**
@@ -145,7 +143,7 @@ Dieses Dokument beschreibt die vollständige Einrichtung und MIDI-/VST-Programmi
 | **3** | **G** | **D4** | **B3** | **A3** | **G3** | **G3** | Viertel (Höhepunkt) – Achtel – Achtel – Viertel – Viertel |
 | **4** | **D** | **F#3** | - | - | **D3** | - | Halbe Note (Schlag 1–2) $\rightarrow$ Halbe Note (Schlag 3–4) |
 
-![MIDI-Editor der Leadgitarre mit Melodiekontur & Höhepunkt](/mymusic-hub/src/img/09_lead_guitar_midi_contour.png)
+![MIDI-Editor der Leadgitarre mit Melodiekontur & Höhepunkt](../../../img/09_lead_guitar_midi_contour.png)
 
 ### Spielweisen
 * **Klangerzeuger / Voreinstellung:** Native Instruments Kontakt 8 $\rightarrow$ *Impact Soundworks Shreddage 3 Hydra* (`Hydra 3.5 Lion Song`)
@@ -153,7 +151,7 @@ Dieses Dokument beschreibt die vollständige Einrichtung und MIDI-/VST-Programmi
 * **Klangvariationen (Anschlagart):** Für den gesamten viertaktigen Abschnitt ist `43 - Picking Mode: Alternate` aktiviert, damit einzelne Töne dynamischer klingen.
 * **Anschlagstärke:** Einheitlich auf **102** gesetzt.
 
-![Klangvariationen & Tastenumschaltung der Leadgitarre](/mymusic-hub/src/img/10_lead_guitar_keyswitches.png)
+![Klangvariationen & Tastenumschaltung der Leadgitarre](../../../img/10_lead_guitar_keyswitches.png)
 
 ---
 
@@ -172,7 +170,7 @@ Dieses Dokument beschreibt die vollständige Einrichtung und MIDI-/VST-Programmi
   ```
 * **Silbenaufteilung:** Bindestriche (`-`) steuern die Verteilung der Silben auf Achtel- und Viertelnoten; `to-night` wird als zusammenhängendes Wort auf eine halbe Note gelegt.
 
-![Mehrzeilige Texteingabe in Synthesizer V](/mymusic-hub/src/img/11_synth_v_lyrics_dialog.png)
+![Mehrzeilige Texteingabe in Synthesizer V](../../../img/12_synth_v_lyrics_dialog.png)
 
 ### Noten und Silben
 
@@ -193,7 +191,7 @@ Dieses Dokument beschreibt die vollständige Einrichtung und MIDI-/VST-Programmi
 | **4** | **1–2** | **F#3** | `to` | `[t uw]` | Leitton über D-Dur (Halbe Note) |
 | **4** | **3–4** | **D3** | `light` | `[l ay t]` | Halbe Note; Auflösung und Rückführung mit Vibrato-Ausklang |
 
-![Lautschrift- und Tonhöhenkurve im Synthesizer-V-Editor für Liam](/mymusic-hub/src/img/12_synth_v_liam_piano_roll.png)
+![Lautschrift- und Tonhöhenkurve im Synthesizer-V-Editor für Liam](../../../img/13_synth_v_liam_piano_roll.png)
 
 ### Gesang und Tonhöhen
 * **Automatische Tonhöhenbearbeitung:** Synthesizer V modelliert kontinuierliche Tonhöhenkurven (grüne Vektorkurve) statt starrer Notenstufen.
