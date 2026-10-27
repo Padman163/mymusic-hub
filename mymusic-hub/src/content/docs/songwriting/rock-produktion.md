@@ -1,5 +1,5 @@
 ---
-title: "Rocksong – Schritt 1: Produktion"
+title: "Rocksong – Schritt 1: Produktion (Refrain)"
 ---
 
 Dieses Dokument beschreibt die vollständige Einrichtung und MIDI-/VST-Programmierung des Grundarrangements in Fender Studio Pro.

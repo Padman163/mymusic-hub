@@ -48,8 +48,16 @@ export default defineConfig({
 											slug: 'songwriting/rock-komposition',
 										},
 										{
-											label: 'Schritt 1: Produktion',
+											label: 'Schritt 1: Produktion (Refrain)',
 											slug: 'songwriting/rock-produktion',
+										},
+																				{
+											label: 'Schritt 2: Songstruktur',
+											slug: 'songwriting/rock-songstruktur',
+										},
+																				{
+											label: 'Schritt 3: Produktion (Strophe & Vor-Refrain)',
+											slug: 'songwriting/rock-produktion2',
 										},
 									],
 								},
