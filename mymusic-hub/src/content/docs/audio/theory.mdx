@@ -4,9 +4,25 @@ title: Musiktheorie
 
 import FretboardClickable from '../../../components/FretboardClickable.astro';
 import DrumPattern from '../../../components/DrumPattern.astro';
+import BassPattern from '../../../components/BassPattern.astro';
 
 Klicke auf die Saiten, um eigene Griffmuster oder Tonleitern zu markieren:
 
 <FretboardClickable />
 
 <DrumPattern showVelocity={true} />
+
+## Bass-Pattern testen
+
+Viertaktiger Rock-Pick-Bass in E-Moll: durchgehende Achtelnoten auf dem Grundton, mit Anschlagstärke 102. Die Notenzeilen zeigen alle Töne der Tonleiter zwischen dem tiefsten und höchsten gespielten Ton.
+
+<BassPattern
+  keyRoot="E"
+  scale="naturalMinor"
+  bars={[
+    { chord: 'Em', note: 'E1', velocity: 102 },
+    { chord: 'C', note: 'C1', velocity: 102 },
+    { chord: 'G', note: 'G1', velocity: 102 },
+    { chord: 'D', note: 'D1', velocity: 102 }
+  ]}
+/>
