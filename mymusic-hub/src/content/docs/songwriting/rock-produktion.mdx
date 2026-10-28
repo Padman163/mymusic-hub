@@ -3,6 +3,7 @@ title: "Rocksong – Schritt 1: Produktion (Refrain)"
 ---
 
 import DrumPattern from '../../../components/DrumPattern.astro';
+import BassPattern from '../../../components/BassPattern.astro';
 
 Dieses Dokument beschreibt die vollständige Einrichtung und MIDI-/VST-Programmierung des Grundarrangements in Fender Studio Pro.
 
@@ -97,6 +98,17 @@ Dieses Dokument beschreibt die vollständige Einrichtung und MIDI-/VST-Programmi
 * **Takt 2 (C):**  `C1` – 8x Achtelnoten (durchgehend auf Zählzeiten 1 bis 4+)
 * **Takt 3 (G):**  `G1` – 8x Achtelnoten (durchgehend auf Zählzeiten 1 bis 4+)
 * **Takt 4 (D):**  `D1` – 8x Achtelnoten (durchgehend auf Zählzeiten 1 bis 4+)
+
+<BassPattern
+  keyRoot="E"
+  scale="naturalMinor"
+  bars={[
+    { chord: 'Em', note: 'E1', velocity: 102 },
+    { chord: 'C', note: 'C1', velocity: 102 },
+    { chord: 'G', note: 'G1', velocity: 102 },
+    { chord: 'D', note: 'D1', velocity: 102 }
+  ]}
+/>
 
 ![Einrichtung des Bass-Editors und Tonleiterquantisierung](../../../img/05_bass_midi_editor.png)
 

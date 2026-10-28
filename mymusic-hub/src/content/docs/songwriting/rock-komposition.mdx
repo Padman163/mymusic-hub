@@ -3,6 +3,7 @@ title: "Rocksong – Schritt 0: Komposition"
 ---
 
 import DrumPattern from '../../../components/DrumPattern.astro';
+import BassPattern from '../../../components/BassPattern.astro';
 
 Dieses Dokument überträgt den theoretischen Leitfaden direkt auf das konkrete Fundament unseres Rocksongs. Alle Spuren sind strikt auf dem Schlag verankert (keine Synkopen, keine Auftakte), um ein stabiles Grundgerüst zu schaffen.
 
@@ -148,6 +149,17 @@ Dieses Dokument überträgt den theoretischen Leitfaden direkt auf das konkrete 
   * Takt 2 (C):  8x **C1**
   * Takt 3 (G):  8x **G1**
   * Takt 4 (D):  8x **D1**
+
+<BassPattern
+  keyRoot="E"
+  scale="naturalMinor"
+  bars={[
+    { chord: 'Em', note: 'E1', velocity: 102 },
+    { chord: 'C', note: 'C1', velocity: 102 },
+    { chord: 'G', note: 'G1', velocity: 102 },
+    { chord: 'D', note: 'D1', velocity: 102 }
+  ]}
+/>
 
 ### 5.3 Rhythmusgitarre
 * **Klang:** Verzerrt (Overdrive/Crunch), mittenbetont.

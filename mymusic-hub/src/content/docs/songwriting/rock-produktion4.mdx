@@ -3,6 +3,7 @@ title: "Schritt 5: Produktion (Bridge, Finale & Intro)"
 ---
 
 import DrumPattern from '../../../components/DrumPattern.astro';
+import BassPattern from '../../../components/BassPattern.astro';
 
 Dieses Dokument beschreibt die MIDI- und VST-Programmierung der fehlenden Formteile, um das Arrangement des Rocksongs vollständig abzuschließen. Die Bridge (Schritt 5) erzeugt den finalen Kontrast, der letzte Refrain und das Outro (Schritt 6) bilden den emotionalen Höhepunkt, und das Intro (Schritt 7) rundet den Song ab.
 
@@ -101,15 +102,80 @@ Auf der Eins des allerletzten Taktes setzen Kick und Crash simultan den harten E
 
 * **Töne:** `C1` (Takt 49), `D1` (Takt 50), `E1` (Takt 51 & 52). Das Ganze wiederholt sich in Takt 53-56.
 
-### Finaler Refrain & Outro (Takt 57–68)
+<BassPattern
+  keyRoot="E"
+  scale="naturalMinor"
+  startBar={49}
+  bars={[
+    { chord: 'C', note: 'C1', noteLengthSteps: 8 },
+    { chord: 'D', note: 'D1', noteLengthSteps: 8 },
+    { chord: 'Em', note: 'E1', noteLengthSteps: 8 },
+    { chord: 'Em', note: 'E1', noteLengthSteps: 8 },
+    { chord: 'C', note: 'C1', noteLengthSteps: 8 },
+    { chord: 'D', note: 'D1', noteLengthSteps: 8 },
+    { chord: 'Em', note: 'E1', noteLengthSteps: 8 },
+    { chord: 'Em', note: 'E1', noteLengthSteps: 8 }
+  ]}
+/>
 
-* **Refrain:** Pumpende Achtel (`E1, C1, G1, D1`), identisch zu Refrain 1 und 2.
+### Finaler Refrain (Takt 57–64)
 
-* **Outro:** `E1`, `C1`, `D1` (jeweils 8x Achtel) und endet mit einer ganzen Note auf `E1` in Takt 68.
+* Pumpende Achtel (`E1, C1, G1, D1`), identisch zu Refrain 1 und 2.
+
+<BassPattern
+  keyRoot="E"
+  scale="naturalMinor"
+  startBar={57}
+  bars={[
+    { chord: 'Em', note: 'E1', velocity: 102 },
+    { chord: 'C', note: 'C1', velocity: 102 },
+    { chord: 'G', note: 'G1', velocity: 102 },
+    { chord: 'D', note: 'D1', velocity: 102 },
+    { chord: 'Em', note: 'E1', velocity: 102 },
+    { chord: 'C', note: 'C1', velocity: 102 },
+    { chord: 'G', note: 'G1', velocity: 102 },
+    { chord: 'D', note: 'D1', velocity: 102 },
+    { chord: 'Em', note: 'E1', velocity: 102 },
+    { chord: 'C', note: 'C1', velocity: 102 },
+    { chord: 'G', note: 'G1', velocity: 102 },
+    { chord: 'D', note: 'D1', velocity: 102 }
+  ]}
+/>
+
+### Outro (Takt 65–68)
+
+* `E1`, `C1`, `D1` (jeweils 8x Achtel), danach endet das Stück mit einer ganzen Note auf `E1` in Takt 68.
+
+<BassPattern
+  keyRoot="E"
+  scale="naturalMinor"
+  startBar={65}
+  bars={[
+    { chord: 'Em', note: 'E1', velocity: 102 },
+    { chord: 'C', note: 'C1', velocity: 102 },
+    { chord: 'D', note: 'D1', velocity: 102 },
+    { chord: 'Em', note: 'E1', velocity: 102, noteLengthSteps: 8 }
+  ]}
+/>
 
 ### Intro (Takt 1–8)
 
 * Identisch zur Programmierung des Refrains (pumpende Achtelnoten, Anschlagstärke 102).
+
+<BassPattern
+  keyRoot="E"
+  scale="naturalMinor"
+  bars={[
+    { chord: 'Em', note: 'E1', velocity: 102 },
+    { chord: 'C', note: 'C1', velocity: 102 },
+    { chord: 'G', note: 'G1', velocity: 102 },
+    { chord: 'D', note: 'D1', velocity: 102 },
+    { chord: 'Em', note: 'E1', velocity: 102 },
+    { chord: 'C', note: 'C1', velocity: 102 },
+    { chord: 'G', note: 'G1', velocity: 102 },
+    { chord: 'D', note: 'D1', velocity: 102 }
+  ]}
+/>
 
 ## 5. Rhythmusgitarre (Spur 1: Shreddage 3 Hydra)
 

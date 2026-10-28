@@ -3,6 +3,7 @@ export interface BassBar {
   chord: string;
   note: string;
   velocity?: number;
+  noteLengthSteps?: number;
 }
 
 export interface Props {
@@ -60,7 +61,13 @@ const chordLabel = (chord: string) => {
   const degree = scaleIntervals.findIndex((interval) => (rootPitchClass + interval) % 12 === chordRoot);
   return degree < 0 ? chord : `${chord} · ${romanDegrees[degree]}`;
 };
-const parsedBars = bars.map((bar) => ({ ...bar, parsedNote: parseNote(bar.note) }));
+const parsedBars = bars.map((bar) => {
+  const noteLengthSteps = bar.noteLengthSteps ?? 1;
+  if (!Number.isInteger(noteLengthSteps) || noteLengthSteps < 1 || noteLengthSteps > stepsPerBar) {
+    throw new Error(`Ungültige Notenlänge ${noteLengthSteps} für "${bar.note}". Erlaubt sind 1 bis ${stepsPerBar} Steps.`);
+  }
+  return { ...bar, parsedNote: parseNote(bar.note) };
+});
 const lowestMidi = Math.min(...parsedBars.map(({ parsedNote }) => parsedNote.midi));
 const highestMidi = Math.max(...parsedBars.map(({ parsedNote }) => parsedNote.midi));
 const pitches = Array.from({ length: highestMidi - lowestMidi + 1 }, (_, index) => {
@@ -118,18 +125,29 @@ const velocities = [...new Set(bars.map(({ velocity }) => velocity ?? 102))];
             const step = barIndex * stepsPerBar + stepIndex;
             const isActive = parsedBars[barIndex].parsedNote.midi === pitch.midi;
             const velocity = bar.velocity ?? 102;
+            const noteLengthSteps = bar.noteLengthSteps ?? 1;
+            const startsNote = stepIndex % noteLengthSteps === 0;
+            const noteSpans = Math.min(noteLengthSteps, stepsPerBar - stepIndex);
+
+            if (isActive && !startsNote) return null;
 
             return (
               <div
                 class={`note-cell ${barIndex % 2 === 1 ? "alternate-bar" : ""}`}
                 style={isActive
-                  ? `grid-column: ${step + 2}; --note-color: ${colorForPitch(pitch.pitchClass)};`
+                  ? `grid-column: ${step + 2} / span ${noteSpans}; --note-color: ${colorForPitch(pitch.pitchClass)};`
                   : `grid-column: ${step + 2};`}
                 aria-label={isActive
                   ? `Takt ${startBar + barIndex}, ${bar.chord}, ${pitch.label}, Schritt ${stepIndex + 1}, Anschlag ${velocity}`
                   : undefined}
               >
-                {isActive && <span class="note-block">{pitch.label}</span>}
+                {isActive && startsNote && (
+                  <span
+                    class="note-block"
+                  >
+                    {pitch.label}
+                  </span>
+                )}
               </div>
             );
           })
@@ -305,8 +323,7 @@ const velocities = [...new Set(bars.map(({ velocity }) => velocity ?? 102))];
   .note-cell {
     display: flex;
     align-items: center;
-    aspect-ratio: 1;
-    height: auto;
+    height: 100%;
     min-width: 0;
     margin: 0 !important;
     border-radius: 2px;

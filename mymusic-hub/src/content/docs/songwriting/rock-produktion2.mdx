@@ -3,6 +3,7 @@ title: "Schritt 3: Produktion (Strophe & Vor-Refrain)"
 ---
 
 import DrumPattern from '../../../components/DrumPattern.astro';
+import BassPattern from '../../../components/BassPattern.astro';
 
 Dieses Dokument beschreibt die MIDI- und VST-Programmierung der ersten 12 Takte (Strophe und Vor-Refrain). Das Ziel ist es, in der DAW gezielt Energie wegzunehmen und langsam wieder aufzubauen, um den Einstieg in das bestehende Refrain-Fundament massiv zu verstärken.
 
@@ -101,6 +102,22 @@ Kick und Snare spielen durchgehende Achtelnoten. Die Velocity steigt über beide
 
   * Takt 15–16: `C1` (16x Achtel)
 
+<BassPattern
+  keyRoot="E"
+  scale="naturalMinor"
+  startBar={9}
+  bars={[
+    { chord: 'Em', note: 'E1', velocity: 88 },
+    { chord: 'Em', note: 'E1', velocity: 88 },
+    { chord: 'C', note: 'C1', velocity: 88 },
+    { chord: 'C', note: 'C1', velocity: 88 },
+    { chord: 'Em', note: 'E1', velocity: 88 },
+    { chord: 'Em', note: 'E1', velocity: 88 },
+    { chord: 'C', note: 'C1', velocity: 88 },
+    { chord: 'C', note: 'C1', velocity: 88 }
+  ]}
+/>
+
 ### Vor-Refrain (Takt 17–20)
 
 * **Anschlagstärke:** Steigt wieder auf das Ausgangsniveau von **102**.
@@ -110,6 +127,18 @@ Kick und Snare spielen durchgehende Achtelnoten. Die Velocity steigt über beide
   * Takt 17–18: `C1` (16x Achtel)
 
   * Takt 19–20: `D1` (16x Achtel)
+
+<BassPattern
+  keyRoot="E"
+  scale="naturalMinor"
+  startBar={17}
+  bars={[
+    { chord: 'C', note: 'C1', velocity: 102 },
+    { chord: 'C', note: 'C1', velocity: 102 },
+    { chord: 'D', note: 'D1', velocity: 102 },
+    { chord: 'D', note: 'D1', velocity: 102 }
+  ]}
+/>
 
 ## 5. Rhythmusgitarre (Spur 1: Shreddage 3 Hydra)
 

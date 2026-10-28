@@ -3,6 +3,7 @@ title: "Schritt 4: Produktion (Strophe 2 & Pre-Chorus 2)"
 ---
 
 import DrumPattern from '../../../components/DrumPattern.astro';
+import BassPattern from '../../../components/BassPattern.astro';
 
 Dieses Dokument beschreibt die MIDI- und VST-Programmierung der Abschnitte nach dem ersten Refrain. Ziel ist es, die musikalische Dichte in Strophe 2 zu erhöhen, um den Songverlauf spannender zu gestalten (Density), bevor er sich wieder in den Refrain entlädt.
 
@@ -82,6 +83,22 @@ Snare und Kick spielen durchgehende Achtel. Die Velocity steigt massiv von 80 au
 * **Rhythmus:** Durchgehende Achtelnoten (`E1` in Takt 29-30 & 33-34, `C1` in Takt 31-32 & 35-36).
 
 * **Anschlagstärke:** Der Bass pumpt aggressiver als in Strophe 1. Die Velocity wird auf knapp **100** angehoben.
+
+<BassPattern
+  keyRoot="E"
+  scale="naturalMinor"
+  startBar={29}
+  bars={[
+    { chord: 'Em', note: 'E1', velocity: 100 },
+    { chord: 'Em', note: 'E1', velocity: 100 },
+    { chord: 'C', note: 'C1', velocity: 100 },
+    { chord: 'C', note: 'C1', velocity: 100 },
+    { chord: 'Em', note: 'E1', velocity: 100 },
+    { chord: 'Em', note: 'E1', velocity: 100 },
+    { chord: 'C', note: 'C1', velocity: 100 },
+    { chord: 'C', note: 'C1', velocity: 100 }
+  ]}
+/>
 
 ## 5. Rhythmusgitarre (Spur 1: Shreddage 3 Hydra)
 
