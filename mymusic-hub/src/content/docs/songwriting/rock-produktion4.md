@@ -1,5 +1,5 @@
 ---
-title: "Schritt 5–7: Produktion (Bridge, Finale & Intro)"
+title: "Schritt 5: Produktion (Bridge, Finale & Intro)"
 ---
 
 Dieses Dokument beschreibt die MIDI- und VST-Programmierung der fehlenden Formteile, um das Arrangement des Rocksongs vollständig abzuschließen. Die Bridge (Schritt 5) erzeugt den finalen Kontrast, der letzte Refrain und das Outro (Schritt 6) bilden den emotionalen Höhepunkt, und das Intro (Schritt 7) rundet den Song ab.
@@ -32,6 +32,7 @@ Alle Blöcke reihen sich nun zu unserem fertigen 68-Takte-Song (ca. 2:05 Minuten
 ## 3. Schlagzeug (Spur 4: EZdrummer 3)
 
 Zur einfacheren Übertragung in Studio One sind hier die exakten Step-Sequencer-Patterns (Raster: 1/8, 8 Steps = 1 Takt) für die jeweiligen Formteile visualisiert.
+
 
 ### Intro & Finaler Refrain (Standard Rock Groove)
 
