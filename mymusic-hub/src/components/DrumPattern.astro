@@ -61,6 +61,9 @@ const visiblePatternData = patternData
   }));
 
 const initialTrack = visiblePatternData[0];
+const stepLabels = Array.from({ length: steps }, (_, index) => (
+  index % 2 === 0 ? `${(Math.floor(index / 2) % 4) + 1}` : "+"
+));
 ---
 
 <div
@@ -70,8 +73,8 @@ const initialTrack = visiblePatternData[0];
 >
   <div class="pattern-header" style={`--steps: ${steps};`}>
     <div class="header-spacer" aria-hidden="true"></div>
-    {Array.from({ length: steps }).map((_, i) => (
-      <div class="step-number">{i + 1}</div>
+    {stepLabels.map((label) => (
+      <div class="step-number">{label}</div>
     ))}
   </div>
   

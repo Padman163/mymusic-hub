@@ -4,6 +4,7 @@ title: "Schritt 5: Produktion (Bridge, Finale & Intro)"
 
 import DrumPattern from '../../../components/DrumPattern.astro';
 import BassPattern from '../../../components/BassPattern.astro';
+import GuitarPattern from '../../../components/GuitarPattern.astro';
 
 Dieses Dokument beschreibt die MIDI- und VST-Programmierung der fehlenden Formteile, um das Arrangement des Rocksongs vollständig abzuschließen. Die Bridge (Schritt 5) erzeugt den finalen Kontrast, der letzte Refrain und das Outro (Schritt 6) bilden den emotionalen Höhepunkt, und das Intro (Schritt 7) rundet den Song ab.
 
@@ -170,13 +171,70 @@ Auf der Eins des allerletzten Taktes setzen Kick und Crash simultan den harten E
 
 * **Spielweise:** Steuernote auf `C-1` (Sustain). Es wird pro Takt nur ein einziger Akkord auf Schlag **1** angeschlagen (Ganze Note). Der verzerrte Akkord klingt den kompletten Takt über aus und erzeugt eine bedrohliche, schwere Atmosphäre.
 
+* Das Visual zeigt Takt 49–52; dieser viertaktige Durchlauf wiederholt sich in Takt 53–56.
+
+<GuitarPattern
+  keyRoot="E"
+  scale="naturalMinor"
+  startBar={49}
+  bars={[
+    { chord: 'C', notes: ['C2', 'G2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'rest', 'rest', 'rest', 'rest', 'rest', 'rest', 'rest'], noteLengthSteps: 8 },
+    { chord: 'D', notes: ['D2', 'A2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'rest', 'rest', 'rest', 'rest', 'rest', 'rest', 'rest'], noteLengthSteps: 8 },
+    { chord: 'Em', notes: ['E2', 'B2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'rest', 'rest', 'rest', 'rest', 'rest', 'rest', 'rest'], noteLengthSteps: 8 },
+    { chord: 'Em', notes: ['E2', 'B2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'rest', 'rest', 'rest', 'rest', 'rest', 'rest', 'rest'], noteLengthSteps: 8 }
+  ]}
+/>
+
 ### Finaler Refrain & Outro (Takt 57–68)
 
 * Kopie der bestehenden Refrain-Blöcke (durchgehende Achtel, Down-Picking). Im Outro ist der letzte Akkord vor dem Ende ein `D5` (in Takt 67), bevor Takt 68 als Ganze Note auf `E5` stehen gelassen wird und ausklingt.
 
+#### Finaler Refrain (Takt 57–64)
+
+* Das Visual zeigt den viertaktigen Durchlauf `Em - C - G - D`; er wiederholt sich in Takt 61–64.
+
+<GuitarPattern
+  keyRoot="E"
+  scale="naturalMinor"
+  startBar={57}
+  bars={[
+    { chord: 'Em', notes: ['E2', 'B2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'C', notes: ['C2', 'G2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'G', notes: ['G2', 'D3'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'D', notes: ['D2', 'A2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] }
+  ]}
+/>
+
+#### Outro (Takt 65–68)
+
+<GuitarPattern
+  keyRoot="E"
+  scale="naturalMinor"
+  startBar={65}
+  bars={[
+    { chord: 'Em', notes: ['E2', 'B2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'C', notes: ['C2', 'G2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'D', notes: ['D2', 'A2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'Em', notes: ['E2', 'B2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'rest', 'rest', 'rest', 'rest', 'rest', 'rest', 'rest'], noteLengthSteps: 8 }
+  ]}
+/>
+
 ### Intro (Takt 1–8)
 
 * Volle Powerchords wie im Refrain, treibt den Track vom Start weg an.
+* Das Visual zeigt einen viertaktigen Durchlauf; er wiederholt sich in Takt 5–8.
+
+<GuitarPattern
+  keyRoot="E"
+  scale="naturalMinor"
+  startBar={1}
+  bars={[
+    { chord: 'Em', notes: ['E2', 'B2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'C', notes: ['C2', 'G2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'G', notes: ['G2', 'D3'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'D', notes: ['D2', 'A2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] }
+  ]}
+/>
 
 ## 6. Leadgitarre (Spur 2: Shreddage 3 Hydra)
 

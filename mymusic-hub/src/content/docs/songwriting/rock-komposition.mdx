@@ -4,6 +4,7 @@ title: "Rocksong – Schritt 0: Komposition"
 
 import DrumPattern from '../../../components/DrumPattern.astro';
 import BassPattern from '../../../components/BassPattern.astro';
+import GuitarPattern from '../../../components/GuitarPattern.astro';
 
 Dieses Dokument überträgt den theoretischen Leitfaden direkt auf das konkrete Fundament unseres Rocksongs. Alle Spuren sind strikt auf dem Schlag verankert (keine Synkopen, keine Auftakte), um ein stabiles Grundgerüst zu schaffen.
 
@@ -169,6 +170,17 @@ Dieses Dokument überträgt den theoretischen Leitfaden direkt auf das konkrete 
   * Takt 2: 8x **C5**-Powerchord ($C2 + G2$)
   * Takt 3: 8x **G5**-Powerchord ($G2 + D3$)
   * Takt 4: 8x **D5**-Powerchord ($D2 + A2$)
+
+<GuitarPattern
+  keyRoot="E"
+  scale="naturalMinor"
+  bars={[
+    { chord: 'Em', notes: ['E2', 'B2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'C', notes: ['C2', 'G2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'G', notes: ['G2', 'D3'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'D', notes: ['D2', 'A2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] }
+  ]}
+/>
 
 ### 5.4 Leadgitarre
 * **Klang:** Breiter Crunch / singender, anhaltender Leadton mit klaren Mitten.

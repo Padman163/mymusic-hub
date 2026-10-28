@@ -3,6 +3,7 @@ title: "Schritt 2: Songstruktur"
 ---
 
 import DrumPattern from '../../../components/DrumPattern.astro';
+import GuitarPattern from '../../../components/GuitarPattern.astro';
 
 Dieses Dokument erweitert das etablierte Refrain-Fundament (Schritt 0 und 1) zu einem vollständigen, standardisierten Rock-Arrangement. Gemäß der Vorgabe wird die harmonische und rhythmische Komplexität nicht erhöht. Die Spannung wird ausschließlich durch strukturellen Kontrast (Weglassen und Hinzufügen von Energie) erzeugt.
 
@@ -132,6 +133,86 @@ Die Bridge reduziert den Groove auf Kick, Snare und Crash auf der Eins. Das Outr
     { name: 'Kick - Hit', note: 'C1', color: '#f87171', activeSteps: [0] },
     { name: 'Snare - Center', note: 'D1', color: '#fbbf24', activeSteps: [0] },
     { name: 'Crash 1 - Crash', note: 'D5', color: '#0ea5e9', activeSteps: [0] }
+  ]}
+/>
+
+### 2.8 Rhythmusgitarren-Patterns der Songabschnitte
+
+Die Patterns zeigen jeweils einen Durchlauf. Wiederholungen in Intro, Strophe, Refrain und Bridge werden nicht erneut visualisiert.
+
+#### Intro und Refrain
+
+Offene Powerchords mit durchgehenden Achtel-Abschlägen.
+
+<GuitarPattern
+  keyRoot="E"
+  scale="naturalMinor"
+  bars={[
+    { chord: 'Em', notes: ['E2', 'B2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'C', notes: ['C2', 'G2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'G', notes: ['G2', 'D3'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'D', notes: ['D2', 'A2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] }
+  ]}
+/>
+
+#### Strophe
+
+Zurückhaltende Palm-Mute-Achtel auf `Em - Em - C - C`.
+
+<GuitarPattern
+  keyRoot="E"
+  scale="naturalMinor"
+  bars={[
+    { chord: 'Em', notes: ['E2', 'B2'], articulations: ['PM', 'PM', 'PM', 'PM', 'PM', 'PM', 'PM', 'PM'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'Em', notes: ['E2', 'B2'], articulations: ['PM', 'PM', 'PM', 'PM', 'PM', 'PM', 'PM', 'PM'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'C', notes: ['C2', 'G2'], articulations: ['PM', 'PM', 'PM', 'PM', 'PM', 'PM', 'PM', 'PM'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'C', notes: ['C2', 'G2'], articulations: ['PM', 'PM', 'PM', 'PM', 'PM', 'PM', 'PM', 'PM'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] }
+  ]}
+/>
+
+#### Vor-Refrain
+
+Offene Achtel-Abschläge auf `C - C - D - D`.
+
+<GuitarPattern
+  keyRoot="E"
+  scale="naturalMinor"
+  bars={[
+    { chord: 'C', notes: ['C2', 'G2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'C', notes: ['C2', 'G2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'D', notes: ['D2', 'A2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'D', notes: ['D2', 'A2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] }
+  ]}
+/>
+
+#### Bridge
+
+Halteakkorde `C - D - Em - Em`, jeweils auf Schlag 1 angeschlagen und über den Takt gehalten.
+
+<GuitarPattern
+  keyRoot="E"
+  scale="naturalMinor"
+  startBar={49}
+  bars={[
+    { chord: 'C', notes: ['C2', 'G2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'rest', 'rest', 'rest', 'rest', 'rest', 'rest', 'rest'], noteLengthSteps: 8 },
+    { chord: 'D', notes: ['D2', 'A2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'rest', 'rest', 'rest', 'rest', 'rest', 'rest', 'rest'], noteLengthSteps: 8 },
+    { chord: 'Em', notes: ['E2', 'B2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'rest', 'rest', 'rest', 'rest', 'rest', 'rest', 'rest'], noteLengthSteps: 8 },
+    { chord: 'Em', notes: ['E2', 'B2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'rest', 'rest', 'rest', 'rest', 'rest', 'rest', 'rest'], noteLengthSteps: 8 }
+  ]}
+/>
+
+#### Outro
+
+`Em - C - D - Em`; die drei ersten Takte spielen Achtel, der Schlussakkord wird gehalten.
+
+<GuitarPattern
+  keyRoot="E"
+  scale="naturalMinor"
+  bars={[
+    { chord: 'Em', notes: ['E2', 'B2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'C', notes: ['C2', 'G2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'D', notes: ['D2', 'A2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'Em', notes: ['E2', 'B2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'rest', 'rest', 'rest', 'rest', 'rest', 'rest', 'rest'], noteLengthSteps: 8 }
   ]}
 />
 

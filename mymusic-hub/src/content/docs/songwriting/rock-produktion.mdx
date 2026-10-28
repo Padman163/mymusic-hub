@@ -4,6 +4,7 @@ title: "Rocksong – Schritt 1: Produktion (Refrain)"
 
 import DrumPattern from '../../../components/DrumPattern.astro';
 import BassPattern from '../../../components/BassPattern.astro';
+import GuitarPattern from '../../../components/GuitarPattern.astro';
 
 Dieses Dokument beschreibt die vollständige Einrichtung und MIDI-/VST-Programmierung des Grundarrangements in Fender Studio Pro.
 
@@ -136,6 +137,17 @@ Dieses Dokument beschreibt die vollständige Einrichtung und MIDI-/VST-Programmi
   * **Anschlagstärke 127:** *Pinch Harmonics*
 * **Projekt-Anschlagstärke:** Einheitlich auf **102** festgelegt (oberer Sustain-Bereich mit maximalem Druck, ohne Nebengeräusche auszulösen)
 * **Anschlagart:** Unterhalb der Notenmatrix ist über die gesamte Länge `42 - Picking Mode: Down` gesetzt. Dadurch werden ausschließlich Abschläge für den typischen kompakten Rock-/Punk-Klang verwendet.
+
+<GuitarPattern
+  keyRoot="E"
+  scale="naturalMinor"
+  bars={[
+    { chord: 'Em', notes: ['E2', 'B2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'C', notes: ['C2', 'G2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'G', notes: ['G2', 'D3'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'D', notes: ['D2', 'A2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] }
+  ]}
+/>
 
 ![Spielweisenmatrix für Kontakt 8 Shreddage 3](../../../img/07_shreddage_articulation_matrix.png)
 ![Studio-Pro-MIDI-Spur der Rhythmusgitarre mit C-1-Sustain und Abschlägen](../../../img/08_rhythm_guitar_downstroke_sustain.png)

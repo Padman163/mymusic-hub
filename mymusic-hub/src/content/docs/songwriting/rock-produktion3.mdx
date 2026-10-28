@@ -4,6 +4,7 @@ title: "Schritt 4: Produktion (Strophe 2 & Pre-Chorus 2)"
 
 import DrumPattern from '../../../components/DrumPattern.astro';
 import BassPattern from '../../../components/BassPattern.astro';
+import GuitarPattern from '../../../components/GuitarPattern.astro';
 
 Dieses Dokument beschreibt die MIDI- und VST-Programmierung der Abschnitte nach dem ersten Refrain. Ziel ist es, die musikalische Dichte in Strophe 2 zu erhöhen, um den Songverlauf spannender zu gestalten (Density), bevor er sich wieder in den Refrain entlädt.
 
@@ -109,6 +110,36 @@ Snare und Kick spielen durchgehende Achtel. Die Velocity steigt massiv von 80 au
 * Danach wechselt die Steuernote sofort wieder auf `C#-1` (Palm Muting) für die restlichen Achtel des Taktes.
 
 * **Akkorde:** `E5` (Takt 29-30, 33-34) und `C5` (Takt 31-32, 35-36).
+
+* Das Visual zeigt Takt 29–32; diese vier Takte wiederholen sich in Takt 33–36.
+
+<GuitarPattern
+  keyRoot="E"
+  scale="naturalMinor"
+  startBar={29}
+  bars={[
+    { chord: 'Em', notes: ['E2', 'B2'], articulations: ['Sustain', 'PM', 'PM', 'PM', 'PM', 'PM', 'PM', 'PM'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'Em', notes: ['E2', 'B2'], articulations: ['Sustain', 'PM', 'PM', 'PM', 'PM', 'PM', 'PM', 'PM'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'C', notes: ['C2', 'G2'], articulations: ['Sustain', 'PM', 'PM', 'PM', 'PM', 'PM', 'PM', 'PM'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'C', notes: ['C2', 'G2'], articulations: ['Sustain', 'PM', 'PM', 'PM', 'PM', 'PM', 'PM', 'PM'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] }
+  ]}
+/>
+
+### Vor-Refrain 2 (Takt 37–40)
+
+* Das Gitarrenpattern übernimmt den offenen Vor-Refrain aus Schritt 3: `C5 - C5 - D5 - D5`, durchgehende Achtel-Abschläge mit Sustain.
+
+<GuitarPattern
+  keyRoot="E"
+  scale="naturalMinor"
+  startBar={37}
+  bars={[
+    { chord: 'C', notes: ['C2', 'G2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'C', notes: ['C2', 'G2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'D', notes: ['D2', 'A2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'D', notes: ['D2', 'A2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] }
+  ]}
+/>
 
 ## 6. Leadgitarre (Spur 2: Shreddage 3 Hydra)
 
