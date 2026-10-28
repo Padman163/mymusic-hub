@@ -2,6 +2,8 @@
 title: "Schritt 3: Produktion (Strophe & Vor-Refrain)"
 ---
 
+import DrumPattern from '../../../components/DrumPattern.astro';
+
 Dieses Dokument beschreibt die MIDI- und VST-Programmierung der ersten 12 Takte (Strophe und Vor-Refrain). Das Ziel ist es, in der DAW gezielt Energie wegzunehmen und langsam wieder aufzubauen, um den Einstieg in das bestehende Refrain-Fundament massiv zu verstärken.
 
 ## 1. Arrangement-Struktur und Zeitachse
@@ -41,17 +43,45 @@ Da wir nach der „Hook-First“-Methode arbeiten und unser Refrain aus Schritt 
 
 * **Ergebnis:** Der Rhythmus bleibt stabil, wirkt aber deutlich zurückhaltender und lässt Raum für den Gesang.
 
-### Vor-Refrain (Takt 9–12)
+<DrumPattern
+  interactive={false}
+  showVelocity={true}
+  patternData={[
+    { name: 'Kick - Hit', note: 'C1', color: '#f87171', activeSteps: [0, 4], velocities: [90, 0, 0, 0, 90, 0, 0, 0] },
+    { name: 'Snare - Center', note: 'D1', color: '#fbbf24', activeSteps: [2, 6], velocities: [0, 0, 75, 0, 0, 0, 75, 0] },
+    { name: 'Hi-Hat - Closed Tip', note: 'A#-1', color: '#4ade80', activeSteps: [0, 1, 2, 3, 4, 5, 6, 7], velocities: [75, 75, 75, 75, 75, 75, 75, 75] }
+  ]}
+/>
 
-* **Takt 17 und 18:** Identisch zur Strophe.
+### Vor-Refrain (Takt 17–20)
 
-* **Takt 19 und 20 (Der Build-Up):**
+#### Takt 17–18
 
-  * Kick und Snare spielen durchgehende Achtelnoten (jeweils 8 Schläge pro Takt).
+Identisch zur Strophe. Das Pattern wird über beide Takte wiederholt.
 
-  * *Dynamik-Anstieg:* Die Anschlagstärke dieser Achtelnoten steigt von Takt 19 bis Ende Takt 20 linear an (z. B. von 70 auf 127), um den Song kraftvoll in den Refrain (Takt 21) zu schieben.
+<DrumPattern
+  interactive={false}
+  showVelocity={true}
+  patternData={[
+    { name: 'Kick - Hit', note: 'C1', color: '#f87171', activeSteps: [0, 4], velocities: [90, 0, 0, 0, 90, 0, 0, 0] },
+    { name: 'Snare - Center', note: 'D1', color: '#fbbf24', activeSteps: [2, 6], velocities: [0, 0, 75, 0, 0, 0, 75, 0] },
+    { name: 'Hi-Hat - Closed Tip', note: 'A#-1', color: '#4ade80', activeSteps: [0, 1, 2, 3, 4, 5, 6, 7], velocities: [75, 75, 75, 75, 75, 75, 75, 75] }
+  ]}
+/>
 
-  ![Drums Build-Up zum Refrain](../../../img/14_drums_built-up.png)
+#### Takt 19–20: Build-up
+
+Kick und Snare spielen durchgehende Achtelnoten. Die Velocity steigt über beide Takte linear von 70 auf 127 an, um den Song kraftvoll in den Refrain (Takt 21) zu schieben.
+
+<DrumPattern
+  steps={16}
+  interactive={false}
+  showVelocity={true}
+  patternData={[
+    { name: 'Kick - Hit', note: 'C1', color: '#f87171', activeSteps: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], velocities: [70, 74, 78, 82, 86, 90, 94, 98, 102, 106, 110, 114, 118, 121, 124, 127] },
+    { name: 'Snare - Center', note: 'D1', color: '#fbbf24', activeSteps: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], velocities: [70, 74, 78, 82, 86, 90, 94, 98, 102, 106, 110, 114, 118, 121, 124, 127] }
+  ]}
+/>
 
 ## 4. Bass (Spur 3: EZbass)
 

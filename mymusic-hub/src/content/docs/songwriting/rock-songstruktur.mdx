@@ -2,6 +2,8 @@
 title: "Schritt 2: Songstruktur"
 ---
 
+import DrumPattern from '../../../components/DrumPattern.astro';
+
 Dieses Dokument erweitert das etablierte Refrain-Fundament (Schritt 0 und 1) zu einem vollständigen, standardisierten Rock-Arrangement. Gemäß der Vorgabe wird die harmonische und rhythmische Komplexität nicht erhöht. Die Spannung wird ausschließlich durch strukturellen Kontrast (Weglassen und Hinzufügen von Energie) erzeugt.
 
 ---
@@ -74,6 +76,64 @@ Die Bridge bringt den musikalischen Kontrast. Sie durchbricht die Erwartung des 
 * **Arrangement:** Ein letztes Aufbäumen, das auf dem Grundakkord $Em$ (Takt 4) stehen bleibt und ausklingt.
 
 ---
+
+### 2.7 Drum-Patterns der Songabschnitte
+
+Die folgenden 8-Step-Patterns übertragen die beschriebenen Grooves auf einen Takt im 4/4-Metrum. Sie zeigen die rhythmische Belegung; konkrete Velocity-Werte sind in diesem Schritt nicht festgelegt.
+
+#### Intro und Strophe
+
+Der Grundgroove aus Schritt 0 eröffnet das Stück. In der Strophe bleibt der Beat stabil und zurückhaltend.
+
+<DrumPattern
+  interactive={false}
+  patternData={[
+    { name: 'Kick - Hit', note: 'C1', color: '#f87171', activeSteps: [0, 4] },
+    { name: 'Snare - Center', note: 'D1', color: '#fbbf24', activeSteps: [2, 6] },
+    { name: 'Hi-Hat - Closed Tip', note: 'A#-1', color: '#4ade80', activeSteps: [0, 1, 2, 3, 4, 5, 6, 7] }
+  ]}
+/>
+
+#### Vor-Refrain
+
+Kick und Snare halten den Grundpuls. In der zweiten Takthälfte öffnet sich die Hi-Hat als Spannungsaufbau für Takt 3 und 4.
+
+<DrumPattern
+  interactive={false}
+  patternData={[
+    { name: 'Kick - Hit', note: 'C1', color: '#f87171', activeSteps: [0, 4] },
+    { name: 'Snare - Center', note: 'D1', color: '#fbbf24', activeSteps: [2, 6] },
+    { name: 'Hi-Hat - Closed Tip', note: 'A#-1', color: '#4ade80', activeSteps: [0, 1, 2, 3] },
+    { name: 'Hi-Hat - Open Edge', note: 'E3', color: '#22c55e', activeSteps: [4, 5, 6, 7] }
+  ]}
+/>
+
+#### Refrain
+
+Der Refrain übernimmt das volle Fundament aus Schritt 1 und markiert den ersten Schlag mit einem Crash.
+
+<DrumPattern
+  interactive={false}
+  patternData={[
+    { name: 'Kick - Hit', note: 'C1', color: '#f87171', activeSteps: [0, 4] },
+    { name: 'Snare - Center', note: 'D1', color: '#fbbf24', activeSteps: [2, 6] },
+    { name: 'Crash 1 - Crash', note: 'D5', color: '#0ea5e9', activeSteps: [0] },
+    { name: 'Hi-Hat / Ride', note: 'A#-1', color: '#4ade80', activeSteps: [0, 1, 2, 3, 4, 5, 6, 7] }
+  ]}
+/>
+
+#### Bridge und Outro
+
+Die Bridge reduziert den Groove auf Kick, Snare und Crash auf der Eins. Das Outro endet mit einem gemeinsamen Kick- und Crash-Schlag.
+
+<DrumPattern
+  interactive={false}
+  patternData={[
+    { name: 'Kick - Hit', note: 'C1', color: '#f87171', activeSteps: [0] },
+    { name: 'Snare - Center', note: 'D1', color: '#fbbf24', activeSteps: [0] },
+    { name: 'Crash 1 - Crash', note: 'D5', color: '#0ea5e9', activeSteps: [0] }
+  ]}
+/>
 
 ## 3. Dynamikkurve (Energie-Architektur)
 
