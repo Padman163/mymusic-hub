@@ -49,7 +49,7 @@ Da wir nach der „Hook-First“-Methode arbeiten und unser Refrain aus Schritt 
 
   * Kick und Snare spielen durchgehende Achtelnoten (jeweils 8 Schläge pro Takt).
 
-  * *Dynamik-Anstieg:* Die Anschlagstärke dieser Achtelnoten steigt von Takt 19 bis Ende Takt 20 linear an (z. B. von 70 auf 110), um den Song kraftvoll in den Refrain (Takt 21) zu schieben.
+  * *Dynamik-Anstieg:* Die Anschlagstärke dieser Achtelnoten steigt von Takt 19 bis Ende Takt 20 linear an (z. B. von 70 auf 127), um den Song kraftvoll in den Refrain (Takt 21) zu schieben.
 
   ![Drums Build-Up zum Refrain](../../../img/14_drums_built-up.png)
 
@@ -109,7 +109,7 @@ In der Strophe fungiert der Gesang als Geschichtenerzähler. Die Melodie liegt t
 
 ### Text (Multi-Lyric Input)
 ```text
-Look- ing in the mir- ror wait- ing for a sign Sha- dows a- round us all run- ning out of time Hear the voi- ces call ing leave it all be- hind We start the fi- re to-night turn- ing the dark in- to light
+Look- ing in the mir- ror wait- ing for a sign Sha- dows a- round us all run- ning out of time Hear the voices call ing leave it all be- hind We start the fi- re to-night turn- ing the dark in- to light
 ```
 *(Anmerkung: "We start the fire..." ist der nahtlose Übergang in den Refrain ab Takt 21).*
 

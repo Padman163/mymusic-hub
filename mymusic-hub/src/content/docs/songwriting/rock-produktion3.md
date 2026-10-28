@@ -1,0 +1,143 @@
+---
+title: "Schritt 4: Produktion (Strophe 2 & Pre-Chorus 2)"
+---
+
+Dieses Dokument beschreibt die MIDI- und VST-Programmierung der Abschnitte nach dem ersten Refrain. Ziel ist es, die musikalische Dichte in Strophe 2 zu erhöhen, um den Songverlauf spannender zu gestalten (Density), bevor er sich wieder in den Refrain entlädt.
+
+## 1. Arrangement-Struktur und Zeitachse
+
+Nach dem ersten Refrain (Takt 21–28) folgen die zweite Strophe und der zweite Vor-Refrain. Die Dichte der Ereignisse wird hier angehoben, ohne das harmonische Fundament zu verändern.
+
+| Songabschnitt | Takte | Harmonien (Akkorde) | Dynamik-Stufe | 
+| ----- | ----- | ----- | ----- | 
+| **Strophe 2** | 8 Takte | `Em - Em - C - C` (2x) | 🟦🟦 Dichter als Strophe 1 | 
+| **Vor-Refrain 2** | 4 Takte | `C - C - D - D` (1x) | 🟦🟦🟦 Mittel (Steigend) | 
+| *(Refrain 2)* | *8 Takte* | `Em - C - G - D` *(aus Schritt 1)* | 🟦🟦🟦🟦 Hoch (Explosion) | 
+
+## 2. DAW-Zeitachse (Fortsetzung)
+
+Die Blöcke reihen sich nahtlos an den ersten Refrain an:
+
+* **Takt 29 bis 36:** Strophe 2
+
+* **Takt 37 bis 40:** Vor-Refrain 2
+
+* **Takt 41 bis 48:** Refrain 2
+
+## 3. Schlagzeug (Spur 4: EZdrummer 3)
+
+### Strophe 2 (Takt 29–36)
+
+* **Grundrhythmus:** Identisch zu Strophe 1 (Kick auf 1 und 3, Snare auf 2 und 4).
+
+* **Dichte (Density):** Um die Strophe treibender zu machen, wechselt die Hi-Hat von "Closed Tip" auf **"Half-Open"**.
+
+* **Anschlagstärke:** Die Velocity von Snare und Hi-Hat wird leicht angehoben (auf ca. **80-85**), um mehr Aggressivität als in Strophe 1 zu erzeugen.
+
+### Vor-Refrain 2 (Takt 37–40)
+
+* Takt 37 & 38 laufen wie die Strophe weiter.
+
+* **Takt 39 & 40:** Erneuter Build-Up (Snare und Kick auf durchgehende Achtel), Velocity steigt massiv von 80 auf 127 an, um in den zweiten Refrain zu pushen.
+
+## 4. Bass (Spur 3: EZbass)
+
+### Strophe 2 (Takt 29–36)
+
+* **Rhythmus:** Durchgehende Achtelnoten (`E1` in Takt 29-30 & 33-34, `C1` in Takt 31-32 & 35-36).
+
+* **Anschlagstärke:** Der Bass pumpt aggressiver als in Strophe 1. Die Velocity wird auf knapp **100** angehoben.
+
+## 5. Rhythmusgitarre (Spur 1: Shreddage 3 Hydra)
+
+### Strophe 2 (Takt 29–36)
+
+* **Akzent-Muting:** Wir mischen hier die Artikulationen, um einen harten Akzent auf den Taktanfang zu setzen.
+
+* Auf der **Zählzeit "1"** jedes Taktes steht die Steuernote auf `C-1` (voller Sustain-Akkord).
+
+* Danach wechselt die Steuernote sofort wieder auf `C#-1` (Palm Muting) für die restlichen Achtel des Taktes.
+
+* **Akkorde:** `E5` (Takt 29-30, 33-34) und `C5` (Takt 31-32, 35-36).
+
+## 6. Leadgitarre (Spur 2: Shreddage 3 Hydra)
+
+Die Leadgitarre bleibt auch in Strophe 2 und Vor-Refrain 2 stumm, um der dichteren Gesangsmelodie nicht im Weg zu stehen. Ihr Einsatz erfolgt erst wieder in Refrain 2 (Takt 41).
+
+## 7. Gesang (Spur 5: Synthesizer V – Liam AI)
+
+Der Textfluss in Strophe 2 ist deutlich dichter und synkopierter als in der ersten Strophe. Es wird gezielt mit Off-Beats (Zählzeiten "+") gearbeitet, um den Groove nach vorne zu treiben.
+
+### Text (Multi-Lyric Input für die DAW)
+
+```
+Ash- es fall- ing down a- round us no- thing left to lose e- ver y broken chain will guide us light- ing the truth
+```
+
+### Rhythmik und Notenmatrix (Strophe 2: Takt 29 bis 32)
+
+*Die Akkordfolge (Em, Em, C, C) wiederholt sich in Takt 33-36. Diese Matrix bildet die erste Hälfte der Strophe (Takt 29-32) exakt ab.*
+
+| Takt | Zählzeit | Tonhöhe | Textsilbe | Notenwert / Rhythmus-Notiz | 
+| ----- | ----- | ----- | ----- | ----- | 
+| **29** | **1** | **E3** | `Ash-` | Achtelnote | 
+| **29** | **1+** | **E3** | `es` | Achtelnote | 
+| **29** | **2** | **G3** | `fall-` | Achtelnote | 
+| **29** | **2+** | **A3** | `ing` | Achtelnote | 
+| **29** | **3** | **B3** | `down` | Achtelnote | 
+| **29** | **3+** | **B3** | `a-` | Achtelnote  | 
+| **29** | **4** | **B3** | `round` | Achtelnote | 
+| **30** | **1** | **G3** | `us` | Achtelnote | 
+| **30** | **2** | **G3** | `no-` | Achtelnote | 
+| **30** | **2+** | **G3** | `thing` | Achtelnote  | 
+| **30** | **3** | **G3** | `left` | Achtelnote | 
+| **30** | **3+** | **G3** | `to` | Achtelnote  | 
+| **31** | **1** | **G3** | `lose` | Viertelnote (Klingt aus) | 
+| **31** | **3** | **E3** | `e-` | Achtelnote | 
+| **31** | **3+** | **E3** | `ver` | Achtelnote  | 
+| **31** | **4** | **G3** | `y` | Achtelnote | 
+| **31** | **4+** | **A3** | `broken` | Viertelnote  | 
+| **32** | **1** | **B3** | `chain` | Achtelnote | 
+| **32** | **1+** | **B3** | `will` | Achtelnote  | 
+| **32** | **2** | **G3** | `guide` | Viertelnote | 
+| **32** | **2+** | **G3** | `us` | Achtelnote  | 
+| **32** | **3** | **G3** | `light-` | Achtelnote | 
+| **32** | **3+** | **G3** | `ing` | Achtelnote  | 
+| **32** | **4** | **G3** | `the` | Achtelnote | 
+| **32** | **4+** | **G3** | `truth` | Viertelnote 
+
+### Rhythmik und Notenmatrix (Strophe 2: Teil 2 – Takt 33 bis 36)
+
+*Diese Matrix ergänzt die zweite Hälfte von Strophe 2 und führt nahtlos in den zweiten Vor-Refrain (Pre-Chorus).*
+
+**Text (Multi-Lyric Input):**
+```text
+Ech- oes call- ing from the sha- dows fad- ing in the night we are break- ing out of dark- ness and come a- live
+```
+
+| Takt | Zählzeit | Tonhöhe | Textsilbe | Notenwert / Rhythmus-Notiz | 
+| :--- | :--- | :--- | :--- | :--- | 
+| **33** | **1** | **E3** | `Ech-` | Achtelnote | 
+| **33** | **1+** | **E3** | `oes` | Achtelnote | 
+| **33** | **2** | **G3** | `call-` | Achtelnote | 
+| **33** | **2+** | **A3** | `ing` | Achtelnote  | 
+| **33** | **3** | **B3** | `from` | Achtelnote | 
+| **33** | **3+** | **B3** | `the` | Achtelnote  | 
+| **33** | **4** | **B3** | `sha-` | Achtelnote | 
+| **33** | **4+** | **B3** | `dows` | Achtelnote | 
+| **34** | **2** | **G3** | `fad-` | Achtelnote | 
+| **34** | **2+** | **G3** | `ing` | Achtelnote  | 
+| **34** | **3** | **G3** | `in` | Achtelnote | 
+| **34** | **3+** | **G3** | `the` | Achtelnote | 
+| **34** | **4** | **G3** | `night` | Viertelnote (Klingt aus) | 
+| **35** | **2** | **E3** | `we` | Viertelnote (Achtung: Variation) | 
+| **35** | **3** | **E3** | `are` | Viertelnote | 
+| **35** | **4+** | **A3** | `break-` | Achtelnote | 
+| **36** | **1** | **B3** | `ing` | Achtelnote | 
+| **36** | **1+** | **B3** | `out` | Achtelnote | 
+| **36** | **2** | **B3** | `of` | Achtelnote | 
+| **36** | **3** | **G3** | `dark-` | Viertelnote | 
+| **36** | **3+** | **G3** | `ness` | Achtelnote | 
+| **36** | **4** | **G3** | `and` | Achtelnote | 
+| **36** | **4+** | **G3** | `come` | Achtelnote | 
+| **37** | **1** | **G3** | `a-live` | Viertelnote | 

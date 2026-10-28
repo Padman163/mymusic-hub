@@ -58,7 +58,14 @@ export default defineConfig({
 																				{
 											label: 'Schritt 3: Produktion (Strophe & Vor-Refrain)',
 											slug: 'songwriting/rock-produktion2',
+											
 										},
+																														{
+											label: 'Schritt 4: Produktion (Strophe 2 & Vor-Refrain 2)',
+											slug: 'songwriting/rock-produktion3',
+											
+										},
+										
 									],
 								},
 							],
