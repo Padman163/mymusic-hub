@@ -1,0 +1,168 @@
+---
+title: "Schritt 5–7: Produktion (Bridge, Finale & Intro)"
+---
+
+Dieses Dokument beschreibt die MIDI- und VST-Programmierung der fehlenden Formteile, um das Arrangement des Rocksongs vollständig abzuschließen. Die Bridge (Schritt 5) erzeugt den finalen Kontrast, der letzte Refrain und das Outro (Schritt 6) bilden den emotionalen Höhepunkt, und das Intro (Schritt 7) rundet den Song ab.
+
+## 1. Arrangement-Struktur und Zeitachse
+
+Mit diesen letzten Schritten wird die klassische Pop/Rock-Architektur vollendet. Die Bridge drosselt das Rhythmusgefühl (Halftime) und wechselt den Startakkord (C-Dur), um den Hörer auf den letzten, explosiven Refrain vorzubereiten.
+
+| Songabschnitt | Takte | Harmonien (Akkorde) | Dynamik-Stufe | 
+| ----- | ----- | ----- | ----- | 
+| **Bridge (C-Teil)** | 8 Takte | `C - D - Em - Em` (2x) | 🟦🟦 Schwer, Halftime-Rhythmus | 
+| **Finaler Refrain** | 8 Takte | `Em - C - G - D` (2x) | 🟦🟦🟦🟦 Hoch (Explosion) | 
+| **Outro** | 4 Takte | `Em - C - D - Em` (1x) | 🟦🟦 Ausklingend auf Tonika | 
+| **Intro** | 8 Takte | `Em - C - G - D` (2x) | 🟦🟦🟦 Instrumentaler Start | 
+
+## 2. DAW-Zeitachse (Die fertige Gesamtübersicht)
+
+Alle Blöcke reihen sich nun zu unserem fertigen 68-Takte-Song (ca. 2:05 Minuten) aneinander:
+
+* **Takt 1 bis 8:** Intro *(Instrumental)*
+
+* *(Takt 9 bis 48: Strophen, Vor-Refrains und Refrains 1 & 2)*
+
+* **Takt 49 bis 56:** Bridge (C-Teil)
+
+* **Takt 57 bis 64:** Finaler Refrain
+
+* **Takt 65 bis 68:** Outro
+
+## 3. Schlagzeug (Spur 4: EZdrummer 3)
+
+Zur einfacheren Übertragung in Studio One sind hier die exakten Step-Sequencer-Patterns (Raster: 1/8, 8 Steps = 1 Takt) für die jeweiligen Formteile visualisiert.
+
+### Intro & Finaler Refrain (Standard Rock Groove)
+
+Treibt den Song vom Start weg und im Finale an. Die Bassdrum liegt auf 1 und 3, die Snare auf 2 und 4. Im Refrain kann für mehr Breite auf ein Ride-Becken gewechselt werden.
+
+| Instrument / Zeile | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 
+| ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- | 
+| 🟥 **Kick - Hit** | 🟥 | ⬛ | ⬛ | ⬛ | 🟥 | ⬛ | ⬛ | ⬛ | 
+| 🟧 **Snare - Center** | ⬛ | ⬛ | 🟧 | ⬛ | ⬛ | ⬛ | 🟧 | ⬛ | 
+| 🟩 **Hi-Hat / Ride** | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 
+
+### Bridge (Takt 49–54) - Halftime Groove
+
+Der treibende Beat wird halbiert. Die Bassdrum spielt stark auf Zählzeit **1**. Die Snare schlägt erst auf die **3** (Step 5). Ein Crash markiert den Taktanfang.
+
+| Instrument / Zeile | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 
+| ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- | 
+| 🟥 **Kick - Hit** | 🟥 | ⬛ | ⬛ | ⬛ | ⬛ | ⬛ | ⬛ | ⬛ | 
+| 🟧 **Snare - Center** | ⬛ | ⬛ | ⬛ | ⬛ | 🟧 | ⬛ | ⬛ | ⬛ | 
+| 🟦 **Crash 1 - Crash** | 🟦 | ⬛ | ⬛ | ⬛ | ⬛ | ⬛ | ⬛ | ⬛ | 
+| 🟩 **Hi-Hat - Open Edge** | 🟩 | ⬛ | 🟩 | ⬛ | 🟩 | ⬛ | 🟩 | ⬛ | 
+
+### Bridge (Takt 55–56) - Der Build-Up Wirbel
+
+Dieses Pattern wird für die letzten zwei Takte der Bridge wiederholt. Kick spielt Viertel, Snare und Floortom schlagen durchgehend Achtel.
+**WICHTIG:** In der Automation muss die Anschlagstärke (Velocity) von Snare und Tom über diese zwei Takte stufenweise von ca. 40 auf 127 ansteigen!
+
+| Instrument / Zeile | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 
+| ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- | 
+| 🟥 **Kick - Hit** | 🟥 | ⬛ | 🟥 | ⬛ | 🟥 | ⬛ | 🟥 | ⬛ | 
+| 🟧 **Snare - Center** | 🟧 | 🟧 | 🟧 | 🟧 | 🟧 | 🟧 | 🟧 | 🟧 | 
+| 🟨 **Floortom 2 - Center** | 🟨 | 🟨 | 🟨 | 🟨 | 🟨 | 🟨 | 🟨 | 🟨 | 
+
+### Outro (Takt 68) - Der finale Schluss-Schlag
+
+Auf der Eins des allerletzten Taktes setzen Kick und Crash simultan den harten Endpunkt. Danach absolute Stille.
+
+| Instrument / Zeile | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 
+| ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- | 
+| 🟥 **Kick - Hit** | 🟥 | ⬛ | ⬛ | ⬛ | ⬛ | ⬛ | ⬛ | ⬛ | 
+| 🟦 **Crash 1 - Crash** | 🟦 | ⬛ | ⬛ | ⬛ | ⬛ | ⬛ | ⬛ | ⬛ | 
+
+## 4. Bass (Spur 3: EZbass)
+
+### Bridge (Takt 49–56)
+
+* **Rhythmus:** Keine pumpenden Achtel mehr! Der Bass spielt ganze Noten (oder Halbe Noten) und lässt diese tief und mächtig ausklingen.
+
+* **Töne:** `C1` (Takt 49), `D1` (Takt 50), `E1` (Takt 51 & 52). Das Ganze wiederholt sich in Takt 53-56.
+
+### Finaler Refrain & Outro (Takt 57–68)
+
+* **Refrain:** Pumpende Achtel (`E1, C1, G1, D1`), identisch zu Refrain 1 und 2.
+
+* **Outro:** `E1`, `C1`, `D1` (jeweils 8x Achtel) und endet mit einer ganzen Note auf `E1` in Takt 68.
+
+### Intro (Takt 1–8)
+
+* Identisch zur Programmierung des Refrains (pumpende Achtelnoten, Anschlagstärke 102).
+
+## 5. Rhythmusgitarre (Spur 1: Shreddage 3 Hydra)
+
+### Bridge (Takt 49–56)
+
+* **Akkorde:** `C5`, `D5`, `E5`, `E5` (2 Durchgänge).
+
+* **Spielweise:** Steuernote auf `C-1` (Sustain). Es wird pro Takt nur ein einziger Akkord auf Schlag **1** angeschlagen (Ganze Note). Der verzerrte Akkord klingt den kompletten Takt über aus und erzeugt eine bedrohliche, schwere Atmosphäre.
+
+### Finaler Refrain & Outro (Takt 57–68)
+
+* Kopie der bestehenden Refrain-Blöcke (durchgehende Achtel, Down-Picking). Im Outro ist der letzte Akkord vor dem Ende ein `D5` (in Takt 67), bevor Takt 68 als Ganze Note auf `E5` stehen gelassen wird und ausklingt.
+
+### Intro (Takt 1–8)
+
+* Volle Powerchords wie im Refrain, treibt den Track vom Start weg an.
+
+## 6. Leadgitarre (Spur 2: Shreddage 3 Hydra)
+
+### Intro (Takt 1–8)
+
+* Takt 1–4: Stumm.
+
+* **Takt 5–8:** Hier spielt die Leadgitarre exakt die Melodie des Refrain-Gesangs! Sie etabliert den "Hook" des Songs instrumentell, bevor Liam in Takt 9 anfängt zu singen.
+
+### Bridge (Takt 49–56)
+
+* Stumm. Hier gehört die volle Aufmerksamkeit dem Gesang und der schweren Instrumentierung.
+
+### Finaler Refrain & Outro (Takt 57–68)
+
+* Kopie des Refrains aus Schritt 1 (inkl. Höhepunkt auf `D4`). Im Outro beendet die Leadgitarre den Song auf dem Grundton `E3` in Takt 68.
+
+## 7. Gesang (Spur 5: Synthesizer V – Liam AI)
+
+Die Bridge bildet den emotionalen und lyrischen Höhepunkt vor dem Finale. Das rhythmische Motiv mischt ruhige, auf den Zählzeiten liegende Viertel- und Halbe-Noten mit treibenden Achtel-Vorausnahmen am Taktende. 
+
+* **Intro & Outro:** Kein Gesang (instrumentale Rahmung).
+
+### Text (Multi-Lyric Input für die Bridge)
+
+```
+All the shad- ows fade a- way Nothing holds us back to- day Feel the pow- er start to rise Burn- ing in our eyes
+```
+
+### Rhythmik und Notenmatrix (Bridge: Takt 49 bis 56)
+
+| Takt | Zählzeit | Tonhöhe | Textsilbe | Notenwert / Rhythmus-Notiz | 
+| :--- | :--- | :--- | :--- | :--- | 
+| **49** | **1** | **G3** | `All` | Viertelnote | 
+| **49** | **2** | **G3** | `the` | Viertelnote | 
+| **49** | **3** | **G3** | `shad-` | Viertelnote | 
+| **49** | **4** | **A3** | `ows` | Viertelnote | 
+| **50** | **1** | **B3** | `fade` | Viertelnote (Phonetik: `[f ey dx]`) | 
+| **50** | **2** | **G3** | `a-` | Viertelnote | 
+| **50** | **3** | **G3** | `way` | Halbe Note (Klingt aus bis Ende Takt 50) | 
+| **51** | **1** | **G3** | `Nothing` | Halbe Note (Ein Silbenblock über 2 Schläge) | 
+| **51** | **3** | **G3** | `holds` | Viertelnote | 
+| **51** | **4** | **A3** | `us` | Viertelnote | 
+| **52** | **1** | **B3** | `back` | Viertelnote | 
+| **52** | **2** | **G3** | `to-` | Viertelnote | 
+| **52** | **3** | **G3** | `day` | Halbe Note (Klingt aus bis Ende Takt 52) | 
+| **53** | **1** | **G3** | `Feel` | Punktierte Viertelnote | 
+| **53** | **3** | **G3** | `the` | Achtelnote (Kurz angestoßen) | 
+| **53** | **3** | **A3** | `pow+er` | Halbe Note | 
+| **54** | **1** | **B3** | `start` | Viertelnote (Bleibt oben auf der Spannung) | 
+| **54** | **2** | **B3** | `to` | Viertelnote | 
+| **54** | **3** | **A3** | `rise` | Halbe Note (Fällt ab, klingt aus) | 
+| **55** | **1** | **G3** | `Burn-` | Halbe Note | 
+| **55** | **3** | **G3** | `ing` | Viertelnote | 
+| **55** | **4** | **A3** | `in` | Achtelnote | 
+| **55** | **4+** | **A3** | `our` | Achtelnote (Off-Beat) | 
+| **56** | **1** | **B3** | `eyes` | Halbe Note (Klingt aus in die Refrain-Spannung) | 
+
+*(Der finale Refrain startet anschließend direkt mit "We start the fire..." auf Zählzeit 1 in Takt 57.)*

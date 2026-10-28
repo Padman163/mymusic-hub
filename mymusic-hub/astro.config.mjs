@@ -65,6 +65,11 @@ export default defineConfig({
 											slug: 'songwriting/rock-produktion3',
 											
 										},
+																																								{
+											label: 'Schritt 5: Produktion (Bridge, Finale & Intro)',
+											slug: 'songwriting/rock-produktion4',
+											
+										},
 										
 									],
 								},
