@@ -1,0 +1,454 @@
+---
+export type GuitarStrum = "down" | "up" | "rest";
+
+export interface GuitarBar {
+  chord: string;
+  notes: string[];
+  articulations: string[];
+  strumming: GuitarStrum[];
+}
+
+export interface Props {
+  bars: GuitarBar[];
+  keyRoot?: string;
+  scale?: "major" | "naturalMinor";
+  stepsPerBar?: number;
+  timeSignature?: string;
+  resolution?: string;
+  startBar?: number;
+}
+
+const {
+  bars,
+  keyRoot = "E",
+  scale = "naturalMinor",
+  stepsPerBar = 8,
+  timeSignature = "4/4",
+  resolution = "1/8",
+  startBar = 1
+} = Astro.props;
+
+if (!Number.isInteger(stepsPerBar) || stepsPerBar < 1) {
+  throw new Error(`Ungültige Step-Anzahl ${stepsPerBar}. Erwartet wird eine positive ganze Zahl.`);
+}
+if (bars.length === 0) {
+  throw new Error("Ein Gitarrenpattern muss mindestens einen Takt enthalten.");
+}
+
+const pitchClasses = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+const notePattern = /^([A-G])(#?)(-?\d+)$/;
+const parseNote = (note: string) => {
+  const match = note.match(notePattern);
+  if (!match) {
+    throw new Error(`Ungültige Gitarrennote "${note}". Erwartet wird z. B. E2 oder F#3.`);
+  }
+
+  const [, letter, accidental, octaveText] = match;
+  const pitchClass = `${letter}${accidental}`;
+  return {
+    midi: (Number(octaveText) + 1) * 12 + pitchClasses.indexOf(pitchClass),
+    pitchClass
+  };
+};
+
+const rootMatch = keyRoot.match(/^([A-G])(#?)$/);
+if (!rootMatch) {
+  throw new Error(`Ungültiger Tonart-Grundton "${keyRoot}". Erwartet wird z. B. E oder F#.`);
+}
+
+const rootPitchClass = pitchClasses.indexOf(`${rootMatch[1]}${rootMatch[2]}`);
+const scaleIntervals = scale === "major" ? [0, 2, 4, 5, 7, 9, 11] : [0, 2, 3, 5, 7, 8, 10];
+const romanDegrees = scale === "major"
+  ? ["I", "ii", "iii", "IV", "V", "vi", "vii°"]
+  : ["i", "ii°", "III", "iv", "v", "VI", "VII"];
+const scalePitchClasses = new Set(scaleIntervals.map((interval) => (rootPitchClass + interval) % 12));
+const chordLabel = (chord: string) => {
+  const match = chord.match(/^([A-G])(#?)/);
+  if (!match) return chord;
+  const chordRoot = pitchClasses.indexOf(`${match[1]}${match[2]}`);
+  const degree = scaleIntervals.findIndex((interval) => (rootPitchClass + interval) % 12 === chordRoot);
+  return degree < 0 ? chord : `${chord} · ${romanDegrees[degree]}`;
+};
+const powerChordLabel = (chord: string) => {
+  const match = chord.match(/^([A-G])(#?)/);
+  return match ? `${match[1]}${match[2]}5` : chord;
+};
+const parsedBars = bars.map((bar) => {
+  if (bar.notes.length === 0) {
+    throw new Error(`Der Gitarrentakt "${bar.chord}" muss mindestens einen Ton enthalten.`);
+  }
+  if (bar.articulations.length !== stepsPerBar || bar.strumming.length !== stepsPerBar) {
+    throw new Error(`Artikulation und Schlagmuster in "${bar.chord}" müssen jeweils genau ${stepsPerBar} Steps enthalten.`);
+  }
+  if (bar.strumming.some((strum) => !["down", "up", "rest"].includes(strum))) {
+    throw new Error(`Ungültiges Schlagmuster in "${bar.chord}". Erlaubt sind down, up und rest.`);
+  }
+  const parsedNotes = bar.notes.map(parseNote);
+  return {
+    ...bar,
+    parsedNotes,
+    noteMidis: new Set(parsedNotes.map(({ midi }) => midi))
+  };
+});
+
+const lowestMidi = Math.min(...parsedBars.flatMap(({ parsedNotes }) => parsedNotes.map(({ midi }) => midi)));
+const highestMidi = Math.max(...parsedBars.flatMap(({ parsedNotes }) => parsedNotes.map(({ midi }) => midi)));
+const pitches = Array.from({ length: highestMidi - lowestMidi + 1 }, (_, index) => {
+  const midi = lowestMidi + index;
+  const pitchClass = pitchClasses[((midi % 12) + 12) % 12];
+  return scalePitchClasses.has(midi % 12)
+    ? { midi, label: `${pitchClass}${Math.floor(midi / 12) - 1}` }
+    : null;
+}).filter((pitch) => pitch !== null).reverse();
+const totalSteps = bars.length * stepsPerBar;
+const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
+  step % 2 === 0 ? `${step / 2 + 1}` : "+"
+));
+const keyLabel = `${keyRoot} ${scale === "major" ? "Dur" : "Moll"}`;
+const strumSymbols: Record<GuitarStrum, string> = {
+  down: "↓",
+  up: "↑",
+  rest: "–"
+};
+const expandedArticulations: Record<string, string> = {
+  PM: "Palm Mute"
+};
+const articulationRuns = parsedBars.flatMap(({ articulations }, barIndex) => {
+  const barRuns = articulations.reduce<{ articulation: string; startStep: number; length: number }[]>(
+    (runs, articulation, stepIndex) => {
+      const previousRun = runs.at(-1);
+      if (previousRun?.articulation === articulation) {
+        previousRun.length += 1;
+      } else {
+        runs.push({ articulation, startStep: stepIndex, length: 1 });
+      }
+      return runs;
+    },
+    []
+  );
+  return barRuns.map((run) => ({
+    ...run,
+    barIndex,
+    startStep: barIndex * stepsPerBar + run.startStep,
+    fullLabel: expandedArticulations[run.articulation] ?? run.articulation,
+    visibleLabel: (expandedArticulations[run.articulation] ?? run.articulation).length * 5.5 + 8
+      <= run.length * 32.5 + Math.max(0, run.length - 1) * 2.5
+      ? expandedArticulations[run.articulation] ?? run.articulation
+      : run.articulation
+  }));
+});
+---
+
+<div
+  class="guitar-pattern"
+  style={`--total-steps: ${totalSteps}; --steps-per-bar: ${stepsPerBar};`}
+  aria-label={`Gitarrenpattern in ${keyLabel}, ${bars.length} Takte, ${timeSignature}, ${resolution}`}
+>
+  <div class="bar-header">
+    <div class="row-label" aria-hidden="true"></div>
+    {bars.map((bar, index) => (
+      <div
+        class={`bar-label ${index % 2 === 1 ? "alternate-bar" : ""}`}
+        style={`grid-column: ${index * stepsPerBar + 2} / span ${stepsPerBar};`}
+      >
+        {chordLabel(bar.chord)}
+      </div>
+    ))}
+  </div>
+
+  <div class="step-header">
+    <div class="row-label" aria-hidden="true"></div>
+    {bars.flatMap((_, barIndex) => stepLabels.map((label) => (
+      <div class={`step-cell ${barIndex % 2 === 1 ? "alternate-bar" : ""}`}>
+        {label}
+      </div>
+    )))}
+  </div>
+
+  <div class="piano-roll">
+    {pitches.map((pitch) => (
+      <div class="pitch-row">
+        <div class="row-label pitch-label">{pitch.label}</div>
+        {parsedBars.flatMap((bar, barIndex) =>
+          Array.from({ length: stepsPerBar }, (_, stepIndex) => {
+            const step = barIndex * stepsPerBar + stepIndex;
+            const isActive = bar.noteMidis.has(pitch.midi) && bar.strumming[stepIndex] !== "rest";
+
+            return (
+              <div
+                class={`note-cell ${barIndex % 2 === 1 ? "alternate-bar" : ""}`}
+                aria-label={isActive
+                  ? `Takt ${startBar + barIndex}, ${bar.chord}, ${pitch.label}, Schritt ${stepIndex + 1}`
+                  : undefined}
+              >
+                {isActive && <span class="note-block">{pitch.label}</span>}
+              </div>
+            );
+          })
+        )}
+      </div>
+    ))}
+
+    <div class="annotation-row chord-note-row" aria-label="Akkord">
+      <div class="row-label">Akkord</div>
+      {parsedBars.flatMap((bar, barIndex) => bar.strumming.map((strum) => (
+        <div
+          class={`step-cell annotation-cell chord-note-cell ${barIndex % 2 === 1 ? "alternate-bar" : ""}`}
+          aria-label={strum === "rest" ? undefined : powerChordLabel(bar.chord)}
+        >
+          {strum === "rest" ? "" : powerChordLabel(bar.chord)}
+        </div>
+      )))}
+    </div>
+
+    <div class="annotation-row" aria-label="Artikulation">
+      <div class="row-label">Artikulation</div>
+      {articulationRuns.map(({ articulation, fullLabel, visibleLabel, startStep, length, barIndex }) => (
+        <div
+          class={`step-cell annotation-cell articulation-bar ${barIndex % 2 === 1 ? "alternate-bar" : ""}`}
+          style={`grid-column: ${startStep + 2} / span ${length};`}
+          aria-label={`Artikulation ${articulation}, Steps ${startStep + 1} bis ${startStep + length}`}
+          title={fullLabel}
+        >
+          {visibleLabel}
+        </div>
+      ))}
+    </div>
+
+    <div class="annotation-row" aria-label="Schlagmuster">
+      <div class="row-label">Schlagmuster</div>
+      {parsedBars.flatMap((bar, barIndex) => bar.strumming.map((strum) => (
+        <div
+          class={`step-cell annotation-cell strum-cell ${barIndex % 2 === 1 ? "alternate-bar" : ""}`}
+          aria-label={strum === "down" ? "Abschlag" : strum === "up" ? "Aufschlag" : "Pause"}
+        >
+          {strumSymbols[strum]}
+        </div>
+      )))}
+    </div>
+  </div>
+
+  <div class="pattern-footer">
+    <span>Taktart: <strong>{timeSignature}</strong></span>
+    <span>Auflösung: <strong>{resolution}</strong></span>
+    <span>Steps pro Takt: <strong>{stepsPerBar}</strong></span>
+  </div>
+</div>
+
+<style>
+  .guitar-pattern {
+    --label-width: 92px;
+    --step-size: 32.5px;
+    --note-height: 16px;
+    --step-gap: 2.5px;
+    width: 100%;
+    max-width: 100%;
+    margin: 1rem 0;
+    overflow: auto hidden;
+    border: 1px solid #27272a;
+    border-radius: 6px;
+    background: #121212;
+    color: #d1d5db;
+    font-family: system-ui, -apple-system, sans-serif;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.25);
+    box-sizing: border-box;
+  }
+
+  .bar-header,
+  .step-header,
+  .pitch-row,
+  .annotation-row {
+    display: grid;
+    grid-template-columns: var(--label-width) repeat(var(--total-steps), var(--step-size));
+    column-gap: var(--step-gap);
+    width: max-content;
+    padding: 0 8px;
+    box-sizing: border-box;
+  }
+
+  .bar-header,
+  .step-header {
+    height: calc(var(--step-size) + var(--step-gap) + 1px);
+    min-height: calc(var(--step-size) + var(--step-gap) + 1px);
+    align-items: center;
+    background: #121212;
+  }
+
+  .bar-header {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 0 8px var(--step-gap);
+  }
+
+  .bar-label,
+  .step-cell {
+    display: grid;
+    place-items: center;
+    height: var(--step-size);
+    min-width: 0;
+    box-sizing: border-box;
+    border: 1px solid #27272a;
+    border-radius: 2px;
+    background: #18181b;
+    color: #9ca3af;
+    line-height: 1;
+  }
+
+  .bar-label {
+    justify-content: flex-start;
+    grid-row: 1;
+    padding: 0 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: left;
+  }
+
+  .alternate-bar {
+    background: #242428 !important;
+  }
+
+  .step-header {
+    border-bottom: 1px solid #35383d;
+    font-size: 10px;
+    padding: 0 8px var(--step-gap);
+  }
+
+  .step-cell {
+    width: var(--step-size);
+    font-size: 10px;
+    font-weight: 600;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
+  }
+
+  .piano-roll {
+    display: flex;
+    flex-direction: column;
+    gap: var(--step-gap);
+    padding-top: var(--step-gap);
+    width: max-content;
+    background: #121212;
+  }
+
+  .pitch-row {
+    height: var(--note-height);
+    flex: 0 0 var(--note-height);
+    min-height: 0;
+    align-items: stretch;
+    background: #121212;
+    margin: 0 !important;
+    padding: 0 8px !important;
+  }
+
+  .pitch-row > * {
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
+  }
+
+  .row-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    font-size: 10px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .pitch-label {
+    color: #d1d5db;
+  }
+
+  .note-cell {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    width: var(--step-size);
+    min-width: 0;
+    border-radius: 2px;
+    background: #18181b;
+  }
+
+  .note-block {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    padding: 0 1px;
+    overflow: hidden;
+    box-sizing: border-box;
+    border-radius: 2px;
+    background: color-mix(in srgb, #60a5fa, transparent 18%);
+    color: #f8fafc;
+    font-size: 9px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .annotation-row {
+    height: var(--step-size);
+    flex: 0 0 var(--step-size);
+    min-height: 0;
+    align-items: stretch;
+    background: #121212;
+    margin: 0 !important;
+    padding: 0 8px !important;
+  }
+
+  .annotation-row > * {
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
+  }
+
+  .annotation-row > .row-label {
+    padding: 0 !important;
+  }
+
+  .annotation-cell {
+    font-size: 9px;
+    font-weight: 600;
+  }
+
+  .chord-note-cell {
+    font-size: 9px;
+    padding: 0 1px !important;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .articulation-bar {
+    width: auto;
+  }
+
+  .strum-cell {
+    font-size: 16px;
+  }
+
+  .pattern-footer {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    min-height: 34px;
+    padding: 0 8px;
+    border-top: 1px solid #33363a;
+    color: #9ca3af;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 640px) {
+    .guitar-pattern {
+      --label-width: 82px;
+    }
+
+    .pattern-footer {
+      gap: 8px;
+      font-size: 10px;
+    }
+  }
+</style>

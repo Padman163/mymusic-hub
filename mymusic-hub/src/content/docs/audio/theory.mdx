@@ -5,6 +5,7 @@ title: Musiktheorie
 import FretboardClickable from '../../../components/FretboardClickable.astro';
 import DrumPattern from '../../../components/DrumPattern.astro';
 import BassPattern from '../../../components/BassPattern.astro';
+import GuitarPattern from '../../../components/GuitarPattern.astro';
 
 Klicke auf die Saiten, um eigene Griffmuster oder Tonleitern zu markieren:
 
@@ -24,5 +25,20 @@ Viertaktiger Rock-Pick-Bass in E-Moll: durchgehende Achtelnoten auf dem Grundton
     { chord: 'C', note: 'C1', velocity: 102 },
     { chord: 'G', note: 'G1', velocity: 102 },
     { chord: 'D', note: 'D1', velocity: 102 }
+  ]}
+/>
+
+## Gitarren-Pattern testen
+
+Viertaktiges Powerchord-Pattern passend zur Bassfolge in E-Moll. Die Noten werden als durchgehende Achtel-Abschläge gespielt und mit Palm-Mute artikuliert.
+
+<GuitarPattern
+  keyRoot="E"
+  scale="naturalMinor"
+  bars={[
+    { chord: 'Em', notes: ['E2', 'B2'], articulations: ['PM', 'PM', 'PM', 'PM', 'PM', 'PM', 'PM', 'PM'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'C', notes: ['C2', 'G2'], articulations: ['PM', 'PM', 'PM', 'PM', 'PM', 'PM', 'PM', 'PM'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'G', notes: ['G2', 'D3'], articulations: ['PM', 'PM', 'PM', 'PM', 'PM', 'PM', 'PM', 'PM'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'D', notes: ['D2', 'A2'], articulations: ['PM', 'PM', 'PM', 'PM', 'PM', 'PM', 'PM', 'PM'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] }
   ]}
 />
