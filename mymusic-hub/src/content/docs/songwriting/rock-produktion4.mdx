@@ -2,6 +2,8 @@
 title: "Schritt 5: Produktion (Bridge, Finale & Intro)"
 ---
 
+import DrumPattern from '../../../components/DrumPattern.astro';
+
 Dieses Dokument beschreibt die MIDI- und VST-Programmierung der fehlenden Formteile, um das Arrangement des Rocksongs vollständig abzuschließen. Die Bridge (Schritt 5) erzeugt den finalen Kontrast, der letzte Refrain und das Outro (Schritt 6) bilden den emotionalen Höhepunkt, und das Intro (Schritt 7) rundet den Song ab.
 
 ## 1. Arrangement-Struktur und Zeitachse
@@ -38,11 +40,15 @@ Zur einfacheren Übertragung in Studio One sind hier die exakten Step-Sequencer-
 
 Treibt den Song vom Start weg und im Finale an. Die Bassdrum liegt auf 1 und 3, die Snare auf 2 und 4. Im Refrain kann für mehr Breite auf ein Ride-Becken gewechselt werden.
 
-| Instrument / Zeile | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 
-| ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- | 
-| 🟥 **Kick - Hit** | 🟥 | ⬛ | ⬛ | ⬛ | 🟥 | ⬛ | ⬛ | ⬛ | 
-| 🟧 **Snare - Center** | ⬛ | ⬛ | 🟧 | ⬛ | ⬛ | ⬛ | 🟧 | ⬛ | 
-| 🟩 **Hi-Hat / Ride** | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 🟩 | 
+<DrumPattern
+  interactive={false}
+  showVelocity={false}
+  patternData={[
+    { name: 'Kick - Hit', note: 'C1', color: '#f87171', activeSteps: [0, 4] },
+    { name: 'Snare - Center', note: 'D1', color: '#fbbf24', activeSteps: [2, 6] },
+    { name: 'Hi-Hat / Ride', note: 'A#-1', color: '#4ade80', activeSteps: [0, 1, 2, 3, 4, 5, 6, 7] }
+  ]}
+/>
 
 ### Bridge (Takt 49–54) - Halftime Groove
 
