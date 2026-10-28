@@ -94,39 +94,39 @@ const initialTrack = visiblePatternData[0];
         </div>
       </div>
     ))}
-  </div>
-  {interactive && showVelocity && (
-    <div class="velocity-row" aria-label="Anschlag für ausgewähltes Instrument">
-      <div class="velocity-info">Anschlag</div>
-      <div class="step-columns velocity-columns" style={`--steps: ${steps};`}>
-        {Array.from({ length: steps }, (_, stepIndex) => {
-          const isActive = initialTrack?.activeSteps.includes(stepIndex) ?? false;
-          const velocity = initialTrack?.velocities[stepIndex] ?? 0;
-          return (
-            <div
-              class="velocity-cell"
-              style={`--velocity-percent: ${(velocity / 127) * 100}%;`}
-              data-active={isActive ? 'true' : 'false'}
-              data-step={stepIndex}
-              data-velocity={velocity}
-              role="slider"
-              aria-label={`Step ${stepIndex + 1}, Anschlag`}
-              aria-valuemin="0"
-              aria-valuemax="127"
-              aria-valuenow={velocity}
-              aria-disabled={isActive ? 'false' : 'true'}
-              tabindex={isActive ? 0 : -1}
-            >
-              <span class="velocity-bar" style={`height: ${(velocity / 127) * 100}%;`}></span>
-              <span class="velocity-label" data-in-bar={velocity >= 40 ? 'true' : 'false'}>
-                {isActive ? velocity : ''}
-              </span>
-            </div>
-          );
-        })}
+    {interactive && showVelocity && (
+      <div class="track-row velocity-row" aria-label="Anschlag für ausgewähltes Instrument">
+        <div class="track-info velocity-info">Anschlag</div>
+        <div class="step-columns step-row velocity-columns" style={`--steps: ${steps};`}>
+          {Array.from({ length: steps }, (_, stepIndex) => {
+            const isActive = initialTrack?.activeSteps.includes(stepIndex) ?? false;
+            const velocity = initialTrack?.velocities[stepIndex] ?? 0;
+            return (
+              <div
+                class="velocity-cell"
+                style={`--velocity-percent: ${(velocity / 127) * 100}%;`}
+                data-active={isActive ? 'true' : 'false'}
+                data-step={stepIndex}
+                data-velocity={velocity}
+                role="slider"
+                aria-label={`Step ${stepIndex + 1}, Anschlag`}
+                aria-valuemin="0"
+                aria-valuemax="127"
+                aria-valuenow={velocity}
+                aria-disabled={isActive ? 'false' : 'true'}
+                tabindex={isActive ? 0 : -1}
+              >
+                <span class="velocity-bar" style={`height: ${(velocity / 127) * 100}%;`}></span>
+                <span class="velocity-label" data-in-bar={velocity >= 40 ? 'true' : 'false'}>
+                  {isActive ? velocity : ''}
+                </span>
+              </div>
+            );
+          })}
+        </div>
       </div>
-    </div>
-  )}
+    )}
+  </div>
 </div>
 
 <style>
@@ -151,6 +151,7 @@ const initialTrack = visiblePatternData[0];
   
   .pattern-header {
     display: flex;
+    align-items: center;
     position: relative;
     z-index: 1;
     background-color: #121212;
@@ -158,8 +159,9 @@ const initialTrack = visiblePatternData[0];
     padding: 0 8px;
     font-size: 13px;
     border-radius: 6px 6px 0 0;
-    height: 48px !important;
-    min-height: 48px !important;
+    height: 24px !important;
+    min-height: 24px !important;
+    flex: 0 0 24px;
     box-sizing: border-box;
     width: max-content;
   }
@@ -179,8 +181,10 @@ const initialTrack = visiblePatternData[0];
   }
 
   .step-header {
-    grid-auto-rows: 48px;
+    height: 24px;
+    grid-auto-rows: 24px;
     align-items: center;
+    align-self: center;
   }
 
   .step-columns > * {
@@ -190,7 +194,7 @@ const initialTrack = visiblePatternData[0];
   
   .step-number {
     width: var(--step-size);
-    height: 48px;
+    height: 24px;
     box-sizing: border-box;
     display: flex;
     align-items: center;
@@ -203,10 +207,10 @@ const initialTrack = visiblePatternData[0];
   }
 
   .pattern-grid {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-auto-rows: max-content;
     width: max-content;
-    gap: var(--step-gap);
+    row-gap: var(--step-gap);
     padding-block: var(--step-gap);
     margin: 0 !important;
   }
@@ -268,7 +272,7 @@ const initialTrack = visiblePatternData[0];
     flex: 0 0 auto;
     padding: 0 8px;
     margin: 0 !important;
-    background-color: #18181b;
+    background-color: #121212;
   }
   
   .step-cell {
@@ -295,23 +299,16 @@ const initialTrack = visiblePatternData[0];
   }
 
   .velocity-row {
-    display: flex;
-    min-height: 50px;
-    width: max-content;
-    margin: 0 !important;
-    padding: 0 !important;
-    background-color: #18181b;
+    background-color: #121212;
   }
 
   .velocity-info {
-    position: relative;
-    display: flex;
-    align-items: center;
-    flex: 0 0 var(--track-label-width);
-    box-sizing: border-box;
-    padding: 0 8px;
-    color: #d1d5db;
-    font-size: 11px;
+    background-color: #121212;
+  }
+
+  .velocity-row.selected .velocity-info,
+  .velocity-row.selected .velocity-columns {
+    background-color: #1c1c20;
   }
 
   .velocity-info::before {
@@ -324,10 +321,7 @@ const initialTrack = visiblePatternData[0];
 
   .velocity-columns {
     grid-auto-rows: 53px;
-    align-items: end;
-    flex: 0 0 auto;
-    padding: 0 8px;
-    background-color: #18181b;
+    background-color: #121212;
   }
 
   .velocity-cell {
@@ -399,8 +393,10 @@ const initialTrack = visiblePatternData[0];
     
     patterns.forEach(pattern => {
       if (pattern.dataset.interactive !== 'true') return;
-      const rows = pattern.querySelectorAll('.track-row');
+      const rows = pattern.querySelectorAll('.track-row:not(.velocity-row)');
+      const velocityRow = pattern.querySelector('.velocity-row');
       const velocityCells = pattern.querySelectorAll('.velocity-cell');
+      let selectedTrack = pattern.querySelector('.track-row.selected') || rows[0];
 
       function renderVelocity(row) {
         const values = JSON.parse(row.dataset.velocities);
@@ -423,8 +419,18 @@ const initialTrack = visiblePatternData[0];
       }
 
       function selectRow(row) {
+        selectedTrack = row;
         rows.forEach(candidate => candidate.classList.toggle('selected', candidate === row));
+        velocityRow?.classList.remove('selected');
         renderVelocity(row);
+      }
+
+      if (velocityRow && velocityRow.dataset.bound !== 'true') {
+        velocityRow.dataset.bound = 'true';
+        velocityRow.addEventListener('click', () => {
+          rows.forEach(row => row.classList.remove('selected'));
+          velocityRow.classList.add('selected');
+        });
       }
 
       rows.forEach(row => {
@@ -465,11 +471,10 @@ const initialTrack = visiblePatternData[0];
           const ratio = 1 - (event.clientY - bounds.top) / bounds.height;
           updateVelocityCell(cell, ratio * 127);
 
-          const selected = pattern.querySelector('.track-row.selected');
-          if (selected) {
-            const values = JSON.parse(selected.dataset.velocities);
+          if (selectedTrack) {
+            const values = JSON.parse(selectedTrack.dataset.velocities);
             values[Number(cell.dataset.step)] = Number(cell.dataset.velocity);
-            selected.dataset.velocities = JSON.stringify(values);
+            selectedTrack.dataset.velocities = JSON.stringify(values);
           }
         };
 
@@ -500,11 +505,10 @@ const initialTrack = visiblePatternData[0];
           event.preventDefault();
           updateVelocityCell(cell, current + changes[event.key]);
 
-          const selected = pattern.querySelector('.track-row.selected');
-          if (selected) {
-            const values = JSON.parse(selected.dataset.velocities);
+          if (selectedTrack) {
+            const values = JSON.parse(selectedTrack.dataset.velocities);
             values[Number(cell.dataset.step)] = Number(cell.dataset.velocity);
-            selected.dataset.velocities = JSON.stringify(values);
+            selectedTrack.dataset.velocities = JSON.stringify(values);
           }
         });
       });
