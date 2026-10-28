@@ -54,32 +54,44 @@ Treibt den Song vom Start weg und im Finale an. Die Bassdrum liegt auf 1 und 3, 
 
 Der treibende Beat wird halbiert. Die Bassdrum spielt stark auf Zählzeit **1**. Die Snare schlägt erst auf die **3** (Step 5). Ein Crash markiert den Taktanfang.
 
-| Instrument / Zeile | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 
-| ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- | 
-| 🟥 **Kick - Hit** | 🟥 | ⬛ | ⬛ | ⬛ | ⬛ | ⬛ | ⬛ | ⬛ | 
-| 🟧 **Snare - Center** | ⬛ | ⬛ | ⬛ | ⬛ | 🟧 | ⬛ | ⬛ | ⬛ | 
-| 🟦 **Crash 1 - Crash** | 🟦 | ⬛ | ⬛ | ⬛ | ⬛ | ⬛ | ⬛ | ⬛ | 
-| 🟩 **Hi-Hat - Open Edge** | 🟩 | ⬛ | 🟩 | ⬛ | 🟩 | ⬛ | 🟩 | ⬛ | 
+<DrumPattern
+  interactive={false}
+  showVelocity={false}
+  patternData={[
+    { name: 'Kick - Hit', note: 'C1', color: '#f87171', activeSteps: [0] },
+    { name: 'Snare - Center', note: 'D1', color: '#fbbf24', activeSteps: [4] },
+    { name: 'Crash 1 - Crash', note: 'D5', color: '#0ea5e9', activeSteps: [0] },
+    { name: 'Hi-Hat - Open Edge', note: 'E3', color: '#22c55e', activeSteps: [0, 2, 4, 6] }
+  ]}
+/>
 
 ### Bridge (Takt 55–56) - Der Build-Up Wirbel
 
 Dieses Pattern wird für die letzten zwei Takte der Bridge wiederholt. Kick spielt Viertel, Snare und Floortom schlagen durchgehend Achtel.
 **WICHTIG:** In der Automation muss die Anschlagstärke (Velocity) von Snare und Tom über diese zwei Takte stufenweise von ca. 40 auf 127 ansteigen!
 
-| Instrument / Zeile | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 
-| ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- | 
-| 🟥 **Kick - Hit** | 🟥 | ⬛ | 🟥 | ⬛ | 🟥 | ⬛ | 🟥 | ⬛ | 
-| 🟧 **Snare - Center** | 🟧 | 🟧 | 🟧 | 🟧 | 🟧 | 🟧 | 🟧 | 🟧 | 
-| 🟨 **Floortom 2 - Center** | 🟨 | 🟨 | 🟨 | 🟨 | 🟨 | 🟨 | 🟨 | 🟨 | 
+<DrumPattern
+  interactive={false}
+  showVelocity={false}
+  patternData={[
+    { name: 'Kick - Hit', note: 'C1', color: '#f87171', activeSteps: [0, 2, 4, 6] },
+    { name: 'Snare - Center', note: 'D1', color: '#fbbf24', activeSteps: [0, 1, 2, 3, 4, 5, 6, 7] },
+    { name: 'Floortom 2 - Center', note: 'F1', color: '#eab308', activeSteps: [0, 1, 2, 3, 4, 5, 6, 7] }
+  ]}
+/>
 
 ### Outro (Takt 68) - Der finale Schluss-Schlag
 
 Auf der Eins des allerletzten Taktes setzen Kick und Crash simultan den harten Endpunkt. Danach absolute Stille.
 
-| Instrument / Zeile | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 
-| ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- | ----- | 
-| 🟥 **Kick - Hit** | 🟥 | ⬛ | ⬛ | ⬛ | ⬛ | ⬛ | ⬛ | ⬛ | 
-| 🟦 **Crash 1 - Crash** | 🟦 | ⬛ | ⬛ | ⬛ | ⬛ | ⬛ | ⬛ | ⬛ | 
+<DrumPattern
+  interactive={false}
+  showVelocity={false}
+  patternData={[
+    { name: 'Kick - Hit', note: 'C1', color: '#f87171', activeSteps: [0] },
+    { name: 'Crash 1 - Crash', note: 'D5', color: '#0ea5e9', activeSteps: [0] }
+  ]}
+/>
 
 ## 4. Bass (Spur 3: EZbass)
 

@@ -63,7 +63,11 @@ const visiblePatternData = patternData
 const initialTrack = visiblePatternData[0];
 ---
 
-<div class="studio-one-pattern" data-interactive={interactive}>
+<div
+  class="studio-one-pattern"
+  data-interactive={interactive}
+  data-show-velocity={showVelocity}
+>
   <div class="pattern-header" style={`--steps: ${steps};`}>
     <div class="header-spacer" aria-hidden="true"></div>
     {Array.from({ length: steps }).map((_, i) => (
@@ -74,10 +78,13 @@ const initialTrack = visiblePatternData[0];
   <div class="pattern-grid">
     {visiblePatternData.map((track, trackIndex) => (
       <div
-        class={`track-row ${interactive && trackIndex === 0 ? 'selected' : ''}`}
+        class={`track-row ${(interactive || showVelocity) && trackIndex === 0 ? 'selected' : ''}`}
         data-color={track.color}
         data-velocities={JSON.stringify(track.velocities)}
         aria-label={`Instrument ${track.name}, Note ${track.note}`}
+        role={showVelocity ? 'button' : undefined}
+        aria-pressed={showVelocity ? trackIndex === 0 : undefined}
+        tabindex={showVelocity ? 0 : undefined}
       >
         <div class="track-info" style={`--track-color: ${track.color};`}>
           <span class="track-name">{track.name}</span>
@@ -90,19 +97,23 @@ const initialTrack = visiblePatternData[0];
               <div 
                 class={`step-cell ${isActive ? 'active' : ''}`} 
                 style={isActive ? `background-color: ${track.color};` : ''}
+                data-step={stepIdx}
               ></div>
             );
           })}
         </div>
       </div>
     ))}
-    {interactive && showVelocity && (
-      <div class="track-row velocity-row" aria-label="Anschlag für ausgewähltes Instrument">
+    {showVelocity && initialTrack && (
+      <div
+        class="track-row velocity-row"
+        aria-label="Anschlag für ausgewähltes Instrument"
+      >
         <div class="track-info velocity-info">Anschlag</div>
         <div class="step-columns step-row velocity-columns" style={`--steps: ${steps};`}>
           {Array.from({ length: steps }, (_, stepIndex) => {
-            const isActive = initialTrack?.activeSteps.includes(stepIndex) ?? false;
-            const velocity = initialTrack?.velocities[stepIndex] ?? 0;
+            const isActive = initialTrack.activeSteps.includes(stepIndex);
+            const velocity = initialTrack.velocities[stepIndex] ?? 0;
             return (
               <div
                 class="velocity-cell"
@@ -110,13 +121,13 @@ const initialTrack = visiblePatternData[0];
                 data-active={isActive ? 'true' : 'false'}
                 data-step={stepIndex}
                 data-velocity={velocity}
-                role="slider"
-                aria-label={`Step ${stepIndex + 1}, Anschlag`}
-                aria-valuemin="0"
-                aria-valuemax="127"
-                aria-valuenow={velocity}
-                aria-disabled={isActive ? 'false' : 'true'}
-                tabindex={isActive ? 0 : -1}
+                role={interactive ? 'slider' : 'img'}
+                aria-label={`${initialTrack.name}, Step ${stepIndex + 1}, Anschlag ${velocity}`}
+                aria-valuemin={interactive ? 0 : undefined}
+                aria-valuemax={interactive ? 127 : undefined}
+                aria-valuenow={interactive ? velocity : undefined}
+                aria-disabled={interactive ? !isActive : undefined}
+                tabindex={interactive && isActive ? 0 : -1}
               >
                 <span class="velocity-bar" style={`height: ${(velocity / 127) * 100}%;`}></span>
                 <span class="velocity-label" data-in-bar={velocity >= 40 ? 'true' : 'false'}>
@@ -267,6 +278,10 @@ const initialTrack = visiblePatternData[0];
     padding: 0 !important;
   }
 
+  .studio-one-pattern[data-show-velocity="true"] .track-row:not(.velocity-row) {
+    cursor: pointer;
+  }
+
   .track-row.selected .track-info,
   .track-row.selected .step-row {
     background-color: #1c1c20;
@@ -339,6 +354,10 @@ const initialTrack = visiblePatternData[0];
 
   .studio-one-pattern[data-interactive="false"] .step-cell:hover {
     filter: none;
+  }
+
+  .studio-one-pattern[data-show-velocity="true"][data-interactive="false"] .step-cell {
+    cursor: pointer;
   }
 
   .velocity-row {
@@ -436,11 +455,14 @@ const initialTrack = visiblePatternData[0];
     const patterns = document.querySelectorAll('.studio-one-pattern');
     
     patterns.forEach(pattern => {
-      if (pattern.dataset.interactive !== 'true') return;
       const rows = pattern.querySelectorAll('.track-row:not(.velocity-row)');
       const velocityRow = pattern.querySelector('.velocity-row');
       const velocityCells = pattern.querySelectorAll('.velocity-cell');
+      const isInteractive = pattern.dataset.interactive === 'true';
+      const hasVelocity = pattern.dataset.showVelocity === 'true';
       let selectedTrack = pattern.querySelector('.track-row.selected') || rows[0];
+
+      if (!isInteractive && !hasVelocity) return;
 
       function renderVelocity(row) {
         const values = JSON.parse(row.dataset.velocities);
@@ -451,13 +473,15 @@ const initialTrack = visiblePatternData[0];
           const value = isActive ? values[stepIndex] : 0;
           velocityCell.dataset.active = String(isActive);
           velocityCell.dataset.velocity = String(value);
-          velocityCell.setAttribute('aria-valuenow', String(value));
-          velocityCell.setAttribute('aria-disabled', String(!isActive));
+          if (isInteractive) {
+            velocityCell.setAttribute('aria-valuenow', String(value));
+            velocityCell.setAttribute('aria-disabled', String(!isActive));
+          }
           velocityCell.setAttribute(
             'aria-label',
             `${row.querySelector('.track-name').textContent}, Step ${stepIndex + 1}, Anschlag`
           );
-          velocityCell.tabIndex = isActive ? 0 : -1;
+          velocityCell.tabIndex = isInteractive && isActive ? 0 : -1;
           updateVelocityCell(velocityCell, value);
         });
       }
@@ -465,16 +489,11 @@ const initialTrack = visiblePatternData[0];
       function selectRow(row) {
         selectedTrack = row;
         rows.forEach(candidate => candidate.classList.toggle('selected', candidate === row));
+        if (hasVelocity) {
+          rows.forEach(candidate => candidate.setAttribute('aria-pressed', String(candidate === row)));
+        }
         velocityRow?.classList.remove('selected');
-        renderVelocity(row);
-      }
-
-      if (velocityRow && velocityRow.dataset.bound !== 'true') {
-        velocityRow.dataset.bound = 'true';
-        velocityRow.addEventListener('click', () => {
-          rows.forEach(row => row.classList.remove('selected'));
-          velocityRow.classList.add('selected');
-        });
+        if (hasVelocity) renderVelocity(row);
       }
 
       rows.forEach(row => {
@@ -483,9 +502,15 @@ const initialTrack = visiblePatternData[0];
         if (row.dataset.bound !== 'true') {
           row.dataset.bound = 'true';
           row.addEventListener('click', () => selectRow(row));
+          row.addEventListener('keydown', event => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            selectRow(row);
+          });
         }
         
         cells.forEach(cell => {
+          if (!isInteractive) return;
           if (cell.dataset.bound === 'true') return;
           cell.dataset.bound = 'true';
 
@@ -507,6 +532,7 @@ const initialTrack = visiblePatternData[0];
       if (selectedRow) selectRow(selectedRow);
 
       velocityCells.forEach(cell => {
+        if (!isInteractive) return;
         if (cell.dataset.bound === 'true') return;
         cell.dataset.bound = 'true';
 
