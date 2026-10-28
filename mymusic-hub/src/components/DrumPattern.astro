@@ -207,6 +207,7 @@ const initialTrack = visiblePatternData[0];
     flex-direction: column;
     width: max-content;
     gap: var(--step-gap);
+    padding-block: var(--step-gap);
     margin: 0 !important;
   }
   
@@ -325,7 +326,7 @@ const initialTrack = visiblePatternData[0];
     grid-auto-rows: 53px;
     align-items: end;
     flex: 0 0 auto;
-    padding: 1px 8px;
+    padding: 0 8px;
     background-color: #18181b;
   }
 
@@ -334,6 +335,9 @@ const initialTrack = visiblePatternData[0];
     width: var(--step-size);
     height: 53px;
     box-sizing: border-box;
+    border: 1px solid #27272a;
+    border-radius: 2px;
+    background-color: #18181b;
     cursor: ns-resize;
     touch-action: none;
     outline-offset: -2px;
