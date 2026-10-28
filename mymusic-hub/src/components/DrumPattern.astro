@@ -2,6 +2,8 @@
 // src/components/DrumPattern.astro
 export interface Props {
   steps?: number;
+  timeSignature?: string;
+  resolution?: string;
   interactive?: boolean;
   showVelocity?: boolean;
   patternData?: {
@@ -15,6 +17,8 @@ export interface Props {
 
 const { 
   steps = 8,
+  timeSignature = "4/4",
+  resolution = "1/8",
   interactive = true,
   showVelocity = false,
   patternData = [
@@ -60,13 +64,11 @@ const initialTrack = visiblePatternData[0];
 ---
 
 <div class="studio-one-pattern" data-interactive={interactive}>
-  <div class="pattern-header">
+  <div class="pattern-header" style={`--steps: ${steps};`}>
     <div class="header-spacer" aria-hidden="true"></div>
-    <div class="step-columns step-header" style={`--steps: ${steps};`}>
-      {Array.from({ length: steps }).map((_, i) => (
-        <div class="step-number">{i + 1}</div>
-      ))}
-    </div>
+    {Array.from({ length: steps }).map((_, i) => (
+      <div class="step-number">{i + 1}</div>
+    ))}
   </div>
   
   <div class="pattern-grid">
@@ -127,6 +129,17 @@ const initialTrack = visiblePatternData[0];
       </div>
     )}
   </div>
+  <div
+    class="pattern-footer"
+    style={`--steps: ${steps};`}
+    aria-label={`Taktart ${timeSignature}, Auflösung ${resolution}, ${steps} Steps`}
+  >
+    <div class="footer-info">
+      <span>Taktart: <strong>{timeSignature}</strong></span>
+      <span>Auflösung: <strong>{resolution}</strong></span>
+      <span>Steps: <strong>{steps}</strong></span>
+    </div>
+  </div>
 </div>
 
 <style>
@@ -149,26 +162,57 @@ const initialTrack = visiblePatternData[0];
     box-sizing: border-box;
   }
   
+  .pattern-header,
+  .pattern-footer {
+    display: grid;
+    grid-template-columns: calc(var(--track-label-width) - var(--step-gap)) repeat(var(--steps), var(--step-size));
+    grid-template-rows: 1fr;
+    column-gap: var(--step-gap);
+    background-color: #121212;
+    padding: 0 8px;
+    height: 36px;
+    min-height: 36px;
+    box-sizing: border-box;
+    width: max-content;
+  }
+
   .pattern-header {
-    display: flex;
     align-items: center;
     position: relative;
     z-index: 1;
-    background-color: #121212;
     border-bottom: 1px solid #27272a;
-    padding: 0 8px;
     font-size: 13px;
     border-radius: 6px 6px 0 0;
-    height: 24px !important;
-    min-height: 24px !important;
-    flex: 0 0 24px;
-    box-sizing: border-box;
-    width: max-content;
+    padding: 8px 8px var(--step-gap);
+    height: calc(var(--step-size) + 8px + var(--step-gap) + 1px);
+    min-height: calc(var(--step-size) + 8px + var(--step-gap) + 1px);
+  }
+
+  .pattern-footer {
+    margin-top: var(--step-gap);
+    border-top: 1px solid #27272a;
+    border-radius: 0 0 6px 6px;
   }
   
   .header-spacer {
     width: var(--track-label-width);
     flex: 0 0 var(--track-label-width);
+  }
+
+  .footer-info {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 0 8px;
+    color: #9ca3af;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .footer-info strong {
+    color: #d1d5db;
+    font-weight: 600;
   }
   
   .step-columns {
@@ -180,13 +224,6 @@ const initialTrack = visiblePatternData[0];
     flex: 0 0 auto;
   }
 
-  .step-header {
-    height: 24px;
-    grid-auto-rows: 24px;
-    align-items: center;
-    align-self: center;
-  }
-
   .step-columns > * {
     margin: 0 !important;
     transform: none !important;
@@ -194,11 +231,17 @@ const initialTrack = visiblePatternData[0];
   
   .step-number {
     width: var(--step-size);
-    height: 24px;
+    height: var(--step-size);
+    align-self: center;
     box-sizing: border-box;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
+    display: grid;
+    place-items: center;
+    background-color: #18181b;
+    border: 1px solid #27272a;
+    border-radius: 2px;
     text-align: center;
     color: #9ca3af;
     font-weight: 600;
@@ -211,7 +254,7 @@ const initialTrack = visiblePatternData[0];
     grid-auto-rows: max-content;
     width: max-content;
     row-gap: var(--step-gap);
-    padding-block: var(--step-gap);
+    padding-top: var(--step-gap);
     margin: 0 !important;
   }
   
@@ -304,6 +347,7 @@ const initialTrack = visiblePatternData[0];
 
   .velocity-info {
     background-color: #121212;
+    font-size: 11px;
   }
 
   .velocity-row.selected .velocity-info,
@@ -347,9 +391,9 @@ const initialTrack = visiblePatternData[0];
 
   .velocity-bar {
     position: absolute;
-    right: 1px;
+    right: 0;
     bottom: 0;
-    left: 1px;
+    left: 0;
     min-height: 0;
     border-radius: 2px 2px 0 0;
     background-color: #3b82f6;
