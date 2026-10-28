@@ -1,12 +1,20 @@
 ---
 export type GuitarStrum = "down" | "up" | "rest";
 
+export interface GuitarNoteEvent {
+  note: string;
+  startStep: number;
+  lengthSteps: number;
+}
+
 export interface GuitarBar {
   chord: string;
   notes: string[];
   articulations: string[];
   strumming: GuitarStrum[];
   noteLengthSteps?: number;
+  noteEvents?: GuitarNoteEvent[];
+  chordDisplay?: string;
 }
 
 export interface Props {
@@ -74,8 +82,15 @@ const powerChordLabel = (chord: string) => {
   const match = chord.match(/^([A-G])(#?)/);
   return match ? `${match[1]}${match[2]}5` : chord;
 };
+const pitchColors: Record<string, string> = {
+  C: "#ef4444",
+  D: "#eab308",
+  E: "#22c55e",
+  G: "#3b82f6"
+};
+const colorForPitch = (pitchClass: string) => pitchColors[pitchClass] ?? "#a78bfa";
 const parsedBars = bars.map((bar) => {
-  if (bar.notes.length === 0) {
+  if (bar.notes.length === 0 && !bar.noteEvents?.length) {
     throw new Error(`Der Gitarrentakt "${bar.chord}" muss mindestens einen Ton enthalten.`);
   }
   if (bar.articulations.length !== stepsPerBar || bar.strumming.length !== stepsPerBar) {
@@ -89,16 +104,34 @@ const parsedBars = bars.map((bar) => {
     throw new Error(`Ungültiges Schlagmuster in "${bar.chord}". Erlaubt sind down, up und rest.`);
   }
   const parsedNotes = bar.notes.map(parseNote);
+  const parsedNoteEvents = bar.noteEvents?.map((event) => {
+    const parsedNote = parseNote(event.note);
+    if (
+      !Number.isInteger(event.startStep)
+      || !Number.isInteger(event.lengthSteps)
+      || event.startStep < 0
+      || event.lengthSteps < 1
+      || event.startStep + event.lengthSteps > stepsPerBar
+    ) {
+      throw new Error(`Ungültige Position oder Länge für Gitarrennote "${event.note}" im Akkord "${bar.chord}".`);
+    }
+    return { ...event, ...parsedNote };
+  });
   return {
     ...bar,
     noteLengthSteps,
     parsedNotes,
+    parsedNoteEvents,
     noteMidis: new Set(parsedNotes.map(({ midi }) => midi))
   };
 });
 
-const lowestMidi = Math.min(...parsedBars.flatMap(({ parsedNotes }) => parsedNotes.map(({ midi }) => midi)));
-const highestMidi = Math.max(...parsedBars.flatMap(({ parsedNotes }) => parsedNotes.map(({ midi }) => midi)));
+const allNoteMidis = parsedBars.flatMap(({ parsedNotes, parsedNoteEvents }) => [
+  ...parsedNotes.map(({ midi }) => midi),
+  ...(parsedNoteEvents ?? []).map(({ midi }) => midi)
+]);
+const lowestMidi = Math.min(...allNoteMidis);
+const highestMidi = Math.max(...allNoteMidis);
 const pitches = Array.from({ length: highestMidi - lowestMidi + 1 }, (_, index) => {
   const midi = lowestMidi + index;
   const pitchClass = pitchClasses[((midi % 12) + 12) % 12];
@@ -182,6 +215,39 @@ const articulationRuns = parsedBars.flatMap(({ articulations }, barIndex) => {
         {parsedBars.flatMap((bar, barIndex) =>
           Array.from({ length: stepsPerBar }, (_, stepIndex) => {
             const step = barIndex * stepsPerBar + stepIndex;
+            if (bar.parsedNoteEvents) {
+              const noteStartingHere = bar.parsedNoteEvents.find(({ midi, startStep }) => (
+                midi === pitch.midi && startStep === stepIndex
+              ));
+              const noteCoveringHere = bar.parsedNoteEvents.some(({ midi, startStep, lengthSteps }) => (
+                midi === pitch.midi && stepIndex > startStep && stepIndex < startStep + lengthSteps
+              ));
+              if (noteCoveringHere) return null;
+
+              return (
+                <div
+                  class={`note-cell ${barIndex % 2 === 1 ? "alternate-bar" : ""}`}
+                  style={noteStartingHere
+                    ? `grid-column: ${step + 2} / span ${noteStartingHere.lengthSteps};`
+                    : `grid-column: ${step + 2};`}
+                  aria-label={noteStartingHere
+                    ? `Takt ${startBar + barIndex}, ${bar.chord}, ${noteStartingHere.note}, Schritt ${stepIndex + 1}, Länge ${noteStartingHere.lengthSteps} Steps`
+                    : undefined}
+                >
+                  {noteStartingHere && (
+                    <span
+                      class="note-block"
+                      style={bar.parsedNoteEvents
+                        ? `--note-color: ${colorForPitch(noteStartingHere.pitchClass)};`
+                        : undefined}
+                    >
+                      {noteStartingHere.note}
+                    </span>
+                  )}
+                </div>
+              );
+            }
+
             const startsNote = stepIndex % bar.noteLengthSteps === 0;
             const noteStartStep = stepIndex - (stepIndex % bar.noteLengthSteps);
             const isActive = bar.noteMidis.has(pitch.midi)
@@ -212,33 +278,45 @@ const articulationRuns = parsedBars.flatMap(({ articulations }, barIndex) => {
       </div>
     ))}
 
-    <div class="annotation-row chord-note-row" aria-label="Akkord">
-      <div class="row-label">Akkord</div>
-      {parsedBars.flatMap((bar, barIndex) =>
-        Array.from({ length: stepsPerBar }, (_, stepIndex) => {
-          const startsNote = stepIndex % bar.noteLengthSteps === 0;
-          const noteStartStep = stepIndex - (stepIndex % bar.noteLengthSteps);
-          const isActive = startsNote && bar.strumming[stepIndex] !== "rest";
-          const continuesNote = !startsNote && bar.strumming[noteStartStep] !== "rest";
-          const step = barIndex * stepsPerBar + stepIndex;
-          const noteSpans = Math.min(bar.noteLengthSteps, stepsPerBar - stepIndex);
+    {parsedBars.some((bar) => bar.notes.length > 0) && (
+      <div class="annotation-row chord-note-row" aria-label="Akkord">
+        <div class="row-label">Akkord</div>
+        {parsedBars.flatMap((bar, barIndex) =>
+          bar.parsedNoteEvents
+            ? bar.parsedNoteEvents.map((noteEvent) => (
+              <div
+                class={`step-cell annotation-cell chord-note-cell ${barIndex % 2 === 1 ? "alternate-bar" : ""}`}
+                style={`grid-column: ${barIndex * stepsPerBar + noteEvent.startStep + 2} / span ${noteEvent.lengthSteps};`}
+                aria-label={bar.chordDisplay ?? powerChordLabel(bar.chord)}
+              >
+                {bar.chordDisplay ?? powerChordLabel(bar.chord)}
+              </div>
+            ))
+            : Array.from({ length: stepsPerBar }, (_, stepIndex) => {
+                const startsNote = stepIndex % bar.noteLengthSteps === 0;
+                const noteStartStep = stepIndex - (stepIndex % bar.noteLengthSteps);
+                const isActive = startsNote && bar.strumming[stepIndex] !== "rest";
+                const continuesNote = !startsNote && bar.strumming[noteStartStep] !== "rest";
+                const step = barIndex * stepsPerBar + stepIndex;
+                const noteSpans = Math.min(bar.noteLengthSteps, stepsPerBar - stepIndex);
 
-          if (continuesNote) return null;
+                if (continuesNote) return null;
 
-          return (
-            <div
-              class={`step-cell annotation-cell chord-note-cell ${barIndex % 2 === 1 ? "alternate-bar" : ""}`}
-              style={isActive
-                ? `grid-column: ${step + 2} / span ${noteSpans};`
-                : `grid-column: ${step + 2};`}
-              aria-label={isActive ? powerChordLabel(bar.chord) : undefined}
-            >
-              {isActive ? powerChordLabel(bar.chord) : ""}
-            </div>
-          );
-        })
-      )}
-    </div>
+                return (
+                  <div
+                    class={`step-cell annotation-cell chord-note-cell ${barIndex % 2 === 1 ? "alternate-bar" : ""}`}
+                    style={isActive
+                      ? `grid-column: ${step + 2} / span ${noteSpans};`
+                      : `grid-column: ${step + 2};`}
+                    aria-label={isActive ? bar.chordDisplay ?? powerChordLabel(bar.chord) : undefined}
+                  >
+                    {isActive ? bar.chordDisplay ?? powerChordLabel(bar.chord) : ""}
+                  </div>
+                );
+              })
+        )}
+      </div>
+    )}
 
     <div class="annotation-row" aria-label="Artikulation">
       <div class="row-label">Artikulation</div>
@@ -420,7 +498,7 @@ const articulationRuns = parsedBars.flatMap(({ articulations }, barIndex) => {
     overflow: hidden;
     box-sizing: border-box;
     border-radius: 2px;
-    background: color-mix(in srgb, #60a5fa, transparent 18%);
+    background: color-mix(in srgb, var(--note-color, #60a5fa), transparent 18%);
     color: #f8fafc;
     font-size: 9px;
     font-weight: 600;
