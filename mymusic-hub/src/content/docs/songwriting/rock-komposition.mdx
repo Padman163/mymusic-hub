@@ -7,6 +7,7 @@ import BassPattern from '../../../components/BassPattern.astro';
 import GuitarPattern from '../../../components/GuitarPattern.astro';
 import ChordProgression from '../../../components/ChordProgression.astro';
 import VocalPattern from '../../../components/VocalPattern.astro';
+import ScorePattern from '../../../components/ScorePattern.astro';
 
 Dieses Dokument überträgt den theoretischen Leitfaden direkt auf das konkrete Fundament unseres Rocksongs. Alle Spuren sind strikt auf dem Schlag verankert (keine Synkopen, keine Auftakte), um ein stabiles Grundgerüst zu schaffen.
 
@@ -283,41 +284,138 @@ Dieses Dokument überträgt den theoretischen Leitfaden direkt auf das konkrete 
 
 ### 5.6 Gesamtpartitur
 
-```text
-========================================================================================================
-TAKT 1: E-Moll (Em / E5) – "Die Basis und das Entfachen"
-Zählzeit:     | 1          +          2          +          3          +          4          +          |
-Schlagzeug:   | Bassdrum+HiHat HiHat  Snare+HiHat HiHat     Bassdrum+HiHat HiHat Snare+HiHat HiHat     |
-Bass:         | E1         E1         E1         E1         E1         E1         E1         E1         |
-Rhythmusgit.: | E5         E5         E5         E5         E5         E5         E5         E5         |
-Leadgitarre:  | E3 (Viertel)          G3 (8tel)  A3 (8tel)  B3 (Viertel)          B3 (Viertel)          |
-Gesang:       | "We"                  "start"    "the"      "fi-"                 "re"                  |
-========================================================================================================
-TAKT 2: C-Dur (C / C5) – "Die Öffnung und der Ruheraum"
-Zählzeit:     | 1          +          2          +          3          +          4          +          |
-Schlagzeug:   | Bassdrum+HiHat HiHat  Snare+HiHat HiHat     Bassdrum+HiHat HiHat Snare+HiHat HiHat     |
-Bass:         | C1         C1         C1         C1         C1         C1         C1         C1         |
-Rhythmusgit.: | C5         C5         C5         C5         C5         C5         C5         C5         |
-Leadgitarre:  | G3 (Halbe Note gehalten)                    [PAUSE]               [PAUSE]               |
-Gesang:       | "to-night" -------------------------------> [KI-ATEMPAUSE]        [KI-ATEMPAUSE]        |
-========================================================================================================
-TAKT 3: G-Dur (G / G5) – "Der Höhepunkt"
-Zählzeit:     | 1          +          2          +          3          +          4          +          |
-Schlagzeug:   | Bassdrum+HiHat HiHat  Snare+HiHat HiHat     Bassdrum+HiHat HiHat Snare+HiHat HiHat     |
-Bass:         | G1         G1         G1         G1         G1         G1         G1         G1         |
-Rhythmusgit.: | G5         G5         G5         G5         G5         G5         G5         G5         |
-Leadgitarre:  | D4 (Viertel, Höhepunkt!) B3 (8tel) A3 (8tel) G3 (Viertel)          G3 (Viertel)          |
-Gesang:       | "turn-" (Höhepunkt!)   "ing"      "the"      "dark"                "in-"                 |
-========================================================================================================
-TAKT 4: D-Dur (D / D5) – "Der Abstieg und die Vorbereitung auf die Wiederholung"
-Zählzeit:     | 1          +          2          +          3          +          4          +          |
-Schlagzeug:   | Bassdrum+HiHat HiHat  Snare+HiHat HiHat     Bassdrum+HiHat HiHat Snare+HiHat HiHat     |
-Bass:         | D1         D1         D1         D1         D1         D1         D1         D1         |
-Rhythmusgit.: | D5         D5         D5         D5         D5         D5         D5         D5         |
-Leadgitarre:  | F#3 (Halbe Note)                            D3 (Halbe Note)                             |
-Gesang:       | "to" -------------------------------------> "light" ----------------------------------->|
-========================================================================================================
-```
+Die Gesamtpartitur verbindet alle fünf Instrumentenspuren taktgenau. Über die Pfeile lassen sich Rhythmusgitarre, Leadgitarre, Bass, Schlagzeug und Gesang einzeln oder gemeinsam aufklappen.
+
+<ScorePattern
+  section="Hauptriff / Refrain"
+  chords={['Em', 'C', 'G', 'D']}
+  tracks={[
+    {
+      name: 'Rhythm Guitar',
+      color: '#60a5fa',
+      pitchExpandable: true,
+      chordNotes: {
+        E5: ['E2', 'B2'],
+        C5: ['C2', 'G2'],
+        G5: ['G2', 'D3'],
+        D5: ['D2', 'A2']
+      },
+      bars: ['E5', 'C5', 'G5', 'D5'].map((chord) => ({
+        events: Array.from({ length: 8 }, (_, startStep) => ({
+          label: chord,
+          kind: 'chord',
+          startStep,
+          lengthSteps: 1
+        }))
+      }))
+    },
+    {
+      name: 'Lead Guitar',
+      color: '#f59e0b',
+      pitchExpandable: true,
+      bars: [
+        { events: [
+          { label: 'E3', startStep: 0, lengthSteps: 2 },
+          { label: 'G3', startStep: 2, lengthSteps: 1 },
+          { label: 'A3', startStep: 3, lengthSteps: 1 },
+          { label: 'B3', startStep: 4, lengthSteps: 2 },
+          { label: 'B3', startStep: 6, lengthSteps: 2 }
+        ] },
+        { events: [
+          { label: 'G3', startStep: 0, lengthSteps: 4 }
+        ] },
+        { events: [
+          { label: 'D4', startStep: 0, lengthSteps: 2 },
+          { label: 'B3', startStep: 2, lengthSteps: 1 },
+          { label: 'A3', startStep: 3, lengthSteps: 1 },
+          { label: 'G3', startStep: 4, lengthSteps: 2 },
+          { label: 'G3', startStep: 6, lengthSteps: 2 }
+        ] },
+        { events: [
+          { label: 'F#3', startStep: 0, lengthSteps: 4 },
+          { label: 'D3', startStep: 4, lengthSteps: 4 }
+        ] }
+      ]
+    },
+    {
+      name: 'Bass',
+      color: '#34d399',
+      pitchExpandable: true,
+      pitchExpansionHeight: 'same',
+      bars: ['E1', 'C1', 'G1', 'D1'].map((note) => ({
+        events: Array.from({ length: 8 }, (_, startStep) => ({
+          label: note,
+          startStep,
+          lengthSteps: 1
+        }))
+      }))
+    },
+    {
+      name: 'Drums',
+      color: '#f87171',
+      expandable: true,
+      compact: true,
+      collapseLanes: true,
+      lanes: [
+        {
+          name: 'Kick',
+          color: '#f87171',
+          notehead: 'circle',
+          bars: Array.from({ length: 4 }, () => ({ events: [
+            { startStep: 0, lengthSteps: 1 },
+            { startStep: 4, lengthSteps: 1 }
+          ] }))
+        },
+        {
+          name: 'Snare',
+          color: '#fbbf24',
+          notehead: 'circle',
+          bars: Array.from({ length: 4 }, () => ({ events: [
+            { startStep: 2, lengthSteps: 1 },
+            { startStep: 6, lengthSteps: 1 }
+          ] }))
+        },
+        {
+          name: 'Hi-Hat',
+          color: '#4ade80',
+          notehead: 'x',
+          bars: Array.from({ length: 4 }, () => ({ events: Array.from({ length: 8 }, (_, startStep) => ({
+            startStep,
+            lengthSteps: 1
+          })) }))
+        }
+      ]
+    },
+    {
+      name: 'Vocals',
+      color: '#c084fc',
+      pitchExpandable: true,
+      bars: [
+        { events: [
+          { label: 'We', pitch: 'E3', startStep: 0, lengthSteps: 2 },
+          { label: 'start', pitch: 'G3', startStep: 2, lengthSteps: 1 },
+          { label: 'the', pitch: 'A3', startStep: 3, lengthSteps: 1 },
+          { label: 'fi-', pitch: 'B3', startStep: 4, lengthSteps: 2 },
+          { label: 're', pitch: 'B3', startStep: 6, lengthSteps: 2 }
+        ] },
+        { events: [
+          { label: 'to-night', pitch: 'G3', startStep: 0, lengthSteps: 4 }
+        ] },
+        { events: [
+          { label: 'turn-', pitch: 'D4', startStep: 0, lengthSteps: 2 },
+          { label: 'ing', pitch: 'B3', startStep: 2, lengthSteps: 1 },
+          { label: 'the', pitch: 'A3', startStep: 3, lengthSteps: 1 },
+          { label: 'dark', pitch: 'G3', startStep: 4, lengthSteps: 2 },
+          { label: 'in-', pitch: 'G3', startStep: 6, lengthSteps: 2 }
+        ] },
+        { events: [
+          { label: 'to', pitch: 'F#3', startStep: 0, lengthSteps: 4 },
+          { label: 'light', pitch: 'D3', startStep: 4, lengthSteps: 4 }
+        ] }
+      ]
+    }
+  ]}
+/>
 
 ---
 

@@ -5,6 +5,7 @@ title: "Schritt 4: Produktion (Strophe 2 & Pre-Chorus 2)"
 import DrumPattern from '../../../components/DrumPattern.astro';
 import BassPattern from '../../../components/BassPattern.astro';
 import GuitarPattern from '../../../components/GuitarPattern.astro';
+import VocalPattern from '../../../components/VocalPattern.astro';
 
 Dieses Dokument beschreibt die MIDI- und VST-Programmierung der Abschnitte nach dem ersten Refrain. Ziel ist es, die musikalische Dichte in Strophe 2 zu erhöhen, um den Songverlauf spannender zu gestalten (Density), bevor er sich wieder in den Refrain entlädt.
 
@@ -221,4 +222,81 @@ Ech- oes call- ing from the sha- dows fad- ing in the night we are break- ing ou
 | **36** | **3+** | **G3** | `ness` | Achtelnote | 
 | **36** | **4** | **G3** | `and` | Achtelnote | 
 | **36** | **4+** | **G3** | `come` | Achtelnote | 
-| **37** | **1** | **G3** | `a-live` | Viertelnote | 
+| **37** | **1** | **G3** | `a-live` | Viertelnote |
+
+### Gesangspattern (Takt 29–37)
+
+Das Pattern fasst die dokumentierten Silben aus Strophe 2 und den Übergang in den Vor-Refrain zusammen.
+
+<VocalPattern
+  startBar={29}
+  bars={[
+    { chord: 'Em', lyrics: [
+      { text: 'Ash-', pitch: 'E3', startStep: 0, lengthSteps: 1 },
+      { text: 'es', pitch: 'E3', startStep: 1, lengthSteps: 1 },
+      { text: 'fall-', pitch: 'G3', startStep: 2, lengthSteps: 1 },
+      { text: 'ing', pitch: 'A3', startStep: 3, lengthSteps: 1 },
+      { text: 'down', pitch: 'B3', startStep: 4, lengthSteps: 1 },
+      { text: 'a-', pitch: 'B3', startStep: 5, lengthSteps: 1 },
+      { text: 'round', pitch: 'B3', startStep: 6, lengthSteps: 1 }
+    ] },
+    { chord: 'Em', lyrics: [
+      { text: 'us', pitch: 'G3', startStep: 0, lengthSteps: 1 },
+      { text: 'no-', pitch: 'G3', startStep: 2, lengthSteps: 1 },
+      { text: 'thing', pitch: 'G3', startStep: 3, lengthSteps: 1 },
+      { text: 'left', pitch: 'G3', startStep: 4, lengthSteps: 1 },
+      { text: 'to', pitch: 'G3', startStep: 5, lengthSteps: 1 }
+    ] },
+    { chord: 'C', lyrics: [
+      { text: 'lose', pitch: 'G3', startStep: 0, lengthSteps: 2 },
+      { text: 'e-', pitch: 'E3', startStep: 4, lengthSteps: 1 },
+      { text: 'ver', pitch: 'E3', startStep: 5, lengthSteps: 1 },
+      { text: 'y', pitch: 'G3', startStep: 6, lengthSteps: 1 },
+      { text: 'broken', pitch: 'A3', startStep: 7, lengthSteps: 1 }
+    ] },
+    { chord: 'C', lyrics: [
+      { text: 'chain', pitch: 'B3', startStep: 0, lengthSteps: 1 },
+      { text: 'will', pitch: 'B3', startStep: 1, lengthSteps: 1 },
+      { text: 'guide', pitch: 'G3', startStep: 2, lengthSteps: 1 },
+      { text: 'us', pitch: 'G3', startStep: 3, lengthSteps: 1 },
+      { text: 'light-', pitch: 'G3', startStep: 4, lengthSteps: 1 },
+      { text: 'ing', pitch: 'G3', startStep: 5, lengthSteps: 1 },
+      { text: 'the', pitch: 'G3', startStep: 6, lengthSteps: 1 },
+      { text: 'truth', pitch: 'G3', startStep: 7, lengthSteps: 1 }
+    ] },
+    { chord: 'Em', lyrics: [
+      { text: 'Ech-', pitch: 'E3', startStep: 0, lengthSteps: 1 },
+      { text: 'oes', pitch: 'E3', startStep: 1, lengthSteps: 1 },
+      { text: 'call-', pitch: 'G3', startStep: 2, lengthSteps: 1 },
+      { text: 'ing', pitch: 'A3', startStep: 3, lengthSteps: 1 },
+      { text: 'from', pitch: 'B3', startStep: 4, lengthSteps: 1 },
+      { text: 'the', pitch: 'B3', startStep: 5, lengthSteps: 1 },
+      { text: 'sha-', pitch: 'B3', startStep: 6, lengthSteps: 1 },
+      { text: 'dows', pitch: 'B3', startStep: 7, lengthSteps: 1 }
+    ] },
+    { chord: 'Em', lyrics: [
+      { text: 'fad-', pitch: 'G3', startStep: 2, lengthSteps: 1 },
+      { text: 'ing', pitch: 'G3', startStep: 3, lengthSteps: 1 },
+      { text: 'in', pitch: 'G3', startStep: 4, lengthSteps: 1 },
+      { text: 'the', pitch: 'G3', startStep: 5, lengthSteps: 1 },
+      { text: 'night', pitch: 'G3', startStep: 6, lengthSteps: 2 }
+    ] },
+    { chord: 'C', lyrics: [
+      { text: 'we', pitch: 'E3', startStep: 2, lengthSteps: 2 },
+      { text: 'are', pitch: 'E3', startStep: 4, lengthSteps: 2 },
+      { text: 'break-', pitch: 'A3', startStep: 7, lengthSteps: 1 }
+    ] },
+    { chord: 'C', lyrics: [
+      { text: 'ing', pitch: 'B3', startStep: 0, lengthSteps: 1 },
+      { text: 'out', pitch: 'B3', startStep: 1, lengthSteps: 1 },
+      { text: 'of', pitch: 'B3', startStep: 2, lengthSteps: 1 },
+      { text: 'dark-', pitch: 'G3', startStep: 4, lengthSteps: 1 },
+      { text: 'ness', pitch: 'G3', startStep: 5, lengthSteps: 1 },
+      { text: 'and', pitch: 'G3', startStep: 6, lengthSteps: 1 },
+      { text: 'come', pitch: 'G3', startStep: 7, lengthSteps: 1 }
+    ] },
+    { chord: 'C', lyrics: [
+      { text: 'a-live', pitch: 'G3', startStep: 0, lengthSteps: 2 }
+    ] }
+  ]}
+/>

@@ -5,6 +5,7 @@ title: "Schritt 5: Produktion (Bridge, Finale & Intro)"
 import DrumPattern from '../../../components/DrumPattern.astro';
 import BassPattern from '../../../components/BassPattern.astro';
 import GuitarPattern from '../../../components/GuitarPattern.astro';
+import VocalPattern from '../../../components/VocalPattern.astro';
 
 Dieses Dokument beschreibt die MIDI- und VST-Programmierung der fehlenden Formteile, um das Arrangement des Rocksongs vollständig abzuschließen. Die Bridge (Schritt 5) erzeugt den finalen Kontrast, der letzte Refrain und das Outro (Schritt 6) bilden den emotionalen Höhepunkt, und das Intro (Schritt 7) rundet den Song ab.
 
@@ -294,3 +295,51 @@ All the shad- ows fade a- way Nothing holds us back to- day Feel the pow- er sta
 | **56** | **1** | **B3** | `eyes` | Halbe Note (Klingt aus in die Refrain-Spannung) | 
 
 *(Der finale Refrain startet anschließend direkt mit "We start the fire..." auf Zählzeit 1 in Takt 57.)*
+
+### Gesangspattern (Bridge, Takt 49–56)
+
+<VocalPattern
+  startBar={49}
+  bars={[
+    { chord: 'C', lyrics: [
+      { text: 'All', pitch: 'G3', startStep: 0, lengthSteps: 2 },
+      { text: 'the', pitch: 'G3', startStep: 2, lengthSteps: 2 },
+      { text: 'shad-', pitch: 'G3', startStep: 4, lengthSteps: 2 },
+      { text: 'ows', pitch: 'A3', startStep: 6, lengthSteps: 2 }
+    ] },
+    { chord: 'D', lyrics: [
+      { text: 'fade', pitch: 'B3', startStep: 0, lengthSteps: 2 },
+      { text: 'a-', pitch: 'G3', startStep: 2, lengthSteps: 2 },
+      { text: 'way', pitch: 'G3', startStep: 4, lengthSteps: 4 }
+    ] },
+    { chord: 'Em', lyrics: [
+      { text: 'Nothing', pitch: 'G3', startStep: 0, lengthSteps: 4 },
+      { text: 'holds', pitch: 'G3', startStep: 4, lengthSteps: 2 },
+      { text: 'us', pitch: 'A3', startStep: 6, lengthSteps: 2 }
+    ] },
+    { chord: 'Em', lyrics: [
+      { text: 'back', pitch: 'B3', startStep: 0, lengthSteps: 2 },
+      { text: 'to-', pitch: 'G3', startStep: 2, lengthSteps: 2 },
+      { text: 'day', pitch: 'G3', startStep: 4, lengthSteps: 4 }
+    ] },
+    { chord: 'C', lyrics: [
+      { text: 'Feel', pitch: 'G3', startStep: 0, lengthSteps: 3 },
+      { text: 'the', pitch: 'G3', startStep: 4, lengthSteps: 1 },
+      { text: 'pow+er', pitch: 'A3', startStep: 5, lengthSteps: 3 }
+    ] },
+    { chord: 'D', lyrics: [
+      { text: 'start', pitch: 'B3', startStep: 0, lengthSteps: 2 },
+      { text: 'to', pitch: 'B3', startStep: 2, lengthSteps: 2 },
+      { text: 'rise', pitch: 'A3', startStep: 4, lengthSteps: 4 }
+    ] },
+    { chord: 'Em', lyrics: [
+      { text: 'Burn-', pitch: 'G3', startStep: 0, lengthSteps: 4 },
+      { text: 'ing', pitch: 'G3', startStep: 4, lengthSteps: 2 },
+      { text: 'in', pitch: 'A3', startStep: 6, lengthSteps: 1 },
+      { text: 'our', pitch: 'A3', startStep: 7, lengthSteps: 1 }
+    ] },
+    { chord: 'Em', lyrics: [
+      { text: 'eyes', pitch: 'B3', startStep: 0, lengthSteps: 4 }
+    ] }
+  ]}
+/>

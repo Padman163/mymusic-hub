@@ -5,6 +5,7 @@ title: "Schritt 3: Produktion (Strophe & Vor-Refrain)"
 import DrumPattern from '../../../components/DrumPattern.astro';
 import BassPattern from '../../../components/BassPattern.astro';
 import GuitarPattern from '../../../components/GuitarPattern.astro';
+import VocalPattern from '../../../components/VocalPattern.astro';
 
 Dieses Dokument beschreibt die MIDI- und VST-Programmierung der ersten 12 Takte (Strophe und Vor-Refrain). Das Ziel ist es, in der DAW gezielt Energie wegzunehmen und langsam wieder aufzubauen, um den Einstieg in das bestehende Refrain-Fundament massiv zu verstärken.
 
@@ -243,6 +244,76 @@ Der Gesang greift dem Formteil als Auftakt leicht vor und startet bereits in Tak
 | **19** | **3** | **B3** | `be-` | Viertelnote (Extremer Leitton-Sprung) | 
 | **19** | **4** | **B3** | `hind` | Halbe Note (Klingt bis Zählzeit 2 in Takt 20) | 
 | **20** | *(Pause)* | \- | \- | KI atmet auf Schlag 3+4, baut maximale Spannung auf | 
+
+### Gesangspattern
+
+Das Pattern zeigt die Gesangslinie von Takt 8 bis 20. Die Fortsetzung von `hind` in Takt 20 markiert den gehaltenen Ton bis Zählzeit 2; danach bleibt der vorgesehene Atemraum frei.
+
+<VocalPattern
+  startBar={8}
+  bars={[
+    { chord: 'Em', lyrics: [
+      { text: 'Look-', pitch: 'E3', startStep: 0, lengthSteps: 2 },
+      { text: 'ing', pitch: 'E3', startStep: 2, lengthSteps: 1 },
+      { text: 'in', pitch: 'E3', startStep: 3, lengthSteps: 1 },
+      { text: 'the', pitch: 'E3', startStep: 4, lengthSteps: 2 },
+      { text: 'mir-', pitch: 'G3', startStep: 6, lengthSteps: 2 }
+    ] },
+    { chord: 'Em', lyrics: [
+      { text: 'ror', pitch: 'E3', startStep: 0, lengthSteps: 4 }
+    ] },
+    { chord: 'Em', lyrics: [
+      { text: 'wait-', pitch: 'E3', startStep: 0, lengthSteps: 2 },
+      { text: 'ing', pitch: 'E3', startStep: 2, lengthSteps: 1 },
+      { text: 'for', pitch: 'E3', startStep: 3, lengthSteps: 3 },
+      { text: 'a', pitch: 'E3', startStep: 6, lengthSteps: 2 }
+    ] },
+    { chord: 'Em', lyrics: [
+      { text: 'sign', pitch: 'E3', startStep: 0, lengthSteps: 4 }
+    ] },
+    { chord: 'C', lyrics: [
+      { text: 'Sha-', pitch: 'E3', startStep: 0, lengthSteps: 2 },
+      { text: 'dows', pitch: 'E3', startStep: 2, lengthSteps: 1 },
+      { text: 'a-', pitch: 'E3', startStep: 3, lengthSteps: 1 },
+      { text: 'round', pitch: 'E3', startStep: 4, lengthSteps: 2 },
+      { text: 'us', pitch: 'G3', startStep: 6, lengthSteps: 2 }
+    ] },
+    { chord: 'C', lyrics: [
+      { text: 'all', pitch: 'E3', startStep: 0, lengthSteps: 4 }
+    ] },
+    { chord: 'C', lyrics: [
+      { text: 'run-', pitch: 'E3', startStep: 0, lengthSteps: 2 },
+      { text: 'ning', pitch: 'E3', startStep: 2, lengthSteps: 1 },
+      { text: 'out', pitch: 'E3', startStep: 3, lengthSteps: 3 },
+      { text: 'of', pitch: 'E3', startStep: 6, lengthSteps: 2 }
+    ] },
+    { chord: 'C', lyrics: [
+      { text: 'time', pitch: 'E3', startStep: 0, lengthSteps: 4 }
+    ] },
+    { chord: 'C', lyrics: [
+      { text: 'Hear', pitch: 'E3', startStep: 0, lengthSteps: 2 },
+      { text: 'the', pitch: 'E3', startStep: 2, lengthSteps: 2 },
+      { text: 'voi-', pitch: 'G3', startStep: 4, lengthSteps: 2 },
+      { text: 'ces', pitch: 'G3', startStep: 6, lengthSteps: 2 }
+    ] },
+    { chord: 'C', lyrics: [
+      { text: 'call-', pitch: 'G3', startStep: 0, lengthSteps: 3 },
+      { text: 'ing', pitch: 'G3', startStep: 3, lengthSteps: 3 }
+    ] },
+    { chord: 'D', lyrics: [
+      { text: 'leave', pitch: 'E3', startStep: 0, lengthSteps: 2 },
+      { text: 'it', pitch: 'E3', startStep: 2, lengthSteps: 2 },
+      { text: 'all', pitch: 'E3', startStep: 4, lengthSteps: 2 }
+    ] },
+    { chord: 'D', lyrics: [
+      { text: 'be-', pitch: 'B3', startStep: 4, lengthSteps: 2 },
+      { text: 'hind', pitch: 'B3', startStep: 6, lengthSteps: 2 }
+    ] },
+    { chord: 'D', lyrics: [
+      { text: 'hind…', pitch: 'B3', startStep: 0, lengthSteps: 2 }
+    ] }
+  ]}
+/>
 
 
   ![Lautschrift- und Tonhöhenkurve im Synthesizer-V-Editor für Strophe und PreChorus](../../../img/15_synth_v_lyrics.png)
