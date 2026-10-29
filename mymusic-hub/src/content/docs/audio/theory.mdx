@@ -105,6 +105,13 @@ Die fünf Instrumentenspuren sind synchron über `Em – C – G – D` angeordn
     {
       name: 'Rhythm Guitar',
       color: '#60a5fa',
+      pitchExpandable: true,
+      chordNotes: {
+        E5: ['E2', 'B2'],
+        C5: ['C2', 'G2'],
+        G5: ['G2', 'D3'],
+        D5: ['D2', 'A2']
+      },
       bars: ['E5', 'C5', 'G5', 'D5'].map((chord) => ({
         events: Array.from({ length: 8 }, (_, startStep) => ({
           label: chord,
