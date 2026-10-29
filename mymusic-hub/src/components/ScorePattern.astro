@@ -13,6 +13,7 @@ export interface ScoreBar {
 export interface ScoreLane {
   name: string;
   color?: string;
+  notehead?: "circle" | "x";
   bars: ScoreBar[];
 }
 
@@ -186,12 +187,12 @@ const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
               )),
               ...bar.events.map((event) => (
                 <div
-                  class={`note-event ${event.kind === "chord" ? "chord-event" : ""}`}
+                  class={`note-event ${event.kind === "chord" ? "chord-event" : ""} ${lane.notehead ? `drum-note drum-note-${lane.notehead}` : ""}`}
                   style={`grid-column: ${barIndex * stepsPerBar + event.startStep + 2} / span ${event.lengthSteps}; grid-row: 1;`}
                   aria-label={`Takt ${startBar + barIndex}, ${track.name}${lane.name ? `, ${lane.name}` : ""}${event.kind === "chord" ? `, Akkord ${event.label}` : event.label ? `: ${event.label}` : " Anschlag"}, Schritt ${event.startStep + 1}, Länge ${event.lengthSteps} Steps`}
                   title={event.kind === "chord" ? `Akkord ${event.label}` : event.label ?? lane.name}
                 >
-                  {event.label}
+                  {lane.notehead ? <span class="drum-notehead" aria-hidden="true"></span> : event.label}
                 </div>
               ))
             ])}
@@ -411,6 +412,30 @@ const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
     background: #9ca3af;
     content: "";
     transform: translateY(-50%);
+  }
+
+  .drum-note {
+    overflow: visible;
+    background: transparent;
+  }
+
+  .drum-notehead {
+    display: block;
+    width: 9px;
+    height: 9px;
+    flex: 0 0 9px;
+    background: var(--track-color);
+    box-sizing: border-box;
+  }
+
+  .drum-note-circle .drum-notehead {
+    border-radius: 50%;
+  }
+
+  .drum-note-x .drum-notehead {
+    background:
+      linear-gradient(45deg, transparent 42%, var(--track-color) 43% 57%, transparent 58%),
+      linear-gradient(-45deg, transparent 42%, var(--track-color) 43% 57%, transparent 58%);
   }
 
   .score-footer {
