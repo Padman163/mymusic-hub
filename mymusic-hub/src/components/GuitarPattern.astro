@@ -285,7 +285,7 @@ const articulationRuns = parsedBars.flatMap(({ articulations }, barIndex) => {
           bar.parsedNoteEvents
             ? bar.parsedNoteEvents.map((noteEvent) => (
               <div
-                class={`step-cell annotation-cell chord-note-cell ${barIndex % 2 === 1 ? "alternate-bar" : ""}`}
+                class={`step-cell annotation-cell chord-note-cell chord-marked ${barIndex % 2 === 1 ? "alternate-bar" : ""}`}
                 style={`grid-column: ${barIndex * stepsPerBar + noteEvent.startStep + 2} / span ${noteEvent.lengthSteps};`}
                 aria-label={bar.chordDisplay ?? powerChordLabel(bar.chord)}
               >
@@ -304,7 +304,7 @@ const articulationRuns = parsedBars.flatMap(({ articulations }, barIndex) => {
 
                 return (
                   <div
-                    class={`step-cell annotation-cell chord-note-cell ${barIndex % 2 === 1 ? "alternate-bar" : ""}`}
+                    class={`step-cell annotation-cell chord-note-cell ${isActive ? "chord-marked" : ""} ${barIndex % 2 === 1 ? "alternate-bar" : ""}`}
                     style={isActive
                       ? `grid-column: ${step + 2} / span ${noteSpans};`
                       : `grid-column: ${step + 2};`}
@@ -536,6 +536,22 @@ const articulationRuns = parsedBars.flatMap(({ articulations }, barIndex) => {
     padding: 0 1px !important;
     overflow: hidden;
     white-space: nowrap;
+  }
+
+  .chord-marked {
+    position: relative;
+    padding-left: 6px !important;
+  }
+
+  .chord-marked::before {
+    position: absolute;
+    inset: 50% auto auto 2px;
+    width: 3px;
+    height: 9px;
+    border-radius: 1px;
+    background: #9ca3af;
+    content: "";
+    transform: translateY(-50%);
   }
 
   .articulation-bar {

@@ -8,6 +8,7 @@ import BassPattern from '../../../components/BassPattern.astro';
 import GuitarPattern from '../../../components/GuitarPattern.astro';
 import VocalPattern from '../../../components/VocalPattern.astro';
 import ChordProgression from '../../../components/ChordProgression.astro';
+import ScorePattern from '../../../components/ScorePattern.astro';
 
 Klicke auf die Saiten, um eigene Griffmuster oder Tonleitern zu markieren:
 
@@ -88,6 +89,166 @@ Der Gesang legt die Silben direkt in die Notenblöcke; die Tonhöhe wird über d
       lyrics: [
         { text: 'to', pitch: 'F#3', startStep: 0, lengthSteps: 4 },
         { text: 'light', pitch: 'D3', startStep: 4, lengthSteps: 4 }
+      ]
+    }
+  ]}
+/>
+
+## Gesamtpartitur testen
+
+Die fünf Instrumentenspuren sind synchron über `Em – C – G – D` angeordnet. Die Reihenfolge entspricht dem Projekt-Routing; jede Spur verwendet durchgehend eine eigene Notenfarbe. Die Drumspur ist in Kick, Snare und Hi-Hat aufgeteilt, damit gleichzeitige Schläge einzeln sichtbar bleiben.
+
+<ScorePattern
+  section="Refrain"
+  chords={['Em', 'C', 'G', 'D']}
+  tracks={[
+    {
+      name: 'Rhythm Guitar',
+      color: '#60a5fa',
+      bars: ['E5', 'C5', 'G5', 'D5'].map((chord) => ({
+        events: Array.from({ length: 8 }, (_, startStep) => ({
+          label: chord,
+          kind: 'chord',
+          startStep,
+          lengthSteps: 1
+        }))
+      }))
+    },
+    {
+      name: 'Lead Guitar',
+      color: '#f59e0b',
+      bars: [
+        { events: [
+          { label: 'E3', startStep: 0, lengthSteps: 2 },
+          { label: 'G3', startStep: 2, lengthSteps: 1 },
+          { label: 'A3', startStep: 3, lengthSteps: 1 },
+          { label: 'B3', startStep: 4, lengthSteps: 2 },
+          { label: 'B3', startStep: 6, lengthSteps: 2 }
+        ] },
+        { events: [
+          { label: 'G3', startStep: 0, lengthSteps: 4 }
+        ] },
+        { events: [
+          { label: 'D4', startStep: 0, lengthSteps: 2 },
+          { label: 'B3', startStep: 2, lengthSteps: 1 },
+          { label: 'A3', startStep: 3, lengthSteps: 1 },
+          { label: 'G3', startStep: 4, lengthSteps: 2 },
+          { label: 'G3', startStep: 6, lengthSteps: 2 }
+        ] },
+        { events: [
+          { label: 'F#3', startStep: 0, lengthSteps: 4 },
+          { label: 'D3', startStep: 4, lengthSteps: 4 }
+        ] }
+      ]
+    },
+    {
+      name: 'Bass',
+      color: '#34d399',
+      bars: [
+        { events: [
+          { label: 'E1', startStep: 0, lengthSteps: 1 },
+          { label: 'E1', startStep: 1, lengthSteps: 1 },
+          { label: 'E1', startStep: 2, lengthSteps: 1 },
+          { label: 'E1', startStep: 3, lengthSteps: 1 },
+          { label: 'E1', startStep: 4, lengthSteps: 1 },
+          { label: 'E1', startStep: 5, lengthSteps: 1 },
+          { label: 'E1', startStep: 6, lengthSteps: 1 },
+          { label: 'E1', startStep: 7, lengthSteps: 1 }
+        ] },
+        { events: [
+          { label: 'C1', startStep: 0, lengthSteps: 1 },
+          { label: 'C1', startStep: 1, lengthSteps: 1 },
+          { label: 'C1', startStep: 2, lengthSteps: 1 },
+          { label: 'C1', startStep: 3, lengthSteps: 1 },
+          { label: 'C1', startStep: 4, lengthSteps: 1 },
+          { label: 'C1', startStep: 5, lengthSteps: 1 },
+          { label: 'C1', startStep: 6, lengthSteps: 1 },
+          { label: 'C1', startStep: 7, lengthSteps: 1 }
+        ] },
+        { events: [
+          { label: 'G1', startStep: 0, lengthSteps: 1 },
+          { label: 'G1', startStep: 1, lengthSteps: 1 },
+          { label: 'G1', startStep: 2, lengthSteps: 1 },
+          { label: 'G1', startStep: 3, lengthSteps: 1 },
+          { label: 'G1', startStep: 4, lengthSteps: 1 },
+          { label: 'G1', startStep: 5, lengthSteps: 1 },
+          { label: 'G1', startStep: 6, lengthSteps: 1 },
+          { label: 'G1', startStep: 7, lengthSteps: 1 }
+        ] },
+        { events: [
+          { label: 'D1', startStep: 0, lengthSteps: 1 },
+          { label: 'D1', startStep: 1, lengthSteps: 1 },
+          { label: 'D1', startStep: 2, lengthSteps: 1 },
+          { label: 'D1', startStep: 3, lengthSteps: 1 },
+          { label: 'D1', startStep: 4, lengthSteps: 1 },
+          { label: 'D1', startStep: 5, lengthSteps: 1 },
+          { label: 'D1', startStep: 6, lengthSteps: 1 },
+          { label: 'D1', startStep: 7, lengthSteps: 1 }
+        ] }
+      ]
+    },
+    {
+      name: 'Drums',
+      color: '#f87171',
+      compact: true,
+      lanes: [
+        {
+          name: 'Kick',
+          color: '#f87171',
+          bars: Array.from({ length: 4 }, () => ({ events: [
+            { startStep: 0, lengthSteps: 1 },
+            { startStep: 4, lengthSteps: 1 }
+          ] }))
+        },
+        {
+          name: 'Snare',
+          color: '#fbbf24',
+          bars: Array.from({ length: 4 }, () => ({ events: [
+            { startStep: 2, lengthSteps: 1 },
+            { startStep: 6, lengthSteps: 1 }
+          ] }))
+        },
+        {
+          name: 'Hi-Hat',
+          color: '#4ade80',
+          bars: Array.from({ length: 4 }, () => ({ events: [
+            { startStep: 0, lengthSteps: 1 },
+            { startStep: 1, lengthSteps: 1 },
+            { startStep: 2, lengthSteps: 1 },
+            { startStep: 3, lengthSteps: 1 },
+            { startStep: 4, lengthSteps: 1 },
+            { startStep: 5, lengthSteps: 1 },
+            { startStep: 6, lengthSteps: 1 },
+            { startStep: 7, lengthSteps: 1 }
+          ] }))
+        }
+      ]
+    },
+    {
+      name: 'Vocals',
+      color: '#c084fc',
+      bars: [
+        { events: [
+          { label: 'We', startStep: 0, lengthSteps: 2 },
+          { label: 'start', startStep: 2, lengthSteps: 1 },
+          { label: 'the', startStep: 3, lengthSteps: 1 },
+          { label: 'fi-', startStep: 4, lengthSteps: 2 },
+          { label: 're', startStep: 6, lengthSteps: 2 }
+        ] },
+        { events: [
+          { label: 'to-night', startStep: 0, lengthSteps: 4 }
+        ] },
+        { events: [
+          { label: 'turn-', startStep: 0, lengthSteps: 2 },
+          { label: 'ing', startStep: 2, lengthSteps: 1 },
+          { label: 'the', startStep: 3, lengthSteps: 1 },
+          { label: 'dark', startStep: 4, lengthSteps: 2 },
+          { label: 'in-', startStep: 6, lengthSteps: 2 }
+        ] },
+        { events: [
+          { label: 'to', startStep: 0, lengthSteps: 4 },
+          { label: 'light', startStep: 4, lengthSteps: 4 }
+        ] }
       ]
     }
   ]}

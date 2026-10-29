@@ -5,6 +5,8 @@ title: "Rocksong – Schritt 0: Komposition"
 import DrumPattern from '../../../components/DrumPattern.astro';
 import BassPattern from '../../../components/BassPattern.astro';
 import GuitarPattern from '../../../components/GuitarPattern.astro';
+import ChordProgression from '../../../components/ChordProgression.astro';
+import VocalPattern from '../../../components/VocalPattern.astro';
 
 Dieses Dokument überträgt den theoretischen Leitfaden direkt auf das konkrete Fundament unseres Rocksongs. Alle Spuren sind strikt auf dem Schlag verankert (keine Synkopen, keine Auftakte), um ein stabiles Grundgerüst zu schaffen.
 
@@ -35,6 +37,8 @@ Dieses Dokument überträgt den theoretischen Leitfaden direkt auf das konkrete 
 * **Harmonischer Rhythmus:** Streng statisch – exakt **1 Akkord pro Takt** ($4$ Schläge pro Harmonie).
 * **Tempo:** $132.00\text{ BPM}$ (gerades Rocktempo).
 * **Dynamische Wirkung:** Die Folge baut über $Em \rightarrow C \rightarrow G$ stetig an Helligkeit auf und entlädt sich auf $D$, um zyklisch wieder in das dunkle $Em$ zu fallen.
+
+<ChordProgression chords={['Em', 'C', 'G', 'D']} keyRoot="E" scale="naturalMinor" />
 
 ### 1.4 Stimmführung
 * **Bassbewegung:** $E \rightarrow C \rightarrow G \rightarrow D$ (stabile Terz- und Quartsprünge, die die Tonart unmissverständlich abstecken).
@@ -190,6 +194,34 @@ Dieses Dokument überträgt den theoretischen Leitfaden direkt auf das konkrete 
   * Takt 3: $D4$ (Viertel), $B3$ (Achtel), $A3$ (Achtel), $G3$ (Viertel), $G3$ (Viertel)
   * Takt 4: $F\sharp 3$ (Halbe Note auf 1-2), $D3$ (Halbe Note auf 3-4)
 
+<GuitarPattern
+  keyRoot="E"
+  scale="naturalMinor"
+  bars={[
+    { chord: 'Em', chordDisplay: 'Em', notes: [], noteEvents: [
+      { note: 'E3', startStep: 0, lengthSteps: 2 },
+      { note: 'G3', startStep: 2, lengthSteps: 1 },
+      { note: 'A3', startStep: 3, lengthSteps: 1 },
+      { note: 'B3', startStep: 4, lengthSteps: 2 },
+      { note: 'B3', startStep: 6, lengthSteps: 2 }
+    ], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'rest', 'up', 'down', 'up', 'rest', 'down', 'rest'] },
+    { chord: 'C', chordDisplay: 'C', notes: [], noteEvents: [
+      { note: 'G3', startStep: 0, lengthSteps: 4 }
+    ], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'rest', 'rest', 'rest', 'rest', 'rest', 'rest', 'rest'] },
+    { chord: 'G', chordDisplay: 'G', notes: [], noteEvents: [
+      { note: 'D4', startStep: 0, lengthSteps: 2 },
+      { note: 'B3', startStep: 2, lengthSteps: 1 },
+      { note: 'A3', startStep: 3, lengthSteps: 1 },
+      { note: 'G3', startStep: 4, lengthSteps: 2 },
+      { note: 'G3', startStep: 6, lengthSteps: 2 }
+    ], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'rest', 'up', 'down', 'up', 'rest', 'down', 'rest'] },
+    { chord: 'D', chordDisplay: 'D', notes: [], noteEvents: [
+      { note: 'F#3', startStep: 0, lengthSteps: 4 },
+      { note: 'D3', startStep: 4, lengthSteps: 4 }
+    ], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'rest', 'rest', 'rest', 'down', 'rest', 'rest', 'rest'] }
+  ]}
+/>
+
 ### 5.5 Gesang
 * **Klangcharakter:** Druckvoll, direkt, moderne Rock-Attitüde (Dreamtonics Synthesizer V – Liam AI).
 * **Text und Rhythmus (synchron zur Leadgitarre, mit ARPAbet-Lautschrift):**
@@ -210,6 +242,44 @@ Dieses Dokument überträgt den theoretischen Leitfaden direkt auf das konkrete 
 | | 4 | G3 | **in-** | `[ih n]` | Vorbereitung Kadenz |
 | **Takt 4** | 1–2 | F#3 | **to** | `[t uw]` | Melancholischer Leitton |
 | | 3–4 | D3 | **light** | `[l ay t]` | Befreiender Abschluss |
+
+<VocalPattern
+  bars={[
+    {
+      chord: 'Em',
+      lyrics: [
+        { text: 'We', pitch: 'E3', startStep: 0, lengthSteps: 2 },
+        { text: 'start', pitch: 'G3', startStep: 2, lengthSteps: 1 },
+        { text: 'the', pitch: 'A3', startStep: 3, lengthSteps: 1 },
+        { text: 'fi-', pitch: 'B3', startStep: 4, lengthSteps: 2 },
+        { text: 're', pitch: 'B3', startStep: 6, lengthSteps: 2 }
+      ]
+    },
+    {
+      chord: 'C',
+      lyrics: [
+        { text: 'to-night', pitch: 'G3', startStep: 0, lengthSteps: 4 }
+      ]
+    },
+    {
+      chord: 'G',
+      lyrics: [
+        { text: 'turn-', pitch: 'D4', startStep: 0, lengthSteps: 2 },
+        { text: 'ing', pitch: 'B3', startStep: 2, lengthSteps: 1 },
+        { text: 'the', pitch: 'A3', startStep: 3, lengthSteps: 1 },
+        { text: 'dark', pitch: 'G3', startStep: 4, lengthSteps: 2 },
+        { text: 'in-', pitch: 'G3', startStep: 6, lengthSteps: 2 }
+      ]
+    },
+    {
+      chord: 'D',
+      lyrics: [
+        { text: 'to', pitch: 'F#3', startStep: 0, lengthSteps: 4 },
+        { text: 'light', pitch: 'D3', startStep: 4, lengthSteps: 4 }
+      ]
+    }
+  ]}
+/>
 
 ### 5.6 Gesamtpartitur
 

@@ -1,0 +1,449 @@
+---
+export interface ScoreEvent {
+  label?: string;
+  kind?: "chord" | "note";
+  startStep: number;
+  lengthSteps: number;
+}
+
+export interface ScoreBar {
+  events: ScoreEvent[];
+}
+
+export interface ScoreLane {
+  name: string;
+  color?: string;
+  bars: ScoreBar[];
+}
+
+export interface ScoreTrack {
+  name: string;
+  color: string;
+  compact?: boolean;
+  bars?: ScoreBar[];
+  lanes?: ScoreLane[];
+}
+
+export interface Props {
+  chords: string[];
+  tracks: ScoreTrack[];
+  section?: string;
+  stepsPerBar?: number;
+  timeSignature?: string;
+  resolution?: string;
+  startBar?: number;
+}
+
+const {
+  chords,
+  tracks,
+  section,
+  stepsPerBar = 8,
+  timeSignature = "4/4",
+  resolution = "1/8",
+  startBar = 1
+} = Astro.props;
+
+if (!Number.isInteger(stepsPerBar) || stepsPerBar < 1) {
+  throw new Error(`Ungültige Step-Anzahl ${stepsPerBar}. Erwartet wird eine positive ganze Zahl.`);
+}
+if (chords.length === 0) {
+  throw new Error("Eine Gesamtpartitur muss mindestens einen Takt enthalten.");
+}
+if (tracks.length === 0) {
+  throw new Error("Eine Gesamtpartitur muss mindestens eine Instrumentenspur enthalten.");
+}
+
+const parsedTracks = tracks.map((track) => {
+  if (!track.name.trim()) {
+    throw new Error("Der Name einer Instrumentenspur darf nicht leer sein.");
+  }
+  if (!/^#[\da-f]{6}$/i.test(track.color)) {
+    throw new Error(`Ungültige Spurfarbe "${track.color}" für "${track.name}". Erwartet wird z. B. #60a5fa.`);
+  }
+  if ((track.bars === undefined) === (track.lanes === undefined)) {
+    throw new Error(`Die Spur "${track.name}" muss entweder Takte oder separate Instrument-Lanes enthalten.`);
+  }
+
+  const lanes = track.lanes ?? [{ name: "", bars: track.bars ?? [] }];
+  if (lanes.length === 0) {
+    throw new Error(`Die Spur "${track.name}" muss mindestens eine Instrument-Lane enthalten.`);
+  }
+
+  const parsedLanes = lanes.map((lane) => {
+    const laneColor = lane.color ?? track.color;
+    if (!/^#[\da-f]{6}$/i.test(laneColor)) {
+      throw new Error(`Ungültige Drum-/Instrumentfarbe "${laneColor}" für "${track.name} · ${lane.name}".`);
+    }
+    if (lane.bars.length !== chords.length) {
+      throw new Error(`Die Spur "${track.name}"${lane.name ? ` (${lane.name})` : ""} muss genau ${chords.length} Takte enthalten.`);
+    }
+
+    const bars = lane.bars.map(({ events }, barIndex) => {
+      const parsedEvents = events.map((event) => {
+        if (event.label !== undefined && !event.label.trim()) {
+          throw new Error(`Ein Notenlabel in Spur "${track.name}", Takt ${startBar + barIndex} darf nicht leer sein.`);
+        }
+        if (
+          !Number.isInteger(event.startStep)
+          || !Number.isInteger(event.lengthSteps)
+          || event.startStep < 0
+          || event.lengthSteps < 1
+          || event.startStep + event.lengthSteps > stepsPerBar
+        ) {
+          throw new Error(`Ungültige Position oder Länge für "${event.label ?? lane.name}" in Spur "${track.name}", Takt ${startBar + barIndex}.`);
+        }
+        return event;
+      }).sort((a, b) => a.startStep - b.startStep);
+
+      parsedEvents.forEach((event, index) => {
+        const previousEvent = parsedEvents[index - 1];
+        if (previousEvent && event.startStep < previousEvent.startStep + previousEvent.lengthSteps) {
+          throw new Error(`Überlappende Noten in Spur "${track.name}"${lane.name ? ` (${lane.name})` : ""}, Takt ${startBar + barIndex}.`);
+        }
+      });
+
+      return { events: parsedEvents };
+    });
+
+    return { ...lane, color: laneColor, bars };
+  });
+
+  return {
+    name: track.name,
+    color: track.color,
+    compact: track.compact ?? false,
+    lanes: parsedLanes
+  };
+});
+
+const totalSteps = chords.length * stepsPerBar;
+const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
+  step % 2 === 0 ? `${step / 2 + 1}` : "+"
+));
+---
+
+<div
+  class="score-pattern"
+  style={`--total-steps: ${totalSteps}; --steps-per-bar: ${stepsPerBar};`}
+  aria-label={`Gesamtpartitur, ${chords.length} Takte, ${timeSignature}, ${resolution}`}
+>
+  <div class="score-content">
+    {section && (
+      <div class="section-row" aria-label={`Songabschnitt: ${section}`}>
+        <div class="row-label" aria-hidden="true"></div>
+        <div class="section-bar" style={`grid-column: 2 / span ${totalSteps};`}>
+          {section}
+        </div>
+      </div>
+    )}
+
+    <div class="measure-row" aria-label="Akkorde">
+      <div class="row-label" aria-hidden="true"></div>
+      {chords.map((chord, barIndex) => (
+        <div
+          class={`measure-cell ${barIndex % 2 === 1 ? "alternate-measure" : ""}`}
+          style={`grid-column: ${barIndex * stepsPerBar + 2} / span ${stepsPerBar};`}
+          aria-label={`Takt ${startBar + barIndex}, Akkord ${chord}`}
+        >
+          <span class="measure-number">Takt {startBar + barIndex}</span>
+          <strong>{chord}</strong>
+        </div>
+      ))}
+    </div>
+
+    <div class="step-row" aria-hidden="true">
+      <div class="row-label"></div>
+      {chords.flatMap((_, barIndex) => stepLabels.map((label) => (
+        <div class={`step-cell ${barIndex % 2 === 1 ? "alternate-measure" : ""}`}>
+          {label}
+        </div>
+      )))}
+    </div>
+
+    {parsedTracks.map((track) => (
+      <div
+        class={`track-group ${track.compact ? "compact-track-group" : ""}`}
+        style={`--track-color: ${track.color};`}
+        aria-label={`Instrumentenspur ${track.name}`}
+      >
+        {track.lanes.map((lane) => (
+          <div
+            class="track-row"
+            style={`--track-color: ${lane.color};`}
+            aria-label={`${track.name}${lane.name ? `: ${lane.name}` : ""}`}
+          >
+            <div class="row-label track-label">
+              {lane.name ? `${track.name} · ${lane.name}` : track.name}
+            </div>
+            {lane.bars.flatMap((bar, barIndex) => [
+              ...Array.from({ length: stepsPerBar }, (_, stepIndex) => (
+                <div
+                  class={`step-cell ${barIndex % 2 === 1 ? "alternate-measure" : ""}`}
+                  style={`grid-column: ${barIndex * stepsPerBar + stepIndex + 2}; grid-row: 1;`}
+                  aria-hidden="true"
+                ></div>
+              )),
+              ...bar.events.map((event) => (
+                <div
+                  class={`note-event ${event.kind === "chord" ? "chord-event" : ""}`}
+                  style={`grid-column: ${barIndex * stepsPerBar + event.startStep + 2} / span ${event.lengthSteps}; grid-row: 1;`}
+                  aria-label={`Takt ${startBar + barIndex}, ${track.name}${lane.name ? `, ${lane.name}` : ""}${event.kind === "chord" ? `, Akkord ${event.label}` : event.label ? `: ${event.label}` : " Anschlag"}, Schritt ${event.startStep + 1}, Länge ${event.lengthSteps} Steps`}
+                  title={event.kind === "chord" ? `Akkord ${event.label}` : event.label ?? lane.name}
+                >
+                  {event.label}
+                </div>
+              ))
+            ])}
+          </div>
+        ))}
+      </div>
+    ))}
+
+    <div class="score-footer">
+      <span>Taktart: <strong>{timeSignature}</strong></span>
+      <span>Auflösung: <strong>{resolution}</strong></span>
+      <span>Steps pro Takt: <strong>{stepsPerBar}</strong></span>
+    </div>
+  </div>
+</div>
+
+<style>
+  .score-pattern {
+    --label-width: 154px;
+    --step-size: 30px;
+    --measure-height: 34px;
+    --track-height: 34px;
+    --step-gap: 2px;
+    width: 100%;
+    max-width: 100%;
+    margin: 1rem 0;
+    overflow: auto hidden;
+    border: 1px solid #27272a;
+    border-radius: 6px;
+    background: #121212;
+    color: #d1d5db;
+    font-family: system-ui, -apple-system, sans-serif;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.25);
+    box-sizing: border-box;
+  }
+
+  .score-content {
+    display: flex;
+    flex-direction: column;
+    row-gap: var(--step-gap);
+    width: max-content;
+    margin-block: 0 !important;
+    padding-block: 8px var(--step-gap);
+    box-sizing: border-box;
+  }
+
+  .section-row {
+    display: grid;
+    grid-template-columns: var(--label-width) repeat(var(--total-steps), var(--step-size));
+    column-gap: var(--step-gap);
+    width: max-content;
+    margin-block: 0 !important;
+    padding: 0 8px;
+    box-sizing: border-box;
+  }
+
+  .section-row > * {
+    margin-block: 0 !important;
+    box-sizing: border-box;
+  }
+
+  .section-bar {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    height: 28px;
+    padding: 0 8px;
+    border: 1px solid #35383d;
+    border-radius: 2px;
+    background: #242428;
+    color: #f3f4f6;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+    box-sizing: border-box;
+  }
+
+  .measure-row,
+  .step-row,
+  .track-row {
+    display: grid;
+    grid-template-columns: var(--label-width) repeat(var(--total-steps), var(--step-size));
+    column-gap: var(--step-gap);
+    width: max-content;
+    margin-block: 0 !important;
+    padding: 0 8px;
+    box-sizing: border-box;
+  }
+
+  .measure-row {
+    grid-auto-rows: var(--measure-height);
+    align-items: stretch;
+  }
+
+  .step-row {
+    grid-auto-rows: 22px;
+    align-items: stretch;
+  }
+
+  .track-group {
+    display: flex;
+    flex-direction: column;
+    row-gap: var(--step-gap);
+    width: max-content;
+    margin-block: 0 !important;
+    box-sizing: border-box;
+  }
+
+  .compact-track-group {
+    --track-height: 22px;
+  }
+
+  .track-row {
+    grid-auto-rows: var(--track-height);
+    align-items: stretch;
+    padding: 0 8px;
+  }
+
+  .measure-row > *,
+  .step-row > *,
+  .track-row > * {
+    margin-block: 0 !important;
+    box-sizing: border-box;
+  }
+
+  .row-label {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    min-width: 0;
+    padding: 0 8px 0 0;
+    color: #9ca3af;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    box-sizing: border-box;
+  }
+
+  .track-label {
+    color: var(--track-color);
+    gap: 6px;
+  }
+
+  .measure-cell,
+  .step-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    height: 100%;
+    border: 1px solid #27272a;
+    border-radius: 2px;
+    background: #18181b;
+    color: #9ca3af;
+    line-height: 1;
+    box-sizing: border-box;
+  }
+
+  .measure-cell {
+    justify-content: space-between;
+    padding: 0 8px;
+    color: #f3f4f6;
+    font-size: 12px;
+  }
+
+  .measure-number {
+    color: #9ca3af;
+    font-size: 10px;
+    font-weight: 500;
+  }
+
+  .alternate-measure {
+    background: #242428;
+  }
+
+  .step-cell {
+    font-size: 9px;
+    font-weight: 600;
+  }
+
+  .note-event {
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    height: 100%;
+    padding: 0 2px;
+    overflow: hidden;
+    border-radius: 2px;
+    background: var(--track-color);
+    color: #111827;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    box-sizing: border-box;
+  }
+
+  .chord-event {
+    position: relative;
+    padding-left: 6px;
+    border: 1px solid #27272a;
+    background: #18181b;
+    color: #d1d5db;
+  }
+
+  .chord-event::before {
+    position: absolute;
+    inset: 50% auto auto 2px;
+    width: 3px;
+    height: 9px;
+    background: #9ca3af;
+    content: "";
+    transform: translateY(-50%);
+  }
+
+  .score-footer {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    min-height: 30px;
+    align-self: stretch;
+    margin-block: 0 !important;
+    padding: 0 8px;
+    border-top: 1px solid #33363a;
+    color: #9ca3af;
+    font-size: 11px;
+    line-height: 1;
+    white-space: nowrap;
+    box-sizing: border-box;
+  }
+
+  .score-footer > * {
+    margin-block: 0 !important;
+    box-sizing: border-box;
+  }
+
+  @media (max-width: 640px) {
+    .score-pattern {
+      --label-width: 138px;
+      --step-size: 28px;
+    }
+
+    .score-footer {
+      gap: 8px;
+      font-size: 10px;
+    }
+  }
+</style>
