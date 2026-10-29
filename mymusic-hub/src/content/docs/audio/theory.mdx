@@ -145,6 +145,8 @@ Die fünf Instrumentenspuren sind synchron über `Em – C – G – D` angeordn
     {
       name: 'Bass',
       color: '#34d399',
+      pitchExpandable: true,
+      pitchExpansionHeight: 'same',
       bars: [
         { events: [
           { label: 'E1', startStep: 0, lengthSteps: 1 },
@@ -191,7 +193,9 @@ Die fünf Instrumentenspuren sind synchron über `Em – C – G – D` angeordn
     {
       name: 'Drums',
       color: '#f87171',
+      expandable: true,
       compact: true,
+      collapseLanes: true,
       lanes: [
         {
           name: 'Kick',
@@ -231,27 +235,28 @@ Die fünf Instrumentenspuren sind synchron über `Em – C – G – D` angeordn
     {
       name: 'Vocals',
       color: '#c084fc',
+      pitchExpandable: true,
       bars: [
         { events: [
-          { label: 'We', startStep: 0, lengthSteps: 2 },
-          { label: 'start', startStep: 2, lengthSteps: 1 },
-          { label: 'the', startStep: 3, lengthSteps: 1 },
-          { label: 'fi-', startStep: 4, lengthSteps: 2 },
-          { label: 're', startStep: 6, lengthSteps: 2 }
+          { label: 'We', pitch: 'E3', startStep: 0, lengthSteps: 2 },
+          { label: 'start', pitch: 'G3', startStep: 2, lengthSteps: 1 },
+          { label: 'the', pitch: 'A3', startStep: 3, lengthSteps: 1 },
+          { label: 'fi-', pitch: 'B3', startStep: 4, lengthSteps: 2 },
+          { label: 're', pitch: 'B3', startStep: 6, lengthSteps: 2 }
         ] },
         { events: [
-          { label: 'to-night', startStep: 0, lengthSteps: 4 }
+          { label: 'to-night', pitch: 'G3', startStep: 0, lengthSteps: 4 }
         ] },
         { events: [
-          { label: 'turn-', startStep: 0, lengthSteps: 2 },
-          { label: 'ing', startStep: 2, lengthSteps: 1 },
-          { label: 'the', startStep: 3, lengthSteps: 1 },
-          { label: 'dark', startStep: 4, lengthSteps: 2 },
-          { label: 'in-', startStep: 6, lengthSteps: 2 }
+          { label: 'turn-', pitch: 'D4', startStep: 0, lengthSteps: 2 },
+          { label: 'ing', pitch: 'B3', startStep: 2, lengthSteps: 1 },
+          { label: 'the', pitch: 'A3', startStep: 3, lengthSteps: 1 },
+          { label: 'dark', pitch: 'G3', startStep: 4, lengthSteps: 2 },
+          { label: 'in-', pitch: 'G3', startStep: 6, lengthSteps: 2 }
         ] },
         { events: [
-          { label: 'to', startStep: 0, lengthSteps: 4 },
-          { label: 'light', startStep: 4, lengthSteps: 4 }
+          { label: 'to', pitch: 'F#3', startStep: 0, lengthSteps: 4 },
+          { label: 'light', pitch: 'D3', startStep: 4, lengthSteps: 4 }
         ] }
       ]
     }
