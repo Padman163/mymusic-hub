@@ -4,6 +4,7 @@ export interface ScoreEvent {
   kind?: "chord" | "note";
   startStep: number;
   lengthSteps: number;
+  pitchOffset?: number;
 }
 
 export interface ScoreBar {
@@ -21,6 +22,7 @@ export interface ScoreTrack {
   name: string;
   color: string;
   compact?: boolean;
+  pitchExpandable?: boolean;
   bars?: ScoreBar[];
   lanes?: ScoreLane[];
 }
@@ -110,10 +112,41 @@ const parsedTracks = tracks.map((track) => {
     return { ...lane, color: laneColor, bars };
   });
 
+  let pitchRange: { lowest: number; highest: number } | undefined;
+  if (track.pitchExpandable) {
+    const pitchEvents = parsedLanes.flatMap((lane) => lane.bars.flatMap((bar) => bar.events.map((event) => {
+      const pitchMatch = event.label?.match(/^([A-G])(#?)(-?\d+)$/);
+      if (!pitchMatch) {
+        throw new Error(`Ungültige Tonhöhe "${event.label ?? ""}" in aufklappbarer Spur "${track.name}". Erwartet wird z. B. E3 oder F#4.`);
+      }
+
+      const pitchClass = `${pitchMatch[1]}${pitchMatch[2]}`;
+      const pitchClasses = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+      const midi = (Number(pitchMatch[3]) + 1) * 12 + pitchClasses.indexOf(pitchClass);
+      return { event, midi };
+    })));
+
+    if (pitchEvents.length === 0) {
+      throw new Error(`Die aufklappbare Spur "${track.name}" muss mindestens eine Note enthalten.`);
+    }
+
+    pitchRange = {
+      lowest: Math.min(...pitchEvents.map(({ midi }) => midi)),
+      highest: Math.max(...pitchEvents.map(({ midi }) => midi))
+    };
+
+    for (const { event, midi } of pitchEvents) {
+      event.pitchOffset = pitchRange.highest === pitchRange.lowest
+        ? 0
+        : ((pitchRange.highest - midi) / (pitchRange.highest - pitchRange.lowest)) * 61.2;
+    }
+  }
+
   return {
     name: track.name,
     color: track.color,
     compact: track.compact ?? false,
+    pitchExpandable: track.pitchExpandable ?? false,
     lanes: parsedLanes
   };
 });
@@ -164,7 +197,7 @@ const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
 
     {parsedTracks.map((track) => (
       <div
-        class={`track-group ${track.compact ? "compact-track-group" : ""}`}
+        class={`track-group ${track.compact ? "compact-track-group" : ""} ${track.pitchExpandable ? "pitch-expandable-group" : ""}`}
         style={`--track-color: ${track.color};`}
         aria-label={`Instrumentenspur ${track.name}`}
       >
@@ -176,6 +209,20 @@ const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
           >
             <div class="row-label track-label">
               {lane.name ? `${track.name} · ${lane.name}` : track.name}
+              {track.pitchExpandable && (
+                <button
+                  class="pitch-toggle"
+                  type="button"
+                  data-pitch-toggle
+                  data-track-name={track.name}
+                  aria-expanded="false"
+                  aria-label={`${track.name} aufklappen`}
+                >
+                  <svg aria-hidden="true" viewBox="0 0 12 12">
+                    <path d="m4 2 4 4-4 4" />
+                  </svg>
+                </button>
+              )}
             </div>
             {lane.bars.flatMap((bar, barIndex) => [
               ...Array.from({ length: stepsPerBar }, (_, stepIndex) => (
@@ -188,7 +235,7 @@ const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
               ...bar.events.map((event) => (
                 <div
                   class={`note-event ${event.kind === "chord" ? "chord-event" : ""} ${lane.notehead ? `drum-note drum-note-${lane.notehead}` : ""}`}
-                  style={`grid-column: ${barIndex * stepsPerBar + event.startStep + 2} / span ${event.lengthSteps}; grid-row: 1;`}
+                  style={`grid-column: ${barIndex * stepsPerBar + event.startStep + 2} / span ${event.lengthSteps}; grid-row: 1;${event.pitchOffset === undefined ? "" : ` --pitch-offset: ${event.pitchOffset}px;`}`}
                   aria-label={`Takt ${startBar + barIndex}, ${track.name}${lane.name ? `, ${lane.name}` : ""}${event.kind === "chord" ? `, Akkord ${event.label}` : event.label ? `: ${event.label}` : " Anschlag"}, Schritt ${event.startStep + 1}, Länge ${event.lengthSteps} Steps`}
                   title={event.kind === "chord" ? `Akkord ${event.label}` : event.label ?? lane.name}
                 >
@@ -338,6 +385,41 @@ const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
     gap: 6px;
   }
 
+  .pitch-toggle {
+    display: inline-grid;
+    place-items: center;
+    width: 16px;
+    height: 20px;
+    flex: 0 0 16px;
+    margin: 0 0 0 auto !important;
+    padding: 0;
+    border: 0;
+    border-radius: 2px;
+    background: transparent;
+    color: #71717a;
+    font: inherit;
+    line-height: 1;
+    cursor: pointer;
+    box-sizing: border-box;
+  }
+
+  .pitch-toggle svg {
+    width: 10px;
+    height: 10px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform 160ms ease, color 160ms ease;
+  }
+
+  .pitch-toggle:hover,
+  .pitch-toggle:focus-visible {
+    color: var(--track-color);
+    outline: none;
+  }
+
   .measure-cell,
   .step-cell {
     display: flex;
@@ -394,6 +476,32 @@ const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
     text-overflow: ellipsis;
     white-space: nowrap;
     box-sizing: border-box;
+  }
+
+  .pitch-expandable-group {
+    --base-track-height: 34px;
+    --track-height: var(--base-track-height);
+  }
+
+  .pitch-expandable-group.is-expanded {
+    --track-height: calc(var(--base-track-height) * 2);
+  }
+
+  .pitch-expandable-group.is-expanded .pitch-toggle {
+    color: var(--track-color);
+  }
+
+  .pitch-expandable-group.is-expanded .pitch-toggle svg {
+    transform: rotate(90deg);
+  }
+
+  .pitch-expandable-group.is-expanded .note-event:not(.chord-event) {
+    position: relative;
+    top: var(--pitch-offset, 0px);
+    align-self: start;
+    height: calc(var(--base-track-height) / 5);
+    overflow: visible;
+    font-size: 7px;
   }
 
   .chord-event {
@@ -472,3 +580,20 @@ const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
     }
   }
 </style>
+
+<script>
+  document.addEventListener("click", (event) => {
+    if (!(event.target instanceof Element)) return;
+
+    const button = event.target.closest<HTMLButtonElement>("[data-pitch-toggle]");
+    const track = button?.closest<HTMLElement>(".pitch-expandable-group");
+    if (!button || !track) return;
+
+    const expanded = track.classList.toggle("is-expanded");
+    button.setAttribute("aria-expanded", String(expanded));
+    button.setAttribute(
+      "aria-label",
+      `${button.dataset.trackName} ${expanded ? "zuklappen" : "aufklappen"}`
+    );
+  });
+</script>
