@@ -815,7 +815,6 @@ const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
 <script>
   const syncPitchToggleState = (score: HTMLElement) => {
     const tracks = Array.from(score.querySelectorAll<HTMLElement>(".expandable-track-group"));
-    const allExpanded = tracks.length > 0 && tracks.every((track) => track.classList.contains("is-expanded"));
     const anyExpanded = tracks.some((track) => track.classList.contains("is-expanded"));
     score.classList.toggle("all-tracks-collapsed", !anyExpanded);
 
@@ -830,8 +829,8 @@ const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
     });
 
     score.querySelectorAll<HTMLButtonElement>("[data-expand-all]").forEach((toggle) => {
-      toggle.setAttribute("aria-expanded", String(allExpanded));
-      toggle.setAttribute("aria-label", allExpanded ? "Alle Spuren zuklappen" : "Alle Spuren aufklappen");
+      toggle.setAttribute("aria-expanded", String(anyExpanded));
+      toggle.setAttribute("aria-label", anyExpanded ? "Alle Spuren zuklappen" : "Alle Spuren aufklappen");
     });
   };
 
@@ -842,7 +841,7 @@ const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
     const score = globalButton?.closest<HTMLElement>(".score-pattern");
     if (globalButton && score) {
       const tracks = Array.from(score.querySelectorAll<HTMLElement>(".expandable-track-group"));
-      const shouldExpand = !tracks.every((track) => track.classList.contains("is-expanded"));
+      const shouldExpand = !tracks.some((track) => track.classList.contains("is-expanded"));
       tracks.forEach((track) => track.classList.toggle("is-expanded", shouldExpand));
       syncPitchToggleState(score);
       return;
