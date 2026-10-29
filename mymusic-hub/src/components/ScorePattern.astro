@@ -146,7 +146,7 @@ const parsedTracks = tracks.map((track) => {
               ...event,
               displayColor: lane.color,
               displayLaneName: lane.name,
-              displayLaneOffset: laneIndex * 9 + 4,
+              displayLaneOffset: laneIndex * 15.3 + 6.8,
               displayNotehead: lane.notehead
             }))).sort((a, b) => a.startStep - b.startStep)
           }))
@@ -163,8 +163,9 @@ const parsedTracks = tracks.map((track) => {
       }));
 
   if (track.pitchExpandable) {
-    const expandedTrackHeight = track.pitchExpansionHeight === "same" ? 34 : 68;
-    const noteHeight = 34 / 5;
+    const baseTrackHeight = 55.25;
+    const expandedTrackHeight = track.pitchExpansionHeight === "same" ? baseTrackHeight : baseTrackHeight * 2;
+    const noteHeight = baseTrackHeight / 5;
     const maxPitchOffset = expandedTrackHeight - noteHeight;
     const pitchClasses = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
     const pitchColors: Record<string, string> = {
@@ -232,13 +233,14 @@ const parsedTracks = tracks.map((track) => {
 });
 
 const totalSteps = chords.length * stepsPerBar;
+const hasExpandableTracks = parsedTracks.some((track) => track.expandable);
 const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
   step % 2 === 0 ? `${step / 2 + 1}` : "+"
 ));
 ---
 
 <div
-  class="score-pattern"
+  class:list={["score-pattern", hasExpandableTracks && "all-tracks-collapsed"]}
   style={`--total-steps: ${totalSteps}; --steps-per-bar: ${stepsPerBar};`}
   aria-label={`Gesamtpartitur, ${chords.length} Takte, ${timeSignature}, ${resolution}`}
 >
@@ -253,7 +255,25 @@ const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
     )}
 
     <div class="measure-row" aria-label="Akkorde">
-      <div class="row-label" aria-hidden="true"></div>
+      <div class="row-label">
+        {hasExpandableTracks && (
+          <>
+            <span class="structure-label">Songstruktur</span>
+            <button
+              class="pitch-toggle global-pitch-toggle"
+              type="button"
+              data-expand-all
+              aria-expanded="false"
+              aria-label="Alle Spuren aufklappen"
+              title="Alle Spuren auf- oder zuklappen"
+            >
+              <svg aria-hidden="true" viewBox="0 0 12 12">
+                <path d="m4 2 4 4-4 4" />
+              </svg>
+            </button>
+          </>
+        )}
+      </div>
       {chords.map((chord, barIndex) => (
         <div
           class={`measure-cell ${barIndex % 2 === 1 ? "alternate-measure" : ""}`}
@@ -367,7 +387,7 @@ const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
     --label-width: 154px;
     --step-size: 30px;
     --measure-height: 34px;
-    --track-height: 34px;
+    --track-height: 55.25px;
     --step-gap: 2px;
     width: 100%;
     max-width: 100%;
@@ -446,6 +466,10 @@ const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
     align-items: stretch;
   }
 
+  .all-tracks-collapsed .step-row {
+    display: none;
+  }
+
   .track-group {
     display: flex;
     flex-direction: column;
@@ -455,16 +479,20 @@ const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
     box-sizing: border-box;
   }
 
+  .track-group + .track-group {
+    margin-block-start: 4px !important;
+  }
+
   .compact-track-group {
-    --track-height: 22px;
+    --track-height: 35.75px;
   }
 
   .drum-expandable-group:not(.is-expanded) {
-    --track-height: 34px;
+    --track-height: 55.25px;
   }
 
   .drum-expandable-group.is-expanded {
-    --track-height: 22px;
+    --track-height: 35.75px;
   }
 
   .drum-expandable-group:not(.is-expanded) .expanded-track-row,
@@ -504,6 +532,18 @@ const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
     gap: 6px;
   }
 
+  .structure-label {
+    color: #9ca3af;
+  }
+
+  .measure-row .row-label {
+    gap: 6px;
+  }
+
+  .global-pitch-toggle {
+    margin-left: 0 !important;
+  }
+
   .pitch-toggle {
     display: inline-grid;
     place-items: center;
@@ -531,6 +571,10 @@ const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
     stroke-linecap: round;
     stroke-linejoin: round;
     transition: transform 160ms ease, color 160ms ease;
+  }
+
+  .global-pitch-toggle[aria-expanded="true"] svg {
+    transform: rotate(90deg);
   }
 
   .pitch-toggle:hover,
@@ -588,7 +632,7 @@ const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
     border-radius: 2px;
     background: var(--track-color);
     color: #111827;
-    font-size: 9px;
+    font-size: 11.7px;
     font-weight: 700;
     line-height: 1;
     text-align: center;
@@ -598,7 +642,7 @@ const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
   }
 
   .pitch-expandable-group {
-    --base-track-height: 34px;
+    --base-track-height: 55.25px;
     --track-height: var(--base-track-height);
   }
 
@@ -623,15 +667,15 @@ const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
     position: relative;
     top: var(--drum-lane-offset, 0px);
     align-self: start;
-    height: 5px;
+    height: 6.5px;
     padding: 0;
     overflow: visible;
   }
 
   .drum-expandable-group:not(.is-expanded) .collapsed-track-row .drum-notehead {
-    width: 5px;
-    height: 5px;
-    flex-basis: 5px;
+    width: 6.5px;
+    height: 6.5px;
+    flex-basis: 6.5px;
   }
 
   .pitch-expandable-group.is-expanded .note-event:not(.chord-event) {
@@ -640,7 +684,7 @@ const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
     align-self: start;
     height: calc(var(--base-track-height) / 5);
     overflow: visible;
-    font-size: 7px;
+    font-size: 9.1px;
   }
 
   .pitch-expandable-group.is-expanded .chord-event.has-expanded-notes {
@@ -659,7 +703,7 @@ const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
     border-radius: 2px;
     background: color-mix(in srgb, var(--track-color), transparent 18%);
     color: #f8fafc;
-    font-size: 7px;
+    font-size: 9.1px;
     font-weight: 600;
     line-height: 1;
     white-space: nowrap;
@@ -686,7 +730,7 @@ const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
     display: inline;
     flex: 0 0 auto;
     margin-left: auto;
-    font-size: 6px;
+    font-size: 7.8px;
     font-weight: 600;
     text-align: right;
   }
@@ -769,20 +813,47 @@ const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
 </style>
 
 <script>
-  document.addEventListener("click", (event) => {
-    if (!(event.target instanceof Element)) return;
+  const syncPitchToggleState = (score: HTMLElement) => {
+    const tracks = Array.from(score.querySelectorAll<HTMLElement>(".expandable-track-group"));
+    const allExpanded = tracks.length > 0 && tracks.every((track) => track.classList.contains("is-expanded"));
+    const anyExpanded = tracks.some((track) => track.classList.contains("is-expanded"));
+    score.classList.toggle("all-tracks-collapsed", !anyExpanded);
 
-    const button = event.target.closest<HTMLButtonElement>("[data-pitch-toggle]");
-    const track = button?.closest<HTMLElement>(".expandable-track-group");
-    if (!button || !track) return;
-
-    const expanded = track.classList.toggle("is-expanded");
-    track.querySelectorAll<HTMLButtonElement>("[data-pitch-toggle]").forEach((toggle) => {
+    score.querySelectorAll<HTMLButtonElement>("[data-pitch-toggle]").forEach((toggle) => {
+      const track = toggle.closest<HTMLElement>(".expandable-track-group");
+      const expanded = track?.classList.contains("is-expanded") ?? false;
       toggle.setAttribute("aria-expanded", String(expanded));
       toggle.setAttribute(
         "aria-label",
         `${toggle.dataset.trackName} ${expanded ? "zuklappen" : "aufklappen"}`
       );
     });
+
+    score.querySelectorAll<HTMLButtonElement>("[data-expand-all]").forEach((toggle) => {
+      toggle.setAttribute("aria-expanded", String(allExpanded));
+      toggle.setAttribute("aria-label", allExpanded ? "Alle Spuren zuklappen" : "Alle Spuren aufklappen");
+    });
+  };
+
+  document.addEventListener("click", (event) => {
+    if (!(event.target instanceof Element)) return;
+
+    const globalButton = event.target.closest<HTMLButtonElement>("[data-expand-all]");
+    const score = globalButton?.closest<HTMLElement>(".score-pattern");
+    if (globalButton && score) {
+      const tracks = Array.from(score.querySelectorAll<HTMLElement>(".expandable-track-group"));
+      const shouldExpand = !tracks.every((track) => track.classList.contains("is-expanded"));
+      tracks.forEach((track) => track.classList.toggle("is-expanded", shouldExpand));
+      syncPitchToggleState(score);
+      return;
+    }
+
+    const button = event.target.closest<HTMLButtonElement>("[data-pitch-toggle]");
+    const track = button?.closest<HTMLElement>(".expandable-track-group");
+    const scoreRoot = button?.closest<HTMLElement>(".score-pattern");
+    if (!button || !track || !scoreRoot) return;
+
+    track.classList.toggle("is-expanded");
+    syncPitchToggleState(scoreRoot);
   });
 </script>
