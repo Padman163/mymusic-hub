@@ -7,12 +7,19 @@ import DrumPattern from '../../../components/DrumPattern.astro';
 import BassPattern from '../../../components/BassPattern.astro';
 import GuitarPattern from '../../../components/GuitarPattern.astro';
 import VocalPattern from '../../../components/VocalPattern.astro';
+import ChordProgression from '../../../components/ChordProgression.astro';
 
 Klicke auf die Saiten, um eigene Griffmuster oder Tonleitern zu markieren:
 
 <FretboardClickable />
 
 <DrumPattern showVelocity={true} />
+
+## Akkordfolge
+
+Ein reines Akkord-Visual: Akkordsymbole mit ihren Stufen in E-Moll, ohne Noten- oder Rhythmusdarstellung.
+
+<ChordProgression chords={['Em', 'C', 'G', 'D']} keyRoot="E" scale="naturalMinor" />
 
 ## Bass-Pattern testen
 
