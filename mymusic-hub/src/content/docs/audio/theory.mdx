@@ -6,6 +6,7 @@ import FretboardClickable from '../../../components/FretboardClickable.astro';
 import DrumPattern from '../../../components/DrumPattern.astro';
 import BassPattern from '../../../components/BassPattern.astro';
 import GuitarPattern from '../../../components/GuitarPattern.astro';
+import VocalPattern from '../../../components/VocalPattern.astro';
 
 Klicke auf die Saiten, um eigene Griffmuster oder Tonleitern zu markieren:
 
@@ -40,5 +41,47 @@ Viertaktiges Powerchord-Pattern passend zur Bassfolge in E-Moll. Die Noten werde
     { chord: 'C', notes: ['C2', 'G2'], articulations: ['PM', 'PM', 'PM', 'PM', 'PM', 'PM', 'PM', 'PM'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
     { chord: 'G', notes: ['G2', 'D3'], articulations: ['PM', 'PM', 'PM', 'PM', 'PM', 'PM', 'PM', 'PM'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
     { chord: 'D', notes: ['D2', 'A2'], articulations: ['PM', 'PM', 'PM', 'PM', 'PM', 'PM', 'PM', 'PM'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] }
+  ]}
+/>
+
+## Gesangs-Pattern testen
+
+Der Gesang legt die Silben direkt in die Notenblöcke; die Tonhöhe wird über die Zeile angezeigt. Die Silbentrennung folgt dem Synthesizer-V-Format: Ein Bindestrich am Silbenende verbindet Folgesilben desselben Wortes. Das Beispiel zeigt den viertaktigen Refrain über `Em – C – G – D`; Takt 2 lässt Platz zum Atmen.
+
+<VocalPattern
+  bars={[
+    {
+      chord: 'Em',
+      lyrics: [
+        { text: 'We', pitch: 'E3', startStep: 0, lengthSteps: 2 },
+        { text: 'start', pitch: 'G3', startStep: 2, lengthSteps: 1 },
+        { text: 'the', pitch: 'A3', startStep: 3, lengthSteps: 1 },
+        { text: 'fi-', pitch: 'B3', startStep: 4, lengthSteps: 2 },
+        { text: 're', pitch: 'B3', startStep: 6, lengthSteps: 2 }
+      ]
+    },
+    {
+      chord: 'C',
+      lyrics: [
+        { text: 'to-night', pitch: 'G3', startStep: 0, lengthSteps: 4 }
+      ]
+    },
+    {
+      chord: 'G',
+      lyrics: [
+        { text: 'turn-', pitch: 'D4', startStep: 0, lengthSteps: 2 },
+        { text: 'ing', pitch: 'B3', startStep: 2, lengthSteps: 1 },
+        { text: 'the', pitch: 'A3', startStep: 3, lengthSteps: 1 },
+        { text: 'dark', pitch: 'G3', startStep: 4, lengthSteps: 2 },
+        { text: 'in-', pitch: 'G3', startStep: 6, lengthSteps: 2 }
+      ]
+    },
+    {
+      chord: 'D',
+      lyrics: [
+        { text: 'to', pitch: 'F#3', startStep: 0, lengthSteps: 4 },
+        { text: 'light', pitch: 'D3', startStep: 4, lengthSteps: 4 }
+      ]
+    }
   ]}
 />
