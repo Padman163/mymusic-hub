@@ -2,22 +2,22 @@
 // src/components/ChordSlider.astro
 const tuning = ["e", "B", "G", "D", "A", "E"];
 
-// Neues, verschlanktes Layout (ohne den doppelten 12. Bund)
-const nutX = 74;
-const fretWidth = 52;
-const fretCount = 13; // Wir zeichnen 13 Bünde, damit die Oktave für Bund 11 noch Platz hat
-const svgWidth = 766; // 74 + (13 * 52) + 16
+// Neues, schmales Layout
+const nutX = 125;
+const fretWidth = 46;
+const fretCount = 14; 
+const svgWidth = 784; 
 const svgHeight = 260;
 
 // Y-Achsen der Saiten
 const stringY = (index: number) => 30 + index * 26; // Y: 30, 56, 82, 108, 134, 160
 
-// X-Achse für offene Saiten / X-Markierungen (Fret 0)
-const openNoteX = 50;
+// Exakte X-Achse für den offenen 0. Bund und die ×-Marker (in einer Flucht)
+const openNoteX = 105;
 
 // Farbpalette
-const colorRoot = "#F38181";
-const colorFifth = "#64C4ED";
+const colorRoot = "#F38181"; 
+const colorFifth = "#64C4ED"; 
 ---
 
 <div class="powerchord-interactive">
@@ -37,30 +37,25 @@ const colorFifth = "#64C4ED";
       <div class="fretboard-scroll">
         <div class="fretboard-wrapper">
           <svg class="fretboard" viewBox={`0 0 ${svgWidth} ${svgHeight}`} role="img">
-            <!-- Griffbrett Hintergrund -->
             <rect x={nutX} y="15" width={fretCount * fretWidth} height="160" rx="3" fill="#18181b" stroke="#3f3f46" stroke-width="1" />
             
-            <!-- Inlays -->
             {[3, 5, 7, 9].map(fret => (
               <circle cx={nutX + (fret - 0.5) * fretWidth} cy="95" r="6" fill="#3f3f46" />
             ))}
-            <!-- 12. Bund Doppel-Inlays -->
             <circle cx={nutX + 11.5 * fretWidth} cy="69" r="6" fill="#3f3f46" />
             <circle cx={nutX + 11.5 * fretWidth} cy="121" r="6" fill="#3f3f46" />
 
-            <!-- Saiten, Saitennamen & X-Marker -->
             {tuning.map((stringName, stringIndex) => {
               const isActive = stringIndex === 5 || stringIndex === 4;
               return (
                 <>
-                  <text class="string-label" x="24" y={stringY(stringIndex)} text-anchor="middle" dominant-baseline="central">{stringName}</text>
+                  <text class="string-label" x="75" y={stringY(stringIndex)} text-anchor="middle" dominant-baseline="central">{stringName}</text>
                   <line x1={nutX} y1={stringY(stringIndex)} x2={nutX + fretCount * fretWidth} y2={stringY(stringIndex)} stroke="#a1a1aa" stroke-width={stringIndex === 5 ? 2.6 : 1.4} />
                   <text class="muted-string" data-string={stringIndex} x={openNoteX} y={stringY(stringIndex)} dominant-baseline="central" opacity={isActive ? "0" : "1"}>×</text>
                 </>
               );
             })}
 
-            <!-- Bundstäbchen & Zahlen -->
             {Array.from({ length: fretCount }, (_, index) => {
               const fret = index + 1;
               const x = nutX + index * fretWidth;
@@ -72,13 +67,12 @@ const colorFifth = "#64C4ED";
               );
             })}
 
-            <!-- Dynamische Tick-Labels (Notennamen unter dem horizontalen Slider) -->
             {Array.from({ length: 12 }, (_, i) => {
               const x = i === 0 ? openNoteX : nutX + (i - 0.5) * fretWidth;
               return <text class="tick-label" data-fret={i} x={x} y="241" text-anchor="middle" dominant-baseline="central">E</text>;
             })}
 
-            <!-- Dynamisch animierte Noten (über CSS transform synchronisiert) -->
+            <!-- Animierte Noten-Gruppen -->
             <g class="dot-root anim-group" style={`transform: translate(${openNoteX}px, ${stringY(5)}px);`}>
               <circle cx="0" cy="0" r="13" fill={colorRoot} />
               <text class="note-label" x="0" y="0" text-anchor="middle" dominant-baseline="central">E</text>
@@ -89,10 +83,10 @@ const colorFifth = "#64C4ED";
             </g>
           </svg>
 
-          <!-- VERTICAL SLIDER (Saiten-Auswahl) -->
-          <input type="range" class="vertical-string-slider" min="3" max="5" value="5" step="1" aria-label="Grundton-Saite auswählen" />
+          <!-- VERTICAL SLIDER -->
+          <input type="range" class="vertical-string-slider slider-2note" min="1" max="5" value="5" step="1" aria-label="Grundton-Saite auswählen" />
 
-          <!-- HORIZONTAL SLIDER (Fret-Auswahl max 11) -->
+          <!-- HORIZONTAL SLIDER -->
           <input type="range" class="horizontal-fret-slider" min="0" max="11" value="0" step="1" aria-label="Bund auswählen" />
         </div>
       </div>
@@ -125,7 +119,7 @@ const colorFifth = "#64C4ED";
               const isActive = stringIndex === 5 || stringIndex === 4 || stringIndex === 3;
               return (
                 <>
-                  <text class="string-label" x="24" y={stringY(stringIndex)} text-anchor="middle" dominant-baseline="central">{stringName}</text>
+                  <text class="string-label" x="75" y={stringY(stringIndex)} text-anchor="middle" dominant-baseline="central">{stringName}</text>
                   <line x1={nutX} y1={stringY(stringIndex)} x2={nutX + fretCount * fretWidth} y2={stringY(stringIndex)} stroke="#a1a1aa" stroke-width={stringIndex === 5 ? 2.6 : 1.4} />
                   <text class="muted-string" data-string={stringIndex} x={openNoteX} y={stringY(stringIndex)} dominant-baseline="central" opacity={isActive ? "0" : "1"}>×</text>
                 </>
@@ -163,9 +157,10 @@ const colorFifth = "#64C4ED";
           </svg>
 
           <!-- VERTICAL SLIDER -->
-          <input type="range" class="vertical-string-slider" min="3" max="5" value="5" step="1" aria-label="Grundton-Saite auswählen" />
+          <!-- Geht beim 3-tönigen nur bis 2 (G-Saite) -->
+          <input type="range" class="vertical-string-slider slider-3note" min="2" max="5" value="5" step="1" aria-label="Grundton-Saite auswählen" />
 
-          <!-- HORIZONTAL SLIDER (Fret-Auswahl max 11) -->
+          <!-- HORIZONTAL SLIDER -->
           <input type="range" class="horizontal-fret-slider" min="0" max="11" value="0" step="1" aria-label="Bund auswählen" />
         </div>
       </div>
@@ -183,18 +178,19 @@ const colorFifth = "#64C4ED";
   function setupPowerChordInteractive() {
     const cards = document.querySelectorAll('.interactive-card');
     
-    // Komplettes Noten-Mapping (ausreichend lang für Bund 11 + Offset)
+    // Komplettes Noten-Mapping INKLUSIVE hoher e-Saite (0), damit das Script nicht abstürzt!
     const notesByString = {
       5: ['E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G'],
       4: ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'C'],
       3: ['D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F'],
       2: ['G', 'G#', 'A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#'],
-      1: ['B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'C', 'C#', 'D']
+      1: ['B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'C', 'C#', 'D'],
+      0: ['E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G']
     };
 
-    const nutX = 74;
-    const fretWidth = 52;
-    const openNoteX = 50;
+    const nutX = 125;
+    const fretWidth = 46;
+    const openNoteX = 105;
     const getStringY = (idx) => 30 + idx * 26;
 
     cards.forEach(card => {
@@ -218,7 +214,7 @@ const colorFifth = "#64C4ED";
           nameDisplay.textContent = rootNote + '5';
         }
 
-        // Ticks-Leiste im SVG aktualisieren
+        // Ticks-Leiste aktualisieren
         tickLabels.forEach((lbl, i) => {
           lbl.textContent = notesByString[rootString][i];
           if (i === fret) {
@@ -236,12 +232,16 @@ const colorFifth = "#64C4ED";
 
         const rootY = getStringY(rootString);
         const fifthY = getStringY(fifthString);
-        const octaveY = getStringY(octaveString);
+        const octaveY = is3Note ? getStringY(octaveString) : 0;
 
-        // -- LOGIK FÜR DIE D-SAITE (B-Saiten-Ausgleich) --
-        const octaveFretOffset = (rootString === 3) ? 3 : 2;
+        // -- B-SAITEN AUSGLEICHS-LOGIK --
+        const isRootG = (rootString === 2);
+        const isRootD = (rootString === 3);
 
-        const fifthFret = fret === 0 ? 2 : fret + 2;
+        const fifthFretOffset = isRootG ? 3 : 2;
+        const octaveFretOffset = (isRootD || isRootG) ? 3 : 2;
+
+        const fifthFret = fret === 0 ? fifthFretOffset : fret + fifthFretOffset;
         const octaveFret = fret === 0 ? octaveFretOffset : fret + octaveFretOffset;
 
         // X-Achsen
@@ -249,23 +249,21 @@ const colorFifth = "#64C4ED";
         const fifthX = nutX + (fifthFret - 0.5) * fretWidth;
         const octaveX = nutX + (octaveFret - 0.5) * fretWidth;
 
-        // Noten auslesen
+        // Noten-Texte (jetzt sicher, da index 0 existiert!)
         const fifthNote = notesByString[fifthString][fifthFret];
-        const octaveNote = notesByString[octaveString][octaveFret];
+        const octaveNote = is3Note ? notesByString[octaveString][octaveFret] : '';
 
-        // -- Root über Translate animieren --
+        // -- Animieren über CSS Transform --
         dotRoot.style.transform = `translate(${rootX}px, ${rootY}px)`;
         const rText = dotRoot.querySelector('text');
         rText.textContent = rootNote;
         rText.setAttribute('font-size', rootNote.length > 1 ? '10' : '12');
 
-        // -- Fifth über Translate animieren --
         dotFifth.style.transform = `translate(${fifthX}px, ${fifthY}px)`;
         const fText = dotFifth.querySelector('text');
         fText.textContent = fifthNote;
         fText.setAttribute('font-size', fifthNote.length > 1 ? '10' : '12');
 
-        // -- Octave über Translate animieren --
         if (is3Note && dotOctave) {
           dotOctave.style.transform = `translate(${octaveX}px, ${octaveY}px)`;
           const oText = dotOctave.querySelector('text');
@@ -273,7 +271,7 @@ const colorFifth = "#64C4ED";
           oText.setAttribute('font-size', octaveNote.length > 1 ? '10' : '12');
         }
 
-        // Gemutete Saiten aktualisieren
+        // Gemutete Saiten aktualisieren (x Marker ein-/ausblenden)
         const activeStrings = is3Note ? [rootString, fifthString, octaveString] : [rootString, fifthString];
         card.querySelectorAll('.muted-string').forEach(muted => {
           const sIdx = parseInt(muted.getAttribute('data-string'), 10);
@@ -284,7 +282,7 @@ const colorFifth = "#64C4ED";
       vSlider?.addEventListener('input', updateDiagram);
       hSlider?.addEventListener('input', updateDiagram);
       
-      // Initiale Darstellung sofort erzwingen
+      // Initial ausführen
       updateDiagram();
     });
   }
@@ -357,14 +355,15 @@ const colorFifth = "#64C4ED";
 
   .fretboard-scroll {
     width: 100%;
+    max-width: 100%;
     overflow-x: auto;
     padding-bottom: 0.5rem;
   }
 
   .fretboard-wrapper {
     position: relative;
-    width: 766px; 
-    height: 260px;
+    width: 784px;
+    height: 260px; 
   }
 
   .fretboard {
@@ -415,7 +414,7 @@ const colorFifth = "#64C4ED";
     transition: all 0.2s ease;
   }
 
-  /* SVG Gruppen synchron animieren */
+  /* Animierte SVG Gruppen. Transform garantiert zeitsynchrone Ausführung ohne Ruckeln */
   .anim-group {
     transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
@@ -424,8 +423,8 @@ const colorFifth = "#64C4ED";
   .horizontal-fret-slider {
     position: absolute;
     top: 217px;  
-    left: 40px;  /* X=50 minus Slider-Thumb Radius 10px */
-    width: 590px; /* Von Fret 0 bis Fret 11 Distanz (570px) + 20px */
+    left: 95px;   /* Startet genau unter den offenen Noten (X=105) - Thumb (10px) */
+    width: 526px; /* Distanz von X=105 bis Fret 11 (X=608) = 503px. + Thumb-Puffer = 526px */
     height: 20px;
     margin: 0;
     padding: 0;
@@ -434,14 +433,25 @@ const colorFifth = "#64C4ED";
   /* -- VERTIKALER SLIDER (Saiten) -- */
   .vertical-string-slider {
     position: absolute;
-    top: 124px;  
-    left: -28px; /* Perfekt platziert links neben den Saitennamen */
-    width: 72px; 
-    height: 20px;
     margin: 0;
     padding: 0;
+    height: 20px;
     transform: rotate(90deg); 
     transform-origin: center center;
+  }
+
+  /* 2-Note geht von Saite 1 bis 5 (Y=56 bis Y=160). Distanz=104. Center Y=108. */
+  .slider-2note {
+    top: 98px;     /* Center Y (108) - Thumb Radius (10) */
+    left: -17px;   /* Liegt sauber links neben den Saiten-Labels */
+    width: 124px;  /* 104px Distanz + 20px Thumb */
+  }
+
+  /* 3-Note geht von Saite 2 bis 5 (Y=82 bis Y=160). Distanz=78. Center Y=121. */
+  .slider-3note {
+    top: 111px;    /* Center Y (121) - Thumb Radius (10) */
+    left: -4px;    /* Leicht versetzt angepasst für den kürzeren Weg */
+    width: 98px;   /* 78px Distanz + 20px Thumb */
   }
 
   /* Custom Slider Styling */
@@ -464,7 +474,7 @@ const colorFifth = "#64C4ED";
   }
 
   .vertical-string-slider::-webkit-slider-runnable-track {
-    background: #3f3f4688; /* Vertikaler Track etwas dezenter */
+    background: #3f3f4688; 
   }
 
   input[type=range]::-webkit-slider-thumb {
