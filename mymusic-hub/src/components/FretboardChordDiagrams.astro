@@ -5,7 +5,15 @@ export interface ChordPosition {
   fret: number;
   note: string;
   octave: number;
-  role: "root" | "third" | "fourth" | "fifth" | "seventh" | "octave" | "ninth";
+  // ZUKUNFTSSICHER: Alle relevanten Intervalle
+  role: "root" | "second" | "third" | "fourth" | "fifth" | "sixth" | "seventh" | "octave" | "ninth" | "eleventh" | "thirteenth";
+}
+
+// NEU: Interface für Barré-Griffe
+export interface Barre {
+  fret: number;
+  startString: number; // z.B. 5 für tiefe E-Saite
+  endString: number;   // z.B. 0 für hohe e-Saite
 }
 
 export interface ChordDiagram {
@@ -14,6 +22,7 @@ export interface ChordDiagram {
   degree: string;
   function: string;
   contextLabel?: string;
+  barre?: Barre; // NEU: Optionaler Barré-Griff
   positions: ChordPosition[];
 }
 
@@ -22,7 +31,7 @@ export interface Props {
   keyLabel: string;
   showLegend?: boolean;
   gallery?: boolean;
-  compact?: boolean; // NEU: Aktiviert die reine Grid-Ansicht ohne Details
+  compact?: boolean;
 }
 
 const {
@@ -30,43 +39,52 @@ const {
   keyLabel,
   showLegend = true,
   gallery = false,
-  compact = false // Standardmäßig aus
+  compact = false
 } = Astro.props;
 
 const tuning = ["e", "B", "G", "D", "A", "E"];
 const stringY = (index: number) => 22 + index * 18;
 const nutX = 58;
 const fretWidth = 62;
+
+// Alle Farben für die Legende und Dots
 const colors = {
   root: "#f87171",
+  second: "#fcd34d",
   third: "#c084fc",
-  fourth: "#f472b6", 
+  fourth: "#f472b6",
   fifth: "#60a5fa",
+  sixth: "#f43f5e",
   seventh: "#4ade80",
   octave: "#fbbf24",
-  ninth: "#2dd4bf"  
+  ninth: "#2dd4bf",
+  eleventh: "#14b8a6",
+  thirteenth: "#8b5cf6"
 };
 
 const roleLabels = {
   root: "Grundton",
+  second: "Sekunde",
   third: "Terz",
-  fourth: "Quarte",  
+  fourth: "Quarte",
   fifth: "Quinte",
-  seventh: "kleine Septime",
+  sixth: "Sexte",
+  seventh: "Septime",
   octave: "Oktave",
-  ninth: "None"      
+  ninth: "None",
+  eleventh: "Undezime",
+  thirteenth: "Tredezime"
 };
 
-// 1. Alle verwendeten Rollen sammeln
+// Dynamische Legende
 const usedRoles = new Set<ChordPosition["role"]>();
 chords.forEach(chord => {
   chord.positions.forEach(pos => usedRoles.add(pos.role));
 });
 
-// 2. Gewünschte Reihenfolge für die Legende festlegen
-const roleOrder: ChordPosition["role"][] = ["root", "third", "fourth", "fifth", "seventh", "octave", "ninth"];
-
-// 3. Nur die Rollen behalten, die auch wirklich in den Akkorden vorkommen
+const roleOrder: ChordPosition["role"][] = [
+  "root", "second", "third", "fourth", "fifth", "sixth", "seventh", "octave", "ninth", "eleventh", "thirteenth"
+];
 const activeLegendRoles = roleOrder.filter(role => usedRoles.has(role));
 
 if (chords.length === 0) {
@@ -105,18 +123,25 @@ for (const chord of chords) {
     </nav>
   )}
 
-  <div class="chord-diagrams" aria-label={`Gitarrengriffe in ${keyLabel}`}>
+<div class="chord-diagrams" aria-label={`Gitarrengriffe in ${keyLabel}`}>
   {chords.map((chord, index) => {
+    // 1. Berechnung der sichtbaren Bünde inklusive Barré absichern
     const frettedPositions = chord.positions.filter(({ fret }) => fret > 0);
-    const firstPlayedFret = Math.min(...frettedPositions.map(({ fret }) => fret));
-    const lastPlayedFret = Math.max(...frettedPositions.map(({ fret }) => fret));
+    let firstPlayedFret = Math.min(...frettedPositions.map(({ fret }) => fret));
+    let lastPlayedFret = Math.max(...frettedPositions.map(({ fret }) => fret));
+    
+    if (chord.barre) {
+      firstPlayedFret = Math.min(firstPlayedFret, chord.barre.fret);
+      lastPlayedFret = Math.max(lastPlayedFret, chord.barre.fret);
+    }
+
     const visibleFirstFret = lastPlayedFret - firstPlayedFret + 1 < 2
       ? Math.max(1, firstPlayedFret - 1)
       : firstPlayedFret;
     const fretCount = lastPlayedFret - visibleFirstFret + 1;
     const playedStrings = new Set(chord.positions.map(({ stringIndex }) => stringIndex));
 
-    return (
+return (
         <article
           class="chord-card"
           aria-label={`${chord.chord}${!compact ? `: ${chord.degree} ${chord.function}` : ""}`}
@@ -124,12 +149,11 @@ for (const chord of chords) {
           style={gallery && !compact ? "grid-area: 1 / 1;" : undefined}
         >
           <header class="chord-heading">
-            {/* Stufe und Funktion nur anzeigen, wenn NICHT compact */}
             {!compact && <span class="degree-label">{chord.degree} · {chord.function}</span>}
             <h4>{chord.chord}</h4>
           </header>
 
-        <svg
+ <svg
           class="fretboard"
           viewBox="0 0 320 168"
           role="img"
@@ -163,24 +187,24 @@ for (const chord of chords) {
               )}
             </>
           ))}
-          {Array.from({ length: fretCount + 1 }, (_, index) => {
-            const x = nutX + index * fretWidth;
-            return (
-              <line
-                x1={x}
-                y1="13"
-                x2={x}
-                y2="121"
-                stroke={visibleFirstFret === 1 && index === 0 ? "#f4f4f5" : "#52525b"}
-                stroke-width={visibleFirstFret === 1 && index === 0 ? 4 : 2}
-              />
-            );
-          })}
+          {chord.barre && (
+            <line
+              x1={nutX + (chord.barre.fret - visibleFirstFret + 0.5) * fretWidth}
+              y1={stringY(Math.min(chord.barre.startString, chord.barre.endString))}
+              x2={nutX + (chord.barre.fret - visibleFirstFret + 0.5) * fretWidth}
+              y2={stringY(Math.max(chord.barre.startString, chord.barre.endString))}
+              stroke="#52525b"
+              stroke-width="16"
+              stroke-linecap="round"
+            />
+          )}
           {Array.from({ length: fretCount }, (_, index) => {
             const fret = visibleFirstFret + index;
             const x = nutX + (index + 0.5) * fretWidth;
             return <text class="fret-label" x={x} y="143">{fret}</text>;
           })}
+
+
           {chord.positions.map(({ stringIndex, fret, note, role }) => {
             const x = fret === 0
               ? 38
@@ -577,6 +601,12 @@ for (const chord of chords) {
   .ninth {
     background-color: #2dd4bf; 
   }
+.second { background-color: #fcd34d; }
+  .sixth { background-color: #f43f5e; }
+  .eleventh { background-color: #14b8a6; }
+  .thirteenth { background-color: #8b5cf6; }
+
+
   .diagram-legend {
     display: flex;
     flex-wrap: wrap;
