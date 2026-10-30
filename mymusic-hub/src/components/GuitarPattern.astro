@@ -82,13 +82,38 @@ const powerChordLabel = (chord: string) => {
   const match = chord.match(/^([A-G])(#?)/);
   return match ? `${match[1]}${match[2]}5` : chord;
 };
-const pitchColors: Record<string, string> = {
-  C: "#ef4444",
-  D: "#eab308",
-  E: "#22c55e",
-  G: "#3b82f6"
+
+// Neue Farb-Definitionen für die Intervalle
+const intervalColors: Record<string, string> = {
+  "1":  "#F38181",
+  "♭2": "#FFAAA6",
+  "2":  "#F4C7AB",
+  "♭3": "#EAA0E3",
+  "3":  "#D382DC",
+  "4":  "#B862D3",
+  "♭5": "#7F8BE8",
+  "5":  "#64C4ED",
+  "♭6": "#52DEE5",
+  "6":  "#6BE4C6",
+  "♭7": "#83E8BA",
+  "7":  "#CBDD7B"
 };
-const colorForPitch = (pitchClass: string) => pitchColors[pitchClass] ?? "#a78bfa";
+const intervalMap = ["1", "♭2", "2", "♭3", "3", "4", "♭5", "5", "♭6", "6", "♭7", "7"];
+
+// Berechnet die Farbe basierend auf dem Abstand zum Akkord-Grundton
+const getIntervalColor = (notePitchClass: string, chord: string) => {
+  const match = chord.match(/^([A-G])(#?)/);
+  if (!match) return "#a78bfa";
+  const chordRoot = `${match[1]}${match[2]}`;
+  const rootIndex = pitchClasses.indexOf(chordRoot);
+  const noteIndex = pitchClasses.indexOf(notePitchClass);
+  
+  if (rootIndex === -1 || noteIndex === -1) return "#a78bfa";
+  const semitones = (noteIndex - rootIndex + 12) % 12;
+  
+  return intervalColors[intervalMap[semitones]] ?? "#a78bfa";
+};
+
 const parsedBars = bars.map((bar) => {
   if (bar.notes.length === 0 && !bar.noteEvents?.length) {
     throw new Error(`Der Gitarrentakt "${bar.chord}" muss mindestens einen Ton enthalten.`);
@@ -136,7 +161,7 @@ const pitches = Array.from({ length: highestMidi - lowestMidi + 1 }, (_, index) 
   const midi = lowestMidi + index;
   const pitchClass = pitchClasses[((midi % 12) + 12) % 12];
   return scalePitchClasses.has(midi % 12)
-    ? { midi, label: `${pitchClass}${Math.floor(midi / 12) - 1}` }
+    ? { midi, label: `${pitchClass}${Math.floor(midi / 12) - 1}`, pitchClass }
     : null;
 }).filter((pitch) => pitch !== null).reverse();
 const totalSteps = bars.length * stepsPerBar;
@@ -238,7 +263,7 @@ const articulationRuns = parsedBars.flatMap(({ articulations }, barIndex) => {
                     <span
                       class="note-block"
                       style={bar.parsedNoteEvents
-                        ? `--note-color: ${colorForPitch(noteStartingHere.pitchClass)};`
+                        ? `--note-color: ${getIntervalColor(noteStartingHere.pitchClass, bar.chord)};`
                         : undefined}
                     >
                       {noteStartingHere.note}
@@ -264,7 +289,7 @@ const articulationRuns = parsedBars.flatMap(({ articulations }, barIndex) => {
               <div
                 class={`note-cell ${barIndex % 2 === 1 ? "alternate-bar" : ""}`}
                 style={isActive
-                  ? `grid-column: ${step + 2} / span ${noteSpans};`
+                  ? `grid-column: ${step + 2} / span ${noteSpans}; --note-color: ${getIntervalColor(pitch.pitchClass, bar.chord)};`
                   : `grid-column: ${step + 2};`}
                 aria-label={isActive
                   ? `Takt ${startBar + barIndex}, ${bar.chord}, ${pitch.label}, Schritt ${stepIndex + 1}`

@@ -78,14 +78,38 @@ const pitches = Array.from({ length: highestMidi - lowestMidi + 1 }, (_, index) 
     : null;
 }).filter((pitch) => pitch !== null).reverse();
 const keyLabel = `${keyRoot} ${scale === "major" ? "Dur" : "Moll"}`;
-const pitchColors: Record<string, string> = {
-  C: "#ef4444",
-  D: "#eab308",
-  E: "#22c55e",
-  G: "#3b82f6"
-};
-const colorForPitch = (pitchClass: string) => pitchColors[pitchClass] ?? "#a78bfa";
 const velocities = [...new Set(bars.map(({ velocity }) => velocity ?? 102))];
+
+// Neue Farb-Definitionen für die Intervalle
+const intervalColors: Record<string, string> = {
+  "1":  "#F38181",
+  "♭2": "#FFAAA6",
+  "2":  "#F4C7AB",
+  "♭3": "#EAA0E3",
+  "3":  "#D382DC",
+  "4":  "#B862D3",
+  "♭5": "#7F8BE8",
+  "5":  "#64C4ED",
+  "♭6": "#52DEE5",
+  "6":  "#6BE4C6",
+  "♭7": "#83E8BA",
+  "7":  "#CBDD7B"
+};
+const intervalMap = ["1", "♭2", "2", "♭3", "3", "4", "♭5", "5", "♭6", "6", "♭7", "7"];
+
+// Berechnet die Farbe basierend auf dem Abstand zum Akkord-Grundton
+const getIntervalColor = (notePitchClass: string, chord: string) => {
+  const match = chord.match(/^([A-G])(#?)/);
+  if (!match) return "#a78bfa"; // Fallback
+  const chordRoot = `${match[1]}${match[2]}`;
+  const rootIndex = pitchClasses.indexOf(chordRoot);
+  const noteIndex = pitchClasses.indexOf(notePitchClass);
+  
+  if (rootIndex === -1 || noteIndex === -1) return "#a78bfa";
+  const semitones = (noteIndex - rootIndex + 12) % 12;
+  
+  return intervalColors[intervalMap[semitones]] ?? "#a78bfa";
+};
 ---
 
 <div
@@ -117,7 +141,8 @@ const velocities = [...new Set(bars.map(({ velocity }) => velocity ?? 102))];
   <div class="piano-roll">
     {pitches.map((pitch) => (
       <div class="pitch-row">
-        <div class="pitch-label" style={`--note-color: ${colorForPitch(pitch.pitchClass)};`}>
+        <!-- Das Label links bekommt zur Orientierung die Farbe bezogen auf den Grundton des Songs (keyRoot) -->
+        <div class="pitch-label" style={`--note-color: ${getIntervalColor(pitch.pitchClass, keyRoot)};`}>
           {pitch.label}
         </div>
         {bars.flatMap((bar, barIndex) =>
@@ -135,7 +160,7 @@ const velocities = [...new Set(bars.map(({ velocity }) => velocity ?? 102))];
               <div
                 class={`note-cell ${barIndex % 2 === 1 ? "alternate-bar" : ""}`}
                 style={isActive
-                  ? `grid-column: ${step + 2} / span ${noteSpans}; --note-color: ${colorForPitch(pitch.pitchClass)};`
+                  ? `grid-column: ${step + 2} / span ${noteSpans}; --note-color: ${getIntervalColor(pitch.pitchClass, bar.chord)};`
                   : `grid-column: ${step + 2};`}
                 aria-label={isActive
                   ? `Takt ${startBar + barIndex}, ${bar.chord}, ${pitch.label}, Schritt ${stepIndex + 1}, Anschlag ${velocity}`

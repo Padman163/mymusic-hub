@@ -35,13 +35,6 @@ if (bars.length === 0) {
 }
 
 const pitchClasses = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-const pitchColors: Record<string, string> = {
-  C: "#ef4444",
-  D: "#eab308",
-  E: "#22c55e",
-  G: "#3b82f6"
-};
-const colorForPitch = (pitchClass: string) => pitchColors[pitchClass] ?? "#a78bfa";
 const notePattern = /^([A-G])(#?)(-?\d+)$/;
 const parsePitch = (pitch: string) => {
   const match = pitch.match(notePattern);
@@ -55,6 +48,37 @@ const parsePitch = (pitch: string) => {
     midi: (Number(octaveText) + 1) * 12 + pitchClasses.indexOf(pitchClass),
     pitchClass
   };
+};
+
+// Neue Farb-Definitionen für die Intervalle
+const intervalColors: Record<string, string> = {
+  "1":  "#F38181",
+  "♭2": "#FFAAA6",
+  "2":  "#F4C7AB",
+  "♭3": "#EAA0E3",
+  "3":  "#D382DC",
+  "4":  "#B862D3",
+  "♭5": "#7F8BE8",
+  "5":  "#64C4ED",
+  "♭6": "#52DEE5",
+  "6":  "#6BE4C6",
+  "♭7": "#83E8BA",
+  "7":  "#CBDD7B"
+};
+const intervalMap = ["1", "♭2", "2", "♭3", "3", "4", "♭5", "5", "♭6", "6", "♭7", "7"];
+
+// Berechnet die Farbe basierend auf dem Abstand zum Akkord-Grundton
+const getIntervalColor = (notePitchClass: string, chord: string) => {
+  const match = chord.match(/^([A-G])(#?)/);
+  if (!match) return "#a78bfa";
+  const chordRoot = `${match[1]}${match[2]}`;
+  const rootIndex = pitchClasses.indexOf(chordRoot);
+  const noteIndex = pitchClasses.indexOf(notePitchClass);
+  
+  if (rootIndex === -1 || noteIndex === -1) return "#a78bfa";
+  const semitones = (noteIndex - rootIndex + 12) % 12;
+  
+  return intervalColors[intervalMap[semitones]] ?? "#a78bfa";
 };
 
 const parsedBars = bars.map((bar) => {
@@ -98,7 +122,7 @@ const highestMidi = Math.max(...allPitches);
 const pitches = Array.from({ length: highestMidi - lowestMidi + 1 }, (_, index) => {
   const midi = lowestMidi + index;
   const pitchClass = pitchClasses[((midi % 12) + 12) % 12];
-  return { midi, label: `${pitchClass}${Math.floor(midi / 12) - 1}` };
+  return { midi, label: `${pitchClass}${Math.floor(midi / 12) - 1}`, pitchClass };
 }).reverse();
 const totalSteps = bars.length * stepsPerBar;
 const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
@@ -135,6 +159,7 @@ const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
   <div class="piano-roll">
     {pitches.map((pitch) => (
       <div class="pitch-row">
+        <!-- Das Label links bleibt neutral oder du könntest hier auch eine Farbe setzen (z.B. basierend auf dem ersten Takt-Akkord). Hier bleibt es vorerst neutral -->
         <div class="row-label pitch-label">{pitch.label}</div>
         {parsedBars.flatMap((bar, barIndex) =>
           Array.from({ length: stepsPerBar }, (_, stepIndex) => {
@@ -160,7 +185,7 @@ const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
                 {lyricStartingHere && (
                   <span
                     class="lyric-block"
-                    style={`--note-color: ${colorForPitch(lyricStartingHere.pitchClass)};`}
+                    style={`--note-color: ${getIntervalColor(lyricStartingHere.pitchClass, bar.chord)};`}
                     title={`${lyricStartingHere.text} · ${lyricStartingHere.pitch}`}
                   >
                     <span class="lyric-text">{lyricStartingHere.text}</span>
