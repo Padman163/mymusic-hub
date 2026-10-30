@@ -1,0 +1,69 @@
+---
+export interface Props {
+  lyrics: string;
+}
+
+const { lyrics } = Astro.props;
+
+// Teilt den Text in einzelne Zeilen (div) auf. 
+// Dadurch können wir Zeilenabstand und Akkord-Abstand getrennt steuern.
+const formattedLyrics = lyrics
+  .trim()
+  .split('\n')
+  .map(line => {
+    const parsed = line.replace(/\[(.*?)\]/g, '<span class="chord" data-chord="$1"></span>');
+    // Leere Zeilen erhalten ein Leerzeichen, damit der Absatzabstand erhalten bleibt
+    return `<div class="lyric-line">${parsed || '&nbsp;'}</div>`;
+  })
+  .join('');
+---
+
+<div class="lyric-sheet" set:html={formattedLyrics} />
+
+<style>
+  .lyric-sheet {
+    margin: 1.5rem 0;
+    padding: 1.5rem;
+    background: #121212;
+    border: 1px solid #27272a;
+    border-radius: 8px;
+    color: #e4e4e7;
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 1.1rem;
+  }
+
+  /* Die Textzeile selbst hat eine normale, kompakte Zeilenhöhe. 
+     Der große Abstand zur Vorzeile entsteht ausschließlich durch das margin-top. */
+  :global(.lyric-line) {
+    line-height: 1.4;
+    margin-top: 2.6rem; /* Dieser Wert steuert den weiten Abstand zwischen den Zeilen */
+  }
+
+  /* Die allererste Zeile im Sheet braucht nach oben nicht so viel Platz */
+  :global(.lyric-line:first-child) {
+    margin-top: 1rem;
+  }
+
+  :global(.chord) {
+    position: relative;
+    display: inline;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  :global(.chord::before) {
+    content: attr(data-chord);
+    position: absolute;
+    /* Da das line-height nun kompakt ist (1.4), reicht ein kleiner negativer top-Wert, 
+       damit der Akkord perfekt lesbar über dem Wort sitzt. */
+    top: -1.4em; 
+    left: 0;
+    color: #F38181; 
+    font-weight: 700;
+    font-size: 1rem;
+    line-height: 1;
+    margin: 0 !important;
+    padding: 0 !important;
+    white-space: nowrap;
+  }
+</style>

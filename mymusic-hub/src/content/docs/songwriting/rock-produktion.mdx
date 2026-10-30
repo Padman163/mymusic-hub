@@ -5,6 +5,7 @@ title: "Rocksong – Schritt 1: Produktion (Refrain)"
 import DrumPattern from '../../../components/DrumPattern.astro';
 import BassPattern from '../../../components/BassPattern.astro';
 import GuitarPattern from '../../../components/GuitarPattern.astro';
+import LyricSheet from '../../../components/LyricSheet.astro';
 
 Dieses Dokument beschreibt die vollständige Einrichtung und MIDI-/VST-Programmierung des Grundarrangements in Fender Studio Pro.
 
@@ -224,6 +225,13 @@ Dieses Dokument beschreibt die vollständige Einrichtung und MIDI-/VST-Programmi
   We start the fi- re to-night turn- ing the dark in- to light
   ```
 * **Silbenaufteilung:** Bindestriche (`-`) steuern die Verteilung der Silben auf Achtel- und Viertelnoten; `to-night` wird als zusammenhängendes Wort auf eine halbe Note gelegt.
+
+<LyricSheet 
+  lyrics={`
+[Em]We start the fi-[C]re tonight
+[G]turning the dark in-[D]to light
+  `} 
+/>
 
 ![Mehrzeilige Texteingabe in Synthesizer V](../../../img/12_synth_v_lyrics_dialog.png)
 
