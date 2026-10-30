@@ -10,10 +10,17 @@ import VocalPattern from '../../../components/VocalPattern.astro';
 import ChordProgression from '../../../components/ChordProgression.astro';
 import FretboardChordDiagrams from '../../../components/FretboardChordDiagrams.astro';
 import ScorePattern from '../../../components/ScorePattern.astro';
+import PentatonicScale from '../../../components/PentatonicScale.astro';
 
 Klicke auf die Saiten, um eigene Griffmuster oder Tonleitern zu markieren:
 
 <FretboardClickable />
+
+## Moll-Pentatonik
+
+Die E-Moll-Pentatonik besteht aus fünf Tönen: E, G, A, B und D. Ihre Stufenformel lautet `1 – ♭3 – 4 – 5 – ♭7`; im Griffbrett-Beispiel sind die Grundtöne E rot markiert.
+
+<PentatonicScale />
 
 ## Akkordgriffe
 
@@ -49,19 +56,19 @@ Drei Beispiele in Standardstimmung: ein offener C-Dur-Akkord, ein G5-Powerchord 
         { stringIndex: 3, stringName: 'D', fret: 5, note: 'G', octave: 3, role: 'octave' }
       ]
     },
-    {
-      chord: 'C7',
-      degree: '1–3–5–♭7',
-      function: 'Dominantseptakkord',
-      contextLabel: 'Offener Griff',
-      positions: [
-        { stringIndex: 4, stringName: 'A', fret: 3, note: 'C', octave: 3, role: 'root' },
-        { stringIndex: 3, stringName: 'D', fret: 2, note: 'E', octave: 3, role: 'third' },
-        { stringIndex: 2, stringName: 'G', fret: 3, note: 'Bb', octave: 3, role: 'seventh' },
-        { stringIndex: 1, stringName: 'B', fret: 1, note: 'C', octave: 4, role: 'root' },
-        { stringIndex: 0, stringName: 'e', fret: 3, note: 'G', octave: 4, role: 'fifth' }
-      ]
-    },
+{
+  chord: 'C7',
+  degree: '1–3–(5)–♭7', // Optional: Die 5 in Klammern, da das G weggelassen wird
+  function: 'Dominantseptakkord',
+  contextLabel: 'Offener Griff',
+  positions: [
+    { stringIndex: 4, stringName: 'A', fret: 3, note: 'C', octave: 3, role: 'root' },
+    { stringIndex: 3, stringName: 'D', fret: 2, note: 'E', octave: 3, role: 'third' },
+    { stringIndex: 2, stringName: 'G', fret: 3, note: 'Bb', octave: 3, role: 'seventh' },
+    { stringIndex: 1, stringName: 'B', fret: 1, note: 'C', octave: 4, role: 'root' },
+    { stringIndex: 0, stringName: 'e', fret: 0, note: 'E', octave: 4, role: 'third' }
+  ]
+},
     {
   chord: 'F',
   degree: 'IV',

@@ -1,0 +1,227 @@
+---
+const strings = ["e", "B", "G", "D", "A", "E"];
+// Vergrößerte Saitenabstände analog zum FretboardClickable
+const stringY = [37.5, 82.5, 127.5, 172.5, 217.5, 262.5];
+const fretWidth = 75; 
+const startX = 50; // Start-X für das Griffbrettholz
+
+const fretX = (fret) => startX + (fret - 12 + 0.5) * fretWidth;
+const fretWireX = (fretIndex) => startX + fretIndex * fretWidth;
+
+const notes = [
+  { stringIndex: 0, fret: 12, note: "E", degree: "1", root: true },
+  { stringIndex: 0, fret: 15, note: "G", degree: "♭3" },
+  { stringIndex: 1, fret: 12, note: "B", degree: "5" },
+  { stringIndex: 1, fret: 15, note: "D", degree: "♭7" },
+  { stringIndex: 2, fret: 12, note: "G", degree: "♭3" },
+  { stringIndex: 2, fret: 14, note: "A", degree: "4" },
+  { stringIndex: 3, fret: 12, note: "D", degree: "♭7" },
+  { stringIndex: 3, fret: 14, note: "E", degree: "1", root: true },
+  { stringIndex: 4, fret: 12, note: "A", degree: "4" },
+  { stringIndex: 4, fret: 14, note: "B", degree: "5" },
+  { stringIndex: 5, fret: 12, note: "E", degree: "1", root: true },
+  { stringIndex: 5, fret: 15, note: "G", degree: "♭3" }
+];
+---
+
+<figure class="pentatonic-scale">
+  <figcaption>
+    <strong>E-Moll-Pentatonik</strong>
+    <span>1 · ♭3 · 4 · 5 · ♭7</span>
+  </figcaption>
+
+  <p class="scale-notes" aria-label="Tonfolge: E, G, A, B, D">
+    <span>E</span><span>G</span><span>A</span><span>B</span><span>D</span>
+  </p>
+
+  <svg
+    viewBox="0 0 380 330"
+    role="img"
+    aria-label="E-Moll-Pentatonik in der Gitarrenlage am 12. bis 15. Bund. Grundtöne E sind hervorgehoben."
+    class="fretboard-svg"
+  >
+    <!-- 1. Griffbrett-Holz -->
+    <rect 
+      x={startX} 
+      y="15" 
+      width={4 * fretWidth} 
+      height="270" 
+      rx="4" 
+      fill="#18181b" 
+      stroke="#27272a" 
+      stroke-width="2" 
+    />
+
+    <!-- 2. Bund-Marker (Inlays) -->
+    <!-- Doppel-Inlay bei Bund 12 -->
+    <circle cx={fretX(12)} cy="60" r="9" fill="#76767c" />
+    <circle cx={fretX(12)} cy="240" r="9" fill="#76767c" />
+    <!-- Einfaches Inlay bei Bund 15 -->
+    <circle cx={fretX(15)} cy="150" r="9" fill="#76767c" />
+
+    <!-- 3. Bundstäbchen (Rahmen links + 4 Bünde) -->
+    {[0, 1, 2, 3, 4].map((i) => (
+      <line 
+        x1={fretWireX(i)} 
+        y1="15" 
+        x2={fretWireX(i)} 
+        y2="285" 
+        stroke="#3f3f46" 
+        stroke-width="3" 
+      />
+    ))}
+
+    <!-- 4. Bund-Zahlen unter dem Griffbrett -->
+    {[12, 13, 14, 15].map((fret) => (
+      <text 
+        x={fretX(fret)} 
+        y="318" 
+        text-anchor="middle" 
+        fill="#71717a" 
+        font-size="18" 
+      >
+        {fret}. Bund
+      </text>
+    ))}
+
+    <!-- 5. Die 6 Saiten mit dynamischer Dicke und Beschriftung -->
+    {strings.map((stringName, index) => (
+      <>
+        <text 
+          x={startX - 15} 
+          y={stringY[index]} 
+          text-anchor="end" 
+          dominant-baseline="central" 
+          fill="#a1a1aa" 
+          font-size="18"
+          font-weight="bold"
+        >
+          {stringName}
+        </text>
+        <line 
+          x1={startX} 
+          y1={stringY[index]} 
+          x2={startX + 4 * fretWidth} 
+          y2={stringY[index]} 
+          stroke="#a1a1aa" 
+          stroke-width={1.8 + (index * 0.6)} 
+        />
+      </>
+    ))}
+
+    <!-- 6. Die Pentatonik-Noten -->
+    {notes.map(({ stringIndex, fret, note, degree, root }) => (
+      <g aria-label={`${note}, Stufe ${degree}${root ? ", Grundton" : ""}`}>
+        <circle 
+          cx={fretX(fret)} 
+          cy={stringY[stringIndex]} 
+          r="19.5" 
+          fill={root ? "#f87171" : "#60a5fa"} 
+          style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));"
+        />
+        <text 
+          x={fretX(fret)} 
+          y={stringY[stringIndex]} 
+          text-anchor="middle" 
+          dominant-baseline="central" 
+          fill="#000" 
+          font-size="16" 
+          font-weight="800"
+        >
+          {note}
+        </text>
+      </g>
+    ))}
+  </svg>
+
+  <p class="legend">
+    <span><i class="root-dot"></i> Grundton E</span>
+    <span><i class="scale-dot"></i> weiterer Ton der Tonleiter</span>
+  </p>
+</figure>
+
+<style>
+  .pentatonic-scale {
+    margin: 1rem 0 2rem;
+    padding: 1.75rem;
+    overflow: hidden;
+    border-radius: 8px;
+    background: #121212;
+    color: #d1d5db;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+
+  .fretboard-svg {
+    width: 100%;
+    max-width: 600px; /* Optional: Verhindert, dass das kleine Grid auf riesigen Monitoren unendlich skaliert */
+    height: auto;
+    display: block;
+    user-select: none;
+  }
+  
+  .fretboard-svg text {
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+
+  figcaption {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.75rem;
+    color: #f3f4f6;
+  }
+
+  figcaption strong {
+    font-size: 1.1rem;
+  }
+
+  figcaption span,
+  .legend {
+    color: #a1a1aa;
+    font-size: 0.9rem;
+  }
+
+  .scale-notes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0.9rem 0 2rem; /* Mehr Abstand zur neuen SVG-Größe */
+  }
+
+  .scale-notes span {
+    min-width: 2rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    background: #27272a;
+    color: #f4f4f5;
+    text-align: center;
+    font-weight: 700;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin: 1.5rem 0 0;
+  }
+
+  .legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .legend i {
+    width: 0.85rem;
+    height: 0.85rem;
+    border-radius: 50%;
+  }
+
+  .root-dot {
+    background: #f87171;
+  }
+
+  .scale-dot {
+    background: #60a5fa;
+  }
+</style>
