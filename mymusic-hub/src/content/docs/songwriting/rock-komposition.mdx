@@ -6,6 +6,7 @@ import DrumPattern from '../../../components/DrumPattern.astro';
 import BassPattern from '../../../components/BassPattern.astro';
 import GuitarPattern from '../../../components/GuitarPattern.astro';
 import ChordProgression from '../../../components/ChordProgression.astro';
+import FretboardChordDiagrams from '../../../components/FretboardChordDiagrams.astro';
 import VocalPattern from '../../../components/VocalPattern.astro';
 import ScorePattern from '../../../components/ScorePattern.astro';
 
@@ -26,11 +27,53 @@ Dieses Dokument überträgt den theoretischen Leitfaden direkt auf das konkrete 
 
 ### 1.2 Akkorde
 * **Akkordtyp:** Reine Powerchords (Quintakkorde), bestehend ausschließlich aus Grundton und reiner Quinte ($1 - 5$).
-* **Tabelle der Klangaussetzungen für Gitarre und Bass:**
-  * **E5:** $E2 - B2$ (Gitarre: $0-2-x-x-x-x$) – Maximal tiefe, schwere Resonanz.
-  * **C5:** $C2 - G2$ (Gitarre: $x-3-5-x-x-x$) – Druckvoller Anschlag auf der A-Saite.
-  * **G5:** $G2 - D3$ (Gitarre: $3-5-x-x-x-x$) – Breit und wuchtig.
-  * **D5:** $D2 - A2$ (Gitarre: $x-5-7-x-x-x$) – Straff und drückend.
+* **Griffe auf der Gitarre:** Die Skizzen zeigen die gespielten Saiten und Töne; die Bundzahlen stehen unter dem Griffbrett. Rot markiert den Grundton, Blau die Quinte.
+
+<FretboardChordDiagrams
+  keyLabel="E-Moll"
+  chords={[
+    {
+      bar: 1,
+      chord: 'E5',
+      degree: 'i',
+      function: 'Tonika',
+      positions: [
+        { stringIndex: 5, stringName: 'E', fret: 0, note: 'E', octave: 2, role: 'root' },
+        { stringIndex: 4, stringName: 'A', fret: 2, note: 'B', octave: 2, role: 'fifth' }
+      ]
+    },
+    {
+      bar: 2,
+      chord: 'C5',
+      degree: 'VI',
+      function: 'Subdominant-Parallele',
+      positions: [
+        { stringIndex: 4, stringName: 'A', fret: 3, note: 'C', octave: 3, role: 'root' },
+        { stringIndex: 3, stringName: 'D', fret: 5, note: 'G', octave: 3, role: 'fifth' }
+      ]
+    },
+    {
+      bar: 3,
+      chord: 'G5',
+      degree: 'III',
+      function: 'Tonika-Parallele',
+      positions: [
+        { stringIndex: 5, stringName: 'E', fret: 3, note: 'G', octave: 2, role: 'root' },
+        { stringIndex: 4, stringName: 'A', fret: 5, note: 'D', octave: 3, role: 'fifth' }
+      ]
+    },
+    {
+      bar: 4,
+      chord: 'D5',
+      degree: 'VII',
+      function: 'Subdominant-Dominante',
+      positions: [
+        { stringIndex: 4, stringName: 'A', fret: 5, note: 'D', octave: 3, role: 'root' },
+        { stringIndex: 3, stringName: 'D', fret: 7, note: 'A', octave: 3, role: 'fifth' }
+      ]
+    }
+  ]}
+/>
 * **Umkehrungen:** Keine. Alle Akkorde verbleiben in der **Grundstellung** für maximalen Druck im Tieftonbereich.
 
 ### 1.3 Akkordfolge
@@ -172,18 +215,18 @@ Dieses Dokument überträgt den theoretischen Leitfaden direkt auf das konkrete 
 * **Spieltechnik:** Durchgehende Achtel-Abschläge.
 * **Töne:**
   * Takt 1: 8x **E5**-Powerchord ($E2 + B2$)
-  * Takt 2: 8x **C5**-Powerchord ($C2 + G2$)
+  * Takt 2: 8x **C5**-Powerchord ($C3 + G3$)
   * Takt 3: 8x **G5**-Powerchord ($G2 + D3$)
-  * Takt 4: 8x **D5**-Powerchord ($D2 + A2$)
+  * Takt 4: 8x **D5**-Powerchord ($D3 + A3$)
 
 <GuitarPattern
   keyRoot="E"
   scale="naturalMinor"
   bars={[
     { chord: 'Em', notes: ['E2', 'B2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
-    { chord: 'C', notes: ['C2', 'G2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'C', notes: ['C3', 'G3'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
     { chord: 'G', notes: ['G2', 'D3'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
-    { chord: 'D', notes: ['D2', 'A2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] }
+    { chord: 'D', notes: ['D3', 'A3'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] }
   ]}
 />
 
@@ -296,9 +339,9 @@ Die Gesamtpartitur verbindet alle fünf Instrumentenspuren taktgenau. Über die 
       pitchExpandable: true,
       chordNotes: {
         E5: ['E2', 'B2'],
-        C5: ['C2', 'G2'],
+        C5: ['C3', 'G3'],
         G5: ['G2', 'D3'],
-        D5: ['D2', 'A2']
+        D5: ['D3', 'A3']
       },
       bars: ['E5', 'C5', 'G5', 'D5'].map((chord) => ({
         events: Array.from({ length: 8 }, (_, startStep) => ({

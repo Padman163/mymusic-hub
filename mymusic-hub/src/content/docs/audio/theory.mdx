@@ -8,11 +8,62 @@ import BassPattern from '../../../components/BassPattern.astro';
 import GuitarPattern from '../../../components/GuitarPattern.astro';
 import VocalPattern from '../../../components/VocalPattern.astro';
 import ChordProgression from '../../../components/ChordProgression.astro';
+import FretboardChordDiagrams from '../../../components/FretboardChordDiagrams.astro';
 import ScorePattern from '../../../components/ScorePattern.astro';
 
 Klicke auf die Saiten, um eigene Griffmuster oder Tonleitern zu markieren:
 
 <FretboardClickable />
+
+## Akkordgriffe
+
+Drei Beispiele in Standardstimmung: ein offener C-Dur-Akkord, ein G5-Powerchord mit zusätzlicher Oktave und ein offener C7. Die Farben markieren die Akkordtöne; `×` bedeutet, dass die Saite nicht angeschlagen wird.
+
+<FretboardChordDiagrams
+  keyLabel="C-Dur, G5 und C7"
+  legendRoles={['root', 'third', 'fifth', 'seventh', 'octave']}
+  showLegend={false}
+  gallery={true}
+  chords={[
+    {
+      chord: 'C-Dur',
+      degree: 'I',
+      function: 'Dur-Dreiklang',
+      contextLabel: 'Offener Griff',
+      positions: [
+        { stringIndex: 4, stringName: 'A', fret: 3, note: 'C', octave: 3, role: 'root' },
+        { stringIndex: 3, stringName: 'D', fret: 2, note: 'E', octave: 3, role: 'third' },
+        { stringIndex: 2, stringName: 'G', fret: 0, note: 'G', octave: 3, role: 'fifth' },
+        { stringIndex: 1, stringName: 'B', fret: 1, note: 'C', octave: 4, role: 'root' },
+        { stringIndex: 0, stringName: 'e', fret: 0, note: 'E', octave: 4, role: 'third' }
+      ]
+    },
+    {
+      chord: 'G5',
+      degree: '1–5–8',
+      function: 'Powerchord mit Oktave',
+      contextLabel: 'Drei Saiten',
+      positions: [
+        { stringIndex: 5, stringName: 'E', fret: 3, note: 'G', octave: 2, role: 'root' },
+        { stringIndex: 4, stringName: 'A', fret: 5, note: 'D', octave: 3, role: 'fifth' },
+        { stringIndex: 3, stringName: 'D', fret: 5, note: 'G', octave: 3, role: 'octave' }
+      ]
+    },
+    {
+      chord: 'C7',
+      degree: '1–3–5–♭7',
+      function: 'Dominantseptakkord',
+      contextLabel: 'Offener Griff',
+      positions: [
+        { stringIndex: 4, stringName: 'A', fret: 3, note: 'C', octave: 3, role: 'root' },
+        { stringIndex: 3, stringName: 'D', fret: 2, note: 'E', octave: 3, role: 'third' },
+        { stringIndex: 2, stringName: 'G', fret: 3, note: 'Bb', octave: 3, role: 'seventh' },
+        { stringIndex: 1, stringName: 'B', fret: 1, note: 'C', octave: 4, role: 'root' },
+        { stringIndex: 0, stringName: 'e', fret: 3, note: 'G', octave: 4, role: 'fifth' }
+      ]
+    }
+  ]}
+/>
 
 <DrumPattern showVelocity={true} />
 
