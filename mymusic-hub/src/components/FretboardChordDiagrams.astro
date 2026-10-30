@@ -23,6 +23,7 @@ export interface Props {
   legendRoles?: ChordPosition["role"][];
   showLegend?: boolean;
   gallery?: boolean;
+  compact?: boolean; // NEU: Aktiviert die reine Grid-Ansicht ohne Details
 }
 
 const {
@@ -30,8 +31,10 @@ const {
   keyLabel,
   legendRoles = ["root", "fifth"],
   showLegend = true,
-  gallery = false
+  gallery = false,
+  compact = false // Standardmäßig aus
 } = Astro.props;
+
 const tuning = ["e", "B", "G", "D", "A", "E"];
 const stringY = (index: number) => 22 + index * 18;
 const nutX = 58;
@@ -66,8 +69,9 @@ for (const chord of chords) {
 }
 ---
 
-<div class:list={["chord-gallery", { "is-gallery": gallery }]}>
-  {gallery && (
+<!-- Klasse 'is-compact' wird hinzugefügt, wenn der compact-Prop true ist -->
+<div class:list={["chord-gallery", { "is-gallery": gallery, "is-compact": compact }]}>
+  {gallery && !compact && (
     <nav
       class="chord-gallery-nav"
       aria-label={`Akkorde in ${keyLabel}`}
@@ -100,12 +104,13 @@ for (const chord of chords) {
     return (
         <article
           class="chord-card"
-          aria-label={`${chord.chord}: ${chord.degree} ${chord.function}`}
-          hidden={gallery && index !== 0}
-          style={gallery ? "grid-area: 1 / 1;" : undefined}
+          aria-label={`${chord.chord}${!compact ? `: ${chord.degree} ${chord.function}` : ""}`}
+          hidden={gallery && !compact && index !== 0}
+          style={gallery && !compact ? "grid-area: 1 / 1;" : undefined}
         >
           <header class="chord-heading">
-            <span class="degree-label">{chord.degree} · {chord.function}</span>
+            {/* Stufe und Funktion nur anzeigen, wenn NICHT compact */}
+            {!compact && <span class="degree-label">{chord.degree} · {chord.function}</span>}
             <h4>{chord.chord}</h4>
           </header>
 
@@ -175,24 +180,29 @@ for (const chord of chords) {
           })}
         </svg>
 
-          <button
-            class="detail-toggle"
-            type="button"
-            aria-expanded="false"
-            aria-controls={`chord-notes-${keyLabel.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${index}`}
-            data-chord-index={index}
-            aria-label={`Griffdetails für ${chord.chord}`}
-          >
-            <span>Töne und Griffdetails</span>
-            <svg class="disclosure-icon" viewBox="0 0 20 20" aria-hidden="true">
-              <path d="m5 7.5 5 5 5-5" />
-            </svg>
-          </button>
+          {/* Detail-Toggle-Button nur anzeigen, wenn NICHT compact */}
+          {!compact && (
+            <button
+              class="detail-toggle"
+              type="button"
+              aria-expanded="false"
+              aria-controls={`chord-notes-${keyLabel.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${index}`}
+              data-chord-index={index}
+              aria-label={`Griffdetails für ${chord.chord}`}
+            >
+              <span>Töne und Griffdetails</span>
+              <svg class="disclosure-icon" viewBox="0 0 20 20" aria-hidden="true">
+                <path d="m5 7.5 5 5 5-5" />
+              </svg>
+            </button>
+          )}
         </article>
     );
   })}
   </div>
-  {chords.map((chord, index) => (
+  
+  {/* Detail-Panels nur generieren, wenn NICHT compact */}
+  {!compact && chords.map((chord, index) => (
     <div
       class="tone-panel"
       id={`chord-notes-${keyLabel.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${index}`}
@@ -221,6 +231,8 @@ for (const chord of chords) {
 )}
 
 <script>
+  // Script bleibt exakt gleich, da der Detail-Toggle Button im Compact-Modus nicht existiert
+  // und somit die Klick-Events sicher ignoriert werden.
   document.addEventListener("click", (event) => {
     const target = event.target;
     if (!(target instanceof Element)) return;
@@ -278,14 +290,13 @@ for (const chord of chords) {
 </script>
 
 <style>
+  /* --- BESTEHENDES CSS --- */
   .chord-gallery {
     display: contents;
   }
-
   .chord-gallery.is-gallery {
     display: block;
   }
-
   .chord-gallery.is-gallery .chord-diagrams {
     height: 380px;
     grid-template-columns: minmax(0, 460px);
@@ -296,13 +307,11 @@ for (const chord of chords) {
     min-width: 0;
     margin: 0;
   }
-
   .chord-gallery.is-gallery .chord-card-slot {
     width: 100%;
     height: auto;
     min-width: 0;
   }
-
   .chord-gallery.is-gallery .chord-card {
     width: 100%;
     height: 380px;
@@ -310,7 +319,6 @@ for (const chord of chords) {
     align-self: start;
     transform: none !important;
   }
-
   .chord-gallery.is-gallery .chord-gallery-nav {
     display: flex !important;
     width: max-content;
@@ -320,7 +328,6 @@ for (const chord of chords) {
     gap: 0.5rem;
     margin: 1.25rem 0 0.75rem;
   }
-
   .chord-gallery.is-gallery .gallery-button {
     display: flex;
     width: 6rem;
@@ -343,18 +350,15 @@ for (const chord of chords) {
     line-height: 1;
     transform: none !important;
   }
-
   .chord-gallery.is-gallery .gallery-button[aria-pressed="true"] {
     border-color: #c084fc;
     background: #3b2b4a;
     color: #faf5ff;
   }
-
   .chord-gallery.is-gallery .gallery-button:focus-visible {
     outline: 2px solid #c084fc;
     outline-offset: 3px;
   }
-
   .chord-diagrams {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
@@ -363,11 +367,11 @@ for (const chord of chords) {
     gap: 1rem;
     margin: 1.25rem 0 0.5rem;
   }
-
   .chord-card {
     position: relative;
     display: flex;
     flex-direction: column;
+    margin: 0 !important;
     min-width: 0;
     min-height: 0;
     height: 100%;
@@ -380,23 +384,19 @@ for (const chord of chords) {
     box-shadow: 0 5px 16px rgb(0 0 0 / 18%);
     font-family: system-ui, -apple-system, sans-serif;
   }
-
   .chord-card[hidden] {
     display: none;
   }
-
   .chord-card-slot[hidden],
   .tone-panel[hidden] {
     display: none;
   }
-
   .chord-heading {
     display: grid;
     grid-template-rows: 2rem 1.7rem;
     gap: 0.15rem;
     margin-bottom: 0.35rem;
   }
-
   .chord-heading h4 {
     align-self: center;
     margin: 0 !important;
@@ -404,7 +404,6 @@ for (const chord of chords) {
     font-size: 1.35rem;
     line-height: 1.2;
   }
-
   .degree-label {
     display: -webkit-box;
     align-self: end;
@@ -416,7 +415,6 @@ for (const chord of chords) {
     -webkit-line-clamp: 2;
     line-height: 1rem;
   }
-
   .detail-toggle {
     display: flex;
     width: 100%;
@@ -433,7 +431,6 @@ for (const chord of chords) {
     font: 600 0.8rem system-ui, -apple-system, sans-serif;
     text-align: left;
   }
-
   .chord-gallery.is-gallery .detail-toggle {
     position: absolute;
     right: 0.8rem;
@@ -443,13 +440,11 @@ for (const chord of chords) {
     box-sizing: border-box;
     margin: 0 !important;
   }
-
   .detail-toggle:focus-visible {
     outline: 2px solid #c084fc;
     outline-offset: 3px;
     border-radius: 2px;
   }
-
   .tone-panel {
     width: 100%;
     min-width: 0;
@@ -464,11 +459,9 @@ for (const chord of chords) {
     box-shadow: 0 5px 16px rgb(0 0 0 / 18%);
     overflow-wrap: anywhere;
   }
-
   .chord-gallery.is-gallery .tone-panel {
     margin: 0 auto;
   }
-
   .disclosure-icon {
     width: 1.1rem;
     height: 1.1rem;
@@ -481,11 +474,9 @@ for (const chord of chords) {
     stroke-width: 1.8;
     transition: transform 0.18s ease;
   }
-
   .detail-toggle[aria-expanded="true"] .disclosure-icon {
     transform: rotate(180deg);
   }
-
   .fretboard {
     display: block;
     width: 100%;
@@ -493,7 +484,6 @@ for (const chord of chords) {
     margin-bottom: 0.3rem;
     overflow: visible;
   }
-
   .string-label,
   .muted-string,
   .note-label,
@@ -501,31 +491,26 @@ for (const chord of chords) {
     font-family: system-ui, -apple-system, sans-serif;
     text-anchor: middle;
   }
-
   .string-label,
   .muted-string,
   .fret-label {
     fill: #a1a1aa;
     font-size: 12px;
   }
-
   .muted-string {
     fill: #71717a;
     font-size: 16px;
   }
-
   .note-label {
     fill: #09090b;
     font-size: 11px;
     font-weight: 800;
   }
-
   .fret-label {
     fill: #d4d4d8;
     font-size: 13px;
     font-weight: 650;
   }
-
   .tone-list {
     display: grid;
     gap: 0.35rem;
@@ -536,7 +521,6 @@ for (const chord of chords) {
     font-size: 0.75rem;
     line-height: 1.4;
   }
-
   .tone-list li {
     display: flex;
     min-width: 0;
@@ -545,12 +529,10 @@ for (const chord of chords) {
     margin: 0 !important;
     padding: 0 !important;
   }
-
   .tone-list li > span:last-child {
     min-width: 0;
     overflow-wrap: anywhere;
   }
-
   .tone-dot,
   .legend-dot {
     flex: 0 0 auto;
@@ -559,27 +541,21 @@ for (const chord of chords) {
     margin-top: 0.15rem;
     border-radius: 50%;
   }
-
   .root {
     background-color: #f87171;
   }
-
   .third {
     background-color: #c084fc;
   }
-
   .fifth {
     background-color: #60a5fa;
   }
-
   .seventh {
     background-color: #4ade80;
   }
-
   .octave {
     background-color: #fbbf24;
   }
-
   .diagram-legend {
     display: flex;
     flex-wrap: wrap;
@@ -588,17 +564,38 @@ for (const chord of chords) {
     color: #a1a1aa;
     font-size: 0.8rem;
   }
-
   .diagram-legend span {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
   }
-
   .legend-dot {
     display: inline-block;
     width: 0.6rem;
     height: 0.6rem;
     margin: 0;
+  }
+
+  /* --- NEUE STYLES FÜR DIE KOMPAKTE GRID-ANSICHT --- */
+  
+  .chord-gallery.is-compact .chord-diagrams {
+    /* Setzt die minimale Breite auf ca. 220px, dadurch entstehen bei ~1000px Bildschirmbreite 4 Spalten */
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+    display: grid;
+  }
+
+  .chord-gallery.is-compact .chord-card {
+    height: auto;
+    padding: 1rem 0.8rem 1rem; /* Padding unten anpassen, da der Toggle-Button fehlt */
+  }
+
+  .chord-gallery.is-compact .chord-heading {
+    display: block; /* Grid-Layout (2 Reihen) aufheben */
+    text-align: center; /* Name des Akkords mittig setzen */
+    margin-bottom: 0.8rem;
+  }
+
+  .chord-gallery.is-compact .chord-heading h4 {
+    font-size: 1.5rem; /* Akkordname etwas präsenter machen */
   }
 </style>
