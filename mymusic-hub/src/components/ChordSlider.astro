@@ -1,8 +1,8 @@
 ---
-// src/components/ChordSlider.astro
+// src/components/PowerChordSlider.astro
 const tuning = ["e", "B", "G", "D", "A", "E"];
 
-// Neues, schmales Layout
+// Schmales Layout (passt perfekt in die Textspalte)
 const nutX = 125;
 const fretWidth = 46;
 const fretCount = 14; 
@@ -12,7 +12,7 @@ const svgHeight = 260;
 // Y-Achsen der Saiten
 const stringY = (index: number) => 30 + index * 26; // Y: 30, 56, 82, 108, 134, 160
 
-// Exakte X-Achse für den offenen 0. Bund und die ×-Marker (in einer Flucht)
+// Exakte X-Achse für den offenen 0. Bund und die ×-Marker
 const openNoteX = 105;
 
 // Farbpalette
@@ -22,12 +22,13 @@ const colorFifth = "#64C4ED";
 
 <div class="powerchord-interactive">
   <div class="chord-diagrams">
-    <!-- 2-TÖNIGER POWERCHORD -->
+
+    <!-- 1. ZWEISTIMMIG (ROOT + QUINTE) -->
     <article class="chord-card interactive-card" data-chord-type="2">
       <header class="chord-heading">
         <div class="heading-content">
           <span class="degree-label">Intervall: 1 · 5</span>
-          <h4>2 Töne (Root + Quinte)</h4>
+          <h4>Zweistimmig (Root + Quinte)</h4>
         </div>
         <div class="chord-info-display">
           Aktuell: <strong class="chord-name-display">E5</strong>
@@ -39,65 +40,52 @@ const colorFifth = "#64C4ED";
           <svg class="fretboard" viewBox={`0 0 ${svgWidth} ${svgHeight}`} role="img">
             <rect x={nutX} y="15" width={fretCount * fretWidth} height="160" rx="3" fill="#18181b" stroke="#3f3f46" stroke-width="1" />
             
-            {[3, 5, 7, 9].map(fret => (
-              <circle cx={nutX + (fret - 0.5) * fretWidth} cy="95" r="6" fill="#3f3f46" />
-            ))}
+            {[3, 5, 7, 9].map(fret => <circle cx={nutX + (fret - 0.5) * fretWidth} cy="95" r="6" fill="#3f3f46" />)}
             <circle cx={nutX + 11.5 * fretWidth} cy="69" r="6" fill="#3f3f46" />
             <circle cx={nutX + 11.5 * fretWidth} cy="121" r="6" fill="#3f3f46" />
 
-            {tuning.map((stringName, stringIndex) => {
-              const isActive = stringIndex === 5 || stringIndex === 4;
-              return (
-                <>
-                  <text class="string-label" x="75" y={stringY(stringIndex)} text-anchor="middle" dominant-baseline="central">{stringName}</text>
-                  <line x1={nutX} y1={stringY(stringIndex)} x2={nutX + fretCount * fretWidth} y2={stringY(stringIndex)} stroke="#a1a1aa" stroke-width={stringIndex === 5 ? 2.6 : 1.4} />
-                  <text class="muted-string" data-string={stringIndex} x={openNoteX} y={stringY(stringIndex)} dominant-baseline="central" opacity={isActive ? "0" : "1"}>×</text>
-                </>
-              );
-            })}
+            {tuning.map((stringName, stringIndex) => (
+              <>
+                <text class="string-label" x="75" y={stringY(stringIndex)} text-anchor="middle" dominant-baseline="central">{stringName}</text>
+                <line x1={nutX} y1={stringY(stringIndex)} x2={nutX + fretCount * fretWidth} y2={stringY(stringIndex)} stroke="#a1a1aa" stroke-width={stringIndex === 5 ? 2.6 : 1.4} />
+                <text class="muted-string" data-string={stringIndex} x={openNoteX} y={stringY(stringIndex)} dominant-baseline="central">×</text>
+              </>
+            ))}
 
-            {Array.from({ length: fretCount }, (_, index) => {
-              const fret = index + 1;
-              const x = nutX + index * fretWidth;
-              return (
-                <>
-                  <line x1={x} y1="15" x2={x} y2="175" stroke="#3f3f46" stroke-width="2" />
-                  <text class="fret-label" x={x + fretWidth / 2} y="195" text-anchor="middle">{fret}</text>
-                </>
-              );
-            })}
+            {Array.from({ length: fretCount }, (_, index) => (
+              <>
+                <line x1={nutX + (index + 1) * fretWidth} y1="15" x2={nutX + (index + 1) * fretWidth} y2="175" stroke="#3f3f46" stroke-width="2" />
+                <text class="fret-label" x={nutX + (index + 1.5) * fretWidth - (fretWidth/2)} y="195" text-anchor="middle">{index + 1}</text>
+              </>
+            ))}
 
-            {Array.from({ length: 12 }, (_, i) => {
-              const x = i === 0 ? openNoteX : nutX + (i - 0.5) * fretWidth;
-              return <text class="tick-label" data-fret={i} x={x} y="241" text-anchor="middle" dominant-baseline="central">E</text>;
-            })}
+            {Array.from({ length: 12 }, (_, i) => (
+              <text class="tick-label" data-fret={i} x={i === 0 ? openNoteX : nutX + (i - 0.5) * fretWidth} y="241" text-anchor="middle" dominant-baseline="central">E</text>
+            ))}
 
-            <!-- Animierte Noten-Gruppen -->
-            <g class="dot-root anim-group" style={`transform: translate(${openNoteX}px, ${stringY(5)}px);`}>
+            <g class="dot-root anim-group">
               <circle cx="0" cy="0" r="13" fill={colorRoot} />
               <text class="note-label" x="0" y="0" text-anchor="middle" dominant-baseline="central">E</text>
             </g>
-            <g class="dot-fifth anim-group" style={`transform: translate(${nutX + 1.5 * fretWidth}px, ${stringY(4)}px);`}>
+            <g class="dot-high-fifth anim-group">
               <circle cx="0" cy="0" r="13" fill={colorFifth} />
               <text class="note-label" x="0" y="0" text-anchor="middle" dominant-baseline="central">B</text>
             </g>
           </svg>
 
-          <!-- VERTICAL SLIDER -->
+          <!-- VERTICAL SLIDER (B-Saite bis E-Saite) -->
           <input type="range" class="vertical-string-slider slider-2note" min="1" max="5" value="5" step="1" aria-label="Grundton-Saite auswählen" />
-
-          <!-- HORIZONTAL SLIDER -->
           <input type="range" class="horizontal-fret-slider" min="0" max="11" value="0" step="1" aria-label="Bund auswählen" />
         </div>
       </div>
     </article>
 
-    <!-- 3-TÖNIGER POWERCHORD -->
+    <!-- 2. DREISTIMMIG (INKL. OKTAVE) -->
     <article class="chord-card interactive-card" data-chord-type="3">
       <header class="chord-heading">
         <div class="heading-content">
           <span class="degree-label">Intervall: 1 · 5 · 8</span>
-          <h4>3 Töne (inkl. Oktave)</h4>
+          <h4>Dreistimmig (inkl. Oktave)</h4>
         </div>
         <div class="chord-info-display">
           Aktuell: <strong class="chord-name-display">E5</strong>
@@ -109,67 +97,173 @@ const colorFifth = "#64C4ED";
           <svg class="fretboard" viewBox={`0 0 ${svgWidth} ${svgHeight}`} role="img">
             <rect x={nutX} y="15" width={fretCount * fretWidth} height="160" rx="3" fill="#18181b" stroke="#3f3f46" stroke-width="1" />
             
-            {[3, 5, 7, 9].map(fret => (
-              <circle cx={nutX + (fret - 0.5) * fretWidth} cy="95" r="6" fill="#3f3f46" />
-            ))}
+            {[3, 5, 7, 9].map(fret => <circle cx={nutX + (fret - 0.5) * fretWidth} cy="95" r="6" fill="#3f3f46" />)}
             <circle cx={nutX + 11.5 * fretWidth} cy="69" r="6" fill="#3f3f46" />
             <circle cx={nutX + 11.5 * fretWidth} cy="121" r="6" fill="#3f3f46" />
 
-            {tuning.map((stringName, stringIndex) => {
-              const isActive = stringIndex === 5 || stringIndex === 4 || stringIndex === 3;
-              return (
-                <>
-                  <text class="string-label" x="75" y={stringY(stringIndex)} text-anchor="middle" dominant-baseline="central">{stringName}</text>
-                  <line x1={nutX} y1={stringY(stringIndex)} x2={nutX + fretCount * fretWidth} y2={stringY(stringIndex)} stroke="#a1a1aa" stroke-width={stringIndex === 5 ? 2.6 : 1.4} />
-                  <text class="muted-string" data-string={stringIndex} x={openNoteX} y={stringY(stringIndex)} dominant-baseline="central" opacity={isActive ? "0" : "1"}>×</text>
-                </>
-              );
-            })}
+            {tuning.map((stringName, stringIndex) => (
+              <>
+                <text class="string-label" x="75" y={stringY(stringIndex)} text-anchor="middle" dominant-baseline="central">{stringName}</text>
+                <line x1={nutX} y1={stringY(stringIndex)} x2={nutX + fretCount * fretWidth} y2={stringY(stringIndex)} stroke="#a1a1aa" stroke-width={stringIndex === 5 ? 2.6 : 1.4} />
+                <text class="muted-string" data-string={stringIndex} x={openNoteX} y={stringY(stringIndex)} dominant-baseline="central">×</text>
+              </>
+            ))}
 
-            {Array.from({ length: fretCount }, (_, index) => {
-              const fret = index + 1;
-              const x = nutX + index * fretWidth;
-              return (
-                <>
-                  <line x1={x} y1="15" x2={x} y2="175" stroke="#3f3f46" stroke-width="2" />
-                  <text class="fret-label" x={x + fretWidth / 2} y="195" text-anchor="middle">{fret}</text>
-                </>
-              );
-            })}
+            {Array.from({ length: fretCount }, (_, index) => (
+              <>
+                <line x1={nutX + (index + 1) * fretWidth} y1="15" x2={nutX + (index + 1) * fretWidth} y2="175" stroke="#3f3f46" stroke-width="2" />
+                <text class="fret-label" x={nutX + (index + 1.5) * fretWidth - (fretWidth/2)} y="195" text-anchor="middle">{index + 1}</text>
+              </>
+            ))}
 
-            {Array.from({ length: 12 }, (_, i) => {
-              const x = i === 0 ? openNoteX : nutX + (i - 0.5) * fretWidth;
-              return <text class="tick-label" data-fret={i} x={x} y="241" text-anchor="middle" dominant-baseline="central">E</text>;
-            })}
+            {Array.from({ length: 12 }, (_, i) => (
+              <text class="tick-label" data-fret={i} x={i === 0 ? openNoteX : nutX + (i - 0.5) * fretWidth} y="241" text-anchor="middle" dominant-baseline="central">E</text>
+            ))}
 
-            <g class="dot-root anim-group" style={`transform: translate(${openNoteX}px, ${stringY(5)}px);`}>
+            <g class="dot-root anim-group">
               <circle cx="0" cy="0" r="13" fill={colorRoot} />
               <text class="note-label" x="0" y="0" text-anchor="middle" dominant-baseline="central">E</text>
             </g>
-            <g class="dot-fifth anim-group" style={`transform: translate(${nutX + 1.5 * fretWidth}px, ${stringY(4)}px);`}>
+            <g class="dot-high-fifth anim-group">
               <circle cx="0" cy="0" r="13" fill={colorFifth} />
               <text class="note-label" x="0" y="0" text-anchor="middle" dominant-baseline="central">B</text>
             </g>
-            <g class="dot-octave anim-group" style={`transform: translate(${nutX + 1.5 * fretWidth}px, ${stringY(3)}px);`}>
+            <g class="dot-octave anim-group">
               <circle cx="0" cy="0" r="13" fill={colorRoot} />
               <text class="note-label" x="0" y="0" text-anchor="middle" dominant-baseline="central">E</text>
             </g>
           </svg>
 
-          <!-- VERTICAL SLIDER -->
-          <!-- Geht beim 3-tönigen nur bis 2 (G-Saite) -->
+          <!-- VERTICAL SLIDER (G-Saite bis E-Saite) -->
           <input type="range" class="vertical-string-slider slider-3note" min="2" max="5" value="5" step="1" aria-label="Grundton-Saite auswählen" />
-
-          <!-- HORIZONTAL SLIDER -->
           <input type="range" class="horizontal-fret-slider" min="0" max="11" value="0" step="1" aria-label="Bund auswählen" />
         </div>
       </div>
     </article>
+
+    <!-- 3. ZWEISTIMMIG UMGEKEHRT -->
+    <article class="chord-card interactive-card" data-chord-type="2-inv">
+      <header class="chord-heading">
+        <div class="heading-content">
+          <span class="degree-label">Intervall: 5 · 1</span>
+          <h4>Zweistimmig umgekehrt (Slash-Chord)</h4>
+        </div>
+        <div class="chord-info-display">
+          Aktuell: <strong class="chord-name-display">A5/E</strong>
+        </div>
+      </header>
+
+      <div class="fretboard-scroll">
+        <div class="fretboard-wrapper">
+          <svg class="fretboard" viewBox={`0 0 ${svgWidth} ${svgHeight}`} role="img">
+            <rect x={nutX} y="15" width={fretCount * fretWidth} height="160" rx="3" fill="#18181b" stroke="#3f3f46" stroke-width="1" />
+            
+            {[3, 5, 7, 9].map(fret => <circle cx={nutX + (fret - 0.5) * fretWidth} cy="95" r="6" fill="#3f3f46" />)}
+            <circle cx={nutX + 11.5 * fretWidth} cy="69" r="6" fill="#3f3f46" />
+            <circle cx={nutX + 11.5 * fretWidth} cy="121" r="6" fill="#3f3f46" />
+
+            {tuning.map((stringName, stringIndex) => (
+              <>
+                <text class="string-label" x="75" y={stringY(stringIndex)} text-anchor="middle" dominant-baseline="central">{stringName}</text>
+                <line x1={nutX} y1={stringY(stringIndex)} x2={nutX + fretCount * fretWidth} y2={stringY(stringIndex)} stroke="#a1a1aa" stroke-width={stringIndex === 5 ? 2.6 : 1.4} />
+                <text class="muted-string" data-string={stringIndex} x={openNoteX} y={stringY(stringIndex)} dominant-baseline="central">×</text>
+              </>
+            ))}
+
+            {Array.from({ length: fretCount }, (_, index) => (
+              <>
+                <line x1={nutX + (index + 1) * fretWidth} y1="15" x2={nutX + (index + 1) * fretWidth} y2="175" stroke="#3f3f46" stroke-width="2" />
+                <text class="fret-label" x={nutX + (index + 1.5) * fretWidth - (fretWidth/2)} y="195" text-anchor="middle">{index + 1}</text>
+              </>
+            ))}
+
+            {Array.from({ length: 12 }, (_, i) => (
+              <text class="tick-label" data-fret={i} x={i === 0 ? openNoteX : nutX + (i - 0.5) * fretWidth} y="241" text-anchor="middle" dominant-baseline="central">A</text>
+            ))}
+
+            <g class="dot-bass-fifth anim-group">
+              <circle cx="0" cy="0" r="13" fill={colorFifth} />
+              <text class="note-label" x="0" y="0" text-anchor="middle" dominant-baseline="central">E</text>
+            </g>
+            <g class="dot-root anim-group">
+              <circle cx="0" cy="0" r="13" fill={colorRoot} />
+              <text class="note-label" x="0" y="0" text-anchor="middle" dominant-baseline="central">A</text>
+            </g>
+          </svg>
+
+          <!-- VERTICAL SLIDER (e-Saite bis A-Saite, da tiefste Saite für den Bass gebraucht wird) -->
+          <input type="range" class="vertical-string-slider slider-2inv" min="0" max="4" value="4" step="1" aria-label="Grundton-Saite auswählen" />
+          <input type="range" class="horizontal-fret-slider" min="0" max="11" value="0" step="1" aria-label="Bund auswählen" />
+        </div>
+      </div>
+    </article>
+
+    <!-- 4. DREISTIMMIG UMGEKEHRT -->
+    <article class="chord-card interactive-card" data-chord-type="3-inv">
+      <header class="chord-heading">
+        <div class="heading-content">
+          <span class="degree-label">Intervall: 5 · 1 · 5</span>
+          <h4>Dreistimmig umgekehrt (Wall of Sound)</h4>
+        </div>
+        <div class="chord-info-display">
+          Aktuell: <strong class="chord-name-display">A5/E</strong>
+        </div>
+      </header>
+
+      <div class="fretboard-scroll">
+        <div class="fretboard-wrapper">
+          <svg class="fretboard" viewBox={`0 0 ${svgWidth} ${svgHeight}`} role="img">
+            <rect x={nutX} y="15" width={fretCount * fretWidth} height="160" rx="3" fill="#18181b" stroke="#3f3f46" stroke-width="1" />
+            
+            {[3, 5, 7, 9].map(fret => <circle cx={nutX + (fret - 0.5) * fretWidth} cy="95" r="6" fill="#3f3f46" />)}
+            <circle cx={nutX + 11.5 * fretWidth} cy="69" r="6" fill="#3f3f46" />
+            <circle cx={nutX + 11.5 * fretWidth} cy="121" r="6" fill="#3f3f46" />
+
+            {tuning.map((stringName, stringIndex) => (
+              <>
+                <text class="string-label" x="75" y={stringY(stringIndex)} text-anchor="middle" dominant-baseline="central">{stringName}</text>
+                <line x1={nutX} y1={stringY(stringIndex)} x2={nutX + fretCount * fretWidth} y2={stringY(stringIndex)} stroke="#a1a1aa" stroke-width={stringIndex === 5 ? 2.6 : 1.4} />
+                <text class="muted-string" data-string={stringIndex} x={openNoteX} y={stringY(stringIndex)} dominant-baseline="central">×</text>
+              </>
+            ))}
+
+            {Array.from({ length: fretCount }, (_, index) => (
+              <>
+                <line x1={nutX + (index + 1) * fretWidth} y1="15" x2={nutX + (index + 1) * fretWidth} y2="175" stroke="#3f3f46" stroke-width="2" />
+                <text class="fret-label" x={nutX + (index + 1.5) * fretWidth - (fretWidth/2)} y="195" text-anchor="middle">{index + 1}</text>
+              </>
+            ))}
+
+            {Array.from({ length: 12 }, (_, i) => (
+              <text class="tick-label" data-fret={i} x={i === 0 ? openNoteX : nutX + (i - 0.5) * fretWidth} y="241" text-anchor="middle" dominant-baseline="central">A</text>
+            ))}
+
+            <g class="dot-bass-fifth anim-group">
+              <circle cx="0" cy="0" r="13" fill={colorFifth} />
+              <text class="note-label" x="0" y="0" text-anchor="middle" dominant-baseline="central">E</text>
+            </g>
+            <g class="dot-root anim-group">
+              <circle cx="0" cy="0" r="13" fill={colorRoot} />
+              <text class="note-label" x="0" y="0" text-anchor="middle" dominant-baseline="central">A</text>
+            </g>
+            <g class="dot-high-fifth anim-group">
+              <circle cx="0" cy="0" r="13" fill={colorFifth} />
+              <text class="note-label" x="0" y="0" text-anchor="middle" dominant-baseline="central">E</text>
+            </g>
+          </svg>
+
+          <!-- VERTICAL SLIDER (B-Saite bis A-Saite, da tiefste und höchste Saite gebraucht werden) -->
+          <input type="range" class="vertical-string-slider slider-3inv" min="1" max="4" value="4" step="1" aria-label="Grundton-Saite auswählen" />
+          <input type="range" class="horizontal-fret-slider" min="0" max="11" value="0" step="1" aria-label="Bund auswählen" />
+        </div>
+      </div>
+    </article>
+
   </div>
 
   <p class="diagram-legend">
     <span><i class="legend-dot" style={`background-color: ${colorRoot};`}></i>1 / 8 (Grundton / Oktave)</span>
-    <span><i class="legend-dot" style={`background-color: ${colorFifth};`}></i>5 (Quinte)</span>
+    <span><i class="legend-dot" style={`background-color: ${colorFifth};`}></i>5 (Quinte, oben oder im Bass)</span>
     <span>× = nicht spielen</span>
   </p>
 </div>
@@ -178,7 +272,7 @@ const colorFifth = "#64C4ED";
   function setupPowerChordInteractive() {
     const cards = document.querySelectorAll('.interactive-card');
     
-    // Komplettes Noten-Mapping INKLUSIVE hoher e-Saite (0), damit das Script nicht abstürzt!
+    // Vollständiges Mapping
     const notesByString = {
       5: ['E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G'],
       4: ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'C'],
@@ -192,6 +286,7 @@ const colorFifth = "#64C4ED";
     const fretWidth = 46;
     const openNoteX = 105;
     const getStringY = (idx) => 30 + idx * 26;
+    const getX = (f) => f === 0 ? openNoteX : nutX + (f - 0.5) * fretWidth;
 
     cards.forEach(card => {
       const vSlider = card.querySelector('.vertical-string-slider');
@@ -199,22 +294,20 @@ const colorFifth = "#64C4ED";
       const nameDisplay = card.querySelector('.chord-name-display');
       const tickLabels = card.querySelectorAll('.tick-label');
       
-      const is3Note = card.getAttribute('data-chord-type') === '3';
+      const chordType = card.getAttribute('data-chord-type');
+      const is3Note = (chordType === '3' || chordType === '3-inv');
+      const isInverted = (chordType === '2-inv' || chordType === '3-inv');
       
       const dotRoot = card.querySelector('.dot-root');
-      const dotFifth = card.querySelector('.dot-fifth');
+      const dotHighFifth = card.querySelector('.dot-high-fifth');
       const dotOctave = card.querySelector('.dot-octave');
+      const dotBassFifth = card.querySelector('.dot-bass-fifth');
 
       function updateDiagram() {
         const fret = parseInt(hSlider.value, 10);
         const rootString = parseInt(vSlider.value, 10);
         
-        const rootNote = notesByString[rootString][fret];
-        if (nameDisplay) {
-          nameDisplay.textContent = rootNote + '5';
-        }
-
-        // Ticks-Leiste aktualisieren
+        // Ticks anpassen
         tickLabels.forEach((lbl, i) => {
           lbl.textContent = notesByString[rootString][i];
           if (i === fret) {
@@ -226,53 +319,57 @@ const colorFifth = "#64C4ED";
           }
         });
 
-        // Y-Achsen
-        const fifthString = rootString - 1;
+        // Berechne Saiten
+        const highFifthString = rootString - 1;
         const octaveString = rootString - 2;
+        const bassFifthString = rootString + 1;
 
-        const rootY = getStringY(rootString);
-        const fifthY = getStringY(fifthString);
-        const octaveY = is3Note ? getStringY(octaveString) : 0;
+        // Berechne Bünde & Ausgleichs-Logiken
+        const highFifthFretOffset = (rootString === 2) ? 3 : 2;
+        const highFifthFret = fret === 0 ? highFifthFretOffset : fret + highFifthFretOffset;
 
-        // -- B-SAITEN AUSGLEICHS-LOGIK --
-        const isRootG = (rootString === 2);
-        const isRootD = (rootString === 3);
-
-        const fifthFretOffset = isRootG ? 3 : 2;
-        const octaveFretOffset = (isRootD || isRootG) ? 3 : 2;
-
-        const fifthFret = fret === 0 ? fifthFretOffset : fret + fifthFretOffset;
+        const octaveFretOffset = (rootString === 2 || rootString === 3) ? 3 : 2;
         const octaveFret = fret === 0 ? octaveFretOffset : fret + octaveFretOffset;
 
-        // X-Achsen
-        const rootX = fret === 0 ? openNoteX : nutX + (fret - 0.5) * fretWidth;
-        const fifthX = nutX + (fifthFret - 0.5) * fretWidth;
-        const octaveX = nutX + (octaveFret - 0.5) * fretWidth;
+        // B-Saiten-Ausgleich rückwärts: Von B zu G (1 zu 2) ist eine kleine Terz, daher Fret - 1 für den Bass
+        const bassFifthFretOffset = (rootString === 1) ? -1 : 0;
+        const bassFifthFret = fret + bassFifthFretOffset;
 
-        // Noten-Texte (jetzt sicher, da index 0 existiert!)
-        const fifthNote = notesByString[fifthString][fifthFret];
-        const octaveNote = is3Note ? notesByString[octaveString][octaveFret] : '';
+        // Hilfsfunktion zum sauberen Animieren/Verstecken der SVG-Noten
+        const updateDot = (dot, string, f) => {
+          if (!dot) return;
+          // Wenn die Saite nicht existiert oder der Bund negativ ist (z.B. B-Saite im 0. Bund rückwärts), ausblenden
+          if (f < 0 || string < 0 || string > 5) {
+            dot.style.display = 'none';
+            return;
+          }
+          dot.style.display = '';
+          dot.style.transform = `translate(${getX(f)}px, ${getStringY(string)}px)`;
+          const txt = dot.querySelector('text');
+          const noteName = notesByString[string][f];
+          txt.textContent = noteName;
+          txt.setAttribute('font-size', noteName.length > 1 ? '10' : '12');
+        };
 
-        // -- Animieren über CSS Transform --
-        dotRoot.style.transform = `translate(${rootX}px, ${rootY}px)`;
-        const rText = dotRoot.querySelector('text');
-        rText.textContent = rootNote;
-        rText.setAttribute('font-size', rootNote.length > 1 ? '10' : '12');
+        updateDot(dotRoot, rootString, fret);
+        updateDot(dotHighFifth, highFifthString, highFifthFret);
+        updateDot(dotOctave, octaveString, octaveFret);
+        updateDot(dotBassFifth, bassFifthString, bassFifthFret);
 
-        dotFifth.style.transform = `translate(${fifthX}px, ${fifthY}px)`;
-        const fText = dotFifth.querySelector('text');
-        fText.textContent = fifthNote;
-        fText.setAttribute('font-size', fifthNote.length > 1 ? '10' : '12');
-
-        if (is3Note && dotOctave) {
-          dotOctave.style.transform = `translate(${octaveX}px, ${octaveY}px)`;
-          const oText = dotOctave.querySelector('text');
-          oText.textContent = octaveNote;
-          oText.setAttribute('font-size', octaveNote.length > 1 ? '10' : '12');
+        // Anzeige-Text anpassen (mit Slash-Chord Erkennung)
+        const rootNoteName = notesByString[rootString][fret];
+        let displayName = rootNoteName + '5';
+        if (isInverted && bassFifthFret >= 0 && bassFifthString <= 5) {
+            displayName += '/' + notesByString[bassFifthString][bassFifthFret];
         }
+        if (nameDisplay) nameDisplay.textContent = displayName;
 
-        // Gemutete Saiten aktualisieren (x Marker ein-/ausblenden)
-        const activeStrings = is3Note ? [rootString, fifthString, octaveString] : [rootString, fifthString];
+        // Gemutete Saiten aktualisieren
+        const activeStrings = [rootString];
+        if (dotHighFifth && highFifthString >= 0) activeStrings.push(highFifthString);
+        if (dotOctave && octaveString >= 0) activeStrings.push(octaveString);
+        if (dotBassFifth && bassFifthString <= 5 && bassFifthFret >= 0) activeStrings.push(bassFifthString);
+          
         card.querySelectorAll('.muted-string').forEach(muted => {
           const sIdx = parseInt(muted.getAttribute('data-string'), 10);
           muted.setAttribute('opacity', activeStrings.includes(sIdx) ? '0' : '1');
@@ -282,7 +379,6 @@ const colorFifth = "#64C4ED";
       vSlider?.addEventListener('input', updateDiagram);
       hSlider?.addEventListener('input', updateDiagram);
       
-      // Initial ausführen
       updateDiagram();
     });
   }
@@ -362,7 +458,7 @@ const colorFifth = "#64C4ED";
 
   .fretboard-wrapper {
     position: relative;
-    width: 784px;
+    width: 784px; 
     height: 260px; 
   }
 
@@ -376,7 +472,6 @@ const colorFifth = "#64C4ED";
     overflow: visible;
   }
 
-  /* SVG Typografie */
   .string-label,
   .muted-string,
   .fret-label {
@@ -414,7 +509,6 @@ const colorFifth = "#64C4ED";
     transition: all 0.2s ease;
   }
 
-  /* Animierte SVG Gruppen. Transform garantiert zeitsynchrone Ausführung ohne Ruckeln */
   .anim-group {
     transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   }
@@ -423,8 +517,8 @@ const colorFifth = "#64C4ED";
   .horizontal-fret-slider {
     position: absolute;
     top: 217px;  
-    left: 95px;   /* Startet genau unter den offenen Noten (X=105) - Thumb (10px) */
-    width: 526px; /* Distanz von X=105 bis Fret 11 (X=608) = 503px. + Thumb-Puffer = 526px */
+    left: 95px;   
+    width: 526px; 
     height: 20px;
     margin: 0;
     padding: 0;
@@ -440,19 +534,18 @@ const colorFifth = "#64C4ED";
     transform-origin: center center;
   }
 
-  /* 2-Note geht von Saite 1 bis 5 (Y=56 bis Y=160). Distanz=104. Center Y=108. */
-  .slider-2note {
-    top: 98px;     /* Center Y (108) - Thumb Radius (10) */
-    left: -17px;   /* Liegt sauber links neben den Saiten-Labels */
-    width: 124px;  /* 104px Distanz + 20px Thumb */
-  }
-
-  /* 3-Note geht von Saite 2 bis 5 (Y=82 bis Y=160). Distanz=78. Center Y=121. */
-  .slider-3note {
-    top: 111px;    /* Center Y (121) - Thumb Radius (10) */
-    left: -4px;    /* Leicht versetzt angepasst für den kürzeren Weg */
-    width: 98px;   /* 78px Distanz + 20px Thumb */
-  }
+  /* Individuelle Positionen der Vertikal-Slider für saubere Zentrierung */
+  /* 2-Note: Saite 1 bis 5 (Y=56 bis 160). Center Y=108. */
+  .slider-2note { top: 98px; left: -17px; width: 124px; }
+  
+  /* 3-Note: Saite 2 bis 5 (Y=82 bis 160). Center Y=121. */
+  .slider-3note { top: 111px; left: -4px; width: 98px; }
+  
+  /* 2-Inv: Saite 0 bis 4 (Y=30 bis 134). Center Y=82. */
+  .slider-2inv { top: 72px; left: -17px; width: 124px; }
+  
+  /* 3-Inv: Saite 1 bis 4 (Y=56 bis 134). Center Y=95. */
+  .slider-3inv { top: 85px; left: -4px; width: 98px; }
 
   /* Custom Slider Styling */
   input[type=range] {
