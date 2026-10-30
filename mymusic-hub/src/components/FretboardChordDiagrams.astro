@@ -5,7 +5,7 @@ export interface ChordPosition {
   fret: number;
   note: string;
   octave: number;
-  role: "root" | "third" | "fifth" | "seventh" | "octave";
+  role: "root" | "third" | "fourth" | "fifth" | "seventh" | "octave" | "ninth";
 }
 
 export interface ChordDiagram {
@@ -20,7 +20,6 @@ export interface ChordDiagram {
 export interface Props {
   chords: ChordDiagram[];
   keyLabel: string;
-  legendRoles?: ChordPosition["role"][];
   showLegend?: boolean;
   gallery?: boolean;
   compact?: boolean; // NEU: Aktiviert die reine Grid-Ansicht ohne Details
@@ -29,7 +28,6 @@ export interface Props {
 const {
   chords,
   keyLabel,
-  legendRoles = ["root", "fifth"],
   showLegend = true,
   gallery = false,
   compact = false // Standardmäßig aus
@@ -42,17 +40,34 @@ const fretWidth = 62;
 const colors = {
   root: "#f87171",
   third: "#c084fc",
+  fourth: "#f472b6", 
   fifth: "#60a5fa",
   seventh: "#4ade80",
-  octave: "#fbbf24"
+  octave: "#fbbf24",
+  ninth: "#2dd4bf"  
 };
+
 const roleLabels = {
   root: "Grundton",
   third: "Terz",
+  fourth: "Quarte",  
   fifth: "Quinte",
   seventh: "kleine Septime",
-  octave: "Oktave"
+  octave: "Oktave",
+  ninth: "None"      
 };
+
+// 1. Alle verwendeten Rollen sammeln
+const usedRoles = new Set<ChordPosition["role"]>();
+chords.forEach(chord => {
+  chord.positions.forEach(pos => usedRoles.add(pos.role));
+});
+
+// 2. Gewünschte Reihenfolge für die Legende festlegen
+const roleOrder: ChordPosition["role"][] = ["root", "third", "fourth", "fifth", "seventh", "octave", "ninth"];
+
+// 3. Nur die Rollen behalten, die auch wirklich in den Akkorden vorkommen
+const activeLegendRoles = roleOrder.filter(role => usedRoles.has(role));
 
 if (chords.length === 0) {
   throw new Error("Mindestens ein Akkorddiagramm ist erforderlich.");
@@ -223,7 +238,7 @@ for (const chord of chords) {
 
 {showLegend && (
   <p class="diagram-legend">
-    {legendRoles.map((role) => (
+    {activeLegendRoles.map((role) => (
       <span><i class={`legend-dot ${role}`}></i>{roleLabels[role]}</span>
     ))}
     <span>× = nicht spielen</span>
@@ -541,11 +556,14 @@ for (const chord of chords) {
     margin-top: 0.15rem;
     border-radius: 50%;
   }
-  .root {
+.root {
     background-color: #f87171;
   }
   .third {
     background-color: #c084fc;
+  }
+  .fourth {
+    background-color: #f472b6;
   }
   .fifth {
     background-color: #60a5fa;
@@ -555,6 +573,9 @@ for (const chord of chords) {
   }
   .octave {
     background-color: #fbbf24;
+  }
+  .ninth {
+    background-color: #2dd4bf; 
   }
   .diagram-legend {
     display: flex;
