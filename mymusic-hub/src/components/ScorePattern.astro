@@ -7,7 +7,7 @@ export interface ScoreEvent {
   startStep: number;
   lengthSteps: number;
   pitchOffset?: number;
-  expandedNotes?: { label: string; color: string; pitchOffset: number }[];
+  expandedNotes?: { label: string; color: string; pitchOffset: number; pitchClass: string }[];
 }
 
 interface ParsedScoreEvent extends ScoreEvent {
@@ -15,6 +15,7 @@ interface ParsedScoreEvent extends ScoreEvent {
   displayLaneName?: string;
   displayLaneOffset?: number;
   displayNotehead?: ScoreLane["notehead"];
+  pitchClass?: string;
 }
 
 export interface ScoreBar {
@@ -74,6 +75,40 @@ if (tracks.length === 0) {
   throw new Error("Eine Gesamtpartitur muss mindestens eine Instrumentenspur enthalten.");
 }
 
+const pitchClasses = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+
+// Intervall-Farbpalette
+const intervalColors: Record<string, string> = {
+  "1":  "#F38181",
+  "♭2": "#FFAAA6",
+  "2":  "#F4C7AB",
+  "♭3": "#EAA0E3",
+  "3":  "#D382DC",
+  "4":  "#B862D3",
+  "♭5": "#7F8BE8",
+  "5":  "#64C4ED",
+  "♭6": "#52DEE5",
+  "6":  "#6BE4C6",
+  "♭7": "#83E8BA",
+  "7":  "#CBDD7B"
+};
+const intervalMap = ["1", "♭2", "2", "♭3", "3", "4", "♭5", "5", "♭6", "6", "♭7", "7"];
+
+// Berechnet die Farbe basierend auf dem Abstand zum Takt-Akkord-Grundton
+const getIntervalColor = (notePitchClass: string, chord: string, fallbackColor: string) => {
+  if (!notePitchClass) return fallbackColor;
+  const match = chord.match(/^([A-G])(#?)/);
+  if (!match) return fallbackColor;
+  const chordRoot = `${match[1]}${match[2]}`;
+  const rootIndex = pitchClasses.indexOf(chordRoot);
+  const noteIndex = pitchClasses.indexOf(notePitchClass);
+  
+  if (rootIndex === -1 || noteIndex === -1) return fallbackColor;
+  const semitones = (noteIndex - rootIndex + 12) % 12;
+  
+  return intervalColors[intervalMap[semitones]] ?? fallbackColor;
+};
+
 const parsedTracks = tracks.map((track) => {
   if (!track.name.trim()) {
     throw new Error("Der Name einer Instrumentenspur darf nicht leer sein.");
@@ -119,7 +154,28 @@ const parsedTracks = tracks.map((track) => {
         ) {
           throw new Error(`Ungültige Position oder Länge für "${event.label ?? lane.name}" in Spur "${track.name}", Takt ${startBar + barIndex}.`);
         }
-        return event;
+        
+        // Pitch-Class parsen (für Vocals über pitch, für Bass/Gitarre über label)
+        let pitchClass = undefined;
+        const pitchText = event.pitch ?? event.label ?? "";
+        
+        if (pitchText) {
+          if (event.kind === "chord") {
+            // Bei Rhythmus-Gitarren-Akkorden (z.B. "E5") extrahieren wir den Grundton
+            const match = pitchText.match(/^([A-G])(#?)/);
+            if (match) {
+              pitchClass = `${match[1]}${match[2]}`;
+            }
+          } else {
+            // Bei Single-Notes (z.B. "E1" oder "F#3") extrahieren wir die Note
+            const match = pitchText.match(/^([A-G])(#?)(-?\d+)?$/);
+            if (match) {
+              pitchClass = `${match[1]}${match[2]}`;
+            }
+          }
+        }
+        
+        return { ...event, pitchClass };
       }).sort((a, b) => a.startStep - b.startStep);
 
       parsedEvents.forEach((event, index) => {
@@ -134,6 +190,7 @@ const parsedTracks = tracks.map((track) => {
 
     return { ...lane, color: laneColor, bars };
   });
+
   const displayLanes = track.collapseLanes
     ? [
         {
@@ -167,28 +224,28 @@ const parsedTracks = tracks.map((track) => {
     const expandedTrackHeight = track.pitchExpansionHeight === "same" ? baseTrackHeight : baseTrackHeight * 2;
     const noteHeight = baseTrackHeight / 5;
     const maxPitchOffset = expandedTrackHeight - noteHeight;
-    const pitchClasses = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-    const pitchColors: Record<string, string> = {
-      C: "#ef4444",
-      D: "#eab308",
-      E: "#22c55e",
-      G: "#3b82f6"
-    };
-    const parsePitch = (pitch: string, event: ScoreEvent) => {
+
+    const parsePitch = (pitch: string, event: ScoreEvent, barIndex: number) => {
       const pitchMatch = pitch.match(/^([A-G])(#?)(-?\d+)$/);
       if (!pitchMatch) {
         throw new Error(`Ungültige Tonhöhe "${pitch}" in aufklappbarer Spur "${track.name}". Erwartet wird z. B. E3 oder F#4.`);
       }
 
       const pitchClass = `${pitchMatch[1]}${pitchMatch[2]}`;
+      const chordForBar = chords[barIndex];
+      // Wir berechnen die Farbe der aufgeklappten Töne dynamisch zum Takt-Akkord
+      const color = getIntervalColor(pitchClass, chordForBar, track.color);
+      
       return {
         event,
         label: pitch,
-        color: pitchColors[pitchClass] ?? "#a78bfa",
+        color,
+        pitchClass,
         midi: (Number(pitchMatch[3]) + 1) * 12 + pitchClasses.indexOf(pitchClass)
       };
     };
-    const pitchEvents = parsedLanes.flatMap((lane) => lane.bars.flatMap((bar) => bar.events.flatMap((event) => {
+
+    const pitchEvents = parsedLanes.flatMap((lane) => lane.bars.flatMap((bar, barIndex) => bar.events.flatMap((event) => {
       const eventPitches = event.pitches
         ?? (event.kind === "chord" && track.chordNotes
           ? track.chordNotes[event.label ?? ""]
@@ -198,7 +255,8 @@ const parsedTracks = tracks.map((track) => {
       if (event.kind === "chord" && eventPitches.length === 1 && eventPitches[0] === event.label) {
         throw new Error(`Für den Akkord "${event.label}" in aufklappbarer Spur "${track.name}" müssen die einzelnen Akkordnoten angegeben werden.`);
       }
-      event.expandedNotes = eventPitches.map((pitch) => parsePitch(pitch, event));
+      
+      event.expandedNotes = eventPitches.map((pitch) => parsePitch(pitch, event, barIndex));
       return event.expandedNotes;
     })));
 
@@ -338,11 +396,18 @@ const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
                 const eventText = event.pitch
                   ? `${event.label ?? ""} · gesungene Note ${event.pitch}`
                   : event.label;
+                  
+                // Farbe dynamisch für alle Noten berechnen (Vocals, Bass, Gitarre), aber nicht für Drums
+                let eventColor = event.displayColor;
+                if (event.pitchClass && !notehead) {
+                   eventColor = getIntervalColor(event.pitchClass, chords[barIndex], eventColor ?? track.color);
+                }
+
                 return (
                   <>
                     <div
                       class={`note-event ${event.kind === "chord" ? "chord-event" : ""} ${event.kind === "chord" && event.expandedNotes ? "has-expanded-notes" : ""} ${event.pitch ? "vocal-note" : ""} ${notehead ? `drum-note drum-note-${notehead}` : ""}`}
-                      style={`grid-column: ${barIndex * stepsPerBar + event.startStep + 2} / span ${event.lengthSteps}; grid-row: 1;${event.pitchOffset === undefined ? "" : ` --pitch-offset: ${event.pitchOffset}px;`}${event.displayColor ? ` --event-color: ${event.displayColor};` : ""}${event.displayLaneOffset === undefined ? "" : ` --drum-lane-offset: ${event.displayLaneOffset}px;`}`}
+                      style={`grid-column: ${barIndex * stepsPerBar + event.startStep + 2} / span ${event.lengthSteps}; grid-row: 1;${event.pitchOffset === undefined ? "" : ` --pitch-offset: ${event.pitchOffset}px;`}${eventColor ? ` --event-color: ${eventColor};` : ""}${event.displayLaneOffset === undefined ? "" : ` --drum-lane-offset: ${event.displayLaneOffset}px;`}`}
                       aria-label={`Takt ${startBar + barIndex}, ${track.name}${eventLaneName ? `, ${eventLaneName}` : ""}${event.kind === "chord" ? `, Akkord ${event.label}` : eventText ? `: ${eventText}` : " Anschlag"}, Schritt ${event.startStep + 1}, Länge ${event.lengthSteps} Steps`}
                       title={event.kind === "chord" ? `Akkord ${event.label}` : eventText ?? eventLaneName}
                     >
@@ -358,7 +423,7 @@ const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
                     {event.kind === "chord" && event.expandedNotes?.map((note) => (
                       <div
                         class="expanded-chord-note"
-                        style={`grid-column: ${barIndex * stepsPerBar + event.startStep + 2} / span ${event.lengthSteps}; grid-row: 1; --pitch-offset: ${note.pitchOffset}px;`}
+                        style={`grid-column: ${barIndex * stepsPerBar + event.startStep + 2} / span ${event.lengthSteps}; grid-row: 1; --pitch-offset: ${note.pitchOffset}px; --note-color: ${note.color};`}
                         aria-label={`Takt ${startBar + barIndex}, ${track.name}, Akkordnote ${note.label}, Schritt ${event.startStep + 1}, Länge ${event.lengthSteps} Steps`}
                         title={note.label}
                       >
@@ -630,7 +695,7 @@ const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
     padding: 0 2px;
     overflow: hidden;
     border-radius: 2px;
-    background: var(--track-color);
+    background: var(--event-color, var(--track-color));
     color: #111827;
     font-size: 11.7px;
     font-weight: 700;
@@ -701,7 +766,7 @@ const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
     padding: 0 1px;
     overflow: hidden;
     border-radius: 2px;
-    background: color-mix(in srgb, var(--track-color), transparent 18%);
+    background: color-mix(in srgb, var(--note-color, var(--track-color)), transparent 18%);
     color: #f8fafc;
     font-size: 9.1px;
     font-weight: 600;
