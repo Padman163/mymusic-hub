@@ -31,6 +31,7 @@ export default defineConfig({
 						{ label: 'Audio-Hardware', slug: 'audio/hardware' },
 						{ label: 'Audio-Software', slug: 'audio/software' },
 						{ label: 'Musiktheorie', slug: 'audio/theory' },
+						{ label: 'Akkordmuster', slug: 'audio/chord-patterns' },
 						{
 							label: 'Songwriting',
 							collapsed: true,
