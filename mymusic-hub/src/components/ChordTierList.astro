@@ -1,0 +1,217 @@
+---
+// src/components/ChordTierList.astro
+
+const sY = [5, 12, 19, 26, 33, 40]; // Y-Koordinaten der 6 Saiten (0=e, 1=B, 2=G, 3=D, 4=A, 5=E)
+const fX = [7.5, 22.5, 37.5, 52.5]; // X-Koordinaten für 4 Bünde (relativ zum Startbund)
+
+const tiers = [
+  {
+    level: 'S',
+    color: '#F38181', // Root-Rot für S-Tier
+    items: [
+      { name: 'E-Shape (E-Saite)', desc: '2 & 3 Töne (Standard)', inv: false, dots: [{s:5, f:0, t:'R'}, {s:4, f:2, t:'5'}, {s:3, f:2, t:'R'}] },
+      { name: 'A-Shape (A-Saite)', desc: '2 & 3 Töne (Standard)', inv: false, dots: [{s:4, f:0, t:'R'}, {s:3, f:2, t:'5'}, {s:2, f:2, t:'R'}] },
+      { name: 'D-Shape (D-Saite)', desc: '2 & 3 Töne (Standard)', inv: false, dots: [{s:3, f:0, t:'R'}, {s:2, f:2, t:'5'}, {s:1, f:3, t:'R'}] },
+      { name: 'Inverted A-Shape', desc: 'Grundton A-Saite (Bass E)', inv: true, dots: [{s:5, f:0, t:'5'}, {s:4, f:0, t:'R'}, {s:3, f:2, t:'5'}] },
+      { name: 'Inverted D-Shape', desc: 'Grundton D-Saite (Bass A)', inv: true, dots: [{s:4, f:0, t:'5'}, {s:3, f:0, t:'R'}, {s:2, f:2, t:'5'}] },
+    ]
+  },
+  {
+    level: 'B',
+    color: '#fcd34d', // Warmes Gelb für B-Tier
+    items: [
+      { name: 'G-Shape (G-Saite)', desc: '2 & 3 Töne (Verliert an Druck)', inv: false, dots: [{s:2, f:0, t:'R'}, {s:1, f:3, t:'5'}, {s:0, f:3, t:'R'}] },
+      { name: 'Inverted G-Shape', desc: 'Grundton G-Saite (Bass D)', inv: true, dots: [{s:3, f:0, t:'5'}, {s:2, f:0, t:'R'}, {s:1, f:3, t:'5'}] },
+    ]
+  },
+  {
+    level: 'C',
+    color: '#6BE4C6', // Mint-Grün für C-Tier
+    items: [
+      { name: 'B-Shape (B-Saite)', desc: 'Nur 2 Töne (Keine Oktave)', inv: false, thin: true, dots: [{s:1, f:0, t:'R'}, {s:0, f:2, t:'5'}] },
+      { name: 'Inverted B-Shape', desc: 'Grundton B-Saite (Bass G)', inv: true, thin: true, dots: [{s:2, f:0, t:'5'}, {s:1, f:1, t:'R'}] },
+      { name: 'Inverted e-Shape', desc: 'Grundton e-Saite (Bass B)', inv: true, thin: true, dots: [{s:1, f:0, t:'5'}, {s:0, f:0, t:'R'}] },
+    ]
+  }
+];
+---
+
+<div class="tier-list-container">
+  {tiers.map(tier => (
+    <div class="tier-row">
+      <div class="tier-label" style={`background-color: ${tier.color};`}>
+        {tier.level}
+      </div>
+      <div class="tier-content">
+        {tier.items.map(item => (
+          <div class={`tier-item ${item.inv ? 'inverted' : ''} ${item.thin ? 'thin' : ''}`}>
+            
+            <div class="mini-diagram" aria-hidden="true">
+              <svg viewBox="0 0 60 45" width="60" height="45" class="mini-fretboard">
+                <rect x="0" y="0" width="60" height="45" rx="3" fill="#18181b" stroke="#3f3f46" stroke-width="1" />
+                
+                {sY.map((y, idx) => (
+                  <line x1="0" y1={y} x2="60" y2={y} stroke="#a1a1aa" stroke-width={idx === 5 ? "1.2" : "0.5"} />
+                ))}
+                
+                {[15, 30, 45].map(x => (
+                  <line x1={x} y1="0" x2={x} y2="45" stroke="#3f3f46" stroke-width="1" />
+                ))}
+                
+                {item.dots.map(dot => (
+                  <circle 
+                    cx={fX[dot.f]} 
+                    cy={sY[dot.s]} 
+                    r="3.5" 
+                    fill={dot.t === 'R' ? '#F38181' : '#64C4ED'} 
+                  />
+                ))}
+              </svg>
+            </div>
+
+            <div class="tier-text">
+              <strong>{item.name}</strong>
+              <span>{item.desc}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  ))}
+</div>
+
+<style>
+  .tier-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 2rem 0;
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #121214;
+    border: 1px solid #303036;
+    border-radius: 8px;
+    padding: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+
+  .tier-row {
+    display: flex;
+    background: #18181b;
+    border-radius: 6px;
+    overflow: hidden;
+    min-height: 80px;
+    border: 1px solid #27272a;
+  }
+
+  .tier-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    flex: 0 0 80px;
+    font-size: 2rem;
+    font-weight: 900;
+    color: #111827;
+    text-shadow: 0px 1px 2px rgba(255, 255, 255, 0.4);
+    border-right: 1px solid #27272a;
+  }
+
+  /* Grid sorgt für streng einheitliche Spaltenbreiten über alle Reihen hinweg */
+  .tier-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 0.75rem;
+    padding: 0.75rem;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .tier-item {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.85rem;
+    background: #27272a;
+    border: 1px solid #3f3f46;
+    border-radius: 6px;
+    padding: 0.6rem 0.85rem 0.6rem 0.6rem;
+    margin: 0 !important; /* Entfernt den ungewollten Starlight / Tailwind Abstand */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    transition: transform 0.15s ease, border-color 0.15s ease;
+  }
+
+  .tier-item:hover {
+    transform: translateY(-2px);
+    border-color: #52525b;
+  }
+
+  .tier-item.inverted {
+    background: #2d2a32;
+    border-left: 3px solid #64C4ED;
+  }
+
+  .tier-item.thin {
+    opacity: 0.75;
+  }
+
+  .mini-diagram {
+    flex: 0 0 60px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    margin: 0 !important;
+  }
+
+  .mini-fretboard {
+    display: block;
+    margin: 0 !important;
+  }
+
+  .tier-text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+    margin: 0 !important;
+  }
+
+  .tier-text strong {
+    color: #f4f4f5;
+    font-size: 0.9rem;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0 !important; /* Sicherstellen, dass kein Text-Abstand greift */
+  }
+
+  .tier-text span {
+    color: #a1a1aa;
+    font-size: 0.75rem;
+    margin-top: 0.2rem !important;
+    line-height: 1.3;
+  }
+
+  @media (max-width: 640px) {
+    .tier-row {
+      flex-direction: column;
+    }
+    .tier-label {
+      width: 100%;
+      flex: 0 0 40px;
+      font-size: 1.25rem;
+      border-right: none;
+      border-bottom: 1px solid #27272a;
+    }
+    .tier-content {
+      padding: 0.5rem;
+      /* Auf kleinen Handys springt es um zu einer einspaltigen Ansicht */
+      grid-template-columns: 1fr; 
+    }
+  }
+</style>
