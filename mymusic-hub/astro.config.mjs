@@ -26,12 +26,22 @@ export default defineConfig({
 			customCss: ['/src/styles/sidebar.css', 'katex/dist/katex.min.css'],
 			sidebar: [
 				{
+					label: 'Projektierung',
+					items: [{ label: 'To-Do', slug: 'projektierung/todo' }],
+				},
+				{
 					label: 'Audio & Musik',
 					items: [
 						{ label: 'Audio-Hardware', slug: 'audio/hardware' },
 						{ label: 'Audio-Software', slug: 'audio/software' },
-						{ label: 'Musiktheorie', slug: 'audio/theory' },
-						{ label: 'Akkordmuster', slug: 'audio/chord-patterns' },
+						{
+							label: 'Musiktheorie',
+							collapsed: true,
+							items: [
+								{ label: 'Visualisierungen erklärt', slug: 'audio/theory' },
+								{ label: 'Akkordmuster', slug: 'audio/chord-patterns' },
+							],
+						},
 						{
 							label: 'Songwriting',
 							collapsed: true,
