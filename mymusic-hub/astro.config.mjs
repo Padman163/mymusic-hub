@@ -30,19 +30,22 @@ export default defineConfig({
 					items: [{ label: 'To-Do', slug: 'projektierung/todo' }],
 				},
 				{
+						
+					label: 'Musiktheorie',
+					collapsed: true,
+					items: [
+						{ label: 'Grundlagen', slug: 'theory/basics' },
+						{ label: 'Visualisierungen erklärt', slug: 'theory/visuals' },
+						{ label: 'Akkordmuster', slug: 'theory/chord-patterns' },
+						{ label: 'Melodie & Harmonie', slug: 'theory/melodie-harmonie' },
+					],
+				},
+				{
 					label: 'Audio & Musik',
 					items: [
 						{ label: 'Audio-Hardware', slug: 'audio/hardware' },
 						{ label: 'Audio-Software', slug: 'audio/software' },
-						{
-							label: 'Musiktheorie',
-							collapsed: true,
-							items: [
-								{ label: 'Visualisierungen erklärt', slug: 'audio/theory' },
-								{ label: 'Akkordmuster', slug: 'audio/chord-patterns' },
-								{ label: 'Melodie & Harmonie', slug: 'songwriting/melodie-harmonie' },
-							],
-						},
+
 						{
 							label: 'Songwriting',
 							collapsed: true,
