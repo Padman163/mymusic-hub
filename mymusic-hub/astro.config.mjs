@@ -30,6 +30,21 @@ export default defineConfig({
 					items: [{ label: 'To-Do', slug: 'projektierung/todo' }],
 				},
 				{
+					label: 'Lehrgang',
+					items: [
+						{
+							label: 'Phase 1: Grundlagen',
+							collapsed: true,
+							items: [
+								{
+									label: 'Lektion 01: Die 12 Halbtöne & das Griffbrett',
+									slug: 'lehrgang/phase-1-grundlagen/01-schall-saite-halbton',
+								},
+							],
+						},
+					],
+				},
+				{
 						
 					label: 'Musiktheorie',
 					collapsed: true,
@@ -44,7 +59,12 @@ export default defineConfig({
 					label: 'Audio & Musik',
 					items: [
 						{ label: 'Audio-Hardware', slug: 'audio/hardware' },
-						{ label: 'Audio-Software', slug: 'audio/software' },
+						{
+							label: 'Sound Design',
+							collapsed: true,
+							items: [{ label: 'Audio-Software', slug: 'audio/software' }],
+						},
+						{ label: 'Backing Track', slug: 'audio/backing-track' },
 
 						{
 							label: 'Songwriting',

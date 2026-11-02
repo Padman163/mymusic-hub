@@ -1,0 +1,73 @@
+---
+title: "Lektion 01: Die 12 Halbtöne & das Griffbrett"
+description: "Physikalische Grundlagen, die 6 Gitarrensaiten und das chromatische Tonsystem."
+sidebar:
+  order: 1
+---
+
+import FretboardClickable from '../../../../components/FretboardClickable.astro';
+
+## 1. Theorie-Fundament
+
+Wenn du eine Saite anschlägst, schwingt sie und bringt die Luft in Bewegung. Diese Schwingungen hören wir als Ton. Wie schnell die Saite schwingt, bestimmt die **Tonhöhe**: schnelle Schwingungen klingen hoch, langsame tief. Die Anzahl der Schwingungen pro Sekunde heißt **Frequenz** und wird in Hertz (Hz) angegeben.
+
+Das Schaubild vergleicht drei Schwingungen im selben Zeitraum: Die Wellenhöhe bleibt gleich, aber die schnellere Schwingung macht mehr Hin-und-her-Bewegungen. Mehr Schwingungen in derselben Zeit bedeuten eine höhere Frequenz und damit einen höheren Ton.
+
+<figure>
+  <svg viewBox="0 0 720 250" role="img" aria-labelledby="wave-title wave-description">
+    <title id="wave-title">Langsame und schnelle Schwingungen im Vergleich</title>
+    <desc id="wave-description">Drei gleich hohe Wellen über denselben Zeitraum. Die langsame Welle schwingt einmal, die mittlere zweimal und die schnelle viermal. Je mehr Schwingungen, desto höher der Ton.</desc>
+    <line x1="190" y1="48" x2="650" y2="48" stroke="#64748b" stroke-dasharray="4 5" />
+    <line x1="190" y1="118" x2="650" y2="118" stroke="#64748b" stroke-dasharray="4 5" />
+    <line x1="190" y1="188" x2="650" y2="188" stroke="#64748b" stroke-dasharray="4 5" />
+    <text x="12" y="53" fill="currentColor" font-size="16">Langsam · tiefer Ton</text>
+    <text x="12" y="123" fill="currentColor" font-size="16">Mittel</text>
+    <text x="12" y="193" fill="currentColor" font-size="16">Schnell · hoher Ton</text>
+    <path d="M190 48 Q305 8 420 48 T650 48" fill="none" stroke="#38bdf8" stroke-width="4" />
+    <path d="M190 118 Q247.5 78 305 118 T420 118 T535 118 T650 118" fill="none" stroke="#a78bfa" stroke-width="4" />
+    <path d="M190 188 Q218.75 148 247.5 188 T305 188 T362.5 188 T420 188 T477.5 188 T535 188 T592.5 188 T650 188" fill="none" stroke="#f472b6" stroke-width="4" />
+    <line x1="190" y1="226" x2="650" y2="226" stroke="currentColor" stroke-width="1.5" />
+    <path d="M650 226 l-9 -5 v10 z" fill="currentColor" />
+    <text x="408" y="247" fill="currentColor" font-size="14" text-anchor="middle">gleicher Zeitraum</text>
+  </svg>
+  <figcaption>Schematische Darstellung: Bei gleicher Wellenhöhe schwingt der höhere Ton öfter im selben Zeitraum.</figcaption>
+</figure>
+
+Das Tonsystem lässt sich wie eine Treppe mit zwölf gleich großen Schritten verstehen: Jeder Schritt ist ein **Halbton**. Nach zwölf Halbtönen beginnt derselbe Tonname wieder, nur eine Oktave höher. Die Töne dazwischen sind die zwölf Tonklassen: **C, C♯/D♭, D, D♯/E♭, E, F, F♯/G♭, G, G♯/A♭, A, A♯/B♭ und B**.
+
+Zwei Nachbarpaare liegen direkt einen Halbton auseinander: **E–F** und **B–C**. Zwischen ihnen passt kein weiterer Ton. Bei den übrigen benachbarten Stammtönen liegt ein Ganzton, also Platz für einen Zwischenton: zum Beispiel **C–C♯–D**. Ein ♯ erhöht einen Ton um einen Halbton, ein ♭ senkt ihn um einen Halbton. So können verschiedene Namen dieselbe Tonhöhe bezeichnen, etwa **C♯ und D♭**.
+
+## 2. Die Gitarre als Halbton-Messlatte
+
+Die Standard-Stimmung der sechs **Leersaiten** lautet von der tiefsten zur höchsten Saite:
+
+| Saite | Leere Saite | Frequenz (ungefähr) |
+|:--:|:--:|--:|
+| 6 | E2 | 82,4 Hz |
+| 5 | A2 | 110,0 Hz |
+| 4 | D3 | 146,8 Hz |
+| 3 | G3 | 196,0 Hz |
+| 2 | B3 | 246,9 Hz |
+| 1 | E4 | 329,6 Hz |
+
+Die Frequenzwerte zeigen, wie stark sich die Tonhöhe zwischen den Saiten verändert: Die tiefe E-Saite schwingt ungefähr 82-mal pro Sekunde, die hohe e-Saite etwa 330-mal. Das ist ungefähr die vierfache Frequenz – entsprechend liegen die beiden E-Saiten zwei Oktaven auseinander. Eine Oktave bedeutet jeweils: Die Frequenz verdoppelt sich. Auch zwischen den übrigen Leersaiten steigt die Frequenz, obwohl die Abstände auf dem Griffbrett nicht immer gleich viele Bünde haben.
+
+### Warum ist die B-Saite anders gestimmt?
+
+Die meisten benachbarten Leersaiten liegen eine reine Quarte auseinander, also fünf Halbtöne: E–A, A–D, D–G und B–E. Zwischen G- und B-Saite liegen dagegen nur vier Halbtöne – eine große Terz:
+
+$$
+G \rightarrow G\sharp \rightarrow A \rightarrow A\sharp \rightarrow B
+$$
+
+Wäre auch dieser Abstand eine reine Quarte, müsste die nächsthöhere Leersaite **C** statt **B** heißen. Die B-Saite ist gegenüber diesem durchgehenden Quartenmuster also um einen Halbton tiefer gestimmt. Das ist eine bewusste Eigenschaft der Standardstimmung und erleichtert viele gebräuchliche Akkordgriffe und Melodien; die Abstände der Saiten müssen deshalb nicht alle gleich sein.
+
+Für das Griffbrett bedeutet diese Ausnahme: Wenn du ein Griffmuster über den Übergang von der G- auf die B-Saite verschiebst, muss der betreffende Ton auf der B-Saite oft **einen Bund höher** gegriffen werden, damit die gleiche Tonbeziehung erhalten bleibt. Die Tonhöhe selbst steigt dabei nicht automatisch – entscheidend ist, welche Töne du greifst.
+
+**Ein Bund entspricht einem Halbtonschritt.** Jeder Bund verkürzt die schwingende Saitenlänge und lässt den Ton um einen Halbton steigen. Am zwölften Bund erklingt derselbe Tonname wie auf der leeren Saite, aber eine Oktave höher.
+
+Im Griffbrettbild ist die hohe e-Saite oben und die tiefe E-Saite unten angeordnet. Die Leersaiten sind links vom Sattel markiert: **e–B–G–D–A–E** von oben nach unten. Die nummerierten Felder zeigen die ersten Bünde. Klicke auf eine Leersaite oder einen Bund, um die Note hervorzuheben.
+
+<FretboardClickable />
+
+Für den passenden Clean-Sound und die Anschlagsübung mit Metronom findest du Begleitmaterial unter [Sound Design: Clean-Preset für Lektion 01](/audio/software/) und [Backing Track: Halbton-Grundübung bei 70 BPM](/audio/backing-track/).
