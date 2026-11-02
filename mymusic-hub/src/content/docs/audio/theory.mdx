@@ -12,19 +12,48 @@ import ChordDiagramPattern from '../../../components/ChordDiagramPattern.astro';
 import ScorePattern from '../../../components/ScorePattern.astro';
 import ScalePattern from '../../../components/ScalePattern.astro';
 
-Klicke auf die Saiten, um eigene Griffmuster oder Tonleitern zu markieren:
+Diese Seite erklärt, wie du die Griffbrett-, Rhythmus- und Noten-Visualisierungen liest. Die Beispiele stehen in Standardstimmung und verwenden, sofern nicht anders angegeben, die Akkordfolge `Em – C – G – D`.
+
+## Interaktives Griffbrett
+
+Das Griffbrett zeigt die ersten zwölf Bünde und die leeren Saiten. Klicke auf eine Position, um sie zu markieren; mit **Alle löschen** entfernst du die Markierungen.
+
+**Legende**
+
+- Die Saiten sind von oben nach unten mit `e – B – G – D – A – E` beschriftet: von der hohen zur tiefen E-Saite.
+- Die Zahlen unter dem Griffbrett bezeichnen die Bünde. Die offenen Saiten links liegen im Bund `0`.
+- Die Farben unterscheiden Tonhöhen (zum Beispiel haben alle angezeigten E-Noten dieselbe Farbe). Sie kennzeichnen hier nicht automatisch eine harmonische Funktion oder einen Grundton.
+
+**Zusatzinfo:** Das Werkzeug eignet sich, um eigene Griffbilder und Tonleitern zu markieren. Die Markierung ist eine Lernhilfe und spielt keinen Ton ab.
 
 <FretboardClickable />
 
-## Moll-Pentatonik
+## Skalen und Intervalle
 
-Die E-Moll-Pentatonik besteht aus fünf Tönen: E, G, A, B und D. Ihre Stufenformel lautet `1 – ♭3 – 4 – 5 – ♭7`; im Griffbrett-Beispiel sind die Grundtöne E rot markiert.
+Die Galerie zeigt vier Ansichten in der Lage am 11. bis 16. Bund: Grundtöne, Dreiklang, Moll-Pentatonik und natürliches Moll. Mit den Reitern wechselst du zwischen den Ansichten; mit **Intervalle / Noten** schaltest du die Beschriftung der Griffbrett-Punkte um.
+
+**Legende**
+
+- `R` beziehungsweise `1` = Grundton. `♭` bedeutet, dass ein Intervall gegenüber der großen/reinen Form um einen Halbton erniedrigt ist.
+- In der Moll-Pentatonik stehen `1 – ♭3 – 4 – 5 – ♭7` für Grundton, kleine Terz, reine Quarte, reine Quinte und kleine Septime.
+- Natürliches Moll ergänzt die `2` und `♭6`; der Dreiklang zeigt `1 – ♭3 – 5`.
+- Die farbigen Punkte verwenden dieselbe Farbe für dieselbe Intervallstufe; die Legende unter dem Griffbrett nennt die Stufe und ihren Namen.
+
+**Zusatzinfo:** E-Moll-Pentatonik besteht aus `E – G – A – B – D`. Natürliches E-Moll enthält zusätzlich `F#` und `C`: `E – F# – G – A – B – C – D`. Die Notennamen und Intervalle sind zwei verschiedene Beschriftungen derselben Positionen.
 
 <ScalePattern />
 
 ## Akkordgriffe
 
-Drei Beispiele in Standardstimmung: ein offener C-Dur-Akkord, ein G5-Powerchord mit zusätzlicher Oktave und ein offener C7. Die Farben markieren die Akkordtöne; `×` bedeutet, dass die Saite nicht angeschlagen wird.
+Drei Beispiele in Standardstimmung: ein offener C-Dur-Akkord, ein G5-Powerchord mit zusätzlicher Oktave und ein offener C7. Mit den Reitern wechselst du zwischen den Griffen; die Umschaltung **Intervalle / Noten** ändert die Beschriftung der Punkte.
+
+**Legende**
+
+- Die senkrechten Linien stehen für die Saiten; die Beschriftung nennt die Stimmung. Die Zahlen am Griffbrett zeigen die Bünde.
+- Ein Punkt zeigt einen gegriffenen Ton. `0` bedeutet leere Saite, `×` bedeutet, dass die Saite nicht angeschlagen wird.
+- Die Farbe und die Intervallbeschriftung ordnen jeden Ton seiner Rolle im Akkord zu: `R` = Grundton, `3`/`♭3` = große/kleine Terz, `5` = Quinte, `♭7` = kleine Septime und `8` = Oktave.
+
+**Zusatzinfo:** C-Dur besteht aus Grundton, großer Terz und Quinte. G5 enthält Grundton und Quinte sowie deren Oktave, aber keine Terz – darum legt der Griff allein nicht fest, ob der Akkord Dur oder Moll ist. C7 ergänzt zum C-Dur-Klang eine kleine Septime; im gezeigten Griff ist die Quinte ausgelassen.
 
 <ChordDiagramPattern
   keyLabel="C-Dur, G5 und C7"
@@ -86,17 +115,94 @@ Drei Beispiele in Standardstimmung: ein offener C-Dur-Akkord, ein G5-Powerchord 
   ]}
 />
 
+### Kompakte Powerchord-Übersicht
+
+Die kompakte Ansicht zeigt die vier Powerchord-Griffe der Folge `E5 – C5 – G5 – D5` gleichzeitig. Sie eignet sich zum schnellen Vergleichen der Positionen; die Bundzahlen stehen jeweils unter den Saiten.
+
+<ChordDiagramPattern
+  keyLabel="E-Moll"
+  compact={true}
+  chords={[
+    {
+      chord: 'E5',
+      degree: 'i',
+      function: 'Tonika',
+      positions: [
+        { stringIndex: 5, stringName: 'E', fret: 0, note: 'E', octave: 2, role: 'root' },
+        { stringIndex: 4, stringName: 'A', fret: 2, note: 'B', octave: 2, role: 'fifth' }
+      ]
+    },
+    {
+      chord: 'C5',
+      degree: 'VI',
+      function: 'Subdominant-Parallele',
+      positions: [
+        { stringIndex: 4, stringName: 'A', fret: 3, note: 'C', octave: 3, role: 'root' },
+        { stringIndex: 3, stringName: 'D', fret: 5, note: 'G', octave: 3, role: 'fifth' }
+      ]
+    },
+    {
+      chord: 'G5',
+      degree: 'III',
+      function: 'Tonika-Parallele',
+      positions: [
+        { stringIndex: 5, stringName: 'E', fret: 3, note: 'G', octave: 2, role: 'root' },
+        { stringIndex: 4, stringName: 'A', fret: 5, note: 'D', octave: 3, role: 'fifth' }
+      ]
+    },
+    {
+      chord: 'D5',
+      degree: 'VII',
+      function: 'Subdominant-Dominante',
+      positions: [
+        { stringIndex: 4, stringName: 'A', fret: 5, note: 'D', octave: 3, role: 'root' },
+        { stringIndex: 3, stringName: 'D', fret: 7, note: 'A', octave: 3, role: 'fifth' }
+      ]
+    }
+  ]}
+/>
+
+## Schlagzeug-Pattern
+
+Das Raster zeigt einen Takt im 4/4-Takt mit acht Steps, also Achtel-Auflösung. Die Steps laufen von links nach rechts; die Beschriftung `1, +, 2, +, 3, +, 4, +` teilt den Takt in Zählzeiten und die dazwischenliegenden Achtel.
+
+**Legende**
+
+- Eine farbige Zelle ist ein Schlag, eine leere Zelle eine Pause. Die Zeile nennt das Instrument und seine MIDI-Note.
+- Im Beispiel liegt die Kick auf Zählzeit 1 und 3, die Snare auf 2 und 4, die geschlossene Hi-Hat auf jeder Achtel.
+- Die Zeile **Anschlag** zeigt für die ausgewählte Instrumentenspur die Velocity von `0` bis `127`: höhere Werte stehen für einen stärkeren MIDI-Anschlag. Klicke auf eine Spur, um ihre Anschlagwerte zu sehen.
+- Der Footer nennt Taktart, Rasterauflösung und Anzahl der Steps.
+
+**Zusatzinfo:** Velocity beschreibt die Anschlagstärke als MIDI-Steuerwert. Wie laut oder klanglich anders ein Schlag wirkt, hängt zusätzlich vom verwendeten Drum-Instrument und dessen Einstellungen ab.
+
 <DrumPattern showVelocity={true} />
 
 ## Akkordfolge
 
-Ein reines Akkord-Visual: Akkordsymbole mit ihren Stufen in E-Moll, ohne Noten- oder Rhythmusdarstellung.
+Das Visual zeigt die Akkorde eines Taktes nebeneinander und ordnet sie der Tonart E-Moll zu. Es stellt weder einzelne Noten noch Rhythmus dar.
+
+**Legende**
+
+- Das Akkordsymbol ist der konkrete Akkord; die römische Ziffer darunter bezeichnet seine Stufe in der Tonleiter.
+- Kleine römische Ziffern stehen hier für Moll-Akkorde, große für Dur-Akkorde.
+- Im Beispiel bedeutet `Em (i) – C (VI) – G (III) – D (VII)`: erster, sechster, dritter und siebter Akkord in E natürlich Moll.
+
+**Zusatzinfo:** Stufenbezeichnungen zeigen die harmonische Funktion relativ zur Tonart. Sie bleiben beim Transponieren als Muster erhalten; die konkreten Akkordsymbole ändern sich.
 
 <ChordProgression chords={['Em', 'C', 'G', 'D']} keyRoot="E" scale="naturalMinor" />
 
 ## Bass-Pattern testen
 
-Viertaktiger Rock-Pick-Bass in E-Moll: durchgehende Achtelnoten auf dem Grundton, mit Anschlagstärke 102. Die Notenzeilen zeigen alle Töne der Tonleiter zwischen dem tiefsten und höchsten gespielten Ton.
+Das Piano-Roll zeigt einen viertaktigen Rock-Pick-Bass in E-Moll. Jeder Takt folgt einem Akkord aus `Em – C – G – D`; gespielt werden durchgehende Achtel auf dessen Grundton.
+
+**Legende**
+
+- Die Akkordnamen stehen über den Takten. Die Zeilen links zeigen die Tonhöhe samt Oktave; die Zeitleiste läuft von links nach rechts.
+- Ein Notenblock ist ein gespielter Ton. Seine Breite zeigt die Dauer; im Beispiel umfasst jeder Block einen Achtel-Step.
+- Die Tonfarben zeigen das Intervall relativ zum Akkord des jeweiligen Takts. Die Zeilenbeschriftungen sind zusätzlich relativ zum Grundton E eingefärbt.
+- Der Footer nennt Taktart, Auflösung, Steps pro Takt und Velocity. Im Beispiel beträgt die Anschlagstärke `102`.
+
+**Zusatzinfo:** Durchgehende Achtel auf dem Grundton stützen den Puls und die Harmonie. Die Zeilen zeigen den Tonhöhenbereich zwischen tiefster und höchster gespielter Note.
 
 <BassPattern
   keyRoot="E"
@@ -111,7 +217,16 @@ Viertaktiger Rock-Pick-Bass in E-Moll: durchgehende Achtelnoten auf dem Grundton
 
 ## Gitarren-Pattern testen
 
-Viertaktiges Powerchord-Pattern passend zur Bassfolge in E-Moll. Die Noten werden als durchgehende Achtel-Abschläge gespielt und mit Palm-Mute artikuliert.
+Das viertaktige Gitarren-Pattern ergänzt den Bass mit Powerchords passend zu `Em – C – G – D`. Die Akkordtöne werden als durchgehende Achtel-Abschläge gespielt und mit Palm-Mute artikuliert.
+
+**Legende**
+
+- Akkorde stehen über den Takten; Tonhöhen stehen links. Die horizontalen Steps zeigen den zeitlichen Ablauf.
+- Die farbigen Notenblöcke sind die gespielten Töne; ihre Länge zeigt die Dauer.
+- Die Zeile **Artikulation** benennt die Spieltechnik. `PM` steht für Palm-Mute: Die Saiten werden nahe der Brücke leicht gedämpft.
+- Die Zeile **Schlagmuster** markiert die Anschlagsrichtung: `↓` = Abschlag, `↑` = Aufschlag; eine Pause wird nicht angeschlagen.
+
+**Zusatzinfo:** Ein Powerchord besteht hier aus Grundton und Quinte. Ohne Terz klingt er weder eindeutig Dur noch Moll. Die Stufenangabe am Akkord orientiert sich an E-Moll.
 
 <GuitarPattern
   keyRoot="E"
@@ -126,7 +241,16 @@ Viertaktiges Powerchord-Pattern passend zur Bassfolge in E-Moll. Die Noten werde
 
 ## Gesangs-Pattern testen
 
-Der Gesang legt die Silben direkt in die Notenblöcke; die Tonhöhe wird über die Zeile angezeigt. Die Silbentrennung folgt dem Synthesizer-V-Format: Ein Bindestrich am Silbenende verbindet Folgesilben desselben Wortes. Das Beispiel zeigt den viertaktigen Refrain über `Em – C – G – D`; Takt 2 lässt Platz zum Atmen.
+Das Vocal-Piano-Roll ordnet die Silben den Tonhöhen und Zeitpunkten im viertaktigen Refrain über `Em – C – G – D` zu.
+
+**Legende**
+
+- Die Tonhöhen samt Oktave stehen links; die Zeit läuft von links nach rechts. Die Akkorde über den Takten zeigen den harmonischen Kontext.
+- Ein Block enthält die Silbe und darunter den gesungenen Ton. Seine horizontale Länge zeigt, wie lange die Silbe gehalten wird.
+- Ein Bindestrich am Silbenende verbindet Folgesilben desselben Wortes, zum Beispiel `fi-` und `re`.
+- Die Blockfarbe zeigt das Intervall des Tons relativ zum Akkord im jeweiligen Takt.
+
+**Zusatzinfo:** Takt 2 enthält eine längere Silbe und lässt danach Raum zum Atmen. Die Tonhöhe kann sich auch innerhalb eines Wortes ändern, um eine Gesangsmelodie zu formen.
 
 <VocalPattern
   bars={[
@@ -168,7 +292,16 @@ Der Gesang legt die Silben direkt in die Notenblöcke; die Tonhöhe wird über d
 
 ## Gesamtpartitur testen
 
-Die fünf Instrumentenspuren sind synchron über `Em – C – G – D` angeordnet. Die Reihenfolge entspricht dem Projekt-Routing; jede Spur verwendet durchgehend eine eigene Notenfarbe. Die Drumspur ist in Kick, Snare und Hi-Hat aufgeteilt, damit gleichzeitige Schläge einzeln sichtbar bleiben.
+Die Gesamtpartitur bündelt Rhythmusgitarre, Lead-Gitarre, Bass, Schlagzeug und Gesang über denselben vier Takten `Em – C – G – D`. So lassen sich die Parts gleichzeitig lesen und rhythmisch vergleichen.
+
+**Legende**
+
+- Die Taktzeile zeigt Akkord und Taktnummer; darunter laufen die gemeinsamen Steps von links nach rechts.
+- Jede Zeile gehört zu einer Instrumentenspur. Notenblöcke zeigen Einsatz und Dauer; die Beschriftung nennt – je nach Spur – Note, Akkord oder Silbe.
+- Die Farbe der Tonblöcke ordnet die Note ihrem Intervall relativ zum Akkord des Takts zu. Bei den Drum-Notenköpfen unterscheiden die Farben die Schlagzeug-Lanes.
+- Die Pfeile an den Spuren klappen zusätzliche Tonhöhen- oder Drum-Lanes auf. Der Pfeil in der Kopfzeile klappt alle erweiterbaren Spuren gemeinsam auf oder zu.
+
+**Zusatzinfo:** Die Spuren sind auf dieselbe Zeitachse ausgerichtet: Ein Einsatz auf derselben horizontalen Position geschieht gleichzeitig. Die Drum-Lanes trennen Kick, Snare und Hi-Hat, sodass überlagerte Schläge einzeln erkennbar bleiben.
 
 <ScorePattern
   section="Refrain"

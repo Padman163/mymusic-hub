@@ -40,16 +40,13 @@ export default defineConfig({
 							items: [
 								{ label: 'Visualisierungen erklärt', slug: 'audio/theory' },
 								{ label: 'Akkordmuster', slug: 'audio/chord-patterns' },
+								{ label: 'Melodie & Harmonie', slug: 'songwriting/melodie-harmonie' },
 							],
 						},
 						{
 							label: 'Songwriting',
 							collapsed: true,
 							items: [
-								{
-									label: 'Melodie & Harmonie',
-									slug: 'songwriting/melodie-harmonie',
-								},
 								{
 									label: 'Projekt: Rock-Arrangement',
 									collapsed: true,
