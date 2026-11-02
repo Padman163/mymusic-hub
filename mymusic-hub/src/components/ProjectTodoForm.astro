@@ -142,6 +142,6 @@
 		const issueUrl = new URL('https://github.com/Padman163/mymusic-hub/issues/new');
 		issueUrl.searchParams.set('title', `[${type}] ${title}`);
 		issueUrl.searchParams.set('body', `## Typ\n${type}\n\n## Beschreibung\n${description}`);
-		window.location.assign(issueUrl);
+		window.open(issueUrl, '_blank', 'noopener,noreferrer');
 	});
 </script>
