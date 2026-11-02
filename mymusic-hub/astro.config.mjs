@@ -30,42 +30,32 @@ export default defineConfig({
 					items: [{ label: 'To-Do', slug: 'projektierung/todo' }],
 				},
 				{
-					label: 'Lehrgang',
+					label: 'Audio & Musik',
 					items: [
 						{
-							label: 'Phase 1: Grundlagen',
-							collapsed: true,
+							label: 'Musiktheorie',
+							collapsed: false,
 							items: [
 								{
-									label: 'Lektion 01: Die 12 Halbtöne & das Griffbrett',
-									slug: 'lehrgang/phase-1-grundlagen/01-schall-saite-halbton',
+									label: 'Level 100: Elementarlehre',
+									collapsed: false,
+									items: [
+										{
+											label: '101: Vom Ton zur Gitarre',
+											slug: 'audio/theory/101-tonsystem-griffbrett',
+										},
+										{
+											label: '102: Sound Design & Presets',
+											slug: 'audio/software',
+										},
+										{
+											label: '103: Backing Track (70 BPM)',
+											slug: 'audio/backing-track',
+										},
+									],
 								},
 							],
 						},
-					],
-				},
-				{
-						
-					label: 'Musiktheorie',
-					collapsed: true,
-					items: [
-						{ label: 'Grundlagen', slug: 'theory/basics' },
-						{ label: 'Visualisierungen erklärt', slug: 'theory/visuals' },
-						{ label: 'Akkordmuster', slug: 'theory/chord-patterns' },
-						{ label: 'Melodie & Harmonie', slug: 'theory/melodie-harmonie' },
-					],
-				},
-				{
-					label: 'Audio & Musik',
-					items: [
-						{ label: 'Audio-Hardware', slug: 'audio/hardware' },
-						{
-							label: 'Sound Design',
-							collapsed: true,
-							items: [{ label: 'Audio-Software', slug: 'audio/software' }],
-						},
-						{ label: 'Backing Track', slug: 'audio/backing-track' },
-
 						{
 							label: 'Songwriting',
 							collapsed: true,
@@ -104,6 +94,16 @@ export default defineConfig({
 										
 									],
 								},
+							],
+						},
+						{
+							label: 'Referenz & Werkzeuge',
+							collapsed: true,
+							items: [
+								{ label: 'Audio-Hardware', slug: 'audio/hardware' },
+								{ label: 'Visualisierungen erklärt', slug: 'audio/theory' },
+								{ label: 'Akkordmuster', slug: 'audio/chord-patterns' },
+								{ label: 'Melodie & Harmonie', slug: 'songwriting/melodie-harmonie' },
 							],
 						},
 					],

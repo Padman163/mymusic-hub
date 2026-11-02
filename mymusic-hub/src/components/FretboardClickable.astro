@@ -2,6 +2,21 @@
 // FretboardClickable.astro
 // Auf 150% vergrößerte Version für optimale Lesbarkeit bei Standard-Zoom.
 
+export interface Props {
+  readOnly?: boolean;
+  fixedPositions?: { stringIndex: number; fret: number }[];
+}
+
+const { readOnly = false, fixedPositions } = Astro.props;
+
+const isFixedPosition = (stringIndex: number, fret: number) => (
+  readOnly && (
+    fixedPositions
+      ? fixedPositions.some((position) => position.stringIndex === stringIndex && position.fret === fret)
+      : fret === 0
+  )
+);
+
 const tuning = ['e', 'B', 'G', 'D', 'A', 'E'];
 // Saitenabstand um 150% vergrößert (Abstand 45px statt 30px)
 const stringPositions = [37.5, 82.5, 127.5, 172.5, 217.5, 262.5];
@@ -33,7 +48,11 @@ const noteColors: Record<string, string> = {
 };
 ---
 
-<div class="fretboard-container" id="fretboard-widget">
+<div
+  class="fretboard-container"
+  id={!readOnly ? 'fretboard-widget' : undefined}
+  data-readonly={readOnly}
+>
   <!-- ViewBox-Höhe von 220 auf 330 skaliert (150%) -->
   <svg viewBox="0 0 1000 330" class="fretboard-svg" preserveAspectRatio="xMidYMid meet">
     
@@ -116,11 +135,16 @@ const noteColors: Record<string, string> = {
       const y = stringPositions[sIndex];
       const x = 22; 
       return (
-        <g class="note-node" data-fret="0" data-string={sIndex}>
+        <g
+          class:list={['note-node', { active: isFixedPosition(sIndex, 0) }]}
+          data-fret="0"
+          data-string={sIndex}
+          aria-label={`Leersaite ${tuning[sIndex]}: ${noteName}`}
+        >
           <circle cx={x} cy={y} r="25" fill="transparent" />
           <circle class="note-circle" cx={x} cy={y} r="19.5" fill={color} />
           <text class="note-text-active" x={x} y={y} text-anchor="middle" dominant-baseline="central">
-            {noteName}
+            {readOnly ? tuning[sIndex] : noteName}
           </text>
           <text class="tuning-default" x={x} y={y} text-anchor="middle" dominant-baseline="central">
             {tuning[sIndex]}
@@ -139,7 +163,12 @@ const noteColors: Record<string, string> = {
             const noteName = fretboardNotes[sIndex][fret];
             const color = noteColors[noteName] || '#fff';
             return (
-              <g class="note-node" data-fret={fret} data-string={sIndex}>
+              <g
+                class:list={['note-node', { active: isFixedPosition(sIndex, fret) }]}
+                data-fret={fret}
+                data-string={sIndex}
+                aria-label={`Saite ${tuning[sIndex]}, Bund ${fret}: ${noteName}`}
+              >
                 <circle cx={x} cy={y} r="25" fill="transparent" />
                 <circle class="note-circle" cx={x} cy={y} r="19.5" fill={color} />
                 <text class="note-text-active" x={x} y={y} text-anchor="middle" dominant-baseline="central">
@@ -154,9 +183,11 @@ const noteColors: Record<string, string> = {
 
   </svg>
 
-  <div class="controls-footer">
-    <button class="btn-clear-all" type="button">Alle löschen</button>
-  </div>
+  { !readOnly && (
+    <div class="controls-footer">
+      <button class="btn-clear-all" type="button">Alle löschen</button>
+    </div>
+  )}
 </div>
 
 <style>
@@ -180,6 +211,11 @@ const noteColors: Record<string, string> = {
   /* --- Noten-Nodes (Interaktion & Animation) --- */
   .note-node {
     cursor: pointer;
+  }
+
+  .fretboard-container[data-readonly='true'] .note-node {
+    cursor: default;
+    pointer-events: none;
   }
 
   .note-circle {
@@ -254,7 +290,7 @@ const noteColors: Record<string, string> = {
 <script>
   function setupFretboard() {
     const container = document.getElementById('fretboard-widget');
-    if (!container) return;
+    if (!container || container.dataset.readonly === 'true') return;
 
     const nodes = container.querySelectorAll('.note-node');
     const clearBtn = container.querySelector('.btn-clear-all');
