@@ -104,21 +104,15 @@ export default defineConfig({
 							label: 'Referenz & Werkzeuge',
 							collapsed: true,
 							items: [
-								{ label: 'Audio-Hardware', slug: 'audio/hardware' },
-								{ label: 'Visualisierungen erklärt', slug: 'audio/theory' },
-								{ label: 'Akkordmuster', slug: 'audio/chord-patterns' },
-								{ label: 'Melodie & Harmonie', slug: 'audio/songwriting/melodie-harmonie' },
+								{ label: 'Audio-Hardware', slug: 'audio/referenzen-werkzeuge/hardware' },
+								{ label: 'Visualisierungen erklärt', slug: 'audio/referenzen-werkzeuge/visualisierungen-erklaert' },
+								{ label: 'Akkordmuster', slug: 'audio/referenzen-werkzeuge/akkordmuster' },
+								
 							],
 						},
 					],
 				},
-				{
-					label: 'Video & Streaming',
-					items: [
-						{ label: 'Video-Hardware', slug: 'audio/referenzen-werkzeuge/hardware' },
-						{ label: 'Video-Software', slug: 'audio/referenzen-werkzeuge/software' },
-					],
-				},
+
 			],
 		}),
 	],
