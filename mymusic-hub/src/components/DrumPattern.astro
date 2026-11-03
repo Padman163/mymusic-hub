@@ -6,11 +6,19 @@ export interface Props {
   resolution?: string;
   interactive?: boolean;
   showVelocity?: boolean;
+  showTrackNote?: boolean;
+  useTrackColors?: boolean;
+  continuous?: boolean;
+  stepSize?: number;
+  stepLabels?: string[];
   patternData?: {
     name: string;
     note: string;
     color: string;
     activeSteps: number[];
+    cellLabels?: string[];
+    eventPositions?: number[];
+    eventLabels?: string[];
     velocities?: number[];
   }[];
 }
@@ -21,6 +29,11 @@ const {
   resolution = "1/8",
   interactive = true,
   showVelocity = false,
+  showTrackNote = true,
+  useTrackColors = false,
+  continuous = false,
+  stepSize = 32.5,
+  stepLabels: customStepLabels,
   patternData = [
     { name: "Kick - Hit", note: "C1", color: "#ef4444", activeSteps: [0, 4] },
     { name: "Snare - Center", note: "D1", color: "#f97316", activeSteps: [2, 6] },
@@ -49,10 +62,12 @@ const noteColors: Record<string, string> = {
 };
 
 const visiblePatternData = patternData
-  .filter((track) => track.activeSteps.length > 0)
+  .filter((track) => track.activeSteps.length > 0 || (track.eventPositions?.length ?? 0) > 0)
   .map((track) => ({
     ...track,
-    color: noteColors[track.note.match(/^[A-G]#?/)?.[0] ?? ''] ?? track.color,
+    color: useTrackColors
+      ? track.color
+      : noteColors[track.note.match(/^[A-G]#?/)?.[0] ?? ''] ?? track.color,
     velocities: Array.from({ length: steps }, (_, stepIndex) => (
       track.activeSteps.includes(stepIndex)
         ? Math.min(127, Math.max(0, track.velocities?.[stepIndex] ?? 90))
@@ -62,14 +77,17 @@ const visiblePatternData = patternData
 
 const initialTrack = visiblePatternData[0];
 const stepLabels = Array.from({ length: steps }, (_, index) => (
-  index % 2 === 0 ? `${(Math.floor(index / 2) % 4) + 1}` : "+"
+  customStepLabels?.[index] ?? (index % 2 === 0 ? `${(Math.floor(index / 2) % 4) + 1}` : "+")
 ));
 ---
 
 <div
   class="studio-one-pattern"
+  style={`--step-size: ${stepSize}px;`}
   data-interactive={interactive}
   data-show-velocity={showVelocity}
+  data-show-track-note={showTrackNote}
+  data-continuous={continuous}
 >
   <div class="pattern-header" style={`--steps: ${steps};`}>
     <div class="header-spacer" aria-hidden="true"></div>
@@ -91,19 +109,35 @@ const stepLabels = Array.from({ length: steps }, (_, index) => (
       >
         <div class="track-info" style={`--track-color: ${track.color};`}>
           <span class="track-name">{track.name}</span>
-          <span class="track-note">{track.note}</span>
+          {showTrackNote && <span class="track-note">{track.note}</span>}
         </div>
         <div class="step-columns step-row" style={`--steps: ${steps};`}>
           {Array.from({ length: steps }).map((_, stepIdx) => {
             const isActive = track.activeSteps.includes(stepIdx);
+            const runStarts = isActive && !track.activeSteps.includes(stepIdx - 1);
+            const runEnds = isActive && !track.activeSteps.includes(stepIdx + 1);
             return (
               <div 
                 class={`step-cell ${isActive ? 'active' : ''}`} 
                 style={isActive ? `background-color: ${track.color};` : ''}
                 data-step={stepIdx}
-              ></div>
+                data-grid-end={stepIdx === steps - 1 ? 'true' : undefined}
+                data-run-start={runStarts ? 'true' : undefined}
+                data-run-end={runEnds ? 'true' : undefined}
+              >
+                {track.cellLabels?.[stepIdx] && (
+                  <span class="step-cell-label">{track.cellLabels[stepIdx]}</span>
+                )}
+              </div>
             );
           })}
+          {track.eventPositions?.map((stepPosition, eventIndex) => (
+            <div
+              class="event-marker"
+              aria-hidden="true"
+              style={`--event-step: ${stepPosition}; --event-color: ${track.color};`}
+            >{track.eventLabels?.[eventIndex]}</div>
+          ))}
         </div>
       </div>
     ))}
@@ -175,7 +209,7 @@ const stepLabels = Array.from({ length: steps }, (_, index) => (
     overflow: auto hidden;
     box-sizing: border-box;
   }
-  
+
   .pattern-header,
   .pattern-footer {
     display: grid;
@@ -200,6 +234,33 @@ const stepLabels = Array.from({ length: steps }, (_, index) => (
     padding: 8px 8px var(--step-gap);
     height: calc(var(--step-size) + 8px + var(--step-gap) + 1px);
     min-height: calc(var(--step-size) + 8px + var(--step-gap) + 1px);
+  }
+
+  .studio-one-pattern[data-continuous="true"] .step-cell.active:not([data-run-end="true"]) {
+    width: calc(var(--step-size) + var(--step-gap));
+    border: 0;
+    border-radius: 0;
+  }
+
+  .studio-one-pattern[data-continuous="true"] .step-cell.active[data-run-end="true"] {
+    width: var(--step-size);
+    border: 0;
+  }
+
+  .studio-one-pattern[data-continuous="true"] .step-cell.active[data-run-start="true"] {
+    border-radius: 4px 0 0 4px;
+  }
+
+  .studio-one-pattern[data-continuous="true"] .step-cell.active[data-run-end="true"] {
+    border-radius: 0 4px 4px 0;
+  }
+
+  .studio-one-pattern[data-continuous="true"] .step-cell.active[data-run-start="true"][data-run-end="true"] {
+    border-radius: 4px;
+  }
+
+  .studio-one-pattern[data-continuous="false"] .step-cell.active {
+    border-radius: 4px;
   }
 
   .pattern-footer {
@@ -328,6 +389,7 @@ const stepLabels = Array.from({ length: steps }, (_, index) => (
   }
   
   .step-row {
+    position: relative;
     align-content: start;
     align-items: start;
     flex: 0 0 auto;
@@ -335,16 +397,45 @@ const stepLabels = Array.from({ length: steps }, (_, index) => (
     margin: 0 !important;
     background-color: #121212;
   }
+
+  .event-marker {
+    position: absolute;
+    top: 0;
+    left: calc(8px + var(--event-step) * (var(--step-size) + var(--step-gap)));
+    width: var(--step-size);
+    height: var(--step-size);
+    box-sizing: border-box;
+    border: 1px solid #27272a;
+    border-radius: 4px;
+    background-color: var(--event-color);
+    display: grid;
+    place-items: center;
+    color: #121212;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    pointer-events: none;
+  }
   
   .step-cell {
+    display: grid;
+    place-items: center;
     width: var(--step-size);
     height: var(--step-size);
     box-sizing: border-box;
     background-color: #18181b;
-    border-radius: 2px;
+    border-radius: 4px;
     cursor: pointer;
     border: 1px solid #27272a;
     transition: filter 0.1s;
+  }
+
+  .step-cell-label {
+    color: #121212;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    pointer-events: none;
   }
   
   .step-cell:hover {
