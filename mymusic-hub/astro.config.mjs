@@ -72,31 +72,28 @@ export default defineConfig({
 									collapsed: true,
 									items: [
 										{
-											label: 'Schritt 0: Komposition',
-											slug: 'songwriting/rock-komposition',
+										label: 'Schritt 0: Komposition',
+										slug: 'audio/songwriting/rock-komposition',
 										},
 										{
-											label: 'Schritt 1: Produktion (Refrain)',
-											slug: 'songwriting/rock-produktion',
+										label: 'Schritt 1: Produktion (Refrain)',
+										slug: 'audio/songwriting/rock-produktion',
 										},
-																				{
-											label: 'Schritt 2: Songstruktur',
-											slug: 'songwriting/rock-songstruktur',
+										{
+										label: 'Schritt 2: Songstruktur',
+										slug: 'audio/songwriting/rock-songstruktur',
 										},
-																				{
-											label: 'Schritt 3: Produktion (Strophe & Vor-Refrain)',
-											slug: 'songwriting/rock-produktion2',
-											
+										{
+										label: 'Schritt 3: Produktion (Strophe & Vor-Refrain)',
+										slug: 'audio/songwriting/rock-produktion2',
 										},
-																														{
-											label: 'Schritt 4: Produktion (Strophe 2 & Vor-Refrain 2)',
-											slug: 'songwriting/rock-produktion3',
-											
+										{
+										label: 'Schritt 4: Produktion (Strophe 2 & Vor-Refrain 2)',
+										slug: 'audio/songwriting/rock-produktion3',
 										},
-																																								{
-											label: 'Schritt 5: Produktion (Bridge, Finale & Intro)',
-											slug: 'songwriting/rock-produktion4',
-											
+										{
+										label: 'Schritt 5: Produktion (Bridge, Finale & Intro)',
+										slug: 'audio/songwriting/rock-produktion4',
 										},
 										
 									],
@@ -110,7 +107,7 @@ export default defineConfig({
 								{ label: 'Audio-Hardware', slug: 'audio/hardware' },
 								{ label: 'Visualisierungen erklärt', slug: 'audio/theory' },
 								{ label: 'Akkordmuster', slug: 'audio/chord-patterns' },
-								{ label: 'Melodie & Harmonie', slug: 'songwriting/melodie-harmonie' },
+								{ label: 'Melodie & Harmonie', slug: 'audio/songwriting/melodie-harmonie' },
 							],
 						},
 					],
@@ -118,8 +115,8 @@ export default defineConfig({
 				{
 					label: 'Video & Streaming',
 					items: [
-						{ label: 'Video-Hardware', slug: 'video/hardware' },
-						{ label: 'Video-Software', slug: 'video/software' },
+						{ label: 'Video-Hardware', slug: 'audio/referenzen-werkzeuge/hardware' },
+						{ label: 'Video-Software', slug: 'audio/referenzen-werkzeuge/software' },
 					],
 				},
 			],
