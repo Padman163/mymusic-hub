@@ -36,7 +36,7 @@ export default defineConfig({
 							label: 'Musiktheorie',
 							collapsed: false,
 							items: [
-								{ label: 'Übersicht', slug: 'audio/theory/100/100-overview' },
+					
 								{
 									label: 'Level 100: Elementarlehre',
 									collapsed: false,
