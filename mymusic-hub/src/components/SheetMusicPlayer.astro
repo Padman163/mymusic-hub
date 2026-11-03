@@ -40,6 +40,12 @@ const { musicXmlUrl, soundFontUrl } = Astro.props;
           fontDirectory: '/alphatab/font/',
           engine: 'svg'
         },
+    
+display: {
+firstStaffPaddingTop: 5,
+          lastStaffPaddingBottom: 5,
+
+  },
         player: {
           enablePlayer: Boolean(sf2Url),
           enableUserInteraction: Boolean(sf2Url),
