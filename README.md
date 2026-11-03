@@ -12,3 +12,7 @@
 1. ```cd mymusic-hub```
 2. ```npm install```
 3. ```npm run dev```
+
+## Branch holen
+
+1. ```git fetch origin```

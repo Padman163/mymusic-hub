@@ -39,20 +39,27 @@ export default defineConfig({
 								{
 									label: 'Level 100: Elementarlehre',
 									collapsed: false,
-									items: [
-										{
-											label: '101: Vom Ton zur Gitarre',
-											slug: 'audio/theory/101-tonsystem-griffbrett',
-										},
-										{
-											label: '102: Sound Design & Presets',
-											slug: 'audio/software',
-										},
-										{
-											label: '103: Backing Track (70 BPM)',
-											slug: 'audio/backing-track',
-										},
-									],
+									items: [{ autogenerate: { directory: 'audio/theory/100' } }],
+								},
+								{
+									label: 'Level 200: Harmonie & Akkorde',
+									collapsed: false,
+									items: [{ autogenerate: { directory: 'audio/theory/200' } }],
+								},
+								{
+									label: 'Level 300: Multi-Instrumentierung',
+									collapsed: true,
+									items: [{ autogenerate: { directory: 'audio/theory/300' } }],
+								},
+								{
+									label: 'Level 400: DAW & Produktion',
+									collapsed: true,
+									items: [{ autogenerate: { directory: 'audio/theory/400' } }],
+								},
+								{
+									label: 'Level 500: Band & Performance',
+									collapsed: true,
+									items: [{ autogenerate: { directory: 'audio/theory/500' } }],
 								},
 							],
 						},
