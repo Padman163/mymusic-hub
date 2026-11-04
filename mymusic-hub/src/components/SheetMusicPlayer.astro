@@ -80,6 +80,13 @@ display: {
           });
         }
 
+        if (xmlUrl?.endsWith('/104-9-Dynamik-Tempo.musicxml')) {
+          score.tracks.forEach((track) => {
+            track.defaultSystemsLayout = 2;
+            track.systemsLayout = [2];
+          });
+        }
+
         if (hasPickupExample) {
           score.stylesheet.scoreConfig.barNumber = 0;
         }

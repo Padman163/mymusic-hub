@@ -35,7 +35,7 @@
             <per-minute>90</per-minute>
           </metronome>
         </direction-type>
-        <sound tempo="90"/>
+        <sound tempo="90" />
       </direction>
       <note>
         <pitch>
@@ -53,6 +53,11 @@
         <duration>1</duration>
         <type>quarter</type>
       </note>
+           <direction placement="above">
+        <direction-type>
+          <words>rit.</words>
+        </direction-type>
+      </direction>
       <note>
         <pitch>
           <step>E</step>
@@ -69,6 +74,7 @@
         <duration>1</duration>
         <type>quarter</type>
       </note>
+ 
     </measure>
     <measure number="2">
       <note>
@@ -79,6 +85,7 @@
         <duration>1</duration>
         <type>quarter</type>
       </note>
+
       <note>
         <pitch>
           <step>A</step>
@@ -87,6 +94,18 @@
         <duration>1</duration>
         <type>quarter</type>
       </note>
+            <direction placement="above">
+        <direction-type>
+          <words>a tempo</words>
+        </direction-type>
+        <direction-type>
+          <metronome>
+            <beat-unit>quarter</beat-unit>
+            <per-minute>90</per-minute>
+          </metronome>
+        </direction-type>
+        <sound tempo="90" />
+      </direction>
       <note>
         <pitch>
           <step>B</step>
@@ -95,6 +114,7 @@
         <duration>1</duration>
         <type>quarter</type>
       </note>
+
       <note>
         <pitch>
           <step>C</step>
@@ -103,6 +123,7 @@
         <duration>1</duration>
         <type>quarter</type>
       </note>
+
       <barline location="right">
         <bar-style>light-heavy</bar-style>
       </barline>
