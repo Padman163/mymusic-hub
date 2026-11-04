@@ -85,6 +85,7 @@ display: {
             track.staves.forEach((staff) => {
               staff.tabConfig = {
                 ...staff.tabConfig,
+                timeSignature: { isVisible: false },
                 rests: { isVisible: false }
               };
             });
