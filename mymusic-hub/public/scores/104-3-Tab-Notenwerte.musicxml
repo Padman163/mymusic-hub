@@ -54,7 +54,7 @@
       </barline>
       <note>
         <pitch><step>G</step><octave>3</octave></pitch>
-        <duration>8</duration>
+        <duration>4</duration>
         <type>whole</type>
         <staff>1</staff>
         <notations><technical><string>3</string><fret>0</fret></technical></notations>
