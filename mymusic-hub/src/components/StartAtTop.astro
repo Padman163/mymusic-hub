@@ -1,0 +1,49 @@
+<script is:inline>
+  const pagePaths = new Set([
+    '/audio/theory/100/104-tabulatur-notensystem/',
+    '/audio/theory/100/105-abschlussquiz/'
+  ]);
+
+  let enforceTop = false;
+  const enforcePageTop = () => {
+    if (enforceTop && window.scrollY !== 0) window.scrollTo(0, 0);
+  };
+
+  const allowUserScroll = (event) => {
+    if (
+      event.type === 'keydown' &&
+      !['ArrowDown', 'ArrowUp', 'End', 'Home', 'PageDown', 'PageUp', ' '].includes(event.key)
+    ) return;
+    if (event.type === 'pointerdown' && event.clientX < document.documentElement.clientWidth) return;
+
+    enforceTop = false;
+    window.removeEventListener('scroll', enforcePageTop);
+  };
+
+  const updateScrollBehavior = () => {
+    enforceTop = pagePaths.has(window.location.pathname);
+    document.documentElement.classList.toggle('disable-musicxml-scroll-anchoring', enforceTop);
+    window.history.scrollRestoration = enforceTop ? 'manual' : 'auto';
+
+    if (enforceTop) {
+      window.addEventListener('scroll', enforcePageTop, { passive: true });
+      window.scrollTo(0, 0);
+    } else {
+      window.removeEventListener('scroll', enforcePageTop);
+    }
+  };
+
+  window.addEventListener('wheel', allowUserScroll, { passive: true });
+  window.addEventListener('touchstart', allowUserScroll, { passive: true });
+  window.addEventListener('pointerdown', allowUserScroll, { passive: true });
+  window.addEventListener('keydown', allowUserScroll);
+  window.addEventListener('pageshow', updateScrollBehavior);
+  document.addEventListener('astro:page-load', updateScrollBehavior);
+  updateScrollBehavior();
+</script>
+
+<style is:global>
+  html.disable-musicxml-scroll-anchoring {
+    overflow-anchor: none !important;
+  }
+</style>

@@ -292,12 +292,34 @@ display: isQuizScore
       }
   };
 
+  const scoreObserver = typeof IntersectionObserver === 'undefined'
+    ? undefined
+    : new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+
+          scoreObserver?.unobserve(entry.target);
+          entry.target.removeAttribute('data-observing');
+          const question = entry.target.closest<HTMLElement>('.musicxml-question');
+          if (question && (question.hidden || question.dataset.active !== 'true')) return;
+          initializeWrapper(entry.target);
+        });
+      }, { rootMargin: '250px 0px' });
+
   const initAlphaTab = () => {
     const wrappers = document.querySelectorAll('[data-sheet-music-player]');
     wrappers.forEach((wrapper) => {
       const question = wrapper.closest<HTMLElement>('.musicxml-question');
       if (question && (question.hidden || question.dataset.active !== 'true')) return;
-      initializeWrapper(wrapper);
+
+      if (!scoreObserver) {
+        initializeWrapper(wrapper);
+        return;
+      }
+
+      if (wrapper.hasAttribute('data-initialized') || wrapper.hasAttribute('data-observing')) return;
+      wrapper.setAttribute('data-observing', 'true');
+      scoreObserver.observe(wrapper);
     });
   };
 
