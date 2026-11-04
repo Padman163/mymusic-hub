@@ -7,7 +7,7 @@
     </score-part>
   </part-list>
   <part id="P1">
-    <measure number="1">
+    <measure number="">
       <attributes>
         <divisions>1</divisions>
         <key>
@@ -22,6 +22,9 @@
           <line>2</line>
         </clef>
       </attributes>
+                        <barline location="left">
+        <bar-style>none</bar-style>
+      </barline>
       <direction placement="below">
         <direction-type>
           <dynamics><p/></dynamics>

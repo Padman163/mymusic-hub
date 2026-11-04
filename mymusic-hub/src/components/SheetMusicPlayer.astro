@@ -78,10 +78,35 @@ display: isQuizScore
       });
 
       const tabDurationBeatIds = new Set<number>();
-      const tabDottedEighthBeatIds = new Set<number>();
+      const adjustsDottedTabNotes = xmlUrl?.endsWith('/104-3-Punktierte-Noten.musicxml') === true;
       const showsTabNoteValues =
         xmlUrl?.endsWith('/104-3-Tab-Notenwerte.musicxml') ||
         xmlUrl?.endsWith('/104-3-Punktierte-Noten.musicxml');
+
+      const adjustTabDotPositions = () => {
+        if (!adjustsDottedTabNotes) return;
+
+        container.querySelectorAll('svg g.at').forEach((dotGlyph) => {
+          if (dotGlyph.getAttribute('data-tab-dot-adjusted') === 'true') return;
+          if (dotGlyph.querySelector('text')?.textContent.codePointAt(0) !== 0xe1e7) return;
+
+          const transform = dotGlyph.getAttribute('transform');
+          const match = transform?.match(/^translate\(([-\d.]+)[,\s]+([-\d.]+)\)$/);
+          if (!match) return;
+
+          const x = Number(match[1]);
+          const y = Number(match[2]);
+          if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+
+          dotGlyph.setAttribute('transform', `translate(${x} ${y - 12})`);
+          dotGlyph.setAttribute('data-tab-dot-adjusted', 'true');
+        });
+      };
+
+      if (adjustsDottedTabNotes) {
+        const dotObserver = new MutationObserver(adjustTabDotPositions);
+        dotObserver.observe(container, { childList: true, subtree: true });
+      }
 
       api.scoreLoaded.on((score) => {
         const hasPickupExample = xmlUrl?.endsWith('/104-6-Auftakt-Wiederholung.musicxml');
@@ -92,14 +117,6 @@ display: isQuizScore
               staff.bars.forEach((bar) => {
                 bar.voices.forEach((voice) => {
                   voice.beats.forEach((beat) => {
-                    if (
-                      xmlUrl?.endsWith('/104-3-Punktierte-Noten.musicxml') &&
-                      beat.duration === alphaTab.model.Duration.Eighth &&
-                      beat.dots > 0
-                    ) {
-                      tabDottedEighthBeatIds.add(beat.id);
-                    }
-
                     if (
                       beat.duration === alphaTab.model.Duration.Whole ||
                       beat.duration === alphaTab.model.Duration.Half
@@ -207,29 +224,13 @@ display: isQuizScore
       });
 
       api.postRenderFinished.on(() => {
-        if (tabDurationBeatIds.size === 0 && tabDottedEighthBeatIds.size === 0) return;
+        if (tabDurationBeatIds.size === 0 && !adjustsDottedTabNotes) return;
 
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             container.querySelectorAll('[data-tab-duration-ring]').forEach((ring) => ring.remove());
 
-            tabDottedEighthBeatIds.forEach((beatId) => {
-              container.querySelectorAll(`svg g.b${beatId} > g.at`).forEach((dotGlyph) => {
-                if (dotGlyph.getAttribute('data-tab-dot-adjusted') === 'true') return;
-                if (dotGlyph.querySelector('text')?.textContent.codePointAt(0) !== 0xe1e7) return;
-
-                const transform = dotGlyph.getAttribute('transform');
-                const match = transform?.match(/^translate\(([-\d.]+)[,\s]+([-\d.]+)\)$/);
-                if (!match) return;
-
-                const x = Number(match[1]);
-                const y = Number(match[2]);
-                if (!Number.isFinite(x) || !Number.isFinite(y)) return;
-
-                dotGlyph.setAttribute('transform', `translate(${x} ${y - 7})`);
-                dotGlyph.setAttribute('data-tab-dot-adjusted', 'true');
-              });
-            });
+            adjustTabDotPositions();
 
             tabDurationBeatIds.forEach((beatId) => {
               container.querySelectorAll(`svg g.b${beatId} > text`).forEach((noteValue) => {

@@ -80,7 +80,9 @@
       <barline location="right"><bar-style>regular</bar-style></barline>
     </measure>
     <measure number="">
-
+                  <barline location="left">
+        <bar-style>none</bar-style>
+      </barline>
       <note>
         <pitch><step>G</step><octave>3</octave></pitch>
         <duration>2</duration>
@@ -114,6 +116,7 @@
       </barline>
       <barline location="right"><bar-style>regular</bar-style></barline>
     </measure>
+
     <measure number="">
 
       <note>
