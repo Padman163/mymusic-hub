@@ -156,26 +156,26 @@ const mixedNoteValueExamples = [
   {
     id: "half-two-quarters",
     file: "105-4-notenwerte",
-    answer: "Eine halbe und zwei Viertelnoten",
-    wrong: ["Eine ganze Note", "Vier Viertelnoten"]
+    answer: "Halbe und Viertelnoten",
+    wrong: ["Ganze und Viertelnoten", "Viertel- und Achtelnoten"]
   },
   {
     id: "four-quarters",
     file: "105-4-vier-viertel",
-    answer: "Vier Viertelnoten",
-    wrong: ["Eine halbe und zwei Viertelnoten", "Eine punktierte halbe und eine Viertelnote"]
+    answer: "Viertelnoten",
+    wrong: ["Halbe und Viertelnoten", "Viertel- und Achtelnoten"]
   },
   {
     id: "quarters-and-eighths",
     file: "105-4-viertel-achtel",
-    answer: "Zwei Viertel- und vier Achtelnoten",
-    wrong: ["Vier Viertelnoten", "Eine halbe und zwei Viertelnoten"]
+    answer: "Viertel- und Achtelnoten",
+    wrong: ["Halbe und Viertelnoten", "Ganze und Viertelnoten"]
   },
   {
     id: "dotted-half-quarter",
     file: "105-4-punktierte-halbe",
-    answer: "Eine punktierte halbe und eine Viertelnote",
-    wrong: ["Eine halbe und eine punktierte Viertelnote sowie eine Achtelnote", "Eine punktierte halbe und zwei Achtelnoten"]
+    answer: "Punktierte halbe und Viertelnoten",
+    wrong: ["Halbe und Viertelnoten", "Punktierte Viertel- und Achtelnoten"]
   }
 ].map(({ id, file, answer, wrong }) =>
   scoreQuestion(
@@ -442,7 +442,6 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
             </fieldset>
           ))}
         </div>
-        <div class="advanced-notation-list" hidden></div>
       </div>
     </section>
 
@@ -874,11 +873,10 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
       const rhythmList = quiz.querySelector<HTMLElement>('.rhythm-list');
       const notationList = quiz.querySelector<HTMLElement>('.notation-list');
       const musicXmlQuestionBank = quiz.querySelector<HTMLElement>('.musicxml-question-bank');
-      const advancedNotationList = quiz.querySelector<HTMLElement>('.advanced-notation-list');
       if (!form || !result || !resetButton || !patternQuestion || !patternCandidates.length ||
         !fretboard || !fretboardTray || !fretboardFeedback || !difficultyStatus ||
         !totalPointsLabel || !passingPointsLabel || !basicsList || !rhythmList || !notationList ||
-        !musicXmlQuestionBank || !advancedNotationList) return;
+        !musicXmlQuestionBank) return;
 
       const banks = JSON.parse(quiz.dataset.questionBank ?? '{}') as Record<Difficulty, QuestionBank>;
       const unlockKey = 'mymusic-hub-level-100-difficulty-2';
@@ -886,10 +884,117 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
       let difficulty: Difficulty = '1';
       let activeFretboardNotes: string[] = [];
       let selectedFretboardNote: string | undefined;
+      let activeNotationExamples: NotationQuestion[] = [];
       const placedFretboardNotes = new Map<string, SVGGElement>();
       const fretboardNodes = [...fretboard.querySelectorAll<SVGGElement>('.note-node')];
       const previousQuestionIds = new Map<string, Set<string>>();
       const previousPatternIds = new Map<Difficulty, string>();
+
+      const advancedNotationQuestion = (item: NotationQuestion): NotationQuestion => {
+        const withSameScore = (prompt: string, answer: string, wrong: string[]): NotationQuestion => ({
+          id: item.id,
+          prompt,
+          answer,
+          options: [answer, ...wrong],
+          musicXmlUrl: item.musicXmlUrl,
+          group: item.group
+        });
+
+        if (item.group === 1) {
+          const notes = ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5', 'F5', 'G5', 'A5'];
+          const noteIndex = notes.indexOf(item.answer);
+          if (noteIndex < 0 || noteIndex + 3 >= notes.length) {
+            throw new Error(`Keine Terz über der notierten Note ${item.answer} verfügbar.`);
+          }
+          return withSameScore(
+            'Welcher Ton liegt eine Terz über dem abgebildeten Ton?',
+            notes[noteIndex + 2],
+            [notes[noteIndex + 1], notes[noteIndex + 3]]
+          );
+        }
+
+        if (item.group === 2) {
+          const noteValue = item.id.replace('note-value-', '');
+          const countByValue: Record<string, number> = {
+            whole: 1,
+            half: 2,
+            quarter: 4,
+            eighth: 8,
+            sixteenth: 16
+          };
+          const count = countByValue[noteValue];
+          if (!count) throw new Error(`Unbekannter Notenwert in Frage ${item.id}.`);
+          const alternatives = [1, 2, 4, 8, 16].filter((value) => value !== count);
+          const wrong = alternatives
+            .sort((left, right) => Math.abs(left - count) - Math.abs(right - count))
+            .slice(0, 2)
+            .map(String);
+          return withSameScore(
+            'Wie viele dieser Noten passen in einen vollständigen 4/4-Takt?',
+            String(count),
+            wrong
+          );
+        }
+
+        if (item.group === 3) {
+          const noteByString: Record<string, string> = {
+            'tab-string-high-e': 'F♯4',
+            'tab-string-b': 'C♯4',
+            'tab-string-g': 'A3',
+            'tab-string-d': 'E3',
+            'tab-string-a': 'B2',
+            'tab-string-low-e': 'F♯2'
+          };
+          const answer = noteByString[item.id];
+          if (!answer) throw new Error(`Keine Tonhöhe für TAB-Frage ${item.id} hinterlegt.`);
+          const noteNames = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
+          const match = answer.match(/^([A-G]♯?)(\d)$/);
+          if (!match) throw new Error(`Ungültiger Tonname ${answer} in TAB-Frage ${item.id}.`);
+          const noteIndex = noteNames.indexOf(match[1]);
+          const midi = (Number(match[2]) + 1) * 12 + noteIndex;
+          const pitchAt = (value: number) => `${noteNames[((value % 12) + 12) % 12]}${Math.floor(value / 12) - 1}`;
+          return withSameScore(
+            'Welcher Ton erklingt auf der notierten Saite im zweiten Bund?',
+            answer,
+            [pitchAt(midi - 1), pitchAt(midi + 1)]
+          );
+        }
+
+        if (item.group === 4) {
+          const noteCountByExample: Record<string, number> = {
+            'mixed-values-half-two-quarters': 3,
+            'mixed-values-four-quarters': 4,
+            'mixed-values-quarters-and-eighths': 6,
+            'mixed-values-dotted-half-quarter': 2
+          };
+          const count = noteCountByExample[item.id];
+          if (!count) throw new Error(`Keine Notenzahl für MusicXML-Frage ${item.id} hinterlegt.`);
+          const alternatives = [2, 3, 4, 6].filter((value) => value !== count);
+          return withSameScore(
+            'Wie viele einzelne Noten sind in diesem Beispiel notiert?',
+            String(count),
+            alternatives.slice(0, 2).map(String)
+          );
+        }
+
+        if (item.group === 5) {
+          const answerByMeter: Record<string, [string, string, string]> = {
+            'time-signature-three-four': ['3 Viertelwerte pro Takt', '4 Viertelwerte pro Takt', '2 Halbe pro Takt'],
+            'time-signature-two-two': ['2 Halbe pro Takt', '3 Viertelwerte pro Takt', '4 Viertelwerte pro Takt'],
+            'time-signature-four-four': ['4 Viertelwerte pro Takt', '3 Viertelwerte pro Takt', '6 Achtelwerte pro Takt'],
+            'time-signature-six-eight': ['6 Achtelwerte pro Takt, meist in zwei Dreiergruppen', '3 Viertelwerte pro Takt', '2 Halbe pro Takt']
+          };
+          const [answer, ...wrong] = answerByMeter[item.id] ?? [];
+          if (!answer) throw new Error(`Keine Taktstruktur für MusicXML-Frage ${item.id} hinterlegt.`);
+          return withSameScore(
+            'Welche Zählstruktur gehört zur Taktart, die sich aus dem Notenbeispiel ergibt?',
+            answer,
+            wrong
+          );
+        }
+
+        throw new Error(`MusicXML-Frage ${item.id} hat keine gültige Kategorie.`);
+      };
 
       const updateFretboardTokens = () => {
         fretboardTray.querySelectorAll<HTMLButtonElement>('.fretboard-note-token').forEach((token) => {
@@ -1054,13 +1159,16 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
         fretboardFeedback.textContent = '';
       };
 
-      const renderQuiz = () => {
+      const renderQuiz = (reshuffleNotation = true) => {
         const bank = banks[difficulty];
         const basics = selectQuestions('basics', bank.basics);
         const rhythm = selectQuestions('rhythm', bank.rhythm);
+        if (reshuffleNotation || activeNotationExamples.length === 0) {
+          activeNotationExamples = selectGroupedNotation(banks["1"].notation);
+        }
         const notation = difficulty === '1'
-          ? selectGroupedNotation(bank.notation)
-          : selectQuestions('notation', bank.notation);
+          ? activeNotationExamples
+          : activeNotationExamples.map(advancedNotationQuestion);
         basicsList.replaceChildren(...basics.map((item, index) => createQuestion(item, 'basics', index)));
         rhythmList.replaceChildren(...rhythm.map((item, index) => createQuestion(item, 'rhythm', index)));
         activeFretboardNotes = shuffle([
@@ -1105,45 +1213,46 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
           });
           return token;
         }));
-        if (difficulty === '1') {
-          musicXmlQuestionBank.hidden = false;
-          advancedNotationList.hidden = true;
-          const cardsById = new Map(
-            [...musicXmlQuestionBank.querySelectorAll<HTMLElement>('.musicxml-question')]
-              .map((card) => [card.dataset.questionId, card] as const)
-          );
-          cardsById.forEach((card) => {
-            card.hidden = true;
-            card.dataset.active = 'false';
-          });
-          notation.forEach((item, index) => {
-            const card = cardsById.get(item.id);
-            if (!card || !item.musicXmlUrl) {
-              throw new Error(`MusicXML-Frage ${item.id} ist nicht vollständig eingebunden.`);
-            }
-            card.hidden = false;
-            card.dataset.active = 'true';
-            const legend = card.querySelector('legend');
-            if (legend) legend.textContent = `${index + 1}. ${item.prompt}`;
-            const player = card.querySelector<HTMLElement>('[data-sheet-music-player]');
-            if (player?.dataset.xml !== item.musicXmlUrl) {
-              throw new Error(`MusicXML-Datei für Frage ${item.id} stimmt nicht mit der Einbindung überein.`);
-            }
-            card.querySelectorAll<HTMLInputElement>('input[type="radio"]').forEach((input) => {
-              input.name = `1-notation-${index}`;
-              input.checked = false;
-            });
-            card.removeAttribute('data-correct');
-            const feedback = card.querySelector<HTMLElement>('.question-feedback');
-            if (feedback) feedback.textContent = '';
-          });
-        } else {
-          musicXmlQuestionBank.hidden = true;
-          advancedNotationList.hidden = false;
-          advancedNotationList.replaceChildren(
-            ...notation.map((item, index) => createQuestion(item, 'notation', index, item.diagram))
-          );
-        }
+        const cardsById = new Map(
+          [...musicXmlQuestionBank.querySelectorAll<HTMLElement>('.musicxml-question')]
+            .map((card) => [card.dataset.questionId, card] as const)
+        );
+        cardsById.forEach((card) => {
+          card.hidden = true;
+          card.dataset.active = 'false';
+        });
+        notation.forEach((item, index) => {
+          const card = cardsById.get(item.id);
+          if (!card || !item.musicXmlUrl) {
+            throw new Error(`MusicXML-Frage ${item.id} ist nicht vollständig eingebunden.`);
+          }
+          card.hidden = false;
+          card.dataset.active = 'true';
+          card.dataset.answer = item.answer;
+          const legend = card.querySelector('legend');
+          if (legend) legend.textContent = `${index + 1}. ${item.prompt}`;
+          const player = card.querySelector<HTMLElement>('[data-sheet-music-player]');
+          if (player?.dataset.xml !== item.musicXmlUrl) {
+            throw new Error(`MusicXML-Datei für Frage ${item.id} stimmt nicht mit der Einbindung überein.`);
+          }
+          const options = card.querySelector<HTMLElement>('.answer-options');
+          if (!options) throw new Error(`Antwortmöglichkeiten für MusicXML-Frage ${item.id} fehlen.`);
+          options.replaceChildren(...shuffle([...item.options]).map((option) => {
+            const label = document.createElement('label');
+            label.className = 'answer-option';
+            const input = document.createElement('input');
+            input.type = 'radio';
+            input.name = `${difficulty}-notation-${index}`;
+            input.value = option;
+            const text = document.createElement('span');
+            text.textContent = option;
+            label.append(input, text);
+            return label;
+          }));
+          card.removeAttribute('data-correct');
+          const feedback = card.querySelector<HTMLElement>('.question-feedback');
+          if (feedback) feedback.textContent = '';
+        });
         document.dispatchEvent(new Event('level100:notation-update'));
         const previousPatternId = previousPatternIds.get(difficulty);
         const patternCandidatesForDifficulty = bank.patterns.filter((pattern) => pattern.id !== previousPatternId);
@@ -1202,7 +1311,7 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
         button.addEventListener('click', () => {
           if (button.disabled || (button.dataset.difficulty !== '1' && button.dataset.difficulty !== '2')) return;
           difficulty = button.dataset.difficulty;
-          renderQuiz();
+          renderQuiz(false);
         });
       });
 
