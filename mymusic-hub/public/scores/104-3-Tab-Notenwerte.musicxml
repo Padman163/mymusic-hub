@@ -49,6 +49,9 @@
           </staff-tuning>
         </staff-details>
       </attributes>
+                  <barline location="left">
+        <bar-style>none</bar-style>
+      </barline>
       <note>
         <pitch><step>G</step><octave>3</octave></pitch>
         <duration>8</duration>
@@ -106,6 +109,9 @@
         <staff>1</staff>
         <notations><technical><string>3</string><fret>0</fret></technical></notations>
       </note>
+            <barline location="left">
+        <bar-style>none</bar-style>
+      </barline>
       <barline location="right"><bar-style>regular</bar-style></barline>
     </measure>
     <measure number="">
