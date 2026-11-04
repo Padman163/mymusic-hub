@@ -51,6 +51,9 @@
           </staff-tuning>
         </staff-details>
       </attributes>
+            <barline location="left">
+        <bar-style>none</bar-style>
+      </barline>
       <barline location="right">
         <bar-style>regular</bar-style>
       </barline>

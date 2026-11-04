@@ -23,6 +23,9 @@
           <line>2</line>
         </clef>
       </attributes>
+      <barline location="left">
+        <bar-style>none</bar-style>
+      </barline>
       <note>
         <pitch>
           <step>C</step>
@@ -59,10 +62,10 @@
     </measure>
     <!-- Takt 2-->
     <measure>
-            <note>
+      <note>
         <pitch>
-                <step>G</step>
-                <octave>4</octave>
+          <step>G</step>
+          <octave>4</octave>
         </pitch>
         <duration>1</duration>
         <type>quarter</type>
@@ -91,7 +94,7 @@
         <duration>1</duration>
         <type>quarter</type>
       </note>
-     <barline location="right">
+      <barline location="right">
         <bar-style>light-heavy</bar-style>
       </barline>
     </measure>

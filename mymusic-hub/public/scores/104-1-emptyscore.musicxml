@@ -32,6 +32,9 @@
           <line>2</line>
         </clef>
       </attributes>
+            <barline location="left">
+        <bar-style>none</bar-style>
+      </barline>
             <barline location="right">
         <bar-style>regular</bar-style>
       </barline>

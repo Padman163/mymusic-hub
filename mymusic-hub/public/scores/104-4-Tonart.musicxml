@@ -25,6 +25,9 @@
           <line>2</line>
         </clef>
       </attributes>
+            <barline location="left">
+        <bar-style>none</bar-style>
+      </barline>
     </measure>
     <!-- Takt 2-->
     <measure number="">

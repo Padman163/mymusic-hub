@@ -27,7 +27,9 @@
           <line>4</line>
         </clef>
       </attributes>
- 
+       <barline location="left">
+        <bar-style>none</bar-style>
+      </barline>
       <!-- C3 (Oberste Linie im Bassschlüssel) -->
       <note>
         <pitch>

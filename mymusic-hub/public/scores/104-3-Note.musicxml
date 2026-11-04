@@ -27,6 +27,9 @@
           <line>2</line>
         </clef>
       </attributes>
+            <barline location="left">
+        <bar-style>none</bar-style>
+      </barline>
       <note>
         <pitch>
           <step>G</step>
@@ -61,7 +64,9 @@
     <measure  number="">
          <print new-system="yes"/>    
 
-     
+           <barline location="left">
+        <bar-style>none</bar-style>
+      </barline>
     
       <note>
         <pitch>

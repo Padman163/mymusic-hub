@@ -27,6 +27,9 @@
           <line>2</line>
         </clef>
       </attributes>
+            <barline location="left">
+        <bar-style>none</bar-style>
+      </barline>
       
       <!-- F5 (Oberste Linie) -->
       <note>

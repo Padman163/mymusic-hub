@@ -73,6 +73,10 @@ display: {
       api.scoreLoaded.on((score) => {
         const hasPickupExample = xmlUrl?.endsWith('/104-6-Auftakt-Wiederholung.musicxml');
 
+        if (hasPickupExample) {
+          score.stylesheet.scoreConfig.barNumber = 0;
+        }
+
         score.tracks.forEach((track) => {
           track.staves.forEach((staff) => {
             staff.bars.forEach((bar) => {
