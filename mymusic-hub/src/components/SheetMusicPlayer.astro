@@ -42,9 +42,21 @@ const { musicXmlUrl, soundFontUrl } = Astro.props;
         },
     
 display: {
-firstStaffPaddingTop: 5,
-          lastStaffPaddingBottom: 5,
+// 1. Abstand ZWISCHEN den beiden Notenzeilen minimieren:
+          notationStaffPaddingBottom: 100, // Abstand unter der oberen Zeile (Standard: 15)
+          notationStaffPaddingTop: 100,    // Abstand über der unteren Zeile (Standard: 15)      
+          notationStaffPaddingTop: -20, // Abstand unter der oberen Zeile (Standard: 15)
+          notationStaffPaddingBottom: 0,    // Abstand über der unteren Zeile (Standard: 15)
 
+          // 2. Korrekte Namen für den Rand ganz oben und ganz unten:
+          firstNotationStaffPaddingTop: 0,
+          firstNotationStaffPaddingBottom: 100,
+          lastNotationStaffPaddingBottom: 0,
+          lastNotationStaffPaddingTop: 100,
+          systemStaffDistance: -100,
+          stavesSpacing: -100,
+          scale: 1.0
+          
   },
         player: {
           enablePlayer: Boolean(sf2Url),
