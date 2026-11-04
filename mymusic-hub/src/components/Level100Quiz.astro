@@ -448,6 +448,9 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
     <div class="quiz-actions">
       <button class="submit-quiz" type="submit">Quiz auswerten</button>
       <button class="reset-quiz" type="button">Neu starten</button>
+      <button class="difficulty-button" type="button" data-difficulty="2" disabled>
+        Schwierigkeit 2
+      </button>
     </div>
     <p class="quiz-result" role="status" aria-live="polite"></p>
   </form>
@@ -660,12 +663,16 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
   }
 
   .difficulty-button {
-    padding: 0.55rem 0.85rem;
+    box-sizing: border-box;
+    min-height: 2.75rem;
+    margin: 0;
+    padding: 0 1rem;
     border: 1px solid var(--quiz-border);
     border-radius: 0.4rem;
     background: var(--sl-color-bg);
     color: var(--sl-color-text);
     font: inherit;
+    line-height: 1.2;
     cursor: pointer;
   }
 
@@ -687,10 +694,14 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
   }
 
   .quiz-actions button {
-    padding: 0.65rem 1rem;
+    box-sizing: border-box;
+    min-height: 2.75rem;
+    margin: 0;
+    padding: 0 1rem;
     border: 1px solid var(--quiz-border);
     border-radius: 0.4rem;
     font: inherit;
+    line-height: 1.2;
     cursor: pointer;
   }
 
@@ -1364,11 +1375,10 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
         if (passed && difficulty === '1' && !unlocked) {
           unlocked = true;
           localStorage.setItem(unlockKey, 'true');
-          const advancedButton = quiz.querySelector<HTMLButtonElement>('[data-difficulty="2"]');
-          if (advancedButton) {
+          quiz.querySelectorAll<HTMLButtonElement>('[data-difficulty="2"]').forEach((advancedButton) => {
             advancedButton.disabled = false;
             advancedButton.textContent = 'Schwierigkeit 2 freigeschaltet';
-          }
+          });
           difficultyStatus.textContent = 'Schwierigkeit 2 ist jetzt dauerhaft freigeschaltet.';
         }
         result.scrollIntoView({ behavior: 'smooth', block: 'center' });
