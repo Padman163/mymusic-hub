@@ -16,7 +16,9 @@ const { musicXmlUrl, soundFontUrl } = Astro.props;
       <p class="player-status">Partitur wird geladen. Wiedergabe benötigt eine SoundFont-Datei.</p>
     )}
   </div>
-  <div class="alphatab-container"></div>
+  <div class="alphatab-frame">
+    <div class="alphatab-container"></div>
+  </div>
 </div>
 
 <script>
@@ -78,6 +80,10 @@ display: {
           });
         });
 
+        if (xmlUrl?.endsWith('/104-1-emptytab.musicxml')) {
+          score.stylesheet.globalDisplayTuning = false;
+        }
+
         if (status) status.textContent = '';
       });
 
@@ -113,16 +119,22 @@ display: {
 </script>
 
 <style>
-  .alphatab-container {
-    overflow-x: auto;
-  }
-
-  .alphatab-container :global(svg.at-surface-svg) {
-    display: block;
+  .alphatab-frame {
     padding: 0.75rem 1rem;
     border: 1px solid #d1d5db;
     border-radius: 0.5rem;
     background: #fff;
+    box-sizing: border-box;
+  }
+
+  .alphatab-container {
+    width: 100%;
+    overflow-x: hidden;
+    box-sizing: border-box;
+  }
+
+  .alphatab-container :global(svg.at-surface-svg) {
+    display: block;
     color: #111827;
     box-sizing: border-box;
   }

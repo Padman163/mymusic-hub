@@ -11,7 +11,7 @@
   <part id="P1">
 
     <!-- TAKT 1 -->
-    <measure width="250" number="">
+    <measure  number="">
       <attributes>
         <!-- 1 Division = 1 Viertelnote (da beat-type = 4) -->
         <divisions>1</divisions>
@@ -37,7 +37,7 @@
       </note>
     </measure>
     <!-- TAKT 2 -->
-    <measure width="250" number="">
+    <measure  number="">
 
       <note>
         <pitch>
@@ -57,43 +57,49 @@
       </note>
     </measure>
     <!-- TAKT 3 -->
-    <measure width="250" number="">
-      <note>
-        <pitch>
-          <step>G</step>
-          <octave>4</octave>
-        </pitch>
-        <duration>1</duration>
-        <type>quarter</type>
-      </note>
-      <note>
-        <pitch>
-          <step>G</step>
-          <octave>4</octave>
-        </pitch>
-        <duration>1</duration>
-        <type>quarter</type>
-      </note>
-      <note>
-        <pitch>
-          <step>G</step>
-          <octave>4</octave>
-        </pitch>
-        <duration>1</duration>
-        <type>quarter</type>
-      </note>
-      <note>
-        <pitch>
-          <step>G</step>
-          <octave>4</octave>
-        </pitch>
-        <duration>1</duration>
-        <type>quarter</type>
-      </note>
-    </measure>
 
+    <measure  number="">
+         <print new-system="yes"/>    
+
+     
+    
+      <note>
+        <pitch>
+          <step>G</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>1</duration>
+        <type>quarter</type>
+      </note>
+      <note>
+        <pitch>
+          <step>G</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>1</duration>
+        <type>quarter</type>
+      </note>
+      <note>
+        <pitch>
+          <step>G</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>1</duration>
+        <type>quarter</type>
+      </note>
+      <note>
+        <pitch>
+          <step>G</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>1</duration>
+        <type>quarter</type>
+      </note>
+     
+    </measure>
+   
     <!-- TAKT 4 -->
-    <measure width="250" number="">
+    <measure  number="">
       <attributes>
         <divisions>1</divisions>
         <key>
