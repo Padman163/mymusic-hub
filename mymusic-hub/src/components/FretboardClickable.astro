@@ -4,10 +4,12 @@
 
 export interface Props {
   readOnly?: boolean;
+  showNoteNames?: boolean;
   fixedPositions?: { stringIndex: number; fret: number }[];
+  dropTargets?: boolean;
 }
 
-const { readOnly = false, fixedPositions } = Astro.props;
+const { readOnly = false, showNoteNames = true, fixedPositions, dropTargets = false } = Astro.props;
 
 const isFixedPosition = (stringIndex: number, fret: number) => (
   readOnly && (
@@ -52,6 +54,7 @@ const noteColors: Record<string, string> = {
   class="fretboard-container"
   id={!readOnly ? 'fretboard-widget' : undefined}
   data-readonly={readOnly}
+  data-drop-targets={dropTargets}
 >
   <!-- ViewBox-Höhe von 220 auf 330 skaliert (150%) -->
   <svg viewBox="0 0 1000 330" class="fretboard-svg" preserveAspectRatio="xMidYMid meet">
@@ -139,13 +142,21 @@ const noteColors: Record<string, string> = {
           class:list={['note-node', { active: isFixedPosition(sIndex, 0) }]}
           data-fret="0"
           data-string={sIndex}
-          aria-label={`Leersaite ${tuning[sIndex]}: ${noteName}`}
+          data-note={noteName}
+          data-color={color}
+          role={dropTargets ? 'button' : undefined}
+          tabindex={dropTargets ? 0 : undefined}
+          aria-label={dropTargets
+            ? `Note auf Leersaite ${tuning[sIndex]} ablegen`
+            : showNoteNames ? `Leersaite ${tuning[sIndex]}: ${noteName}` : `Markierte Leersaite ${tuning[sIndex]}`}
         >
           <circle cx={x} cy={y} r="25" fill="transparent" />
           <circle class="note-circle" cx={x} cy={y} r="19.5" fill={color} />
-          <text class="note-text-active" x={x} y={y} text-anchor="middle" dominant-baseline="central">
-            {readOnly ? tuning[sIndex] : noteName}
-          </text>
+          {(showNoteNames || dropTargets) && (
+            <text class="note-text-active" x={x} y={y} text-anchor="middle" dominant-baseline="central">
+              {showNoteNames ? (readOnly ? tuning[sIndex] : noteName) : noteName}
+            </text>
+          )}
           <text class="tuning-default" x={x} y={y} text-anchor="middle" dominant-baseline="central">
             {tuning[sIndex]}
           </text>
@@ -167,13 +178,23 @@ const noteColors: Record<string, string> = {
                 class:list={['note-node', { active: isFixedPosition(sIndex, fret) }]}
                 data-fret={fret}
                 data-string={sIndex}
-                aria-label={`Saite ${tuning[sIndex]}, Bund ${fret}: ${noteName}`}
+                data-note={noteName}
+                data-color={color}
+                role={dropTargets ? 'button' : undefined}
+                tabindex={dropTargets ? 0 : undefined}
+                aria-label={dropTargets
+                  ? `Note auf Saite ${tuning[sIndex]}, Bund ${fret} ablegen`
+                  : showNoteNames
+                    ? `Saite ${tuning[sIndex]}, Bund ${fret}: ${noteName}`
+                    : `Markierte Position: Saite ${tuning[sIndex]}, Bund ${fret}`}
               >
                 <circle cx={x} cy={y} r="25" fill="transparent" />
                 <circle class="note-circle" cx={x} cy={y} r="19.5" fill={color} />
-                <text class="note-text-active" x={x} y={y} text-anchor="middle" dominant-baseline="central">
-                  {noteName}
-                </text>
+                {(showNoteNames || dropTargets) && (
+                  <text class="note-text-active" x={x} y={y} text-anchor="middle" dominant-baseline="central">
+                    {noteName}
+                  </text>
+                )}
               </g>
             );
           })}
@@ -218,6 +239,11 @@ const noteColors: Record<string, string> = {
     pointer-events: none;
   }
 
+  .fretboard-container[data-drop-targets='true'] .note-node {
+    cursor: copy;
+    pointer-events: all;
+  }
+
   .note-circle {
     opacity: 0;
     transition: opacity 0.15s ease;
@@ -247,6 +273,14 @@ const noteColors: Record<string, string> = {
   }
   .note-node:hover .note-text-active {
     opacity: 0.6;
+  }
+
+  .fretboard-container[data-drop-targets='true'] .note-node:not(.active):hover .note-text-active {
+    opacity: 0;
+  }
+
+  .note-node.drag-over .note-circle {
+    opacity: 0.8;
   }
 
   .note-node[data-fret="0"]:hover .tuning-default {

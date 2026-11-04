@@ -3,19 +3,23 @@
 interface Props {
   musicXmlUrl: string;
   soundFontUrl?: string;
+  showControls?: boolean;
 }
 
-const { musicXmlUrl, soundFontUrl } = Astro.props;
+const { musicXmlUrl, soundFontUrl, showControls = true } = Astro.props;
 ---
 
 <div class="alphatab-wrapper" data-xml={musicXmlUrl} data-sf2={soundFontUrl} data-sheet-music-player>
-  <div class="controls">
-    {soundFontUrl ? (
-      <button class="play-btn" type="button" disabled>Lädt SoundFont…</button>
-    ) : (
-      <p class="player-status">Partitur wird geladen. Wiedergabe benötigt eine SoundFont-Datei.</p>
-    )}
-  </div>
+  {showControls && (
+    <div class="controls">
+      {soundFontUrl ? (
+        <button class="play-btn" type="button" disabled>Lädt SoundFont…</button>
+      ) : (
+        <p class="player-status" role="status" aria-live="polite">Partitur wird geladen. Wiedergabe benötigt eine SoundFont-Datei.</p>
+      )}
+    </div>
+  )}
+  {!showControls && <p class="player-status" role="status" aria-live="polite" hidden></p>}
   <div class="alphatab-frame">
     <div class="alphatab-container"></div>
   </div>
@@ -24,11 +28,8 @@ const { musicXmlUrl, soundFontUrl } = Astro.props;
 <script>
   import * as alphaTab from '@coderline/alphatab';
 
-  const initAlphaTab = () => {
-    const wrappers = document.querySelectorAll('[data-sheet-music-player]');
-
-    wrappers.forEach(wrapper => {
-      if (wrapper.hasAttribute('data-initialized')) return;
+  const initializeWrapper = (wrapper: Element) => {
+      if (wrapper.hasAttribute('data-initialized') || wrapper.getBoundingClientRect().width === 0) return;
       wrapper.setAttribute('data-initialized', 'true');
 
       const container = wrapper.querySelector('.alphatab-container') as HTMLElement;
@@ -36,6 +37,7 @@ const { musicXmlUrl, soundFontUrl } = Astro.props;
       const status = wrapper.querySelector('.player-status') as HTMLElement | null;
       const xmlUrl = wrapper.getAttribute('data-xml');
       const sf2Url = wrapper.getAttribute('data-sf2');
+      const isQuizScore = xmlUrl?.includes('/105-') === true;
 
       const api = new alphaTab.AlphaTabApi(container, {
         core: {
@@ -43,8 +45,13 @@ const { musicXmlUrl, soundFontUrl } = Astro.props;
           engine: 'svg'
         },
     
-display: {
-          layoutMode: alphaTab.LayoutMode.Parchment, // Erzwingt strikte System- und Takt-Vorgaben
+display: isQuizScore
+  ? {
+    layoutMode: alphaTab.LayoutMode.Parchment,
+    scale: 1
+  }
+  : {
+  layoutMode: alphaTab.LayoutMode.Parchment, // Erzwingt strikte System- und Takt-Vorgaben
           // 1. Abstand ZWISCHEN den beiden Notenzeilen minimieren:
           notationStaffPaddingBottom: 100, // Abstand unter der oberen Zeile (Standard: 15)
           notationStaffPaddingTop: 100,    // Abstand über der unteren Zeile (Standard: 15)      
@@ -61,7 +68,7 @@ display: {
           lastSystemFillThreshold: 0,
           scale: 1.0
           
-  },
+          },
         player: {
           enablePlayer: Boolean(sf2Url),
           enableUserInteraction: Boolean(sf2Url),
@@ -256,7 +263,10 @@ display: {
       });
 
       api.error.on((error) => {
-        if (status) status.textContent = ``;
+        if (status) {
+          status.hidden = false;
+          status.textContent = `Partitur konnte nicht geladen werden: ${String(error)}`;
+        }
         if (playBtn) {
           playBtn.textContent = 'Laden fehlgeschlagen';
           playBtn.disabled = true;
@@ -279,10 +289,19 @@ display: {
           playBtn.classList.toggle('is-playing', isPlaying);
         });
       }
+  };
+
+  const initAlphaTab = () => {
+    const wrappers = document.querySelectorAll('[data-sheet-music-player]');
+    wrappers.forEach((wrapper) => {
+      const question = wrapper.closest<HTMLElement>('.musicxml-question');
+      if (question && (question.hidden || question.dataset.active !== 'true')) return;
+      initializeWrapper(wrapper);
     });
   };
 
   initAlphaTab();
+  document.addEventListener('level100:notation-update', initAlphaTab);
   document.addEventListener('astro:page-load', initAlphaTab);
 </script>
 
