@@ -73,6 +73,13 @@ display: {
       api.scoreLoaded.on((score) => {
         const hasPickupExample = xmlUrl?.endsWith('/104-6-Auftakt-Wiederholung.musicxml');
 
+        if (xmlUrl?.endsWith('/104-8-Artikulation.musicxml')) {
+          score.tracks.forEach((track) => {
+            track.defaultSystemsLayout = 1;
+            track.systemsLayout = [1, 1, 1];
+          });
+        }
+
         if (hasPickupExample) {
           score.stylesheet.scoreConfig.barNumber = 0;
         }
