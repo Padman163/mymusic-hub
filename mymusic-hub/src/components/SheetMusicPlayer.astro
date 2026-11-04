@@ -59,7 +59,7 @@ firstStaffPaddingTop: 5,
       });
 
       api.error.on((error) => {
-        if (status) status.textContent = `Die Partitur konnte nicht geladen werden: ${error.message}`;
+        if (status) status.textContent = ``;
         if (playBtn) {
           playBtn.textContent = 'Laden fehlgeschlagen';
           playBtn.disabled = true;
