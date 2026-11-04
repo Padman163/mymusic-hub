@@ -44,7 +44,6 @@ const { musicXmlUrl, soundFontUrl } = Astro.props;
         },
     
 display: {
-        
           layoutMode: alphaTab.LayoutMode.Parchment, // Erzwingt strikte System- und Takt-Vorgaben
           // 1. Abstand ZWISCHEN den beiden Notenzeilen minimieren:
           notationStaffPaddingBottom: 100, // Abstand unter der oberen Zeile (Standard: 15)
@@ -82,6 +81,14 @@ display: {
 
         if (xmlUrl?.endsWith('/104-1-emptytab.musicxml')) {
           score.stylesheet.globalDisplayTuning = false;
+          score.tracks.forEach((track) => {
+            track.staves.forEach((staff) => {
+              staff.tabConfig = {
+                ...staff.tabConfig,
+                rests: { isVisible: false }
+              };
+            });
+          });
         }
 
         if (status) status.textContent = '';

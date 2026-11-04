@@ -16,11 +16,6 @@
         <key>
           <fifths>0</fifths>
         </key>
-        <time>
-          <beats></beats>
-          <beat-type></beat-type>
-        </time>
-
         <!-- Tabulatur-Schlüssel -->
         <clef>
           <sign>TAB</sign>
