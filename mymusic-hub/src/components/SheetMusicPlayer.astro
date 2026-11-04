@@ -71,13 +71,19 @@ display: {
       });
 
       api.scoreLoaded.on((score) => {
+        const hasPickupExample = xmlUrl?.endsWith('/104-6-Auftakt-Wiederholung.musicxml');
+
         score.tracks.forEach((track) => {
           track.staves.forEach((staff) => {
             staff.bars.forEach((bar) => {
-              bar.displayScale = 1;
+              bar.displayScale = hasPickupExample && bar.index === 0 ? 0.5 : 1;
             });
           });
         });
+
+        if (hasPickupExample && score.masterBars.length > 0) {
+          score.masterBars[0].displayScale = 0.5;
+        }
 
         if (
           xmlUrl?.endsWith('/104-2-Violin.musicxml') ||
