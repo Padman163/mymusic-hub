@@ -68,19 +68,31 @@ Ein **Taktstrich** trennt einen Takt vom nächsten. Der doppelte Taktstrich kann
 
 ## 4. Tonartvorzeichnung und Tonleitern
 
-Die **Tonartvorzeichnung** steht nach dem Schlüssel. Sie zeigt an, welche Töne im ganzen Stück grundsätzlich erhöht oder erniedrigt werden. Die Vorzeichen stehen auf festgelegten Linien oder Zwischenräumen und gelten für die entsprechenden Töne in allen Oktaven, bis eine andere Tonartvorzeichnung folgt.
+Die **Tonartvorzeichnung** steht nach dem Schlüssel. Sie zeigt an, welche Töne im ganzen Stück grundsätzlich erhöht oder erniedrigt werden. Jedes Vorzeichen steht auf der Linie oder im Zwischenraum der Tonhöhe, die es verändert. Es gilt für diesen Tonbuchstaben in allen Oktaven, bis eine andere Tonartvorzeichnung folgt.
 
-| Dur-Tonart | Vorzeichen |
-|---|---|
-| C-Dur | keine |
-| G-Dur | F♯ |
-| D-Dur | F♯, C♯ |
-| A-Dur | F♯, C♯, G♯ |
-| F-Dur | B♭ |
-| B♭-Dur | B♭, E♭ |
-| E♭-Dur | B♭, E♭, A♭ |
+<table>
+  <thead>
+    <tr>
+      <th>Dur-Tonart mit Kreuzen</th>
+      <th>Vorzeichen</th>
+      <th style={{ borderLeft: '1px solid var(--sl-color-gray-5)', paddingLeft: '1rem' }}>Dur-Tonart mit b-Vorzeichen</th>
+      <th>Vorzeichen</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>C-Dur</td><td>keine</td><td style={{ borderLeft: '1px solid var(--sl-color-gray-5)', paddingLeft: '1rem' }}>C-Dur</td><td>keine</td></tr>
+    <tr><td>G-Dur</td><td>F♯</td><td style={{ borderLeft: '1px solid var(--sl-color-gray-5)', paddingLeft: '1rem' }}>F-Dur</td><td>B♭</td></tr>
+    <tr><td>D-Dur</td><td>F♯, C♯</td><td style={{ borderLeft: '1px solid var(--sl-color-gray-5)', paddingLeft: '1rem' }}>B♭-Dur</td><td>B♭, E♭</td></tr>
+    <tr><td>A-Dur</td><td>F♯, C♯, G♯</td><td style={{ borderLeft: '1px solid var(--sl-color-gray-5)', paddingLeft: '1rem' }}>E♭-Dur</td><td>B♭, E♭, A♭</td></tr>
+    <tr><td>E-Dur</td><td>F♯, C♯, G♯, D♯</td><td style={{ borderLeft: '1px solid var(--sl-color-gray-5)', paddingLeft: '1rem' }}>A♭-Dur</td><td>B♭, E♭, A♭, D♭</td></tr>
+    <tr><td>B-Dur</td><td>F♯, C♯, G♯, D♯, A♯</td><td style={{ borderLeft: '1px solid var(--sl-color-gray-5)', paddingLeft: '1rem' }}>D♭-Dur</td><td>B♭, E♭, A♭, D♭, G♭</td></tr>
+  </tbody>
+</table>
 
-Ein einzelnes **Kreuz** (♯) erhöht einen Ton um einen Halbton, ein **b** (♭) erniedrigt ihn um einen Halbton. Ein **Auflösungszeichen** hebt ein Vorzeichen für die betreffende Note auf. Einzelne Vorzeichen innerhalb eines Takts gelten für die entsprechende Note bis zum nächsten Taktstrich.
+Ein einzelnes **Kreuz** (♯) erhöht einen Ton um einen Halbton, ein **b** (♭) erniedrigt ihn um einen Halbton. Ein **Auflösungszeichen** (♮) hebt ein Kreuz oder b für die betreffende Note auf. Einzelne Vorzeichen innerhalb eines Takts gelten für die entsprechende Note bis zum nächsten Taktstrich.
+
+<SheetMusicPlayer musicXmlUrl="/scores/104-4-Tonart.musicxml" />
+
 
 Die Dur-Tonleiter folgt dem Muster **Ganzton – Ganzton – Halbton – Ganzton – Ganzton – Ganzton – Halbton**. In G-Dur ist zum Beispiel F♯ nötig, damit dieses Muster stimmt. Aus einer Tonleiter kannst du Dreiklänge bilden, indem du einen Ton überspringst und jeweils den nächsten Ton dazunimmst:
 
