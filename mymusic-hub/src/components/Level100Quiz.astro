@@ -1323,6 +1323,7 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
           if (button.disabled || (button.dataset.difficulty !== '1' && button.dataset.difficulty !== '2')) return;
           difficulty = button.dataset.difficulty;
           renderQuiz(false);
+          window.scrollTo(0, 0);
         });
       });
 
@@ -1384,7 +1385,10 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
         result.scrollIntoView({ behavior: 'smooth', block: 'center' });
       });
 
-      resetButton.addEventListener('click', renderQuiz);
+      resetButton.addEventListener('click', () => {
+        renderQuiz();
+        window.scrollTo(0, 0);
+      });
 
       renderQuiz();
     });
