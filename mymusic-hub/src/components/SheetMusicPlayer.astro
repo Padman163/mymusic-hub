@@ -42,7 +42,9 @@ const { musicXmlUrl, soundFontUrl } = Astro.props;
         },
     
 display: {
-// 1. Abstand ZWISCHEN den beiden Notenzeilen minimieren:
+        
+          layoutMode: alphaTab.LayoutMode.Parchment, // Erzwingt strikte System- und Takt-Vorgaben
+          // 1. Abstand ZWISCHEN den beiden Notenzeilen minimieren:
           notationStaffPaddingBottom: 100, // Abstand unter der oberen Zeile (Standard: 15)
           notationStaffPaddingTop: 100,    // Abstand über der unteren Zeile (Standard: 15)      
           notationStaffPaddingTop: -20, // Abstand unter der oberen Zeile (Standard: 15)
@@ -55,6 +57,7 @@ display: {
           lastNotationStaffPaddingTop: 100,
           systemStaffDistance: -100,
           stavesSpacing: -100,
+          lastSystemFillThreshold: 0,
           scale: 1.0
           
   },
@@ -66,7 +69,15 @@ display: {
         }
       });
 
-      api.scoreLoaded.on(() => {
+      api.scoreLoaded.on((score) => {
+        score.tracks.forEach((track) => {
+          track.staves.forEach((staff) => {
+            staff.bars.forEach((bar) => {
+              bar.displayScale = 1;
+            });
+          });
+        });
+
         if (status) status.textContent = '';
       });
 
