@@ -87,6 +87,19 @@ display: {
           });
         }
 
+        if (xmlUrl?.endsWith('/104-2-Tabulatur.musicxml')) {
+          score.stylesheet.scoreConfig.timeSignature = { isVisible: false };
+          score.tracks.forEach((track) => {
+            track.staves.forEach((staff) => {
+              staff.tabConfig = {
+                ...staff.tabConfig,
+                timeSignature: { isVisible: false },
+                rhythm: alphaTab.TabRhythmMode.Hidden
+              };
+            });
+          });
+        }
+
         if (hasPickupExample) {
           score.stylesheet.scoreConfig.barNumber = 0;
         }
