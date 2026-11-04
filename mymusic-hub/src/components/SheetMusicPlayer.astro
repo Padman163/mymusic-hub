@@ -79,6 +79,27 @@ display: {
           });
         });
 
+        if (
+          xmlUrl?.endsWith('/104-2-Violin.musicxml') ||
+          xmlUrl?.endsWith('/104-2-Bass.musicxml')
+        ) {
+          score.tracks.forEach((track) => {
+            track.staves.forEach((staff) => {
+              staff.bars.forEach((bar) => {
+                bar.voices.forEach((voice) => {
+                  voice.beats.forEach((beat) => {
+                    beat.style ??= new alphaTab.model.BeatStyle();
+                    beat.style.colors.set(
+                      alphaTab.model.BeatSubElement.StandardNotationStem,
+                      new alphaTab.model.Color(0, 0, 0, 0)
+                    );
+                  });
+                });
+              });
+            });
+          });
+        }
+
         if (xmlUrl?.endsWith('/104-1-emptytab.musicxml')) {
           score.stylesheet.globalDisplayTuning = false;
           score.tracks.forEach((track) => {
