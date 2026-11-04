@@ -76,13 +76,11 @@ display: {
         const hasPickupExample = xmlUrl?.endsWith('/104-6-Auftakt-Wiederholung.musicxml');
 
         if (xmlUrl?.endsWith('/104-3-Tab-Notenwerte.musicxml')) {
-          const tabDurations: string[] = [];
           score.tracks.forEach((track) => {
             track.staves.forEach((staff) => {
               staff.bars.forEach((bar) => {
                 bar.voices.forEach((voice) => {
                   voice.beats.forEach((beat) => {
-                    tabDurations.push(`${beat.id}:${beat.duration}`);
                     if (
                       beat.duration === alphaTab.model.Duration.Whole ||
                       beat.duration === alphaTab.model.Duration.Half
@@ -94,9 +92,6 @@ display: {
               });
             });
           });
-          container.dataset.tabDurations = tabDurations.join(',');
-          container.dataset.tabWhole = String(alphaTab.model.Duration.Whole);
-          container.dataset.tabHalf = String(alphaTab.model.Duration.Half);
         }
 
         if (xmlUrl?.endsWith('/104-8-Artikulation.musicxml')) {
@@ -193,32 +188,39 @@ display: {
       });
 
       api.postRenderFinished.on(() => {
-        container.dataset.postRenderFinished = 'true';
-        container.dataset.tabBeatIdCount = String(tabDurationBeatIds.size);
-        container.dataset.tabBeatGroups = Array.from(container.querySelectorAll('svg g'))
-          .map((group) => group.getAttribute('class'))
-          .filter((className) => className?.startsWith('b'))
-          .join(',');
         if (tabDurationBeatIds.size === 0) return;
 
-        container.querySelectorAll('[data-tab-duration-ring]').forEach((ring) => ring.remove());
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            container.querySelectorAll('[data-tab-duration-ring]').forEach((ring) => ring.remove());
 
-        tabDurationBeatIds.forEach((beatId) => {
-          container.querySelectorAll(`svg g.b${beatId}`).forEach((beatGroup) => {
-            const noteValue = beatGroup.querySelector('text');
-            if (!noteValue) return;
+            tabDurationBeatIds.forEach((beatId) => {
+              container.querySelectorAll(`svg g.b${beatId} > text`).forEach((noteValue) => {
+                const bounds = noteValue.getBBox();
+                const matrix = noteValue.getCTM();
+                const svg = noteValue.ownerSVGElement;
+                if (bounds.width === 0 || bounds.height === 0 || !matrix || !svg) return;
 
-            const bounds = noteValue.getBBox();
-            const radius = Math.max(bounds.width, bounds.height) / 2 + 4;
-            const ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-            ring.setAttribute('cx', String(bounds.x + bounds.width / 2));
-            ring.setAttribute('cy', String(bounds.y + bounds.height / 2));
-            ring.setAttribute('r', String(radius));
-            ring.setAttribute('fill', 'white');
-            ring.setAttribute('stroke', '#222211');
-            ring.setAttribute('stroke-width', '1');
-            ring.setAttribute('data-tab-duration-ring', '');
-            beatGroup.insertBefore(ring, noteValue);
+                const radius = Math.max(bounds.width, bounds.height) / 2 + 1;
+                const overlay = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                overlay.setAttribute(
+                  'transform',
+                  `matrix(${matrix.a} ${matrix.b} ${matrix.c} ${matrix.d} ${matrix.e} ${matrix.f})`
+                );
+                overlay.setAttribute('data-tab-duration-ring', '');
+                overlay.setAttribute('aria-hidden', 'true');
+
+                const ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                ring.setAttribute('cx', String(bounds.x + bounds.width / 2));
+                ring.setAttribute('cy', String(bounds.y + bounds.height / 2));
+                ring.setAttribute('r', String(radius));
+                ring.setAttribute('fill', 'white');
+                ring.setAttribute('stroke', '#222211');
+                ring.setAttribute('stroke-width', '1');
+                overlay.append(ring, noteValue.cloneNode(true));
+                svg.append(overlay);
+              });
+            });
           });
         });
       });
