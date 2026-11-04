@@ -70,8 +70,34 @@ display: {
         }
       });
 
+      const tabDurationBeatIds = new Set<number>();
+
       api.scoreLoaded.on((score) => {
         const hasPickupExample = xmlUrl?.endsWith('/104-6-Auftakt-Wiederholung.musicxml');
+
+        if (xmlUrl?.endsWith('/104-3-Tab-Notenwerte.musicxml')) {
+          const tabDurations: string[] = [];
+          score.tracks.forEach((track) => {
+            track.staves.forEach((staff) => {
+              staff.bars.forEach((bar) => {
+                bar.voices.forEach((voice) => {
+                  voice.beats.forEach((beat) => {
+                    tabDurations.push(`${beat.id}:${beat.duration}`);
+                    if (
+                      beat.duration === alphaTab.model.Duration.Whole ||
+                      beat.duration === alphaTab.model.Duration.Half
+                    ) {
+                      tabDurationBeatIds.add(beat.id);
+                    }
+                  });
+                });
+              });
+            });
+          });
+          container.dataset.tabDurations = tabDurations.join(',');
+          container.dataset.tabWhole = String(alphaTab.model.Duration.Whole);
+          container.dataset.tabHalf = String(alphaTab.model.Duration.Half);
+        }
 
         if (xmlUrl?.endsWith('/104-8-Artikulation.musicxml')) {
           score.tracks.forEach((track) => {
@@ -84,6 +110,20 @@ display: {
           score.tracks.forEach((track) => {
             track.defaultSystemsLayout = 2;
             track.systemsLayout = [2];
+          });
+        }
+
+        if (xmlUrl?.endsWith('/104-3-Tab-Notenwerte.musicxml')) {
+          score.tracks.forEach((track) => {
+            track.defaultSystemsLayout = 2;
+            track.systemsLayout = [2, 2];
+            track.staves.forEach((staff) => {
+              staff.tabConfig = {
+                ...staff.tabConfig,
+                timeSignature: { isVisible: false },
+                rhythm: alphaTab.TabRhythmMode.ShowWithBars
+              };
+            });
           });
         }
 
@@ -151,6 +191,37 @@ display: {
         }
 
         if (status) status.textContent = '';
+      });
+
+      api.postRenderFinished.on(() => {
+        container.dataset.postRenderFinished = 'true';
+        container.dataset.tabBeatIdCount = String(tabDurationBeatIds.size);
+        container.dataset.tabBeatGroups = Array.from(container.querySelectorAll('svg g'))
+          .map((group) => group.getAttribute('class'))
+          .filter((className) => className?.startsWith('b'))
+          .join(',');
+        if (tabDurationBeatIds.size === 0) return;
+
+        container.querySelectorAll('[data-tab-duration-ring]').forEach((ring) => ring.remove());
+
+        tabDurationBeatIds.forEach((beatId) => {
+          container.querySelectorAll(`svg g.b${beatId}`).forEach((beatGroup) => {
+            const noteValue = beatGroup.querySelector('text');
+            if (!noteValue) return;
+
+            const bounds = noteValue.getBBox();
+            const radius = Math.max(bounds.width, bounds.height) / 2 + 4;
+            const ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            ring.setAttribute('cx', String(bounds.x + bounds.width / 2));
+            ring.setAttribute('cy', String(bounds.y + bounds.height / 2));
+            ring.setAttribute('r', String(radius));
+            ring.setAttribute('fill', 'white');
+            ring.setAttribute('stroke', '#222211');
+            ring.setAttribute('stroke-width', '1');
+            ring.setAttribute('data-tab-duration-ring', '');
+            beatGroup.insertBefore(ring, noteValue);
+          });
+        });
       });
 
       api.error.on((error) => {
