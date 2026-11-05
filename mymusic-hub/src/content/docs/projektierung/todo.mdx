@@ -1,18 +1,17 @@
 ---
 title: To-Do
-description: Bugs, Features und Decisions als GitHub-Issues erfassen.
+description: Feature Cards erstellen und verwalten.
 ---
 
-import ProjectTodoForm from '../../../components/ProjectTodoForm.astro';
+import ProjectCardForm from '../../../components/ProjectCardForm.astro';
+import ProjectFeatureCardsList from '../../../components/ProjectFeatureCardsList.astro';
 
-Hier kannst du neue Bugs, Features und Decisions für das Projekt anlegen. Der Eintrag wird als vorausgefülltes GitHub-Issue vorbereitet.
+## Feature Cards
 
-<p>
-  <a href="https://github.com/Padman163/mymusic-hub/issues" target="_blank" rel="noopener noreferrer">
-    Bestehende Einträge auf GitHub ansehen
-  </a>
-</p>
+Hier kannst du neue Feature Cards für das Projekt erstellen. Diese werden lokal in der Projektdatei gespeichert und können später in die Dokumentation übernommen werden.
 
-<ProjectTodoForm />
+<ProjectCardForm />
 
-Nach dem Absenden öffnet sich GitHub in einem neuen Tab. Melde dich dort an und bestätige das Erstellen des Issues. Du benötigst Zugriff auf das Repository. Die Website speichert keine GitHub-Zugangsdaten.
+### Bestehende Cards
+
+<ProjectFeatureCardsList showForm={false} />
