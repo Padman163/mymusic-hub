@@ -1,0 +1,262 @@
+---
+title: Test - InteractiveScoreTrainer
+description: Interaktive Tests für die InteractiveScoreTrainer-Komponente
+---
+
+import InteractiveScoreTrainer from '../../../components/InteractiveScoreTrainer.astro';
+
+# 🎵 Test: InteractiveScoreTrainer-Komponente
+
+Der **InteractiveScoreTrainer** ist das Herzstück der Musik-Praxis-Werkzeuge. Er hat **3 progressive Schwierigkeitsstufen** von Gitarren-TAB bis zur Bassschlüssel-Notation.
+
+---
+
+## **🎸 Stufe 1: Gitarren-TAB-Editor**
+
+**Was ist das?** Ein interaktives 6-Saiten-TAB-Raster, in dem du Bundzahlen (0–12) eingeben kannst.
+
+**Wie funktioniert's:**
+1. Du siehst 6 Zeilen (die 6 Saiten der Gitarre)
+2. Klick auf ein Feld
+3. Tippe eine Zahl (0, 1, 2, ... 12) ein
+4. Drücke "✓ Eingabe prüfen" um deine Antwort zu überprüfen
+
+<InteractiveScoreTrainer 
+  initialMode={1}
+  scale="Pentatonik A-Moll"
+  exerciseTitle="Übung 1.1: A-Moll Pentatonik auf allen Saiten"
+/>
+
+### Was hier sichtbar sein sollte:
+- ✅ **6 Reihen** (eine für jede Saite: E, A, D, G, B, E)
+- ✅ **Mehrere Spalten** zum Eintragen
+- ✅ **Eingabefelder** die du anklicken kannst
+- ✅ **"✓ Eingabe prüfen"-Button** zum Validieren
+- ✅ **Toolbar** mit Optionen (Dreiklang markieren, Artikulation)
+
+### So testest du Stufe 1:
+1. Klick auf ein Eingabefeld
+2. Tippe **0** oder **2** oder **5** ein
+3. Klick auf nächstes Feld
+4. Klick "✓ Eingabe prüfen"
+5. Du solltest sehen: ✅ oder ❌ (grün oder rot)
+
+---
+
+## **🎵 Stufe 2: Standard-Notation (Violinschlüssel)**
+
+**Was ist das?** Ein 5-Linien-System wie in echten Notenblättern.
+
+**Wie funktioniert's:**
+1. Du siehst ein echtes Notensystem mit Violinschlüssel (𝄞)
+2. Klick auf eine Position zwischen/auf den Linien
+3. Es erscheint eine Note
+4. Nutze die Toolbar für Vorzeichen (♯ ♭ ♮)
+5. Drücke "✓ Eingabe prüfen"
+
+<InteractiveScoreTrainer 
+  initialMode={2}
+  scale="C-Dur Tonleiter"
+  exerciseTitle="Übung 2.1: C-Dur Tonleiter im Violinschlüssel"
+/>
+
+### Was hier sichtbar sein sollte:
+- ✅ **5 Linien** (Notensystem)
+- ✅ **Violinschlüssel** (𝄞) am Anfang
+- ✅ **Leere Notenköpfe** die du platzieren kannst
+- ✅ **Vorzeichen-Buttons**: ♯ (Kreuz), ♭ (Be), ♮ (Auflösungszeichen)
+- ✅ **Notenwert-Wähler**: Ganze, halbe, Viertel, Achtel, Sechzehntel Noten
+
+### So testest du Stufe 2:
+1. Klick auf die zweite Linie von oben (wo G-Note hingehört)
+2. Eine Note sollte erscheinen
+3. Klick "♯"-Button wenn du ein Kreuz brauchst
+4. Klick "✓ Eingabe prüfen"
+5. Feedback: ✅ (richtig) oder ❌ (falsch)
+
+---
+
+## **🎼 Stufe 3: Bassschlüssel (Master-Modus)**
+
+**Was ist das?** Der komplexeste Modus: 5-Linien-System im **F-Bassschlüssel** mit Tonart-Wahl.
+
+**Wie funktioniert's:**
+1. Du siehst ein Notensystem mit Bassschlüssel (𝄢)
+2. **Wichtig:** Erst Tonart wählen (rechts oben, Dropdown)
+3. Dann Noten eintragen
+4. Die Vorzeichen der Tonart werden automatisch angezeigt
+5. Drücke "✓ Eingabe prüfen"
+
+<InteractiveScoreTrainer 
+  initialMode={3}
+  scale="G-Dur (1 Kreuz)"
+  exerciseTitle="Übung 3.1: G-Dur im Bassschlüssel mit Tonartvorzeichen"
+/>
+
+### Was hier sichtbar sein sollte:
+- ✅ **5 Linien** (Notensystem)
+- ✅ **Bassschlüssel** (𝄢) mit Pünktchen um das F
+- ✅ **Tonart-Dropdown**: Wähle zwischen C, G, D, A, F, B, Es (mit bis zu 3 ♯ oder ♭)
+- ✅ **Automatische Vorzeichen**: Wenn du G-Dur wählst, erscheint automatisch 1 ♯
+- ✅ **Noteneingabe** wie in Stufe 2
+
+### So testest du Stufe 3:
+1. Dropdown: Wähle **"G-Dur (1 ♯)"**
+2. Das ♯ sollte automatisch vor allen F-Noten erscheinen
+3. Klick auf eine Notenlinie
+4. Eine Note wird erstellt
+5. Klick "✓ Eingabe prüfen"
+
+---
+
+## **Tabs zwischen den Stufen wechseln**
+
+Oben solltest du **3 Tabs** sehen:
+- **🎸 TAB** → Klick hier für Stufe 1 (Gitarre)
+- **🎵 Notation** → Klick hier für Stufe 2 (Violinschlüssel)
+- **🎼 Bass** → Klick hier für Stufe 3 (Bassschlüssel)
+
+**So testest du Tab-Navigation:**
+1. Klick auf jeden Tab nacheinander
+2. Der Inhalt sollte sich ändern
+3. Jeder Tab sollte seine eigene Übung zeigen
+
+---
+
+## **Toolbar & Spezial-Funktionen**
+
+### **Dreiklang markieren** (Farb-Highlight-Modus)
+
+Wenn diese Option aktiv ist:
+- 🔴 **Grundton** (Root): Rot (#F38181)
+- 🟣 **Terz** (3rd): Violett (#D382DC)
+- 🔵 **Quinte** (5th): Blau (#64C4ED)
+
+**So testest du das:**
+1. Klick auf "🎨 Dreiklang markieren" Button
+2. Wenn du eine Tonleiter aufbaust, werden die Triaden farbig hervorgehoben
+3. Die Farben sollten dem Intervall-Farbschema folgen
+
+### **Artikulation** (Spielweise hinzufügen)
+
+Buttons in der Toolbar:
+- 🎯 **Staccato** (kurze, getrennte Noten)
+- ⌣ **Legato** (sanft verbundene Noten)
+- ➖ **Tenuto** (gehaltene Noten)
+- ▶️ **Accent** (betonte Noten)
+- **Dynamik**: pp, p, mp, mf, f, ff
+
+**So testest du Artikulation:**
+1. Klick auf eine Note
+2. Klick auf "🎯 Staccato"
+3. Ein Punkt sollte unter der Note erscheinen
+4. Probiere verschiedene Artikulationen
+
+---
+
+## **"✓ Eingabe prüfen" Button**
+
+Dieser Button ist das Herz des Trainers!
+
+**Was passiert wenn du klickst:**
+1. Der Trainer vergleicht deine Eingabe mit der Lösung
+2. **✅ Grünes Feedback** = Richtig! +20 XP gewonnen
+3. **❌ Rotes Feedback** = Falsch, versuche es nochmal
+4. **💡 Hinweis-Text** = "Warte, das ist nicht ganz richtig... der Grundton sollte hier sein"
+
+**So testest du die Validierung:**
+1. Fülle eine Übung (teilweise) aus
+2. Klick "✓ Eingabe prüfen"
+3. Du solltest grünen oder roten Hinweis sehen
+4. Bei Richtig: oben rechts "+20 XP" Notifikation
+
+---
+
+## **Farbpalette der Intervalle**
+
+Der Trainer nutzt diese Standardfarben für Musikintervalle:
+
+| Intervall | Farbe | Hex |
+|---|---|---|
+| **1 (Grundton)** | 🔴 Rot | #F38181 |
+| **♭2** | Rosa | #FFAAA6 |
+| **2** | Hellbraun | #F4C7AB |
+| **♭3** | Magenta | #EAA0E3 |
+| **3** | Dunkelviolett | #D382DC |
+| **4** | Blauviolett | #B862D3 |
+| **♭5** | Blau | #7F8BE8 |
+| **5** | Hellblau | #64C4ED |
+| **♭6** | Türkis | #52DEE5 |
+| **6** | Minzgrün | #6BE4C6 |
+| **♭7** | Hellgrün | #83E8BA |
+| **7** | Gelbgrün | #CBDD7B |
+
+Diese Farben helfen dir, Intervalle schnell zu erkennen!
+
+---
+
+## **Wichtiger Test-Ablauf**
+
+### ✅ **Basis-Tests (was muss funktionieren):**
+- [ ] Stufe 1 (TAB): Bundzahlen eingeben und validieren
+- [ ] Stufe 2 (Notation): Noten auf Linien platzieren
+- [ ] Stufe 3 (Bass): Tonart wählen, Vorzeichen auto-anpassen
+- [ ] Tab-Navigation: Zwischen Stufen wechseln funktioniert
+- [ ] Eingabe prüfen: Grüne/rote Rückmeldung kommt
+- [ ] XP-Gewinn: Bei Erfolg "+20 XP" oben rechts sichtbar
+
+### ✅ **Erweiterte Tests:**
+- [ ] Dreiklang-Markierung: Farben für Root/3./5. richtig
+- [ ] Artikulation: Staccato/Legato/Tenuto erscheinen
+- [ ] Dynamik-Symbole: pp bis ff eintragen
+- [ ] Notenwerte: Ganze/halbe/Viertel/Achtel ändern sich
+- [ ] Vorzeichen: ♯ ♭ ♮ funktionieren korrekt
+- [ ] Tonart-Vorzeichnung: Automatisch bei Bass-Modus
+
+---
+
+## **Info für Entwickler**
+
+**Props der Komponente:**
+
+```astro
+interface Props {
+  initialMode?: 1 | 2 | 3;        // Welche Stufe sichtbar? (Standard: 1)
+  scale?: string;                 // Name der Tonleiter (z.B. "A-Moll Pentatonik")
+  exerciseTitle?: string;         // Titel der Übung
+}
+```
+
+**Dateistandort:**
+```
+src/components/InteractiveScoreTrainer.astro (532 Zeilen)
+```
+
+**Implementierte Features:**
+- ✅ 3 separate Modi (TAB, Notation, Bass)
+- ✅ Validierungssystem (richtig/falsch)
+- ✅ XP-Integration (Punkte bei Erfolg)
+- ✅ Farbschema für Intervalle
+- ✅ Artikulations-Toolbar
+- ✅ Tonart-Vorzeichen im Bass-Modus
+- ✅ Tab-Navigation zwischen Stufen
+
+---
+
+## **Häufige Fragen**
+
+**F: Warum kann ich im TAB nur 0-12 eingeben?**  
+A: Das sind die Standard-Bundzahlen einer Gitarre (0 = leere Saite, 12 = Oktave).
+
+**F: Wo speichert sich die Lösung?**  
+A: Die Komponente vergleicht intern mit der vordefinierten Lösung. Diese könnten aus der Datenbank kommen.
+
+**F: Kann ich die Übungen von unterschiedlichen Anfangslagen starten?**  
+A: Mit `initialMode={1/2/3}` ja. Der Trainer merkt sich nur, welche Stufe zuletzt benutzt wurde.
+
+**F: Wo wird der XP-Fortschritt gespeichert?**  
+A: Im XpTracker mit `localStorage`. Rufe `window.addXp(20, 'notation')` auf!
+
+---
+
+✨ **Teste alle 3 Stufen nacheinander und berichte mir, was funktioniert und was nicht!**

@@ -26,6 +26,12 @@ export default defineConfig({
 			customCss: ['/src/styles/sidebar.css', 'katex/dist/katex.min.css'],
 			sidebar: [
 				{
+					label: 'Übersicht & Dokumentation',
+					items: [
+						{ autogenerate: { directory: 'uebersicht' } },
+					],
+				},
+				{
 					label: 'Projektierung',
 					items: [{ label: 'To-Do', slug: 'projektierung/todo' }],
 				},

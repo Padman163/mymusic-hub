@@ -5,14 +5,10 @@ tags: ['UI', 'Components', 'Gamification']
 difficulty: 'Basis'
 ---
 
-import FeatureCard from '../../../components/FeatureCard.astro';
-import ChapterTagBar from '../../../components/ChapterTagBar.astro';
-import InteractiveScoreTrainer from '../../../components/InteractiveScoreTrainer.astro';
-import XpTracker from '../../../components/XpTracker.astro';
-
 ## 🎮 Neue Komponenten-Übersicht
 
-Dieses Dokument dokumentiert alle neuen Komponenten, die in dieser Version hinzugefügt wurden:
+Diese Seite dokumentiert alle neuen Komponenten, die in dieser Version hinzugefügt wurden:
+
 1. **FeatureCard** – GitHub-Issue-ähnliche Feature-Tracker
 2. **ChapterTagBar** – Filter- und Metadaten-Display
 3. **InteractiveScoreTrainer** – 3-Stufen TAB/Notation/Bass-Editor
@@ -20,258 +16,252 @@ Dieses Dokument dokumentiert alle neuen Komponenten, die in dieser Version hinzu
 
 ---
 
-## 1. Feature Card Component
+## 1. Feature Card Component (`FeatureCard.astro`)
 
-Die `FeatureCard`-Komponente zeigt Features im GitHub-Issue-Design an:
+Die `FeatureCard`-Komponente zeigt Features im **GitHub-Issue-Design** an.
 
 ### Props:
-- `id`: string (z.B. `"FEAT-101-A"`)
-- `title`: string
-- `status`: `'Geplant' | 'In Arbeit' | 'Bereit' | 'Konzept'`
-- `category`: string
-- `difficulty?: string`
-- `tags?: string[]`
-- `comments?: Array<{ author: string; role: 'Dev' | 'Didaktik' | 'Audio'; text: string }>`
+- `id`: string – eindeutige Feature-ID (z.B. `"FEAT-101-A"`)
+- `title`: string – Titel des Features
+- `status`: `'Geplant' | 'In Arbeit' | 'Bereit' | 'Konzept'` – Status-Badge mit Farbe
+- `category`: string – Kategorie (z.B. `"Praxis 101"`, `"Gamification"`, `"Songwriting"`)
+- `difficulty?`: string – optional: `'Basis'`, `'Mittel'`, `'Fortgeschritten'`, `'Master'`
+- `tags?`: string[] – optional: Filterbare Tags
+- `comments?`: Array – optional: Developer/Didaktik/Audio-Kommentare
 
-### Beispiel:
+### Layout:
+- **Header:** ID-Badge, Titel, Status-Badge (farbcodiert), Kategorie-Badge
+- **Hauptbereich:** `<slot />` für detaillierte Beschreibung und Teilaufgaben
+- **Tag-Zeile:** Schnelle Filterung nach Tags
+- **Aufklappbarer Footer:** `<details>` mit Kommentaren, gruppiert nach Rolle (Dev/Didaktik/Audio)
 
-<FeatureCard
-  id="FEAT-101-A"
-  title="TAB-Editor für Level 100"
-  status="In Arbeit"
-  category="Praxis 101"
-  difficulty="Mittel"
-  tags={['Gitarre', 'Praxis', 'Interactive']}
-  comments={[
-    {
-      author: "Felix Dev",
-      role: "Dev",
-      text: "Interaktive TAB-Eingabe ist implementiert. Validierung läuft."
-    },
-    {
-      author: "Marina Didaktik",
-      role: "Didaktik",
-      text: "Farbcodierung nach Intervallen hilft Schülern sehr!"
-    }
-  ]}
->
-  <h4>Tasks:</h4>
-  <ul>
-    <li>✅ 6-Saiten-TAB-Raster mit 0–12 Bundzahlen</li>
-    <li>✅ Farbcodierung nach Intervallen</li>
-    <li>⏳ Validierung gegen Referenz</li>
-    <li>⏳ XP-Integration</li>
-  </ul>
-</FeatureCard>
+### Use Case:
+Auf Übersichtsseiten und Feature-Tracking-Dashboards, um den Status und die Diskussion von Features zentral zu verwalten.
 
 ---
 
-## 2. Chapter Tag Bar
+## 2. Chapter Tag Bar (`ChapterTagBar.astro`)
 
-### Display-Modus (Standard für Lektionsseiten)
-
-Zeigt elegante Chips für Tags, Schwierigkeit, Diploma-Level und XP:
-
-<ChapterTagBar 
-  tags={['Gitarre', 'D1-relevant', 'Praxis']} 
-  difficulty="Mittel" 
-  dLevel="D1" 
-  xp={50}
-  filterMode={false}
-/>
-
-**Use Case:** Am Seitenanfang von Lektionen, um Metadaten anzuzeigen.
-
-### Filter-Modus (für Übersichtsseiten)
-
-Interaktive Button-Leiste zum Filtern von Inhalten:
-
-<ChapterTagBar filterMode={true} />
-
-**Use Case:** Auf Index- oder Übersichtsseiten, um Inhalte zu filtern.
+Die `ChapterTagBar`-Komponente zeigt **Metadaten und ermöglicht clientseitige Filterung**.
 
 ### Props:
-- `tags?: string[]`
-- `difficulty?: string` – Eine der: `'Basis' | 'Mittel' | 'Fortgeschritten' | 'Master'`
-- `dLevel?: string` – Eine der: `'D1' | 'D2' | 'D3' | 'Produktion'`
-- `xp?: number`
-- `filterMode?: boolean` (default: `false`)
+- `tags?`: string[] – Tags aus dem Content-Metadaten
+- `difficulty?`: string – `'Basis' | 'Mittel' | 'Fortgeschritten' | 'Master'`
+- `dLevel?`: string – Diploma-Level: `'D1' | 'D2' | 'D3' | 'Produktion'`
+- `xp?`: number – XP-Wert für diese Lektion
+- `filterMode?`: boolean – `false` (Display) oder `true` (Filterbar)
+
+### Display-Modus (`filterMode={false}`, Standard):
+Zeigt elegante **Chips** am Seitenanfang von Lektionen:
+- **Instrument:** `Gitarre` / `Allgemein`
+- **Prüfungsrelevanz:** `D1-relevant`, `D2-relevant`, `D3-relevant`
+- **Schwierigkeitsstufe:** `Basis`, `Mittel`, `Fortgeschritten`, `Master`
+- **XP-Wert:** z.B. `+50 XP`
+
+Jedes Chip hat ein passend farbiges Icon/Emoji und ist am Rand abgerundet.
+
+### Filter-Modus (`filterMode={true}`):
+Rendert eine **interaktive Filterleiste** mit Buttons:
+- Buttons für `Alle`, `Gitarre`, `Allgemein`, `D1-relevant`, `D2-relevant`, `D3-relevant`, `Leicht`, `Mittel`, `Schwer`
+- **Vanilla-JS:** Filtert DOM-Elemente mit `data-tags`-Attributen
+- **State:** In `sessionStorage` oder Komponenten-State
+
+### Use Case:
+- **Display-Modus:** Am Anfang jeder Lektion, um Kontext und Relevanz zu zeigen
+- **Filter-Modus:** Auf Übersichtsseiten (Index, Kapitel-Übersicht), um Inhalte zu filtern
 
 ---
 
-## 3. Interactive Score Trainer
+## 3. Interactive Score Trainer (`InteractiveScoreTrainer.astro`)
 
-Ein progressives 3-Stufen-Trainings-Tool:
+Das **progressive 3-Stufen-Trainings-Tool** für Notation und TAB.
 
-<InteractiveScoreTrainer 
-  initialMode={1}
-  scale="C-Dur"
-  exerciseTitle="Anfänger: TAB-Eingabe"
-/>
+### Props:
+- `initialMode?`: `1 | 2 | 3` – Startstufe (default: `1`)
+- `scale?`: string – Tonleiter/Scale (z.B. `"C-Dur"`, `"A-Moll"`)
+- `exerciseTitle?`: string – Titel der Übung
+
+### 3 Schwierigkeitsstufen (Tabs):
+
+#### **Stufe 1 – Gitarren-Standard (TAB)**
+- Interaktives **6-Linien-TAB-Raster**
+- Benutzer trägt **Bundzahlen** (0–12) auf den 6 Saiten ein
+- Klickbar: Felder zum Eingeben oder Löschen
+- Farbcodierung nach **Intervall-Palette** (optional)
+- Validierung gegen Referenz-TAB
+
+#### **Stufe 2 – Standard-Notation (Violinschlüssel)**
+- Interaktives **5-Linien-System** im Violinschlüssel ($\mathcal{G}_8$)
+- Benutzer setzt:
+  - **Notenköpfe** (durch Klick auf Linie/Zwischenraum)
+  - **Vorzeichen:** ♯ (Kreuz), ♭ (Be), ♮ (Auflösungszeichen)
+  - **Notenwerte:** Ganze, Halbe, Viertel, Achtel, Sechzehntel
+- Farben nach Intervallen
+- Validierung gegen Referenz-Notation
+
+#### **Stufe 3 – Master (Bassschlüssel)**
+- **5-Linien-System** im **F-Bassschlüssel** (Violinschlüssel 8va bassa)
+- Benutzer wählt **Tonart-Vorzeichen:** C, G, D, A, F, B, Es (bis 3 ♯/♭)
+- Setzt Notenköpfe wie Stufe 2
+- Validierung mit Bassschlüssel-Linienabständen
+
+### Zusatz-Features (Toolbar):
+
+#### **Modus: „Dreiklang markieren"**
+- Markiert automatisch **Grundton** (#F38181), **Terz** (#EAA0E3 / #D382DC), **Quinte** (#64C4ED)
+- Hilft Schülern, Akkordaufbau zu visualisieren
+
+#### **Modus: „Artikulation setzen"**
+- Buttons für:
+  - **Staccato-Punkt** (·)
+  - **Legato-Bogen** (_)
+  - **Tenuto-Strich** (─)
+  - **Akzentkeil** (>)
+  - **Dynamikstufen:** $pp$, $p$, $mp$, $mf$, $f$, $ff$
+
+#### **Prüf-Button: „Eingabe prüfen & XP sammeln"**
+- Vergleicht Benutzer-Input mit Referenz
+- Gibt visuelles Feedback: ✅ Grün (richtig) oder ❌ Rot (falsch)
+- Ruft `window.addXp()` auf bei Erfolg
+- Zeigt Fehlerpunkte
+
+### Use Case:
+Lektion 104 (Gamification-Vorstufe): Benutzer trainiert progressive Notation von TAB → Standard → Bass, mit Farbcodierung und XP-Reward.
+
+---
+
+## 4. XP Tracker (`XpTracker.astro`)
+
+Das **Gamification-Dashboard-Widget** für Skill-Tracking.
+
+### Props:
+- `showPillars?`: boolean – zeige die 3 Säulen (default: `true`)
 
 ### Features:
 
-**Stufe 1: TAB (Anfänger)**
-- 6-Saiten-Gitarren-TAB mit Bundzahlen 0–12
-- Interaktive Eingabe
-- Dreiklang-Markierung (1 = Grundton, 3 = Terz, 5 = Quinte)
+#### **localStorage-Persistierung**
+- Key: `mymusic_xp_state`
+- Speichert: Gesamt-XP, Pro-Säule-XP, Level, Progress zu nächstem Level
+- Format: JSON `{ totalXp: number, pillars: { motor: number, rhythm: number, notation: number }, ... }`
 
-**Stufe 2: Standard-Notation (Mittel)**
-- 5-Linien-System mit Violinschlüssel (𝄞)
-- Notenköpfe, Vorzeichen (♯, ♭, ♮)
-- Notenwerte: Ganze, Halbe, Viertel, Achtel
-- Artikulation: Staccato, Legato, Tenuto, Akzent
-- Dynamik: pp bis ff
+#### **Gesamt-XP & Fortschritt**
+- Zeigt **Gesamt-XP** prominent oben
+- **Fortschrittsbalken** für nächstes Level (z.B. 0/100 XP → Level 2)
+- **Level-Gate-Anzeige:** z.B. „Level 100 Praxis-Freischaltung bei 80% + bestandenem Quiz 105"
 
-**Stufe 3: Bassschlüssel (Fortgeschritten)**
-- F-Bassschlüssel (𝄢)
-- Tonart-Vorzeichenwahl (bis ±3 ♯/♭)
-- Tonarten: C, G, D, A, F, B, Es
+#### **3 Säulen (Skill-Pillars)**
+1. **Griffbrett-Motorik** (motor)
+   - XP aus Stufe 1 (TAB-Editor)
+   - Fortschrittsbalken
 
-### Props:
-- `initialMode?: 1 | 2 | 3` (default: `1`)
-- `scale?: string` (z.B. `"D-Dur"`)
-- `exerciseTitle?: string`
+2. **Rhythmus & Backing-Track** (rhythm)
+   - XP aus DrumPattern, BassPattern, GuitarPattern-Übungen
+   - Fortschrittsbalken
 
----
+3. **Notation & Mikro-Songwriting** (notation)
+   - XP aus Stufe 2/3 (Standard/Bass), ScorePattern-Übungen
+   - Fortschrittsbalken
 
-## 4. XP Tracker
+Jede Säule hat:
+- **Name** und **Icon** (🎸, 🥁, 🎼)
+- **Aktuellen XP** und **Gesamt-Target** für diesen Pillar
+- **Farbigen Fortschrittsbalken**
 
-Ein Gamification-Dashboard mit localStorage-Persistierung:
-
-<XpTracker showPillars={true} />
-
-### Features:
-
-- **Gesamt-XP** anzeigen
-- **Level-Gate-Tracking**: „80% + Quiz 105 erfolgreich"
-- **3 Fähigkeits-Säulen** mit Fortschrittsbalken:
-  - 🎸 Griffbrett-Motorik
-  - 🥁 Rhythmus & Backing-Track
-  - 🎵 Notation & Mikro-Songwriting
-- **localStorage-Persistierung**: `mymusic_xp_state`
-- **Export/Import** der XP-Daten als JSON
-
-### Public API:
-
+#### **Public API für XP-Hinzufügen**
 ```javascript
-// XP hinzufügen und auf eine Säule verteilen
-window.addXp(10, 'motor');   // Griffbrett-Motorik
-window.addXp(15, 'rhythm');  // Rhythmus
-window.addXp(20, 'notation'); // Notation
+window.addXp(amount, pillar)
+```
+- `amount`: number – XP-Punkte (z.B. 50)
+- `pillar`: `'motor' | 'rhythm' | 'notation'` – welche Säule
+
+Beispiele:
+```javascript
+window.addXp(50, 'motor')    // +50 XP zu Griffbrett-Motorik
+window.addXp(30, 'rhythm')   // +30 XP zu Rhythmus
+window.addXp(20, 'notation') // +20 XP zu Notation
 ```
 
-### Props:
-- `compact?: boolean` (default: `false`)
-- `showPillars?: boolean` (default: `true`)
+#### **Export & Import** (optional)
+- Button zum Export des XP-State als JSON (zum Backup)
+- Button zum Import aus JSON (zum Restore)
+
+### Use Case:
+Widget auf der Startseite oder im Sidebar, um Fortschritt zu tracken. Wird von allen anderen Komponenten (InteractiveScoreTrainer, FeatureCard-Validierung, etc.) aufgerufen.
 
 ---
 
-## Content Schema Erweiterung
+## 🎨 Intervall-Farbpalette
 
-Das `src/content.config.ts` wurde um optionale Metadaten erweitert:
+Alle Komponenten verwenden diese 12er-Palette für **musikalische Intervalle**:
 
-```typescript
-export const collections = {
-  docs: defineCollection({
-    loader: docsLoader(),
-    schema: docsSchema({
-      extend: z.object({
-        tags: z.array(z.string()).optional(),
-        difficulty: z.enum(['Basis', 'Mittel', 'Fortgeschritten', 'Master']).optional(),
-        dLevel: z.enum(['D1', 'D2', 'D3', 'Produktion']).optional(),
-        xpReward: z.number().optional(),
-      }),
-    }),
-  }),
-};
-```
+| Intervall | Farbe | Hex | Bedeutung |
+|-----------|-------|-----|----------|
+| 1 | 🔴 | `#F38181` | Grundton (Root) |
+| ♭2 | 🟠 | `#FFAAA6` | Kleine Sekunde |
+| 2 | 🟠 | `#F4C7AB` | Große Sekunde |
+| ♭3 | 🟣 | `#EAA0E3` | Kleine Terz |
+| 3 | 🟣 | `#D382DC` | Große Terz |
+| 4 | 🟣 | `#B862D3` | Quarte |
+| ♭5 | 🔵 | `#7F8BE8` | Verminderte Quinte (Tritonus) |
+| 5 | 🔵 | `#64C4ED` | Quinte (Perfect Fifth) |
+| ♭6 | 🔵 | `#52DEE5` | Kleine Sexte |
+| 6 | 🟢 | `#6BE4C6` | Große Sexte |
+| ♭7 | 🟢 | `#83E8BA` | Kleine Septime |
+| 7 | 🟡 | `#CBDD7B` | Große Septime |
 
-### Beispiel Frontmatter:
+Diese Farben werden in allen Komponenten konsistent verwendet für:
+- **Notenköpfe** im InteractiveScoreTrainer
+- **Griffbrett-Visualisierung** in FretboardClickable
+- **TAB-Eingabe-Raster** im Trainer
+- **Akkord-Markierung** (Grundton, Terz, Quinte)
+
+---
+
+## 📋 Integration in Content-Schema
+
+Alle Seiten können diese neuen Metadaten nutzen:
 
 ```yaml
 ---
-title: "Level 100: Erste Schritte"
-tags: ['Gitarre', 'D1-relevant', 'Praxis']
-difficulty: 'Basis'
+title: "Meine Lektion"
+tags: ['Gitarre', 'D1-relevant', 'Praxis', 'Theorie']
+difficulty: 'Mittel'
 dLevel: 'D1'
 xpReward: 50
 ---
 ```
 
----
-
-## Intervall-Farbpalette
-
-Alle Komponenten nutzen diese konsistente Farbpalette:
-
-| Intervall | Hex | Notizen |
-|-----------|-----|---------|
-| 1 (Grundton) | #F38181 | Rotes Rot – Basis-Note |
-| ♭2 | #FFAAA6 | Coral-Rot |
-| 2 | #F4C7AB | Peachy-Orange |
-| ♭3 | #EAA0E3 | Magenta – Kleine Terz |
-| 3 | #D382DC | Purple – Große Terz |
-| 4 | #B862D3 | Dark Purple – Quarte |
-| ♭5 | #7F8BE8 | Indigo – Tritonus |
-| 5 | #64C4ED | Cyan – Quinte |
-| ♭6 | #52DEE5 | Light Cyan |
-| 6 | #6BE4C6 | Teal – Sexte |
-| ♭7 | #83E8BA | Mint – Kleine Septime |
-| 7 | #CBDD7B | Lime – Große Septime |
+Diese Werte werden dann von `ChapterTagBar` und anderen Komponenten gelesen und angezeigt.
 
 ---
 
-## Integration in Lektionen
+## 🧪 Testing
 
-### Beispiel: Lektion 104 (Praxis-Freischaltung)
+Öffne die Browser-**Developer Tools** (F12) und versuche:
 
-```astro
----
-import InteractiveScoreTrainer from '../components/InteractiveScoreTrainer.astro';
-import XpTracker from '../components/XpTracker.astro';
-import ChapterTagBar from '../components/ChapterTagBar.astro';
----
+```javascript
+// XP hinzufügen
+window.addXp(50, 'motor')
+window.addXp(30, 'rhythm')
+window.addXp(20, 'notation')
 
-<ChapterTagBar 
-  tags={['Gitarre', 'D1-relevant']}
-  difficulty="Mittel"
-  xpReward={50}
-/>
+// XP-State anschauen
+console.log(JSON.parse(localStorage.getItem('mymusic_xp_state')))
 
-## TAB-Trainer Übung 1
-
-<InteractiveScoreTrainer 
-  initialMode={1}
-  scale="C-Dur"
-  exerciseTitle="Dreiklang auf der Gitarre"
-/>
-
-<XpTracker />
+// XP zurücksetzen
+localStorage.removeItem('mymusic_xp_state')
 ```
 
 ---
 
-## Komponenten-Dateien
+## ✅ Checkliste
 
-Alle neuen Komponenten befinden sich in `src/components/`:
-
-- [FeatureCard.astro](/workspaces/mymusic-hub/mymusic-hub/src/components/FeatureCard.astro) (5.3 KB)
-- [ChapterTagBar.astro](/workspaces/mymusic-hub/mymusic-hub/src/components/ChapterTagBar.astro) (5.0 KB)
-- [InteractiveScoreTrainer.astro](/workspaces/mymusic-hub/mymusic-hub/src/components/InteractiveScoreTrainer.astro) (13 KB)
-- [XpTracker.astro](/workspaces/mymusic-hub/mymusic-hub/src/components/XpTracker.astro) (10 KB)
-
-**Total:** ~33 KB neuer Code, vollständig typesicher und Astro-native.
-
----
-
-## Nächste Schritte
-
-1. ✅ **AUFGABE 1:** Content-Schema erweitern
-2. ✅ **AUFGABE 2:** 4 neue Komponenten erstellen
-3. ⏳ **AUFGABE 3:** Praxis-Tracking-Seite (Lektion 104)
-4. ⏳ **AUFGABE 4:** Feature-Tracking-Dashboard
-5. ⏳ **AUFGABE 5:** Cheat-Sheet-Referenzseite
-6. ⏳ **AUFGABE 6:** Full-Score-Update für Lektion 104
-
-Bitte teile mit, welche Aufgaben als Nächstes implementiert werden sollen!
+- [x] `FeatureCard.astro` – GitHub-Issue-Design mit Status, Tags, Comments
+- [x] `ChapterTagBar.astro` – Display- und Filter-Modi
+- [x] `InteractiveScoreTrainer.astro` – 3-Stufen-Editor mit Validierung
+- [x] `XpTracker.astro` – Gamification-Dashboard mit localStorage
+- [x] Schema-Erweiterung in `content.config.ts` – tags, difficulty, dLevel, xpReward
+- [ ] Integration aller Komponenten in Lektionen (Aufgabe 3)
+- [ ] Feature-Tracking-Dashboard (Aufgabe 4)
+- [ ] Cheat-Sheet-Referenzseite (Aufgabe 5)
+- [ ] Full-Score-Update mit Audio-Scoring (Aufgabe 6)
