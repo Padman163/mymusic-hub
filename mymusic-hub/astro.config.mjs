@@ -33,7 +33,9 @@ export default defineConfig({
 				},
 				{
 					label: 'Projektierung',
-					items: [{ label: 'To-Do', slug: 'projektierung/todo' }],
+					items: [
+						{ autogenerate: { directory: 'projektierung' } },
+					],
 				},
 				{
 					label: 'Audio & Musik',

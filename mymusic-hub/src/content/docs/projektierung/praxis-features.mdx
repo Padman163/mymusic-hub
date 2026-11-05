@@ -1,0 +1,324 @@
+---
+title: 🎸 Praxis-Features & Projektierung (Praxis 101–104)
+description: Komplette Feature-Liste für das Praxis-Modul mit interaktiven Feature Cards und Gamification
+---
+
+import FeatureCard from '../../../components/FeatureCard.astro';
+import XpTracker from '../../../components/XpTracker.astro';
+
+# 🎸 Praxis-Features & Projektierung
+
+Komplette Übersicht der **12 Praxis-Features** (FEAT-101-A bis FEAT-104-C), System-Features, Gamification und die 3 täglichen Praxis-Säulen.
+
+---
+
+## 🎯 Praxis 101–104 Features
+
+### Praxis 101: Stimmung & Intonation
+
+<FeatureCard
+  id="FEAT-101-A"
+  title="Interaktives Gitarren-Tuning & Frequenz-Check"
+  status="Bereit"
+  category="Praxis 101"
+  difficulty="Basis"
+  tags={["Gitarre", "Motorik", "Audio", "D1-relevant"]}
+  comments={[
+    {
+      author: "Didaktik",
+      role: "Didaktik",
+      text: "Verhindert Schlupf an den Mechaniken. Wichtig: immer von unten nach oben in den Zielton ziehen!"
+    },
+    {
+      author: "Dev",
+      role: "Dev",
+      text: "Frequenzanzeige in Hz neben dem Notennamen einblenden. Web Audio API für Frequenzanalyse."
+    }
+  ]}
+>
+**Beschreibung:**
+Stimmen der Gitarre per Web-Audio-API/Stimmgerät-Referenz:
+- E₂ = 82,4 Hz (tiefe E-Saite)
+- A₂ = 110 Hz, D₃ = 146,8 Hz, G₃ = 196 Hz, B₃ = 246,9 Hz, E₄ = 329,6 Hz
+- Kammerton A₄ = 440 Hz (Standard)
+
+**Teilaufgaben:**
+- [ ] Frequenzmessung per Mikrofon aktivieren
+- [ ] Live-Needle-Anzeige (wie echtes Stimmgerät)
+- [ ] Zielfrequenz erreicht → grüner Hinweis
+- [ ] Speicherung der letzten Stimmung (Kalibrierhistorie)
+</FeatureCard>
+
+<FeatureCard
+  id="FEAT-101-B"
+  title="Unisono-Prüfung (5. Bund) & Intonations-Check (12. Bund)"
+  status="Bereit"
+  category="Praxis 101"
+  difficulty="Mittel"
+  tags={["Gitarre", "Motorik", "Audio", "D1-relevant"]}
+  comments={[
+    {
+      author: "Audio",
+      role: "Audio",
+      text: "Erklärt direkt die Einstellung der Saitenreiter an der Bridge (Mensur-Korrektur)."
+    },
+    {
+      author: "Didaktik",
+      role: "Didaktik",
+      text: "Hörtraining auf Schwebungen: Bei leichter Verstimmung hören Schüler das Vibrieren."
+    }
+  ]}
+>
+**Beschreibung:**
+Relativstimmung und Intonationsprüfung:
+
+**5. Bund Unisono:**
+- Standard: E-Saite 5. Bund = A-Saite offen (Ausnahme: G-Saite 4. Bund = B-Saite offen)
+- Beide Töne gemeinsam spielen → Schwebungen/Beats hören
+- Bei perfekter Stimmung: kein Vibrato, reiner Ton
+
+**12. Bund (Oktav-Harmonic):**
+- Natural Harmonic (Flageolett): 12. Bund leicht berühren, anschlagen, Finger abheben
+- Gegriffenem Ton: 12. Bund normal greifen
+- Vergleichen: Sollten identisch sein (prüft Bridge-Einstellung/Mensur)
+
+**Teilaufgaben:**
+- [ ] Relative Stimmung über 5. Bund nachvollziehen
+- [ ] Schwebungen bewusst hören trainieren
+- [ ] Natural Harmonic vs. gegriffenem Ton vergleichen
+- [ ] Feedback: "Intonation OK" oder "Bridge anpassen nötig"
+</FeatureCard>
+
+### Praxis 102: Motorik & Greif-Technik
+
+<FeatureCard
+  id="FEAT-102-A"
+  title="Druck-Release-Test & Greifpunkt-Disziplin"
+  status="Bereit"
+  category="Praxis 102"
+  difficulty="Basis"
+  tags={["Gitarre", "Motorik", "D1-relevant"]}
+  comments={[
+    {
+      author: "Didaktik",
+      role: "Didaktik",
+      text: "Baut minimale Haltekraft und entspannte Greifhand-Motorik auf. Kernübung für saubere Technik!"
+    }
+  ]}
+>
+**Beschreibung:**
+Test der korrekten Greiftechnik:
+
+1. **Position:** Fingerkuppe 1 mm hinter dem Bundstäbchen platzieren
+2. **Druck langsam lösen:** Ton wird lauter, dann über Fret Buzz zur Dead Note (völlig stumm)
+3. **Minimal erhöhen:** Bis zum klaren Ton ohne Buzz
+4. **Jede Saite einzeln:** Alle 6 Saiten trainieren
+
+**Ziel:** Verstehen der minimalen Greifkraft, Verhindert Mikro-Bending (ungewollte Tonhöhen-Variationen), Entspannte, ermüdungsfreie Handposition
+
+**Teilaufgaben:**
+- [ ] Auf jeder Saite den "Dead Note → Clear Tone"-Punkt finden
+- [ ] Durchhalten ohne Fret Buzz
+- [ ] 3× pro Tag trainieren (2 Min./Saite)
+</FeatureCard>
+
+### Praxis 103: Rhythmus & Backing-Tracks
+
+<FeatureCard
+  id="FEAT-103-A"
+  title="MIDI-Backing-Track-Baukasten & DAW-Looping"
+  status="In Arbeit"
+  category="Praxis 103"
+  difficulty="Mittel"
+  tags={["Gitarre", "DAW", "Rhythmus", "D2-relevant"]}
+  comments={[
+    {
+      author: "Dev",
+      role: "Dev",
+      text: "Exportierbare .mid-Snippets pro Lektion bereitstellen. Studio One Session-Templates bauen."
+    },
+    {
+      author: "Didaktik",
+      role: "Didaktik",
+      text: "Einfache Drum-Grooves: 1&3 Kick, 2&4 Snare, Achtel-Hi-Hat, Grundton-Bass"
+    }
+  ]}
+>
+**Beschreibung:**
+Eigene MIDI-Backing-Tracks bauen oder Datenbank-Tracks nutzen:
+
+**Einfache Standard-Grooves:**
+- **Kick:** Auf Zahl 1 & 3
+- **Snare:** Auf Zahl 2 & 4  
+- **Hi-Hat:** Achtel-Noten durchgehend
+- **Bass:** Grundton im Rhythmus des Songs
+
+**Workflow:**
+1. Studio One öffnen → Blank Session
+2. 4 Spuren: Drums, Kick, Snare, Bass
+3. Groove eingeben (MIDI oder Samples)
+4. Export als .mid oder Audio (WAV)
+5. Im Web-Player abspielen
+
+**Teilaufgaben:**
+- [ ] Grundgroove (4/4, 90 BPM) bauen
+- [ ] Variations-Pattern erstellen (Verse, Chorus)
+- [ ] .mid-Export testen
+- [ ] Im Webbrowser abspielen
+</FeatureCard>
+
+### Praxis 104: Notationen-Praxis & Tonleitern
+
+<FeatureCard
+  id="FEAT-104-A"
+  title="Interaktive Notations-Komponente (3 Schwierigkeitsstufen)"
+  status="Bereit"
+  category="Praxis 104"
+  difficulty="Mittel"
+  tags={["Gitarre", "Notation", "Motorik", "D1-relevant"]}
+  comments={[
+    {
+      author: "Dev",
+      role: "Dev",
+      text: "Nutzt intern AlphaTab / SVG-Canvas zur Validierung der Nutzereingabe. XP-Integration via window.addXp()"
+    },
+    {
+      author: "Didaktik",
+      role: "Didaktik",
+      text: "Progressive Schwierigkeit: TAB → Violinschlüssel → Bassschlüssel. Keine Sprünge!"
+    }
+  ]}
+>
+**Beschreibung:**
+Eigenständiges Eintragen von Noten in InteractiveScoreTrainer:
+
+**Stufe 1: Gitarren-TAB (bevorzugt für Einstieg)**
+- 6-Linien-Raster
+- Bundzahlen 0–12 eingeben
+- Validierung: "Stimmt das?" → XP bei Erfolg
+
+**Stufe 2: Standardnotation (Violinschlüssel)**
+- 5-Linien-System
+- Notenköpfe platzieren
+- Vorzeichen (♯, ♭, ♮) hinzufügen
+- Notenwerte wählen (Ganze, Halbe, Viertel, Achtel)
+
+**Stufe 3: Bassschlüssel + Tonart (Master-Modus)**
+- F-Bassschlüssel
+- Tonart-Dropdown: C, G, D, A, F, B, Es (bis 3 Vorzeichen)
+- Automatische Vorzeichen-Anzeige
+- Noten platzieren + validieren
+
+**Teilaufgaben:**
+- [ ] Stufe 1 TAB: 10 verschiedene Tonleitern
+- [ ] Stufe 2 Notation: C-Dur in 3 Oktaven
+- [ ] Stufe 3 Bass: G-Dur mit 1 Vorzeichen, D-Dur mit 2 Vorzeichen
+- [ ] Jeweils +15/30/50 XP bei Erfolg
+</FeatureCard>
+
+---
+
+## 🛠️ System-Features & GitHub-Roadmap
+
+### FEAT-SYS-01: Interaktive Cheat Sheets
+
+Kompakte, druck- und filterbare Schnellreferenzen für Lernende mit Intervallen (Farbcode), Akkord-Formeln, Powerchord-Tier-List, Standard-Griffem und D1–D3-Notationssymbolen.
+
+### FEAT-SYS-02: Multi-Tagging & Kapitel-Sortiersystem
+
+Strukturiertes Metadaten-System für alle Kapitel mit Frontmatter-Feldern (tags, difficulty, dLevel, xpReward) und Filterung auf Übersichtsseiten.
+
+### FEAT-SYS-03: Optimiertes Songwriting-Template (Blueprint v2)
+
+Modulare Songwriting-Workflow mit standardisiertem Prozess: Hook-First-Methode, Spannungsbogen-Matrix, Frequenz-Aufteilung, DAW-Keyswitch-Map und Quality-Gate.
+
+### FEAT-SYS-04: Songwriting Schritt 6 – Full Score (3-Varianten-Ansicht)
+
+Finale Komponente des Rock-Arrangements mit synchronisierter Vollpartitur in 3 Ansichten: Score-Pattern, Klassische Standardnotation, Instrumenten-Tabulatur.
+
+---
+
+## 📅 3 Praxis-Säulen (Tagesroutine)
+
+Das mymusic-hub Trainingsmodell basiert auf 3 eng verzahnten Säulen, die täglich in einer 30-Minuten-Session absolviert werden:
+
+### 🎸 Säule A: Griffbrett-Motorik & Lokalisierung (10 Min)
+
+**Ziel:** Schnelle, sichere Finger-Platzierung auf dem Griffbrett ohne Blick
+
+**Daily Workout:**
+- Druck-Release-Test (FEAT-102-A): 2 Min
+- Plektrum-Wechselschlag (FEAT-102-B): 3 Min
+- Tonleitern-Automatismus: 5 Min (C-Dur, G-Dur, D-Dur im 65 BPM)
+
+### 🥁 Säule B: Timing & Backing-Tracks in der DAW (10 Min)
+
+**Ziel:** Rhythmische Präzision, Groove-Feeling, Band-Spielen trainieren
+
+**Daily Workout:**
+- Metronom-Starter (65 BPM, 4/4): 2 Min
+- Backing-Track aus Datenbank wählen: 1 Min
+- Freies Spiel über Track (Improvisation): 7 Min
+
+### 📝 Säule C: Mikro-Songwriting (Frage-Antwort-Prinzip) (10 Min)
+
+**Ziel:** Melodie-Bewusstsein, Kreativität, eigene Komposition
+
+**Daily Workflow:**
+1. **Frage:** Zufällige Melodie-Phrase (2 Takte) im Violinschlüssel
+2. **Antwort:** Schüler spielt eigene Fortsetzung (2 Takte)
+3. **Feedback:** Harmonie-Analyse
+
+---
+
+## 🎮 Gamification & XP-System
+
+<XpTracker />
+
+### XP-Verteilung (Praxis 101–104)
+
+| Feature | Aktion | XP | Säule |
+|---------|--------|----|----|
+| **101-A** | Tuning perfekt | 10 | 🎸 Motor |
+| **101-B** | Intonation OK | 15 | 🎸 Motor |
+| **102-A** | Druck-Release bestanden | 10 | 🎸 Motor |
+| **102-B** | P-I-M-A Haltung stabil | 20 | 🎸 Motor |
+| **102-C** | Palm Mute + Fretting | 20 | 🎸 Motor |
+| **102-D** | Alle Artikulationen | 25 | 🎸 Motor |
+| **103-A** | Backing-Track erstellt | 25 | 🥁 Rhythmus |
+| **103-B** | Rhythmus-Workout komplett | 30 | 🥁 Rhythmus |
+| **103-C** | Taktarten-Parcours | 40 | 🥁 Rhythmus |
+| **104-A Stufe 1** | TAB-Übung validiert | 15 | 📝 Notation |
+| **104-A Stufe 2** | Violinschlüssel-Übung | 30 | 📝 Notation |
+| **104-A Stufe 3** | Bassschlüssel-Übung | 50 | 📝 Notation |
+| **104-B** | Tonleitern + Dreiklang | 35 | 📝 Notation |
+| **104-C** | Komplettes Arrangement | 50 | 📝 Notation |
+
+---
+
+## 🏆 Level-Gates & Freischaltung
+
+**Level 100 – Motorik Basis:**
+- Voraussetzung: 80+ XP (Motorik-Checks)
+- Freischaltung: FEAT-103-A (MIDI-Backing-Tracks)
+- Status: AKTIV (nach Tuning + Druck-Release)
+
+**Level 200 – Rhythmus Expert:**
+- Voraussetzung: 100+ XP (Rhythmus-Checks)
+- Freischaltung: FEAT-103-C (Taktarten-Trainer)
+- Status: LOCKED (benötigt 100 XP)
+
+**Level 300 – Notation Master:**
+- Voraussetzung: 160+ XP (Notation-Checks)
+- Freischaltung: FEAT-104-C (Full-Score Arrangement)
+- Status: LOCKED (benötigt 160 XP)
+
+**Level 400 – D1-Freischaltung:**
+- Voraussetzung: 250+ XP + Quiz 105 ✓
+- Freischaltung: Level 200 + Songwriting-Module
+- Status: LOCKED (Endziel)
+
+---
+
+**Nächste Schritte:** Alle Kapitel mit Tags & XP ausstatten, Live-Gamification-Dashboard implementieren.
+
