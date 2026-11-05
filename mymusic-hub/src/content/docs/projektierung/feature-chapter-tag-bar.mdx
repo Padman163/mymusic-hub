@@ -1,0 +1,335 @@
+---
+title: "Feature: ChapterTagBar Component"
+description: "Metadata-Display und clientseitige Tag-Filterung für Kapitel und Übersichtsseiten"
+---
+
+import ChapterTagBar from '../../../components/ChapterTagBar.astro';
+
+# 🏷️ Feature: ChapterTagBar Component
+
+**Wofür?** Zeigt Metadaten eines Kapitels elegant an (Schwierigkeit, D-Level, XP-Reward) oder ermöglicht dynamische Client-seitige Filterung von Inhalten basierend auf Tags. Zwei Modi: Display (Lektionsseite) und Filter (Übersichtsseite).
+
+---
+
+## Live-Demo: Display-Modus
+
+<ChapterTagBar 
+  tags={['Gitarre', 'D1-relevant']} 
+  difficulty="Mittel" 
+  dLevel="D1" 
+  xp={50}
+  filterMode={false}
+/>
+
+**Das siehst du:** Elegante graue Info-Chips oben auf einer Lektionsseite.
+
+---
+
+## 🎯 Props & Modi
+
+### Props
+
+```typescript
+interface Props {
+  tags?: string[];           // z.B. ['Gitarre', 'D1-relevant', 'Praxis']
+  difficulty?: string;       // 'Basis', 'Mittel', 'Fortgeschritten', 'Master'
+  dLevel?: string;           // 'D1', 'D2', 'D3', 'Produktion'
+  xp?: number;               // XP-Reward für diese Lektion (z.B. 50)
+  filterMode?: boolean;      // Display (false) vs. Filter (true) Modus
+}
+```
+
+---
+
+## 📍 Modus 1: Display (Standard auf Lektionsseiten)
+
+### Verwendung
+
+```astro
+---
+title: "Level 100: Praxis-Freischaltung"
+tags: ['Gitarre', 'D1-relevant', 'Praxis', 'Motorik']
+difficulty: 'Mittel'
+dLevel: 'D1'
+xpReward: 50
+---
+
+import ChapterTagBar from '../../../components/ChapterTagBar.astro';
+
+<ChapterTagBar 
+  tags={['Gitarre', 'D1-relevant', 'Praxis', 'Motorik']}
+  difficulty="Mittel" 
+  dLevel="D1" 
+  xp={50}
+  filterMode={false}
+/>
+
+## Inhalt der Lektion...
+```
+
+### Was du siehst
+
+```
+[🎸 Gitarre] [📚 Allgemein] [🔵 D1-relevant]  |  Schwierigkeit: Mittel  |  XP: 50
+```
+
+Alle Chips sind **nicht interaktiv** - nur zur Information.
+
+### Emoji-Zuordnung
+
+| Tag | Icon | Bedeutung |
+|-----|------|-----------|
+| Gitarre | 🎸 | Instrument-spezifisch |
+| Allgemein | 📚 | Instrument-übergreifend |
+| D1-relevant | 🔵 | Prüfungsstoff D1 |
+| D2-relevant | 🟠 | Prüfungsstoff D2 |
+| D3-relevant | 🔴 | Prüfungsstoff D3 |
+| Praxis | 💪 | Praktische Übungen |
+| Theorie | 🧠 | Theoretischer Stoff |
+| Motorik | 🖐️ | Finger & Motorik Training |
+| Rhythmus | 🥁 | Rhythmus & Timing |
+| Notation | 📝 | Noten lesen & schreiben |
+| Audio | 🎵 | Sound/Audio-Engineering |
+| Songwriting | ✍️ | Komposition & Arrangement |
+| DAW | 🎛️ | Digital Audio Workstation |
+
+---
+
+## 🔍 Modus 2: Filter (auf Übersichtsseiten)
+
+### Verwendung
+
+```astro
+---
+title: "Alle Lektionen"
+description: "Durchsuche und filtere alle Kapitel"
+---
+
+import ChapterTagBar from '../../../components/ChapterTagBar.astro';
+
+# 📚 Kapitelübersicht
+
+<ChapterTagBar filterMode={true} />
+
+[Danach: Liste aller Kapitel mit data-tags Attributen]
+
+<div class="chapter-list">
+  <div data-tags="Gitarre D1-relevant Praxis Motorik">
+    <!-- Kapitel 1 -->
+  </div>
+  <div data-tags="Allgemein D1-relevant Theorie">
+    <!-- Kapitel 2 -->
+  </div>
+</div>
+```
+
+### Was du siehst
+
+**Filter-Leiste mit Buttons:**
+
+```
+[Alle] [🎸 Gitarre] [📚 Allgemein] [🔵 D1-relevant] [🟠 D2-relevant] [🔴 D3-relevant]
+[💪 Leicht] [🎯 Mittel] [🚀 Schwer] [🏆 Master]
+```
+
+Buttons sind **interaktiv** - klick drauf und die Elemente darunter filtern sich!
+
+### Filterungs-Logik
+
+```javascript
+// Wenn du klickst "🎸 Gitarre":
+// → Zeige nur Kapitel mit data-tags="...Gitarre..."
+
+// Wenn du "🔵 D1-relevant" UND "💪 Leicht" klickst:
+// → Zeige nur Kapitel mit BEIDEN Tags
+
+// Klick auf aktiven Button:
+// → Deaktiviert den Filter (toggle)
+
+// Klick auf "Alle":
+// → Setzt alle Filter zurück
+```
+
+---
+
+## 🧪 Live-Test: Filter-Modus
+
+### Schritt 1: HTML mit data-tags schreiben
+
+```html
+<div class="chapter-list">
+  <div data-tags="Gitarre D1-relevant Motorik">
+    <h3>Kapitel: Druck-Release-Test</h3>
+    <p>Greiftechnik trainieren...</p>
+  </div>
+  
+  <div data-tags="Allgemein D1-relevant Theorie">
+    <h3>Kapitel: Notennamen auf der Gitarre</h3>
+    <p>Alle Noten lernen...</p>
+  </div>
+  
+  <div data-tags="Gitarre D2-relevant Rhythmus">
+    <h3>Kapitel: Backing-Tracks mit DAW</h3>
+    <p>MIDI-Grooves bauen...</p>
+  </div>
+</div>
+```
+
+### Schritt 2: ChapterTagBar einbinden
+
+```astro
+<ChapterTagBar filterMode={true} />
+
+<div class="chapter-list">
+  <!-- Kapitel wie oben -->
+</div>
+```
+
+### Schritt 3: Testen
+
+1. Öffne die Seite im Browser
+2. Klick auf **[🎸 Gitarre]** → nur Gitarren-Kapitel sichtbar
+3. Klick auf **[🔵 D1-relevant]** → nur D1 + Gitarre sichtbar
+4. Klick auf **[Alle]** → alle Kapitel wieder da
+
+---
+
+## 📋 Technische Details
+
+### localStorage für Filter-State
+
+Der aktuelle Filter-State wird **nicht** gespeichert (absichtlich). Jeder Seitenbesuch startet mit allen Kapiteln.
+
+Falls du Filter-Memory möchtest:
+
+```javascript
+// Speichern
+localStorage.setItem('chapter-filter', JSON.stringify(activeFilters));
+
+// Laden
+const saved = localStorage.getItem('chapter-filter');
+```
+
+### CSS Styling
+
+- **Display-Modus:** Graue Chips, horizontal arrangiert
+- **Filter-Modus:** Buttons mit Hover-Effekt, Aktivstatus farbig
+- **Responsive:** Auf Mobile stacked/wrapped
+
+### Performance
+
+- ✅ Vanilla JavaScript (kein Framework)
+- ✅ O(n) Filterungs-Algorithmus
+- ✅ Keine API-Calls
+- ✅ Instant-Feedback
+
+---
+
+## 🎨 Farb-Coding nach Schwierigkeit (Filter-Modus)
+
+| Schwierigkeit | Farbe | Icon |
+|---------------|-------|------|
+| Basis | Grün | 💪 |
+| Mittel | Blau | 🎯 |
+| Fortgeschritten | Orange | 🚀 |
+| Master | Gold | 🏆 |
+
+---
+
+## 🚀 Integration in Lektionsseiten
+
+### Beispiel: Lektion 102-A
+
+```mdx
+---
+title: "Lektion 102-A: Druck-Release-Test"
+tags: ['Gitarre', 'D1-relevant', 'Motorik', 'Praxis']
+difficulty: 'Basis'
+dLevel: 'D1'
+xpReward: 30
+---
+
+import ChapterTagBar from '../../../components/ChapterTagBar.astro';
+
+<ChapterTagBar 
+  tags={['Gitarre', 'D1-relevant', 'Motorik', 'Praxis']}
+  difficulty="Basis"
+  dLevel="D1"
+  xp={30}
+  filterMode={false}
+/>
+
+## Inhaltsverzeichnis
+
+- Ziele dieser Lektion
+- Schritt-für-Schritt Anleitung
+- Häufige Fehler
+- Video-Referenzen
+```
+
+---
+
+## 🧪 Test-Checkliste: Display-Modus
+
+- [ ] Alle Tags als Chips sichtbar
+- [ ] Emoji neben jedem Tag korrekt
+- [ ] Schwierigkeit angezeigt
+- [ ] D-Level angezeigt
+- [ ] XP-Reward angezeigt
+- [ ] Auf Mobile responsive (Chips nicht überlappt)
+
+---
+
+## 🧪 Test-Checkliste: Filter-Modus
+
+- [ ] Alle Filter-Buttons sichtbar
+- [ ] Klick auf Button filtert Inhalte
+- [ ] Mehrere Filter kombinierbar (UND-Logik)
+- [ ] "Alle" Button setzt alle Filter zurück
+- [ ] Aktiver Filter hat andere Farbe/Style
+- [ ] Auf Mobile responsive (Buttons nicht zu klein)
+- [ ] keine Kapitel übrig nach Filter (korrektes Verhalten)
+
+---
+
+## 💡 Best Practices
+
+1. **Immer data-tags setzen** auf Kapitel-Elementen (Display-Modus)
+2. **Tags im Frontmatter** und in ChapterTagBar **konsistent halten**
+3. **Max 5-6 Tags pro Kapitel** - sonst zu viel Info
+4. **Eindeutige Tag-Namen** verwenden (z.B. "D1-relevant" statt "D1")
+5. **Auf Filterergebnis checken** - keine leeren Ergebnisse
+
+---
+
+## 🔗 Verwandte Features
+
+- **FeatureCard** - Nutzt auch Tags (aber für Features, nicht Kapitel)
+- **XpTracker** - Könnte nach Tag-Abschluss XP vergeben
+- **Content-Schema** - Frontmatter-Felder (tags, difficulty, dLevel, xpReward)
+
+---
+
+## 🐛 Debugging
+
+**Filter funktioniert nicht?**
+
+1. Öffne Browser-Console (F12)
+2. Überprüfe `data-tags` Attribute auf HTML-Elementen
+3. Stelle sicher, dass Tag-Namen **exakt** gleich sind
+4. Beispiel:
+   ```javascript
+   // In der Console:
+   document.querySelectorAll('[data-tags]').forEach(el => {
+     console.log(el.getAttribute('data-tags'));
+   });
+   ```
+
+---
+
+## 📝 Roadmap
+
+- [ ] Multi-Language-Support (English, Deutsch, etc.)
+- [ ] Saved Filters (Favoriten speichern)
+- [ ] Filter-History (Zuletzt verwendet)
+- [ ] Export gefilterte Kapitel als PDF
