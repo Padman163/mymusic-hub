@@ -169,5 +169,28 @@
     ],
     "status": "New",
     "createdAt": "2026-11-06T16:13:49.945Z"
+  },
+  {
+    "id": "ba3eebb1-29b5-4205-b44f-a99e26c87da3",
+    "type": "Feature",
+    "title": "Artikulationen & Dynamik am Metronom",
+    "description": "Steuerung von Artikulation (Legato, Staccato, Tenuto, Akzente) und Dynamik (pp bis ff) bei 65 BPM.",
+    "area": "Praxis",
+    "checklist": [
+      {
+        "text": "4-Takt-Übung mit Crescendo/Decrescendo entwerfen",
+        "checked": false
+      },
+      {
+        "text": "Artikulationszeichen definieren",
+        "checked": false
+      },
+      {
+        "text": "Hinweis ergänzen: Zwingend mit trockenem Clean-Preset ohne Kompressor spielen",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-06T16:14:28.840Z"
   }
 ]
