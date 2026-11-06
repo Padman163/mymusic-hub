@@ -9,6 +9,11 @@
 1. ```npm install```
 2. ```npm run dev```
 
+## Netlify
+```npx netlify-cli login```
+```npx netlify-cli link```
+```npx netlify-cli dev```
+
 ## Aktuellsten Branch holen
 1. ```git switch <aktuellsten-branch>```
 2. ```git fetch origin```
