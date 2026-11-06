@@ -112,8 +112,12 @@ const notation = renderNotationSvg({
 
   .notation-final-bar {
     position: absolute;
-    right: 1rem;
-    top: calc(0.75rem + 28px);
+    right: var(--notation-panel-padding);
+    top: calc(var(--notation-panel-padding) + 28px);
+  }
+
+  .notation-clickable.has-header:not(.embedded) .notation-final-bar {
+    top: calc(var(--notation-panel-padding) + 52px);
   }
 
   :global(.notation-staff) {
