@@ -16,5 +16,14 @@
     "area": "Theorie",
     "status": "New",
     "createdAt": "2026-11-06T15:41:04.017Z"
+  },
+  {
+    "id": "2de014c0-93f2-4bcd-a221-df3a8c59bc3e",
+    "type": "Decision",
+    "title": "Anordnung der Songwriting- Schritte",
+    "description": "- Schritt 0-5 neu definieren\n- DAW / Pattern / Notation trennen?",
+    "area": "Theorie",
+    "status": "New",
+    "createdAt": "2026-11-06T15:42:46.577Z"
   }
 ]
