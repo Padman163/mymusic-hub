@@ -307,5 +307,28 @@
     ],
     "status": "New",
     "createdAt": "2026-11-06T16:16:56.882Z"
+  },
+  {
+    "id": "559c96d8-658c-4f41-83be-f722f71a9ed6",
+    "type": "Feature",
+    "title": "Tempo-, Dynamik- & Artikulations-Praxis",
+    "description": "Live-Einspielen von Tempo- und Dynamiksprüngen (subito) sowie Einbau von Artikulationszeichen ins Notenbild.",
+    "area": "Praxis",
+    "checklist": [
+      {
+        "text": "Artikulations-Werkzeugkasten in der Notationskomponente freischalten",
+        "checked": false
+      },
+      {
+        "text": "DAW-Automationskurven für Tempo-Tracks als Vorlage bereitstellen",
+        "checked": false
+      },
+      {
+        "text": "Backing-Track mit programmiertem Accelerando/Ritardando anfertigen",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-06T16:17:39.475Z"
   }
 ]
