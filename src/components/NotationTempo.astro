@@ -47,18 +47,16 @@ import NotationClickable from './NotationClickable.astro';
     border-radius: 0.5rem;
     background: #fff;
     box-sizing: border-box;
-    overflow-x: auto;
   }
 
   .tempo-row {
-    display: flex;
-    min-width: 500px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
   }
 
   .tempo-measure {
     position: relative;
-    flex: 1 0 250px;
-    min-width: 250px;
+    min-width: 0;
     padding-top: 40px;
     color: #111827;
   }

@@ -6,8 +6,8 @@ type Duration = 'whole' | 'half' | 'quarter' | 'eighth' | 'sixteenth';
 type Accidental = { type: 'sharp' | 'natural' | 'flat'; step: Step };
 type Articulation = 'staccato' | 'tenuto' | 'accent' | 'marcato';
 type Note =
-  | { type: 'filled' | 'empty'; step: Step; stem?: boolean; duration?: never; beamGroup?: never; articulation?: Articulation }
-  | { duration: Duration; step: Step; beamGroup?: string; type?: never; stem?: never; articulation?: Articulation };
+  | { type: 'filled' | 'empty'; step: Step; stem?: boolean; duration?: never; beamGroup?: never; articulation?: Articulation; articulationPosition?: 'above' | 'below' }
+  | { duration: Duration; step: Step; beamGroup?: string; type?: never; stem?: never; articulation?: Articulation; articulationPosition?: 'above' | 'below' };
 
 interface Props {
   showLeftBar?: boolean;
@@ -58,11 +58,11 @@ const accidentalSymbols = {
   natural: { glyph: '\uE261', label: 'Auflösungszeichen' },
   flat: { glyph: '\uE260', label: 'b-Vorzeichen' }
 } as const;
-const articulationSymbols: Record<Articulation, { glyph: string; label: string }> = {
-  staccato: { glyph: '\uE4A2', label: 'Staccato' },
-  tenuto: { glyph: '\uE4A4', label: 'Tenuto' },
-  accent: { glyph: '\uE4A0', label: 'Akzent' },
-  marcato: { glyph: '\uE4AC', label: 'Marcato' }
+const articulationSymbols: Record<Articulation, { above: string; below: string; belowOffset: number; label: string }> = {
+  staccato: { above: '\uE4A2', below: '\uE4A3', belowOffset: 12, label: 'Staccato' },
+  tenuto: { above: '\uE4A4', below: '\uE4A5', belowOffset: 12, label: 'Tenuto' },
+  accent: { above: '\uE4A0', below: '\uE4A1', belowOffset: 18, label: 'Akzent' },
+  marcato: { above: '\uE4AC', below: '\uE4AD', belowOffset: 18, label: 'Marcato' }
 };
 const accidentalStart = clef ? 36 : 6;
 const timeWidth = timeSignature ? Math.max(String(timeSignature.numerator).length, String(timeSignature.denominator).length) * 17 : 0;
@@ -82,7 +82,7 @@ const groupByIndex = new Map(renderedGroups.flatMap((group) => group.indices.map
 const noteDescription = notes.map((note, index) => {
   const stemUp = groupByIndex.get(index)?.stemUp ?? note.step < 4;
   const hasStem = note.duration ? note.duration !== 'whole' : note.stem === true;
-  const articulation = note.articulation ? ` mit ${articulationSymbols[note.articulation].label}` : '';
+  const articulation = note.articulation ? ` mit ${articulationSymbols[note.articulation].label}${note.articulationPosition === 'below' ? ' unterhalb' : ''}` : '';
   return `${note.duration ? durationLabels[note.duration] : note.type === 'filled' ? 'gefüllter Notenkopf' : 'ungefüllter Notenkopf'} auf Position ${note.step}${hasStem ? ` mit Hals nach ${stemUp ? 'oben' : 'unten'}` : ' ohne Hals'}${articulation}`;
 }).join(', ');
 const timeGlyphs = (value: number) => [...String(value)].map((digit) => String.fromCodePoint(0xE080 + Number(digit))).join('');
@@ -124,6 +124,8 @@ const timeGlyphs = (value: number) => [...String(value)].map((digit) => String.f
       const stemUp = group?.stemUp ?? note.step < 4;
       const hasStem = note.duration ? note.duration !== 'whole' : note.stem === true;
       const stemY = group?.beamY ?? y + (stemUp ? -31.5 : 31.5);
+      const articulationSymbol = note.articulation ? articulationSymbols[note.articulation] : undefined;
+      const articulationY = y + (note.articulationPosition === 'below' ? articulationSymbol?.belowOffset ?? 12 : -12);
       const glyph = note.duration === 'whole' ? '\uE0A2' : note.duration === 'half' || note.type === 'empty' ? '\uE0A3' : '\uE0A4';
       const flag = note.duration === 'eighth' ? (stemUp ? '\uE240' : '\uE241') :
         note.duration === 'sixteenth' ? (stemUp ? '\uE242' : '\uE243') : undefined;
@@ -137,8 +139,10 @@ const timeGlyphs = (value: number) => [...String(value)].map((digit) => String.f
           )}
           {flag && !group && <text class="notation-note" x={x} y={stemY} transform={`translate(${stemUp ? 4.5 : -4.5} 0)`}>{flag}</text>}
           <text class="notation-note" x={x} y={y} text-anchor="middle">{glyph}</text>
-          {note.articulation && (
-            <text class="notation-articulation" x={x} y={y - 12} text-anchor="middle">{articulationSymbols[note.articulation].glyph}</text>
+          {note.articulation && articulationSymbol && (
+            <text class="notation-articulation" x={x} y={articulationY} text-anchor="middle">
+              {note.articulationPosition === 'below' ? articulationSymbol.below : articulationSymbol.above}
+            </text>
           )}
         </g>
       );

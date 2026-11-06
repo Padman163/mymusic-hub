@@ -25,21 +25,18 @@ const { timeSignatures } = Astro.props;
     border-radius: 0.5rem;
     background: #fff;
     box-sizing: border-box;
-    overflow-x: auto;
   }
 
   .time-signatures-row {
-    display: flex;
-    min-width: 460px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
   }
 
   .time-signatures-measure {
-    flex: 1 0 72px;
-    min-width: 72px;
+    min-width: 0;
   }
 
   .time-signatures-measure:first-child {
-    flex-basis: 100px;
-    min-width: 100px;
+    grid-column: span 2;
   }
 </style>

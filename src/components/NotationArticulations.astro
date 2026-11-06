@@ -2,28 +2,32 @@
 import NotationClickable from './NotationClickable.astro';
 
 const articulations = [
-  { type: 'staccato', label: 'Staccato' },
-  { type: 'tenuto', label: 'Tenuto' },
-  { type: 'accent', label: 'Akzent' },
-  { type: 'marcato', label: 'Marcato' }
+  { type: 'staccato', label: 'Staccato', position: 'above', step: 7 },
+  { type: 'tenuto', label: 'Tenuto', position: 'above', step: 7 },
+  { type: 'accent', label: 'Akzent', position: 'above', step: 7 },
+  { type: 'marcato', label: 'Marcato', position: 'above', step: 7 },
+  { type: 'staccato', label: 'Staccato', position: 'below', step: 2 },
+  { type: 'tenuto', label: 'Tenuto', position: 'below', step: 2 },
+  { type: 'accent', label: 'Akzent', position: 'below', step: 2 },
+  { type: 'marcato', label: 'Marcato', position: 'below', step: 2 }
 ] as const;
 ---
 
 <div class="articulation-examples not-content" data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
   <div class="articulation-row">
-    {articulations.map(({ type }, index) => (
+    {articulations.map(({ type, position, step }, index) => (
       <div class="articulation-measure">
         <NotationClickable
           embedded
-          clef={index === 0 ? 'treble' : undefined}
+          clef={index === 0 || index === 4 ? 'treble' : undefined}
           rightBarStyle={index === articulations.length - 1 ? 'final' : 'single'}
-          notes={[{ duration: 'quarter', step: 7, articulation: type }]}
+          notes={[{ duration: 'quarter', step, articulation: type, articulationPosition: position }]}
         />
       </div>
     ))}
   </div>
   <div class="articulation-labels">
-    {articulations.map(({ label }) => <span>{label}</span>)}
+    {articulations.map(({ label, position }) => <span>{label} ({position === 'above' ? 'oben' : 'unten'})</span>)}
   </div>
 </div>
 
@@ -34,24 +38,28 @@ const articulations = [
     border-radius: 0.5rem;
     background: #fff;
     box-sizing: border-box;
-    overflow-x: auto;
   }
 
   .articulation-row,
   .articulation-labels {
-    display: flex;
-    min-width: 500px;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
-  .articulation-measure,
-  .articulation-labels span {
-    flex: 1 0 100px;
-    min-width: 100px;
+  .articulation-measure {
+    min-width: 0;
   }
 
   .articulation-labels {
     color: #111827;
     font: 0.875rem/1.3 Georgia, serif;
     text-align: center;
+  }
+
+  @media (max-width: 520px) {
+    .articulation-row,
+    .articulation-labels {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
 </style>

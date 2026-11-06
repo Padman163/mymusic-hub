@@ -26,21 +26,18 @@ const flatSteps = [4, 7, 3, 6, 2] as const;
     border-radius: 0.5rem;
     background: #fff;
     box-sizing: border-box;
-    overflow-x: auto;
   }
 
   .accidental-row {
-    display: flex;
-    min-width: 290px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
   }
 
   .accidental-measure {
-    flex: 1 0 90px;
-    min-width: 90px;
+    min-width: 0;
   }
 
   .accidental-measure:first-child {
-    flex-basis: 110px;
-    min-width: 110px;
+    grid-column: span 2;
   }
 </style>
