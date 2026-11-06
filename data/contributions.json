@@ -43,5 +43,14 @@
     "area": "Praxis",
     "status": "New",
     "createdAt": "2026-11-06T15:48:41.006Z"
+  },
+  {
+    "id": "85f9a0ba-9d5f-4756-893d-8d01f38b55e1",
+    "type": "Feature",
+    "title": "Unisono-Prüfung (5. Bund) & Intonations-Check (12. Bund)",
+    "description": "- Relativstimmung über den 5. Bund (Ausnahme G-Saite 4. Bund → B-Saite) mit Hörtraining auf Schwebungen\n- Oktavreinheits-Check am 12. Bund: Vergleich zwischen Natural Harmonic (Flageolett) und gegriffenem Ton im 12. Bund",
+    "area": "Praxis",
+    "status": "New",
+    "createdAt": "2026-11-06T15:49:45.541Z"
   }
 ]
