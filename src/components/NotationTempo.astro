@@ -1,0 +1,98 @@
+---
+import NotationClickable from './NotationClickable.astro';
+---
+
+<div class="tempo-example not-content" data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
+  <div class="tempo-row">
+    <div class="tempo-measure">
+      <div class="tempo-heading"><strong>Allegro</strong><br /><span aria-label="Viertelnote gleich 90"><span class="metronome-note" aria-hidden="true">{'\uECA5'}</span> = 90</span></div>
+      <NotationClickable
+        embedded
+        clef="treble"
+        timeSignature={{ numerator: 4, denominator: 4 }}
+        notes={[
+          { duration: 'quarter', step: 0 },
+          { duration: 'quarter', step: 1 },
+          { duration: 'quarter', step: 2 },
+          { duration: 'quarter', step: 3 }
+        ]}
+      />
+    </div>
+    <div class="tempo-measure">
+      <span class="tempo-rit">rit.</span>
+      <span class="tempo-return">a tempo</span>
+      <NotationClickable
+        embedded
+        rightBarStyle="final"
+        notes={[
+          { duration: 'quarter', step: 2 },
+          { duration: 'quarter', step: 3 },
+          { duration: 'quarter', step: 4 },
+          { duration: 'quarter', step: 5 }
+        ]}
+      />
+    </div>
+  </div>
+</div>
+
+<style>
+  @font-face {
+    font-family: 'NotationTempoBravura';
+    src: url('/alphatab/font/Bravura.woff2') format('woff2');
+  }
+
+  .tempo-example {
+    padding: 0.75rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    background: #fff;
+    box-sizing: border-box;
+    overflow-x: auto;
+  }
+
+  .tempo-row {
+    display: flex;
+    min-width: 500px;
+  }
+
+  .tempo-measure {
+    position: relative;
+    flex: 1 0 250px;
+    min-width: 250px;
+    padding-top: 40px;
+    color: #111827;
+  }
+
+  .tempo-heading,
+  .tempo-rit,
+  .tempo-return {
+    position: absolute;
+    font: 14px/1.2 Georgia, serif;
+  }
+
+  .tempo-heading {
+    top: 0;
+    left: 6px;
+  }
+
+  .tempo-rit,
+  .tempo-return {
+    top: 43px;
+    font-style: italic;
+  }
+
+  .metronome-note {
+    font: 24px/1 'NotationTempoBravura';
+    vertical-align: -0.2em;
+  }
+
+  .tempo-rit {
+    left: 20%;
+    transform: translateX(-50%);
+  }
+
+  .tempo-return {
+    left: 60%;
+    transform: translateX(-50%);
+  }
+</style>

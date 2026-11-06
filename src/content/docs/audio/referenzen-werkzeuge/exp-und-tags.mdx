@@ -1,0 +1,41 @@
+---
+title: EXP und Tags
+---
+
+## Idee
+
+Die Inhalte der Lehrgänge sollen später in Bereiche wie einzelne Instrumente und allgemeine Musiktheorie aufgeteilt werden. Erfahrungspunkte (EXP) sollen die Erfahrung im jeweiligen Bereich ausdrücken. Für Aufgaben sollen je nach Aufgabe Punkte vergeben werden; Inhalte sollen unterschiedliche Schwierigkeitsstufen haben.
+
+Mit Erfahrungspunkten sollen sich später Inhalte freischalten beziehungsweise kaufen lassen, zum Beispiel ein CheatSheet. Aufgaben zum Notensystem sollen wegen ihrer Schwierigkeit mehr Punkte geben können.
+
+## Tags und geplante EXP-Faktoren
+
+Tags sollen Visualisierungen, Aufgaben und Fragen ihren Themen und Bereichen zuordnen. Die Kategorie **Bereich** beschreibt, welchem Erfahrungsbereich ein Inhalt zugeordnet ist; **Thema** beschreibt seinen fachlichen Inhalt. Sie bilden eine Grundlage für das spätere EXP-System; die konkrete Punktevergabe ist noch nicht festgelegt.
+
+| Kategorie | Tag | Bedeutung | Faktor |
+| --- | --- | --- | --- |
+| Bereich | `Allgemein` | Allgemeine, instrumentenübergreifende Inhalte. | 1 |
+| Thema | `Notensystem` | Inhalte, die sich mit dem Notensystem befassen. | 1,5 |
+| Thema | `Tabulatur` | Inhalte, die sich mit Tabulatur befassen; bisher nur geplant. | 1 |
+| Notenschlüssel | `Violinschlüssel` | Inhalte mit Violinschlüssel; bisher nur geplant. | 1,0 |
+| Notenschlüssel | `Bassschlüssel` | Inhalte mit Bassschlüssel; bisher nur geplant. | 1,1 |
+
+Der Bassschlüssel erhält einen höheren Faktor, da er im Lehrgang seltener verwendet und weniger ausführlich erklärt wird.
+
+Der Faktor soll auf die Grund-EXP einer Frage angewendet werden: Bei 10 Grund-EXP ergäben sich beispielsweise 15 EXP für eine Notensystemfrage und 10 EXP für eine Tabulaturfrage. Die Faktoren sind zunächst Beispiele; ihre genaue Anwendung, insbesondere bei mehreren Tags, und die Punktewerte sind noch nicht festgelegt.
+
+## Bisher hinterlegte Tags
+
+| Inhalt | Hinterlegte Tags | Ort der Metadaten |
+| --- | --- | --- |
+| [Notensystem-Visualisierung](../visualisierungen-erklaert/notensystem/) | `Allgemein`, `Notensystem` | `data-tags` am Wurzelelement von `NotationClickable.astro`; ein JSON-Array mit den Tag-Namen. |
+| [Klaviaturnotation](../visualisierungen-erklaert/notensystem/#klaviaturnotation) | `Allgemein`, `Notensystem` | `data-tags` am Wurzelelement von `KeyboardNotation.astro`; die beiden enthaltenen Notensysteme tragen dieselben Tags. |
+| [Vorzeichen-Schaubild](../visualisierungen-erklaert/notensystem/#vorzeichen) | `Allgemein`, `Notensystem` | `data-tags` am Wurzelelement von `NotationAccidentals.astro`; die enthaltenen Notensysteme tragen dieselben Tags. |
+| [Auftakt und Wiederholung](../visualisierungen-erklaert/notensystem/#auftakt-und-wiederholung) | `Allgemein`, `Notensystem` | `data-tags` am Wurzelelement von `NotationPickupRepeat.astro`; die enthaltenen Notensysteme tragen dieselben Tags. |
+| [Tempoangaben](../visualisierungen-erklaert/notensystem/#tempoangaben) | `Allgemein`, `Notensystem` | `data-tags` am Wurzelelement von `NotationTempo.astro`; die enthaltenen Notensysteme tragen dieselben Tags. |
+
+Die Tags kennzeichnen bisher nur die Visualisierung. Aufgaben und Fragen erhalten dadurch nicht automatisch Tags oder EXP; ihre Zuordnung muss später gesondert erfolgen.
+
+## Noch offen
+
+Die Regeln für Punktewerte, Faktoren, Schwierigkeitsstufen, Freischaltungen und Käufe sowie die Speicherung der Erfahrungspunkte werden später festgelegt. Das EXP- und Kaufsystem ist noch nicht implementiert.

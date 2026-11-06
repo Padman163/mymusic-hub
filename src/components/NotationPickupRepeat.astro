@@ -1,0 +1,112 @@
+---
+import NotationClickable from './NotationClickable.astro';
+
+interface Props {
+  showMeasureNumbers?: boolean;
+}
+
+const { showMeasureNumbers = false } = Astro.props;
+const rows = [
+  [
+    { number: undefined, steps: [2], showClef: true, showTime: true, startRepeat: false, endRepeat: false, showRightBar: true, final: false },
+    { number: 1, steps: [3, 4, 5, 2], showClef: false, showTime: false, startRepeat: false, endRepeat: false, showRightBar: false, final: false },
+    { number: 2, steps: [5, 6, 5, 4], showClef: false, showTime: false, startRepeat: true, endRepeat: false, showRightBar: true, final: false }
+  ],
+  [
+    { number: 3, steps: [3, 2, 1, 2], showClef: true, showTime: false, startRepeat: false, endRepeat: true, showRightBar: false, final: false },
+    { number: 4, steps: [3, 2, 0], showClef: false, showTime: false, startRepeat: false, endRepeat: false, showRightBar: true, final: true }
+  ]
+] as const;
+---
+
+<div class="pickup-example not-content" data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
+  {rows.map((row) => (
+    <div class="pickup-row">
+    {row.map((measure) => (
+      <div class="pickup-measure">
+        {showMeasureNumbers && measure.number !== undefined && <span class="measure-label">{measure.number}</span>}
+        <NotationClickable
+          embedded
+          clef={measure.showClef ? 'treble' : undefined}
+          timeSignature={measure.showTime ? { numerator: 4, denominator: 4 } : undefined}
+          noteStart={measure.showClef && !measure.showTime ? 36 : 0}
+          showRightBar={measure.showRightBar}
+          rightBarStyle={measure.final ? 'final' : 'single'}
+          notes={measure.steps.map((step) => ({ duration: 'quarter' as const, step }))}
+        />
+        {measure.startRepeat && (
+          <svg class="repeat-start" width="13" height="36" viewBox="0 0 13 36" role="img" aria-label="Beginn der Wiederholung">
+            <rect x="0" y="0" width="4" height="36" />
+            <rect x="7" y="0" width="1" height="36" />
+            <circle cx="11" cy="13.5" r="1.5" />
+            <circle cx="11" cy="22.5" r="1.5" />
+          </svg>
+        )}
+        {measure.endRepeat && (
+          <svg class="repeat-end" width="13" height="36" viewBox="0 0 13 36" role="img" aria-label="Ende der Wiederholung">
+            <circle cx="2" cy="13.5" r="1.5" />
+            <circle cx="2" cy="22.5" r="1.5" />
+            <rect x="5" y="0" width="1" height="36" />
+            <rect x="9" y="0" width="4" height="36" />
+          </svg>
+        )}
+      </div>
+    ))}
+    </div>
+  ))}
+</div>
+
+<style>
+  .pickup-example {
+    padding: 0.75rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    background: #fff;
+    box-sizing: border-box;
+    overflow-x: auto;
+  }
+
+  .pickup-row {
+    display: flex;
+    min-width: 360px;
+  }
+
+  .pickup-row + .pickup-row {
+    margin-top: 16px;
+  }
+
+  .pickup-measure {
+    position: relative;
+    flex: 1 0 110px;
+    min-width: 110px;
+  }
+
+  .pickup-row:first-child .pickup-measure:first-child {
+    flex-basis: 160px;
+    min-width: 160px;
+  }
+
+  .measure-label {
+    position: absolute;
+    top: 13px;
+    left: 2px;
+    color: #111827;
+    font: 10px/1 Georgia, serif;
+  }
+
+  .repeat-start,
+  .repeat-end {
+    position: absolute;
+    top: 28px;
+    display: block;
+    fill: #111827;
+  }
+
+  .repeat-start {
+    left: 0;
+  }
+
+  .repeat-end {
+    right: 0;
+  }
+</style>

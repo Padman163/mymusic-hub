@@ -108,8 +108,16 @@ export default defineConfig({
 							collapsed: true,
 							items: [
 								{ label: 'Audio-Hardware', slug: 'audio/referenzen-werkzeuge/hardware' },
-								{ label: 'Visualisierungen erklärt', slug: 'audio/referenzen-werkzeuge/visualisierungen-erklaert' },
+								{
+									label: 'Visualisierungen erklärt',
+									collapsed: true,
+									items: [
+										{ label: 'Übersicht', slug: 'audio/referenzen-werkzeuge/visualisierungen-erklaert' },
+										{ label: 'Notensystem', slug: 'audio/referenzen-werkzeuge/visualisierungen-erklaert/notensystem' },
+									],
+								},
 								{ label: 'Akkordmuster', slug: 'audio/referenzen-werkzeuge/akkordmuster' },
+								{ label: 'EXP und Tags', slug: 'audio/referenzen-werkzeuge/exp-und-tags' },
 								
 							],
 						},

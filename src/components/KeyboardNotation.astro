@@ -1,0 +1,82 @@
+---
+import NotationClickable from './NotationClickable.astro';
+import NotationFinalBar from './NotationFinalBar.astro';
+
+interface Props {
+  showBrace?: boolean;
+  rightBarStyle?: 'single' | 'final';
+}
+
+const { showBrace = true, rightBarStyle = 'final' } = Astro.props;
+---
+
+<div class="keyboard-notation not-content" data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
+  {showBrace && (
+    <svg class="keyboard-brace" viewBox="0 0 84 997" preserveAspectRatio="none" aria-hidden="true">
+      <text x="0" y="997">{'\uE000'}</text>
+    </svg>
+  )}
+  <div class="keyboard-staves">
+    <NotationClickable embedded clef="treble" showRightBar={rightBarStyle === 'single'} notes={[{ type: 'filled', step: -2 }]} />
+    <NotationClickable embedded clef="bass" showRightBar={rightBarStyle === 'single'} notes={[{ type: 'filled', step: 10 }]} />
+    <svg class="keyboard-left-bar" width="1" height="90" aria-hidden="true">
+      <line x1="0.5" y1="0" x2="0.5" y2="90" />
+    </svg>
+    {rightBarStyle === 'final' && <div class="keyboard-final-bar"><NotationFinalBar height={90} /></div>}
+  </div>
+</div>
+
+<style>
+  @font-face {
+    font-family: 'KeyboardNotationBravura';
+    src: url('/alphatab/font/Bravura.woff2') format('woff2');
+  }
+
+  .keyboard-notation {
+    display: flex;
+    padding: 0.75rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    background: #fff;
+    box-sizing: border-box;
+  }
+
+  .keyboard-brace {
+    flex: none;
+    width: 14px;
+    height: 90px;
+    margin: 28px 4px 0 0;
+    fill: #111827;
+  }
+
+  .keyboard-brace text {
+    font-family: 'KeyboardNotationBravura';
+    font-size: 1000px;
+  }
+
+  .keyboard-staves {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .keyboard-left-bar {
+    position: absolute;
+    top: 28px;
+    left: -0.5px;
+    display: block;
+    overflow: visible;
+    stroke: #111827;
+    stroke-width: 1;
+  }
+
+  .keyboard-staves :global(.notation-clickable + .notation-clickable) {
+    margin-top: -38px;
+  }
+
+  .keyboard-final-bar {
+    position: absolute;
+    top: 28px;
+    right: 0;
+  }
+</style>

@@ -1,0 +1,46 @@
+---
+import NotationClickable from './NotationClickable.astro';
+
+const sharpSteps = [8, 5, 9, 6, 3] as const;
+const flatSteps = [4, 7, 3, 6, 2] as const;
+---
+
+<div class="accidental-examples not-content" data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
+  <div class="accidental-row">
+    <div class="accidental-measure">
+      <NotationClickable embedded clef="treble" accidentals={sharpSteps.map((step) => ({ type: 'sharp', step }))} />
+    </div>
+    <div class="accidental-measure">
+      <NotationClickable embedded accidentals={sharpSteps.map((step) => ({ type: 'natural', step }))} />
+    </div>
+    <div class="accidental-measure">
+      <NotationClickable embedded accidentals={flatSteps.map((step) => ({ type: 'flat', step }))} />
+    </div>
+  </div>
+</div>
+
+<style>
+  .accidental-examples {
+    padding: 0.75rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    background: #fff;
+    box-sizing: border-box;
+    overflow-x: auto;
+  }
+
+  .accidental-row {
+    display: flex;
+    min-width: 290px;
+  }
+
+  .accidental-measure {
+    flex: 1 0 90px;
+    min-width: 90px;
+  }
+
+  .accidental-measure:first-child {
+    flex-basis: 110px;
+    min-width: 110px;
+  }
+</style>
