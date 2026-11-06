@@ -1,0 +1,101 @@
+﻿---
+import NotationClickable from './NotationClickable.astro';
+---
+
+<div class="dynamics-example not-content" data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
+  <div class="dynamics-row" role="img" aria-label="Crescendo von piano zu forte">
+    <NotationClickable
+      embedded
+      clef="treble"
+      notes={[
+        { duration: 'quarter', step: 5 },
+        { duration: 'quarter', step: 4 },
+        { duration: 'quarter', step: 3 },
+        { duration: 'quarter', step: 4 }
+      ]}
+    />
+    <span class="dynamic-word">cresc.</span>
+    <span class="dynamic-mark dynamic-start">{'\uE520'}</span>
+    <span class="dynamic-mark dynamic-end">{'\uE522'}</span>
+    <svg class="hairpin" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true">
+      <line x1="0" y1="6" x2="100" y2="0" />
+      <line x1="0" y1="6" x2="100" y2="12" />
+    </svg>
+  </div>
+  <div class="dynamics-row" role="img" aria-label="Decrescendo von forte zu piano">
+    <NotationClickable
+      embedded
+      notes={[
+        { duration: 'quarter', step: 5 },
+        { duration: 'quarter', step: 4 },
+        { duration: 'quarter', step: 3 },
+        { duration: 'quarter', step: 4 }
+      ]}
+    />
+    <span class="dynamic-word">decresc.</span>
+    <span class="dynamic-mark dynamic-start">{'\uE522'}</span>
+    <span class="dynamic-mark dynamic-end">{'\uE520'}</span>
+    <svg class="hairpin" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true">
+      <line x1="0" y1="0" x2="100" y2="6" />
+      <line x1="0" y1="12" x2="100" y2="6" />
+    </svg>
+  </div>
+</div>
+
+<style>
+  @font-face {
+    font-family: 'NotationDynamicsBravura';
+    src: url('/alphatab/font/Bravura.woff2') format('woff2');
+  }
+
+  .dynamics-example {
+    padding: 0.75rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    background: #fff;
+    box-sizing: border-box;
+    overflow-x: auto;
+  }
+
+  .dynamics-row {
+    position: relative;
+    min-width: 500px;
+    height: 124px;
+  }
+
+  .dynamic-word,
+  .dynamic-mark,
+  .hairpin {
+    position: absolute;
+    color: #111827;
+  }
+
+  .dynamic-word {
+    top: 80px;
+    left: calc(20% - 6px);
+    font: italic 12px/1 Georgia, serif;
+  }
+
+  .dynamic-mark {
+    top: 88px;
+    font: 30px/1 'NotationDynamicsBravura';
+  }
+
+  .dynamic-start {
+    right: calc(80% + 12px);
+  }
+
+  .dynamic-end {
+    left: calc(80% + 12px);
+  }
+
+  .hairpin {
+    left: calc(20% - 6px);
+    top: 100px;
+    width: calc(60% + 12px);
+    height: 10px;
+    overflow: visible;
+    stroke: currentColor;
+    stroke-width: 1;
+  }
+</style>

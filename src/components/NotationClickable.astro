@@ -4,9 +4,10 @@ import NotationFinalBar from './NotationFinalBar.astro';
 type Step = -2 | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
 type Duration = 'whole' | 'half' | 'quarter' | 'eighth' | 'sixteenth';
 type Accidental = { type: 'sharp' | 'natural' | 'flat'; step: Step };
+type Articulation = 'staccato' | 'tenuto' | 'accent' | 'marcato';
 type Note =
-  | { type: 'filled' | 'empty'; step: Step; stem?: boolean; duration?: never; beamGroup?: never }
-  | { duration: Duration; step: Step; beamGroup?: string; type?: never; stem?: never };
+  | { type: 'filled' | 'empty'; step: Step; stem?: boolean; duration?: never; beamGroup?: never; articulation?: Articulation }
+  | { duration: Duration; step: Step; beamGroup?: string; type?: never; stem?: never; articulation?: Articulation };
 
 interface Props {
   showLeftBar?: boolean;
@@ -57,6 +58,12 @@ const accidentalSymbols = {
   natural: { glyph: '\uE261', label: 'Auflösungszeichen' },
   flat: { glyph: '\uE260', label: 'b-Vorzeichen' }
 } as const;
+const articulationSymbols: Record<Articulation, { glyph: string; label: string }> = {
+  staccato: { glyph: '\uE4A2', label: 'Staccato' },
+  tenuto: { glyph: '\uE4A4', label: 'Tenuto' },
+  accent: { glyph: '\uE4A0', label: 'Akzent' },
+  marcato: { glyph: '\uE4AC', label: 'Marcato' }
+};
 const accidentalStart = clef ? 36 : 6;
 const timeWidth = timeSignature ? Math.max(String(timeSignature.numerator).length, String(timeSignature.denominator).length) * 17 : 0;
 const timeStart = accidentalStart + accidentals.length * 12;
@@ -75,7 +82,8 @@ const groupByIndex = new Map(renderedGroups.flatMap((group) => group.indices.map
 const noteDescription = notes.map((note, index) => {
   const stemUp = groupByIndex.get(index)?.stemUp ?? note.step < 4;
   const hasStem = note.duration ? note.duration !== 'whole' : note.stem === true;
-  return `${note.duration ? durationLabels[note.duration] : note.type === 'filled' ? 'gefüllter Notenkopf' : 'ungefüllter Notenkopf'} auf Position ${note.step}${hasStem ? ` mit Hals nach ${stemUp ? 'oben' : 'unten'}` : ' ohne Hals'}`;
+  const articulation = note.articulation ? ` mit ${articulationSymbols[note.articulation].label}` : '';
+  return `${note.duration ? durationLabels[note.duration] : note.type === 'filled' ? 'gefüllter Notenkopf' : 'ungefüllter Notenkopf'} auf Position ${note.step}${hasStem ? ` mit Hals nach ${stemUp ? 'oben' : 'unten'}` : ' ohne Hals'}${articulation}`;
 }).join(', ');
 const timeGlyphs = (value: number) => [...String(value)].map((digit) => String.fromCodePoint(0xE080 + Number(digit))).join('');
 ---
@@ -129,6 +137,9 @@ const timeGlyphs = (value: number) => [...String(value)].map((digit) => String.f
           )}
           {flag && !group && <text class="notation-note" x={x} y={stemY} transform={`translate(${stemUp ? 4.5 : -4.5} 0)`}>{flag}</text>}
           <text class="notation-note" x={x} y={y} text-anchor="middle">{glyph}</text>
+          {note.articulation && (
+            <text class="notation-articulation" x={x} y={y - 12} text-anchor="middle">{articulationSymbols[note.articulation].glyph}</text>
+          )}
         </g>
       );
     })}
@@ -183,7 +194,8 @@ const timeGlyphs = (value: number) => [...String(value)].map((digit) => String.f
   .notation-clef,
   .notation-note,
   .notation-accidental,
-  .notation-time {
+  .notation-time,
+  .notation-articulation {
     font-family: 'NotationClickableBravura';
     font-size: 36px;
     fill: #111827;

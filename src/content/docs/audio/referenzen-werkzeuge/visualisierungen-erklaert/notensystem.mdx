@@ -8,6 +8,8 @@ import NotationTimeSignatures from '../../../../../components/NotationTimeSignat
 import NotationAccidentals from '../../../../../components/NotationAccidentals.astro';
 import NotationPickupRepeat from '../../../../../components/NotationPickupRepeat.astro';
 import NotationTempo from '../../../../../components/NotationTempo.astro';
+import NotationArticulations from '../../../../../components/NotationArticulations.astro';
+import NotationDynamics from '../../../../../components/NotationDynamics.astro';
 
 ## Grundansicht
 
@@ -118,6 +120,18 @@ Taktnummern sind standardmäßig ausgeblendet und werden in diesem Beispiel mit 
 Das Beispiel zeigt zwei 4/4-Takte mit **Allegro** und der Metronomangabe **Viertelnote = 90** (90 Viertelschläge pro Minute). Im zweiten Takt bedeutet **rit.**, allmählich langsamer zu werden; **a tempo** führt zum ursprünglichen Tempo zurück. Die Zahl ist hier die konkrete Tempovorgabe.
 
 <NotationTempo />
+
+## Artikulation
+
+Artikulationszeichen beschreiben, wie ein Ton gespielt und gestaltet wird. Das Beispiel zeigt fünf häufige Zeichen: **Staccato** verkürzt den Ton, **Staccatissimo** noch stärker; **Tenuto** hält ihn voll aus, der **Akzent** hebt ihn hervor und **Marcato** markiert einen besonders kräftigen Anschlag.
+
+<NotationArticulations />
+
+## Dynamik
+
+Dynamikzeichen geben an, wie laut oder leise gespielt wird. **p** (*piano*) bedeutet leise, **f** (*forte*) laut. Ein Crescendo (*cresc.*) wird durch einen nach rechts weiter werdenden Keil dargestellt und bedeutet, allmählich lauter zu werden. Ein Decrescendo (*decresc.*) verengt sich nach rechts und bedeutet, allmählich leiser zu werden.
+
+<NotationDynamics />
 
 ## Schlussstrich
 
