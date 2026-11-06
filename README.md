@@ -19,6 +19,19 @@ Die Netlify Function unter `netlify/functions/contributions.ts` nimmt Beiträge 
 
 Das Token darf nicht im Frontend oder in eingecheckten Dateien hinterlegt werden. Bis eine Anmeldung oder ein anderer Zugriffsschutz ergänzt ist, kann jeder Besucher die öffentliche API zum Einreichen von Beiträgen aufrufen. Die Einträge sind entsprechend der Sichtbarkeit des Repositorys einsehbar; vertrauliche Daten sollten daher nicht eingereicht werden. Die API ist von der Speicherung getrennt, sodass später die GitHub-Speicherung durch eine Datenbankanbindung ersetzt werden kann.
 
+### Deploy Preview für die Entwicklung
+
+1. Das GitHub-Repository in Netlify verknüpfen, `main` als Produktionsbranch wählen und Deploy Previews aktivieren.
+2. Einen Pull Request vom Feature-Branch nach `main` öffnen. Netlify baut dafür eine eigene Preview-URL, ohne die Produktionsseite zu veröffentlichen.
+3. Weitere Änderungen auf den Feature-Branch pushen; der offene Pull Request erhält automatisch eine aktualisierte Preview.
+4. Erst nach Abschluss der Tests den Pull Request nach `main` mergen.
+
+Für den Deploy-Preview-Kontext müssen die Umgebungsvariablen in Netlify separat gesetzt werden, wenn auch das Speichern getestet werden soll. Ohne explizites `GITHUB_BRANCH` schreibt die Function nach `main`, auch in einer Preview. Für isolierte Tests empfiehlt sich daher ein separates Test-Repository mit eigenem, darauf eingeschränktem Token und einer bestehenden leeren JSON-Array-Datei. `GITHUB_REPOSITORY`, `GITHUB_TOKEN` und gegebenenfalls `GITHUB_BRANCH` im Kontext **Deploy Previews** entsprechend setzen. Nach Änderungen an den Umgebungsvariablen die Preview erneut deployen.
+
+Die Produktionskonfiguration in `netlify.toml` überspringt Builds, wenn seit dem letzten erfolgreichen Build ausschließlich `data/contributions.json` geändert wurde. Dadurch löst nicht jeder gespeicherte Beitrag einen Produktions-Deploy aus. Wird `GITHUB_DATA_PATH` geändert, muss die Ignore-Regel entsprechend angepasst werden. Dokumentationsseiten unter `src/content/docs` bleiben buildrelevant.
+
+Deploy Previews haben laut aktueller Netlify-Preisliste keine Produktions-Deploy-Gebühr, sind aber nicht grundsätzlich ohne Credit-Verbrauch: Zugriffe, Datenverkehr und Function-Ausführungen können Credits verbrauchen. Die genauen Konditionen hängen vom Tarif ab und sind im Netlify-Dashboard und in der [Preisliste](https://www.netlify.com/pricing/) zu prüfen.
+
 ## Aktuellsten Branch holen
 1. ```git switch <aktuellsten-branch>```
 2. ```git fetch origin```
