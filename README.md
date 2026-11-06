@@ -5,9 +5,15 @@
 ```npm create astro@latest -- --template starlight```
 
 
-## Anwendung starten 
-1. ```npm install```
-2. ```npm run dev```
+## Anwendung starten ( ohne Netlify )
+```npm install```
+```npm run dev```
+
+## Anwendung starten ( mit Netlify )
+ ```npm install```
+```npx netlify-cli login```
+```npx netlify-cli link```
+```npx netlify-cli dev```
 
 ## Aktuellsten Branch holen
 1. ```git switch <aktuellsten-branch>```
@@ -41,12 +47,16 @@
 ## IssueTracker-Beiträge speichern
 Die Netlify Function unter `netlify/functions/contributions.ts` nimmt Beiträge entgegen und speichert sie zunächst in `data/contributions.json` im GitHub-Repository. In Netlify müssen dafür folgende Umgebungsvariablen gesetzt werden:
 
-- `GITHUB_TOKEN`: Fine-grained Personal Access Token mit Lese- und Schreibzugriff auf den Repository-Inhalt.
+- `GITHUB_TOKEN`: Fine-grained Personal Access Token mit Lese- und Schreibzugriff auf den Repository-Inhalt. Darf NICHT als Secret definiert werden
 - `GITHUB_REPOSITORY`: Repository im Format `owner/repository`.
 - `GITHUB_BRANCH`: Zielbranch (optional, Standard: `main`).
 - `GITHUB_DATA_PATH`: Speicherpfad (optional, Standard: `data/contributions.json`).
 
 Das Token darf nicht im Frontend oder in eingecheckten Dateien hinterlegt werden. Bis eine Anmeldung oder ein anderer Zugriffsschutz ergänzt ist, kann jeder Besucher die öffentliche API zum Einreichen von Beiträgen aufrufen. Die Einträge sind entsprechend der Sichtbarkeit des Repositorys einsehbar; vertrauliche Daten sollten daher nicht eingereicht werden. Die API ist von der Speicherung getrennt, sodass später die GitHub-Speicherung durch eine Datenbankanbindung ersetzt werden kann.
+
+Die Beitragsübersicht unter `projektierung/beitraege` liest die Einträge bei jedem Aufruf über dieselbe Netlify Function und denselben konfigurierten GitHub-Branch wie das Formular. Dort lassen sich Beiträge erstellen, bearbeiten und löschen; Änderungen erscheinen als Commits und bleiben in der Git-Historie nachvollziehbar. Beim Erstellen werden der Bereich `Theorie`, `Praxis` oder `Komponente` und die Priorität `Hoch`, `Mittel` oder `Niedrig` ausgewählt. Neue Beiträge erhalten standardmäßig die Priorität `Mittel`; ältere Beiträge ohne Priorität werden ebenfalls als `Mittel` angezeigt und erst beim Bearbeiten mit Priorität gespeichert. Ältere Beiträge ohne Bereich werden als „Ohne Bereich“ angezeigt und können beim Bearbeiten zugeordnet werden. Neue Beiträge erhalten den Status `New`; bestehende Beiträge ohne Status werden ebenfalls als `New` angezeigt und erst beim Bearbeiten mit Status gespeichert. Im Bearbeitungsmodus stehen außerdem `Active` und `Resolved` zur Auswahl. Ohne Zugriffsschutz kann jeder Besucher Beiträge bearbeiten oder löschen. Für die Übersicht muss die JSON-Datei auf dem konfigurierten Branch vorhanden sein und ein Array enthalten. Die Übersicht und ihre API sind ebenfalls öffentlich zugänglich, auch wenn das Repository privat ist. Das lokale `npm run dev` startet keine Netlify Functions; zum Testen wird eine Netlify-Umgebung benötigt.
+
+Die Beschreibung ist optional. Beiträge können bis zu 100 Checklistenpunkte mit je maximal 200 Zeichen enthalten. Punkte werden beim Erstellen oder Bearbeiten hinzugefügt und entfernt; das Abhaken erfolgt im Bearbeitungsmodus und wird beim Speichern übernommen. Ältere Beiträge ohne Checkliste bleiben unverändert nutzbar.
 
 ### Deploy Preview für die Entwicklung
 
@@ -60,4 +70,3 @@ Für den Deploy-Preview-Kontext müssen die Umgebungsvariablen in Netlify separa
 Die Produktionskonfiguration in `netlify.toml` überspringt Builds, wenn seit dem letzten erfolgreichen Build ausschließlich `data/contributions.json` geändert wurde. Dadurch löst nicht jeder gespeicherte Beitrag einen Produktions-Deploy aus. Wird `GITHUB_DATA_PATH` geändert, muss die Ignore-Regel entsprechend angepasst werden. Dokumentationsseiten unter `src/content/docs` bleiben buildrelevant.
 
 Deploy Previews haben laut aktueller Netlify-Preisliste keine Produktions-Deploy-Gebühr, sind aber nicht grundsätzlich ohne Credit-Verbrauch: Zugriffe, Datenverkehr und Function-Ausführungen können Credits verbrauchen. Die genauen Konditionen hängen vom Tarif ab und sind im Netlify-Dashboard und in der [Preisliste](https://www.netlify.com/pricing/) zu prüfen.
-

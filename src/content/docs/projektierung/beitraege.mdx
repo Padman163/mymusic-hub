@@ -1,0 +1,15 @@
+---
+title: Beiträge
+description: Übersicht der Bugs, Features und Decisions im IssueTracker.
+---
+
+import ContributionList from '../../../components/ContributionList.astro';
+
+Hier findest du die gespeicherten Beiträge zur Projektierung.
+Mit dem Symbol neben „Neuen Beitrag erstellen“ wechselst du zwischen Karten- und kompakter Listenansicht.
+Daneben kannst du Beiträge nach Typ, Bereich und Priorität filtern sowie nach Erstellungsdatum oder Priorität sortieren. Bei gleicher Priorität stehen die neuesten Beiträge zuerst.
+Du kannst Beiträge hier auch bearbeiten oder löschen. Neue und ältere Beiträge ohne gespeicherten Status werden als „New“ angezeigt; im Bearbeitungsmodus kannst du den Status auf „Active“ oder „Resolved“ setzen.
+Beim Erstellen wählst du den Bereich „Theorie“, „Praxis“ oder „Komponente“ und die Priorität „Hoch“, „Mittel“ oder „Niedrig“. „Mittel“ ist vorausgewählt und wird auch bei älteren Beiträgen ohne Priorität angezeigt. Ältere Beiträge ohne Bereich können beim Bearbeiten zugeordnet werden.
+Die Beschreibung ist optional und wird in der Übersicht auf drei Zeilen gekürzt. Neue Checklistenpunkte kannst du in der freien Zeile eingeben und mit Enter bestätigen; ein noch nicht bestätigter Punkt wird beim Speichern ebenfalls übernommen. Im Footer zeigt ein Zähler den Fortschritt der Checkliste; die einzelnen Punkte und die vollständige Beschreibung findest du im Bearbeitungsmodus. Dort kannst du Punkte auch abhaken; gespeichert werden sie zusammen mit dem Beitrag.
+
+<ContributionList />

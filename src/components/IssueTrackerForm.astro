@@ -1,12 +1,7 @@
 <form id="issue-tracker-form" class="issue-tracker-form">
-	<div class="field">
-		<label for="contribution-type">Typ</label>
-		<select id="contribution-type" name="type" required>
-			<option value="Bug">Bug</option>
-			<option value="Feature">Feature</option>
-			<option value="Decision">Decision</option>
-		</select>
-	</div>
+	<div id="contribution-type-field"></div>
+	<div id="contribution-area-field"></div>
+	<div id="contribution-priority-field"></div>
 
 	<div class="field">
 		<label for="contribution-title">Titel</label>
@@ -21,15 +16,17 @@
 	</div>
 
 	<div class="field">
-		<label for="contribution-description">Beschreibung</label>
+		<label for="contribution-description">Beschreibung (optional)</label>
 		<textarea
 			id="contribution-description"
 			name="description"
 			rows="7"
+			maxlength="10000"
 			placeholder="Worum geht es? Ergänze bei Bugs gern die Schritte zum Nachstellen."
-			required
 		></textarea>
 	</div>
+
+	<div id="contribution-checklist-field"></div>
 
 	<button type="submit">Beitrag speichern</button>
 	<p class="form-status" role="status" aria-live="polite"></p>
@@ -99,6 +96,11 @@
 </style>
 
 <script>
+	import { createTypePicker, createTagPicker, createPlainTag, isContributionType } from '../lib/contribution-types';
+	import { contributionAreas, isContributionArea } from '../lib/contribution-area';
+	import { contributionPriorities, defaultContributionPriority, isContributionPriority } from '../lib/contribution-priority';
+	import { createChecklistEditor } from '../lib/checklist-editor';
+
 	const form = document.querySelector<HTMLFormElement>('#issue-tracker-form');
 
 	if (!(form instanceof HTMLFormElement)) {
@@ -107,20 +109,38 @@
 
 	const submitButton = form.querySelector<HTMLButtonElement>('button[type="submit"]');
 	const status = form.querySelector<HTMLParagraphElement>('.form-status');
+	const typeContainer = form.querySelector<HTMLDivElement>('#contribution-type-field');
+	const areaContainer = form.querySelector<HTMLDivElement>('#contribution-area-field');
+	const priorityContainer = form.querySelector<HTMLDivElement>('#contribution-priority-field');
+	const checklistContainer = form.querySelector<HTMLDivElement>('#contribution-checklist-field');
 
-	if (!(submitButton instanceof HTMLButtonElement) || !(status instanceof HTMLParagraphElement)) {
+	if (!(submitButton instanceof HTMLButtonElement) || !(status instanceof HTMLParagraphElement) || !(typeContainer instanceof HTMLDivElement) || !(areaContainer instanceof HTMLDivElement) || !(priorityContainer instanceof HTMLDivElement) || !(checklistContainer instanceof HTMLDivElement)) {
 		throw new Error('Die Rückmeldung des Projektierungsformulars wurde nicht gefunden.');
 	}
+
+	const typePicker = createTypePicker('Bug');
+	typeContainer.append(typePicker);
+	const areaPicker = createTagPicker('area', 'Bereich', contributionAreas, undefined, (area) => createPlainTag(area, 'area'));
+	const priorityPicker = createTagPicker('priority', 'Priorität', contributionPriorities, defaultContributionPriority, (priority) => createPlainTag(priority, 'priority'));
+	areaContainer.append(areaPicker);
+	priorityContainer.append(priorityPicker);
+	const checklistEditor = createChecklistEditor();
+	checklistContainer.append(checklistEditor.element);
+	form.addEventListener('reset', () => checklistEditor.clear());
 
 	form.addEventListener('submit', async (event) => {
 		event.preventDefault();
 
 		const typeField = form.elements.namedItem('type');
+		const areaField = form.elements.namedItem('area');
+		const priorityField = form.elements.namedItem('priority');
 		const titleField = form.elements.namedItem('title');
 		const descriptionField = form.elements.namedItem('description');
 
 		if (
-			!(typeField instanceof HTMLSelectElement) ||
+			!(typeField instanceof RadioNodeList) ||
+			!(areaField instanceof RadioNodeList) ||
+			!(priorityField instanceof RadioNodeList) ||
 			!(titleField instanceof HTMLInputElement) ||
 			!(descriptionField instanceof HTMLTextAreaElement)
 		) {
@@ -128,10 +148,20 @@
 		}
 
 		const type = typeField.value;
-		if (type !== 'Bug' && type !== 'Feature' && type !== 'Decision') {
-			typeField.setCustomValidity('Bitte wähle einen gültigen Eintragstyp.');
-			typeField.reportValidity();
-			typeField.setCustomValidity('');
+		if (!isContributionType(type)) {
+			status.textContent = 'Bitte wähle einen gültigen Eintragstyp.';
+			return;
+		}
+
+		const area = areaField.value;
+		if (!isContributionArea(area)) {
+			status.textContent = 'Bitte wähle einen gültigen Bereich.';
+			return;
+		}
+
+		const priority = priorityField.value;
+		if (!isContributionPriority(priority)) {
+			status.textContent = 'Bitte wähle eine gültige Priorität.';
 			return;
 		}
 
@@ -144,21 +174,24 @@
 		}
 
 		const description = descriptionField.value.trim();
-		if (!description) {
-			descriptionField.setCustomValidity('Bitte gib eine Beschreibung ein.');
-			descriptionField.reportValidity();
-			descriptionField.setCustomValidity('');
-			return;
-		}
+		const checklist = checklistEditor.items();
+		if (!checklist) return;
 
 		status.textContent = 'Beitrag wird gespeichert …';
 		submitButton.disabled = true;
+		typePicker.disabled = true;
+		areaPicker.disabled = true;
+		priorityPicker.disabled = true;
+		titleField.disabled = true;
+		descriptionField.disabled = true;
+		checklistEditor.element.disabled = true;
+		form.dispatchEvent(new CustomEvent('contribution:busy', { bubbles: true, detail: true }));
 
 		try {
 			const response = await fetch('/api/contributions', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ type, title, description }),
+				body: JSON.stringify({ type, area, priority, title, description, checklist }),
 			});
 
 			const result: unknown = await response.json();
@@ -175,6 +208,7 @@
 
 			status.textContent = 'Beitrag wurde gespeichert.';
 			form.reset();
+			form.dispatchEvent(new CustomEvent('contribution:created', { bubbles: true, detail: result }));
 		} catch (error) {
 			status.textContent =
 				error instanceof Error
@@ -182,6 +216,13 @@
 					: 'Der Beitrag konnte wegen eines unerwarteten Fehlers nicht gespeichert werden.';
 		} finally {
 			submitButton.disabled = false;
+			typePicker.disabled = false;
+			areaPicker.disabled = false;
+			priorityPicker.disabled = false;
+			titleField.disabled = false;
+			descriptionField.disabled = false;
+			checklistEditor.element.disabled = false;
+			form.dispatchEvent(new CustomEvent('contribution:busy', { bubbles: true, detail: false }));
 		}
 	});
 </script>
