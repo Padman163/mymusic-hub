@@ -1,0 +1,429 @@
+---
+export interface Props {
+  compact?: boolean;
+  showPillars?: boolean;
+}
+
+const {
+  compact = false,
+  showPillars = true
+} = Astro.props;
+---
+
+<div class="xp-tracker" data-compact={compact} data-show-pillars={showPillars}>
+  <div class="xp-header">
+    <h3 class="xp-title">🎮 Experience Points</h3>
+    <div class="xp-display">
+      <span class="xp-amount" data-xp="0">0</span>
+      <span class="xp-label">XP</span>
+    </div>
+  </div>
+
+  <div class="level-gate">
+    <div class="gate-icon">🎯</div>
+    <div class="gate-info">
+      <p class="gate-title">Level 100 Praxis-Freischaltung</p>
+      <p class="gate-requirement">Erforderlich: 80% + bestandenes Quiz 105</p>
+      <div class="gate-progress">
+        <div class="progress-bar">
+          <div class="progress-fill" data-progress="0" style="width: 0%;"></div>
+        </div>
+        <span class="progress-text" data-progress-text="0/80">0/80 XP</span>
+      </div>
+    </div>
+  </div>
+
+  {showPillars && (
+    <div class="pillars-section">
+      <h4 class="pillars-title">Fähigkeits-Säulen</h4>
+      <div class="pillars-grid">
+        <div class="pillar">
+          <div class="pillar-header">
+            <span class="pillar-icon">🎸</span>
+            <span class="pillar-name">Griffbrett-Motorik</span>
+          </div>
+          <div class="pillar-bar">
+            <div class="pillar-fill" data-pillar="motor" style="width: 0%;"></div>
+          </div>
+          <p class="pillar-stat" data-pillar-stat="motor">0%</p>
+        </div>
+
+        <div class="pillar">
+          <div class="pillar-header">
+            <span class="pillar-icon">🥁</span>
+            <span class="pillar-name">Rhythmus & Backing</span>
+          </div>
+          <div class="pillar-bar">
+            <div class="pillar-fill" data-pillar="rhythm" style="width: 0%;"></div>
+          </div>
+          <p class="pillar-stat" data-pillar-stat="rhythm">0%</p>
+        </div>
+
+        <div class="pillar">
+          <div class="pillar-header">
+            <span class="pillar-icon">🎵</span>
+            <span class="pillar-name">Notation & Songwriting</span>
+          </div>
+          <div class="pillar-bar">
+            <div class="pillar-fill" data-pillar="notation" style="width: 0%;"></div>
+          </div>
+          <p class="pillar-stat" data-pillar-stat="notation">0%</p>
+        </div>
+      </div>
+    </div>
+  )}
+
+  <div class="xp-actions">
+    <button class="btn-reset" data-action="reset">🔄 Zurücksetzen</button>
+    <button class="btn-export" data-action="export">💾 Exportieren</button>
+  </div>
+</div>
+
+<script>
+  interface XpState {
+    totalXp: number;
+    motor: number;
+    rhythm: number;
+    notation: number;
+    lastUpdated: string;
+  }
+
+  const STORAGE_KEY = 'mymusic_xp_state';
+  const tracker = document.querySelector('.xp-tracker') as HTMLElement;
+  if (!tracker) throw new Error('XP tracker not found');
+
+  // Initialize XP State
+  function initXpState(): XpState {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      try {
+        return JSON.parse(stored) as XpState;
+      } catch {
+        console.error('Failed to parse XP state');
+      }
+    }
+    return {
+      totalXp: 0,
+      motor: 0,
+      rhythm: 0,
+      notation: 0,
+      lastUpdated: new Date().toISOString()
+    };
+  }
+
+  // Save XP State
+  function saveXpState(state: XpState) {
+    state.lastUpdated = new Date().toISOString();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    updateDisplay(state);
+  }
+
+  // Update Display
+  function updateDisplay(state: XpState) {
+    const xpAmount = tracker.querySelector('[data-xp]') as HTMLElement;
+    if (xpAmount) {
+      xpAmount.textContent = state.totalXp.toString();
+      xpAmount.setAttribute('data-xp', state.totalXp.toString());
+    }
+
+    // Update level gate progress
+    const progressFill = tracker.querySelector('[data-progress]') as HTMLElement;
+    const progressText = tracker.querySelector('[data-progress-text]') as HTMLElement;
+    const maxXp = 80;
+    const percentage = Math.min((state.totalXp / maxXp) * 100, 100);
+
+    if (progressFill) {
+      progressFill.style.width = percentage + '%';
+      progressFill.setAttribute('data-progress', percentage.toString());
+    }
+
+    if (progressText) {
+      progressText.textContent = `${state.totalXp}/${maxXp} XP`;
+      progressText.setAttribute('data-progress-text', `${state.totalXp}/${maxXp}`);
+    }
+
+    // Update pillars
+    const pillars = ['motor', 'rhythm', 'notation'];
+    pillars.forEach((pillar) => {
+      const fillEl = tracker.querySelector(`[data-pillar="${pillar}"]`) as HTMLElement;
+      const statEl = tracker.querySelector(`[data-pillar-stat="${pillar}"]`) as HTMLElement;
+      const value = state[pillar as keyof XpState] as number;
+      const percentage = Math.min(value, 100);
+
+      if (fillEl) fillEl.style.width = percentage + '%';
+      if (statEl) statEl.textContent = percentage + '%';
+    });
+  }
+
+  // Public API for adding XP
+  (window as any).addXp = function (amount: number, pillar?: 'motor' | 'rhythm' | 'notation') {
+    const state = initXpState();
+    state.totalXp += amount;
+
+    if (pillar) {
+      const current = state[pillar] || 0;
+      state[pillar] = Math.min(current + (amount / 3), 100);
+    }
+
+    saveXpState(state);
+    showXpNotification(amount);
+  };
+
+  // Show XP notification
+  function showXpNotification(amount: number) {
+    const notif = document.createElement('div');
+    notif.className = 'xp-notification';
+    notif.textContent = `+${amount} XP`;
+    tracker.appendChild(notif);
+
+    setTimeout(() => notif.remove(), 2000);
+  }
+
+  // Action buttons
+  const actionBtns = tracker.querySelectorAll('[data-action]');
+  actionBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const action = btn.getAttribute('data-action');
+
+      if (action === 'reset') {
+        if (confirm('Wirklich alle XP-Daten zurücksetzen?')) {
+          localStorage.removeItem(STORAGE_KEY);
+          updateDisplay(initXpState());
+        }
+      } else if (action === 'export') {
+        const state = initXpState();
+        const json = JSON.stringify(state, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'mymusic-xp-export.json';
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    });
+  });
+
+  // Initialize display on load
+  updateDisplay(initXpState());
+</script>
+
+<style>
+  .xp-tracker {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    padding: 24px;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .xp-tracker[data-compact="true"] {
+    padding: 16px;
+  }
+
+  .xp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .xp-title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
+  .xp-display {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .xp-amount {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .xp-label {
+    font-size: 1rem;
+    opacity: 0.9;
+  }
+
+  .level-gate {
+    display: flex;
+    gap: 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+
+  .gate-icon {
+    font-size: 2.5rem;
+    line-height: 1;
+  }
+
+  .gate-info {
+    flex: 1;
+  }
+
+  .gate-title {
+    margin: 0 0 4px 0;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .gate-requirement {
+    margin: 0 0 12px 0;
+    font-size: 0.875rem;
+    opacity: 0.9;
+  }
+
+  .gate-progress {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .progress-bar {
+    flex: 1;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: #4CAF50;
+    transition: width 0.3s ease;
+  }
+
+  .progress-text {
+    font-size: 0.875rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .pillars-section {
+    margin-bottom: 20px;
+  }
+
+  .pillars-title {
+    margin: 0 0 12px 0;
+    font-size: 1rem;
+    font-weight: 600;
+    opacity: 0.95;
+  }
+
+  .pillars-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+  }
+
+  .pillar {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 12px;
+  }
+
+  .pillar-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .pillar-icon {
+    font-size: 1.5rem;
+  }
+
+  .pillar-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .pillar-bar {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+
+  .pillar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4CAF50, #8BC34A);
+    transition: width 0.3s ease;
+  }
+
+  .pillar-stat {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-align: right;
+  }
+
+  .xp-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .btn-reset,
+  .btn-export {
+    padding: 8px 16px;
+    background-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-reset:hover,
+  .btn-export:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+  }
+
+  .xp-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #4CAF50;
+    color: #ffffff;
+    padding: 12px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    animation: slideIn 0.3s ease, slideOut 0.3s ease 1.7s forwards;
+    z-index: 1000;
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideOut {
+    from {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+  }
+</style>

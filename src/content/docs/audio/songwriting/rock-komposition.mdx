@@ -1,0 +1,480 @@
+---
+title: "Rocksong – Schritt 0: Komposition"
+---
+
+import DrumPattern from '../../../../components/DrumPattern.astro';
+import BassPattern from '../../../../components/BassPattern.astro';
+import GuitarPattern from '../../../../components/GuitarPattern.astro';
+import ChordProgression from '../../../../components/ChordProgression.astro';
+import ChordDiagramPattern from '../../../../components/ChordDiagramPattern.astro';
+import VocalPattern from '../../../../components/VocalPattern.astro';
+import ScorePattern from '../../../../components/ScorePattern.astro';
+
+Dieses Dokument überträgt den theoretischen Leitfaden direkt auf das konkrete Fundament unseres Rocksongs. Alle Spuren sind strikt auf dem Schlag verankert (keine Synkopen, keine Auftakte), um ein stabiles Grundgerüst zu schaffen.
+
+---
+
+## 1. Harmonie
+
+### 1.1 Tonart
+* **Tonales Zentrum / Tonart:** E-Moll.
+* **Tongeschlecht und Charakter:** Dunkel, erdig, rau und treibend. E-Moll ist eine typische Tonart für die Rockgitarre (tiefe leere E-Saite als Gravitationsanker).
+* **Funktion der Akkorde im Stück:**
+  * $Em$ = Tonika ($i$): Maximales Gravitationszentrum.
+  * $C$ = Subdominant-Parallele ($VI$): Kraftvolle Öffnung nach oben.
+  * $G$ = Tonika-Parallele ($III$): Heller Dur-Klang, energiereich.
+  * $D$ = Subdominant-Dominante ($VII$): Klassischer Rock-Akkord mit Drang zurück nach $Em$.
+
+### 1.2 Akkorde
+* **Akkordtyp:** Reine Powerchords (Quintakkorde), bestehend ausschließlich aus Grundton und reiner Quinte ($1 - 5$).
+* **Griffe auf der Gitarre:** Die Skizzen zeigen die gespielten Saiten und Töne; die Bundzahlen stehen unter dem Griffbrett. Rot markiert den Grundton, Blau die Quinte.
+
+<ChordDiagramPattern
+  keyLabel="E-Moll"
+  compact={true}
+  chords={[
+    {
+      bar: 1,
+      chord: 'E5',
+      degree: 'i',
+      function: 'Tonika',
+      positions: [
+        { stringIndex: 5, stringName: 'E', fret: 0, note: 'E', octave: 2, role: 'root' },
+        { stringIndex: 4, stringName: 'A', fret: 2, note: 'B', octave: 2, role: 'fifth' }
+      ]
+    },
+    {
+      bar: 2,
+      chord: 'C5',
+      degree: 'VI',
+      function: 'Subdominant-Parallele',
+      positions: [
+        { stringIndex: 4, stringName: 'A', fret: 3, note: 'C', octave: 3, role: 'root' },
+        { stringIndex: 3, stringName: 'D', fret: 5, note: 'G', octave: 3, role: 'fifth' }
+      ]
+    },
+    {
+      bar: 3,
+      chord: 'G5',
+      degree: 'III',
+      function: 'Tonika-Parallele',
+      positions: [
+        { stringIndex: 5, stringName: 'E', fret: 3, note: 'G', octave: 2, role: 'root' },
+        { stringIndex: 4, stringName: 'A', fret: 5, note: 'D', octave: 3, role: 'fifth' }
+      ]
+    },
+    {
+      bar: 4,
+      chord: 'D5',
+      degree: 'VII',
+      function: 'Subdominant-Dominante',
+      positions: [
+        { stringIndex: 4, stringName: 'A', fret: 5, note: 'D', octave: 3, role: 'root' },
+        { stringIndex: 3, stringName: 'D', fret: 7, note: 'A', octave: 3, role: 'fifth' }
+      ]
+    }
+
+  ]}
+/>
+* **Umkehrungen:** Keine. Alle Akkorde verbleiben in der **Grundstellung** für maximalen Druck im Tieftonbereich.
+
+### 1.3 Akkordfolge
+* **Akkordfolge:** $Em - C - G - D$ ($i - VI - III - VII$).
+* **Harmonischer Rhythmus:** Streng statisch – exakt **1 Akkord pro Takt** ($4$ Schläge pro Harmonie).
+* **Tempo:** $132.00\text{ BPM}$ (gerades Rocktempo).
+* **Dynamische Wirkung:** Die Folge baut über $Em \rightarrow C \rightarrow G$ stetig an Helligkeit auf und entlädt sich auf $D$, um zyklisch wieder in das dunkle $Em$ zu fallen.
+
+<ChordProgression chords={['Em', 'C', 'G', 'D']} keyRoot="E" scale="naturalMinor" />
+
+### 1.4 Stimmführung
+* **Bassbewegung:** $E \rightarrow C \rightarrow G \rightarrow D$ (stabile Terz- und Quartsprünge, die die Tonart unmissverständlich abstecken).
+* **Gemeinsame Töne (Gitarre):** Der Ton $G$ fungiert als harmonischer Anker (Terz in Em, Quinte in C, Grundton in G).
+* **Frequenz-Staffelung:** Rhythmusgitarren spielen im Mittenbereich ($E2-D3$), während der Bass die Sub-Oktave ($E1-D2$) dominiert. Dadurch entsteht kein Frequenzmatsch.
+
+---
+
+## 2. Melodie
+
+### 2.1 Tonleitern
+* **Grundtonleiter:** E-Moll-Pentatonik ($E - G - A - B - D$).
+* **Erweiterung:** Diatonisches E-Moll für Leittöne ($F\sharp$).
+* **Tonumfang:** $E3$ bis $D4$ (genau eine Septime). Liegt optimal im druckvollen Tenorregister – singbar, fokussiert und ohne stimmliche Überdehnung.
+
+### 2.2 Zielnoten
+* **Takt 1 (Em):** Zielton auf Schlag $1$ ist das **E3** (Grundton $1$ $\rightarrow$ absolut stabil und geerdet).
+* **Takt 2 (C):** Zielton auf Schlag $1$ ist das **G3** (Akkordquinte $5$ von C $\rightarrow$ offener Schwebezustand).
+* **Takt 3 (G):** Zielton auf Schlag $1$ ist das **D4** (Akkordquinte $5$ von G $\rightarrow$ strahlend, Spitzenton).
+* **Takt 4 (D):** Zielton auf Schlag $1$ ist das **F#3** (Akkordterz $3$ von D $\rightarrow$ melodischer Zug zurück zur Tonika).
+
+### 2.3 Spannung und Auflösung
+* **Leitton-Spannung:** Das $F\sharp 3$ in Takt 4 (über D5) verlangt nach einer schrittweisen Auflösung nach unten zum Grundton $D3$ bzw. nach oben in das tonale Zentrum $E3$ auf Takt 1 des nächsten Durchgangs.
+* **Ruhepol:** Das tiefe $E3$ in Takt 1 beendet jegliche Instabilität.
+
+### 2.4 Dissonanzen
+* **Purismus in Schritt 0:** Es werden **keine** Bendings, Slides, Vorhalte oder Blue Notes verwendet.
+* Jeder Ton ist ein direkter Skalen- oder Akkordton, um das tonale Fundament lupenrein darzustellen.
+
+### 2.5 Kontur und Höhepunkt
+* **Kontur:** Bogenform mit anschließender absteigender Tonfolge.
+* **Schritte und Sprünge:**
+  * Takt 1: Schritte aufwärts ($E3 \rightarrow G3 \rightarrow A3 \rightarrow B3$).
+  * Takt 3: **Der Intervallsprung und melodische Höhepunkt** auf das hohe **D4** auf Schlag 1.
+  * **Ausgleichsbewegung:** Auf den Höhepunkt $D4$ folgt sofort ein stufenweiser Abstieg ($D4 \rightarrow B3 \rightarrow A3 \rightarrow G3$).
+
+---
+
+## 3. Rhythmus
+
+### 3.1 Metrum und Taktart
+* **Taktart:** $4/4$-Takt (gerader Rockrhythmus).
+* **Unterteilung:** Gerade Achtelnoten. Keine Triolen, kein Shuffle, kein ternäres Rhythmusgefühl.
+
+### 3.2 Phrasierung und Einsätze
+* **Einsatz:** Strenger **Beginn auf Schlag 1**.
+* Weder Leadgitarre noch Gesang nutzen Auftakte oder verspätete Einsätze. Jeder Taktanfang wird direkt angeschlagen beziehungsweise gesungen.
+
+### 3.3 Noten und Artikulation
+* **Rhythmisches Motiv der Melodie:**
+  * Takt 1: Viertel ($1$) – Zwei Achtel ($2, 2+$) – Viertel ($3$) – Viertel ($4$).
+  * Takt 2: Halbe Note ($1-2$) – Halbe Pause ($3-4$).
+  * Takt 3: Viertel ($1$) – Zwei Achtel ($2, 2+$) – Viertel ($3$) – Viertel ($4$).
+  * Takt 4: Halbe Note ($1-2$) – Halbe Note ($3-4$).
+* **Artikulation:**
+  * Leadgitarre: Wechselschlag (lebendig, dynamisch).
+  * Gesang: Gebunden mit natürlichen Tonhöhenübergängen und Vibrato.
+  * Rhythmusgitarre: Durchgängige, druckvolle Abschläge.
+
+### 3.4 Groove
+* **Betonung:** Ausschließlich auf den Zählzeiten. Die Betonungen liegen auf den schweren Zählzeiten $1$ und $3$ (Bassdrum) sowie $2$ und $4$ (Snare).
+* Keine Synkopen, keine verschobenen Phrasen.
+
+### 3.5 Pausen und Atmung
+* **Takt 2:** Schlag $3$ und $4$ sind vollständige Pausen für Leadgitarre und Gesang.
+* Diese Pause schafft den nötigen Freiraum für das Ohr (und die Atemberechnung der KI), bevor in Takt 3 der Höhepunkt einsetzt.
+
+---
+
+## 4. Motive und Form
+
+### 4.1 Kernmotiv
+* **Motivumfang:** $5$ Töne in Takt 1 ($E3 - G3 - A3 - B3 - B3$).
+* **Rhythmisches Erkennungsmerkmal:** `[Viertel] - [Achtel + Achtel] - [Viertel] - [Viertel]`.
+
+### 4.2 Variation
+* **Tonhöhenvariation:** Takt 3 nutzt exakt denselben Rhythmus wie Takt 1, ersetzt die Töne jedoch vollständig durch die absteigende Höhepunktlinie ($D4 - B3 - A3 - G3 - G3$).
+* **Rhythmische Dehnung:** Takt 4 schließt die Bewegung mit zwei ruhigen Halben Noten ($F\sharp 3 - D3$) ab.
+
+### 4.3 Frage und Antwort
+* **Vordersatz (Frage – Takt 1 und 2):**
+  * Steigt auf und landet auf dem $G3$ über dem C-Akkord. Klingt offen und unvollendet.
+* **Nachsatz (Antwort – Takt 3 und 4):**
+  * Startet auf dem Höhepunkt $D4$, fällt stufenweise ab und landet über das $F\sharp 3$ stabil auf dem $D3$. Schließt die viertaktige Periode harmonisch ab.
+
+### 4.4 Songabschnitt
+* **Funktion des Abschnitts:** Dieses viertaktige Muster dient als **Hauptriff und Refrainfundament**.
+* Es ist so aufgebaut, dass es nahtlos als viertaktige Schleife wiederholt werden kann.
+
+---
+
+## 5. Arrangement
+
+### 5.1 Schlagzeug
+* **Hi-Hat:** Durchgehende Achtelnoten ($1, +, 2, +, 3, +, 4, +$), geschlossen.
+* **Snare:** Knochentrockener Rückschlag exakt auf Schlag **2** und **4**.
+* **Bassdrum:** Felsenfester Schlag auf Zählzeit **1** und **3** (synchron zum Puls).
+
+<DrumPattern
+  interactive={false}
+  patternData={[
+    { name: 'Kick - Hit', note: 'C1', color: '#f87171', activeSteps: [0, 4] },
+    { name: 'Snare - Center', note: 'D1', color: '#fbbf24', activeSteps: [2, 6] },
+    { name: 'Hi-Hat - Closed Edge', note: 'A#-1', color: '#4ade80', activeSteps: [0, 1, 2, 3, 4, 5, 6, 7] }
+  ]}
+/>
+
+### 5.2 Bass
+* **Klang und Lage:** Satter Rock-Pick-Bass im tiefen Register ($E1 - D2$).
+* **Rhythmus:** Durchgehende, pumpende Achtelnoten zur Bindung an die Rhythmusgitarre (Anschlagstärke: 102).
+* **Töne:**
+  * Takt 1 (Em): 8x **E1**
+  * Takt 2 (C):  8x **C1**
+  * Takt 3 (G):  8x **G1**
+  * Takt 4 (D):  8x **D1**
+
+<BassPattern
+  keyRoot="E"
+  scale="naturalMinor"
+  bars={[
+    { chord: 'Em', note: 'E1', velocity: 102 },
+    { chord: 'C', note: 'C1', velocity: 102 },
+    { chord: 'G', note: 'G1', velocity: 102 },
+    { chord: 'D', note: 'D1', velocity: 102 }
+  ]}
+/>
+
+### 5.3 Rhythmusgitarre
+* **Klang:** Verzerrt (Overdrive/Crunch), mittenbetont.
+* **Spieltechnik:** Durchgehende Achtel-Abschläge.
+* **Töne:**
+  * Takt 1: 8x **E5**-Powerchord ($E2 + B2$)
+  * Takt 2: 8x **C5**-Powerchord ($C3 + G3$)
+  * Takt 3: 8x **G5**-Powerchord ($G2 + D3$)
+  * Takt 4: 8x **D5**-Powerchord ($D3 + A3$)
+
+<GuitarPattern
+  keyRoot="E"
+  scale="naturalMinor"
+  bars={[
+    { chord: 'Em', notes: ['E2', 'B2'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'C', notes: ['C3', 'G3'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'G', notes: ['G2', 'D3'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] },
+    { chord: 'D', notes: ['D3', 'A3'], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'down', 'down', 'down', 'down', 'down', 'down', 'down'] }
+  ]}
+/>
+
+### 5.4 Leadgitarre
+* **Klang:** Breiter Crunch / singender, anhaltender Leadton mit klaren Mitten.
+* **Notenfolge:**
+  * Takt 1: $E3$ (Viertel), $G3$ (Achtel), $A3$ (Achtel), $B3$ (Viertel), $B3$ (Viertel)
+  * Takt 2: $G3$ (Halbe Note auf 1-2), *Pausen auf 3 und 4*
+  * Takt 3: $D4$ (Viertel), $B3$ (Achtel), $A3$ (Achtel), $G3$ (Viertel), $G3$ (Viertel)
+  * Takt 4: $F\sharp 3$ (Halbe Note auf 1-2), $D3$ (Halbe Note auf 3-4)
+
+<GuitarPattern
+  keyRoot="E"
+  scale="naturalMinor"
+  bars={[
+    { chord: 'Em', chordDisplay: 'Em', notes: [], noteEvents: [
+      { note: 'E3', startStep: 0, lengthSteps: 2 },
+      { note: 'G3', startStep: 2, lengthSteps: 1 },
+      { note: 'A3', startStep: 3, lengthSteps: 1 },
+      { note: 'B3', startStep: 4, lengthSteps: 2 },
+      { note: 'B3', startStep: 6, lengthSteps: 2 }
+    ], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'rest', 'up', 'down', 'up', 'rest', 'down', 'rest'] },
+    { chord: 'C', chordDisplay: 'C', notes: [], noteEvents: [
+      { note: 'G3', startStep: 0, lengthSteps: 4 }
+    ], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'rest', 'rest', 'rest', 'rest', 'rest', 'rest', 'rest'] },
+    { chord: 'G', chordDisplay: 'G', notes: [], noteEvents: [
+      { note: 'D4', startStep: 0, lengthSteps: 2 },
+      { note: 'B3', startStep: 2, lengthSteps: 1 },
+      { note: 'A3', startStep: 3, lengthSteps: 1 },
+      { note: 'G3', startStep: 4, lengthSteps: 2 },
+      { note: 'G3', startStep: 6, lengthSteps: 2 }
+    ], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'rest', 'up', 'down', 'up', 'rest', 'down', 'rest'] },
+    { chord: 'D', chordDisplay: 'D', notes: [], noteEvents: [
+      { note: 'F#3', startStep: 0, lengthSteps: 4 },
+      { note: 'D3', startStep: 4, lengthSteps: 4 }
+    ], articulations: ['Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain', 'Sustain'], strumming: ['down', 'rest', 'rest', 'rest', 'down', 'rest', 'rest', 'rest'] }
+  ]}
+/>
+
+### 5.5 Gesang
+* **Klangcharakter:** Druckvoll, direkt, moderne Rock-Attitüde (Dreamtonics Synthesizer V – Liam AI).
+* **Text und Rhythmus (synchron zur Leadgitarre, mit ARPAbet-Lautschrift):**
+
+| Takt | Schlag | Note | Textsilbe | ARPAbet-Lautschrift | Emotionale Aussage |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Takt 1** | 1 | E3 | **We** | `[w iy]` | Erdung, entschlossener Start |
+| | 2 | G3 | **start** | `[s t aa]` | Vorwärtsdrang, Zischlaut |
+| | 2+ | A3 | **the** | `[dh]` | Schnelle Verbindung |
+| | 3 | B3 | **fi-** | `[f ay]` | Akzentuierte Quinte |
+| | 4 | B3 | **re** | `[er]` | Nachdruck |
+| **Takt 2** | 1–2 | G3 | **to-night** | `[t uw n ay t]` | Gehaltener Vokal, offener Ruheraum |
+| | 3–4 | – | *(Atemholen)* | – | Atemraum für die KI-Stimme |
+| **Takt 3** | 1 | D4 | **turn-** | `[t er n]` | **Melodischer Höhepunkt:** maximaler Druck |
+| | 2 | B3 | **ing** | `[ih n]` | Fallender Ausgleich |
+| | 2+ | A3 | **the** | `[dh]` | Kurze Silbe |
+| | 3 | G3 | **dark** | `[d aa r k]` | Fester Akkordton |
+| | 4 | G3 | **in-** | `[ih n]` | Vorbereitung Kadenz |
+| **Takt 4** | 1–2 | F#3 | **to** | `[t uw]` | Melancholischer Leitton |
+| | 3–4 | D3 | **light** | `[l ay t]` | Befreiender Abschluss |
+
+<VocalPattern
+  bars={[
+    {
+      chord: 'Em',
+      lyrics: [
+        { text: 'We', pitch: 'E3', startStep: 0, lengthSteps: 2 },
+        { text: 'start', pitch: 'G3', startStep: 2, lengthSteps: 1 },
+        { text: 'the', pitch: 'A3', startStep: 3, lengthSteps: 1 },
+        { text: 'fi-', pitch: 'B3', startStep: 4, lengthSteps: 2 },
+        { text: 're', pitch: 'B3', startStep: 6, lengthSteps: 2 }
+      ]
+    },
+    {
+      chord: 'C',
+      lyrics: [
+        { text: 'to-night', pitch: 'G3', startStep: 0, lengthSteps: 4 }
+      ]
+    },
+    {
+      chord: 'G',
+      lyrics: [
+        { text: 'turn-', pitch: 'D4', startStep: 0, lengthSteps: 2 },
+        { text: 'ing', pitch: 'B3', startStep: 2, lengthSteps: 1 },
+        { text: 'the', pitch: 'A3', startStep: 3, lengthSteps: 1 },
+        { text: 'dark', pitch: 'G3', startStep: 4, lengthSteps: 2 },
+        { text: 'in-', pitch: 'G3', startStep: 6, lengthSteps: 2 }
+      ]
+    },
+    {
+      chord: 'D',
+      lyrics: [
+        { text: 'to', pitch: 'F#3', startStep: 0, lengthSteps: 4 },
+        { text: 'light', pitch: 'D3', startStep: 4, lengthSteps: 4 }
+      ]
+    }
+  ]}
+/>
+
+### 5.6 Gesamtpartitur
+
+Die Gesamtpartitur verbindet alle fünf Instrumentenspuren taktgenau. Über die Pfeile lassen sich Rhythmusgitarre, Leadgitarre, Bass, Schlagzeug und Gesang einzeln oder gemeinsam aufklappen.
+
+<ScorePattern
+  section="Hauptriff / Refrain"
+  chords={['Em', 'C', 'G', 'D']}
+  tracks={[
+    {
+      name: 'Rhythm Guitar',
+      color: '#60a5fa',
+      pitchExpandable: true,
+      chordNotes: {
+        E5: ['E2', 'B2'],
+        C5: ['C3', 'G3'],
+        G5: ['G2', 'D3'],
+        D5: ['D3', 'A3']
+      },
+      bars: ['E5', 'C5', 'G5', 'D5'].map((chord) => ({
+        events: Array.from({ length: 8 }, (_, startStep) => ({
+          label: chord,
+          kind: 'chord',
+          startStep,
+          lengthSteps: 1
+        }))
+      }))
+    },
+    {
+      name: 'Lead Guitar',
+      color: '#f59e0b',
+      pitchExpandable: true,
+      bars: [
+        { events: [
+          { label: 'E3', startStep: 0, lengthSteps: 2 },
+          { label: 'G3', startStep: 2, lengthSteps: 1 },
+          { label: 'A3', startStep: 3, lengthSteps: 1 },
+          { label: 'B3', startStep: 4, lengthSteps: 2 },
+          { label: 'B3', startStep: 6, lengthSteps: 2 }
+        ] },
+        { events: [
+          { label: 'G3', startStep: 0, lengthSteps: 4 }
+        ] },
+        { events: [
+          { label: 'D4', startStep: 0, lengthSteps: 2 },
+          { label: 'B3', startStep: 2, lengthSteps: 1 },
+          { label: 'A3', startStep: 3, lengthSteps: 1 },
+          { label: 'G3', startStep: 4, lengthSteps: 2 },
+          { label: 'G3', startStep: 6, lengthSteps: 2 }
+        ] },
+        { events: [
+          { label: 'F#3', startStep: 0, lengthSteps: 4 },
+          { label: 'D3', startStep: 4, lengthSteps: 4 }
+        ] }
+      ]
+    },
+    {
+      name: 'Bass',
+      color: '#34d399',
+      pitchExpandable: true,
+      pitchExpansionHeight: 'same',
+      bars: ['E1', 'C1', 'G1', 'D1'].map((note) => ({
+        events: Array.from({ length: 8 }, (_, startStep) => ({
+          label: note,
+          startStep,
+          lengthSteps: 1
+        }))
+      }))
+    },
+    {
+      name: 'Drums',
+      color: '#f87171',
+      expandable: true,
+      compact: true,
+      collapseLanes: true,
+      lanes: [
+        {
+          name: 'Kick',
+          color: '#f87171',
+          notehead: 'circle',
+          bars: Array.from({ length: 4 }, () => ({ events: [
+            { startStep: 0, lengthSteps: 1 },
+            { startStep: 4, lengthSteps: 1 }
+          ] }))
+        },
+        {
+          name: 'Snare',
+          color: '#fbbf24',
+          notehead: 'circle',
+          bars: Array.from({ length: 4 }, () => ({ events: [
+            { startStep: 2, lengthSteps: 1 },
+            { startStep: 6, lengthSteps: 1 }
+          ] }))
+        },
+        {
+          name: 'Hi-Hat',
+          color: '#4ade80',
+          notehead: 'x',
+          bars: Array.from({ length: 4 }, () => ({ events: Array.from({ length: 8 }, (_, startStep) => ({
+            startStep,
+            lengthSteps: 1
+          })) }))
+        }
+      ]
+    },
+    {
+      name: 'Vocals',
+      color: '#c084fc',
+      pitchExpandable: true,
+      bars: [
+        { events: [
+          { label: 'We', pitch: 'E3', startStep: 0, lengthSteps: 2 },
+          { label: 'start', pitch: 'G3', startStep: 2, lengthSteps: 1 },
+          { label: 'the', pitch: 'A3', startStep: 3, lengthSteps: 1 },
+          { label: 'fi-', pitch: 'B3', startStep: 4, lengthSteps: 2 },
+          { label: 're', pitch: 'B3', startStep: 6, lengthSteps: 2 }
+        ] },
+        { events: [
+          { label: 'to-night', pitch: 'G3', startStep: 0, lengthSteps: 4 }
+        ] },
+        { events: [
+          { label: 'turn-', pitch: 'D4', startStep: 0, lengthSteps: 2 },
+          { label: 'ing', pitch: 'B3', startStep: 2, lengthSteps: 1 },
+          { label: 'the', pitch: 'A3', startStep: 3, lengthSteps: 1 },
+          { label: 'dark', pitch: 'G3', startStep: 4, lengthSteps: 2 },
+          { label: 'in-', pitch: 'G3', startStep: 6, lengthSteps: 2 }
+        ] },
+        { events: [
+          { label: 'to', pitch: 'F#3', startStep: 0, lengthSteps: 4 },
+          { label: 'light', pitch: 'D3', startStep: 4, lengthSteps: 4 }
+        ] }
+      ]
+    }
+  ]}
+/>
+
+---
+
+## 6. Qualitätscheck
+
+### 6.1 Prüffragen
+* [x] **Harmonische Stabilität:** E-Moll unverrückbar etabliert.
+* [x] **Rhythmische Synchronität:** Kick, Bass und Rhythmusgitarre greifen exakt ineinander.
+* [x] **Ausgleichsregel:** Intervallsprung auf $D4$ in Takt 3 wird sofort durch stufenweisen Abstieg abgefangen.
+* [x] **Höhepunkt:** Genau ein melodischer Höhepunkt auf Schlag 1 von Takt 3.
+* [x] **Atmung:** Klare 2-Schlag-Pause in Takt 2 vorhanden.
+* [x] **Geradlinigkeit:** Keine störenden Synkopen oder Ghostnotes in Schritt 0.
+
+### 6.2 Bewertung
+* **Einstufung:** **Stufe 2 (Solides Grundgerüst und tragfähiges Hauptthema)**.
+* **Begründung:** Alle handwerklichen und theoretischen Kriterien für ein treibendes Rock-Fundament sind erfüllt. Der Track ist stabil, singbar und druckvoll.
+* **Bereit für Schritt 1:** Durch die absolute rhythmische Geradlinigkeit ist dieses Arrangement die ideale Grundlage, um es im nächsten Schritt gezielt mit **Auftakten, Synkopen und rhythmischen Verschiebungen** weiterzuentwickeln.

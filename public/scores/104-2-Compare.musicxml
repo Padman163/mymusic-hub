@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 4.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">
+<score-partwise version="4.0">
+  
+  <part-list>
+    <score-part id="P1">
+      <part-name></part-name>
+    </score-part>
+  </part-list>
+
+  <part id="P1">
+    <measure number="">
+
+      <attributes>
+        <divisions>1</divisions>
+        <key>
+          <fifths>0</fifths>
+        </key>
+        <time>
+          <beats></beats>
+          <beat-type></beat-type>
+        </time>
+        
+        <!-- WICHTIG: Definiert, dass dieses Instrument 2 Zeilen hat -->
+        <staves>2</staves>
+        
+        <!-- System 1: Violinschlüssel -->
+        <clef number="1">
+          <sign>G</sign>
+          <line>2</line>
+        </clef>
+        
+        <!-- System 2: Bassschlüssel -->
+        <clef number="2">
+          <sign>F</sign>
+          <line>4</line>
+        </clef>
+      </attributes>
+
+      
+      <!-- ========================================== -->
+      <!-- RECHTE HAND (Notensystem 1)                -->
+      <!-- ========================================== -->
+
+      
+      <!-- ========================================== -->
+      <!-- ZEIT ZURÜCKSPULEN (Time Travel)            -->
+      <!-- Wir spulen um die Dauer von 4 Vierteln     -->
+      <!-- zurück an den Anfang des Taktes.           -->
+      <!-- ========================================== -->
+      <backup>
+        <duration>4</duration>
+      </backup>
+      
+      <!-- ========================================== -->
+      <!-- LINKE HAND (Notensystem 2)                 -->
+      <!-- ========================================== -->
+      <note>
+        <pitch>
+          <step>C</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>4</duration>
+        <type>whole</type>
+        <staff>2</staff> <!-- Zuordnung zu System 2 -->
+      </note>
+      
+    </measure>
+  </part>
+</score-partwise>

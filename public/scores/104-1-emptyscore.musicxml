@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 4.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">
+<score-partwise version="4.0">
+
+  <!-- Definition der Instrumente/Spuren -->
+  <part-list>
+    <score-part id="P1">
+      <part-name>
+      </part-name>
+    </score-part>
+  </part-list>
+
+  <!-- Inhalt der Spur -->
+  <part id="P1">
+
+    <!-- Takt 1 -->
+    <measure number="">
+      <attributes>
+        <divisions>1</divisions>
+        <!-- Tonart: C-Dur (0 Vorzeichen) -->
+        <key>
+          <fifths>0</fifths>
+        </key>
+        <!-- Taktart: 4/4 -->
+        <time>
+          <beats></beats>
+          <beat-type></beat-type>
+        </time>
+        <!-- Notenschlüssel: Violinschlüssel (G) auf der 2. Linie -->
+        <clef>
+          <sign>G</sign>
+          <line>2</line>
+        </clef>
+      </attributes>
+            <barline location="left">
+        <bar-style>none</bar-style>
+      </barline>
+            <barline location="right">
+        <bar-style>regular</bar-style>
+      </barline>
+    </measure>
+  </part>
+</score-partwise>

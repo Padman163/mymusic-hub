@@ -1,0 +1,626 @@
+---
+// src/components/PowerChordSlider.astro
+const tuning = ["e", "B", "G", "D", "A", "E"];
+
+// Schmales Layout (passt perfekt in die Textspalte)
+const nutX = 125;
+const fretWidth = 46;
+const fretCount = 14; 
+const svgWidth = 784; 
+const svgHeight = 260;
+
+// Y-Achsen der Saiten
+const stringY = (index: number) => 30 + index * 26; // Y: 30, 56, 82, 108, 134, 160
+
+// Exakte X-Achse für den offenen 0. Bund und die ×-Marker
+const openNoteX = 105;
+
+// Farbpalette
+const colorRoot = "#F38181"; 
+const colorFifth = "#64C4ED"; 
+---
+
+<div class="powerchord-interactive">
+  <div class="chord-diagrams">
+
+    <!-- 1. ZWEISTIMMIG (ROOT + QUINTE) -->
+    <article class="chord-card interactive-card" data-chord-type="2">
+      <header class="chord-heading">
+        <div class="heading-content">
+          <span class="degree-label">Intervall: 1 · 5</span>
+          <h4>Zweistimmig (Root + Quinte)</h4>
+        </div>
+        <div class="chord-info-display">
+          Aktuell: <strong class="chord-name-display">E5</strong>
+        </div>
+      </header>
+
+      <div class="fretboard-scroll">
+        <div class="fretboard-wrapper">
+          <svg class="fretboard" viewBox={`0 0 ${svgWidth} ${svgHeight}`} role="img">
+            <rect x={nutX} y="15" width={fretCount * fretWidth} height="160" rx="3" fill="#18181b" stroke="#3f3f46" stroke-width="1" />
+            
+            {[3, 5, 7, 9].map(fret => <circle cx={nutX + (fret - 0.5) * fretWidth} cy="95" r="6" fill="#3f3f46" />)}
+            <circle cx={nutX + 11.5 * fretWidth} cy="69" r="6" fill="#3f3f46" />
+            <circle cx={nutX + 11.5 * fretWidth} cy="121" r="6" fill="#3f3f46" />
+
+            {tuning.map((stringName, stringIndex) => (
+              <>
+                <text class="string-label" x="75" y={stringY(stringIndex)} text-anchor="middle" dominant-baseline="central">{stringName}</text>
+                <line x1={nutX} y1={stringY(stringIndex)} x2={nutX + fretCount * fretWidth} y2={stringY(stringIndex)} stroke="#a1a1aa" stroke-width={stringIndex === 5 ? 2.6 : 1.4} />
+                <text class="muted-string" data-string={stringIndex} x={openNoteX} y={stringY(stringIndex)} dominant-baseline="central">×</text>
+              </>
+            ))}
+
+            {Array.from({ length: fretCount }, (_, index) => (
+              <>
+                <line x1={nutX + (index + 1) * fretWidth} y1="15" x2={nutX + (index + 1) * fretWidth} y2="175" stroke="#3f3f46" stroke-width="2" />
+                <text class="fret-label" x={nutX + (index + 1.5) * fretWidth - (fretWidth/2)} y="195" text-anchor="middle">{index + 1}</text>
+              </>
+            ))}
+
+            {Array.from({ length: 12 }, (_, i) => (
+              <text class="tick-label" data-fret={i} x={i === 0 ? openNoteX : nutX + (i - 0.5) * fretWidth} y="241" text-anchor="middle" dominant-baseline="central">E</text>
+            ))}
+
+            <g class="dot-root anim-group">
+              <circle cx="0" cy="0" r="13" fill={colorRoot} />
+              <text class="note-label" x="0" y="0" text-anchor="middle" dominant-baseline="central">E</text>
+            </g>
+            <g class="dot-high-fifth anim-group">
+              <circle cx="0" cy="0" r="13" fill={colorFifth} />
+              <text class="note-label" x="0" y="0" text-anchor="middle" dominant-baseline="central">B</text>
+            </g>
+          </svg>
+
+          <!-- VERTICAL SLIDER (B-Saite bis E-Saite) -->
+          <input type="range" class="vertical-string-slider slider-2note" min="1" max="5" value="5" step="1" aria-label="Grundton-Saite auswählen" />
+          <input type="range" class="horizontal-fret-slider" min="0" max="11" value="0" step="1" aria-label="Bund auswählen" />
+        </div>
+      </div>
+    </article>
+
+    <!-- 2. DREISTIMMIG (INKL. OKTAVE) -->
+    <article class="chord-card interactive-card" data-chord-type="3">
+      <header class="chord-heading">
+        <div class="heading-content">
+          <span class="degree-label">Intervall: 1 · 5 · 8</span>
+          <h4>Dreistimmig (inkl. Oktave)</h4>
+        </div>
+        <div class="chord-info-display">
+          Aktuell: <strong class="chord-name-display">E5</strong>
+        </div>
+      </header>
+
+      <div class="fretboard-scroll">
+        <div class="fretboard-wrapper">
+          <svg class="fretboard" viewBox={`0 0 ${svgWidth} ${svgHeight}`} role="img">
+            <rect x={nutX} y="15" width={fretCount * fretWidth} height="160" rx="3" fill="#18181b" stroke="#3f3f46" stroke-width="1" />
+            
+            {[3, 5, 7, 9].map(fret => <circle cx={nutX + (fret - 0.5) * fretWidth} cy="95" r="6" fill="#3f3f46" />)}
+            <circle cx={nutX + 11.5 * fretWidth} cy="69" r="6" fill="#3f3f46" />
+            <circle cx={nutX + 11.5 * fretWidth} cy="121" r="6" fill="#3f3f46" />
+
+            {tuning.map((stringName, stringIndex) => (
+              <>
+                <text class="string-label" x="75" y={stringY(stringIndex)} text-anchor="middle" dominant-baseline="central">{stringName}</text>
+                <line x1={nutX} y1={stringY(stringIndex)} x2={nutX + fretCount * fretWidth} y2={stringY(stringIndex)} stroke="#a1a1aa" stroke-width={stringIndex === 5 ? 2.6 : 1.4} />
+                <text class="muted-string" data-string={stringIndex} x={openNoteX} y={stringY(stringIndex)} dominant-baseline="central">×</text>
+              </>
+            ))}
+
+            {Array.from({ length: fretCount }, (_, index) => (
+              <>
+                <line x1={nutX + (index + 1) * fretWidth} y1="15" x2={nutX + (index + 1) * fretWidth} y2="175" stroke="#3f3f46" stroke-width="2" />
+                <text class="fret-label" x={nutX + (index + 1.5) * fretWidth - (fretWidth/2)} y="195" text-anchor="middle">{index + 1}</text>
+              </>
+            ))}
+
+            {Array.from({ length: 12 }, (_, i) => (
+              <text class="tick-label" data-fret={i} x={i === 0 ? openNoteX : nutX + (i - 0.5) * fretWidth} y="241" text-anchor="middle" dominant-baseline="central">E</text>
+            ))}
+
+            <g class="dot-root anim-group">
+              <circle cx="0" cy="0" r="13" fill={colorRoot} />
+              <text class="note-label" x="0" y="0" text-anchor="middle" dominant-baseline="central">E</text>
+            </g>
+            <g class="dot-high-fifth anim-group">
+              <circle cx="0" cy="0" r="13" fill={colorFifth} />
+              <text class="note-label" x="0" y="0" text-anchor="middle" dominant-baseline="central">B</text>
+            </g>
+            <g class="dot-octave anim-group">
+              <circle cx="0" cy="0" r="13" fill={colorRoot} />
+              <text class="note-label" x="0" y="0" text-anchor="middle" dominant-baseline="central">E</text>
+            </g>
+          </svg>
+
+          <!-- VERTICAL SLIDER (G-Saite bis E-Saite) -->
+          <input type="range" class="vertical-string-slider slider-3note" min="2" max="5" value="5" step="1" aria-label="Grundton-Saite auswählen" />
+          <input type="range" class="horizontal-fret-slider" min="0" max="11" value="0" step="1" aria-label="Bund auswählen" />
+        </div>
+      </div>
+    </article>
+
+    <!-- 3. ZWEISTIMMIG UMGEKEHRT -->
+    <article class="chord-card interactive-card" data-chord-type="2-inv">
+      <header class="chord-heading">
+        <div class="heading-content">
+          <span class="degree-label">Intervall: 5 · 1</span>
+          <h4>Zweistimmig umgekehrt (Slash-Chord)</h4>
+        </div>
+        <div class="chord-info-display">
+          Aktuell: <strong class="chord-name-display">A5/E</strong>
+        </div>
+      </header>
+
+      <div class="fretboard-scroll">
+        <div class="fretboard-wrapper">
+          <svg class="fretboard" viewBox={`0 0 ${svgWidth} ${svgHeight}`} role="img">
+            <rect x={nutX} y="15" width={fretCount * fretWidth} height="160" rx="3" fill="#18181b" stroke="#3f3f46" stroke-width="1" />
+            
+            {[3, 5, 7, 9].map(fret => <circle cx={nutX + (fret - 0.5) * fretWidth} cy="95" r="6" fill="#3f3f46" />)}
+            <circle cx={nutX + 11.5 * fretWidth} cy="69" r="6" fill="#3f3f46" />
+            <circle cx={nutX + 11.5 * fretWidth} cy="121" r="6" fill="#3f3f46" />
+
+            {tuning.map((stringName, stringIndex) => (
+              <>
+                <text class="string-label" x="75" y={stringY(stringIndex)} text-anchor="middle" dominant-baseline="central">{stringName}</text>
+                <line x1={nutX} y1={stringY(stringIndex)} x2={nutX + fretCount * fretWidth} y2={stringY(stringIndex)} stroke="#a1a1aa" stroke-width={stringIndex === 5 ? 2.6 : 1.4} />
+                <text class="muted-string" data-string={stringIndex} x={openNoteX} y={stringY(stringIndex)} dominant-baseline="central">×</text>
+              </>
+            ))}
+
+            {Array.from({ length: fretCount }, (_, index) => (
+              <>
+                <line x1={nutX + (index + 1) * fretWidth} y1="15" x2={nutX + (index + 1) * fretWidth} y2="175" stroke="#3f3f46" stroke-width="2" />
+                <text class="fret-label" x={nutX + (index + 1.5) * fretWidth - (fretWidth/2)} y="195" text-anchor="middle">{index + 1}</text>
+              </>
+            ))}
+
+            {Array.from({ length: 12 }, (_, i) => (
+              <text class="tick-label" data-fret={i} x={i === 0 ? openNoteX : nutX + (i - 0.5) * fretWidth} y="241" text-anchor="middle" dominant-baseline="central">A</text>
+            ))}
+
+            <g class="dot-bass-fifth anim-group">
+              <circle cx="0" cy="0" r="13" fill={colorFifth} />
+              <text class="note-label" x="0" y="0" text-anchor="middle" dominant-baseline="central">E</text>
+            </g>
+            <g class="dot-root anim-group">
+              <circle cx="0" cy="0" r="13" fill={colorRoot} />
+              <text class="note-label" x="0" y="0" text-anchor="middle" dominant-baseline="central">A</text>
+            </g>
+          </svg>
+
+          <!-- VERTICAL SLIDER (e-Saite bis A-Saite, da tiefste Saite für den Bass gebraucht wird) -->
+          <input type="range" class="vertical-string-slider slider-2inv" min="0" max="4" value="4" step="1" aria-label="Grundton-Saite auswählen" />
+          <input type="range" class="horizontal-fret-slider" min="0" max="11" value="0" step="1" aria-label="Bund auswählen" />
+        </div>
+      </div>
+    </article>
+
+    <!-- 4. DREISTIMMIG UMGEKEHRT -->
+    <article class="chord-card interactive-card" data-chord-type="3-inv">
+      <header class="chord-heading">
+        <div class="heading-content">
+          <span class="degree-label">Intervall: 5 · 1 · 5</span>
+          <h4>Dreistimmig umgekehrt (Wall of Sound)</h4>
+        </div>
+        <div class="chord-info-display">
+          Aktuell: <strong class="chord-name-display">A5/E</strong>
+        </div>
+      </header>
+
+      <div class="fretboard-scroll">
+        <div class="fretboard-wrapper">
+          <svg class="fretboard" viewBox={`0 0 ${svgWidth} ${svgHeight}`} role="img">
+            <rect x={nutX} y="15" width={fretCount * fretWidth} height="160" rx="3" fill="#18181b" stroke="#3f3f46" stroke-width="1" />
+            
+            {[3, 5, 7, 9].map(fret => <circle cx={nutX + (fret - 0.5) * fretWidth} cy="95" r="6" fill="#3f3f46" />)}
+            <circle cx={nutX + 11.5 * fretWidth} cy="69" r="6" fill="#3f3f46" />
+            <circle cx={nutX + 11.5 * fretWidth} cy="121" r="6" fill="#3f3f46" />
+
+            {tuning.map((stringName, stringIndex) => (
+              <>
+                <text class="string-label" x="75" y={stringY(stringIndex)} text-anchor="middle" dominant-baseline="central">{stringName}</text>
+                <line x1={nutX} y1={stringY(stringIndex)} x2={nutX + fretCount * fretWidth} y2={stringY(stringIndex)} stroke="#a1a1aa" stroke-width={stringIndex === 5 ? 2.6 : 1.4} />
+                <text class="muted-string" data-string={stringIndex} x={openNoteX} y={stringY(stringIndex)} dominant-baseline="central">×</text>
+              </>
+            ))}
+
+            {Array.from({ length: fretCount }, (_, index) => (
+              <>
+                <line x1={nutX + (index + 1) * fretWidth} y1="15" x2={nutX + (index + 1) * fretWidth} y2="175" stroke="#3f3f46" stroke-width="2" />
+                <text class="fret-label" x={nutX + (index + 1.5) * fretWidth - (fretWidth/2)} y="195" text-anchor="middle">{index + 1}</text>
+              </>
+            ))}
+
+            {Array.from({ length: 12 }, (_, i) => (
+              <text class="tick-label" data-fret={i} x={i === 0 ? openNoteX : nutX + (i - 0.5) * fretWidth} y="241" text-anchor="middle" dominant-baseline="central">A</text>
+            ))}
+
+            <g class="dot-bass-fifth anim-group">
+              <circle cx="0" cy="0" r="13" fill={colorFifth} />
+              <text class="note-label" x="0" y="0" text-anchor="middle" dominant-baseline="central">E</text>
+            </g>
+            <g class="dot-root anim-group">
+              <circle cx="0" cy="0" r="13" fill={colorRoot} />
+              <text class="note-label" x="0" y="0" text-anchor="middle" dominant-baseline="central">A</text>
+            </g>
+            <g class="dot-high-fifth anim-group">
+              <circle cx="0" cy="0" r="13" fill={colorFifth} />
+              <text class="note-label" x="0" y="0" text-anchor="middle" dominant-baseline="central">E</text>
+            </g>
+          </svg>
+
+          <!-- VERTICAL SLIDER (B-Saite bis A-Saite, da tiefste und höchste Saite gebraucht werden) -->
+          <input type="range" class="vertical-string-slider slider-3inv" min="1" max="4" value="4" step="1" aria-label="Grundton-Saite auswählen" />
+          <input type="range" class="horizontal-fret-slider" min="0" max="11" value="0" step="1" aria-label="Bund auswählen" />
+        </div>
+      </div>
+    </article>
+
+  </div>
+
+  <p class="diagram-legend">
+    <span><i class="legend-dot" style={`background-color: ${colorRoot};`}></i>1 / 8 (Grundton / Oktave)</span>
+    <span><i class="legend-dot" style={`background-color: ${colorFifth};`}></i>5 (Quinte, oben oder im Bass)</span>
+    <span>× = nicht spielen</span>
+  </p>
+</div>
+
+<script>
+  function setupPowerChordInteractive() {
+    const cards = document.querySelectorAll('.interactive-card');
+    
+    // Vollständiges Mapping
+    const notesByString = {
+      5: ['E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G'],
+      4: ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'C'],
+      3: ['D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F'],
+      2: ['G', 'G#', 'A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#'],
+      1: ['B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'C', 'C#', 'D'],
+      0: ['E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G']
+    };
+
+    const nutX = 125;
+    const fretWidth = 46;
+    const openNoteX = 105;
+    const getStringY = (idx) => 30 + idx * 26;
+    const getX = (f) => f === 0 ? openNoteX : nutX + (f - 0.5) * fretWidth;
+
+    cards.forEach(card => {
+      const vSlider = card.querySelector('.vertical-string-slider');
+      const hSlider = card.querySelector('.horizontal-fret-slider');
+      const nameDisplay = card.querySelector('.chord-name-display');
+      const tickLabels = card.querySelectorAll('.tick-label');
+      
+      const chordType = card.getAttribute('data-chord-type');
+      const is3Note = (chordType === '3' || chordType === '3-inv');
+      const isInverted = (chordType === '2-inv' || chordType === '3-inv');
+      
+      const dotRoot = card.querySelector('.dot-root');
+      const dotHighFifth = card.querySelector('.dot-high-fifth');
+      const dotOctave = card.querySelector('.dot-octave');
+      const dotBassFifth = card.querySelector('.dot-bass-fifth');
+
+      function updateDiagram() {
+        const fret = parseInt(hSlider.value, 10);
+        const rootString = parseInt(vSlider.value, 10);
+        
+        // Ticks anpassen
+        tickLabels.forEach((lbl, i) => {
+          lbl.textContent = notesByString[rootString][i];
+          if (i === fret) {
+            lbl.setAttribute('fill', '#F38181');
+            lbl.setAttribute('font-weight', '800');
+          } else {
+            lbl.setAttribute('fill', '#71717a');
+            lbl.setAttribute('font-weight', '600');
+          }
+        });
+
+        // Berechne Saiten
+        const highFifthString = rootString - 1;
+        const octaveString = rootString - 2;
+        const bassFifthString = rootString + 1;
+
+        // Berechne Bünde & Ausgleichs-Logiken
+        const highFifthFretOffset = (rootString === 2) ? 3 : 2;
+        const highFifthFret = fret === 0 ? highFifthFretOffset : fret + highFifthFretOffset;
+
+        const octaveFretOffset = (rootString === 2 || rootString === 3) ? 3 : 2;
+        const octaveFret = fret === 0 ? octaveFretOffset : fret + octaveFretOffset;
+
+        // B-Saiten-Ausgleich rückwärts: Von B zu G (1 zu 2) ist eine kleine Terz, daher Fret - 1 für den Bass
+        const bassFifthFretOffset = (rootString === 1) ? -1 : 0;
+        const bassFifthFret = fret + bassFifthFretOffset;
+
+        // Hilfsfunktion zum sauberen Animieren/Verstecken der SVG-Noten
+        const updateDot = (dot, string, f) => {
+          if (!dot) return;
+          // Wenn die Saite nicht existiert oder der Bund negativ ist (z.B. B-Saite im 0. Bund rückwärts), ausblenden
+          if (f < 0 || string < 0 || string > 5) {
+            dot.style.display = 'none';
+            return;
+          }
+          dot.style.display = '';
+          dot.style.transform = `translate(${getX(f)}px, ${getStringY(string)}px)`;
+          const txt = dot.querySelector('text');
+          const noteName = notesByString[string][f];
+          txt.textContent = noteName;
+          txt.setAttribute('font-size', noteName.length > 1 ? '10' : '12');
+        };
+
+        updateDot(dotRoot, rootString, fret);
+        updateDot(dotHighFifth, highFifthString, highFifthFret);
+        updateDot(dotOctave, octaveString, octaveFret);
+        updateDot(dotBassFifth, bassFifthString, bassFifthFret);
+
+        // Anzeige-Text anpassen (mit Slash-Chord Erkennung)
+        const rootNoteName = notesByString[rootString][fret];
+        let displayName = rootNoteName + '5';
+        if (isInverted && bassFifthFret >= 0 && bassFifthString <= 5) {
+            displayName += '/' + notesByString[bassFifthString][bassFifthFret];
+        }
+        if (nameDisplay) nameDisplay.textContent = displayName;
+
+        // Gemutete Saiten aktualisieren
+        const activeStrings = [rootString];
+        if (dotHighFifth && highFifthString >= 0) activeStrings.push(highFifthString);
+        if (dotOctave && octaveString >= 0) activeStrings.push(octaveString);
+        if (dotBassFifth && bassFifthString <= 5 && bassFifthFret >= 0) activeStrings.push(bassFifthString);
+          
+        card.querySelectorAll('.muted-string').forEach(muted => {
+          const sIdx = parseInt(muted.getAttribute('data-string'), 10);
+          muted.setAttribute('opacity', activeStrings.includes(sIdx) ? '0' : '1');
+        });
+      }
+
+      vSlider?.addEventListener('input', updateDiagram);
+      hSlider?.addEventListener('input', updateDiagram);
+      
+      updateDiagram();
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', setupPowerChordInteractive);
+  document.addEventListener('astro:page-load', setupPowerChordInteractive);
+</script>
+
+<style>
+  .powerchord-interactive {
+    margin: 1.5rem 0 2rem;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+
+  .chord-diagrams {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .chord-card {
+    display: flex;
+    flex-direction: column;
+    padding: 1.25rem;
+    border: 1px solid #303036;
+    border-radius: 10px;
+    background: linear-gradient(145deg, #1b1b20, #121214);
+    box-shadow: 0 5px 16px rgb(0 0 0 / 18%);
+  }
+
+  .chord-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #303036;
+    padding-bottom: 0.75rem;
+  }
+
+  .heading-content {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 0.25rem;
+  }
+
+  .chord-heading h4 {
+    margin: 0 !important;
+    color: #fafafa;
+    font-size: 1.35rem;
+  }
+
+  .degree-label {
+    color: #FFAAA6;
+    font-size: 0.85rem;
+    font-weight: 650;
+  }
+
+  .chord-info-display {
+    color: #a1a1aa;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  .chord-name-display {
+    color: #F38181;
+    font-size: 1.4rem;
+    font-weight: 800;
+    margin-left: 0.4rem;
+  }
+
+  .fretboard-scroll {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+  }
+
+  .fretboard-wrapper {
+    position: relative;
+    width: 784px; 
+    height: 260px; 
+  }
+
+  .fretboard {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    overflow: visible;
+  }
+
+  .string-label,
+  .muted-string,
+  .fret-label {
+    font-family: system-ui, -apple-system, sans-serif;
+    fill: #a1a1aa;
+  }
+  
+  .string-label {
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .muted-string {
+    fill: #71717a;
+    font-size: 18px;
+    font-weight: 600;
+    transition: opacity 0.2s ease;
+  }
+  
+  .note-label {
+    fill: #09090b;
+    font-weight: 800;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+  
+  .fret-label {
+    fill: #d4d4d8;
+    font-size: 13px;
+    font-weight: 650;
+  }
+
+  .tick-label {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 11px;
+    transition: all 0.2s ease;
+  }
+
+  .anim-group {
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* -- HORIZONTALER SLIDER (Bünde) -- */
+  .horizontal-fret-slider {
+    position: absolute;
+    top: 217px;  
+    left: 95px;   
+    width: 526px; 
+    height: 20px;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* -- VERTIKALER SLIDER (Saiten) -- */
+  .vertical-string-slider {
+    position: absolute;
+    margin: 0;
+    padding: 0;
+    height: 20px;
+    transform: rotate(90deg); 
+    transform-origin: center center;
+  }
+
+  /* Individuelle Positionen der Vertikal-Slider für saubere Zentrierung */
+  /* 2-Note: Saite 1 bis 5 (Y=56 bis 160). Center Y=108. */
+  .slider-2note { top: 98px; left: -17px; width: 124px; }
+  
+  /* 3-Note: Saite 2 bis 5 (Y=82 bis 160). Center Y=121. */
+  .slider-3note { top: 111px; left: -4px; width: 98px; }
+  
+  /* 2-Inv: Saite 0 bis 4 (Y=30 bis 134). Center Y=82. */
+  .slider-2inv { top: 72px; left: -17px; width: 124px; }
+  
+  /* 3-Inv: Saite 1 bis 4 (Y=56 bis 134). Center Y=95. */
+  .slider-3inv { top: 85px; left: -4px; width: 98px; }
+
+  /* Custom Slider Styling */
+  input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+  }
+  
+  input[type=range]:focus {
+    outline: none;
+  }
+
+  input[type=range]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 6px;
+    background: #3f3f46;
+    border-radius: 3px;
+  }
+
+  .vertical-string-slider::-webkit-slider-runnable-track {
+    background: #3f3f4688; 
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: #F38181;
+    border: 3px solid #18181b;
+    margin-top: -7px;
+    box-shadow: 0 0 6px rgba(0,0,0,0.6);
+    transition: transform 0.1s ease;
+  }
+
+  input[type=range]::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+  }
+
+  /* Firefox Fallbacks */
+  input[type=range]::-moz-range-track {
+    width: 100%;
+    height: 6px;
+    background: #3f3f46;
+    border-radius: 3px;
+  }
+  input[type=range]::-moz-range-thumb {
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    background: #F38181;
+    border: 3px solid #18181b;
+    box-shadow: 0 0 6px rgba(0,0,0,0.6);
+  }
+
+  .diagram-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    margin: 1.5rem 0 0;
+    color: #a1a1aa;
+    font-size: 0.85rem;
+  }
+
+  .diagram-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .legend-dot {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 50%;
+  }
+</style>

@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 4.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">
+<score-partwise version="4.0">
+  
+  <part-list>
+    <score-part id="P1">
+      <part-name></part-name>
+    </score-part>
+  </part-list>
+
+  <part id="P1">
+    
+    <!-- TAKT 1 -->
+    <measure number="">
+      <attributes>
+        <!-- 1 Division = 1 Viertelnote (da beat-type = 4) -->
+        <divisions>1</divisions>
+        <key>
+          <fifths>0</fifths>
+        </key>
+        <time>
+          <beats></beats>
+          <beat-type></beat-type>
+        </time>
+        <clef>
+          <sign>G</sign>
+          <line>2</line>
+        </clef>
+      </attributes>
+            <barline location="left">
+        <bar-style>none</bar-style>
+      </barline>
+      
+      <!-- F5 (Oberste Linie) -->
+      <note>
+        <pitch>
+          <step>F</step>
+          <octave>5</octave>
+        </pitch>
+        <duration>1</duration>
+        <type>quarter</type>
+        <stem>none</stem>
+      </note>
+      <!-- E5 -->
+      <note>
+        <pitch>
+          <step>E</step>
+          <octave>5</octave>
+        </pitch>
+        <duration>1</duration>
+        <type>quarter</type>
+        <stem>none</stem>
+      </note>
+      <!-- D5 -->
+      <note>
+        <pitch>
+          <step>D</step>
+          <octave>5</octave>
+        </pitch>
+        <duration>1</duration>
+        <type>quarter</type>
+        <stem>none</stem>
+      </note>
+      <!-- C5 -->
+      <note>
+        <pitch>
+          <step>C</step>
+          <octave>5</octave>
+        </pitch>
+        <duration>1</duration>
+        <type>quarter</type>
+        <stem>none</stem>
+      </note>
+
+
+  
+      <!-- B4 (Achtung: Das deutsche 'H' ist in MusicXML immer ein 'B') -->
+      <note>
+        <pitch>
+          <step>B</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>1</duration>
+        <type>quarter</type>
+        <stem>none</stem>
+      </note>
+      <!-- A4 -->
+      <note>
+        <pitch>
+          <step>A</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>1</duration>
+        <type>quarter</type>
+        <stem>none</stem>
+      </note>
+      <!-- G4 -->
+      <note>
+        <pitch>
+          <step>G</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>1</duration>
+        <type>quarter</type>
+        <stem>none</stem>
+      </note>
+      <!-- F4 -->
+      <note>
+        <pitch>
+          <step>F</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>1</duration>
+        <type>quarter</type>
+        <stem>none</stem>
+      </note>
+   
+      <!-- E4 (Unterste Linie) -->
+      <note>
+        <pitch>
+          <step>E</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>1</duration>
+        <type>quarter</type>
+        <stem>none</stem>
+      </note>
+            <!-- D4 (Unterste Linie) -->
+      <note>
+        <pitch>
+          <step>D</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>1</duration>
+        <type>quarter</type>
+        <stem>none</stem>
+      </note>
+            <!-- C4 (Unterste Linie) -->
+      <note>
+        <pitch>
+          <step>C</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>1</duration>
+        <type>quarter</type>
+        <stem>none</stem>
+      </note>
+
+    </measure>
+    
+  </part>
+</score-partwise>

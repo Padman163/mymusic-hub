@@ -1,0 +1,378 @@
+---
+// src/components/SheetMusicPlayer.astro
+interface Props {
+  musicXmlUrl: string;
+  soundFontUrl?: string;
+  showControls?: boolean;
+}
+
+const { musicXmlUrl, soundFontUrl, showControls = true } = Astro.props;
+---
+
+<div class="alphatab-wrapper" data-xml={musicXmlUrl} data-sf2={soundFontUrl} data-sheet-music-player>
+  {showControls && (
+    <div class="controls">
+      {soundFontUrl ? (
+        <button class="play-btn" type="button" disabled>Lädt SoundFont…</button>
+      ) : (
+        <p class="player-status" role="status" aria-live="polite">Partitur wird geladen. Wiedergabe benötigt eine SoundFont-Datei.</p>
+      )}
+    </div>
+  )}
+  {!showControls && <p class="player-status" role="status" aria-live="polite" hidden></p>}
+  <div class="alphatab-frame">
+    <div class="alphatab-container"></div>
+  </div>
+</div>
+
+<script>
+  import * as alphaTab from '@coderline/alphatab';
+
+  const initializeWrapper = (wrapper: Element) => {
+      if (wrapper.hasAttribute('data-initialized') || wrapper.getBoundingClientRect().width === 0) return;
+      wrapper.setAttribute('data-initialized', 'true');
+
+      const container = wrapper.querySelector('.alphatab-container') as HTMLElement;
+      const playBtn = wrapper.querySelector('.play-btn') as HTMLButtonElement | null;
+      const status = wrapper.querySelector('.player-status') as HTMLElement | null;
+      const xmlUrl = wrapper.getAttribute('data-xml');
+      const sf2Url = wrapper.getAttribute('data-sf2');
+      const isQuizScore = xmlUrl?.includes('/105-') === true;
+
+      const api = new alphaTab.AlphaTabApi(container, {
+        core: {
+          fontDirectory: '/alphatab/font/',
+          engine: 'svg'
+        },
+    
+display: isQuizScore
+  ? {
+    layoutMode: alphaTab.LayoutMode.Parchment,
+    scale: 1
+  }
+  : {
+  layoutMode: alphaTab.LayoutMode.Parchment, // Erzwingt strikte System- und Takt-Vorgaben
+          // 1. Abstand ZWISCHEN den beiden Notenzeilen minimieren:
+          notationStaffPaddingBottom: 100, // Abstand unter der oberen Zeile (Standard: 15)
+          notationStaffPaddingTop: 100,    // Abstand über der unteren Zeile (Standard: 15)      
+          notationStaffPaddingTop: -20, // Abstand unter der oberen Zeile (Standard: 15)
+          notationStaffPaddingBottom: 0,    // Abstand über der unteren Zeile (Standard: 15)
+
+          // 2. Korrekte Namen für den Rand ganz oben und ganz unten:
+          firstNotationStaffPaddingTop: 0,
+          firstNotationStaffPaddingBottom: 100,
+          lastNotationStaffPaddingBottom: 0,
+          lastNotationStaffPaddingTop: 100,
+          systemStaffDistance: -100,
+          stavesSpacing: -100,
+          lastSystemFillThreshold: 0,
+          scale: 1.0
+          
+          },
+        player: {
+          enablePlayer: Boolean(sf2Url),
+          enableUserInteraction: Boolean(sf2Url),
+          soundFont: sf2Url ?? undefined,
+          workerFile: sf2Url ? '/alphatab/alphaTab.worker.mjs' : undefined
+        }
+      });
+
+      const tabDurationBeatIds = new Set<number>();
+      const adjustsDottedTabNotes = xmlUrl?.endsWith('/104-3-Punktierte-Noten.musicxml') === true;
+      const showsTabNoteValues =
+        xmlUrl?.endsWith('/104-3-Tab-Notenwerte.musicxml') ||
+        xmlUrl?.endsWith('/104-3-Punktierte-Noten.musicxml');
+
+      const adjustTabDotPositions = () => {
+        if (!adjustsDottedTabNotes) return;
+
+        container.querySelectorAll('svg g.at').forEach((dotGlyph) => {
+          if (dotGlyph.getAttribute('data-tab-dot-adjusted') === 'true') return;
+          if (dotGlyph.querySelector('text')?.textContent.codePointAt(0) !== 0xe1e7) return;
+
+          const transform = dotGlyph.getAttribute('transform');
+          const match = transform?.match(/^translate\(([-\d.]+)[,\s]+([-\d.]+)\)$/);
+          if (!match) return;
+
+          const x = Number(match[1]);
+          const y = Number(match[2]);
+          if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+
+          dotGlyph.setAttribute('transform', `translate(${x} ${y - 12})`);
+          dotGlyph.setAttribute('data-tab-dot-adjusted', 'true');
+        });
+      };
+
+      if (adjustsDottedTabNotes) {
+        const dotObserver = new MutationObserver(adjustTabDotPositions);
+        dotObserver.observe(container, { childList: true, subtree: true });
+      }
+
+      api.scoreLoaded.on((score) => {
+        const hasPickupExample = xmlUrl?.endsWith('/104-6-Auftakt-Wiederholung.musicxml');
+
+        if (showsTabNoteValues) {
+          score.tracks.forEach((track) => {
+            track.staves.forEach((staff) => {
+              staff.bars.forEach((bar) => {
+                bar.voices.forEach((voice) => {
+                  voice.beats.forEach((beat) => {
+                    if (
+                      beat.duration === alphaTab.model.Duration.Whole ||
+                      beat.duration === alphaTab.model.Duration.Half
+                    ) {
+                      tabDurationBeatIds.add(beat.id);
+                    }
+                  });
+                });
+              });
+            });
+          });
+        }
+
+        if (xmlUrl?.endsWith('/104-8-Artikulation.musicxml')) {
+          score.tracks.forEach((track) => {
+            track.defaultSystemsLayout = 1;
+            track.systemsLayout = [1, 1, 1];
+          });
+        }
+
+        if (xmlUrl?.endsWith('/104-9-Dynamik-Tempo.musicxml')) {
+          score.tracks.forEach((track) => {
+            track.defaultSystemsLayout = 2;
+            track.systemsLayout = [2];
+          });
+        }
+
+        if (showsTabNoteValues) {
+          score.tracks.forEach((track) => {
+            track.defaultSystemsLayout = 2;
+            track.systemsLayout = [2, 2];
+            track.staves.forEach((staff) => {
+              staff.tabConfig = {
+                ...staff.tabConfig,
+                rhythm: alphaTab.TabRhythmMode.ShowWithBars
+              };
+            });
+          });
+        }
+
+        if (xmlUrl?.endsWith('/104-2-Tabulatur.musicxml')) {
+          score.stylesheet.scoreConfig.timeSignature = { isVisible: false };
+          score.tracks.forEach((track) => {
+            track.staves.forEach((staff) => {
+              staff.tabConfig = {
+                ...staff.tabConfig,
+                timeSignature: { isVisible: false },
+                rhythm: alphaTab.TabRhythmMode.Hidden
+              };
+            });
+          });
+        }
+
+        if (hasPickupExample) {
+          score.stylesheet.scoreConfig.barNumber = 0;
+        }
+
+        score.tracks.forEach((track) => {
+          track.staves.forEach((staff) => {
+            staff.bars.forEach((bar) => {
+              bar.displayScale = hasPickupExample && bar.index === 0 ? 0.5 : 1;
+            });
+          });
+        });
+
+        if (hasPickupExample && score.masterBars.length > 0) {
+          score.masterBars[0].displayScale = 0.5;
+        }
+
+        if (
+          xmlUrl?.endsWith('/104-2-Violin.musicxml') ||
+          xmlUrl?.endsWith('/104-2-Bass.musicxml')
+        ) {
+          score.tracks.forEach((track) => {
+            track.staves.forEach((staff) => {
+              staff.bars.forEach((bar) => {
+                bar.voices.forEach((voice) => {
+                  voice.beats.forEach((beat) => {
+                    beat.style ??= new alphaTab.model.BeatStyle();
+                    beat.style.colors.set(
+                      alphaTab.model.BeatSubElement.StandardNotationStem,
+                      new alphaTab.model.Color(0, 0, 0, 0)
+                    );
+                  });
+                });
+              });
+            });
+          });
+        }
+
+        if (xmlUrl?.endsWith('/104-1-emptytab.musicxml')) {
+          score.stylesheet.globalDisplayTuning = false;
+          score.tracks.forEach((track) => {
+            track.staves.forEach((staff) => {
+              staff.tabConfig = {
+                ...staff.tabConfig,
+                timeSignature: { isVisible: false },
+                rests: { isVisible: false }
+              };
+            });
+          });
+        }
+
+        if (status) status.textContent = '';
+      });
+
+      api.postRenderFinished.on(() => {
+        if (tabDurationBeatIds.size === 0 && !adjustsDottedTabNotes) return;
+
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            container.querySelectorAll('[data-tab-duration-ring]').forEach((ring) => ring.remove());
+
+            adjustTabDotPositions();
+
+            tabDurationBeatIds.forEach((beatId) => {
+              container.querySelectorAll(`svg g.b${beatId} > text`).forEach((noteValue) => {
+                const bounds = noteValue.getBBox();
+                const matrix = noteValue.getCTM();
+                const svg = noteValue.ownerSVGElement;
+                if (bounds.width === 0 || bounds.height === 0 || !matrix || !svg) return;
+
+                const radius = Math.max(bounds.width, bounds.height) / 2 + 1;
+                const overlay = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                overlay.setAttribute(
+                  'transform',
+                  `matrix(${matrix.a} ${matrix.b} ${matrix.c} ${matrix.d} ${matrix.e} ${matrix.f})`
+                );
+                overlay.setAttribute('data-tab-duration-ring', '');
+                overlay.setAttribute('aria-hidden', 'true');
+
+                const ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                ring.setAttribute('cx', String(bounds.x + bounds.width / 2));
+                ring.setAttribute('cy', String(bounds.y + bounds.height / 2));
+                ring.setAttribute('r', String(radius));
+                ring.setAttribute('fill', 'white');
+                ring.setAttribute('stroke', '#222211');
+                ring.setAttribute('stroke-width', '1');
+                overlay.append(ring, noteValue.cloneNode(true));
+                svg.append(overlay);
+              });
+            });
+          });
+        });
+      });
+
+      api.error.on((error) => {
+        if (status) {
+          status.hidden = false;
+          status.textContent = `Partitur konnte nicht geladen werden: ${String(error)}`;
+        }
+        if (playBtn) {
+          playBtn.textContent = 'Laden fehlgeschlagen';
+          playBtn.disabled = true;
+        }
+      });
+
+      if (xmlUrl) api.load(xmlUrl);
+
+      if (playBtn) {
+        playBtn.addEventListener('click', () => api.playPause());
+
+        api.soundFontLoaded.on(() => {
+          playBtn.textContent = 'Play';
+          playBtn.disabled = false;
+        });
+
+        api.playerStateChanged.on((event) => {
+          const isPlaying = event.state === alphaTab.synth.PlayerState.Playing;
+          playBtn.textContent = isPlaying ? 'Pause' : 'Play';
+          playBtn.classList.toggle('is-playing', isPlaying);
+        });
+      }
+  };
+
+  const scoreObserver = typeof IntersectionObserver === 'undefined'
+    ? undefined
+    : new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+
+          scoreObserver?.unobserve(entry.target);
+          entry.target.removeAttribute('data-observing');
+          const question = entry.target.closest<HTMLElement>('.musicxml-question');
+          if (question && (question.hidden || question.dataset.active !== 'true')) return;
+          initializeWrapper(entry.target);
+        });
+      }, { rootMargin: '250px 0px' });
+
+  const initAlphaTab = () => {
+    const wrappers = document.querySelectorAll('[data-sheet-music-player]');
+    wrappers.forEach((wrapper) => {
+      const question = wrapper.closest<HTMLElement>('.musicxml-question');
+      if (question && (question.hidden || question.dataset.active !== 'true')) return;
+
+      if (!scoreObserver) {
+        initializeWrapper(wrapper);
+        return;
+      }
+
+      if (wrapper.hasAttribute('data-initialized') || wrapper.hasAttribute('data-observing')) return;
+      wrapper.setAttribute('data-observing', 'true');
+      scoreObserver.observe(wrapper);
+    });
+  };
+
+  initAlphaTab();
+  document.addEventListener('level100:notation-update', initAlphaTab);
+  document.addEventListener('astro:page-load', initAlphaTab);
+</script>
+
+<style>
+  .alphatab-frame {
+    padding: 0.75rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    background: #fff;
+    box-sizing: border-box;
+  }
+
+  .alphatab-container {
+    width: 100%;
+    overflow-x: hidden;
+    box-sizing: border-box;
+  }
+
+  .alphatab-container :global(svg.at-surface-svg) {
+    display: block;
+    color: #111827;
+    box-sizing: border-box;
+  }
+
+  .controls {
+    margin-bottom: 1rem;
+  }
+
+  .play-btn {
+    padding: 0.5rem 1rem;
+    border: 0;
+    border-radius: 0.375rem;
+    background: #2563eb;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .play-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  .play-btn.is-playing {
+    background: #d97706;
+  }
+
+  .player-status {
+    margin: 0;
+  }
+</style>

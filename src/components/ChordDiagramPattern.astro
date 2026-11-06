@@ -1,0 +1,729 @@
+---
+export interface ChordPosition {
+  stringIndex: number;
+  stringName: string;
+  fret: number;
+  note: string;
+  octave: number;
+  // Unterstützt sowohl die alten englischen Begriffe als auch direkte Intervalle
+  role: "root" | "second" | "third" | "fourth" | "fifth" | "sixth" | "seventh" | "octave" | "ninth" | "eleventh" | "thirteenth" | "1" | "♭2" | "2" | "♭3" | "3" | "4" | "♭5" | "5" | "♭6" | "6" | "♭7" | "7" | "8";
+}
+
+export interface Barre {
+  fret: number;
+  startString: number;
+  endString: number;
+}
+
+export interface ChordDiagram {
+  bar?: number;
+  chord: string;
+  degree: string;
+  function: string;
+  contextLabel?: string;
+  barre?: Barre;
+  positions: ChordPosition[];
+}
+
+export interface Props {
+  chords: ChordDiagram[];
+  keyLabel: string;
+  showLegend?: boolean;
+  gallery?: boolean;
+  compact?: boolean;
+}
+
+const {
+  chords,
+  keyLabel,
+  showLegend = true,
+  gallery = false,
+  compact = false
+} = Astro.props;
+
+const tuning = ["e", "B", "G", "D", "A", "E"];
+const stringY = (index: number) => 22 + index * 18;
+const nutX = 58;
+const fretWidth = 62;
+
+// Neue Farbpalette + Abwärtskompatibilität für alte Rollenbezeichnungen
+const colors: Record<string, string> = {
+  // Alte Fallbacks
+  root: "#F38181",
+  second: "#F4C7AB",
+  third: "#D382DC",     // große Terz als Standard für 'third'
+  fourth: "#B862D3",
+  fifth: "#64C4ED",
+  sixth: "#6BE4C6",
+  seventh: "#83E8BA",   // kleine Septime als Standard für 'seventh' (Dominant)
+  octave: "#F38181",
+  ninth: "#F4C7AB",
+  eleventh: "#B862D3",
+  thirteenth: "#6BE4C6",
+  // Exakte Intervalle
+  "1":  "#F38181",
+  "♭2": "#FFAAA6",
+  "2":  "#F4C7AB",
+  "♭3": "#EAA0E3",
+  "3":  "#D382DC",
+  "4":  "#B862D3",
+  "♭5": "#7F8BE8",
+  "5":  "#64C4ED",
+  "♭6": "#52DEE5",
+  "6":  "#6BE4C6",
+  "♭7": "#83E8BA",
+  "7":  "#CBDD7B",
+  "8":  "#F38181"
+};
+
+const roleLabels: Record<string, string> = {
+  root: "Grundton", second: "Sekunde", third: "Terz", fourth: "Quarte", fifth: "Quinte", sixth: "Sexte", seventh: "Septime", octave: "Oktave", ninth: "None", eleventh: "Undezime", thirteenth: "Tredezime",
+  "1": "Grundton", "♭2": "kleine Sekunde", "2": "große Sekunde", "♭3": "kleine Terz", "3": "große Terz", "4": "reine Quarte", "♭5": "Tritonus", "5": "reine Quinte", "♭6": "kleine Sexte", "6": "große Sexte", "♭7": "kleine Septime", "7": "große Septime", "8": "Oktave"
+};
+
+const roleDisplay: Record<string, string> = {
+  root: "R", "1": "R",
+  "♭2": "♭2", second: "2", "2": "2",
+  "♭3": "♭3", third: "3", "3": "3",
+  fourth: "4", "4": "4",
+  "♭5": "♭5", fifth: "5", "5": "5",
+  "♭6": "♭6", sixth: "6", "6": "6",
+  seventh: "♭7", "♭7": "♭7", "7": "7",
+  octave: "8", "8": "8",
+  ninth: "9", eleventh: "11", thirteenth: "13"
+};
+
+const usedRoles = new Set<ChordPosition["role"]>();
+chords.forEach(chord => {
+  chord.positions.forEach(pos => usedRoles.add(pos.role));
+});
+
+const roleOrder: ChordPosition["role"][] = [
+  "1", "root", "♭2", "2", "second", "ninth", "♭3", "3", "third", "4", "fourth", "eleventh", "♭5", "5", "fifth", "♭6", "6", "sixth", "thirteenth", "♭7", "seventh", "7", "8", "octave"
+];
+const activeLegendRoles = roleOrder.filter(role => usedRoles.has(role));
+
+if (chords.length === 0) {
+  throw new Error("Mindestens ein Akkorddiagramm ist erforderlich.");
+}
+
+for (const chord of chords) {
+  if (chord.positions.length < 2 || !chord.positions.some(({ fret }) => fret > 0) ||
+    chord.positions.some(({ stringIndex, fret }) =>
+    !Number.isInteger(stringIndex) || stringIndex < 0 || stringIndex >= tuning.length ||
+    !Number.isInteger(fret) || fret < 0
+    )) {
+    throw new Error(`Ungültige Griffbrettpositionen für ${chord.chord}.`);
+  }
+}
+---
+
+<div class:list={["chord-gallery show-intervals", { "is-gallery": gallery, "is-compact": compact }]}>
+  <div class="toolbar">
+    {gallery && !compact ? (
+      <nav
+        class="chord-gallery-nav"
+        aria-label={`Akkorde in ${keyLabel}`}
+        style={`--chord-count: ${chords.length};`}
+      >
+        {chords.map((chord, index) => (
+          <button
+            class="gallery-button"
+            type="button"
+            data-chord-index={index}
+            aria-pressed={index === 0 ? "true" : "false"}
+          >
+            {chord.chord}
+          </button>
+        ))}
+      </nav>
+    ) : (
+      <div class="toolbar-spacer"></div>
+    )}
+    
+    <div class="display-toggle" aria-label="Anzeige umschalten">
+      <button class="toggle-btn" type="button" data-display="intervals" aria-pressed="true">Intervalle</button>
+      <button class="toggle-btn" type="button" data-display="notes" aria-pressed="false">Noten</button>
+    </div>
+  </div>
+
+  <div class="chord-diagrams" aria-label={`Gitarrengriffe in ${keyLabel}`}>
+    {chords.map((chord, index) => {
+      const frettedPositions = chord.positions.filter(({ fret }) => fret > 0);
+      let firstPlayedFret = Math.min(...frettedPositions.map(({ fret }) => fret));
+      let lastPlayedFret = Math.max(...frettedPositions.map(({ fret }) => fret));
+      
+      if (chord.barre) {
+        firstPlayedFret = Math.min(firstPlayedFret, chord.barre.fret);
+        lastPlayedFret = Math.max(lastPlayedFret, chord.barre.fret);
+      }
+
+      const visibleFirstFret = lastPlayedFret - firstPlayedFret + 1 < 2
+        ? Math.max(1, firstPlayedFret - 1)
+        : firstPlayedFret;
+      const fretCount = lastPlayedFret - visibleFirstFret + 1;
+      const playedStrings = new Set(chord.positions.map(({ stringIndex }) => stringIndex));
+
+      return (
+        <article
+          class="chord-card"
+          aria-label={`${chord.chord}${!compact ? `: ${chord.degree} ${chord.function}` : ""}`}
+          hidden={gallery && !compact && index !== 0}
+          style={gallery && !compact ? "grid-area: 1 / 1;" : undefined}
+        >
+          <header class="chord-heading">
+            {!compact && <span class="degree-label">{chord.degree} · {chord.function}</span>}
+            <h4>{chord.chord}</h4>
+          </header>
+
+          <svg
+            class="fretboard"
+            viewBox="0 0 320 168"
+            role="img"
+            aria-label={`${chord.chord}: ${chord.positions.map(({ note, octave, stringName, fret }) =>
+              `${note}${octave} auf ${stringName}-Saite, ${fret === 0 ? "offen" : `Bund ${fret}`}`
+            ).join(" und ")}`}
+          >
+            <rect
+              x={nutX}
+              y="13"
+              width={fretCount * fretWidth}
+              height="108"
+              rx="3"
+              fill="#18181b"
+              stroke="#3f3f46"
+              stroke-width="1"
+            />
+            {tuning.map((stringName, stringIndex) => (
+              <>
+                <text class="string-label" x="14" y={stringY(stringIndex) + 4}>{stringName}</text>
+                <line
+                  x1={nutX}
+                  y1={stringY(stringIndex)}
+                  x2={nutX + fretCount * fretWidth}
+                  y2={stringY(stringIndex)}
+                  stroke="#a1a1aa"
+                  stroke-width={stringIndex === 5 ? 2.4 : 1.4}
+                />
+                {!playedStrings.has(stringIndex) && (
+                  <text class="muted-string" x="38" y={stringY(stringIndex) + 4}>×</text>
+                )}
+              </>
+            ))}
+            {Array.from({ length: fretCount + 1 }, (_, index) => (
+              <line
+                x1={nutX + index * fretWidth}
+                y1="13"
+                x2={nutX + index * fretWidth}
+                y2="121"
+                stroke={index === 0 && visibleFirstFret === 1 ? "#e4e4e7" : "#52525b"}
+                stroke-width={index === 0 && visibleFirstFret === 1 ? 3 : 1.5}
+              />
+            ))}
+            {chord.barre && (
+              <line
+                x1={nutX + (chord.barre.fret - visibleFirstFret + 0.5) * fretWidth}
+                y1={stringY(Math.min(chord.barre.startString, chord.barre.endString))}
+                x2={nutX + (chord.barre.fret - visibleFirstFret + 0.5) * fretWidth}
+                y2={stringY(Math.max(chord.barre.startString, chord.barre.endString))}
+                stroke="#52525b"
+                stroke-width="16"
+                stroke-linecap="round"
+              />
+            )}
+            {Array.from({ length: fretCount }, (_, index) => {
+              const fret = visibleFirstFret + index;
+              const x = nutX + (index + 0.5) * fretWidth;
+              return <text class="fret-label" x={x} y="143">{fret}</text>;
+            })}
+
+            {chord.positions.map(({ stringIndex, fret, note, role }) => {
+              const x = fret === 0
+                ? 38
+                : nutX + (fret - visibleFirstFret + 0.5) * fretWidth;
+              const y = stringY(stringIndex);
+              const displayInterval = roleDisplay[role] ?? role;
+              
+              return (
+                <g>
+                  <circle cx={x} cy={y} r="12" fill={colors[role]} />
+                  <text class="label-interval note-label" x={x} y={y + 4} font-size={displayInterval.length > 1 ? "9.5" : "11"}>{displayInterval}</text>
+                  <text class="label-note note-label" x={x} y={y + 4} font-size={note.length > 1 ? "9.5" : "11"}>{note}</text>
+                </g>
+              );
+            })}
+          </svg>
+
+          {!compact && (
+            <button
+              class="detail-toggle"
+              type="button"
+              aria-expanded="false"
+              aria-controls={`chord-notes-${keyLabel.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${index}`}
+              data-chord-index={index}
+              aria-label={`Griffdetails für ${chord.chord}`}
+            >
+              <span>Töne und Griffdetails</span>
+              <svg class="disclosure-icon" viewBox="0 0 20 20" aria-hidden="true">
+                <path d="m5 7.5 5 5 5-5" />
+              </svg>
+            </button>
+          )}
+        </article>
+      );
+    })}
+  </div>
+  
+  {!compact && chords.map((chord, index) => (
+    <div
+      class="tone-panel"
+      id={`chord-notes-${keyLabel.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${index}`}
+      data-chord-index={index}
+      hidden
+    >
+      <ul class="tone-list">
+        {chord.positions.map(({ stringName, fret, note, octave, role }) => (
+          <li>
+            <!-- CSS Klassen ersetzt durch dynamisches Inline-Styling der Intervall-Farbe -->
+            <span class="tone-dot" style={`background-color: ${colors[role]};`} aria-hidden="true"></span>
+            <span>{roleLabels[role]}: {note}{octave} · {stringName}-Saite, {fret === 0 ? "offen (0)" : `Bund ${fret}`}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  ))}
+
+  {showLegend && (
+    <p class="diagram-legend">
+      {activeLegendRoles.map((role) => (
+        <span><i class="legend-dot" style={`background-color: ${colors[role]};`}></i>{roleDisplay[role]} ({roleLabels[role]})</span>
+      ))}
+      <span>× = nicht spielen</span>
+    </p>
+  )}
+</div>
+
+<script>
+  function setupChordGallery() {
+    document.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+
+      // 1. Details einklappen/aufklappen
+      const detailToggle = target.closest<HTMLButtonElement>(".detail-toggle");
+      if (detailToggle) {
+        const gallery = detailToggle.closest<HTMLElement>(".chord-gallery");
+        const group = gallery?.querySelector<HTMLElement>(".chord-diagrams");
+        const chordIndex = detailToggle.dataset.chordIndex;
+        const panel = gallery?.querySelector<HTMLElement>(`.tone-panel[data-chord-index="${chordIndex}"]`);
+        if (!gallery || !group || chordIndex === undefined || !panel) return;
+
+        const shouldOpen = detailToggle.getAttribute("aria-expanded") !== "true";
+        group.querySelectorAll<HTMLButtonElement>(".detail-toggle[aria-expanded='true']").forEach((otherToggle) => {
+          if (otherToggle === detailToggle) return;
+          otherToggle.setAttribute("aria-expanded", "false");
+          const otherPanel = gallery.querySelector<HTMLElement>(`.tone-panel[data-chord-index="${otherToggle.dataset.chordIndex}"]`);
+          if (otherPanel) otherPanel.hidden = true;
+        });
+
+        detailToggle.setAttribute("aria-expanded", String(shouldOpen));
+        panel.hidden = !shouldOpen;
+        return;
+      }
+
+      // 2. Skalen-Reiter Umschaltung (wenn gallery=true)
+      const button = target.closest<HTMLButtonElement>(".gallery-button");
+      if (button) {
+        const gallery = button.closest(".chord-gallery.is-gallery");
+        if (!gallery) return;
+
+        const selectedIndex = Number(button.dataset.chordIndex);
+        const cards = gallery.querySelectorAll<HTMLElement>(".chord-card");
+        
+        gallery.querySelectorAll<HTMLButtonElement>(".gallery-button").forEach((item) => {
+          const selected = Number(item.dataset.chordIndex) === selectedIndex;
+          item.setAttribute("aria-pressed", String(selected));
+        });
+        cards.forEach((card, index) => {
+          card.hidden = index !== selectedIndex;
+          const toggleBtn = card.querySelector<HTMLButtonElement>(".detail-toggle");
+          toggleBtn?.setAttribute("aria-expanded", "false");
+        });
+        gallery.querySelectorAll<HTMLElement>(".tone-panel").forEach((panel) => {
+          panel.hidden = true;
+        });
+        return;
+      }
+      
+      // 3. Kippschalter für Intervalle vs Noten
+      const displayButton = target.closest<HTMLButtonElement>(".toggle-btn");
+      if (displayButton) {
+        const gallery = displayButton.closest(".chord-gallery");
+        if (!gallery) return;
+
+        const mode = displayButton.dataset.display;
+        gallery.querySelectorAll<HTMLButtonElement>(".toggle-btn").forEach((btn) => {
+          btn.setAttribute("aria-pressed", String(btn.dataset.display === mode));
+        });
+
+        if (mode === "notes") {
+          gallery.classList.remove("show-intervals");
+          gallery.classList.add("show-notes");
+        } else {
+          gallery.classList.remove("show-notes");
+          gallery.classList.add("show-intervals");
+        }
+      }
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', setupChordGallery);
+  document.addEventListener('astro:page-load', setupChordGallery);
+</script>
+
+<style>
+  .chord-gallery {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .chord-gallery.is-gallery .chord-diagrams {
+    height: 380px;
+    grid-template-columns: minmax(0, 460px);
+    grid-template-rows: 380px;
+    justify-content: center;
+    align-content: start;
+    align-items: start;
+    min-width: 0;
+    margin: 0;
+  }
+  .chord-gallery.is-gallery .chord-card {
+    width: 100%;
+    height: 380px;
+    margin: 0 !important;
+    align-self: start;
+    transform: none !important;
+  }
+
+  /* Neue Toolbar für Navigation & Kippschalter */
+  .toolbar {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 1rem !important;
+    margin: 1.25rem 0 0.75rem !important;
+  }
+
+  .toolbar > * {
+    margin: 0 !important;
+  }
+  
+  .toolbar-spacer {
+    flex: 1 1 auto;
+  }
+
+  .chord-gallery-nav {
+    display: flex !important;
+    width: max-content;
+    height: 2.5rem;
+    flex-flow: row nowrap !important;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .gallery-button {
+    display: flex;
+    width: 6rem;
+    min-width: 6rem;
+    height: 2.5rem;
+    min-height: 2.5rem;
+    flex: 0 0 6rem;
+    margin: 0 !important;
+    align-self: center;
+    box-sizing: border-box;
+    align-items: center;
+    justify-content: center;
+    padding: 0.45rem 0.9rem;
+    border: 1px solid #3f3f46;
+    border-radius: 999px;
+    background: #18181b;
+    color: #d4d4d8;
+    cursor: pointer;
+    font: 600 0.9rem system-ui, -apple-system, sans-serif;
+    line-height: 1;
+    transition: all 0.2s ease;
+  }
+  
+  .gallery-button[aria-pressed="true"] {
+    border-color: #F38181;
+    background: #3b2727;
+    color: #faf5ff;
+  }
+  
+  .gallery-button:focus-visible {
+    outline: 2px solid #F38181;
+    outline-offset: 3px;
+  }
+
+  /* Kippschalter Logik */
+  .display-toggle {
+    display: flex !important;
+    flex: 0 0 auto;
+    background: #18181b;
+    border: 1px solid #3f3f46;
+    border-radius: 999px;
+    overflow: hidden;
+    height: 2.5rem;
+    align-items: stretch;
+  }
+
+  .toggle-btn {
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    color: #a1a1aa;
+    border: none;
+    padding: 0 1.25rem;
+    font: 600 0.85rem system-ui, -apple-system, sans-serif;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .toggle-btn[aria-pressed="true"] {
+    background: #3f3f46;
+    color: #f4f4f5;
+  }
+
+  .toggle-btn:focus-visible {
+    outline: 2px solid #F38181;
+    outline-offset: -2px;
+  }
+
+  .chord-gallery.show-intervals .label-note {
+    display: none;
+  }
+  .chord-gallery.show-notes .label-interval {
+    display: none;
+  }
+
+  /* Restliches Akkord-CSS */
+  .chord-diagrams {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+    grid-auto-rows: 1fr;
+    align-items: stretch;
+    gap: 1rem;
+    margin: 0.5rem 0;
+  }
+  .chord-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    margin: 0 !important;
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    box-sizing: border-box;
+    padding: 1rem 0.8rem 0.85rem;
+    border: 1px solid #303036;
+    border-radius: 10px;
+    background: linear-gradient(145deg, #1b1b20, #121214);
+    color: #e4e4e7;
+    box-shadow: 0 5px 16px rgb(0 0 0 / 18%);
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+  .chord-card[hidden] {
+    display: none;
+  }
+  .tone-panel[hidden] {
+    display: none;
+  }
+  .chord-heading {
+    display: grid;
+    grid-template-rows: 2rem 1.7rem;
+    gap: 0.15rem;
+    margin-bottom: 0.35rem;
+  }
+  .chord-heading h4 {
+    align-self: center;
+    margin: 0 !important;
+    color: #fafafa;
+    font-size: 1.35rem;
+    line-height: 1.2;
+  }
+  .degree-label {
+    display: -webkit-box;
+    align-self: end;
+    overflow: hidden;
+    color: #FFAAA6;
+    font-size: 0.8rem;
+    font-weight: 650;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-height: 1rem;
+  }
+  .detail-toggle {
+    display: flex;
+    width: 100%;
+    height: 2.5rem;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+    padding: 0.35rem 0 0;
+    border: 0;
+    border-top: 1px solid #303036;
+    background: transparent;
+    color: #a1a1aa;
+    cursor: pointer;
+    font: 600 0.8rem system-ui, -apple-system, sans-serif;
+    text-align: left;
+  }
+  .chord-gallery.is-gallery .detail-toggle {
+    position: absolute;
+    right: 0.8rem;
+    bottom: 0.85rem;
+    left: 0.8rem;
+    width: auto !important;
+    box-sizing: border-box;
+    margin: 0 !important;
+  }
+  .detail-toggle:focus-visible {
+    outline: 2px solid #F38181;
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+  .tone-panel {
+    width: 100%;
+    min-width: 0;
+    max-width: 460px;
+    padding: 0.75rem 1rem;
+    box-sizing: border-box;
+    border: 1px solid #303036;
+    border-top: 0;
+    border-radius: 0 0 10px 10px;
+    background: #18181b;
+    color: #d4d4d8;
+    box-shadow: 0 5px 16px rgb(0 0 0 / 18%);
+    overflow-wrap: anywhere;
+  }
+  .chord-gallery.is-gallery .tone-panel {
+    margin: 0 auto;
+  }
+  .disclosure-icon {
+    width: 1.1rem;
+    height: 1.1rem;
+    flex: 0 0 auto;
+    margin-left: 0.6rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.8;
+    transition: transform 0.18s ease;
+  }
+  .detail-toggle[aria-expanded="true"] .disclosure-icon {
+    transform: rotate(180deg);
+  }
+  .fretboard {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin-bottom: 0.3rem;
+    overflow: visible;
+  }
+  .string-label,
+  .muted-string,
+  .note-label,
+  .fret-label {
+    font-family: system-ui, -apple-system, sans-serif;
+    text-anchor: middle;
+  }
+  .string-label,
+  .muted-string,
+  .fret-label {
+    fill: #a1a1aa;
+    font-size: 12px;
+  }
+  .muted-string {
+    fill: #71717a;
+    font-size: 16px;
+  }
+  .note-label {
+    fill: #09090b;
+    font-weight: 800;
+  }
+  .fret-label {
+    fill: #d4d4d8;
+    font-size: 13px;
+    font-weight: 650;
+  }
+  .tone-list {
+    display: grid;
+    gap: 0.35rem;
+    margin: 0.1rem 0 0 !important;
+    padding: 0 !important;
+    list-style: none;
+    color: #d4d4d8;
+    font-size: 0.75rem;
+    line-height: 1.4;
+  }
+  .tone-list li {
+    display: flex;
+    min-width: 0;
+    align-items: flex-start;
+    gap: 0.45rem;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .tone-list li > span:last-child {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .tone-dot,
+  .legend-dot {
+    flex: 0 0 auto;
+    width: 0.65rem;
+    height: 0.65rem;
+    margin-top: 0.15rem;
+    border-radius: 50%;
+  }
+  .legend-dot {
+    display: inline-block;
+    width: 0.6rem;
+    height: 0.6rem;
+    margin: 0;
+  }
+  .diagram-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    margin: 1.25rem 0 1rem;
+    color: #a1a1aa;
+    font-size: 0.8rem;
+  }
+  .diagram-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .chord-gallery.is-compact .chord-diagrams {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+    display: grid;
+  }
+  .chord-gallery.is-compact .chord-card {
+    height: auto;
+    padding: 1rem 0.8rem 1rem;
+  }
+  .chord-gallery.is-compact .chord-heading {
+    display: block;
+    text-align: center;
+    margin-bottom: 0.8rem;
+  }
+  .chord-gallery.is-compact .chord-heading h4 {
+    font-size: 1.5rem;
+  }
+</style>

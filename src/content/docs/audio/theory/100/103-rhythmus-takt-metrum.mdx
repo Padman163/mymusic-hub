@@ -1,0 +1,112 @@
+---
+title: "103: Rhythmus, Takt & Metrum"
+description: "Notenwerte, rhythmische Unterteilungen, Taktarten und Tempo verstehen und praktisch zählen."
+sidebar:
+  order: 3
+---
+
+import DrumPattern from '../../../../../components/DrumPattern.astro';
+
+Rhythmus ordnet Töne und Pausen in der Zeit. Ein regelmäßiger **Puls** hilft dir, diese Abstände zu hören und mitzuzählen. Mehrere Pulse werden zu einem **Takt** zusammengefasst; wiederkehrende Betonungen prägen das **Metrum**. Wenn du diese Ebenen auseinanderhältst, kannst du Rhythmen leichter lesen, spielen und gemeinsam mit anderen halten.
+
+## 1. Noten- und Pausenwerte
+
+Notenwerte beschreiben, wie lange ein Ton im Verhältnis zu anderen Tönen dauert. Im 4/4-Takt entspricht jeder der vier Schläge einer Viertelnote. Im Drum-Pattern steht jede Zeile für eine einzelne Note, die am ersten Schlag beginnt. Die blauen, durchgehenden Felder zeigen ihre Dauer im Takt; jeder Step entspricht einem Sechzehntelschlag.
+
+<DrumPattern
+  steps={16}
+  timeSignature="4/4"
+  resolution="1/16"
+  interactive={false}
+  showTrackNote={false}
+  useTrackColors={true}
+  continuous={true}
+  stepLabels={['1', '', '', '', '2', '', '', '', '3', '', '', '', '4', '', '', '']}
+  patternData={[
+    { name: 'Ganze Note', note: '4', color: '#38bdf8', activeSteps: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] },
+    { name: 'Halbe Note', note: '2', color: '#38bdf8', activeSteps: [0, 1, 2, 3, 4, 5, 6, 7] },
+    { name: 'Viertelnote', note: '1', color: '#38bdf8', activeSteps: [0, 1, 2, 3] },
+    { name: 'Achtelnote', note: '½', color: '#38bdf8', activeSteps: [0, 1] },
+    { name: 'Sechzehntelnote', note: '¼', color: '#38bdf8', activeSteps: [0] }
+  ]}
+/>
+
+Zu jedem Notenwert gehört eine **Pause gleicher Dauer**. Eine Viertelpause lässt also einen Zählschlag frei, eine Achtelpause eine halbe Zählzeit. Pausen sind ein aktiver Teil des Rhythmus: Zähle sie innerlich weiter, statt den Puls anzuhalten.
+
+Ein Punkt hinter einer Note oder Pause verlängert ihren Wert um die Hälfte. Eine **punktierte Viertelnote** dauert deshalb eine Viertel plus eine Achtel, also 1½ Viertelschläge. Zwei gleich lange Noten können außerdem mit einem **Haltebogen** verbunden werden: Ihre Dauern werden addiert, der Ton wird aber nur einmal angeschlagen.
+
+## 2. Unterteilungen: gerade Werte und Triolen
+
+Ein Zählschlag lässt sich in kleinere, gleichmäßige Teile unterteilen. Zwei **Achtelnoten** passen in einen Viertelschlag; vier **Sechzehntelnoten** passen in denselben Zeitraum. Im Pattern steht jede Zahl für einen Viertelschlag. Die gefüllten Felder zeigen, an welchen Stellen du anschlägst:
+
+**Achtel:** Zähle „1 & 2 & 3 & 4 &“. Die Achtel liegen gleichmäßig auf dem Schlag und dazwischen.
+
+**Sechzehntel:** Zähle „1-e-&-a, 2-e-&-a, 3-e-&-a, 4-e-&-a“. Zwischen zwei Viertelschlägen liegen jeweils vier gleichmäßige Sechzehntel.
+
+<DrumPattern
+  steps={16}
+  timeSignature="4/4"
+  resolution="1/16 + Achteltriole"
+  interactive={false}
+  useTrackColors={true}
+  stepLabels={['1', 'e', '&', 'a', '2', 'e', '&', 'a', '3', 'e', '&', 'a', '4', 'e', '&', 'a']}
+  patternData={[
+    { name: 'Grundpuls', note: '4×', color: '#38bdf8', activeSteps: [0, 4, 8, 12], cellLabels: ['1', '', '', '', '2', '', '', '', '3', '', '', '', '4'] },
+    { name: 'Achtel', note: '8×', color: '#38bdf8', activeSteps: [0, 2, 4, 6, 8, 10, 12, 14], cellLabels: ['1', '', '&', '', '2', '', '&', '', '3', '', '&', '', '4', '', '&'] },
+    { name: 'Sechzehntel', note: '16×', color: '#38bdf8', activeSteps: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], cellLabels: ['1', 'e', '&', 'a', '2', 'e', '&', 'a', '3', 'e', '&', 'a', '4', 'e', '&', 'a'] },
+    { name: 'Achteltriole', note: '12×', color: '#facc15', activeSteps: [], eventPositions: [0, 4 / 3, 8 / 3, 4, 16 / 3, 20 / 3, 8, 28 / 3, 32 / 3, 12, 40 / 3, 44 / 3], eventLabels: ['1', '&', 'a', '2', '&', 'a', '3', '&', 'a', '4', '&', 'a'] }
+  ]}
+/>
+
+Eine **Triole** teilt eine Dauer, in der normalerweise zwei gleich lange Noten erklingen, in drei gleich große Teile. Eine **Achteltriole** besteht aus drei gleichmäßigen Tönen innerhalb eines Viertelschlags. Zähle pro Schlag „1-&-a, 2-&-a“ und so weiter: Die Zahl fällt auf den Grundpuls, **&** und **a** liegen gleichmäßig dazwischen.
+
+Im gelben Triolen-Track steht **1-&-a, 2-&-a, 3-&-a, 4-&-a** direkt bei den zwölf Einsätzen. Die blauen Tracks zeigen gleichzeitig Grundpuls, Achtel und Sechzehntel zum Vergleich. Die Triolentöne liegen gleichmäßig zwischen den Viertelschlägen und passen daher nicht alle auf die Sechzehntel-Steps.
+
+Übe Unterteilungen zunächst auf einer einzigen Tonhöhe oder mit einem gedämpften Anschlag. So kannst du dich auf gleichmäßige Abstände konzentrieren, ohne zugleich einen Fingersatz wechseln zu müssen.
+
+## 3. Metrum und Taktarten
+
+Die **Taktangabe** steht am Anfang eines Stücks nach Schlüssel und Tonartvorzeichnung. Die obere Zahl gibt an, wie viele Zählwerte in einen Takt passen; die untere Zahl bezeichnet den Notenwert, der als Einheit gezählt wird. So enthält ein 3/4-Takt drei Viertelwerte, ein 6/8-Takt sechs Achtelwerte. Wie diese Angaben in der Notenschrift aussehen, zeigt [104: Notensystem & Tabulatur](/audio/theory/100/104-tabulatur-notensystem/).
+
+Ein Taktstrich grenzt einen Takt vom nächsten ab. Die Zählzeiten innerhalb eines Takts sind nicht alle gleich gewichtet: Bestimmte Schläge werden stärker empfunden oder gespielt. Diese wiederkehrende Ordnung nennt man **Metrum**.
+
+- **2/4:** zwei Viertelwerte pro Takt. Der erste Schlag wird häufig betont.
+- **3/4:** drei Viertelwerte pro Takt. Die Betonung auf der Eins lässt den Takt oft in drei Schlägen schwingen.
+- **4/4:** vier Viertelwerte pro Takt. Die Eins ist meist der stärkste Bezugspunkt; in vielen Pop- und Rockstilen setzen Snare oder Klatschen einen **Backbeat** auf Zwei und Vier.
+- **6/8:** sechs Achtelwerte pro Takt. Häufig werden sie als zwei Gruppen zu je drei Achteln empfunden: **1-2-3, 4-5-6**. Der Puls liegt dann oft auf dem ersten Achtel jeder Gruppe, nicht auf allen sechs Achteln einzeln.
+- **Alla Breve (2/2):** zwei Halbe pro Takt. Häufig wird der Takt in zwei größeren Pulsen empfunden, auch wenn die Musik zusätzlich kleinere Unterteilungen enthält.
+
+Die Zahlen allein sagen nicht immer alles über den empfundenen Puls aus. Höre darauf, wo sich die Betonungen wiederholen und ob ein Takt eher in Zweier-, Dreier- oder größeren Gruppen schwingt.
+
+## 4. Synkopen
+
+Eine **Synkope** entsteht, wenn ein Ton auf einer normalerweise schwachen Zählzeit oder zwischen den Grundschlägen betont wird. Oft wird der Ton über den folgenden starken Schlag hinweg ausgehalten. Dadurch verschiebt sich die gefühlte Betonung, und der Rhythmus wirkt spannungsvoller oder „gegen den Puls“.
+
+Zähle im 4/4-Takt gleichmäßig **1 & 2 & 3 & 4 &**. Liegt ein Akzent zum Beispiel auf einem **&** statt auf einer Zahl oder wird ein Ton über die nächste Zahl hinweg gehalten, kann eine Synkope entstehen. Nicht jeder Offbeat ist automatisch eine Synkope: Entscheidend ist, dass die Betonung oder Tonlänge die übliche Gewichtung der Schläge verschiebt.
+
+## 5. Auftakt, Wiederholungen und Tempo
+
+Ein **Auftakt** beginnt vor dem ersten vollständigen Takt. Er enthält meist nur einen Teil der Zählzeiten; die fehlende Dauer wird am Ende des Stücks ausgeglichen. Zähle beim Spielen weiter im Metrum, auch wenn die Melodie vor der Eins einsetzt.
+
+**Wiederholungszeichen** zeigen an, dass ein Abschnitt erneut gespielt wird. Ein doppelter Taktstrich mit Punkten markiert Anfang oder Ende der Wiederholung. Gibt es zwei Schlussvarianten, führen die Klammern mit den Zahlen 1 und 2 durch den ersten und den zweiten Durchgang.
+
+Das **Tempo** gibt an, wie schnell der Grundpuls ist. Es wird in **BPM** (*beats per minute*, Schläge pro Minute) angegeben: Bei 60 BPM liegt eine Zählzeit pro Sekunde, bei 120 BPM zwei. Welche Notenlänge als Schlag zählt, hängt von der Tempoangabe und vom Metrum ab.
+
+Ein Metronom gibt den Puls gleichmäßig vor. Beginne beim Üben mit einem Tempo, in dem du den Rhythmus sauber zählen und spielen kannst. Tippe den Puls mit dem Fuß oder sprich die Unterteilungen laut mit. Steigere das Tempo erst, wenn die Abstände stabil bleiben.
+
+Tempoangaben wie eine Metronomzahl oder ein Tempowort findest du in der Notation oberhalb des Notensystems; die Zeichen dazu folgen in [104: Notensystem & Tabulatur](/audio/theory/100/104-tabulatur-notensystem/).
+
+## 6. Rhythmische Artikulation
+
+Der Rhythmus legt fest, **wann** ein Ton beginnt und wie lange er dauern soll. Die **Artikulation** beschreibt, wie der Ton klingt und endet. Beim **Legato** gehen Töne möglichst verbunden ineinander über; beim **Staccato** werden sie kurz gespielt und vor dem nächsten Einsatz beendet. Auf der Gitarre kannst du die Länge unter anderem durch kontrolliertes Abdämpfen gestalten.
+
+Auch eine **Phrasenpause** gehört zum Rhythmus. Sie schafft Platz zwischen musikalischen Gedanken und macht den nächsten Einsatz hörbar. Halte während einer Pause den inneren Puls weiter, damit du anschließend sicher an der richtigen Stelle einsetzt.
+
+Wie du Legato und Staccato spielst, wird in [102: Mechanik, Haltung & Anschlag](/audio/theory/100/102-mechanik-haltung-anschlag/) erklärt; die zugehörigen Notationszeichen findest du in [104: Notensystem & Tabulatur](/audio/theory/100/104-tabulatur-notensystem/).
+
+:::tip[Rhythmus üben]
+- Klatsche oder spiele zuerst nur den Grundpuls und zähle die Takte mit.
+- Sprich danach die Unterteilungen gleichmäßig dazu, auch während Pausen.
+- Übe einen Rhythmus langsam mit Metronom und achte darauf, dass die Schläge nicht schneller oder langsamer werden.
+- Setze Akzente bewusst und beende Töne kontrolliert, statt jede Note gleich lang klingen zu lassen.
+:::

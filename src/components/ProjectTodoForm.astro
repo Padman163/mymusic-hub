@@ -1,0 +1,147 @@
+<form id="project-issue-form" class="todo-form">
+	<div class="field">
+		<label for="issue-type">Eintragstyp</label>
+		<select id="issue-type" name="type" required>
+			<option value="Bug">Bug</option>
+			<option value="Feature">Feature</option>
+			<option value="Decision">Decision</option>
+		</select>
+	</div>
+
+	<div class="field">
+		<label for="issue-title">Titel</label>
+		<input
+			id="issue-title"
+			name="title"
+			type="text"
+			maxlength="120"
+			placeholder="Kurzer, aussagekräftiger Titel"
+			required
+		/>
+	</div>
+
+	<div class="field">
+		<label for="issue-description">Beschreibung</label>
+		<textarea
+			id="issue-description"
+			name="description"
+			rows="7"
+			placeholder="Worum geht es? Ergänze bei Bugs gern die Schritte zum Nachstellen."
+			required
+		></textarea>
+	</div>
+
+	<button type="submit">Auf GitHub weiter</button>
+</form>
+
+<style>
+	.todo-form {
+		display: grid;
+		gap: 1rem;
+		max-width: 42rem;
+	}
+
+	.field {
+		display: grid;
+		gap: 0.4rem;
+	}
+
+	label {
+		font-weight: 600;
+	}
+
+	input,
+	select,
+	textarea {
+		box-sizing: border-box;
+		width: 100%;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.4rem;
+		padding: 0.65rem 0.75rem;
+		background: var(--sl-color-bg);
+		color: var(--sl-color-text);
+		font: inherit;
+	}
+
+	textarea {
+		resize: vertical;
+	}
+
+	button {
+		justify-self: start;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.4rem;
+		padding: 0.65rem 0.9rem;
+		background: var(--sl-color-bg);
+		color: var(--sl-color-text);
+		font: inherit;
+		font-weight: 600;
+		cursor: pointer;
+	}
+
+	button:hover {
+		border-color: var(--sl-color-accent);
+		color: var(--sl-color-text-accent);
+	}
+
+	input:focus-visible,
+	select:focus-visible,
+	textarea:focus-visible,
+	button:focus-visible {
+		outline: 2px solid var(--sl-color-accent);
+		outline-offset: 2px;
+	}
+</style>
+
+<script>
+	const form = document.querySelector<HTMLFormElement>('#project-issue-form');
+
+	if (!(form instanceof HTMLFormElement)) {
+		throw new Error('Das Projektierungsformular wurde nicht gefunden.');
+	}
+
+	form.addEventListener('submit', (event) => {
+		event.preventDefault();
+
+		const typeField = form.elements.namedItem('type');
+		const titleField = form.elements.namedItem('title');
+		const descriptionField = form.elements.namedItem('description');
+
+		if (
+			!(typeField instanceof HTMLSelectElement) ||
+			!(titleField instanceof HTMLInputElement) ||
+			!(descriptionField instanceof HTMLTextAreaElement)
+		) {
+			throw new Error('Die Felder des Projektierungsformulars sind unvollständig.');
+		}
+
+		const type = typeField.value;
+		if (type !== 'Bug' && type !== 'Feature' && type !== 'Decision') {
+			typeField.setCustomValidity('Bitte wähle einen gültigen Eintragstyp.');
+			typeField.reportValidity();
+			typeField.setCustomValidity('');
+			return;
+		}
+
+		const title = titleField.value.trim();
+		if (!title) {
+			titleField.setCustomValidity('Bitte gib einen Titel ein.');
+			titleField.reportValidity();
+			titleField.setCustomValidity('');
+			return;
+		}
+
+		const description = descriptionField.value.trim();
+		if (!description) {
+			descriptionField.setCustomValidity('Bitte gib eine Beschreibung ein.');
+			descriptionField.reportValidity();
+			descriptionField.setCustomValidity('');
+			return;
+		}
+
+		const issueUrl = new URL('https://github.com/Padman163/mymusic-hub/issues/new');
+		issueUrl.searchParams.set('title', `[${type}] ${title}`);
+		issueUrl.searchParams.set('body', `## Typ\n${type}\n\n## Beschreibung\n${description}`);
+		window.open(issueUrl, '_blank', 'noopener,noreferrer');
+	});
+</script>

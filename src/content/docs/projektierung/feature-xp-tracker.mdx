@@ -1,0 +1,247 @@
+---
+title: "Feature: XP Tracker (Gamification Dashboard)"
+description: "Persistentes Gamification-System mit 3 Skill-Säulen, Level-Gates und XP-Vergabe"
+---
+
+import XpTracker from '../../../components/XpTracker.astro';
+
+# 🎮 Feature: XP Tracker
+
+**Wofür?** Der XpTracker ist das **Gamification-Dashboard** für dein Musik-Lernen. Er speichert deine Fortschritte persistent (im Browser) und zeigt deinen Fortschritt in 3 Skill-Säulen übersichtlich an. Ziel: Motivation durch sichtbare Progression.
+
+---
+
+## Dashboard-Übersicht
+
+<XpTracker />
+
+### Was du siehst:
+- ✅ **Große XP-Nummer** oben (Gesamt-XP)
+- ✅ **Level-Gate-Text** (aktuelles Ziel, z. B. "Level 100 Praxis-Freischaltung bei 80% + Quiz 105")
+- ✅ **3 Fortschrittsbalken** (🎸 Motorik, 🥁 Rhythmus, 📝 Notation)
+- ✅ **Buttons:** Zurücksetzen, Exportieren, Importieren
+
+---
+
+## 📊 Die 3 Skill-Säulen
+
+| Säule | Farbe | Beschreibung |
+|-------|-------|-------------|
+| **🎸 Griffbrett-Motorik** | Grün | Finger-Geschwindigkeit, Greiftechnik, Tonlokalisierung |
+| **🥁 Rhythmus & Backing-Track** | Blau | Rhythmus-Präzision, Timing, Groove-Feeling |
+| **📝 Notation & Songwriting** | Violett | Noten lesen, Tonleitern, Eigenkompositionen |
+
+Jeder Balken zeigt prozentual: `aktuelle XP / Ziel-XP für diesen Bereich`
+
+---
+
+## 🔧 Wie XP funktioniert
+
+### XP sammeln
+
+Jede abgeschlossene Übung vergibt XP in eine der 3 Säulen:
+
+**Griffbrett-Motorik (🎸):**
+- Druck-Release-Test: +10 XP
+- Plektrum-Wechselschlag: +15 XP
+- Tonleitern-Automatismus: +20 XP
+- Artikulationen: +25 XP
+
+**Rhythmus & Backing-Track (🥁):**
+- Metronom-Session: +10 XP
+- Backing-Track-Take: +25 XP
+- Rhythmus-Workout: +30 XP
+- Taktarten-Parcours: +40 XP
+
+**Notation & Songwriting (📝):**
+- TAB Stufe 1: +15 XP
+- Violinschlüssel Stufe 2: +30 XP
+- Bassschlüssel Stufe 3: +50 XP
+- Tonleitern + Dreiklang: +35 XP
+- Eigene Komposition: +40 XP
+
+### Level-Gates (Freischaltungen)
+
+```
+Level 100 – Motorik Basis (80+ XP)
+└─ Freischaltung: FEAT-103-A (MIDI-Backing-Tracks bauen)
+
+Level 200 – Rhythmus Expert (100+ XP)
+└─ Freischaltung: FEAT-103-C (Taktarten-Trainer)
+
+Level 300 – Notation Master (160+ XP)
+└─ Freischaltung: FEAT-104-C (Full-Score Arrangement)
+
+Level 400 – D1-Prüfung (250+ XP + Quiz 105 ✓)
+└─ Freischaltung: Songwriting & Performance
+```
+
+---
+
+## 🧪 Live-Test: XP hinzufügen
+
+### Schritt 1: Browser-Console öffnen
+
+1. Drücke **F12** auf deiner Tastatur
+2. Klick auf Tab **"Console"** (unten im schwarzen Fenster)
+3. Du siehst einen **blinkenden Cursor** nach `>`
+
+### Schritt 2: XP hinzufügen
+
+Kopiere folgende Befehle in die Console und drücke **Enter**:
+
+```javascript
+// +10 XP für Griffbrett-Motorik
+window.addXp(10, 'motor');
+
+// +15 XP für Rhythmus & Backing-Track
+window.addXp(15, 'rhythm');
+
+// +20 XP für Notation & Songwriting
+window.addXp(20, 'notation');
+```
+
+### Schritt 3: Beobachte den Tracker
+
+- 🎥 Die **XP-Nummer oben** wird größer
+- 🎥 Die **Balken** wachsen
+- 🎥 Evtl. **Benachrichtigung** "XP: +10" rutscht rein
+
+### Schritt 4: Refresh den Browser
+
+- Drücke **F5** zum Neuladen
+- ✨ **Deine XP sind noch da!** (im `localStorage` gespeichert)
+
+---
+
+## 💾 Export & Import
+
+Der Tracker speichert alles unter dem Key `mymusic_xp_state` im Browser-Storage.
+
+### Daten exportieren
+
+In der Console:
+```javascript
+const data = localStorage.getItem('mymusic_xp_state');
+console.log(JSON.parse(data));
+```
+
+Das gibt ein JSON-Objekt aus, das du speichern kannst.
+
+### Daten importieren
+
+```javascript
+const newData = {
+  "totalXp": 150,
+  "currentLevel": 100,
+  "pillars": {
+    "motor": { "xp": 50, "level": 1 },
+    "rhythm": { "xp": 50, "level": 1 },
+    "notation": { "xp": 50, "level": 1 }
+  }
+};
+localStorage.setItem('mymusic_xp_state', JSON.stringify(newData));
+```
+
+---
+
+## 🔌 Public API
+
+Andere Komponenten können XP vergeben via globale Funktion:
+
+```javascript
+// Syntax: window.addXp(amount, pillar)
+// pillar = 'motor' | 'rhythm' | 'notation'
+
+window.addXp(10, 'motor');      // Griffbrett-Motorik
+window.addXp(25, 'rhythm');     // Rhythmus & Backing-Track
+window.addXp(30, 'notation');   // Notation & Songwriting
+```
+
+**In Astro-Komponenten:**
+
+```astro
+<button onclick="window.addXp(20, 'motor')">
+  Übung bestanden! (+20 XP)
+</button>
+```
+
+---
+
+## 📋 Technische Details
+
+### Props
+
+```typescript
+interface Props {
+  compact?: boolean;        // Minimal-Ansicht (default: false)
+  showPillars?: boolean;    // Säulen anzeigen (default: true)
+}
+```
+
+### localStorage Key
+
+```
+Key: 'mymusic_xp_state'
+
+Struktur:
+{
+  "totalXp": number,
+  "currentLevel": number,
+  "pillars": {
+    "motor": { xp: number, level: number },
+    "rhythm": { xp: number, level: number },
+    "notation": { xp: number, level: number }
+  },
+  "completedChecks": string[],
+  "lastSessionDate": ISO string
+}
+```
+
+### Events
+
+Der Tracker triggert folgende Events auf `window`:
+
+```javascript
+// Bei XP-Gewinn
+window.addEventListener('xp-gain', (e) => {
+  console.log(e.detail); // { amount: 10, pillar: 'motor' }
+});
+
+// Bei Level-Up
+window.addEventListener('level-up', (e) => {
+  console.log(e.detail); // { level: 100, message: "..." }
+});
+```
+
+---
+
+## 🎨 Styling
+
+- **Hauptfarbe:** Violett-Gradient (#7c3aed → #6d28d9)
+- **Motorik-Balken:** Grün (#10b981)
+- **Rhythmus-Balken:** Blau (#3b82f6)
+- **Notation-Balken:** Violett (#8b5cf6)
+- **Text:** Weiß auf dunklem Hintergrund
+- **Responsive:** Mobile-optimiert
+
+---
+
+## ✅ Test-Checkliste
+
+- [ ] Dashboard lädt ohne Fehler
+- [ ] Alle 3 Balken sichtbar
+- [ ] Buttons funktionieren (Zurücksetzen, Export, Import)
+- [ ] `window.addXp()` in Console funktioniert
+- [ ] XP bleibt nach Browser-Refresh erhalten
+- [ ] Level-Gate-Text aktualisiert sich bei XP-Gewinn
+- [ ] Auf Mobile-Geräten responsive
+
+---
+
+## 🚀 Nächste Schritte
+
+- [ ] Integration in alle Praxis-Seiten (101-104)
+- [ ] Quiz 105 mit automatischer XP-Vergabe
+- [ ] Leaderboard / Statistiken-Seite
+- [ ] Mobile App Integration (Progressive Web App)

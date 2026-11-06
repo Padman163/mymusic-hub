@@ -1,0 +1,686 @@
+---
+// src/components/DrumPattern.astro
+export interface Props {
+  steps?: number;
+  timeSignature?: string;
+  resolution?: string;
+  interactive?: boolean;
+  showVelocity?: boolean;
+  showTrackNote?: boolean;
+  useTrackColors?: boolean;
+  continuous?: boolean;
+  keepEmptyTracks?: boolean;
+  stepSize?: number;
+  stepLabels?: string[];
+  patternData?: {
+    name: string;
+    note: string;
+    color: string;
+    activeSteps: number[];
+    cellLabels?: string[];
+    eventPositions?: number[];
+    eventLabels?: string[];
+    velocities?: number[];
+  }[];
+}
+
+const { 
+  steps = 8,
+  timeSignature = "4/4",
+  resolution = "1/8",
+  interactive = true,
+  showVelocity = false,
+  showTrackNote = true,
+  useTrackColors = false,
+  continuous = false,
+  keepEmptyTracks = false,
+  stepSize = 32.5,
+  stepLabels: customStepLabels,
+  patternData = [
+    { name: "Kick - Hit", note: "C1", color: "#ef4444", activeSteps: [0, 4] },
+    { name: "Snare - Center", note: "D1", color: "#f97316", activeSteps: [2, 6] },
+    { name: "Snare - Edge", note: "A0", color: "#f97316", activeSteps: [] },
+    { name: "Floortom 2 - Center", note: "F1", color: "#eab308", activeSteps: [] },
+    { name: "Hi-Hat - Closed Edge", note: "A#-1", color: "#22c55e", activeSteps: [0, 1, 2, 3, 4, 5, 6, 7] },
+    { name: "Hi-Hat - Open Edge 0", note: "E3", color: "#22c55e", activeSteps: [] },
+    { name: "Hi-Hat - Open Edge 3", note: "D0", color: "#22c55e", activeSteps: [] },
+    { name: "Crash 1 - Crash", note: "D5", color: "#0ea5e9", activeSteps: [] }
+  ]
+} = Astro.props;
+
+const noteColors: Record<string, string> = {
+  C: '#f87171',
+  'C#': '#fb923c',
+  D: '#fbbf24',
+  'D#': '#f472b6',
+  E: '#a3e635',
+  F: '#e879f9',
+  'F#': '#2dd4bf',
+  G: '#60a5fa',
+  'G#': '#38bdf8',
+  A: '#c084fc',
+  'A#': '#4ade80',
+  B: '#facc15'
+};
+
+const visiblePatternData = patternData
+  .filter((track) => keepEmptyTracks || track.activeSteps.length > 0 || (track.eventPositions?.length ?? 0) > 0)
+  .map((track) => ({
+    ...track,
+    color: useTrackColors
+      ? track.color
+      : noteColors[track.note.match(/^[A-G]#?/)?.[0] ?? ''] ?? track.color,
+    velocities: Array.from({ length: steps }, (_, stepIndex) => (
+      track.activeSteps.includes(stepIndex)
+        ? Math.min(127, Math.max(0, track.velocities?.[stepIndex] ?? 90))
+        : 0
+    ))
+  }));
+
+const initialTrack = visiblePatternData[0];
+const stepLabels = Array.from({ length: steps }, (_, index) => (
+  customStepLabels?.[index] ?? (index % 2 === 0 ? `${(Math.floor(index / 2) % 4) + 1}` : "+")
+));
+---
+
+<div
+  class="studio-one-pattern"
+  style={`--step-size: ${stepSize}px;`}
+  data-interactive={interactive}
+  data-show-velocity={showVelocity}
+  data-show-track-note={showTrackNote}
+  data-continuous={continuous}
+>
+  <div class="pattern-header" style={`--steps: ${steps};`}>
+    <div class="header-spacer" aria-hidden="true"></div>
+    {stepLabels.map((label) => (
+      <div class="step-number">{label}</div>
+    ))}
+  </div>
+  
+  <div class="pattern-grid">
+    {visiblePatternData.map((track, trackIndex) => (
+      <div
+        class={`track-row ${(interactive || showVelocity) && trackIndex === 0 ? 'selected' : ''}`}
+        data-color={track.color}
+        data-velocities={JSON.stringify(track.velocities)}
+        aria-label={`Instrument ${track.name}, Note ${track.note}`}
+        role={showVelocity ? 'button' : undefined}
+        aria-pressed={showVelocity ? trackIndex === 0 : undefined}
+        tabindex={showVelocity ? 0 : undefined}
+      >
+        <div class="track-info" style={`--track-color: ${track.color};`}>
+          <span class="track-name">{track.name}</span>
+          {showTrackNote && <span class="track-note">{track.note}</span>}
+        </div>
+        <div class="step-columns step-row" style={`--steps: ${steps};`}>
+          {Array.from({ length: steps }).map((_, stepIdx) => {
+            const isActive = track.activeSteps.includes(stepIdx);
+            const runStarts = isActive && !track.activeSteps.includes(stepIdx - 1);
+            const runEnds = isActive && !track.activeSteps.includes(stepIdx + 1);
+            return (
+              <div 
+                class={`step-cell ${isActive ? 'active' : ''}`} 
+                style={isActive ? `background-color: ${track.color};` : ''}
+                data-step={stepIdx}
+                data-grid-end={stepIdx === steps - 1 ? 'true' : undefined}
+                data-run-start={runStarts ? 'true' : undefined}
+                data-run-end={runEnds ? 'true' : undefined}
+              >
+                {track.cellLabels?.[stepIdx] && (
+                  <span class="step-cell-label">{track.cellLabels[stepIdx]}</span>
+                )}
+              </div>
+            );
+          })}
+          {track.eventPositions?.map((stepPosition, eventIndex) => (
+            <div
+              class="event-marker"
+              aria-hidden="true"
+              style={`--event-step: ${stepPosition}; --event-color: ${track.color};`}
+            >{track.eventLabels?.[eventIndex]}</div>
+          ))}
+        </div>
+      </div>
+    ))}
+    {showVelocity && initialTrack && (
+      <div
+        class="track-row velocity-row"
+        aria-label="Anschlag für ausgewähltes Instrument"
+      >
+        <div class="track-info velocity-info">Anschlag</div>
+        <div class="step-columns step-row velocity-columns" style={`--steps: ${steps};`}>
+          {Array.from({ length: steps }, (_, stepIndex) => {
+            const isActive = initialTrack.activeSteps.includes(stepIndex);
+            const velocity = initialTrack.velocities[stepIndex] ?? 0;
+            return (
+              <div
+                class="velocity-cell"
+                style={`--velocity-percent: ${(velocity / 127) * 100}%;`}
+                data-active={isActive ? 'true' : 'false'}
+                data-step={stepIndex}
+                data-velocity={velocity}
+                role={interactive ? 'slider' : 'img'}
+                aria-label={`${initialTrack.name}, Step ${stepIndex + 1}, Anschlag ${velocity}`}
+                aria-valuemin={interactive ? 0 : undefined}
+                aria-valuemax={interactive ? 127 : undefined}
+                aria-valuenow={interactive ? velocity : undefined}
+                aria-disabled={interactive ? !isActive : undefined}
+                tabindex={interactive && isActive ? 0 : -1}
+              >
+                <span class="velocity-bar" style={`height: ${(velocity / 127) * 100}%;`}></span>
+                <span class="velocity-label" data-in-bar={velocity >= 40 ? 'true' : 'false'}>
+                  {isActive ? velocity : ''}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    )}
+  </div>
+  <div
+    class="pattern-footer"
+    style={`--steps: ${steps};`}
+    aria-label={`Taktart ${timeSignature}, Auflösung ${resolution}, ${steps} Steps`}
+  >
+    <div class="footer-info">
+      <span>Taktart: <strong>{timeSignature}</strong></span>
+      <span>Auflösung: <strong>{resolution}</strong></span>
+      <span>Steps: <strong>{steps}</strong></span>
+    </div>
+  </div>
+</div>
+
+<style>
+  .studio-one-pattern {
+    --track-label-width: 150px;
+    --step-size: 32.5px;
+    --step-gap: 2.5px;
+    background-color: #121212;
+    border-radius: 6px;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #d1d5db;
+    width: fit-content;
+    max-width: 100%;
+    min-width: min-content;
+    margin: 1rem 0;
+    border: 1px solid #27272a;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    user-select: none;
+    overflow: auto hidden;
+    box-sizing: border-box;
+  }
+
+  .pattern-header,
+  .pattern-footer {
+    display: grid;
+    grid-template-columns: calc(var(--track-label-width) - var(--step-gap)) repeat(var(--steps), var(--step-size));
+    grid-template-rows: 1fr;
+    column-gap: var(--step-gap);
+    background-color: #121212;
+    padding: 0 8px;
+    height: 36px;
+    min-height: 36px;
+    box-sizing: border-box;
+    width: max-content;
+  }
+
+  .pattern-header {
+    align-items: center;
+    position: relative;
+    z-index: 1;
+    border-bottom: 1px solid #27272a;
+    font-size: 13px;
+    border-radius: 6px 6px 0 0;
+    padding: 8px 8px var(--step-gap);
+    height: calc(var(--step-size) + 8px + var(--step-gap) + 1px);
+    min-height: calc(var(--step-size) + 8px + var(--step-gap) + 1px);
+  }
+
+  .studio-one-pattern[data-continuous="true"] .step-cell.active:not([data-run-end="true"]) {
+    width: calc(var(--step-size) + var(--step-gap));
+    border: 0;
+    border-radius: 0;
+  }
+
+  .studio-one-pattern[data-continuous="true"] .step-cell.active[data-run-end="true"] {
+    width: var(--step-size);
+    border: 0;
+  }
+
+  .studio-one-pattern[data-continuous="true"] .step-cell.active[data-run-start="true"] {
+    border-radius: 4px 0 0 4px;
+  }
+
+  .studio-one-pattern[data-continuous="true"] .step-cell.active[data-run-end="true"] {
+    border-radius: 0 4px 4px 0;
+  }
+
+  .studio-one-pattern[data-continuous="true"] .step-cell.active[data-run-start="true"][data-run-end="true"] {
+    border-radius: 4px;
+  }
+
+  .studio-one-pattern[data-continuous="false"] .step-cell.active {
+    border-radius: 4px;
+  }
+
+  .pattern-footer {
+    margin-top: var(--step-gap);
+    border-top: 1px solid #27272a;
+    border-radius: 0 0 6px 6px;
+  }
+  
+  .header-spacer {
+    width: var(--track-label-width);
+    flex: 0 0 var(--track-label-width);
+  }
+
+  .footer-info {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 0 8px;
+    color: #9ca3af;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .footer-info strong {
+    color: #d1d5db;
+    font-weight: 600;
+  }
+  
+  .step-columns {
+    display: grid;
+    grid-template-columns: repeat(var(--steps), var(--step-size));
+    grid-auto-rows: var(--step-size);
+    column-gap: var(--step-gap);
+    row-gap: var(--step-gap);
+    flex: 0 0 auto;
+  }
+
+  .step-columns > * {
+    margin: 0 !important;
+    transform: none !important;
+  }
+  
+  .step-number {
+    width: var(--step-size);
+    height: var(--step-size);
+    align-self: center;
+    box-sizing: border-box;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
+    display: grid;
+    place-items: center;
+    background-color: #18181b;
+    border: 1px solid #27272a;
+    border-radius: 2px;
+    text-align: center;
+    color: #9ca3af;
+    font-weight: 600;
+    font-size: 12px;
+    line-height: 1;
+  }
+
+  .pattern-grid {
+    display: grid;
+    grid-auto-rows: max-content;
+    width: max-content;
+    row-gap: var(--step-gap);
+    padding-top: var(--step-gap);
+    margin: 0 !important;
+  }
+  
+  .track-row {
+    display: flex;
+    align-items: stretch;
+    background-color: #121212;
+    width: max-content;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .studio-one-pattern[data-show-velocity="true"] .track-row:not(.velocity-row) {
+    cursor: pointer;
+  }
+
+  .track-row.selected .track-info,
+  .track-row.selected .step-row {
+    background-color: #1c1c20;
+  }
+  
+  .track-info {
+    position: relative;
+    width: var(--track-label-width);
+    flex: 0 0 var(--track-label-width);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 4px;
+    padding: 0 8px;
+    margin: 0 !important;
+    box-sizing: border-box;
+  }
+
+  .track-info::before {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 4px;
+    background-color: var(--track-color);
+    content: "";
+  }
+  
+  .track-name {
+    min-width: 0;
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .track-note {
+    font-size: 11px;
+    color: #9ca3af;
+    width: 30px;
+    flex-shrink: 0;
+    text-align: right;
+  }
+  
+  .step-row {
+    position: relative;
+    align-content: start;
+    align-items: start;
+    flex: 0 0 auto;
+    padding: 0 8px;
+    margin: 0 !important;
+    background-color: #121212;
+  }
+
+  .event-marker {
+    position: absolute;
+    top: 0;
+    left: calc(8px + var(--event-step) * (var(--step-size) + var(--step-gap)));
+    width: var(--step-size);
+    height: var(--step-size);
+    box-sizing: border-box;
+    border: 1px solid #27272a;
+    border-radius: 4px;
+    background-color: var(--event-color);
+    display: grid;
+    place-items: center;
+    color: #121212;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    pointer-events: none;
+  }
+  
+  .step-cell {
+    display: grid;
+    place-items: center;
+    width: var(--step-size);
+    height: var(--step-size);
+    box-sizing: border-box;
+    background-color: #18181b;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid #27272a;
+    transition: filter 0.1s;
+  }
+
+  .step-cell-label {
+    color: #121212;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    pointer-events: none;
+  }
+  
+  .step-cell:hover {
+    filter: brightness(1.3);
+  }
+
+  .studio-one-pattern[data-interactive="false"] .step-cell {
+    cursor: default;
+  }
+
+  .studio-one-pattern[data-interactive="false"] .step-cell:hover {
+    filter: none;
+  }
+
+  .studio-one-pattern[data-show-velocity="true"][data-interactive="false"] .step-cell {
+    cursor: pointer;
+  }
+
+  .velocity-row {
+    background-color: #121212;
+  }
+
+  .velocity-info {
+    background-color: #121212;
+    font-size: 11px;
+  }
+
+  .velocity-row.selected .velocity-info,
+  .velocity-row.selected .velocity-columns {
+    background-color: #1c1c20;
+  }
+
+  .velocity-info::before {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 4px;
+    background-color: #3b82f6;
+    content: "";
+  }
+
+  .velocity-columns {
+    grid-auto-rows: 53px;
+    background-color: #121212;
+  }
+
+  .velocity-cell {
+    position: relative;
+    width: var(--step-size);
+    height: 53px;
+    box-sizing: border-box;
+    border: 1px solid #27272a;
+    border-radius: 2px;
+    background-color: #18181b;
+    cursor: ns-resize;
+    touch-action: none;
+    outline-offset: -2px;
+  }
+
+  .velocity-cell[data-active="false"] {
+    cursor: default;
+  }
+
+  .velocity-cell:focus-visible {
+    outline: 1px solid #60a5fa;
+  }
+
+  .velocity-bar {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    min-height: 0;
+    border-radius: 2px 2px 0 0;
+    background-color: #3b82f6;
+    pointer-events: none;
+  }
+
+  .velocity-label {
+    position: absolute;
+    right: 0;
+    bottom: calc(var(--velocity-percent, 0%) + 2px);
+    left: 0;
+    z-index: 1;
+    color: #fff;
+    font-size: 10px;
+    line-height: 12px;
+    text-align: center;
+    pointer-events: none;
+  }
+
+  .velocity-label[data-in-bar="true"] {
+    bottom: 2px;
+  }
+</style>
+
+<script>
+  function updateVelocityCell(cell, velocity) {
+    const value = Math.max(0, Math.min(127, Math.round(velocity)));
+    const bar = cell.querySelector('.velocity-bar');
+    const label = cell.querySelector('.velocity-label');
+
+    cell.dataset.velocity = String(value);
+    cell.setAttribute('aria-valuenow', String(value));
+    cell.style.setProperty('--velocity-percent', `${(value / 127) * 100}%`);
+    bar.style.height = `${(value / 127) * 100}%`;
+    label.textContent = cell.dataset.active === 'true' ? String(value) : '';
+    label.dataset.inBar = value >= 40 ? 'true' : 'false';
+  }
+
+  function setupDrumPatterns() {
+    const patterns = document.querySelectorAll('.studio-one-pattern');
+    
+    patterns.forEach(pattern => {
+      const rows = pattern.querySelectorAll('.track-row:not(.velocity-row)');
+      const velocityRow = pattern.querySelector('.velocity-row');
+      const velocityCells = pattern.querySelectorAll('.velocity-cell');
+      const isInteractive = pattern.dataset.interactive === 'true';
+      const hasVelocity = pattern.dataset.showVelocity === 'true';
+      let selectedTrack = pattern.querySelector('.track-row.selected') || rows[0];
+
+      if (!isInteractive && !hasVelocity) return;
+
+      function renderVelocity(row) {
+        const values = JSON.parse(row.dataset.velocities);
+        const stepCells = row.querySelectorAll('.step-cell');
+
+        velocityCells.forEach((velocityCell, stepIndex) => {
+          const isActive = stepCells[stepIndex].classList.contains('active');
+          const value = isActive ? values[stepIndex] : 0;
+          velocityCell.dataset.active = String(isActive);
+          velocityCell.dataset.velocity = String(value);
+          if (isInteractive) {
+            velocityCell.setAttribute('aria-valuenow', String(value));
+            velocityCell.setAttribute('aria-disabled', String(!isActive));
+          }
+          velocityCell.setAttribute(
+            'aria-label',
+            `${row.querySelector('.track-name').textContent}, Step ${stepIndex + 1}, Anschlag`
+          );
+          velocityCell.tabIndex = isInteractive && isActive ? 0 : -1;
+          updateVelocityCell(velocityCell, value);
+        });
+      }
+
+      function selectRow(row) {
+        selectedTrack = row;
+        rows.forEach(candidate => candidate.classList.toggle('selected', candidate === row));
+        if (hasVelocity) {
+          rows.forEach(candidate => candidate.setAttribute('aria-pressed', String(candidate === row)));
+        }
+        velocityRow?.classList.remove('selected');
+        if (hasVelocity) renderVelocity(row);
+      }
+
+      rows.forEach(row => {
+        const color = row.getAttribute('data-color');
+        const cells = row.querySelectorAll('.step-cell');
+        if (row.dataset.bound !== 'true') {
+          row.dataset.bound = 'true';
+          row.addEventListener('click', () => selectRow(row));
+          row.addEventListener('keydown', event => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            selectRow(row);
+          });
+        }
+        
+        cells.forEach(cell => {
+          if (!isInteractive) return;
+          if (cell.dataset.bound === 'true') return;
+          cell.dataset.bound = 'true';
+
+          cell.addEventListener('click', () => {
+            selectRow(row);
+            const isActive = cell.classList.toggle('active');
+            cell.style.backgroundColor = isActive ? color : '#18181b';
+
+            const values = JSON.parse(row.dataset.velocities);
+            const stepIndex = Number(cell.dataset.step);
+            values[stepIndex] = isActive ? (values[stepIndex] || 90) : 0;
+            row.dataset.velocities = JSON.stringify(values);
+            renderVelocity(row);
+          });
+        });
+      });
+
+      const selectedRow = pattern.querySelector('.track-row.selected') || rows[0];
+      if (selectedRow) selectRow(selectedRow);
+
+      velocityCells.forEach(cell => {
+        if (!isInteractive) return;
+        if (cell.dataset.bound === 'true') return;
+        cell.dataset.bound = 'true';
+
+        const setFromPointer = (event) => {
+          const bounds = cell.getBoundingClientRect();
+          const ratio = 1 - (event.clientY - bounds.top) / bounds.height;
+          updateVelocityCell(cell, ratio * 127);
+
+          if (selectedTrack) {
+            const values = JSON.parse(selectedTrack.dataset.velocities);
+            values[Number(cell.dataset.step)] = Number(cell.dataset.velocity);
+            selectedTrack.dataset.velocities = JSON.stringify(values);
+          }
+        };
+
+        cell.addEventListener('pointerdown', event => {
+          if (cell.dataset.active !== 'true') return;
+          event.preventDefault();
+          cell.setPointerCapture(event.pointerId);
+          setFromPointer(event);
+        });
+        cell.addEventListener('pointermove', event => {
+          if (cell.hasPointerCapture(event.pointerId)) setFromPointer(event);
+        });
+        cell.addEventListener('keydown', event => {
+          if (cell.dataset.active !== 'true') return;
+
+          const current = Number(cell.dataset.velocity);
+          const changes = {
+            ArrowUp: 1,
+            ArrowRight: 1,
+            ArrowDown: -1,
+            ArrowLeft: -1,
+            PageUp: 10,
+            PageDown: -10,
+            Home: -current,
+            End: 127 - current
+          };
+          if (!(event.key in changes)) return;
+          event.preventDefault();
+          updateVelocityCell(cell, current + changes[event.key]);
+
+          if (selectedTrack) {
+            const values = JSON.parse(selectedTrack.dataset.velocities);
+            values[Number(cell.dataset.step)] = Number(cell.dataset.velocity);
+            selectedTrack.dataset.velocities = JSON.stringify(values);
+          }
+        });
+      });
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', setupDrumPatterns);
+  document.addEventListener('astro:page-load', setupDrumPatterns);
+</script>

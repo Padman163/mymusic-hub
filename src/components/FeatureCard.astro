@@ -1,0 +1,266 @@
+---
+export interface Comment {
+  author: string;
+  role: 'Dev' | 'Didaktik' | 'Audio';
+  text: string;
+}
+
+export interface Props {
+  id: string;
+  title: string;
+  status: 'Geplant' | 'In Arbeit' | 'Bereit' | 'Konzept';
+  category: string;
+  difficulty?: string;
+  tags?: string[];
+  comments?: Comment[];
+}
+
+const {
+  id,
+  title,
+  status,
+  category,
+  difficulty,
+  tags = [],
+  comments = []
+} = Astro.props;
+
+const statusColors: Record<string, string> = {
+  'Geplant': '#FFA500',
+  'In Arbeit': '#4A90E2',
+  'Bereit': '#7CB342',
+  'Konzept': '#9C27B0'
+};
+
+const statusBgColors: Record<string, string> = {
+  'Geplant': '#FFF3E0',
+  'In Arbeit': '#E3F2FD',
+  'Bereit': '#F1F8E9',
+  'Konzept': '#F3E5F5'
+};
+
+const roleColors: Record<string, string> = {
+  'Dev': '#0066CC',
+  'Didaktik': '#009900',
+  'Audio': '#CC0000'
+};
+
+const groupedComments = comments.reduce((acc, comment) => {
+  if (!acc[comment.role]) acc[comment.role] = [];
+  acc[comment.role].push(comment);
+  return acc;
+}, {} as Record<string, Comment[]>);
+---
+
+<div class="feature-card">
+  <div class="feature-header">
+    <div class="header-top">
+      <span class="id-badge">{id}</span>
+      <h3 class="feature-title">{title}</h3>
+      <span class="status-badge" style={{ backgroundColor: statusBgColors[status], color: statusColors[status] }}>
+        {status}
+      </span>
+    </div>
+    <p class="category-label">{category}</p>
+  </div>
+
+  <div class="feature-content">
+    <slot />
+  </div>
+
+  {tags.length > 0 && (
+    <div class="tags-row">
+      {tags.map((tag) => (
+        <span class="tag">{tag}</span>
+      ))}
+    </div>
+  )}
+
+  {difficulty && (
+    <div class="difficulty-row">
+      <span class="difficulty-label">Schwierigkeit: {difficulty}</span>
+    </div>
+  )}
+
+  {comments.length > 0 && (
+    <details class="comments-section">
+      <summary>💬 {comments.length} Kommentar{comments.length !== 1 ? 'e' : ''}</summary>
+      <div class="comments-container">
+        {['Dev', 'Didaktik', 'Audio'].map((role) => (
+          groupedComments[role] && (
+            <div class="comment-group" key={role}>
+              <h4 class="comment-role-title" style={{ borderLeftColor: roleColors[role] }}>
+                {role}
+              </h4>
+              {groupedComments[role].map((comment, idx) => (
+                <div class="comment-item" key={idx}>
+                  <span class="comment-author">{comment.author}</span>
+                  <p class="comment-text">{comment.text}</p>
+                </div>
+              ))}
+            </div>
+          )
+        ))}
+      </div>
+    </details>
+  )}
+</div>
+
+<style>
+  .feature-card {
+    border: 1px solid #e1e4e8;
+    border-radius: 8px;
+    padding: 16px;
+    margin: 12px 0;
+    background-color: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.2s ease;
+  }
+
+  .feature-card:hover {
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .feature-header {
+    margin-bottom: 12px;
+    border-bottom: 1px solid #e1e4e8;
+    padding-bottom: 12px;
+  }
+
+  .header-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+
+  .id-badge {
+    display: inline-block;
+    background-color: #f6f8fa;
+    border: 1px solid #d1d5da;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #24292e;
+    font-family: monospace;
+  }
+
+  .feature-title {
+    flex: 1;
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #24292e;
+  }
+
+  .status-badge {
+    display: inline-block;
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .category-label {
+    margin: 0;
+    font-size: 0.875rem;
+    color: #586069;
+    font-weight: 500;
+  }
+
+  .feature-content {
+    margin: 12px 0;
+    line-height: 1.6;
+  }
+
+  .tags-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 8px 0;
+  }
+
+  .tag {
+    display: inline-block;
+    background-color: #f1f3f5;
+    border: 1px solid #d1d5da;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    color: #586069;
+  }
+
+  .difficulty-row {
+    margin: 8px 0;
+  }
+
+  .difficulty-label {
+    display: inline-block;
+    background-color: #fff8e1;
+    border-left: 3px solid #ffc107;
+    padding: 6px 10px;
+    font-size: 0.875rem;
+    color: #856404;
+  }
+
+  .comments-section {
+    margin-top: 12px;
+    border-top: 1px solid #e1e4e8;
+    padding-top: 12px;
+  }
+
+  .comments-section summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: #0366d6;
+    padding: 8px 0;
+    user-select: none;
+  }
+
+  .comments-section summary:hover {
+    text-decoration: underline;
+  }
+
+  .comments-container {
+    margin-top: 12px;
+  }
+
+  .comment-group {
+    margin-bottom: 12px;
+  }
+
+  .comment-role-title {
+    margin: 0 0 8px 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #24292e;
+    border-left: 3px solid;
+    padding-left: 8px;
+  }
+
+  .comment-item {
+    margin-left: 12px;
+    margin-bottom: 8px;
+    padding: 8px;
+    background-color: #f6f8fa;
+    border-radius: 4px;
+  }
+
+  .comment-author {
+    display: block;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #24292e;
+    margin-bottom: 4px;
+  }
+
+  .comment-text {
+    margin: 0;
+    font-size: 0.875rem;
+    color: #586069;
+    line-height: 1.5;
+  }
+</style>

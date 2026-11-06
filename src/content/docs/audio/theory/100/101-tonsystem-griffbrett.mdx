@@ -1,0 +1,148 @@
+---
+title: "101: Vom Ton zur Gitarre"
+description: "Elementarlehre: 12 Halbtöne, Stammtöne und Griffbrett-Orientierung."
+sidebar:
+  order: 1
+---
+
+
+import FretboardClickable from '../../../../../components/FretboardClickable.astro';
+import DrumPattern from '../../../../../components/DrumPattern.astro';
+
+## 1. Musiktheorie
+
+Wenn du eine Saite anschlägst, schwingt sie und bringt die Luft in Bewegung. Diese Schwingungen hören wir als Ton. Wie schnell die Saite schwingt, bestimmt die **Tonhöhe**. Die Anzahl der Schwingungen pro Sekunde heißt **Frequenz** und wird in Hertz (Hz) angegeben.
+
+### Langsame und schnelle Schwingungen
+
+Im Schaubild siehst du drei Schwingungen über denselben Zeitraum. Die Wellenhöhe ist ähnlich, aber sie bewegen sich unterschiedlich oft hin und her: Je mehr Schwingungen in dieselbe Zeit passen, desto höher ist die Frequenz und desto höher klingt der Ton. Weniger Schwingungen bedeuten eine tiefere Frequenz und einen tieferen Ton.
+
+<figure>
+  <svg viewBox="0 0 720 250" role="img" aria-labelledby="wave-title wave-description">
+    <title id="wave-title">Langsame und schnelle Schwingungen im Vergleich</title>
+    <desc id="wave-description">Drei gleich hohe Wellen über denselben Zeitraum. Die langsame Welle schwingt einmal, die mittlere zweimal und die schnelle viermal. Je mehr Schwingungen, desto höher der Ton.</desc>
+    <line x1="190" y1="48" x2="650" y2="48" stroke="#64748b" stroke-dasharray="4 5" />
+    <line x1="190" y1="118" x2="650" y2="118" stroke="#64748b" stroke-dasharray="4 5" />
+    <line x1="190" y1="188" x2="650" y2="188" stroke="#64748b" stroke-dasharray="4 5" />
+    <text x="12" y="53" fill="currentColor" font-size="16">Langsam · tiefer Ton</text>
+    <text x="12" y="123" fill="currentColor" font-size="16">Mittel</text>
+    <text x="12" y="193" fill="currentColor" font-size="16">Schnell · hoher Ton</text>
+    <path d="M190 48 Q305 8 420 48 T650 48" fill="none" stroke="#38bdf8" stroke-width="4" />
+    <path d="M190 118 Q247.5 78 305 118 T420 118 T535 118 T650 118" fill="none" stroke="#a78bfa" stroke-width="4" />
+    <path d="M190 188 Q218.75 148 247.5 188 T305 188 T362.5 188 T420 188 T477.5 188 T535 188 T592.5 188 T650 188" fill="none" stroke="#f472b6" stroke-width="4" />
+    <line x1="190" y1="226" x2="650" y2="226" stroke="currentColor" stroke-width="1.5" />
+    <path d="M650 226 l-9 -5 v10 z" fill="currentColor" />
+    <text x="408" y="247" fill="currentColor" font-size="14" text-anchor="middle">gleicher Zeitraum</text>
+  </svg>
+  <figcaption>Schematische Darstellung: Bei gleicher Wellenhöhe schwingt der höhere Ton öfter im selben Zeitraum.</figcaption>
+</figure>
+
+### Zwölf Töne und die Oktave
+
+Für Musik teilen wir den Weg von einem Ton bis zu seinem nächsthöheren Namensvetter in **zwölf Halbtonschritte**. So entstehen die zwölf Tonklassen: **C, C♯/D♭, D, D♯/E♭, E, F, F♯/G♭, G, G♯/A♭, A, A♯/B♭ und B**. Stell sie dir wie zwölf gleichmäßige Stufen vor; nach der zwölften Stufe beginnt dieselbe Folge wieder.
+
+Diese Wiederkehr heißt **Oktave**. Eine Oktave höher bedeutet, dass die Frequenz doppelt so groß ist: Die Saite schwingt im selben Zeitraum doppelt so oft. Der Tonname bleibt gleich, nur die Tonlage ist höher. Im Schaubild ist das an E2 und E3 zu sehen.
+
+Die Ziffern in Bezeichnungen wie **E2**, **E3** und **E4** geben an, in welcher Oktave der Ton liegt. In der wissenschaftlichen Notation ist **E2** die tiefe E-Leersaite, **E3** das E eine Oktave darüber und **E4** das E der hohen e-Saite. In der traditionellen D1-Oktavbezeichnung entspricht das der **großen Oktave** (E2), der **kleinen Oktave** (E3) und der **eingestrichenen Oktave** (e' = E4). Die Schreibweisen benennen also dieselbe Tonhöhe in unterschiedlichen Notationssystemen.
+
+<figure>
+  <svg viewBox="0 0 760 240" role="img" aria-labelledby="octave-title octave-description">
+    <title id="octave-title">Eine Oktave verdoppelt die Frequenz</title>
+    <desc id="octave-description">Im selben Zeitraum schwingt E2 mit 82,4 Hertz einmal, während E3 mit 164,8 Hertz zweimal schwingt. E3 hat damit die doppelte Frequenz und klingt eine Oktave höher.</desc>
+    <line x1="205" y1="70" x2="650" y2="70" stroke="#64748b" stroke-dasharray="4 5" />
+    <line x1="205" y1="145" x2="650" y2="145" stroke="#64748b" stroke-dasharray="4 5" />
+    <text x="12" y="75" fill="currentColor" font-size="16">E2 · 82,4 Hz</text>
+    <text x="12" y="150" fill="currentColor" font-size="16">E3 · 164,8 Hz</text>
+    <path d="M205 70 Q316.25 30 427.5 70 T650 70" fill="none" stroke="#38bdf8" stroke-width="4" />
+    <path d="M205 145 Q260.625 105 316.25 145 T427.5 145 T538.75 145 T650 145" fill="none" stroke="#a78bfa" stroke-width="4" />
+    <line x1="205" y1="195" x2="650" y2="195" stroke="currentColor" stroke-width="1.5" />
+    <path d="M650 195 l-9 -5 v10 z" fill="currentColor" />
+    <text x="427" y="220" fill="currentColor" font-size="14" text-anchor="middle">gleicher Zeitraum</text>
+  </svg>
+  <figcaption>E3 schwingt im gleichen Zeitraum doppelt so oft wie E2: eine Oktave höher und mit doppelter Frequenz.</figcaption>
+</figure>
+
+### Standardstimmung als Landkarte
+
+Jetzt übertragen wir die Tonidee auf die Gitarre. In der Standardstimmung heißen die sechs **Leersaiten** von der tiefsten zur höchsten:
+
+| Saite | Leere Saite | Frequenz (ungefähr) |
+|:--:|:--:|--:|
+| 1 | e4 | 329,6 Hz |
+| 2 | B3 | 246,9 Hz |
+| 3 | G3 | 196,0 Hz |
+| 4 | D3 | 146,8 Hz |
+| 5 | A2 | 110,0 Hz |
+| 6 | E2 | 82,4 Hz |
+
+Im Griffbrettbild sind die **Leersaiten** links vom Sattel dauerhaft markiert: von oben nach unten **e–B–G–D–A–E**. Die Markierungen sind fest gesetzt und können nicht angeklickt oder gelöscht werden. Die tiefe E-Saite liegt unten, die hohe e-Saite oben. Die Zahlen unter dem Griffbrett zeigen die Bünde.
+
+<FretboardClickable readOnly />
+
+Die tiefe E-Saite schwingt ungefähr 82-mal pro Sekunde, die hohe e-Saite etwa 330-mal. Das ist ungefähr die vierfache Frequenz: Von E2 zu E4 liegen zwei Oktaven, und pro Oktave verdoppelt sich die Frequenz.
+
+Die Abstände zwischen benachbarten Leersaiten sind fast überall gleich: **E–A, A–D, D–G und B–E** liegen jeweils fünf Halbtöne auseinander, also eine reine Quarte. Diese Quartenstimmung erlaubt viele gleichbleibende Griff- und Intervallformen über mehrere Saiten. Die Ausnahme ist **G–B**: Diese Saiten liegen nur vier Halbtöne auseinander, also eine große Terz. Sie erleichtert verbreitete Akkordgriffe, unterbricht aber das gleichmäßige Muster; deshalb muss man beim Übertragen von Griffmustern über diesen Saitenübergang meist einen Bund ausgleichen.
+
+
+### Unisono: derselbe Ton an mehreren Stellen
+
+Anders als beim Klavier kannst du auf der Gitarre denselben Ton mit identischer Frequenz an verschiedenen Stellen greifen. Zum Beispiel erklingt am **5. Bund der tiefen E-Saite** ein $A_2$ – genau wie auf der **leeren A-Saite**. Beide Positionen klingen also unisono.
+
+Darum denken Gitarristen oft in **Lagen**: Eine Melodie oder ein Ton kann horizontal entlang einer Saite oder vertikal über benachbarte Saiten gespielt werden. Welche Position du wählst, beeinflusst den Fingersatz und den Klangcharakter, nicht aber die Tonhöhe, wenn es sich um denselben Ton in derselben Oktave handelt.
+
+### Warum ist die B-Saite anders gestimmt?
+
+Wenn das Quartenmuster auch zwischen G und der nächsten Saite weiterginge, wäre die nächste Leersaite **C**. Stattdessen ist sie **B** – einen Halbton tiefer. Diese Abweichung ist Teil der Standardstimmung: Sie ist ein praktischer Kompromiss, der viele gebräuchliche Akkordgriffe und Melodien auf den Saiten ermöglicht. Deshalb sind Griffmuster über den Übergang von G- auf B-Saite nicht immer identisch; beim Übertragen muss man häufig einen Bund ausgleichen.
+
+Wenn du ein Griffmuster über den Übergang von der G- auf die B-Saite verschiebst, muss der betreffende Ton auf der B-Saite oft **einen Bund höher** gegriffen werden, damit die gleiche Tonbeziehung erhalten bleibt. Damit haben wir die vertikale Richtung des Griffbretts betrachtet: die sechs Saiten und ihre Stimmung. Jetzt wechseln wir den Blick und verfolgen die Töne **horizontal auf einer einzelnen Saite**.
+
+### Horizontal auf einer Saite: vom E zum E
+
+**Ein Bund entspricht einem Halbtonschritt.** Jeder Bund verkürzt die schwingende Saitenlänge und lässt den Ton um einen Halbton steigen. Auf der tiefen E-Saite startest du leer bei E2. Bund für Bund gehst du horizontal durch alle zwölf Halbtonschritte; am 12. Bund erreichst du wieder ein E, jetzt E3. Das ist eine Oktave höher.
+
+Im Griffbrett-Schaubild sind alle Töne auf der **tiefen E-Saite** vom leeren E bis zum E im 12. Bund fest markiert: **E – F – F♯ – G – G♯ – A – A♯ – B – C – C♯ – D – D♯ – E**. Die Markierungen sind nicht interaktiv und lassen sich nicht löschen. So kannst du den Halbtonschritt von Bund zu Bund verfolgen.
+
+<FretboardClickable
+  readOnly
+  fixedPositions={[
+    { stringIndex: 5, fret: 0 },
+    { stringIndex: 5, fret: 1 },
+    { stringIndex: 5, fret: 2 },
+    { stringIndex: 5, fret: 3 },
+    { stringIndex: 5, fret: 4 },
+    { stringIndex: 5, fret: 5 },
+    { stringIndex: 5, fret: 6 },
+    { stringIndex: 5, fret: 7 },
+    { stringIndex: 5, fret: 8 },
+    { stringIndex: 5, fret: 9 },
+    { stringIndex: 5, fret: 10 },
+    { stringIndex: 5, fret: 11 },
+    { stringIndex: 5, fret: 12 }
+  ]}
+/>
+
+Die Saite klingt am 12. Bund ungefähr eine Oktave höher als leer: Aus etwa **82,4 Hz (E2)** werden etwa **164,8 Hz (E3)**. Das Griffbrett zeigt so dieselbe Tonfolge wie das Tonsystem – nur als Weg entlang der Saite.
+
+### Die Halbtonschritte auf der Saite
+
+Warum liegen **E und F** nur einen Halbton auseinander? Die zwölf Schritte einer Oktave werden mit sieben Stammtönen benannt: **C, D, E, F, G, A, B**. Diese Stammtöne liegen nicht alle gleich weit auseinander. In der üblichen Dur-Tonleiter wechseln sich Ganzton- und Halbtonschritte in einem festen Muster ab: **Ganzton – Ganzton – Halbton – Ganzton – Ganzton – Ganzton – Halbton**. In C-Dur liegen die Halbtonschritte dadurch genau zwischen **E–F** und **B–C**. Es gibt dort keinen weiteren Stammton dazwischen; der nächste Schritt ist bereits der nächste Tonname.
+
+Jetzt lassen sich die zwei besonderen Nachbarpaare auch direkt am Griffbrett erkennen: **E–F** liegen auf der tiefen E-Saite in den Bünden 0 und 1, **B–C** in den Bünden 7 und 8. Bei beiden führt der nächste Bund direkt zum nächsten Stammton – zwischen den Tönen liegt kein zusätzlicher Halbton.
+
+Bei anderen benachbarten Stammtönen passt ein weiterer Ton dazwischen: zum Beispiel **F–F♯–G** oder **C–C♯–D**. Ein ♯ erhöht einen Ton um einen Halbton, ein ♭ senkt ihn. Daher können unterschiedliche Namen dieselbe Tonhöhe bezeichnen, zum Beispiel **C♯ und D♭**.
+
+Ein **Ganztonschritt** umfasst zwei Halbtöne, also zwei Bünde auf derselben Saite. Er ist der Abstand zwischen den meisten benachbarten Stammtönen, zum Beispiel **C–D**, **D–E** oder **F–G**. Ein Halbtonschritt entspricht dagegen genau einem Bund, etwa **E–F** oder **F–F♯**.
+
+### Enharmonische Verwechslung
+
+Auf einem gleichstufig gestimmten Instrument wie der Gitarre können zwei unterschiedlich geschriebene Töne dieselbe Tonhöhe haben und damit auf demselben Bund liegen. Das nennt man **enharmonische Verwechslung**: **F♯ = G♭** und **C♯ = D♭**. Ein Kreuz (**♯**) erhöht den Stammton um einen Halbton; in der deutschen Namensgebung erhält er meist die Endung **-is** (F wird zu **Fis**). Ein Be (**♭**) erniedrigt ihn um einen Halbton; meist kommt die Endung **-es** hinzu (G wird zu **Ges**). Welche Schreibweise verwendet wird, hängt vom musikalischen Zusammenhang ab, auch wenn beide Töne auf der Gitarre denselben Bund bezeichnen.
+
+:::tip[Die wichtigsten Eckpunkte]
+- Ein Ton entsteht durch Schwingungen; je höher die Frequenz, desto höher der Ton.
+- Zwölf Halbtonschritte ergeben eine Oktave und verdoppeln die Frequenz; **E2, E3 und E4** bezeichnen aufsteigende Oktaven.
+- Standardstimmung: **E – A – D – G – B – e**. Meist liegen die Saiten fünf Halbtöne (reine Quarte) auseinander; **G–B** ist mit vier Halbtönen (große Terz) die Ausnahme.
+- Ein Bund entspricht einem Halbton, zwei Bünde einem Ganzton. Auf der tiefen E-Saite führt der 12. Bund von **E2** zu **E3**.
+- **E–F** und **B–C** liegen direkt einen Halbton auseinander.
+- Enharmonische Töne wie **F♯/G♭** und **C♯/D♭** können denselben Bund bezeichnen.
+- Derselbe Ton kann auf der Gitarre an mehreren Positionen liegen, zum Beispiel **A2** auf der leeren A-Saite und am 5. Bund der tiefen E-Saite.
+:::

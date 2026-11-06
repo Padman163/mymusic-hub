@@ -1,0 +1,398 @@
+---
+export interface VocalLyricEvent {
+  text: string;
+  pitch: string;
+  startStep: number;
+  lengthSteps: number;
+}
+
+export interface VocalBar {
+  chord: string;
+  lyrics: VocalLyricEvent[];
+}
+
+export interface Props {
+  bars: VocalBar[];
+  stepsPerBar?: number;
+  timeSignature?: string;
+  resolution?: string;
+  startBar?: number;
+}
+
+const {
+  bars,
+  stepsPerBar = 8,
+  timeSignature = "4/4",
+  resolution = "1/8",
+  startBar = 1
+} = Astro.props;
+
+if (!Number.isInteger(stepsPerBar) || stepsPerBar < 1) {
+  throw new Error(`Ungültige Step-Anzahl ${stepsPerBar}. Erwartet wird eine positive ganze Zahl.`);
+}
+if (bars.length === 0) {
+  throw new Error("Ein Gesangspattern muss mindestens einen Takt enthalten.");
+}
+
+const pitchClasses = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+const notePattern = /^([A-G])(#?)(-?\d+)$/;
+const parsePitch = (pitch: string) => {
+  const match = pitch.match(notePattern);
+  if (!match) {
+    throw new Error(`Ungültige Gesangstonhöhe "${pitch}". Erwartet wird z. B. E3 oder F#4.`);
+  }
+
+  const [, letter, accidental, octaveText] = match;
+  const pitchClass = `${letter}${accidental}`;
+  return {
+    midi: (Number(octaveText) + 1) * 12 + pitchClasses.indexOf(pitchClass),
+    pitchClass
+  };
+};
+
+// Neue Farb-Definitionen für die Intervalle
+const intervalColors: Record<string, string> = {
+  "1":  "#F38181",
+  "♭2": "#FFAAA6",
+  "2":  "#F4C7AB",
+  "♭3": "#EAA0E3",
+  "3":  "#D382DC",
+  "4":  "#B862D3",
+  "♭5": "#7F8BE8",
+  "5":  "#64C4ED",
+  "♭6": "#52DEE5",
+  "6":  "#6BE4C6",
+  "♭7": "#83E8BA",
+  "7":  "#CBDD7B"
+};
+const intervalMap = ["1", "♭2", "2", "♭3", "3", "4", "♭5", "5", "♭6", "6", "♭7", "7"];
+
+// Berechnet die Farbe basierend auf dem Abstand zum Akkord-Grundton
+const getIntervalColor = (notePitchClass: string, chord: string) => {
+  const match = chord.match(/^([A-G])(#?)/);
+  if (!match) return "#a78bfa";
+  const chordRoot = `${match[1]}${match[2]}`;
+  const rootIndex = pitchClasses.indexOf(chordRoot);
+  const noteIndex = pitchClasses.indexOf(notePitchClass);
+  
+  if (rootIndex === -1 || noteIndex === -1) return "#a78bfa";
+  const semitones = (noteIndex - rootIndex + 12) % 12;
+  
+  return intervalColors[intervalMap[semitones]] ?? "#a78bfa";
+};
+
+const parsedBars = bars.map((bar) => {
+  const parsedLyrics = bar.lyrics.map((event) => {
+    if (!event.text.trim()) {
+      throw new Error(`Eine Textsilbe im Gesangstakt "${bar.chord}" darf nicht leer sein.`);
+    }
+    if (
+      !Number.isInteger(event.startStep)
+      || !Number.isInteger(event.lengthSteps)
+      || event.startStep < 0
+      || event.lengthSteps < 1
+      || event.startStep + event.lengthSteps > stepsPerBar
+    ) {
+      throw new Error(`Ungültige Position oder Länge für Textsilbe "${event.text}" im Gesangstakt "${bar.chord}".`);
+    }
+    return { ...event, ...parsePitch(event.pitch) };
+  });
+
+  parsedLyrics.forEach((event, index) => {
+    if (parsedLyrics.some((other, otherIndex) => (
+      otherIndex !== index
+      && other.midi === event.midi
+      && event.startStep < other.startStep + other.lengthSteps
+      && other.startStep < event.startStep + event.lengthSteps
+    ))) {
+      throw new Error(`Überlappende Gesangsnoten auf ${event.pitch} im Takt "${bar.chord}".`);
+    }
+  });
+
+  return { ...bar, parsedLyrics };
+});
+
+const allPitches = parsedBars.flatMap(({ parsedLyrics }) => parsedLyrics.map(({ midi }) => midi));
+if (allPitches.length === 0) {
+  throw new Error("Ein Gesangspattern muss mindestens eine Textsilbe enthalten.");
+}
+
+const lowestMidi = Math.min(...allPitches);
+const highestMidi = Math.max(...allPitches);
+const pitches = Array.from({ length: highestMidi - lowestMidi + 1 }, (_, index) => {
+  const midi = lowestMidi + index;
+  const pitchClass = pitchClasses[((midi % 12) + 12) % 12];
+  return { midi, label: `${pitchClass}${Math.floor(midi / 12) - 1}`, pitchClass };
+}).reverse();
+const totalSteps = bars.length * stepsPerBar;
+const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
+  step % 2 === 0 ? `${step / 2 + 1}` : "+"
+));
+---
+
+<div
+  class="vocal-pattern"
+  style={`--total-steps: ${totalSteps}; --steps-per-bar: ${stepsPerBar};`}
+  aria-label={`Gesangspattern, ${bars.length} Takte, ${timeSignature}, ${resolution}`}
+>
+  <div class="bar-header">
+    <div class="row-label" aria-hidden="true"></div>
+    {bars.map((bar, index) => (
+      <div
+        class={`bar-label ${index % 2 === 1 ? "alternate-bar" : ""}`}
+        style={`grid-column: ${index * stepsPerBar + 2} / span ${stepsPerBar};`}
+      >
+        {bar.chord}
+      </div>
+    ))}
+  </div>
+
+  <div class="step-header">
+    <div class="row-label" aria-hidden="true"></div>
+    {bars.flatMap((_, barIndex) => stepLabels.map((label) => (
+      <div class={`step-cell ${barIndex % 2 === 1 ? "alternate-bar" : ""}`}>
+        {label}
+      </div>
+    )))}
+  </div>
+
+  <div class="piano-roll">
+    {pitches.map((pitch) => (
+      <div class="pitch-row">
+        <!-- Das Label links bleibt neutral oder du könntest hier auch eine Farbe setzen (z.B. basierend auf dem ersten Takt-Akkord). Hier bleibt es vorerst neutral -->
+        <div class="row-label pitch-label">{pitch.label}</div>
+        {parsedBars.flatMap((bar, barIndex) =>
+          Array.from({ length: stepsPerBar }, (_, stepIndex) => {
+            const step = barIndex * stepsPerBar + stepIndex;
+            const lyricStartingHere = bar.parsedLyrics.find(({ midi, startStep }) => (
+              midi === pitch.midi && startStep === stepIndex
+            ));
+            const lyricCoveringHere = bar.parsedLyrics.some(({ midi, startStep, lengthSteps }) => (
+              midi === pitch.midi && stepIndex > startStep && stepIndex < startStep + lengthSteps
+            ));
+            if (lyricCoveringHere) return null;
+
+            return (
+              <div
+                class={`note-cell ${barIndex % 2 === 1 ? "alternate-bar" : ""}`}
+                style={lyricStartingHere
+                  ? `grid-column: ${step + 2} / span ${lyricStartingHere.lengthSteps};`
+                  : `grid-column: ${step + 2};`}
+                aria-label={lyricStartingHere
+                  ? `Takt ${startBar + barIndex}, ${bar.chord}, ${lyricStartingHere.pitch}, ${lyricStartingHere.text}, Schritt ${stepIndex + 1}, Länge ${lyricStartingHere.lengthSteps} Steps`
+                  : undefined}
+              >
+                {lyricStartingHere && (
+                  <span
+                    class="lyric-block"
+                    style={`--note-color: ${getIntervalColor(lyricStartingHere.pitchClass, bar.chord)};`}
+                    title={`${lyricStartingHere.text} · ${lyricStartingHere.pitch}`}
+                  >
+                    <span class="lyric-text">{lyricStartingHere.text}</span>
+                    <span class="lyric-pitch">{lyricStartingHere.pitch}</span>
+                  </span>
+                )}
+              </div>
+            );
+          })
+        )}
+      </div>
+    ))}
+  </div>
+
+  <div class="pattern-footer">
+    <span>Taktart: <strong>{timeSignature}</strong></span>
+    <span>Auflösung: <strong>{resolution}</strong></span>
+    <span>Steps pro Takt: <strong>{stepsPerBar}</strong></span>
+  </div>
+</div>
+
+<style>
+  .vocal-pattern {
+    --label-width: 52px;
+    --step-size: 32.5px;
+    --note-height: 22px;
+    --step-gap: 2.5px;
+    width: 100%;
+    max-width: 100%;
+    margin: 1rem 0;
+    overflow: auto hidden;
+    border: 1px solid #27272a;
+    border-radius: 6px;
+    background: #121212;
+    color: #d1d5db;
+    font-family: system-ui, -apple-system, sans-serif;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.25);
+    box-sizing: border-box;
+  }
+
+  .bar-header,
+  .step-header,
+  .pitch-row {
+    display: grid;
+    grid-template-columns: var(--label-width) repeat(var(--total-steps), var(--step-size));
+    column-gap: var(--step-gap);
+    width: max-content;
+    padding: 0 8px;
+    box-sizing: border-box;
+  }
+
+  .bar-header,
+  .step-header {
+    height: calc(var(--step-size) + var(--step-gap) + 1px);
+    min-height: calc(var(--step-size) + var(--step-gap) + 1px);
+    align-items: center;
+    background: #121212;
+  }
+
+  .bar-header {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 0 8px var(--step-gap);
+  }
+
+  .bar-label,
+  .step-cell {
+    display: grid;
+    place-items: center;
+    height: var(--step-size);
+    min-width: 0;
+    box-sizing: border-box;
+    border: 1px solid #27272a;
+    border-radius: 2px;
+    background: #18181b;
+    color: #9ca3af;
+    line-height: 1;
+  }
+
+  .bar-label {
+    justify-content: flex-start;
+    grid-row: 1;
+    padding: 0 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .alternate-bar {
+    background: #242428 !important;
+  }
+
+  .step-header {
+    border-bottom: 1px solid #35383d;
+    font-size: 10px;
+    padding: 0 8px var(--step-gap);
+  }
+
+  .step-cell {
+    width: var(--step-size);
+    font-size: 10px;
+    font-weight: 600;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
+  }
+
+  .piano-roll {
+    display: flex;
+    flex-direction: column;
+    gap: var(--step-gap);
+    padding-top: var(--step-gap);
+    width: max-content;
+    background: #121212;
+  }
+
+  .pitch-row {
+    height: var(--note-height);
+    flex: 0 0 var(--note-height);
+    min-height: 0;
+    align-items: stretch;
+    background: #121212;
+    margin: 0 !important;
+    padding: 0 8px !important;
+  }
+
+  .pitch-row > * {
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: none !important;
+  }
+
+  .row-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    font-size: 10px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .pitch-label {
+    color: #d1d5db;
+  }
+
+  .note-cell {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    min-width: 0;
+    border-radius: 2px;
+    background: #18181b;
+  }
+
+  .lyric-block {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    height: 100%;
+    gap: 2px;
+    padding: 0 3px;
+    overflow: hidden;
+    box-sizing: border-box;
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--note-color), transparent 18%);
+    color: #f8fafc;
+    font-size: 10px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .lyric-text {
+    min-width: 0;
+    overflow: hidden;
+    text-align: left;
+    text-overflow: ellipsis;
+  }
+
+  .lyric-pitch {
+    flex: 0 0 auto;
+    font-size: 8px;
+    font-weight: 500;
+    text-align: right;
+  }
+
+  .pattern-footer {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    min-height: 34px;
+    padding: 0 8px;
+    border-top: 1px solid #33363a;
+    color: #9ca3af;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 640px) {
+    .vocal-pattern {
+      --label-width: 46px;
+    }
+
+    .pattern-footer {
+      gap: 8px;
+      font-size: 10px;
+    }
+  }
+</style>

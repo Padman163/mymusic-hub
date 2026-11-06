@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 4.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">
+<score-partwise version="4.0">
+  
+  <part-list>
+    <score-part id="P1">
+      <part-name></part-name>
+    </score-part>
+  </part-list>
+
+  <part id="P1">
+    
+    <!-- TAKT 1 -->
+    <measure number="">
+      <attributes>
+        <divisions>1</divisions>
+        <key>
+          <fifths>0</fifths>
+        </key>
+        <time>
+          <beats></beats>
+          <beat-type></beat-type>
+        </time>
+        <!-- Bassschlüssel (F-Schlüssel auf der 4. Linie) -->
+        <clef>
+          <sign>F</sign>
+          <line>4</line>
+        </clef>
+      </attributes>
+       <barline location="left">
+        <bar-style>none</bar-style>
+      </barline>
+      <!-- C3 (Oberste Linie im Bassschlüssel) -->
+      <note>
+        <pitch>
+          <step>C</step>
+          <octave>4</octave>
+        </pitch>
+        <duration>1</duration>
+        <type>quarter</type>
+        <stem>none</stem>
+      </note>      
+      <!-- B3 (Oberste Linie im Bassschlüssel) -->
+      <note>
+        <pitch>
+          <step>B</step>
+          <octave>3</octave>
+        </pitch>
+        <duration>1</duration>
+        <type>quarter</type>
+        <stem>none</stem>
+      </note>
+      <!-- A3 (Oberste Linie im Bassschlüssel) -->
+      <note>
+        <pitch>
+          <step>A</step>
+          <octave>3</octave>
+        </pitch>
+        <duration>1</duration>
+        <type>quarter</type>
+        <stem>none</stem>
+      </note>
+      <!-- G3 -->
+      <note>
+        <pitch>
+          <step>G</step>
+          <octave>3</octave>
+        </pitch>
+        <duration>1</duration>
+        <type>quarter</type>
+        <stem>none</stem>
+      </note>
+      <!-- F3 (Das F, das dem Schlüssel den Namen gibt) -->
+      <note>
+        <pitch>
+          <step>F</step>
+          <octave>3</octave>
+        </pitch>
+        <duration>1</duration>
+        <type>quarter</type>
+        <stem>none</stem>
+      </note>
+      <!-- E3 -->
+      <note>
+        <pitch>
+          <step>E</step>
+          <octave>3</octave>
+        </pitch>
+        <duration>1</duration>
+        <type>quarter</type>
+        <stem>none</stem>
+      </note>
+        <!-- D3 -->
+      <note>
+        <pitch>
+          <step>D</step>
+          <octave>3</octave>
+        </pitch>
+        <duration>1</duration>
+        <type>quarter</type>
+        <stem>none</stem>
+      </note>
+      <!-- C3 -->
+      <note>
+        <pitch>
+          <step>C</step>
+          <octave>3</octave>
+        </pitch>
+        <duration>1</duration>
+        <type>quarter</type>
+        <stem>none</stem>
+      </note>
+      <!-- B2 (Deutsches H) -->
+      <note>
+        <pitch>
+          <step>B</step>
+          <octave>2</octave>
+        </pitch>
+        <duration>1</duration>
+        <type>quarter</type>
+        <stem>none</stem>
+      </note>
+      <!-- A2 -->
+      <note>
+        <pitch>
+          <step>A</step>
+          <octave>2</octave>
+        </pitch>
+        <duration>1</duration>
+        <type>quarter</type>
+        <stem>none</stem>
+      </note>
+     
+      <!-- G2 (Unterste Linie) -->
+      <note>
+        <pitch>
+          <step>G</step>
+          <octave>2</octave>
+        </pitch>
+        <duration>1</duration>
+        <type>quarter</type>
+        <stem>none</stem>
+      </note>
+      
+   
+    </measure>
+  </part>
+</score-partwise>
