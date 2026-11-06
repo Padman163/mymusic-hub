@@ -1,0 +1,12 @@
+---
+title: IssueTracker
+description: Bugs, Features und Decisions als Projektbeiträge erfassen.
+---
+
+import IssueTrackerForm from '../../../components/IssueTrackerForm.astro';
+
+Hier kannst du neue Bugs, Features und Decisions für das Projekt einreichen. Beiträge werden im Projekt gespeichert; es wird kein GitHub-Issue erstellt.
+
+<IssueTrackerForm />
+
+Die Einträge werden zunächst in `data/contributions.json` im GitHub-Repository abgelegt. Das Formular benötigt dafür eine konfigurierte Netlify Function.
