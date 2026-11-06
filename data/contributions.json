@@ -146,5 +146,28 @@
     ],
     "status": "New",
     "createdAt": "2026-11-06T16:13:20.422Z"
+  },
+  {
+    "id": "082e6184-fc82-4301-a556-f0e32f550cc6",
+    "type": "Feature",
+    "title": "2-Wege-Dämpfung",
+    "description": "Saiten abdämpfen mit der Picking-Hand (Palm Mute) und der Greifhand (flacher Zeigefinger).",
+    "area": "Praxis",
+    "checklist": [
+      {
+        "text": "Palm Mute an der Bridge illustrieren/beschreiben",
+        "checked": false
+      },
+      {
+        "text": "Greifhand-Dämpftechnik für Nachbarsaiten erklären",
+        "checked": false
+      },
+      {
+        "text": "Info zur Notwendigkeit für spätere High-Gain-Sounds ergänzen",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-06T16:13:49.945Z"
   }
 ]
