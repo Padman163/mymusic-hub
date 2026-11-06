@@ -16,7 +16,8 @@
         "text": "Instrumentbezogen ( unsichtbar )",
         "checked": false
       }
-    ]
+    ],
+    "priority": "Hoch"
   },
   {
     "id": "7c13fc92-5341-48c1-8c31-05d86b155c64",
