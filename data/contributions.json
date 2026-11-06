@@ -5,5 +5,12 @@
     "title": "asdsd",
     "description": "asdsd",
     "createdAt": "2026-11-06T13:48:34.004Z"
+  },
+  {
+    "id": "657081ea-822c-49fe-9f73-7f196c7e1458",
+    "type": "Bug",
+    "title": "test",
+    "description": "test",
+    "createdAt": "2026-11-06T13:59:06.349Z"
   }
 ]
