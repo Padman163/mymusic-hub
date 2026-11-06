@@ -5,11 +5,12 @@
 ```npm create astro@latest -- --template starlight```
 
 
-## Anwendung starten 
-1. ```npm install```
-2. ```npm run dev```
+## Anwendung starten ( ohne Netlify )
+```npm install```
+```npm run dev```
 
-## Netlify
+## Anwendung starten ( mit Netlify )
+ ```npm install```
 ```npx netlify-cli login```
 ```npx netlify-cli link```
 ```npx netlify-cli dev```
