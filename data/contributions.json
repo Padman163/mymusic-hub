@@ -7,5 +7,14 @@
     "area": "Theorie",
     "status": "New",
     "createdAt": "2026-11-06T15:39:57.219Z"
+  },
+  {
+    "id": "7c13fc92-5341-48c1-8c31-05d86b155c64",
+    "type": "Feature",
+    "title": "Kapitel mit Tags versehen",
+    "description": "- D1/D2/D3 ( unsichtbar )\n- Instrumentbezogen ( unsichtbar )",
+    "area": "Theorie",
+    "status": "New",
+    "createdAt": "2026-11-06T15:41:04.017Z"
   }
 ]
