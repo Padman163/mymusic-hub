@@ -12,12 +12,5 @@
     "title": "test",
     "description": "test",
     "createdAt": "2026-11-06T13:59:06.349Z"
-  },
-  {
-    "id": "d1501b02-db93-49bc-b672-cd7d2f0724f1",
-    "type": "Bug",
-    "title": "321423",
-    "description": "321",
-    "createdAt": "2026-11-06T14:06:25.042Z"
   }
 ]
