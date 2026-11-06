@@ -47,7 +47,7 @@
 ## IssueTracker-Beiträge speichern
 Die Netlify Function unter `netlify/functions/contributions.ts` nimmt Beiträge entgegen und speichert sie zunächst in `data/contributions.json` im GitHub-Repository. In Netlify müssen dafür folgende Umgebungsvariablen gesetzt werden:
 
-- `GITHUB_TOKEN`: Fine-grained Personal Access Token mit Lese- und Schreibzugriff auf den Repository-Inhalt.
+- `GITHUB_TOKEN`: Fine-grained Personal Access Token mit Lese- und Schreibzugriff auf den Repository-Inhalt. Darf NICHT als Secret definiert werden
 - `GITHUB_REPOSITORY`: Repository im Format `owner/repository`.
 - `GITHUB_BRANCH`: Zielbranch (optional, Standard: `main`).
 - `GITHUB_DATA_PATH`: Speicherpfad (optional, Standard: `data/contributions.json`).
