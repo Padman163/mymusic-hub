@@ -123,5 +123,28 @@
     ],
     "status": "New",
     "createdAt": "2026-11-06T16:10:35.823Z"
+  },
+  {
+    "id": "7c675512-0704-43ee-a0ef-e1baf5ed00c7",
+    "type": "Feature",
+    "title": "Plektrum- & Fingerstyle-Mechanik (P-I-M-A)",
+    "description": "Handgelenk-Wechselschlag für das Plektrum und Standardhaltung der Zupfhand für Bass- und Diskantsaiten.",
+    "area": "Praxis",
+    "checklist": [
+      {
+        "text": "Wechselschlag-Übung definieren",
+        "checked": false
+      },
+      {
+        "text": "P-I-M-A-Zuordnung (Daumen bis Ringfinger) visualisieren",
+        "checked": false
+      },
+      {
+        "text": "Hinweis auf Wichtigkeit für spätere Arpeggien einbauen",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-06T16:13:20.422Z"
   }
 ]
