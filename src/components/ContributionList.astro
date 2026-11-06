@@ -1,0 +1,99 @@
+<section aria-label="Gespeicherte Beiträge">
+	<p id="contribution-list-status" role="status" aria-live="polite">Beiträge werden geladen …</p>
+	<ul id="contribution-list" class="contribution-list"></ul>
+</section>
+
+<style>
+	.contribution-list {
+		display: grid;
+		gap: 1rem;
+		padding: 0;
+		list-style: none;
+	}
+
+	.contribution-list :global(li) {
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.4rem;
+		padding: 1rem;
+	}
+
+	.contribution-list :global(h2) {
+		margin: 0.3rem 0;
+		font-size: 1.25rem;
+	}
+
+	.contribution-list :global(p) {
+		margin: 0.5rem 0 0;
+		white-space: pre-wrap;
+		overflow-wrap: anywhere;
+	}
+
+	.contribution-list :global(.contribution-meta) {
+		color: var(--sl-color-gray-2);
+		font-size: 0.875rem;
+	}
+</style>
+
+<script>
+	const list = document.querySelector<HTMLUListElement>('#contribution-list');
+	const status = document.querySelector<HTMLParagraphElement>('#contribution-list-status');
+	if (!(list instanceof HTMLUListElement) || !(status instanceof HTMLParagraphElement)) {
+		throw new Error('Die Beitragsübersicht wurde nicht gefunden.');
+	}
+
+	interface Contribution {
+		type: 'Bug' | 'Feature' | 'Decision';
+		title: string;
+		description: string;
+		createdAt: string;
+	}
+
+	function isContribution(value: unknown): value is Contribution {
+		if (typeof value !== 'object' || value === null) return false;
+		return (
+			'type' in value && (value.type === 'Bug' || value.type === 'Feature' || value.type === 'Decision') &&
+			'title' in value && typeof value.title === 'string' &&
+			'description' in value && typeof value.description === 'string' &&
+			'createdAt' in value && typeof value.createdAt === 'string' &&
+			Number.isFinite(Date.parse(value.createdAt))
+		);
+	}
+
+	async function loadContributions() {
+		try {
+			const response = await fetch('/api/contributions', { cache: 'no-store' });
+			if (!response.ok) throw new Error('Die Beiträge konnten derzeit nicht geladen werden.');
+			const data: unknown = await response.json();
+			if (
+				typeof data !== 'object' || data === null || !('contributions' in data) ||
+				!Array.isArray(data.contributions) || !data.contributions.every(isContribution)
+			) {
+				throw new Error('Die Beitragsdaten haben ein ungültiges Format.');
+			}
+
+			if (data.contributions.length === 0) {
+				status.textContent = 'Noch keine Beiträge vorhanden.';
+				return;
+			}
+
+			for (const contribution of [...data.contributions].reverse()) {
+				const item = document.createElement('li');
+				const meta = document.createElement('div');
+				meta.className = 'contribution-meta';
+				meta.textContent = `${contribution.type} · ${new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(contribution.createdAt))}`;
+				const title = document.createElement('h2');
+				title.textContent = contribution.title;
+				const description = document.createElement('p');
+				description.textContent = contribution.description;
+				item.append(meta, title, description);
+				list.append(item);
+			}
+			status.textContent = `${data.contributions.length} Beiträge geladen.`;
+		} catch (error) {
+			console.error('Fehler beim Laden der Beiträge:', error);
+			status.textContent = 'Die Beiträge konnten nicht geladen werden. Bitte versuche es später erneut.';
+		}
+	}
+
+	void loadContributions();
+</script>

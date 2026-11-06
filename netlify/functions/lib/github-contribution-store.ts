@@ -6,7 +6,7 @@ export interface Contribution {
 	createdAt: string;
 }
 
-export async function saveContribution(contribution: Contribution): Promise<void> {
+function githubFileConfig() {
 	const token = process.env.GITHUB_TOKEN;
 	const repository = process.env.GITHUB_REPOSITORY;
 
@@ -29,44 +29,64 @@ export async function saveContribution(contribution: Contribution): Promise<void
 		'X-GitHub-Api-Version': '2022-11-28',
 	};
 
+	return { url, headers, branch };
+}
+
+async function readFile(
+	config: ReturnType<typeof githubFileConfig>,
+	allowMissing = false,
+): Promise<{ contributions: unknown[]; sha: string | undefined }> {
+	const readResponse = await fetch(`${config.url}?ref=${encodeURIComponent(config.branch)}`, {
+		headers: config.headers,
+	});
+
+	if (readResponse.status === 404 && allowMissing) {
+		return { contributions: [], sha: undefined };
+	}
+
+	if (!readResponse.ok) {
+		throw new Error(`GitHub konnte die Beitragsdatei nicht lesen (HTTP ${readResponse.status}).`);
+	}
+
+	const file: unknown = await readResponse.json();
+	if (
+		typeof file !== 'object' ||
+		file === null ||
+		!('content' in file) ||
+		typeof file.content !== 'string' ||
+		!('sha' in file) ||
+		typeof file.sha !== 'string'
+	) {
+		throw new Error('Die Beitragsdatei auf GitHub hat ein ungültiges Format.');
+	}
+
+	const parsedContent: unknown = JSON.parse(Buffer.from(file.content, 'base64').toString('utf8'));
+	if (!Array.isArray(parsedContent)) {
+		throw new Error('Die Beitragsdatei auf GitHub muss ein JSON-Array enthalten.');
+	}
+
+	return { contributions: parsedContent, sha: file.sha };
+}
+
+export async function listContributions(): Promise<unknown[]> {
+	const { contributions } = await readFile(githubFileConfig());
+	return contributions;
+}
+
+export async function saveContribution(contribution: Contribution): Promise<void> {
+	const config = githubFileConfig();
+
 	for (let attempt = 0; attempt < 3; attempt += 1) {
-		const readResponse = await fetch(`${url}?ref=${encodeURIComponent(branch)}`, { headers });
-		let contributions: unknown[] = [];
-		let sha: string | undefined;
-
-		if (readResponse.ok) {
-			const file: unknown = await readResponse.json();
-			if (
-				typeof file !== 'object' ||
-				file === null ||
-				!('content' in file) ||
-				typeof file.content !== 'string' ||
-				!('sha' in file) ||
-				typeof file.sha !== 'string'
-			) {
-				throw new Error('Die Beitragsdatei auf GitHub hat ein ungültiges Format.');
-			}
-
-			const decodedContent = Buffer.from(file.content, 'base64').toString('utf8');
-			const parsedContent: unknown = JSON.parse(decodedContent);
-			if (!Array.isArray(parsedContent)) {
-				throw new Error('Die Beitragsdatei auf GitHub muss ein JSON-Array enthalten.');
-			}
-
-			contributions = parsedContent;
-			sha = file.sha;
-		} else if (readResponse.status !== 404) {
-			throw new Error(`GitHub konnte die Beitragsdatei nicht lesen (HTTP ${readResponse.status}).`);
-		}
+		const { contributions, sha } = await readFile(config, true);
 
 		contributions.push(contribution);
-		const writeResponse = await fetch(`${url}?ref=${encodeURIComponent(branch)}`, {
+		const writeResponse = await fetch(config.url, {
 			method: 'PUT',
-			headers: { ...headers, 'Content-Type': 'application/json' },
+			headers: { ...config.headers, 'Content-Type': 'application/json' },
 			body: JSON.stringify({
 				message: 'Add project contribution',
 				content: Buffer.from(JSON.stringify(contributions, null, 2), 'utf8').toString('base64'),
-				branch,
+				branch: config.branch,
 				...(sha ? { sha } : {}),
 			}),
 		});

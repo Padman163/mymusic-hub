@@ -27,7 +27,10 @@ export default defineConfig({
 			sidebar: [
 				{
 					label: 'Projektierung',
-					items: [{ label: 'IssueTracker', slug: 'projektierung/issuetracker' }],
+					items: [
+						{ label: 'Beiträge', slug: 'projektierung/beitraege' },
+						{ label: 'IssueTracker', slug: 'projektierung/issuetracker' },
+					],
 				},
 				{
 					label: 'Audio & Musik',
