@@ -295,6 +295,14 @@
       {
         "text": "Formel-Trainer für C, G, D, A, F, B, Es umsetzen",
         "checked": false
+      },
+      {
+        "text": "Interaktive Dreiklangs-Markierung (I, III, V) in die Komponente einbauen",
+        "checked": false
+      },
+      {
+        "text": "Transfer-Aufgabe zum Nachspielen auf dem Griffbrett definieren",
+        "checked": false
       }
     ],
     "status": "New",
