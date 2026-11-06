@@ -215,5 +215,28 @@
     ],
     "status": "New",
     "createdAt": "2026-11-06T16:15:02.139Z"
+  },
+  {
+    "id": "4888e2be-1f23-40dc-b5d0-f1594a1649f7",
+    "type": "Feature",
+    "title": "Rhythmus-Workout",
+    "description": "Metronom-Training für Notenwerte, Punktierungen, Triolen und Offbeat-Synkopen.",
+    "area": "Praxis",
+    "checklist": [
+      {
+        "text": "Übungsreihe für Ganze bis 16tel Noten anlegen",
+        "checked": false
+      },
+      {
+        "text": "Strikte Anschlagsregel (Downstroke auf Zählzeit, Upstroke auf '+') definieren",
+        "checked": false
+      },
+      {
+        "text": "Spezifische Übungen für Achteltriolen und Synkopen einbauen",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-06T16:15:26.904Z"
   }
 ]
