@@ -15,7 +15,33 @@
     "description": "- D1/D2/D3 ( unsichtbar )\n- Instrumentbezogen ( unsichtbar )\n- Download- Bereich mit Cheat Sheets\n- Interaktive Cheat Sheets\n- Quick Tips\n- Visualisierungen",
     "area": "Theorie",
     "status": "New",
-    "createdAt": "2026-11-06T15:41:04.017Z"
+    "createdAt": "2026-11-06T15:41:04.017Z",
+    "checklist": [
+      {
+        "text": "Visualisierungen",
+        "checked": false
+      },
+      {
+        "text": "Quick Tips",
+        "checked": false
+      },
+      {
+        "text": "Interaktive Cheat Sheets",
+        "checked": false
+      },
+      {
+        "text": "Download- Bereich mit Cheat Sheets",
+        "checked": false
+      },
+      {
+        "text": "Instrumentbezogen ( unsichtbar )",
+        "checked": false
+      },
+      {
+        "text": "D1/D2/D3 ( unsichtbar )",
+        "checked": false
+      }
+    ]
   },
   {
     "id": "2de014c0-93f2-4bcd-a221-df3a8c59bc3e",
