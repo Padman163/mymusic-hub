@@ -1,5 +1,6 @@
 import { defaultContributionStatus, type ContributionStatus } from '../../../src/lib/contribution-status';
 import type { ContributionArea } from '../../../src/lib/contribution-area';
+import { checklistsEqual, type ChecklistItem } from '../../../src/lib/contribution-checklist';
 
 export interface Contribution {
 	id: string;
@@ -9,9 +10,10 @@ export interface Contribution {
 	createdAt: string;
 	status?: ContributionStatus;
 	area?: ContributionArea;
+	checklist?: ChecklistItem[];
 }
 
-export type ContributionFields = Pick<Contribution, 'type' | 'title' | 'description' | 'status' | 'area'>;
+export type ContributionFields = Pick<Contribution, 'type' | 'title' | 'description' | 'status' | 'area' | 'checklist'>;
 
 export class ContributionNotFoundError extends Error {}
 export class ContributionConflictError extends Error {}
@@ -144,6 +146,7 @@ export async function modifyContribution(
 				!('description' in item) || item.description !== expected.description ||
 				!('createdAt' in item) || item.createdAt !== expected.createdAt ||
 				('area' in item ? item.area : undefined) !== expected.area ||
+				!checklistsEqual('checklist' in item ? item.checklist : undefined, expected.checklist) ||
 				(('status' in item ? item.status : defaultContributionStatus) !== (expected.status ?? defaultContributionStatus))
 			) {
 				throw new ContributionConflictError();

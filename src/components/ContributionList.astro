@@ -1,6 +1,7 @@
 ---
 import IssueTrackerForm from './IssueTrackerForm.astro';
 import './contribution-tags.css';
+import './contribution-checklist.css';
 ---
 
 <section aria-label="Gespeicherte Beiträge">
@@ -98,24 +99,22 @@ import './contribution-tags.css';
 	.contribution-list :global(li) {
 		border: 1px solid var(--sl-color-gray-5);
 		border-radius: 0.4rem;
-		padding: 1rem;
+		padding: 1rem 1rem 0.5rem;
 	}
 
 	.contribution-list :global(.contribution-card-header) {
 		display: flex;
-		align-items: flex-start;
+		align-items: center;
 		justify-content: space-between;
 		gap: 0.75rem;
 	}
 
-	.contribution-list :global(.contribution-card-heading) {
-		min-width: 0;
-		overflow-wrap: anywhere;
-	}
-
 	.contribution-list :global(h2) {
-		margin: 0.3rem 0;
+		margin: 1rem 0 0;
+		border-bottom: 1px solid var(--sl-color-gray-5);
+		padding-bottom: 0.5rem;
 		font-size: 1.25rem;
+		overflow-wrap: anywhere;
 	}
 
 	.contribution-list :global(p) {
@@ -124,13 +123,47 @@ import './contribution-tags.css';
 		overflow-wrap: anywhere;
 	}
 
+	.contribution-list :global(.contribution-description:not([hidden])) {
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 3;
+		overflow: hidden;
+	}
+
 	.contribution-list :global(.contribution-meta) {
 		display: flex;
 		align-items: center;
 		flex-wrap: wrap;
+		min-width: 0;
 		gap: 0.5rem;
 		color: var(--sl-color-gray-2);
 		font-size: 0.875rem;
+	}
+
+	.contribution-list :global(.contribution-card-footer) {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		margin: 1rem 0 0;
+		border-top: 1px solid var(--sl-color-gray-5);
+		padding-top: 0.75rem;
+		color: var(--sl-color-gray-2);
+		font-size: 0.875rem;
+	}
+
+	.contribution-list :global(.contribution-card-footer time) {
+		margin-left: auto;
+		text-align: right;
+	}
+
+	.contribution-list :global(.checklist-progress) {
+		font-weight: 600;
+	}
+
+	.contribution-list :global(p[role='status']:empty) {
+		display: none;
 	}
 
 	.contribution-list :global(.contribution-status),
@@ -298,6 +331,8 @@ import './contribution-tags.css';
 	import { contributionStatuses, defaultContributionStatus, isContributionStatus, type ContributionStatus } from '../lib/contribution-status';
 	import { addIcon, createTypePicker, createTypeTag, isContributionType, type ContributionType } from '../lib/contribution-types';
 	import { contributionAreas, isContributionArea, type ContributionArea } from '../lib/contribution-area';
+	import { isChecklist, type ChecklistItem } from '../lib/contribution-checklist';
+	import { createChecklistEditor } from '../lib/checklist-editor';
 
 	const list = document.querySelector<HTMLUListElement>('#contribution-list');
 	const status = document.querySelector<HTMLParagraphElement>('#contribution-list-status');
@@ -365,6 +400,7 @@ import './contribution-tags.css';
 		createdAt: string;
 		status?: ContributionStatus;
 		area?: ContributionArea;
+		checklist?: ChecklistItem[];
 	}
 
 	function isContribution(value: unknown): value is Contribution {
@@ -377,14 +413,15 @@ import './contribution-tags.css';
 			'createdAt' in value && typeof value.createdAt === 'string' &&
 			Number.isFinite(Date.parse(value.createdAt)) &&
 			(!('status' in value) || isContributionStatus(value.status)) &&
-			(!('area' in value) || isContributionArea(value.area))
+			(!('area' in value) || isContributionArea(value.area)) &&
+			(!('checklist' in value) || isChecklist(value.checklist))
 		);
 	}
 
 	async function changeContribution(
 		method: 'PATCH' | 'DELETE',
 		expected: Contribution,
-		fields?: Pick<Contribution, 'type' | 'title' | 'description' | 'status' | 'area'>,
+		fields?: Pick<Contribution, 'type' | 'title' | 'description' | 'status' | 'area' | 'checklist'>,
 	) {
 		const response = await fetch('/api/contributions', {
 			method,
@@ -405,7 +442,7 @@ import './contribution-tags.css';
 	}
 
 	function updateCount() {
-		const count = list.querySelectorAll('li').length;
+		const count = list.children.length;
 		status.textContent = count === 0 ? 'Noch keine Beiträge vorhanden.' : `${count} Beiträge geladen.`;
 	}
 
@@ -415,12 +452,13 @@ import './contribution-tags.css';
 		item.setAttribute('data-contribution-id', contribution.id);
 		const header = document.createElement('div');
 		header.className = 'contribution-card-header';
-		const heading = document.createElement('div');
-		heading.className = 'contribution-card-heading';
 		const meta = document.createElement('div');
 		meta.className = 'contribution-meta';
+		const footer = document.createElement('div');
+		footer.className = 'contribution-card-footer';
 		const title = document.createElement('h2');
 		const description = document.createElement('p');
+		description.className = 'contribution-description';
 		const actions = document.createElement('div');
 		actions.className = 'contribution-card-actions';
 		const edit = document.createElement('button');
@@ -446,9 +484,19 @@ import './contribution-tags.css';
 			contributionArea.className = 'contribution-area';
 			if (contribution.area) contributionArea.dataset.area = contribution.area;
 			contributionArea.textContent = contribution.area ?? 'Ohne Bereich';
-			meta.replaceChildren(tag, contributionArea, contributionStatus, date);
+			meta.replaceChildren(tag, contributionArea);
+			footer.replaceChildren(contributionStatus);
+			const checklist = contribution.checklist ?? [];
+			if (checklist.length > 0) {
+				const progress = document.createElement('span');
+				progress.className = 'checklist-progress';
+				progress.textContent = `${checklist.filter((entry) => entry.checked).length}/${checklist.length} erledigt`;
+				footer.append(progress);
+			}
+			footer.append(date);
 			title.textContent = contribution.title;
 			description.textContent = contribution.description;
+			description.hidden = !contribution.description;
 			edit.setAttribute('aria-label', `${contribution.title} bearbeiten`);
 		}
 
@@ -492,13 +540,13 @@ import './contribution-tags.css';
 			titleInput.required = true;
 			titleLabel.append(titleInput);
 			const descriptionLabel = document.createElement('label');
-			descriptionLabel.textContent = 'Beschreibung';
+			descriptionLabel.textContent = 'Beschreibung (optional)';
 			const descriptionInput = document.createElement('textarea');
 			descriptionInput.value = contribution.description;
 			descriptionInput.maxLength = 10_000;
 			descriptionInput.rows = 7;
-			descriptionInput.required = true;
 			descriptionLabel.append(descriptionInput);
+			const checklistEditor = createChecklistEditor(contribution.checklist, true);
 			const formActions = document.createElement('div');
 			formActions.className = 'contribution-actions';
 			const save = document.createElement('button');
@@ -525,7 +573,7 @@ import './contribution-tags.css';
 				edit.focus();
 			});
 			formActions.append(save, remove);
-			form.append(typePicker, areaLabel, statusLabel, titleLabel, descriptionLabel, formActions);
+			form.append(typePicker, areaLabel, statusLabel, titleLabel, descriptionLabel, checklistEditor.element, formActions);
 			item.insertBefore(form, message);
 			titleInput.focus();
 
@@ -539,6 +587,7 @@ import './contribution-tags.css';
 				statusInput.disabled = true;
 				titleInput.disabled = true;
 				descriptionInput.disabled = true;
+				checklistEditor.element.disabled = true;
 				message.textContent = 'Beitrag wird gelöscht …';
 				try {
 					await changeContribution('DELETE', contribution);
@@ -557,6 +606,7 @@ import './contribution-tags.css';
 					statusInput.disabled = false;
 					titleInput.disabled = false;
 					descriptionInput.disabled = false;
+					checklistEditor.element.disabled = false;
 				}
 			});
 
@@ -577,9 +627,11 @@ import './contribution-tags.css';
 					message.textContent = 'Bitte wähle einen gültigen Status.';
 					return;
 				}
-				const fields = { type: selectedType, area: selectedArea, status: selectedStatus, title: titleInput.value.trim(), description: descriptionInput.value.trim() };
-				if (!fields.title || !fields.description) {
-					message.textContent = 'Bitte gib einen Titel und eine Beschreibung ein.';
+				const checklist = checklistEditor.items();
+				if (!checklist) return;
+				const fields = { type: selectedType, area: selectedArea, status: selectedStatus, title: titleInput.value.trim(), description: descriptionInput.value.trim(), checklist };
+				if (!fields.title) {
+					message.textContent = 'Bitte gib einen Titel ein.';
 					return;
 				}
 				save.disabled = true;
@@ -590,6 +642,7 @@ import './contribution-tags.css';
 				statusInput.disabled = true;
 				titleInput.disabled = true;
 				descriptionInput.disabled = true;
+				checklistEditor.element.disabled = true;
 				message.textContent = 'Beitrag wird gespeichert …';
 				try {
 					await changeContribution('PATCH', contribution, fields);
@@ -612,14 +665,14 @@ import './contribution-tags.css';
 					statusInput.disabled = false;
 					titleInput.disabled = false;
 					descriptionInput.disabled = false;
+					checklistEditor.element.disabled = false;
 				}
 			});
 		});
 
 		render();
-		heading.append(meta, title);
-		header.append(heading, actions);
-		item.append(header, description, message);
+		header.append(meta, actions);
+		item.append(header, title, description, message, footer);
 		if (prepend) list.prepend(item);
 		else list.append(item);
 	}

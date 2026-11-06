@@ -56,6 +56,8 @@ Das Token darf nicht im Frontend oder in eingecheckten Dateien hinterlegt werden
 
 Die Beitragsübersicht unter `projektierung/beitraege` liest die Einträge bei jedem Aufruf über dieselbe Netlify Function und denselben konfigurierten GitHub-Branch wie das Formular. Dort lassen sich Beiträge erstellen, bearbeiten und löschen; Änderungen erscheinen als Commits und bleiben in der Git-Historie nachvollziehbar. Beim Erstellen ist der Bereich `Theorie` oder `Praxis` auszuwählen. Ältere Beiträge ohne Bereich werden als „Ohne Bereich“ angezeigt und können beim Bearbeiten zugeordnet werden. Neue Beiträge erhalten den Status `New`; bestehende Beiträge ohne Status werden ebenfalls als `New` angezeigt und erst beim Bearbeiten mit Status gespeichert. Im Bearbeitungsmodus stehen außerdem `Active` und `Resolved` zur Auswahl. Ohne Zugriffsschutz kann jeder Besucher Beiträge bearbeiten oder löschen. Für die Übersicht muss die JSON-Datei auf dem konfigurierten Branch vorhanden sein und ein Array enthalten. Die Übersicht und ihre API sind ebenfalls öffentlich zugänglich, auch wenn das Repository privat ist. Das lokale `npm run dev` startet keine Netlify Functions; zum Testen wird eine Netlify-Umgebung benötigt.
 
+Die Beschreibung ist optional. Beiträge können bis zu 100 Checklistenpunkte mit je maximal 200 Zeichen enthalten. Punkte werden beim Erstellen oder Bearbeiten hinzugefügt und entfernt; das Abhaken erfolgt im Bearbeitungsmodus und wird beim Speichern übernommen. Ältere Beiträge ohne Checkliste bleiben unverändert nutzbar.
+
 ### Deploy Preview für die Entwicklung
 
 1. Das GitHub-Repository in Netlify verknüpfen, `main` als Produktionsbranch wählen und Deploy Previews aktivieren.
