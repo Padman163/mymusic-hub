@@ -31,3 +31,4 @@
 1. Kopiert branch mit anderem Namen in z.b. das Archiv ```git branch -m <kopierter-branch> archive/<eingefügter-branch>```
 2. Pusht den kopierten branch auf GitHub ```git push origin -u archive/<eingefügter-branch>```
 3. Löscht einen branch ```git push origin --delete <branch>```
+4. Neuen branch erstellen ```git switch -c <neuer-branch>```
