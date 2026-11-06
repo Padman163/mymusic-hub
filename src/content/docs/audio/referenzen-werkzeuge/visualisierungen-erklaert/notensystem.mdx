@@ -98,13 +98,13 @@ Mit `duration` zeigt die Komponente ganze (`whole`), halbe (`half`), Viertel- (`
   { duration: 'sixteenth', step: 2 }
 ]} />
 
-Aufeinanderfolgende Achtel- oder Sechzehntelnoten desselben Werts können mit demselben `beamGroup`-Namen verbunden werden. Eine Gruppe benötigt mindestens zwei Noten und erhält eine gemeinsame Halsrichtung. Gemischte Notenwerte innerhalb einer Gruppe sind noch nicht vorgesehen.
+Aufeinanderfolgende Achtel- oder Sechzehntelnoten desselben Werts können mit demselben `beamGroup`-Namen verbunden werden. Eine Gruppe benötigt mindestens zwei Noten und erhält eine gemeinsame Halsrichtung. Bei unterschiedlichen Tonhöhen wird der Balken geneigt und die Hälse werden bis zum Balken geführt. Gemischte Notenwerte innerhalb einer Gruppe sind noch nicht vorgesehen.
 
 <NotationClickable clef="treble" notes={[
   { duration: 'eighth', step: 2, beamGroup: 'achtel' },
-  { duration: 'eighth', step: 2, beamGroup: 'achtel' },
+  { duration: 'eighth', step: 4, beamGroup: 'achtel' },
   { duration: 'sixteenth', step: 6, beamGroup: 'sechzehntel' },
-  { duration: 'sixteenth', step: 6, beamGroup: 'sechzehntel' }
+  { duration: 'sixteenth', step: 4, beamGroup: 'sechzehntel' }
 ]} />
 
 Die Beispiele zeigen die Zeichen zur Veranschaulichung; die Komponente prüft noch nicht, ob Notenwerte zusammen zur Taktart passen.

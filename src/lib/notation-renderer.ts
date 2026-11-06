@@ -160,6 +160,21 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     fraction: (index + 1) / (notes.length + 1),
     offset: noteInset * (1 - (index + 1) / (notes.length + 1))
   });
+  const beamStemEnds = new Map<number, number>();
+  const beamStemDirections = new Map<number, boolean>();
+  groups.forEach((group) => {
+    const steps = group.indices.map((index) => notes[index].step);
+    const stemUp = steps.reduce((sum, step) => sum + step, 0) / steps.length < 4;
+    const firstIndex = group.indices[0];
+    const lastIndex = group.indices[group.indices.length - 1];
+    const firstY = 64 - notes[firstIndex].step * 4.5 + (stemUp ? -31.5 : 31.5);
+    const lastY = 64 - notes[lastIndex].step * 4.5 + (stemUp ? -31.5 : 31.5);
+    group.indices.forEach((index) => {
+      const progress = (index - firstIndex) / (lastIndex - firstIndex);
+      beamStemEnds.set(index, firstY + (lastY - firstY) * progress);
+      beamStemDirections.set(index, stemUp);
+    });
+  });
 
   const description: string[] = [];
   if (clef) description.push(clef === 'treble' ? 'Violinschlüssel' : 'Bassschlüssel');
@@ -212,14 +227,16 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
   groups.forEach((group) => {
     const steps = group.indices.map((index) => notes[index].step);
     const stemUp = steps.reduce((sum, step) => sum + step, 0) / steps.length < 4;
-    const ys = steps.map((step) => 64 - step * 4.5);
-    const beamY = stemUp ? Math.min(...ys) - 31.5 : Math.max(...ys) + 31.5;
     const first = notePosition(group.indices[0]);
     const last = notePosition(group.indices[group.indices.length - 1]);
     const stemOffset = stemUp ? 4.5 : -4.5;
+    const firstNote = notes[group.indices[0]];
+    const lastNote = notes[group.indices[group.indices.length - 1]];
+    const firstBeamY = 64 - firstNote.step * 4.5 + (stemUp ? -31.5 : 31.5);
+    const lastBeamY = 64 - lastNote.step * 4.5 + (stemUp ? -31.5 : 31.5);
     for (let beam = 0; beam < (group.duration === 'sixteenth' ? 2 : 1); beam += 1) {
-      const y = beamY + beam * (stemUp ? 6 : -6);
-      parts.push(`<line x1="calc(${first.percent} + ${first.offset + stemOffset}px)" y1="${y}" x2="calc(${last.percent} + ${last.offset + stemOffset}px)" y2="${y}" stroke-width="4" />`);
+      const beamOffset = beam * (stemUp ? 6 : -6);
+      parts.push(`<line x1="calc(${first.percent} + ${first.offset + stemOffset}px)" y1="${firstBeamY + beamOffset}" x2="calc(${last.percent} + ${last.offset + stemOffset}px)" y2="${lastBeamY + beamOffset}" stroke-width="4" />`);
     }
   });
 
@@ -242,9 +259,9 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
   notes.forEach((note, index) => {
     const position = notePosition(index);
     const y = 64 - note.step * 4.5;
-    const stemUp = note.step < 4;
+    const stemUp = beamStemDirections.get(index) ?? note.step < 4;
     const hasStem = note.duration ? note.duration !== 'whole' : note.stem === true;
-    const stemY = y + (stemUp ? -31.5 : 31.5);
+    const stemY = beamStemEnds.get(index) ?? y + (stemUp ? -31.5 : 31.5);
     const x = position.percent;
     if (note.step === -2 || note.step === 10) {
       parts.push(`<rect x="${x}" y="${y - 0.5}" width="18" height="1" transform="translate(${position.offset - 9} 0)" fill="currentColor" stroke="none" />`);
