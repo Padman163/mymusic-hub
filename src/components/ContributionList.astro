@@ -1,9 +1,92 @@
+---
+import IssueTrackerForm from './IssueTrackerForm.astro';
+---
+
 <section aria-label="Gespeicherte Beiträge">
-	<p id="contribution-list-status" role="status" aria-live="polite">Beiträge werden geladen …</p>
+	<button id="new-contribution" class="new-contribution" type="button" aria-expanded="false" aria-controls="new-contribution-card">Neuen Beitrag erstellen</button>
+	<div id="new-contribution-card" class="new-contribution-card" hidden>
+		<div class="new-contribution-header">
+			<h2>Neuer Beitrag</h2>
+			<button id="close-contribution" class="close-contribution" type="button" aria-label="Formular schließen" title="Formular schließen">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+					<path d="M6 6l12 12M18 6L6 18"></path>
+				</svg>
+			</button>
+		</div>
+		<IssueTrackerForm />
+	</div>
+	<p id="contribution-list-status" role="status" aria-live="polite" tabindex="-1">Beiträge werden geladen …</p>
 	<ul id="contribution-list" class="contribution-list"></ul>
 </section>
 
 <style>
+	.new-contribution {
+		border: 1px solid #1d4ed8;
+		border-radius: 0.4rem;
+		padding: 0.65rem 0.9rem;
+		background: #1d4ed8;
+		color: #fff;
+		font: inherit;
+		font-weight: 600;
+		cursor: pointer;
+	}
+
+	.new-contribution:hover {
+		background: #1e40af;
+	}
+
+	.new-contribution[hidden] {
+		display: none;
+	}
+
+	.new-contribution-card {
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.4rem;
+		padding: 1rem;
+	}
+
+	.new-contribution-card[hidden] {
+		display: none;
+	}
+
+	.new-contribution-header {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 0.75rem;
+		margin-bottom: 1rem;
+	}
+
+	.new-contribution-header h2 {
+		margin: 0;
+		font-size: 1.25rem;
+	}
+
+	.close-contribution {
+		display: grid;
+		place-items: center;
+		flex-shrink: 0;
+		width: 2.5rem;
+		height: 2.5rem;
+		margin: 0;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.4rem;
+		background: var(--sl-color-bg);
+		color: var(--sl-color-text);
+		cursor: pointer;
+	}
+
+	.close-contribution svg {
+		width: 1.2rem;
+		height: 1.2rem;
+	}
+
+	.new-contribution:focus-visible,
+	.close-contribution:focus-visible {
+		outline: 2px solid var(--sl-color-accent);
+		outline-offset: 2px;
+	}
+
 	.contribution-list {
 		display: grid;
 		gap: 1rem;
@@ -15,6 +98,18 @@
 		border: 1px solid var(--sl-color-gray-5);
 		border-radius: 0.4rem;
 		padding: 1rem;
+	}
+
+	.contribution-list :global(.contribution-card-header) {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 0.75rem;
+	}
+
+	.contribution-list :global(.contribution-card-heading) {
+		min-width: 0;
+		overflow-wrap: anywhere;
 	}
 
 	.contribution-list :global(h2) {
@@ -32,16 +127,187 @@
 		color: var(--sl-color-gray-2);
 		font-size: 0.875rem;
 	}
+
+	.contribution-list :global(.contribution-actions) {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.5rem;
+		margin-top: 1rem;
+	}
+
+	.contribution-list :global(.contribution-actions > button) {
+		margin: 0;
+	}
+
+	.contribution-list :global(.contribution-actions[hidden]) {
+		display: none;
+	}
+
+	.contribution-list :global(.contribution-card-actions) {
+		display: flex;
+		flex-shrink: 0;
+		gap: 0.25rem;
+		margin: 0;
+	}
+
+	.contribution-list :global(.contribution-card-actions[hidden]) {
+		display: none;
+	}
+
+	.contribution-list :global(button) {
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.4rem;
+		padding: 0.5rem 0.75rem;
+		background: var(--sl-color-bg);
+		color: var(--sl-color-text);
+		font: inherit;
+		cursor: pointer;
+	}
+
+	.contribution-list :global(button:disabled) {
+		cursor: wait;
+		opacity: 0.6;
+	}
+
+	.contribution-list :global(.contribution-card-actions button),
+	.contribution-list :global(.contribution-actions .contribution-delete) {
+		display: grid;
+		place-items: center;
+		width: 2.5rem;
+		height: 2.5rem;
+		margin: 0;
+		padding: 0;
+		border-color: currentColor;
+	}
+
+	.contribution-list :global(.contribution-card-actions button[hidden]) {
+		display: none;
+	}
+
+	.contribution-list :global(.contribution-actions .contribution-delete) {
+		margin-left: auto;
+	}
+
+	.contribution-list :global(.contribution-edit) {
+		color: #2563eb;
+	}
+
+	.contribution-list :global(.contribution-save) {
+		border-color: #1d4ed8;
+		background: #1d4ed8;
+		color: #fff;
+	}
+
+	.contribution-list :global(.contribution-save:hover:not(:disabled)) {
+		border-color: #1e40af;
+		background: #1e40af;
+	}
+
+	.contribution-list :global(.contribution-delete) {
+		color: #dc2626;
+	}
+
+	:global(:root[data-theme='dark']) .contribution-list :global(.contribution-edit) {
+		color: #93c5fd;
+	}
+
+	:global(:root[data-theme='dark']) .contribution-list :global(.contribution-delete) {
+		color: #fca5a5;
+	}
+
+	.contribution-list :global(.contribution-card-actions svg),
+	.contribution-list :global(.contribution-actions .contribution-delete svg) {
+		width: 1.2rem;
+		height: 1.2rem;
+	}
+
+	.contribution-list :global(button:focus-visible) {
+		outline: 2px solid currentColor;
+		outline-offset: 2px;
+	}
+
+	.contribution-list :global(form) {
+		display: grid;
+		gap: 0.5rem;
+		margin-top: 1rem;
+	}
+
+	.contribution-list :global(input),
+	.contribution-list :global(select),
+	.contribution-list :global(textarea) {
+		box-sizing: border-box;
+		width: 100%;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.4rem;
+		padding: 0.65rem 0.75rem;
+		background: var(--sl-color-bg);
+		color: var(--sl-color-text);
+		font: inherit;
+	}
 </style>
 
 <script>
 	const list = document.querySelector<HTMLUListElement>('#contribution-list');
 	const status = document.querySelector<HTMLParagraphElement>('#contribution-list-status');
-	if (!(list instanceof HTMLUListElement) || !(status instanceof HTMLParagraphElement)) {
+	const newButton = document.querySelector<HTMLButtonElement>('#new-contribution');
+	const newCard = document.querySelector<HTMLDivElement>('#new-contribution-card');
+	const closeButton = document.querySelector<HTMLButtonElement>('#close-contribution');
+	const newForm = newCard?.querySelector<HTMLFormElement>('#issue-tracker-form');
+	if (
+		!(list instanceof HTMLUListElement) || !(status instanceof HTMLParagraphElement) ||
+		!(newButton instanceof HTMLButtonElement) || !(newCard instanceof HTMLDivElement) ||
+		!(closeButton instanceof HTMLButtonElement) || !(newForm instanceof HTMLFormElement)
+	) {
 		throw new Error('Die Beitragsübersicht wurde nicht gefunden.');
 	}
 
+	let listLoaded = false;
+
+	newButton.addEventListener('click', () => {
+		const formStatus = newForm.querySelector<HTMLElement>('.form-status');
+		if (formStatus) formStatus.textContent = '';
+		newCard.hidden = false;
+		newButton.hidden = true;
+		newButton.setAttribute('aria-expanded', 'true');
+		newForm.querySelector<HTMLSelectElement>('select')?.focus();
+	});
+
+	closeButton.addEventListener('click', () => {
+		newForm.reset();
+		const formStatus = newForm.querySelector<HTMLElement>('.form-status');
+		if (formStatus) formStatus.textContent = '';
+		newCard.hidden = true;
+		newButton.hidden = false;
+		newButton.setAttribute('aria-expanded', 'false');
+		newButton.focus();
+	});
+
+	newForm.addEventListener('contribution:busy', (event) => {
+		if (event instanceof CustomEvent) closeButton.disabled = event.detail === true;
+	});
+
+	newForm.addEventListener('contribution:created', (event) => {
+		if (!(event instanceof CustomEvent)) return;
+		const result: unknown = event.detail;
+		if (
+			typeof result === 'object' && result !== null && 'contribution' in result &&
+			isContribution(result.contribution)
+		) {
+			addContribution(result.contribution, true);
+			updateCount();
+			if (!listLoaded) void loadContributions();
+		} else {
+			void loadContributions();
+		}
+		newCard.hidden = true;
+		newButton.hidden = false;
+		newButton.setAttribute('aria-expanded', 'false');
+		newButton.focus();
+	});
+
 	interface Contribution {
+		id: string;
 		type: 'Bug' | 'Feature' | 'Decision';
 		title: string;
 		description: string;
@@ -51,12 +317,226 @@
 	function isContribution(value: unknown): value is Contribution {
 		if (typeof value !== 'object' || value === null) return false;
 		return (
+			'id' in value && typeof value.id === 'string' && value.id.length > 0 &&
 			'type' in value && (value.type === 'Bug' || value.type === 'Feature' || value.type === 'Decision') &&
 			'title' in value && typeof value.title === 'string' &&
 			'description' in value && typeof value.description === 'string' &&
 			'createdAt' in value && typeof value.createdAt === 'string' &&
 			Number.isFinite(Date.parse(value.createdAt))
 		);
+	}
+
+	async function changeContribution(
+		method: 'PATCH' | 'DELETE',
+		expected: Contribution,
+		fields?: Pick<Contribution, 'type' | 'title' | 'description'>,
+	) {
+		const response = await fetch('/api/contributions', {
+			method,
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ expected, fields }),
+		});
+		if (!response.ok) {
+			let message = 'Der Beitrag konnte nicht geändert werden.';
+			const contentType = response.headers.get('Content-Type');
+			if (contentType?.includes('application/json')) {
+				const result: unknown = await response.json();
+				if (typeof result === 'object' && result !== null && 'error' in result && typeof result.error === 'string') {
+					message = result.error;
+				}
+			}
+			throw new Error(message);
+		}
+	}
+
+	function updateCount() {
+		const count = list.querySelectorAll('li').length;
+		status.textContent = count === 0 ? 'Noch keine Beiträge vorhanden.' : `${count} Beiträge geladen.`;
+	}
+
+	function addContribution(contribution: Contribution, prepend = false) {
+		if (Array.from(list.children).some((item) => item.getAttribute('data-contribution-id') === contribution.id)) return;
+		const item = document.createElement('li');
+		item.setAttribute('data-contribution-id', contribution.id);
+		const header = document.createElement('div');
+		header.className = 'contribution-card-header';
+		const heading = document.createElement('div');
+		heading.className = 'contribution-card-heading';
+		const meta = document.createElement('div');
+		meta.className = 'contribution-meta';
+		const title = document.createElement('h2');
+		const description = document.createElement('p');
+		const actions = document.createElement('div');
+		actions.className = 'contribution-card-actions';
+		const edit = document.createElement('button');
+		edit.type = 'button';
+		edit.className = 'contribution-edit';
+		edit.title = 'Bearbeiten';
+		function addIcon(button: HTMLButtonElement, paths: string[]) {
+			const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+			svg.setAttribute('viewBox', '0 0 24 24');
+			svg.setAttribute('fill', 'none');
+			svg.setAttribute('stroke', 'currentColor');
+			svg.setAttribute('stroke-width', '2');
+			svg.setAttribute('stroke-linecap', 'round');
+			svg.setAttribute('stroke-linejoin', 'round');
+			svg.setAttribute('aria-hidden', 'true');
+			for (const d of paths) {
+				const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+				path.setAttribute('d', d);
+				svg.append(path);
+			}
+			button.append(svg);
+		}
+
+		addIcon(edit, ['M12 20h9', 'M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z']);
+		actions.append(edit);
+		const message = document.createElement('p');
+		message.setAttribute('role', 'status');
+		message.setAttribute('aria-live', 'polite');
+
+		function render() {
+			meta.textContent = `${contribution.type} · ${new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(contribution.createdAt))}`;
+			title.textContent = contribution.title;
+			description.textContent = contribution.description;
+			edit.setAttribute('aria-label', `${contribution.title} bearbeiten`);
+		}
+
+		edit.addEventListener('click', () => {
+			edit.hidden = true;
+			message.textContent = '';
+			const form = document.createElement('form');
+			const typeLabel = document.createElement('label');
+			typeLabel.textContent = 'Typ';
+			const type = document.createElement('select');
+			for (const value of ['Bug', 'Feature', 'Decision']) {
+				const option = document.createElement('option');
+				option.value = value;
+				option.textContent = value;
+				type.append(option);
+			}
+			type.value = contribution.type;
+			typeLabel.append(type);
+			const titleLabel = document.createElement('label');
+			titleLabel.textContent = 'Titel';
+			const titleInput = document.createElement('input');
+			titleInput.value = contribution.title;
+			titleInput.maxLength = 120;
+			titleInput.required = true;
+			titleLabel.append(titleInput);
+			const descriptionLabel = document.createElement('label');
+			descriptionLabel.textContent = 'Beschreibung';
+			const descriptionInput = document.createElement('textarea');
+			descriptionInput.value = contribution.description;
+			descriptionInput.maxLength = 10_000;
+			descriptionInput.rows = 7;
+			descriptionInput.required = true;
+			descriptionLabel.append(descriptionInput);
+			const formActions = document.createElement('div');
+			formActions.className = 'contribution-actions';
+			const save = document.createElement('button');
+			save.type = 'submit';
+			save.className = 'contribution-save';
+			save.textContent = 'Speichern';
+			const cancel = document.createElement('button');
+			cancel.type = 'button';
+			cancel.title = 'Bearbeitung schließen';
+			cancel.setAttribute('aria-label', 'Bearbeitung schließen');
+			addIcon(cancel, ['M6 6l12 12', 'M18 6L6 18']);
+			actions.append(cancel);
+			const remove = document.createElement('button');
+			remove.type = 'button';
+			remove.className = 'contribution-delete';
+			remove.title = 'Löschen';
+			remove.setAttribute('aria-label', `${contribution.title} löschen`);
+			addIcon(remove, ['M3 6h18', 'M8 6V4h8v2', 'M5 6l1 14h12l1-14', 'M10 10v6', 'M14 10v6']);
+			cancel.addEventListener('click', () => {
+				form.remove();
+				cancel.remove();
+				edit.hidden = false;
+				message.textContent = '';
+				edit.focus();
+			});
+			formActions.append(save, remove);
+			form.append(typeLabel, titleLabel, descriptionLabel, formActions);
+			item.insertBefore(form, message);
+			titleInput.focus();
+
+			remove.addEventListener('click', async () => {
+				if (!window.confirm(`Beitrag „${contribution.title}“ wirklich löschen?`)) return;
+				save.disabled = true;
+				cancel.disabled = true;
+				remove.disabled = true;
+				type.disabled = true;
+				titleInput.disabled = true;
+				descriptionInput.disabled = true;
+				message.textContent = 'Beitrag wird gelöscht …';
+				try {
+					await changeContribution('DELETE', contribution);
+					item.remove();
+					updateCount();
+					status.focus();
+				} catch (error) {
+					console.error('Fehler beim Löschen des Beitrags:', error);
+					message.textContent = error instanceof Error ? error.message : 'Der Beitrag konnte nicht gelöscht werden.';
+				} finally {
+					save.disabled = false;
+					cancel.disabled = false;
+					remove.disabled = false;
+					type.disabled = false;
+					titleInput.disabled = false;
+					descriptionInput.disabled = false;
+				}
+			});
+
+			form.addEventListener('submit', async (event) => {
+				event.preventDefault();
+				const selectedType = type.value;
+				if (selectedType !== 'Bug' && selectedType !== 'Feature' && selectedType !== 'Decision') {
+					message.textContent = 'Bitte wähle einen gültigen Typ.';
+					return;
+				}
+				const fields = { type: selectedType, title: titleInput.value.trim(), description: descriptionInput.value.trim() };
+				if (!fields.title || !fields.description) {
+					message.textContent = 'Bitte gib einen Titel und eine Beschreibung ein.';
+					return;
+				}
+				save.disabled = true;
+				cancel.disabled = true;
+				remove.disabled = true;
+				type.disabled = true;
+				titleInput.disabled = true;
+				descriptionInput.disabled = true;
+				message.textContent = 'Beitrag wird gespeichert …';
+				try {
+					await changeContribution('PATCH', contribution, fields);
+					contribution = { ...contribution, ...fields };
+					render();
+					form.remove();
+					cancel.remove();
+					edit.hidden = false;
+					message.textContent = 'Beitrag wurde aktualisiert.';
+					edit.focus();
+				} catch (error) {
+					console.error('Fehler beim Bearbeiten des Beitrags:', error);
+					message.textContent = error instanceof Error ? error.message : 'Der Beitrag konnte nicht geändert werden.';
+				} finally {
+					save.disabled = false;
+					cancel.disabled = false;
+					remove.disabled = false;
+					type.disabled = false;
+					titleInput.disabled = false;
+					descriptionInput.disabled = false;
+				}
+			});
+		});
+
+		render();
+		heading.append(meta, title);
+		header.append(heading, actions);
+		item.append(header, description, message);
+		if (prepend) list.prepend(item);
+		else list.append(item);
 	}
 
 	async function loadContributions() {
@@ -71,24 +551,11 @@
 				throw new Error('Die Beitragsdaten haben ein ungültiges Format.');
 			}
 
-			if (data.contributions.length === 0) {
-				status.textContent = 'Noch keine Beiträge vorhanden.';
-				return;
-			}
-
 			for (const contribution of [...data.contributions].reverse()) {
-				const item = document.createElement('li');
-				const meta = document.createElement('div');
-				meta.className = 'contribution-meta';
-				meta.textContent = `${contribution.type} · ${new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(contribution.createdAt))}`;
-				const title = document.createElement('h2');
-				title.textContent = contribution.title;
-				const description = document.createElement('p');
-				description.textContent = contribution.description;
-				item.append(meta, title, description);
-				list.append(item);
+				addContribution(contribution);
 			}
-			status.textContent = `${data.contributions.length} Beiträge geladen.`;
+			listLoaded = true;
+			updateCount();
 		} catch (error) {
 			console.error('Fehler beim Laden der Beiträge:', error);
 			status.textContent = 'Die Beiträge konnten nicht geladen werden. Bitte versuche es später erneut.';

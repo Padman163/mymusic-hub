@@ -6,6 +6,11 @@ export interface Contribution {
 	createdAt: string;
 }
 
+export type ContributionFields = Pick<Contribution, 'type' | 'title' | 'description'>;
+
+export class ContributionNotFoundError extends Error {}
+export class ContributionConflictError extends Error {}
+
 function githubFileConfig() {
 	const token = process.env.GITHUB_TOKEN;
 	const repository = process.env.GITHUB_REPOSITORY;
@@ -73,18 +78,22 @@ export async function listContributions(): Promise<unknown[]> {
 	return contributions;
 }
 
-export async function saveContribution(contribution: Contribution): Promise<void> {
+async function changeContributions(
+	message: string,
+	allowMissing: boolean,
+	change: (contributions: unknown[]) => void,
+): Promise<void> {
 	const config = githubFileConfig();
 
 	for (let attempt = 0; attempt < 3; attempt += 1) {
-		const { contributions, sha } = await readFile(config, true);
+		const { contributions, sha } = await readFile(config, allowMissing);
 
-		contributions.push(contribution);
+		change(contributions);
 		const writeResponse = await fetch(config.url, {
 			method: 'PUT',
 			headers: { ...config.headers, 'Content-Type': 'application/json' },
 			body: JSON.stringify({
-				message: 'Add project contribution',
+				message,
 				content: Buffer.from(JSON.stringify(contributions, null, 2), 'utf8').toString('base64'),
 				branch: config.branch,
 				...(sha ? { sha } : {}),
@@ -98,4 +107,46 @@ export async function saveContribution(contribution: Contribution): Promise<void
 			throw new Error(`GitHub konnte den Beitrag nicht speichern (HTTP ${writeResponse.status}).`);
 		}
 	}
+
+}
+
+export async function saveContribution(contribution: Contribution): Promise<void> {
+	await changeContributions('Add project contribution', true, (contributions) => {
+		contributions.push(contribution);
+	});
+}
+
+export async function modifyContribution(
+	expected: Contribution,
+	fields: ContributionFields | null,
+): Promise<void> {
+	await changeContributions(
+		fields ? 'Update project contribution' : 'Delete project contribution',
+		false,
+		(contributions) => {
+			const matches = contributions
+				.map((item, index) => ({ item, index }))
+				.filter(({ item }) => typeof item === 'object' && item !== null && 'id' in item && item.id === expected.id);
+
+			if (matches.length === 0) throw new ContributionNotFoundError();
+			if (matches.length !== 1) throw new ContributionConflictError();
+
+			const { item, index } = matches[0];
+			if (
+				typeof item !== 'object' || item === null ||
+				!('type' in item) || item.type !== expected.type ||
+				!('title' in item) || item.title !== expected.title ||
+				!('description' in item) || item.description !== expected.description ||
+				!('createdAt' in item) || item.createdAt !== expected.createdAt
+			) {
+				throw new ContributionConflictError();
+			}
+
+			if (fields) {
+				contributions[index] = { ...item, ...fields };
+			} else {
+				contributions.splice(index, 1);
+			}
+		},
+	);
 }

@@ -1,8 +1,16 @@
 import type { Config } from '@netlify/functions';
-import { listContributions, saveContribution, type Contribution } from './lib/github-contribution-store';
+import {
+	ContributionConflictError,
+	ContributionNotFoundError,
+	listContributions,
+	modifyContribution,
+	saveContribution,
+	type Contribution,
+	type ContributionFields,
+} from './lib/github-contribution-store';
 
 const allowedTypes = ['Bug', 'Feature', 'Decision'] as const;
-const maxRequestBytes = 12_000;
+const maxRequestBytes = 150_000;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === 'object' && value !== null;
@@ -10,6 +18,26 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function isContributionType(value: unknown): value is Contribution['type'] {
 	return typeof value === 'string' && allowedTypes.some((allowedType) => allowedType === value);
+}
+
+function contributionFields(value: unknown): ContributionFields | null {
+	if (!isRecord(value)) return null;
+	const { type, title, description } = value;
+	if (
+		!isContributionType(type) ||
+		typeof title !== 'string' || !title.trim() || title.trim().length > 120 ||
+		typeof description !== 'string' || !description.trim() || description.trim().length > 10_000
+	) return null;
+	return { type, title: title.trim(), description: description.trim() };
+}
+
+function isContribution(value: unknown): value is Contribution {
+	return isRecord(value) &&
+		typeof value.id === 'string' && value.id.length > 0 && value.id.length <= 100 &&
+		isContributionType(value.type) &&
+		typeof value.title === 'string' && value.title.length <= 120 &&
+		typeof value.description === 'string' && value.description.length <= 10_000 &&
+		typeof value.createdAt === 'string' && value.createdAt.length <= 100;
 }
 
 export const config: Config = {
@@ -24,7 +52,7 @@ function jsonResponse(status: number, body: unknown): Response {
 }
 
 export default async (request: Request): Promise<Response> => {
-	if (request.method !== 'GET' && request.method !== 'POST') {
+	if (!['GET', 'POST', 'PATCH', 'DELETE'].includes(request.method)) {
 		return jsonResponse(405, { error: 'Diese Methode wird nicht unterstützt.' });
 	}
 
@@ -57,28 +85,39 @@ export default async (request: Request): Promise<Response> => {
 		return jsonResponse(400, { error: 'Die Beitragsdaten sind ungültig.' });
 	}
 
-	const { type, title, description } = body;
-	if (!isContributionType(type)) {
-		return jsonResponse(400, { error: 'Bitte wähle einen gültigen Typ.' });
-	}
-	if (typeof title !== 'string' || !title.trim() || title.trim().length > 120) {
-		return jsonResponse(400, { error: 'Der Titel muss zwischen 1 und 120 Zeichen lang sein.' });
-	}
-	if (typeof description !== 'string' || !description.trim() || description.trim().length > 10_000) {
-		return jsonResponse(400, { error: 'Die Beschreibung muss zwischen 1 und 10000 Zeichen lang sein.' });
+	if (request.method === 'PATCH' || request.method === 'DELETE') {
+		if (!isContribution(body.expected)) {
+			return jsonResponse(400, { error: 'Der ursprüngliche Beitrag ist ungültig.' });
+		}
+		const fields = request.method === 'PATCH' ? contributionFields(body.fields) : null;
+		if (request.method === 'PATCH' && !fields) {
+			return jsonResponse(400, { error: 'Bitte gib einen gültigen Typ, Titel und eine Beschreibung ein.' });
+		}
+		try {
+			await modifyContribution(body.expected, fields);
+			return jsonResponse(200, { message: fields ? 'Beitrag wurde aktualisiert.' : 'Beitrag wurde gelöscht.' });
+		} catch (error) {
+			if (error instanceof ContributionNotFoundError) {
+				return jsonResponse(404, { error: 'Der Beitrag wurde bereits gelöscht. Bitte lade die Seite neu.' });
+			}
+			if (error instanceof ContributionConflictError) {
+				return jsonResponse(409, { error: 'Der Beitrag wurde zwischenzeitlich geändert. Bitte lade die Seite neu.' });
+			}
+			console.error('Der Beitrag konnte nicht geändert werden.', error);
+			return jsonResponse(502, { error: 'Der Beitrag konnte derzeit nicht geändert werden.' });
+		}
 	}
 
-	const contribution: Contribution = {
-		id: crypto.randomUUID(),
-		type,
-		title: title.trim(),
-		description: description.trim(),
-		createdAt: new Date().toISOString(),
-	};
+	const fields = contributionFields(body);
+	if (!fields) {
+		return jsonResponse(400, { error: 'Bitte gib einen gültigen Typ, Titel (maximal 120 Zeichen) und eine Beschreibung (maximal 10000 Zeichen) ein.' });
+	}
+
+	const contribution: Contribution = { id: crypto.randomUUID(), ...fields, createdAt: new Date().toISOString() };
 
 	try {
 		await saveContribution(contribution);
-		return jsonResponse(201, { message: 'Beitrag wurde gespeichert.' });
+		return jsonResponse(201, { message: 'Beitrag wurde gespeichert.', contribution });
 	} catch (error) {
 		console.error('Der Beitrag konnte nicht auf GitHub gespeichert werden.', error);
 		return jsonResponse(502, { error: 'Der Beitrag konnte derzeit nicht gespeichert werden.' });

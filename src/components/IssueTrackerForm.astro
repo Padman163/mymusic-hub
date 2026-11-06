@@ -26,6 +26,7 @@
 			id="contribution-description"
 			name="description"
 			rows="7"
+			maxlength="10000"
 			placeholder="Worum geht es? Ergänze bei Bugs gern die Schritte zum Nachstellen."
 			required
 		></textarea>
@@ -153,6 +154,10 @@
 
 		status.textContent = 'Beitrag wird gespeichert …';
 		submitButton.disabled = true;
+		typeField.disabled = true;
+		titleField.disabled = true;
+		descriptionField.disabled = true;
+		form.dispatchEvent(new CustomEvent('contribution:busy', { bubbles: true, detail: true }));
 
 		try {
 			const response = await fetch('/api/contributions', {
@@ -175,6 +180,7 @@
 
 			status.textContent = 'Beitrag wurde gespeichert.';
 			form.reset();
+			form.dispatchEvent(new CustomEvent('contribution:created', { bubbles: true, detail: result }));
 		} catch (error) {
 			status.textContent =
 				error instanceof Error
@@ -182,6 +188,10 @@
 					: 'Der Beitrag konnte wegen eines unerwarteten Fehlers nicht gespeichert werden.';
 		} finally {
 			submitButton.disabled = false;
+			typeField.disabled = false;
+			titleField.disabled = false;
+			descriptionField.disabled = false;
+			form.dispatchEvent(new CustomEvent('contribution:busy', { bubbles: true, detail: false }));
 		}
 	});
 </script>
