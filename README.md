@@ -33,3 +33,4 @@
 2. Pusht den kopierten branch auf GitHub ```git push origin -u archive/<eingefügter-branch>```
 3. Löscht einen branch ```git push origin --delete <branch>```
 4. Neuen branch erstellen ```git switch -c <neuer-branch>```
+5. Prozesse abbrechen und auf mein wechseln ```git checkout -f main```
