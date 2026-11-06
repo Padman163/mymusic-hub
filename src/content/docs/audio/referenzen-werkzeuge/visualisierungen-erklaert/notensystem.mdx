@@ -108,6 +108,23 @@ Aufeinanderfolgende Achtel- oder Sechzehntelnoten desselben Werts können mit de
 
 Die Beispiele zeigen die Zeichen zur Veranschaulichung; die Komponente prüft noch nicht, ob Notenwerte zusammen zur Taktart passen.
 
+## Schlussstrich
+
+Der Schlussstrich besteht aus einer dünnen und einer dicken Linie. Mit `rightBarStyle="final"` ersetzt er den einfachen rechten Taktstrich; mit `showRightBar={false}` kann er ausgeblendet werden.
+
+<NotationClickable clef="treble" rightBarStyle="final" />
+
+## Klaviaturnotation
+
+Das Klaviersystem zeigt oben den Violin- und unten den Bassschlüssel. Das mittlere C (C4) steht im oberen System auf der ersten Hilfslinie darunter und im unteren System auf der ersten Hilfslinie darüber. Beide Darstellungen liegen hier genau übereinander und zeigen denselben Ton.
+
+<KeyboardNotation />
+
+Der Schlussstrich erstreckt sich über beide Systeme. Mit `rightBarStyle="single"` erscheinen stattdessen die einfachen Taktstriche. Die geschweifte Klammer ist standardmäßig sichtbar und lässt sich beim Einbinden mit `<KeyboardNotation showBrace={false} />` ausblenden.
+
+Die Visualisierung trägt die Tags `Allgemein` und `Notensystem`. Mehr zur geplanten Verwendung steht unter [EXP und Tags](../../exp-und-tags/).
+
+
 ## Auftakt und Wiederholung
 
 Das Beispiel im 4/4-Takt beginnt mit einem Auftakt von einer Viertelnote. Danach folgen die nummerierten Takte 1 bis 4. Die Wiederholungszeichen schließen Takt 2 und 3 ein: Nach Takt 3 werden diese beiden Takte einmal wiederholt, bevor Takt 4 folgt. Der letzte Takt enthält drei Viertelnoten und ergänzt damit den Auftakt zu einem vollständigen 4/4-Takt.
@@ -140,18 +157,3 @@ Dynamikzeichen geben an, wie laut oder leise gespielt wird. **p** (*piano*) bede
 
 <NotationDynamics />
 
-## Schlussstrich
-
-Der Schlussstrich besteht aus einer dünnen und einer dicken Linie. Mit `rightBarStyle="final"` ersetzt er den einfachen rechten Taktstrich; mit `showRightBar={false}` kann er ausgeblendet werden.
-
-<NotationClickable clef="treble" rightBarStyle="final" />
-
-## Klaviaturnotation
-
-Das Klaviersystem zeigt oben den Violin- und unten den Bassschlüssel. Das mittlere C (C4) steht im oberen System auf der ersten Hilfslinie darunter und im unteren System auf der ersten Hilfslinie darüber. Beide Darstellungen liegen hier genau übereinander und zeigen denselben Ton.
-
-<KeyboardNotation />
-
-Der Schlussstrich erstreckt sich über beide Systeme. Mit `rightBarStyle="single"` erscheinen stattdessen die einfachen Taktstriche. Die geschweifte Klammer ist standardmäßig sichtbar und lässt sich beim Einbinden mit `<KeyboardNotation showBrace={false} />` ausblenden.
-
-Die Visualisierung trägt die Tags `Allgemein` und `Notensystem`. Mehr zur geplanten Verwendung steht unter [EXP und Tags](../../exp-und-tags/).
