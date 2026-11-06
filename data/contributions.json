@@ -192,5 +192,28 @@
     ],
     "status": "New",
     "createdAt": "2026-11-06T16:14:28.840Z"
+  },
+  {
+    "id": "c408af61-28ee-4d05-a443-17b5421188d9",
+    "type": "Feature",
+    "title": "MIDI-Backing-Track-Baukasten & DAW-Looping",
+    "description": "Erstellung eigener MIDI-Backing-Tracks (Kick, Snare, Hi-Hat, Grundton) oder Nutzung des Web-Players.",
+    "area": "Praxis",
+    "checklist": [
+      {
+        "text": "Bauanleitung für Basis-Groove in Studio One schreiben",
+        "checked": false
+      },
+      {
+        "text": "Exportierbare .mid-Snippets pro Lektion bereitstellen",
+        "checked": false
+      },
+      {
+        "text": "Datenbank-Tracks in den Web-Player einbinden",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-06T16:15:02.139Z"
   }
 ]
