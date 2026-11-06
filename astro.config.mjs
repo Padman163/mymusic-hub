@@ -29,7 +29,6 @@ export default defineConfig({
 					label: 'Projektierung',
 					items: [
 						{ label: 'Beiträge', slug: 'projektierung/beitraege' },
-						{ label: 'IssueTracker', slug: 'projektierung/issuetracker' },
 					],
 				},
 				{
