@@ -26,3 +26,8 @@
 
 5. Löscht anstehende commits: ```git clean -fd```
 6. Löscht push :  ```git reset --hard origin/<älteren-branch>```
+
+## Sonstige Befehle
+1. Kopiert branch mit anderem Namen in z.b. das Archiv ```git branch -m <kopierter-branch> archive/<eingefügter-branch>```
+2. Pusht den kopierten branch auf GitHub ```git push origin -u archive/<eingefügter-branch>```
+3. Löscht einen branch ```git push origin --delete <branch>```
