@@ -37,24 +37,42 @@ export function createTypeTag(type: ContributionType) {
 	return tag;
 }
 
-export function createTypePicker(selected: ContributionType) {
+export function createTagPicker<T extends string>(
+	name: string,
+	title: string,
+	values: readonly T[],
+	selected: T | undefined,
+	createTag: (value: T) => HTMLElement,
+) {
 	const fieldset = document.createElement('fieldset');
 	fieldset.className = 'contribution-type-picker';
 	const legend = document.createElement('legend');
-	legend.textContent = 'Typ';
+	legend.textContent = title;
 	const choices = document.createElement('div');
 	choices.className = 'contribution-type-choices';
-	for (const type of contributionTypes) {
+	for (const value of values) {
 		const label = document.createElement('label');
 		const radio = document.createElement('input');
 		radio.type = 'radio';
-		radio.name = 'type';
-		radio.value = type;
-		radio.defaultChecked = type === selected;
+		radio.name = name;
+		radio.value = value;
+		radio.defaultChecked = value === selected;
 		radio.required = true;
-		label.append(radio, createTypeTag(type));
+		label.append(radio, createTag(value));
 		choices.append(label);
 	}
 	fieldset.append(legend, choices);
 	return fieldset;
+}
+
+export function createTypePicker(selected: ContributionType) {
+	return createTagPicker('type', 'Typ', contributionTypes, selected, createTypeTag);
+}
+
+export function createPlainTag(value: string, category: 'area' | 'priority') {
+	const tag = document.createElement('span');
+	tag.className = 'contribution-tag';
+	tag.dataset[category] = value;
+	tag.textContent = value;
+	return tag;
 }

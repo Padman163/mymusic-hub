@@ -1,11 +1,66 @@
 ---
 import IssueTrackerForm from './IssueTrackerForm.astro';
+import { contributionTypes } from '../lib/contribution-types';
+import { contributionAreas } from '../lib/contribution-area';
+import { contributionPriorities } from '../lib/contribution-priority';
 import './contribution-tags.css';
 import './contribution-checklist.css';
 ---
 
 <section aria-label="Gespeicherte Beiträge">
-	<button id="new-contribution" class="new-contribution" type="button" aria-expanded="false" aria-controls="new-contribution-card">Neuen Beitrag erstellen</button>
+	<div class="contribution-toolbar">
+		<button id="new-contribution" class="new-contribution" type="button" aria-expanded="false" aria-controls="new-contribution-card">Neuen Beitrag erstellen</button>
+		<div class="contribution-toolbar-controls">
+			<details class="contribution-menu">
+				<summary title="Beiträge filtern" aria-label="Beiträge filtern">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+						<path d="M4 5h16l-6 7v6l-4 2v-8z"></path>
+					</svg>
+				</summary>
+				<div class="contribution-menu-panel">
+					<label for="filter-type">Typ</label>
+					<select id="filter-type">
+						<option value="">Alle Typen</option>
+						{contributionTypes.map((type) => <option value={type}>{type}</option>)}
+					</select>
+					<label for="filter-area">Bereich</label>
+					<select id="filter-area">
+						<option value="">Alle Bereiche</option>
+						<option value="none">Ohne Bereich</option>
+						{contributionAreas.map((area) => <option value={area}>{area}</option>)}
+					</select>
+					<label for="filter-priority">Priorität</label>
+					<select id="filter-priority">
+						<option value="">Alle Prioritäten</option>
+						{contributionPriorities.map((priority) => <option value={priority}>{priority}</option>)}
+					</select>
+				</div>
+			</details>
+			<details class="contribution-menu">
+				<summary title="Beiträge sortieren" aria-label="Beiträge sortieren">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+						<path d="M4 7h16M4 12h11M4 17h6"></path>
+					</svg>
+				</summary>
+				<div class="contribution-menu-panel">
+					<label for="sort-contributions">Sortierung</label>
+					<select id="sort-contributions">
+						<option value="newest">Neueste zuerst</option>
+						<option value="oldest">Älteste zuerst</option>
+						<option value="priority">Priorität: Hoch zuerst</option>
+					</select>
+				</div>
+			</details>
+		<button id="contribution-view-toggle" class="contribution-view-toggle" type="button" aria-label="Listenansicht anzeigen" title="Listenansicht anzeigen" aria-controls="contribution-list">
+			<svg class="list-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+				<path d="M4 6h2M10 6h10M4 12h2M10 12h10M4 18h2M10 18h10"></path>
+			</svg>
+			<svg class="cards-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true" hidden>
+				<path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"></path>
+			</svg>
+		</button>
+		</div>
+	</div>
 	<div id="new-contribution-card" class="new-contribution-card" hidden>
 		<div class="new-contribution-header">
 			<h2>Neuer Beitrag</h2>
@@ -22,6 +77,93 @@ import './contribution-checklist.css';
 </section>
 
 <style>
+	.contribution-toolbar {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 0.75rem;
+	}
+
+	.contribution-toolbar-controls {
+		position: relative;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin: 0 0 0 auto;
+	}
+
+	.contribution-menu {
+		margin: 0;
+	}
+
+	.contribution-menu summary,
+	.contribution-view-toggle {
+		display: grid;
+		place-items: center;
+		flex-shrink: 0;
+		width: 2.5rem;
+		height: 2.5rem;
+		margin: 0;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.4rem;
+		background: var(--sl-color-bg);
+		color: var(--sl-color-text);
+		cursor: pointer;
+	}
+
+	.contribution-menu summary {
+		list-style: none;
+		padding: 0;
+	}
+
+	.contribution-menu summary::before,
+	.contribution-menu summary::-webkit-details-marker {
+		display: none;
+	}
+
+	.contribution-menu summary svg,
+	.contribution-view-toggle svg {
+		width: 1.2rem;
+		height: 1.2rem;
+		margin: 0;
+	}
+
+	.contribution-menu-panel {
+		position: absolute;
+		z-index: 2;
+		right: 0;
+		display: grid;
+		gap: 0.35rem;
+		box-sizing: border-box;
+		width: min(17rem, calc(100vw - 2rem));
+		margin: 0.4rem 0 0;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.4rem;
+		padding: 0.75rem;
+		background: var(--sl-color-bg);
+		box-shadow: 0 0.25rem 0.75rem #0003;
+	}
+
+	.contribution-menu-panel label {
+		font-size: 0.875rem;
+		font-weight: 600;
+	}
+
+	.contribution-menu-panel select {
+		width: 100%;
+		margin: 0 0 0.35rem;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.4rem;
+		padding: 0.4rem;
+		background: var(--sl-color-bg);
+		color: var(--sl-color-text);
+		font: inherit;
+	}
+
+	.contribution-view-toggle svg[hidden] {
+		display: none;
+	}
+
 	.new-contribution {
 		border: 1px solid #1d4ed8;
 		border-radius: 0.4rem;
@@ -84,6 +226,9 @@ import './contribution-checklist.css';
 	}
 
 	.new-contribution:focus-visible,
+	.contribution-menu summary:focus-visible,
+	.contribution-menu-panel select:focus-visible,
+	.contribution-view-toggle:focus-visible,
 	.close-contribution:focus-visible {
 		outline: 2px solid var(--sl-color-accent);
 		outline-offset: 2px;
@@ -100,6 +245,11 @@ import './contribution-checklist.css';
 		border: 1px solid var(--sl-color-gray-5);
 		border-radius: 0.4rem;
 		padding: 1rem 1rem 0.5rem;
+	}
+
+	.contribution-list :global(li[hidden]),
+	.contribution-list[data-view='list'] :global(li[hidden]) {
+		display: none;
 	}
 
 	.contribution-list :global(.contribution-card-header) {
@@ -164,6 +314,53 @@ import './contribution-checklist.css';
 
 	.contribution-list :global(p[role='status']:empty) {
 		display: none;
+	}
+
+	.contribution-list[data-view='list'] {
+		gap: 0.5rem;
+	}
+
+	.contribution-list[data-view='list'] :global(li) {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr) auto;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.5rem;
+	}
+
+	.contribution-list[data-view='list'] :global(.contribution-card-header) {
+		display: contents;
+	}
+
+	.contribution-list[data-view='list'] :global(.contribution-meta) {
+		grid-column: 1;
+		grid-row: 1;
+	}
+
+	.contribution-list[data-view='list'] :global(h2) {
+		grid-column: 2;
+		grid-row: 1;
+		margin: 0;
+		border: 0;
+		padding: 0;
+		font-size: 1rem;
+	}
+
+	.contribution-list[data-view='list'] :global(.contribution-card-actions) {
+		grid-column: 3;
+		grid-row: 1;
+	}
+
+	.contribution-list[data-view='list'] :global(.contribution-area),
+	.contribution-list[data-view='list'] :global(.contribution-meta [data-priority]),
+	.contribution-list[data-view='list'] :global(.contribution-description),
+	.contribution-list[data-view='list'] :global(.contribution-card-footer) {
+		display: none;
+	}
+
+	.contribution-list[data-view='list'] :global(form),
+	.contribution-list[data-view='list'] :global(p[role='status']) {
+		grid-column: 1 / -1;
 	}
 
 	.contribution-list :global(.contribution-status),
@@ -329,26 +526,73 @@ import './contribution-checklist.css';
 
 <script>
 	import { contributionStatuses, defaultContributionStatus, isContributionStatus, type ContributionStatus } from '../lib/contribution-status';
-	import { addIcon, createTypePicker, createTypeTag, isContributionType, type ContributionType } from '../lib/contribution-types';
+	import { addIcon, createTypePicker, createTypeTag, createTagPicker, createPlainTag, isContributionType, type ContributionType } from '../lib/contribution-types';
 	import { contributionAreas, isContributionArea, type ContributionArea } from '../lib/contribution-area';
 	import { isChecklist, type ChecklistItem } from '../lib/contribution-checklist';
 	import { createChecklistEditor } from '../lib/checklist-editor';
+	import { contributionPriorities, defaultContributionPriority, isContributionPriority, type ContributionPriority } from '../lib/contribution-priority';
 
 	const list = document.querySelector<HTMLUListElement>('#contribution-list');
 	const status = document.querySelector<HTMLParagraphElement>('#contribution-list-status');
 	const newButton = document.querySelector<HTMLButtonElement>('#new-contribution');
+	const viewToggle = document.querySelector<HTMLButtonElement>('#contribution-view-toggle');
+	const listIcon = viewToggle?.querySelector<SVGElement>('.list-icon');
+	const cardsIcon = viewToggle?.querySelector<SVGElement>('.cards-icon');
+	const filterType = document.querySelector<HTMLSelectElement>('#filter-type');
+	const filterArea = document.querySelector<HTMLSelectElement>('#filter-area');
+	const filterPriority = document.querySelector<HTMLSelectElement>('#filter-priority');
+	const sortSelect = document.querySelector<HTMLSelectElement>('#sort-contributions');
 	const newCard = document.querySelector<HTMLDivElement>('#new-contribution-card');
 	const closeButton = document.querySelector<HTMLButtonElement>('#close-contribution');
 	const newForm = newCard?.querySelector<HTMLFormElement>('#issue-tracker-form');
 	if (
 		!(list instanceof HTMLUListElement) || !(status instanceof HTMLParagraphElement) ||
-		!(newButton instanceof HTMLButtonElement) || !(newCard instanceof HTMLDivElement) ||
+		!(newButton instanceof HTMLButtonElement) || !(viewToggle instanceof HTMLButtonElement) ||
+		!(listIcon instanceof SVGElement) || !(cardsIcon instanceof SVGElement) || !(newCard instanceof HTMLDivElement) ||
+		!(filterType instanceof HTMLSelectElement) || !(filterArea instanceof HTMLSelectElement) ||
+		!(filterPriority instanceof HTMLSelectElement) || !(sortSelect instanceof HTMLSelectElement) ||
 		!(closeButton instanceof HTMLButtonElement) || !(newForm instanceof HTMLFormElement)
 	) {
 		throw new Error('Die Beitragsübersicht wurde nicht gefunden.');
 	}
 
 	let listLoaded = false;
+	const entries = new Map<HTMLLIElement, Contribution>();
+	const menus = document.querySelectorAll<HTMLDetailsElement>('.contribution-menu');
+
+	for (const menu of menus) {
+		const summary = menu.querySelector('summary');
+		if (!summary) throw new Error('Das Beitragsmenü wurde nicht gefunden.');
+		summary.addEventListener('click', () => {
+			if (menu.open) return;
+			for (const other of menus) {
+				if (other !== menu) other.open = false;
+			}
+		});
+	}
+
+	document.addEventListener('click', (event) => {
+		if (!(event.target instanceof Node)) return;
+		for (const menu of menus) {
+			if (!menu.contains(event.target)) menu.open = false;
+		}
+	});
+
+	for (const control of [filterType, filterArea, filterPriority, sortSelect]) {
+		control.addEventListener('change', () => {
+			if (listLoaded) updateCount();
+		});
+	}
+
+	viewToggle.addEventListener('click', () => {
+		const listView = list.dataset.view !== 'list';
+		list.dataset.view = listView ? 'list' : 'cards';
+		const label = listView ? 'Kartenansicht anzeigen' : 'Listenansicht anzeigen';
+		viewToggle.setAttribute('aria-label', label);
+		viewToggle.title = label;
+		listIcon.toggleAttribute('hidden', listView);
+		cardsIcon.toggleAttribute('hidden', !listView);
+	});
 
 	newButton.addEventListener('click', () => {
 		const formStatus = newForm.querySelector<HTMLElement>('.form-status');
@@ -400,6 +644,7 @@ import './contribution-checklist.css';
 		createdAt: string;
 		status?: ContributionStatus;
 		area?: ContributionArea;
+		priority?: ContributionPriority;
 		checklist?: ChecklistItem[];
 	}
 
@@ -414,6 +659,7 @@ import './contribution-checklist.css';
 			Number.isFinite(Date.parse(value.createdAt)) &&
 			(!('status' in value) || isContributionStatus(value.status)) &&
 			(!('area' in value) || isContributionArea(value.area)) &&
+			(!('priority' in value) || isContributionPriority(value.priority)) &&
 			(!('checklist' in value) || isChecklist(value.checklist))
 		);
 	}
@@ -421,7 +667,7 @@ import './contribution-checklist.css';
 	async function changeContribution(
 		method: 'PATCH' | 'DELETE',
 		expected: Contribution,
-		fields?: Pick<Contribution, 'type' | 'title' | 'description' | 'status' | 'area' | 'checklist'>,
+		fields?: Pick<Contribution, 'type' | 'title' | 'description' | 'status' | 'area' | 'priority' | 'checklist'>,
 	) {
 		const response = await fetch('/api/contributions', {
 			method,
@@ -442,8 +688,34 @@ import './contribution-checklist.css';
 	}
 
 	function updateCount() {
-		const count = list.children.length;
-		status.textContent = count === 0 ? 'Noch keine Beiträge vorhanden.' : `${count} Beiträge geladen.`;
+		const sorted = Array.from(entries.entries()).sort(([, a], [, b]) => {
+			if (sortSelect.value === 'priority') {
+				const priorityOrder = contributionPriorities.indexOf(a.priority ?? defaultContributionPriority) -
+					contributionPriorities.indexOf(b.priority ?? defaultContributionPriority);
+				if (priorityOrder !== 0) return priorityOrder;
+			}
+			const dateOrder = Date.parse(a.createdAt) - Date.parse(b.createdAt);
+			return sortSelect.value === 'oldest' ? dateOrder : -dateOrder;
+		});
+		let visible = 0;
+		sorted.forEach(([element, contribution]) => {
+			const matches = (!filterType.value || contribution.type === filterType.value) &&
+				(!filterArea.value || (contribution.area ?? 'none') === filterArea.value) &&
+				(!filterPriority.value || (contribution.priority ?? defaultContributionPriority) === filterPriority.value);
+			element.hidden = !matches;
+			if (matches) visible += 1;
+		});
+		const focused = document.activeElement;
+		for (let index = 0; index < sorted.length; index += 1) {
+			const element = sorted[index][0];
+			if (list.children[index] !== element) list.insertBefore(element, list.children[index] ?? null);
+		}
+		if (focused instanceof HTMLElement && focused.isConnected && !focused.closest('[hidden]') && document.activeElement !== focused) {
+			focused.focus({ preventScroll: true });
+		}
+		status.textContent = entries.size === 0 ? 'Noch keine Beiträge vorhanden.' :
+			visible === 0 ? 'Keine Beiträge entsprechen den gewählten Filtern.' :
+			`${visible} von ${entries.size} Beiträgen angezeigt.`;
 	}
 
 	function addContribution(contribution: Contribution, prepend = false) {
@@ -485,6 +757,10 @@ import './contribution-checklist.css';
 			if (contribution.area) contributionArea.dataset.area = contribution.area;
 			contributionArea.textContent = contribution.area ?? 'Ohne Bereich';
 			meta.replaceChildren(tag, contributionArea);
+			const priorityValue = contribution.priority ?? defaultContributionPriority;
+			const priority = createPlainTag(priorityValue, 'priority');
+			priority.setAttribute('aria-label', `Priorität: ${priorityValue}`);
+			meta.append(priority);
 			footer.replaceChildren(contributionStatus);
 			const checklist = contribution.checklist ?? [];
 			if (checklist.length > 0) {
@@ -505,22 +781,8 @@ import './contribution-checklist.css';
 			message.textContent = '';
 			const form = document.createElement('form');
 			const typePicker = createTypePicker(contribution.type);
-			const areaLabel = document.createElement('label');
-			areaLabel.textContent = 'Bereich';
-			const areaInput = document.createElement('select');
-			areaInput.required = true;
-			const areaPlaceholder = document.createElement('option');
-			areaPlaceholder.value = '';
-			areaPlaceholder.textContent = 'Bitte auswählen';
-			areaInput.append(areaPlaceholder);
-			for (const value of contributionAreas) {
-				const option = document.createElement('option');
-				option.value = value;
-				option.textContent = value;
-				areaInput.append(option);
-			}
-			areaInput.value = contribution.area ?? '';
-			areaLabel.append(areaInput);
+			const areaPicker = createTagPicker('area', 'Bereich', contributionAreas, contribution.area, (area) => createPlainTag(area, 'area'));
+			const priorityPicker = createTagPicker('priority', 'Priorität', contributionPriorities, contribution.priority ?? defaultContributionPriority, (priority) => createPlainTag(priority, 'priority'));
 			const statusLabel = document.createElement('label');
 			statusLabel.textContent = 'Status';
 			const statusInput = document.createElement('select');
@@ -573,7 +835,7 @@ import './contribution-checklist.css';
 				edit.focus();
 			});
 			formActions.append(save, remove);
-			form.append(typePicker, areaLabel, statusLabel, titleLabel, descriptionLabel, checklistEditor.element, formActions);
+			form.append(typePicker, areaPicker, priorityPicker, statusLabel, titleLabel, descriptionLabel, checklistEditor.element, formActions);
 			item.insertBefore(form, message);
 			titleInput.focus();
 
@@ -583,7 +845,8 @@ import './contribution-checklist.css';
 				cancel.disabled = true;
 				remove.disabled = true;
 				typePicker.disabled = true;
-				areaInput.disabled = true;
+				areaPicker.disabled = true;
+				priorityPicker.disabled = true;
 				statusInput.disabled = true;
 				titleInput.disabled = true;
 				descriptionInput.disabled = true;
@@ -592,6 +855,7 @@ import './contribution-checklist.css';
 				try {
 					await changeContribution('DELETE', contribution);
 					item.remove();
+					entries.delete(item);
 					updateCount();
 					status.focus();
 				} catch (error) {
@@ -602,7 +866,8 @@ import './contribution-checklist.css';
 					cancel.disabled = false;
 					remove.disabled = false;
 					typePicker.disabled = false;
-					areaInput.disabled = false;
+					areaPicker.disabled = false;
+					priorityPicker.disabled = false;
 					statusInput.disabled = false;
 					titleInput.disabled = false;
 					descriptionInput.disabled = false;
@@ -617,9 +882,14 @@ import './contribution-checklist.css';
 					message.textContent = 'Bitte wähle einen gültigen Typ.';
 					return;
 				}
-				const selectedArea = areaInput.value;
+				const selectedArea = new FormData(form).get('area');
 				if (!isContributionArea(selectedArea)) {
 					message.textContent = 'Bitte wähle einen gültigen Bereich.';
+					return;
+				}
+				const selectedPriority = new FormData(form).get('priority');
+				if (!isContributionPriority(selectedPriority)) {
+					message.textContent = 'Bitte wähle eine gültige Priorität.';
 					return;
 				}
 				const selectedStatus = statusInput.value;
@@ -629,7 +899,7 @@ import './contribution-checklist.css';
 				}
 				const checklist = checklistEditor.items();
 				if (!checklist) return;
-				const fields = { type: selectedType, area: selectedArea, status: selectedStatus, title: titleInput.value.trim(), description: descriptionInput.value.trim(), checklist };
+				const fields = { type: selectedType, area: selectedArea, priority: selectedPriority, status: selectedStatus, title: titleInput.value.trim(), description: descriptionInput.value.trim(), checklist };
 				if (!fields.title) {
 					message.textContent = 'Bitte gib einen Titel ein.';
 					return;
@@ -638,7 +908,8 @@ import './contribution-checklist.css';
 				cancel.disabled = true;
 				remove.disabled = true;
 				typePicker.disabled = true;
-				areaInput.disabled = true;
+				areaPicker.disabled = true;
+				priorityPicker.disabled = true;
 				statusInput.disabled = true;
 				titleInput.disabled = true;
 				descriptionInput.disabled = true;
@@ -647,12 +918,15 @@ import './contribution-checklist.css';
 				try {
 					await changeContribution('PATCH', contribution, fields);
 					contribution = { ...contribution, ...fields };
+					entries.set(item, contribution);
 					render();
 					form.remove();
 					cancel.remove();
 					edit.hidden = false;
 					message.textContent = 'Beitrag wurde aktualisiert.';
-					edit.focus();
+					updateCount();
+					if (item.hidden) status.focus();
+					else edit.focus();
 				} catch (error) {
 					console.error('Fehler beim Bearbeiten des Beitrags:', error);
 					message.textContent = error instanceof Error ? error.message : 'Der Beitrag konnte nicht geändert werden.';
@@ -661,7 +935,8 @@ import './contribution-checklist.css';
 					cancel.disabled = false;
 					remove.disabled = false;
 					typePicker.disabled = false;
-					areaInput.disabled = false;
+					areaPicker.disabled = false;
+					priorityPicker.disabled = false;
 					statusInput.disabled = false;
 					titleInput.disabled = false;
 					descriptionInput.disabled = false;
@@ -675,6 +950,7 @@ import './contribution-checklist.css';
 		item.append(header, title, description, message, footer);
 		if (prepend) list.prepend(item);
 		else list.append(item);
+		entries.set(item, contribution);
 	}
 
 	async function loadContributions() {

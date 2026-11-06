@@ -1,4 +1,4 @@
-export const contributionAreas = ['Theorie', 'Praxis'] as const;
+export const contributionAreas = ['Theorie', 'Praxis', 'Komponente'] as const;
 export type ContributionArea = (typeof contributionAreas)[number];
 
 export function isContributionArea(value: unknown): value is ContributionArea {

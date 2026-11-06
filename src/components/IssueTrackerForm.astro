@@ -1,14 +1,7 @@
 <form id="issue-tracker-form" class="issue-tracker-form">
 	<div id="contribution-type-field"></div>
-
-	<div class="field">
-		<label for="contribution-area">Bereich</label>
-		<select id="contribution-area" name="area" required>
-			<option value="">Bitte auswählen</option>
-			<option value="Theorie">Theorie</option>
-			<option value="Praxis">Praxis</option>
-		</select>
-	</div>
+	<div id="contribution-area-field"></div>
+	<div id="contribution-priority-field"></div>
 
 	<div class="field">
 		<label for="contribution-title">Titel</label>
@@ -103,8 +96,9 @@
 </style>
 
 <script>
-	import { createTypePicker, isContributionType } from '../lib/contribution-types';
-	import { isContributionArea } from '../lib/contribution-area';
+	import { createTypePicker, createTagPicker, createPlainTag, isContributionType } from '../lib/contribution-types';
+	import { contributionAreas, isContributionArea } from '../lib/contribution-area';
+	import { contributionPriorities, defaultContributionPriority, isContributionPriority } from '../lib/contribution-priority';
 	import { createChecklistEditor } from '../lib/checklist-editor';
 
 	const form = document.querySelector<HTMLFormElement>('#issue-tracker-form');
@@ -116,14 +110,20 @@
 	const submitButton = form.querySelector<HTMLButtonElement>('button[type="submit"]');
 	const status = form.querySelector<HTMLParagraphElement>('.form-status');
 	const typeContainer = form.querySelector<HTMLDivElement>('#contribution-type-field');
+	const areaContainer = form.querySelector<HTMLDivElement>('#contribution-area-field');
+	const priorityContainer = form.querySelector<HTMLDivElement>('#contribution-priority-field');
 	const checklistContainer = form.querySelector<HTMLDivElement>('#contribution-checklist-field');
 
-	if (!(submitButton instanceof HTMLButtonElement) || !(status instanceof HTMLParagraphElement) || !(typeContainer instanceof HTMLDivElement) || !(checklistContainer instanceof HTMLDivElement)) {
+	if (!(submitButton instanceof HTMLButtonElement) || !(status instanceof HTMLParagraphElement) || !(typeContainer instanceof HTMLDivElement) || !(areaContainer instanceof HTMLDivElement) || !(priorityContainer instanceof HTMLDivElement) || !(checklistContainer instanceof HTMLDivElement)) {
 		throw new Error('Die Rückmeldung des Projektierungsformulars wurde nicht gefunden.');
 	}
 
 	const typePicker = createTypePicker('Bug');
 	typeContainer.append(typePicker);
+	const areaPicker = createTagPicker('area', 'Bereich', contributionAreas, undefined, (area) => createPlainTag(area, 'area'));
+	const priorityPicker = createTagPicker('priority', 'Priorität', contributionPriorities, defaultContributionPriority, (priority) => createPlainTag(priority, 'priority'));
+	areaContainer.append(areaPicker);
+	priorityContainer.append(priorityPicker);
 	const checklistEditor = createChecklistEditor();
 	checklistContainer.append(checklistEditor.element);
 	form.addEventListener('reset', () => checklistEditor.clear());
@@ -133,12 +133,14 @@
 
 		const typeField = form.elements.namedItem('type');
 		const areaField = form.elements.namedItem('area');
+		const priorityField = form.elements.namedItem('priority');
 		const titleField = form.elements.namedItem('title');
 		const descriptionField = form.elements.namedItem('description');
 
 		if (
 			!(typeField instanceof RadioNodeList) ||
-			!(areaField instanceof HTMLSelectElement) ||
+			!(areaField instanceof RadioNodeList) ||
+			!(priorityField instanceof RadioNodeList) ||
 			!(titleField instanceof HTMLInputElement) ||
 			!(descriptionField instanceof HTMLTextAreaElement)
 		) {
@@ -157,6 +159,12 @@
 			return;
 		}
 
+		const priority = priorityField.value;
+		if (!isContributionPriority(priority)) {
+			status.textContent = 'Bitte wähle eine gültige Priorität.';
+			return;
+		}
+
 		const title = titleField.value.trim();
 		if (!title) {
 			titleField.setCustomValidity('Bitte gib einen Titel ein.');
@@ -172,7 +180,8 @@
 		status.textContent = 'Beitrag wird gespeichert …';
 		submitButton.disabled = true;
 		typePicker.disabled = true;
-		areaField.disabled = true;
+		areaPicker.disabled = true;
+		priorityPicker.disabled = true;
 		titleField.disabled = true;
 		descriptionField.disabled = true;
 		checklistEditor.element.disabled = true;
@@ -182,7 +191,7 @@
 			const response = await fetch('/api/contributions', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ type, area, title, description, checklist }),
+				body: JSON.stringify({ type, area, priority, title, description, checklist }),
 			});
 
 			const result: unknown = await response.json();
@@ -208,7 +217,8 @@
 		} finally {
 			submitButton.disabled = false;
 			typePicker.disabled = false;
-			areaField.disabled = false;
+			areaPicker.disabled = false;
+			priorityPicker.disabled = false;
 			titleField.disabled = false;
 			descriptionField.disabled = false;
 			checklistEditor.element.disabled = false;

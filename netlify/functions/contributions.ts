@@ -2,6 +2,7 @@ import type { Config } from '@netlify/functions';
 import { defaultContributionStatus, isContributionStatus } from '../../src/lib/contribution-status';
 import { isContributionArea } from '../../src/lib/contribution-area';
 import { isChecklist } from '../../src/lib/contribution-checklist';
+import { defaultContributionPriority, isContributionPriority } from '../../src/lib/contribution-priority';
 import {
 	ContributionConflictError,
 	ContributionNotFoundError,
@@ -25,16 +26,17 @@ function isContributionType(value: unknown): value is Contribution['type'] {
 
 function contributionFields(value: unknown): ContributionFields | null {
 	if (!isRecord(value)) return null;
-	const { type, title, description, status, area, checklist } = value;
+	const { type, title, description, status, area, priority, checklist } = value;
 	if (
 		!isContributionType(type) ||
 		typeof title !== 'string' || !title.trim() || title.trim().length > 120 ||
 		(description !== undefined && (typeof description !== 'string' || description.trim().length > 10_000)) ||
 		(status !== undefined && !isContributionStatus(status)) ||
 		(area !== undefined && !isContributionArea(area)) ||
+		(priority !== undefined && !isContributionPriority(priority)) ||
 		(checklist !== undefined && !isChecklist(checklist))
 	) return null;
-	return { type, title: title.trim(), description: description?.trim() ?? '', ...(status === undefined ? {} : { status }), ...(area === undefined ? {} : { area }), ...(checklist === undefined ? {} : { checklist: checklist.map((item) => ({ text: item.text.trim(), checked: item.checked })) }) };
+	return { type, title: title.trim(), description: description?.trim() ?? '', ...(status === undefined ? {} : { status }), ...(area === undefined ? {} : { area }), ...(priority === undefined ? {} : { priority }), ...(checklist === undefined ? {} : { checklist: checklist.map((item) => ({ text: item.text.trim(), checked: item.checked })) }) };
 }
 
 function isContribution(value: unknown): value is Contribution {
@@ -46,6 +48,7 @@ function isContribution(value: unknown): value is Contribution {
 		typeof value.createdAt === 'string' && value.createdAt.length <= 100 &&
 		(value.status === undefined || isContributionStatus(value.status)) &&
 		(value.area === undefined || isContributionArea(value.area)) &&
+		(value.priority === undefined || isContributionPriority(value.priority)) &&
 		(value.checklist === undefined || isChecklist(value.checklist));
 }
 
@@ -100,7 +103,7 @@ export default async (request: Request): Promise<Response> => {
 		}
 		const fields = request.method === 'PATCH' ? contributionFields(body.fields) : null;
 		if (request.method === 'PATCH' && !fields) {
-			return jsonResponse(400, { error: 'Bitte überprüfe Typ, Bereich, Titel, Beschreibung und Checkliste.' });
+			return jsonResponse(400, { error: 'Bitte überprüfe Typ, Bereich, Priorität, Titel, Beschreibung und Checkliste.' });
 		}
 		try {
 			await modifyContribution(body.expected, fields);
@@ -119,10 +122,10 @@ export default async (request: Request): Promise<Response> => {
 
 	const fields = contributionFields(body);
 	if (!fields || !fields.area) {
-		return jsonResponse(400, { error: 'Bitte überprüfe Typ, Bereich, Titel, Beschreibung und Checkliste.' });
+		return jsonResponse(400, { error: 'Bitte überprüfe Typ, Bereich, Priorität, Titel, Beschreibung und Checkliste.' });
 	}
 
-	const contribution: Contribution = { id: crypto.randomUUID(), ...fields, status: fields.status ?? defaultContributionStatus, createdAt: new Date().toISOString() };
+	const contribution: Contribution = { id: crypto.randomUUID(), ...fields, priority: fields.priority ?? defaultContributionPriority, status: fields.status ?? defaultContributionStatus, createdAt: new Date().toISOString() };
 
 	try {
 		await saveContribution(contribution);

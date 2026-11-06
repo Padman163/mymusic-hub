@@ -31,6 +31,15 @@
 :root[data-theme='dark'] .contribution-tag[data-tag='Feature'] { color: #93c5fd; }
 :root[data-theme='dark'] .contribution-tag[data-tag='Decision'] { color: #86efac; }
 
+.contribution-tag[data-area] { color: var(--sl-color-text); }
+.contribution-tag[data-priority='Hoch'] { color: #b91c1c; }
+.contribution-tag[data-priority='Mittel'] { color: #a16207; }
+.contribution-tag[data-priority='Niedrig'] { color: #15803d; }
+
+:root[data-theme='dark'] .contribution-tag[data-priority='Hoch'] { color: #fca5a5; }
+:root[data-theme='dark'] .contribution-tag[data-priority='Mittel'] { color: #fde047; }
+:root[data-theme='dark'] .contribution-tag[data-priority='Niedrig'] { color: #86efac; }
+
 .contribution-type-picker {
 	min-width: 0;
 	margin: 0;
@@ -69,7 +78,8 @@
 	overflow: hidden;
 }
 
-:root .contribution-type-choices input[type='radio']:not(:checked) + .contribution-tag {
+:root .contribution-type-choices input[type='radio']:not(:checked) + .contribution-tag,
+:root[data-theme='dark'] .contribution-type-choices input[type='radio']:not(:checked) + .contribution-tag {
 	color: var(--sl-color-gray-3);
 }
 
