@@ -284,5 +284,20 @@
     ],
     "status": "New",
     "createdAt": "2026-11-06T16:16:38.793Z"
+  },
+  {
+    "id": "e482025a-dadc-41ca-994c-1d21f2fe8c2b",
+    "type": "Feature",
+    "title": "Dur-Tonleitern & Dreiklangs-Markierung",
+    "description": "Aufbau von Dur-Tonleitern (G-G-H-G-G-G-H) und Markierung der Stufen I, III und V als Dreiklang.",
+    "area": "Theorie",
+    "checklist": [
+      {
+        "text": "Formel-Trainer für C, G, D, A, F, B, Es umsetzen",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-06T16:16:56.882Z"
   }
 ]
