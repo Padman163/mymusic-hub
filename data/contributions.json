@@ -25,5 +25,14 @@
     "area": "Theorie",
     "status": "New",
     "createdAt": "2026-11-06T15:42:46.577Z"
+  },
+  {
+    "id": "2170c2d4-1656-4722-89a8-0eae01b2cf50",
+    "type": "Feature",
+    "title": "Schritt 6: Full Score",
+    "description": "- Einzelne Teile darstellen\n- Gesamtpartitur ( Pattern-Style, Notation, TAB )",
+    "area": "Theorie",
+    "status": "New",
+    "createdAt": "2026-11-06T15:43:33.831Z"
   }
 ]
