@@ -2,20 +2,48 @@
   {
     "id": "9844e193-4801-461c-9035-00ca5a9b8bd8",
     "type": "Feature",
-    "title": "Cheat Sheets entwickeln",
-    "description": "- Akkorde\n- Notation",
+    "title": "Meta-Daten für Beiträge",
+    "description": "",
     "area": "Theorie",
     "status": "New",
-    "createdAt": "2026-11-06T15:39:57.219Z"
+    "createdAt": "2026-11-06T15:39:57.219Z",
+    "checklist": [
+      {
+        "text": "D1/D2/D3 ( unsichtbar )",
+        "checked": false
+      },
+      {
+        "text": "Instrumentbezogen ( unsichtbar )",
+        "checked": false
+      }
+    ]
   },
   {
     "id": "7c13fc92-5341-48c1-8c31-05d86b155c64",
     "type": "Feature",
-    "title": "Kapitel mit Tags versehen",
-    "description": "- D1/D2/D3 ( unsichtbar )\n- Instrumentbezogen ( unsichtbar )\n- Download- Bereich mit Cheat Sheets\n- Interaktive Cheat Sheets\n- Quick Tips\n- Visualisierungen",
+    "title": "Cheat Sheets",
+    "description": "- Download- Bereich mit Cheat Sheets\n- Interaktive Cheat Sheets\n- Quick Tips\n- Visualisierungen",
     "area": "Theorie",
     "status": "New",
-    "createdAt": "2026-11-06T15:41:04.017Z"
+    "createdAt": "2026-11-06T15:41:04.017Z",
+    "checklist": [
+      {
+        "text": "Visualisierungen",
+        "checked": false
+      },
+      {
+        "text": "Quick Tips",
+        "checked": false
+      },
+      {
+        "text": "Interaktive Cheat Sheets",
+        "checked": false
+      },
+      {
+        "text": "Download- Bereich mit Cheat Sheets",
+        "checked": false
+      }
+    ]
   },
   {
     "id": "2de014c0-93f2-4bcd-a221-df3a8c59bc3e",
@@ -34,5 +62,273 @@
     "area": "Theorie",
     "status": "New",
     "createdAt": "2026-11-06T15:43:33.831Z"
+  },
+  {
+    "id": "efca5807-bde1-453b-a543-83e7bc169145",
+    "type": "Feature",
+    "title": "Interaktives Gitarren-Tuning & Frequenz-Check",
+    "description": "",
+    "area": "Praxis",
+    "status": "New",
+    "createdAt": "2026-11-06T15:48:41.006Z",
+    "checklist": [
+      {
+        "text": "Stimmen der Gitarre per Web-Audio-API",
+        "checked": false
+      },
+      {
+        "text": "Stimmgerät-Referenz: E2 = 82,4Hz, E4 = 329,6 Hz",
+        "checked": false
+      },
+      {
+        "text": "Stimmregel: Immer von unten nach oben stimmen",
+        "checked": false
+      }
+    ]
+  },
+  {
+    "id": "85f9a0ba-9d5f-4756-893d-8d01f38b55e1",
+    "type": "Feature",
+    "title": "Unisono-Prüfung (5. Bund) & Intonations-Check (12. Bund)",
+    "description": "- Relativstimmung über den 5. Bund (Ausnahme G-Saite 4. Bund → B-Saite) mit Hörtraining auf Schwebungen\n- Oktavreinheits-Check am 12. Bund: Vergleich zwischen Natural Harmonic (Flageolett) und gegriffenem Ton im 12. Bund",
+    "area": "Praxis",
+    "status": "New",
+    "createdAt": "2026-11-06T15:49:45.541Z",
+    "checklist": [
+      {
+        "text": "Relativstimmung über den 5. Bund (Ausnahme G-Saite 4. Bund → B-Saite) mit Hörtraining auf Schwebungen",
+        "checked": false
+      },
+      {
+        "text": "Oktavreinheits-Check am 12. Bund: Vergleich zwischen Natural Harmonic (Flageolett) und gegriffenem Ton im 12. Bund",
+        "checked": false
+      }
+    ]
+  },
+  {
+    "id": "c90558c0-5024-4300-ba9c-4ccead06691d",
+    "type": "Feature",
+    "title": "Druck-Release-Test & Greifpunkt-Disziplin",
+    "description": "Übung zur minimalen Haltekraft (Fret Buzz bis Dead Note zu klarem Ton) und korrekten Fingerplatzierung.",
+    "area": "Praxis",
+    "checklist": [
+      {
+        "text": "Positions-Anleitung (1 mm hinter Bundstäbchen) formulieren",
+        "checked": false
+      },
+      {
+        "text": "Erklärung zu ungewolltem Mikro-Bending durch zu viel Druck ergänzen",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-06T16:10:35.823Z"
+  },
+  {
+    "id": "7c675512-0704-43ee-a0ef-e1baf5ed00c7",
+    "type": "Feature",
+    "title": "Plektrum- & Fingerstyle-Mechanik (P-I-M-A)",
+    "description": "Handgelenk-Wechselschlag für das Plektrum und Standardhaltung der Zupfhand für Bass- und Diskantsaiten.",
+    "area": "Praxis",
+    "checklist": [
+      {
+        "text": "Wechselschlag-Übung definieren",
+        "checked": false
+      },
+      {
+        "text": "P-I-M-A-Zuordnung (Daumen bis Ringfinger) visualisieren",
+        "checked": false
+      },
+      {
+        "text": "Hinweis auf Wichtigkeit für spätere Arpeggien einbauen",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-06T16:13:20.422Z"
+  },
+  {
+    "id": "082e6184-fc82-4301-a556-f0e32f550cc6",
+    "type": "Feature",
+    "title": "2-Wege-Dämpfung",
+    "description": "Saiten abdämpfen mit der Picking-Hand (Palm Mute) und der Greifhand (flacher Zeigefinger).",
+    "area": "Praxis",
+    "checklist": [
+      {
+        "text": "Palm Mute an der Bridge illustrieren/beschreiben",
+        "checked": false
+      },
+      {
+        "text": "Greifhand-Dämpftechnik für Nachbarsaiten erklären",
+        "checked": false
+      },
+      {
+        "text": "Info zur Notwendigkeit für spätere High-Gain-Sounds ergänzen",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-06T16:13:49.945Z"
+  },
+  {
+    "id": "ba3eebb1-29b5-4205-b44f-a99e26c87da3",
+    "type": "Feature",
+    "title": "Artikulationen & Dynamik am Metronom",
+    "description": "Steuerung von Artikulation (Legato, Staccato, Tenuto, Akzente) und Dynamik (pp bis ff) bei 65 BPM.",
+    "area": "Praxis",
+    "checklist": [
+      {
+        "text": "4-Takt-Übung mit Crescendo/Decrescendo entwerfen",
+        "checked": false
+      },
+      {
+        "text": "Artikulationszeichen definieren",
+        "checked": false
+      },
+      {
+        "text": "Hinweis ergänzen: Zwingend mit trockenem Clean-Preset ohne Kompressor spielen",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-06T16:14:28.840Z"
+  },
+  {
+    "id": "c408af61-28ee-4d05-a443-17b5421188d9",
+    "type": "Feature",
+    "title": "MIDI-Backing-Track-Baukasten & DAW-Looping",
+    "description": "Erstellung eigener MIDI-Backing-Tracks (Kick, Snare, Hi-Hat, Grundton) oder Nutzung des Web-Players.",
+    "area": "Praxis",
+    "checklist": [
+      {
+        "text": "Bauanleitung für Basis-Groove in Studio One schreiben",
+        "checked": false
+      },
+      {
+        "text": "Exportierbare .mid-Snippets pro Lektion bereitstellen",
+        "checked": false
+      },
+      {
+        "text": "Datenbank-Tracks in den Web-Player einbinden",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-06T16:15:02.139Z"
+  },
+  {
+    "id": "4888e2be-1f23-40dc-b5d0-f1594a1649f7",
+    "type": "Feature",
+    "title": "Rhythmus-Workout",
+    "description": "Metronom-Training für Notenwerte, Punktierungen, Triolen und Offbeat-Synkopen.",
+    "area": "Praxis",
+    "checklist": [
+      {
+        "text": "Übungsreihe für Ganze bis 16tel Noten anlegen",
+        "checked": false
+      },
+      {
+        "text": "Strikte Anschlagsregel (Downstroke auf Zählzeit, Upstroke auf '+') definieren",
+        "checked": false
+      },
+      {
+        "text": "Spezifische Übungen für Achteltriolen und Synkopen einbauen",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-06T16:15:26.904Z"
+  },
+  {
+    "id": "386f5ff7-12d0-46df-af26-00d0238fe761",
+    "type": "Feature",
+    "title": "Taktarten-Trainer & Formteil-Parcours",
+    "description": "Spielpraxis für wechselnde Taktarten (4/4, 3/4, 2/4, 2/2, 6/8) und das Umsetzen von Ablaufzeichen.",
+    "area": "Praxis",
+    "checklist": [
+      {
+        "text": "Übungsstück mit Auftakt und Wiederholungsklammern (1/2) schreiben",
+        "checked": false
+      },
+      {
+        "text": "D.C. al Fine, Ritardando und Fermate ($\\fermata$) in den Parcours integrieren",
+        "checked": false
+      },
+      {
+        "text": "Didaktik-Hinweis zum echten Vom-Blatt-Ablauf ergänzen",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-06T16:15:58.577Z"
+  },
+  {
+    "id": "09c3b1bf-31b0-424b-99fe-b5ce2151dfe2",
+    "type": "Feature",
+    "title": "Interaktive Notations-Komponente",
+    "description": "Eintragen von Noten in 3 Schwierigkeitsstufen (Gitarren-TAB, Violinschlüssel, Bassschlüssel).",
+    "area": "Theorie",
+    "checklist": [
+      {
+        "text": "Komponente <InteractiveScoreTrainer/> anlegen",
+        "checked": false
+      },
+      {
+        "text": "AlphaTab / SVG-Canvas zur Eingabevalidierung einbinden",
+        "checked": false
+      },
+      {
+        "text": "Level-Auswahl (Stufe 1 bis 3) programmieren",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-06T16:16:38.793Z"
+  },
+  {
+    "id": "e482025a-dadc-41ca-994c-1d21f2fe8c2b",
+    "type": "Feature",
+    "title": "Dur-Tonleitern & Dreiklangs-Markierung",
+    "description": "Aufbau von Dur-Tonleitern (G-G-H-G-G-G-H) und Markierung der Stufen I, III und V als Dreiklang.",
+    "area": "Theorie",
+    "checklist": [
+      {
+        "text": "Formel-Trainer für C, G, D, A, F, B, Es umsetzen",
+        "checked": false
+      },
+      {
+        "text": "Interaktive Dreiklangs-Markierung (I, III, V) in die Komponente einbauen",
+        "checked": false
+      },
+      {
+        "text": "Transfer-Aufgabe zum Nachspielen auf dem Griffbrett definieren",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-06T16:16:56.882Z"
+  },
+  {
+    "id": "559c96d8-658c-4f41-83be-f722f71a9ed6",
+    "type": "Feature",
+    "title": "Tempo-, Dynamik- & Artikulations-Praxis",
+    "description": "Live-Einspielen von Tempo- und Dynamiksprüngen (subito) sowie Einbau von Artikulationszeichen ins Notenbild.",
+    "area": "Praxis",
+    "checklist": [
+      {
+        "text": "Artikulations-Werkzeugkasten in der Notationskomponente freischalten",
+        "checked": false
+      },
+      {
+        "text": "DAW-Automationskurven für Tempo-Tracks als Vorlage bereitstellen",
+        "checked": false
+      },
+      {
+        "text": "Backing-Track mit programmiertem Accelerando/Ritardando anfertigen",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-06T16:17:39.475Z"
   }
 ]
