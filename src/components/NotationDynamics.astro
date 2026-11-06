@@ -1,55 +1,57 @@
 ﻿---
 import NotationClickable from './NotationClickable.astro';
+import '../styles/notation.css';
+
+interface Props {
+  type?: 'both' | 'crescendo' | 'decrescendo';
+  embedded?: boolean;
+  showStaff?: boolean;
+}
+
+const { type = 'both', embedded = false, showStaff = true } = Astro.props;
+const examples = type === 'both' ? ['crescendo', 'decrescendo'] as const : [type] as const;
 ---
 
-<div class="dynamics-example not-content" data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
-  <div class="dynamics-row" role="img" aria-label="Crescendo von piano zu forte">
-    <NotationClickable
-      embedded
-      clef="treble"
-      notes={[
-        { duration: 'quarter', step: 5 },
-        { duration: 'quarter', step: 4 },
-        { duration: 'quarter', step: 3 },
-        { duration: 'quarter', step: 4 }
-      ]}
-    />
-    <span class="dynamic-word">cresc.</span>
-    <span class="dynamic-mark dynamic-start">{'\uE520'}</span>
-    <span class="dynamic-mark dynamic-end">{'\uE522'}</span>
-    <svg class="hairpin" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true">
-      <line x1="0" y1="6" x2="100" y2="0" />
-      <line x1="0" y1="6" x2="100" y2="12" />
-    </svg>
-  </div>
-  <div class="dynamics-row" role="img" aria-label="Decrescendo von forte zu piano">
-    <NotationClickable
-      embedded
-      notes={[
-        { duration: 'quarter', step: 5 },
-        { duration: 'quarter', step: 4 },
-        { duration: 'quarter', step: 3 },
-        { duration: 'quarter', step: 4 }
-      ]}
-    />
-    <span class="dynamic-word">decresc.</span>
-    <span class="dynamic-mark dynamic-start">{'\uE522'}</span>
-    <span class="dynamic-mark dynamic-end">{'\uE520'}</span>
-    <svg class="hairpin" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true">
-      <line x1="0" y1="0" x2="100" y2="6" />
-      <line x1="0" y1="12" x2="100" y2="6" />
-    </svg>
-  </div>
+<div class:list={['dynamics-example', 'not-content', { embedded }]} data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
+  {examples.map((example) => (
+    <div class="dynamics-row" role="img" aria-label={example === 'crescendo' ? 'Crescendo von piano zu forte' : 'Decrescendo von forte zu piano'}>
+      {showStaff && (
+        <NotationClickable
+          embedded
+          clef={example === 'crescendo' ? 'treble' : undefined}
+          notes={[
+            { duration: 'quarter', step: 5 },
+            { duration: 'quarter', step: 4 },
+            { duration: 'quarter', step: 3 },
+            { duration: 'quarter', step: 4 }
+          ]}
+        />
+      )}
+      <span class="dynamic-word">{example === 'crescendo' ? 'cresc.' : 'decresc.'}</span>
+      <span class="dynamic-mark dynamic-start">{example === 'crescendo' ? '\uE520' : '\uE522'}</span>
+      <span class="dynamic-mark dynamic-end">{example === 'crescendo' ? '\uE522' : '\uE520'}</span>
+      <svg class="hairpin" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true">
+        {example === 'crescendo' ? (
+          <>
+            <line x1="0" y1="6" x2="100" y2="0" />
+            <line x1="0" y1="6" x2="100" y2="12" />
+          </>
+        ) : (
+          <>
+            <line x1="0" y1="0" x2="100" y2="6" />
+            <line x1="0" y1="12" x2="100" y2="6" />
+          </>
+        )}
+      </svg>
+    </div>
+  ))}
 </div>
 
 <style>
-  @font-face {
-    font-family: 'NotationDynamicsBravura';
-    src: url('/alphatab/font/Bravura.woff2') format('woff2');
-  }
-
   .dynamics-example {
-    padding: 0.75rem 1rem;
+    display: grid;
+    gap: var(--notation-system-gap);
+    padding: var(--notation-panel-padding);
     border: 1px solid #d1d5db;
     border-radius: 0.5rem;
     background: #fff;
@@ -59,7 +61,9 @@ import NotationClickable from './NotationClickable.astro';
   .dynamics-row {
     position: relative;
     min-width: 0;
-    height: 146px;
+    height: 108px;
+    margin-bottom: calc(-1 * var(--notation-system-gap));
+    --dynamics-staff-bottom: 64px;
   }
 
   .dynamic-word,
@@ -70,14 +74,14 @@ import NotationClickable from './NotationClickable.astro';
   }
 
   .dynamic-word {
-    top: 120px;
+    top: calc(var(--dynamics-staff-bottom) + var(--notation-dynamics-label-gap));
     left: calc(20% - 6px);
     font: italic 12px/1 Georgia, serif;
   }
 
   .dynamic-mark {
-    top: 90px;
-    font: 30px/1 'NotationDynamicsBravura';
+    top: calc(var(--dynamics-staff-bottom) + var(--notation-dynamics-mark-gap));
+    font: 30px/1 'NotationBravura';
   }
 
   .dynamic-start {
@@ -90,11 +94,41 @@ import NotationClickable from './NotationClickable.astro';
 
   .hairpin {
     left: calc(20% - 6px);
-    top: 100px;
+    top: calc(var(--dynamics-staff-bottom) + var(--notation-dynamics-hairpin-gap));
     width: calc(60% + 12px);
     height: 10px;
     overflow: visible;
     stroke: currentColor;
     stroke-width: 1;
+  }
+
+  .dynamics-example.embedded {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .dynamics-example.embedded .dynamics-row {
+    height: 48px;
+    margin-bottom: 0;
+    --dynamics-staff-bottom: 0px;
+  }
+
+  .dynamics-example.embedded .dynamic-mark {
+    font-size: 24px;
+  }
+
+  .dynamics-example.embedded .dynamic-start {
+    right: calc(80% + 10px);
+  }
+
+  .dynamics-example.embedded .dynamic-end {
+    left: calc(80% + 10px);
+  }
+
+  .dynamics-example.embedded .dynamic-word {
+    left: calc(20% - 6px);
+    font-size: 10px;
   }
 </style>

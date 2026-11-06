@@ -33,7 +33,7 @@ const articulations = [
 
 <style>
   .articulation-examples {
-    padding: 0.75rem 1rem;
+    padding: var(--notation-panel-padding);
     border: 1px solid #d1d5db;
     border-radius: 0.5rem;
     background: #fff;
@@ -44,6 +44,7 @@ const articulations = [
   .articulation-labels {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
+    row-gap: var(--notation-system-gap);
   }
 
   .articulation-measure {

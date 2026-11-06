@@ -1,0 +1,12 @@
+@font-face {
+  font-family: 'NotationBravura';
+  src: url('/alphatab/font/Bravura.woff2') format('woff2');
+}
+
+:root {
+  --notation-system-gap: 1rem;
+  --notation-panel-padding: 1.5rem;
+  --notation-dynamics-mark-gap: 8px;
+  --notation-dynamics-hairpin-gap: 18px;
+  --notation-dynamics-label-gap: 32px;
+}

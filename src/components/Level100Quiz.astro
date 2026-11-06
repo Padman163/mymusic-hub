@@ -2,6 +2,7 @@
 import FretboardClickable from './FretboardClickable.astro';
 import DrumPattern from './DrumPattern.astro';
 import SheetMusicPlayer from './SheetMusicPlayer.astro';
+import '../styles/notation.css';
 
 interface Question {
   id: string;
@@ -641,10 +642,30 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
     color: var(--sl-color-text);
   }
 
-  .level-100-quiz :global(.notation-diagram svg) {
+  .level-100-quiz :global(.notation-diagram > svg.notation-staff) {
     width: 100%;
-    height: auto;
+    height: 92px;
     max-height: 7rem;
+  }
+
+  .level-100-quiz :global(.notation-staff) {
+    display: block;
+    overflow: visible;
+    color: currentColor;
+    stroke: currentColor;
+    stroke-width: 1;
+  }
+
+  .level-100-quiz :global(.notation-staff text) {
+    font-family: 'NotationBravura';
+    font-size: 36px;
+    fill: currentColor;
+    stroke: none;
+  }
+
+  .level-100-quiz :global(.notation-curve) {
+    fill: currentColor;
+    stroke: none;
   }
 
   .quiz-actions {
@@ -739,6 +760,8 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
 </style>
 
 <script>
+  import { renderNotationSvg } from '../lib/notation-renderer';
+
   type QuizQuestion = { id: string; prompt: string; options: string[]; answer: string };
   type FretboardQuestion = QuizQuestion & { stringIndex: number; fret: number };
   type Diagram =
@@ -765,8 +788,6 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
   };
   type Difficulty = '1' | '2';
 
-  const svgNamespace = 'http://www.w3.org/2000/svg';
-
   function shuffle<T>(items: T[]): T[] {
     for (let index = items.length - 1; index > 0; index -= 1) {
       const swapIndex = Math.floor(Math.random() * (index + 1));
@@ -775,91 +796,40 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
     return items;
   }
 
-  function createSvgElement(tag: string, attributes: Record<string, string>): SVGElement {
-    const element = document.createElementNS(svgNamespace, tag);
-    Object.entries(attributes).forEach(([name, value]) => element.setAttribute(name, value));
-    return element;
-  }
-
   function renderNotationDiagram(diagram: NotationDiagram, index: number): HTMLElement {
     const figure = document.createElement('figure');
     figure.className = 'notation-diagram';
-    const svg = createSvgElement('svg', {
-      viewBox: '0 0 240 110',
-      role: 'img',
-      'aria-label': `Schaubild ${index + 1} zur Notationsfrage`
-    });
-
-    const addLine = (x1: number, y1: number, x2: number, y2: number, width = 1) => {
-      svg.append(createSvgElement('line', {
-        x1: String(x1), y1: String(y1), x2: String(x2), y2: String(y2),
-        stroke: 'currentColor', 'stroke-width': String(width)
-      }));
-    };
-
-    if (diagram.type === 'staff-note' || diagram.type === 'note-value') {
-      [24, 39, 54, 69, 84].forEach((y) => addLine(35, y, 205, y));
-    }
-
+    const options = { label: `Schaubild ${index + 1} zur Notationsfrage` };
     if (diagram.type === 'staff-note') {
-      const y = 84 - diagram.step * 7.5;
-      if (diagram.step < 0 || diagram.step > 8) addLine(132, y, 162, y);
-      svg.append(createSvgElement('ellipse', {
-        cx: '150', cy: String(y), rx: '9', ry: '6', fill: 'currentColor',
-        transform: `rotate(-20 150 ${y})`
-      }));
-      addLine(158, y, 158, y - 42, 2.5);
-    } else if (diagram.type === 'note-value') {
-      const isUnfilled = diagram.value === 'whole' || diagram.value === 'half';
-      const notePositions = diagram.dotted ||
-        diagram.value === 'whole' || diagram.value === 'half' ? [120] : [88, 150];
-      notePositions.forEach((x) => {
-        svg.append(createSvgElement('ellipse', {
-          cx: String(x), cy: '68', rx: '10', ry: '6',
-          fill: isUnfilled ? 'none' : 'currentColor',
-          stroke: 'currentColor',
-          'stroke-width': isUnfilled ? '2.5' : '1',
-          transform: `rotate(-20 ${x} 68)`
-        }));
-        if (diagram.value !== 'whole') addLine(x + 9, 67, x + 9, 25, 2.5);
-        if (diagram.value === 'eighth' || diagram.value === 'sixteenth') {
-          const beamCount = diagram.value === 'eighth' ? 1 : 2;
-          for (let beam = 0; beam < beamCount; beam += 1) {
-            addLine(x + 9, 27 + beam * 9, x + 71, 42 + beam * 9, 4);
-          }
-        }
+      figure.innerHTML = renderNotationSvg({
+        ...options,
+        clef: 'treble',
+        notes: [{ type: 'filled', step: diagram.step, stem: true }]
       });
-      if (diagram.dotted) {
-        svg.append(createSvgElement('circle', {
-          cx: diagram.value === 'whole' || diagram.value === 'half' ? '138' : '106',
-          cy: '62', r: '2.5', fill: 'currentColor'
-        }));
-      }
+    } else if (diagram.type === 'note-value') {
+      figure.innerHTML = renderNotationSvg({
+        ...options,
+        clef: 'treble',
+        notes: [{
+          duration: diagram.value,
+          step: 4,
+          dotted: diagram.dotted
+        }]
+      });
     } else if (diagram.type === 'time-signature') {
-      const top = document.createElementNS(svgNamespace, 'text');
-      top.textContent = String(diagram.numerator);
-      top.setAttribute('x', '120');
-      top.setAttribute('y', '54');
-      top.setAttribute('text-anchor', 'middle');
-      top.setAttribute('font-size', '42');
-      top.setAttribute('font-weight', '700');
-      top.setAttribute('fill', 'currentColor');
-      const bottom = top.cloneNode(true) as SVGTextElement;
-      bottom.textContent = String(diagram.denominator);
-      bottom.setAttribute('y', '94');
-      svg.append(top, bottom);
+      figure.innerHTML = renderNotationSvg({
+        ...options,
+        clef: 'treble',
+        timeSignature: { numerator: diagram.numerator, denominator: diagram.denominator }
+      });
     } else if (diagram.type === 'repeat') {
-      addLine(48, 20, 48, 90, 2);
-      addLine(55, 20, 55, 90, 5);
-      addLine(188, 20, 188, 90, 5);
-      addLine(195, 20, 195, 90, 2);
-      [48, 63].forEach((y) => {
-        svg.append(createSvgElement('circle', { cx: '72', cy: String(y), r: '3.5', fill: 'currentColor' }));
-        svg.append(createSvgElement('circle', { cx: '171', cy: String(y), r: '3.5', fill: 'currentColor' }));
+      figure.innerHTML = renderNotationSvg({
+        ...options,
+        clef: 'treble',
+        repeatStart: true,
+        repeatEnd: true
       });
     }
-
-    figure.append(svg);
     return figure;
   }
 

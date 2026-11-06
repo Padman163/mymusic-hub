@@ -1,0 +1,197 @@
+---
+import NotationClickable from './NotationClickable.astro';
+import NotationDynamics from './NotationDynamics.astro';
+import type { NotationAccidental, NotationCurve, NotationNote } from '../lib/notation-renderer';
+interface Measure {
+  measureNumber?: string | number;
+  clef?: 'treble' | 'bass';
+  timeSignature?: { numerator: number; denominator: number };
+  accidentals?: NotationAccidental[];
+  notes: NotationNote[];
+  rightBarStyle: 'single' | 'final';
+  tempo?: string;
+  curves?: NotationCurve[];
+  repeatStart?: boolean;
+  repeatEnd?: boolean;
+  hairpin?: 'crescendo' | 'decrescendo';
+}
+
+const systems: Measure[][] = [
+  [
+    {
+      measureNumber: 'Auftakt',
+      clef: 'treble',
+      timeSignature: { numerator: 4, denominator: 4 },
+      tempo: 'Allegro · ♩ = 90',
+      notes: [{ duration: 'quarter', step: 2 }],
+      rightBarStyle: 'single'
+    },
+    {
+      measureNumber: 1,
+      notes: [
+        { duration: 'quarter', step: 4, articulation: 'staccato' },
+        { duration: 'quarter', step: 5, articulation: 'tenuto' },
+        { duration: 'quarter', step: 6 },
+        { duration: 'quarter', step: 4 }
+      ],
+      rightBarStyle: 'single'
+    },
+    {
+      measureNumber: 2,
+      notes: [
+        { duration: 'eighth', step: 2, beamGroup: 'eighths' },
+        { duration: 'eighth', step: 3, beamGroup: 'eighths' },
+        { duration: 'sixteenth', step: 4, beamGroup: 'sixteenths' },
+        { duration: 'sixteenth', step: 5, beamGroup: 'sixteenths' },
+        { duration: 'quarter', step: 6 },
+        { duration: 'quarter', step: 4 },
+        { duration: 'eighth', step: 3 }
+      ],
+      rightBarStyle: 'single'
+    },
+    {
+      measureNumber: 3,
+      curves: [{ from: 1, to: 2, type: 'tie', placement: 'below' }],
+      notes: [
+        { duration: 'half', step: 4 },
+        { duration: 'quarter', step: 2 },
+        { duration: 'quarter', step: 2 }
+      ],
+      rightBarStyle: 'single'
+    }
+  ],
+  [
+    {
+      measureNumber: 4,
+      clef: 'treble',
+      timeSignature: { numerator: 4, denominator: 4 },
+      hairpin: 'crescendo',
+      notes: [
+        { duration: 'quarter', step: 2 },
+        { duration: 'quarter', step: 4 },
+        { duration: 'quarter', step: 5 },
+        { duration: 'quarter', step: 7 }
+      ],
+      rightBarStyle: 'single'
+    },
+    {
+      measureNumber: 5,
+      repeatStart: true,
+      tempo: 'rit. · a tempo',
+      curves: [{ from: 1, to: 2, type: 'slur', placement: 'below' }],
+      notes: [
+        { duration: 'half', step: 6 },
+        { duration: 'quarter', step: 4, accidental: 'flat' },
+        { duration: 'quarter', step: 5 }
+      ],
+      rightBarStyle: 'single'
+    },
+    {
+      measureNumber: 6,
+      repeatEnd: true,
+      notes: [
+        { duration: 'quarter', step: 2, articulation: 'accent', articulationPosition: 'below' },
+        { duration: 'quarter', step: 6, articulation: 'marcato', articulationPosition: 'above' },
+        { duration: 'quarter', step: 5 },
+        { duration: 'quarter', step: 4 }
+      ],
+      rightBarStyle: 'single'
+    },
+    {
+      measureNumber: 7,
+      hairpin: 'decrescendo',
+      notes: [
+        { duration: 'half', step: 2 },
+        { duration: 'quarter', step: 3 }
+      ],
+      rightBarStyle: 'final'
+    }
+  ]
+] as const;
+---
+
+<div class="notation-overview not-content" data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
+  {systems.map((system) => (
+    <div class="overview-system">
+      {system.map((measure) => (
+        <div class="overview-measure">
+          <div class="measure-staff">
+            <NotationClickable
+              embedded
+              measureNumber={measure.measureNumber}
+              tempo={measure.tempo}
+              clef={measure.clef}
+              timeSignature={measure.timeSignature}
+              accidentals={measure.accidentals}
+              notes={measure.notes}
+              curves={measure.curves}
+              rightBarStyle={measure.rightBarStyle}
+              repeatStart={measure.repeatStart}
+              repeatEnd={measure.repeatEnd}
+              showRightBar={!measure.repeatEnd}
+            />
+          </div>
+          {measure.hairpin && <NotationDynamics type={measure.hairpin} embedded showStaff={false} />}
+        </div>
+      ))}
+    </div>
+  ))}
+</div>
+
+<style>
+  .notation-overview {
+    display: grid;
+    gap: var(--notation-system-gap);
+    padding: var(--notation-panel-padding) var(--notation-panel-padding) 2rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    background: #fff;
+    box-sizing: border-box;
+  }
+
+  .overview-system {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    row-gap: var(--notation-system-gap);
+  }
+
+  .overview-system:first-child {
+    grid-template-columns: minmax(0, 0.65fr) repeat(3, minmax(0, 1fr));
+  }
+
+  .overview-measure {
+    position: relative;
+    min-width: 0;
+  }
+
+  .overview-measure :global(.notation-clickable.embedded.has-header .notation-header) {
+    position: absolute;
+    top: -12px;
+    right: 0;
+    left: 0;
+    height: 12px;
+    z-index: 2;
+  }
+
+  .overview-measure > :global(.dynamics-example.embedded) {
+    position: absolute;
+    top: 64px;
+    right: 0;
+    left: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .measure-staff {
+    position: relative;
+  }
+  @media (max-width: 520px) {
+    .overview-system {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .overview-system:first-child {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+</style>

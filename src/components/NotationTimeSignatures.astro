@@ -20,7 +20,7 @@ const { timeSignatures } = Astro.props;
 
 <style>
   .time-signatures {
-    padding: 0.75rem 1rem;
+    padding: var(--notation-panel-padding);
     border: 1px solid #d1d5db;
     border-radius: 0.5rem;
     background: #fff;
@@ -30,6 +30,7 @@ const { timeSignatures } = Astro.props;
   .time-signatures-row {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+    row-gap: var(--notation-system-gap);
   }
 
   .time-signatures-measure {
