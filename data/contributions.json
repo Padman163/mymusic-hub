@@ -2,11 +2,21 @@
   {
     "id": "9844e193-4801-461c-9035-00ca5a9b8bd8",
     "type": "Feature",
-    "title": "Cheat Sheets entwickeln",
-    "description": "- Akkorde\n- Notation",
+    "title": "Meta-Daten für Beiträge",
+    "description": "",
     "area": "Theorie",
     "status": "New",
-    "createdAt": "2026-11-06T15:39:57.219Z"
+    "createdAt": "2026-11-06T15:39:57.219Z",
+    "checklist": [
+      {
+        "text": "D1/D2/D3 ( unsichtbar )",
+        "checked": false
+      },
+      {
+        "text": "Instrumentbezogen ( unsichtbar )",
+        "checked": false
+      }
+    ]
   },
   {
     "id": "7c13fc92-5341-48c1-8c31-05d86b155c64",
