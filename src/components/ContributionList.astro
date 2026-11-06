@@ -1,0 +1,980 @@
+---
+import IssueTrackerForm from './IssueTrackerForm.astro';
+import { contributionTypes } from '../lib/contribution-types';
+import { contributionAreas } from '../lib/contribution-area';
+import { contributionPriorities } from '../lib/contribution-priority';
+import './contribution-tags.css';
+import './contribution-checklist.css';
+---
+
+<section aria-label="Gespeicherte Beiträge">
+	<div class="contribution-toolbar">
+		<button id="new-contribution" class="new-contribution" type="button" aria-expanded="false" aria-controls="new-contribution-card">Neuen Beitrag erstellen</button>
+		<div class="contribution-toolbar-controls">
+			<details class="contribution-menu">
+				<summary title="Beiträge filtern" aria-label="Beiträge filtern">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+						<path d="M4 5h16l-6 7v6l-4 2v-8z"></path>
+					</svg>
+				</summary>
+				<div class="contribution-menu-panel">
+					<label for="filter-type">Typ</label>
+					<select id="filter-type">
+						<option value="">Alle Typen</option>
+						{contributionTypes.map((type) => <option value={type}>{type}</option>)}
+					</select>
+					<label for="filter-area">Bereich</label>
+					<select id="filter-area">
+						<option value="">Alle Bereiche</option>
+						<option value="none">Ohne Bereich</option>
+						{contributionAreas.map((area) => <option value={area}>{area}</option>)}
+					</select>
+					<label for="filter-priority">Priorität</label>
+					<select id="filter-priority">
+						<option value="">Alle Prioritäten</option>
+						{contributionPriorities.map((priority) => <option value={priority}>{priority}</option>)}
+					</select>
+				</div>
+			</details>
+			<details class="contribution-menu">
+				<summary title="Beiträge sortieren" aria-label="Beiträge sortieren">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+						<path d="M4 7h16M4 12h11M4 17h6"></path>
+					</svg>
+				</summary>
+				<div class="contribution-menu-panel">
+					<label for="sort-contributions">Sortierung</label>
+					<select id="sort-contributions">
+						<option value="newest">Neueste zuerst</option>
+						<option value="oldest">Älteste zuerst</option>
+						<option value="priority">Priorität: Hoch zuerst</option>
+					</select>
+				</div>
+			</details>
+		<button id="contribution-view-toggle" class="contribution-view-toggle" type="button" aria-label="Listenansicht anzeigen" title="Listenansicht anzeigen" aria-controls="contribution-list">
+			<svg class="list-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+				<path d="M4 6h2M10 6h10M4 12h2M10 12h10M4 18h2M10 18h10"></path>
+			</svg>
+			<svg class="cards-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true" hidden>
+				<path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"></path>
+			</svg>
+		</button>
+		</div>
+	</div>
+	<div id="new-contribution-card" class="new-contribution-card" hidden>
+		<div class="new-contribution-header">
+			<h2>Neuer Beitrag</h2>
+			<button id="close-contribution" class="close-contribution" type="button" aria-label="Formular schließen" title="Formular schließen">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+					<path d="M6 6l12 12M18 6L6 18"></path>
+				</svg>
+			</button>
+		</div>
+		<IssueTrackerForm />
+	</div>
+	<p id="contribution-list-status" role="status" aria-live="polite" tabindex="-1">Beiträge werden geladen …</p>
+	<ul id="contribution-list" class="contribution-list"></ul>
+</section>
+
+<style>
+	.contribution-toolbar {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 0.75rem;
+	}
+
+	.contribution-toolbar-controls {
+		position: relative;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin: 0 0 0 auto;
+	}
+
+	.contribution-menu {
+		margin: 0;
+	}
+
+	.contribution-menu summary,
+	.contribution-view-toggle {
+		display: grid;
+		place-items: center;
+		flex-shrink: 0;
+		width: 2.5rem;
+		height: 2.5rem;
+		margin: 0;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.4rem;
+		background: var(--sl-color-bg);
+		color: var(--sl-color-text);
+		cursor: pointer;
+	}
+
+	.contribution-menu summary {
+		list-style: none;
+		padding: 0;
+	}
+
+	.contribution-menu summary::before,
+	.contribution-menu summary::-webkit-details-marker {
+		display: none;
+	}
+
+	.contribution-menu summary svg,
+	.contribution-view-toggle svg {
+		width: 1.2rem;
+		height: 1.2rem;
+		margin: 0;
+	}
+
+	.contribution-menu-panel {
+		position: absolute;
+		z-index: 2;
+		right: 0;
+		display: grid;
+		gap: 0.35rem;
+		box-sizing: border-box;
+		width: min(17rem, calc(100vw - 2rem));
+		margin: 0.4rem 0 0;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.4rem;
+		padding: 0.75rem;
+		background: var(--sl-color-bg);
+		box-shadow: 0 0.25rem 0.75rem #0003;
+	}
+
+	.contribution-menu-panel label {
+		font-size: 0.875rem;
+		font-weight: 600;
+	}
+
+	.contribution-menu-panel select {
+		width: 100%;
+		margin: 0 0 0.35rem;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.4rem;
+		padding: 0.4rem;
+		background: var(--sl-color-bg);
+		color: var(--sl-color-text);
+		font: inherit;
+	}
+
+	.contribution-view-toggle svg[hidden] {
+		display: none;
+	}
+
+	.new-contribution {
+		border: 1px solid #1d4ed8;
+		border-radius: 0.4rem;
+		padding: 0.65rem 0.9rem;
+		background: #1d4ed8;
+		color: #fff;
+		font: inherit;
+		font-weight: 600;
+		cursor: pointer;
+	}
+
+	.new-contribution:hover {
+		background: #1e40af;
+	}
+
+	.new-contribution[hidden] {
+		display: none;
+	}
+
+	.new-contribution-card {
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.4rem;
+		padding: 1rem;
+	}
+
+	.new-contribution-card[hidden] {
+		display: none;
+	}
+
+	.new-contribution-header {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 0.75rem;
+		margin-bottom: 1rem;
+	}
+
+	.new-contribution-header h2 {
+		margin: 0;
+		font-size: 1.25rem;
+	}
+
+	.close-contribution {
+		display: grid;
+		place-items: center;
+		flex-shrink: 0;
+		width: 2.5rem;
+		height: 2.5rem;
+		margin: 0;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.4rem;
+		background: var(--sl-color-bg);
+		color: var(--sl-color-text);
+		cursor: pointer;
+	}
+
+	.close-contribution svg {
+		width: 1.2rem;
+		height: 1.2rem;
+	}
+
+	.new-contribution:focus-visible,
+	.contribution-menu summary:focus-visible,
+	.contribution-menu-panel select:focus-visible,
+	.contribution-view-toggle:focus-visible,
+	.close-contribution:focus-visible {
+		outline: 2px solid var(--sl-color-accent);
+		outline-offset: 2px;
+	}
+
+	.contribution-list {
+		display: grid;
+		gap: 1rem;
+		padding: 0;
+		list-style: none;
+	}
+
+	.contribution-list :global(li) {
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.4rem;
+		padding: 1rem 1rem 0.5rem;
+	}
+
+	.contribution-list :global(li[hidden]),
+	.contribution-list[data-view='list'] :global(li[hidden]) {
+		display: none;
+	}
+
+	.contribution-list :global(.contribution-card-header) {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+	}
+
+	.contribution-list :global(h2) {
+		margin: 1rem 0 0;
+		border-bottom: 1px solid var(--sl-color-gray-5);
+		padding-bottom: 0.5rem;
+		font-size: 1.25rem;
+		overflow-wrap: anywhere;
+	}
+
+	.contribution-list :global(p) {
+		margin: 0.5rem 0 0;
+		white-space: pre-wrap;
+		overflow-wrap: anywhere;
+	}
+
+	.contribution-list :global(.contribution-description:not([hidden])) {
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 3;
+		overflow: hidden;
+	}
+
+	.contribution-list :global(.contribution-meta) {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		min-width: 0;
+		gap: 0.5rem;
+		color: var(--sl-color-gray-2);
+		font-size: 0.875rem;
+	}
+
+	.contribution-list :global(.contribution-card-footer) {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		margin: 1rem 0 0;
+		border-top: 1px solid var(--sl-color-gray-5);
+		padding-top: 0.75rem;
+		color: var(--sl-color-gray-2);
+		font-size: 0.875rem;
+	}
+
+	.contribution-list :global(.contribution-card-footer time) {
+		margin-left: auto;
+		text-align: right;
+	}
+
+	.contribution-list :global(.checklist-progress) {
+		font-weight: 600;
+	}
+
+	.contribution-list :global(p[role='status']:empty) {
+		display: none;
+	}
+
+	.contribution-list[data-view='list'] {
+		gap: 0.5rem;
+	}
+
+	.contribution-list[data-view='list'] :global(li) {
+		display: grid;
+		grid-template-columns: auto minmax(0, 1fr) auto;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.5rem;
+	}
+
+	.contribution-list[data-view='list'] :global(.contribution-card-header) {
+		display: contents;
+	}
+
+	.contribution-list[data-view='list'] :global(.contribution-meta) {
+		grid-column: 1;
+		grid-row: 1;
+	}
+
+	.contribution-list[data-view='list'] :global(h2) {
+		grid-column: 2;
+		grid-row: 1;
+		margin: 0;
+		border: 0;
+		padding: 0;
+		font-size: 1rem;
+	}
+
+	.contribution-list[data-view='list'] :global(.contribution-card-actions) {
+		grid-column: 3;
+		grid-row: 1;
+	}
+
+	.contribution-list[data-view='list'] :global(.contribution-area),
+	.contribution-list[data-view='list'] :global(.contribution-meta [data-priority]),
+	.contribution-list[data-view='list'] :global(.contribution-description),
+	.contribution-list[data-view='list'] :global(.contribution-card-footer) {
+		display: none;
+	}
+
+	.contribution-list[data-view='list'] :global(form),
+	.contribution-list[data-view='list'] :global(p[role='status']) {
+		grid-column: 1 / -1;
+	}
+
+	.contribution-list :global(.contribution-status),
+	.contribution-list :global(.contribution-area) {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		box-sizing: border-box;
+		width: 7rem;
+		flex-shrink: 0;
+		margin: 0;
+		border: 1px solid currentColor;
+		border-radius: 999px;
+		padding: 0.1rem 0.5rem;
+		font-weight: 600;
+		line-height: 1.4;
+	}
+
+	.contribution-list :global(.contribution-status[data-status='New']) {
+		border-color: var(--sl-color-gray-4);
+		color: var(--sl-color-text);
+	}
+
+	.contribution-list :global(.contribution-area) {
+		border-color: var(--sl-color-gray-4);
+		color: var(--sl-color-text);
+	}
+
+	.contribution-list :global(.contribution-status[data-status='Active']) {
+		color: #1d4ed8;
+	}
+
+	.contribution-list :global(.contribution-status[data-status='Resolved']) {
+		color: #15803d;
+	}
+
+	:global(:root[data-theme='dark']) .contribution-list :global(.contribution-status[data-status='Active']) {
+		color: #93c5fd;
+	}
+
+	:global(:root[data-theme='dark']) .contribution-list :global(.contribution-status[data-status='Resolved']) {
+		color: #86efac;
+	}
+
+	.contribution-list :global(.contribution-actions) {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.5rem;
+		margin-top: 1rem;
+	}
+
+	.contribution-list :global(.contribution-actions > button) {
+		margin: 0;
+	}
+
+	.contribution-list :global(.contribution-actions[hidden]) {
+		display: none;
+	}
+
+	.contribution-list :global(.contribution-card-actions) {
+		display: flex;
+		flex-shrink: 0;
+		gap: 0.25rem;
+		margin: 0;
+	}
+
+	.contribution-list :global(.contribution-card-actions[hidden]) {
+		display: none;
+	}
+
+	.contribution-list :global(button) {
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.4rem;
+		padding: 0.5rem 0.75rem;
+		background: var(--sl-color-bg);
+		color: var(--sl-color-text);
+		font: inherit;
+		cursor: pointer;
+	}
+
+	.contribution-list :global(button:disabled) {
+		cursor: wait;
+		opacity: 0.6;
+	}
+
+	.contribution-list :global(.contribution-card-actions button),
+	.contribution-list :global(.contribution-actions .contribution-delete) {
+		display: grid;
+		place-items: center;
+		width: 2.5rem;
+		height: 2.5rem;
+		margin: 0;
+		padding: 0;
+		border-color: currentColor;
+	}
+
+	.contribution-list :global(.contribution-card-actions button[hidden]) {
+		display: none;
+	}
+
+	.contribution-list :global(.contribution-actions .contribution-delete) {
+		margin-left: auto;
+	}
+
+	.contribution-list :global(.contribution-edit) {
+		color: #2563eb;
+	}
+
+	.contribution-list :global(.contribution-save) {
+		border-color: #1d4ed8;
+		background: #1d4ed8;
+		color: #fff;
+	}
+
+	.contribution-list :global(.contribution-save:hover:not(:disabled)) {
+		border-color: #1e40af;
+		background: #1e40af;
+	}
+
+	.contribution-list :global(.contribution-delete) {
+		color: #dc2626;
+	}
+
+	:global(:root[data-theme='dark']) .contribution-list :global(.contribution-edit) {
+		color: #93c5fd;
+	}
+
+	:global(:root[data-theme='dark']) .contribution-list :global(.contribution-delete) {
+		color: #fca5a5;
+	}
+
+	.contribution-list :global(.contribution-card-actions svg),
+	.contribution-list :global(.contribution-actions .contribution-delete svg) {
+		width: 1.2rem;
+		height: 1.2rem;
+	}
+
+	.contribution-list :global(button:focus-visible) {
+		outline: 2px solid currentColor;
+		outline-offset: 2px;
+	}
+
+	.contribution-list :global(form) {
+		display: grid;
+		gap: 0.5rem;
+		margin-top: 1rem;
+	}
+
+	.contribution-list :global(input),
+	.contribution-list :global(select),
+	.contribution-list :global(textarea) {
+		box-sizing: border-box;
+		width: 100%;
+		border: 1px solid var(--sl-color-gray-5);
+		border-radius: 0.4rem;
+		padding: 0.65rem 0.75rem;
+		background: var(--sl-color-bg);
+		color: var(--sl-color-text);
+		font: inherit;
+	}
+</style>
+
+<script>
+	import { contributionStatuses, defaultContributionStatus, isContributionStatus, type ContributionStatus } from '../lib/contribution-status';
+	import { addIcon, createTypePicker, createTypeTag, createTagPicker, createPlainTag, isContributionType, type ContributionType } from '../lib/contribution-types';
+	import { contributionAreas, isContributionArea, type ContributionArea } from '../lib/contribution-area';
+	import { isChecklist, type ChecklistItem } from '../lib/contribution-checklist';
+	import { createChecklistEditor } from '../lib/checklist-editor';
+	import { contributionPriorities, defaultContributionPriority, isContributionPriority, type ContributionPriority } from '../lib/contribution-priority';
+
+	const list = document.querySelector<HTMLUListElement>('#contribution-list');
+	const status = document.querySelector<HTMLParagraphElement>('#contribution-list-status');
+	const newButton = document.querySelector<HTMLButtonElement>('#new-contribution');
+	const viewToggle = document.querySelector<HTMLButtonElement>('#contribution-view-toggle');
+	const listIcon = viewToggle?.querySelector<SVGElement>('.list-icon');
+	const cardsIcon = viewToggle?.querySelector<SVGElement>('.cards-icon');
+	const filterType = document.querySelector<HTMLSelectElement>('#filter-type');
+	const filterArea = document.querySelector<HTMLSelectElement>('#filter-area');
+	const filterPriority = document.querySelector<HTMLSelectElement>('#filter-priority');
+	const sortSelect = document.querySelector<HTMLSelectElement>('#sort-contributions');
+	const newCard = document.querySelector<HTMLDivElement>('#new-contribution-card');
+	const closeButton = document.querySelector<HTMLButtonElement>('#close-contribution');
+	const newForm = newCard?.querySelector<HTMLFormElement>('#issue-tracker-form');
+	if (
+		!(list instanceof HTMLUListElement) || !(status instanceof HTMLParagraphElement) ||
+		!(newButton instanceof HTMLButtonElement) || !(viewToggle instanceof HTMLButtonElement) ||
+		!(listIcon instanceof SVGElement) || !(cardsIcon instanceof SVGElement) || !(newCard instanceof HTMLDivElement) ||
+		!(filterType instanceof HTMLSelectElement) || !(filterArea instanceof HTMLSelectElement) ||
+		!(filterPriority instanceof HTMLSelectElement) || !(sortSelect instanceof HTMLSelectElement) ||
+		!(closeButton instanceof HTMLButtonElement) || !(newForm instanceof HTMLFormElement)
+	) {
+		throw new Error('Die Beitragsübersicht wurde nicht gefunden.');
+	}
+
+	let listLoaded = false;
+	const entries = new Map<HTMLLIElement, Contribution>();
+	const menus = document.querySelectorAll<HTMLDetailsElement>('.contribution-menu');
+
+	for (const menu of menus) {
+		const summary = menu.querySelector('summary');
+		if (!summary) throw new Error('Das Beitragsmenü wurde nicht gefunden.');
+		summary.addEventListener('click', () => {
+			if (menu.open) return;
+			for (const other of menus) {
+				if (other !== menu) other.open = false;
+			}
+		});
+	}
+
+	document.addEventListener('click', (event) => {
+		if (!(event.target instanceof Node)) return;
+		for (const menu of menus) {
+			if (!menu.contains(event.target)) menu.open = false;
+		}
+	});
+
+	for (const control of [filterType, filterArea, filterPriority, sortSelect]) {
+		control.addEventListener('change', () => {
+			if (listLoaded) updateCount();
+		});
+	}
+
+	viewToggle.addEventListener('click', () => {
+		const listView = list.dataset.view !== 'list';
+		list.dataset.view = listView ? 'list' : 'cards';
+		const label = listView ? 'Kartenansicht anzeigen' : 'Listenansicht anzeigen';
+		viewToggle.setAttribute('aria-label', label);
+		viewToggle.title = label;
+		listIcon.toggleAttribute('hidden', listView);
+		cardsIcon.toggleAttribute('hidden', !listView);
+	});
+
+	newButton.addEventListener('click', () => {
+		const formStatus = newForm.querySelector<HTMLElement>('.form-status');
+		if (formStatus) formStatus.textContent = '';
+		newCard.hidden = false;
+		newButton.hidden = true;
+		newButton.setAttribute('aria-expanded', 'true');
+		newForm.querySelector<HTMLInputElement>('input[name="type"]:checked')?.focus();
+	});
+
+	closeButton.addEventListener('click', () => {
+		newForm.reset();
+		const formStatus = newForm.querySelector<HTMLElement>('.form-status');
+		if (formStatus) formStatus.textContent = '';
+		newCard.hidden = true;
+		newButton.hidden = false;
+		newButton.setAttribute('aria-expanded', 'false');
+		newButton.focus();
+	});
+
+	newForm.addEventListener('contribution:busy', (event) => {
+		if (event instanceof CustomEvent) closeButton.disabled = event.detail === true;
+	});
+
+	newForm.addEventListener('contribution:created', (event) => {
+		if (!(event instanceof CustomEvent)) return;
+		const result: unknown = event.detail;
+		if (
+			typeof result === 'object' && result !== null && 'contribution' in result &&
+			isContribution(result.contribution)
+		) {
+			addContribution(result.contribution, true);
+			updateCount();
+			if (!listLoaded) void loadContributions();
+		} else {
+			void loadContributions();
+		}
+		newCard.hidden = true;
+		newButton.hidden = false;
+		newButton.setAttribute('aria-expanded', 'false');
+		newButton.focus();
+	});
+
+	interface Contribution {
+		id: string;
+		type: ContributionType;
+		title: string;
+		description: string;
+		createdAt: string;
+		status?: ContributionStatus;
+		area?: ContributionArea;
+		priority?: ContributionPriority;
+		checklist?: ChecklistItem[];
+	}
+
+	function isContribution(value: unknown): value is Contribution {
+		if (typeof value !== 'object' || value === null) return false;
+		return (
+			'id' in value && typeof value.id === 'string' && value.id.length > 0 &&
+			'type' in value && isContributionType(value.type) &&
+			'title' in value && typeof value.title === 'string' &&
+			'description' in value && typeof value.description === 'string' &&
+			'createdAt' in value && typeof value.createdAt === 'string' &&
+			Number.isFinite(Date.parse(value.createdAt)) &&
+			(!('status' in value) || isContributionStatus(value.status)) &&
+			(!('area' in value) || isContributionArea(value.area)) &&
+			(!('priority' in value) || isContributionPriority(value.priority)) &&
+			(!('checklist' in value) || isChecklist(value.checklist))
+		);
+	}
+
+	async function changeContribution(
+		method: 'PATCH' | 'DELETE',
+		expected: Contribution,
+		fields?: Pick<Contribution, 'type' | 'title' | 'description' | 'status' | 'area' | 'priority' | 'checklist'>,
+	) {
+		const response = await fetch('/api/contributions', {
+			method,
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ expected, fields }),
+		});
+		if (!response.ok) {
+			let message = 'Der Beitrag konnte nicht geändert werden.';
+			const contentType = response.headers.get('Content-Type');
+			if (contentType?.includes('application/json')) {
+				const result: unknown = await response.json();
+				if (typeof result === 'object' && result !== null && 'error' in result && typeof result.error === 'string') {
+					message = result.error;
+				}
+			}
+			throw new Error(message);
+		}
+	}
+
+	function updateCount() {
+		const sorted = Array.from(entries.entries()).sort(([, a], [, b]) => {
+			if (sortSelect.value === 'priority') {
+				const priorityOrder = contributionPriorities.indexOf(a.priority ?? defaultContributionPriority) -
+					contributionPriorities.indexOf(b.priority ?? defaultContributionPriority);
+				if (priorityOrder !== 0) return priorityOrder;
+			}
+			const dateOrder = Date.parse(a.createdAt) - Date.parse(b.createdAt);
+			return sortSelect.value === 'oldest' ? dateOrder : -dateOrder;
+		});
+		let visible = 0;
+		sorted.forEach(([element, contribution]) => {
+			const matches = (!filterType.value || contribution.type === filterType.value) &&
+				(!filterArea.value || (contribution.area ?? 'none') === filterArea.value) &&
+				(!filterPriority.value || (contribution.priority ?? defaultContributionPriority) === filterPriority.value);
+			element.hidden = !matches;
+			if (matches) visible += 1;
+		});
+		const focused = document.activeElement;
+		for (let index = 0; index < sorted.length; index += 1) {
+			const element = sorted[index][0];
+			if (list.children[index] !== element) list.insertBefore(element, list.children[index] ?? null);
+		}
+		if (focused instanceof HTMLElement && focused.isConnected && !focused.closest('[hidden]') && document.activeElement !== focused) {
+			focused.focus({ preventScroll: true });
+		}
+		status.textContent = entries.size === 0 ? 'Noch keine Beiträge vorhanden.' :
+			visible === 0 ? 'Keine Beiträge entsprechen den gewählten Filtern.' :
+			`${visible} von ${entries.size} Beiträgen angezeigt.`;
+	}
+
+	function addContribution(contribution: Contribution, prepend = false) {
+		if (Array.from(list.children).some((item) => item.getAttribute('data-contribution-id') === contribution.id)) return;
+		const item = document.createElement('li');
+		item.setAttribute('data-contribution-id', contribution.id);
+		const header = document.createElement('div');
+		header.className = 'contribution-card-header';
+		const meta = document.createElement('div');
+		meta.className = 'contribution-meta';
+		const footer = document.createElement('div');
+		footer.className = 'contribution-card-footer';
+		const title = document.createElement('h2');
+		const description = document.createElement('p');
+		description.className = 'contribution-description';
+		const actions = document.createElement('div');
+		actions.className = 'contribution-card-actions';
+		const edit = document.createElement('button');
+		edit.type = 'button';
+		edit.className = 'contribution-edit';
+		edit.title = 'Bearbeiten';
+		addIcon(edit, ['M12 20h9', 'M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z']);
+		actions.append(edit);
+		const message = document.createElement('p');
+		message.setAttribute('role', 'status');
+		message.setAttribute('aria-live', 'polite');
+
+		function render() {
+			const tag = createTypeTag(contribution.type);
+			const date = document.createElement('time');
+			date.dateTime = contribution.createdAt;
+			date.textContent = new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(contribution.createdAt));
+			const contributionStatus = document.createElement('span');
+			contributionStatus.className = 'contribution-status';
+			contributionStatus.dataset.status = contribution.status ?? defaultContributionStatus;
+			contributionStatus.textContent = contribution.status ?? defaultContributionStatus;
+			const contributionArea = document.createElement('span');
+			contributionArea.className = 'contribution-area';
+			if (contribution.area) contributionArea.dataset.area = contribution.area;
+			contributionArea.textContent = contribution.area ?? 'Ohne Bereich';
+			meta.replaceChildren(tag, contributionArea);
+			const priorityValue = contribution.priority ?? defaultContributionPriority;
+			const priority = createPlainTag(priorityValue, 'priority');
+			priority.setAttribute('aria-label', `Priorität: ${priorityValue}`);
+			meta.append(priority);
+			footer.replaceChildren(contributionStatus);
+			const checklist = contribution.checklist ?? [];
+			if (checklist.length > 0) {
+				const progress = document.createElement('span');
+				progress.className = 'checklist-progress';
+				progress.textContent = `${checklist.filter((entry) => entry.checked).length}/${checklist.length} erledigt`;
+				footer.append(progress);
+			}
+			footer.append(date);
+			title.textContent = contribution.title;
+			description.textContent = contribution.description;
+			description.hidden = !contribution.description;
+			edit.setAttribute('aria-label', `${contribution.title} bearbeiten`);
+		}
+
+		edit.addEventListener('click', () => {
+			edit.hidden = true;
+			message.textContent = '';
+			const form = document.createElement('form');
+			const typePicker = createTypePicker(contribution.type);
+			const areaPicker = createTagPicker('area', 'Bereich', contributionAreas, contribution.area, (area) => createPlainTag(area, 'area'));
+			const priorityPicker = createTagPicker('priority', 'Priorität', contributionPriorities, contribution.priority ?? defaultContributionPriority, (priority) => createPlainTag(priority, 'priority'));
+			const statusLabel = document.createElement('label');
+			statusLabel.textContent = 'Status';
+			const statusInput = document.createElement('select');
+			for (const value of contributionStatuses) {
+				const option = document.createElement('option');
+				option.value = value;
+				option.textContent = value;
+				statusInput.append(option);
+			}
+			statusInput.value = contribution.status ?? defaultContributionStatus;
+			statusLabel.append(statusInput);
+			const titleLabel = document.createElement('label');
+			titleLabel.textContent = 'Titel';
+			const titleInput = document.createElement('input');
+			titleInput.value = contribution.title;
+			titleInput.maxLength = 120;
+			titleInput.required = true;
+			titleLabel.append(titleInput);
+			const descriptionLabel = document.createElement('label');
+			descriptionLabel.textContent = 'Beschreibung (optional)';
+			const descriptionInput = document.createElement('textarea');
+			descriptionInput.value = contribution.description;
+			descriptionInput.maxLength = 10_000;
+			descriptionInput.rows = 7;
+			descriptionLabel.append(descriptionInput);
+			const checklistEditor = createChecklistEditor(contribution.checklist, true);
+			const formActions = document.createElement('div');
+			formActions.className = 'contribution-actions';
+			const save = document.createElement('button');
+			save.type = 'submit';
+			save.className = 'contribution-save';
+			save.textContent = 'Speichern';
+			const cancel = document.createElement('button');
+			cancel.type = 'button';
+			cancel.title = 'Bearbeitung schließen';
+			cancel.setAttribute('aria-label', 'Bearbeitung schließen');
+			addIcon(cancel, ['M6 6l12 12', 'M18 6L6 18']);
+			actions.append(cancel);
+			const remove = document.createElement('button');
+			remove.type = 'button';
+			remove.className = 'contribution-delete';
+			remove.title = 'Löschen';
+			remove.setAttribute('aria-label', `${contribution.title} löschen`);
+			addIcon(remove, ['M3 6h18', 'M8 6V4h8v2', 'M5 6l1 14h12l1-14', 'M10 10v6', 'M14 10v6']);
+			cancel.addEventListener('click', () => {
+				form.remove();
+				cancel.remove();
+				edit.hidden = false;
+				message.textContent = '';
+				edit.focus();
+			});
+			formActions.append(save, remove);
+			form.append(typePicker, areaPicker, priorityPicker, statusLabel, titleLabel, descriptionLabel, checklistEditor.element, formActions);
+			item.insertBefore(form, message);
+			titleInput.focus();
+
+			remove.addEventListener('click', async () => {
+				if (!window.confirm(`Beitrag „${contribution.title}“ wirklich löschen?`)) return;
+				save.disabled = true;
+				cancel.disabled = true;
+				remove.disabled = true;
+				typePicker.disabled = true;
+				areaPicker.disabled = true;
+				priorityPicker.disabled = true;
+				statusInput.disabled = true;
+				titleInput.disabled = true;
+				descriptionInput.disabled = true;
+				checklistEditor.element.disabled = true;
+				message.textContent = 'Beitrag wird gelöscht …';
+				try {
+					await changeContribution('DELETE', contribution);
+					item.remove();
+					entries.delete(item);
+					updateCount();
+					status.focus();
+				} catch (error) {
+					console.error('Fehler beim Löschen des Beitrags:', error);
+					message.textContent = error instanceof Error ? error.message : 'Der Beitrag konnte nicht gelöscht werden.';
+				} finally {
+					save.disabled = false;
+					cancel.disabled = false;
+					remove.disabled = false;
+					typePicker.disabled = false;
+					areaPicker.disabled = false;
+					priorityPicker.disabled = false;
+					statusInput.disabled = false;
+					titleInput.disabled = false;
+					descriptionInput.disabled = false;
+					checklistEditor.element.disabled = false;
+				}
+			});
+
+			form.addEventListener('submit', async (event) => {
+				event.preventDefault();
+				const selectedType = new FormData(form).get('type');
+				if (!isContributionType(selectedType)) {
+					message.textContent = 'Bitte wähle einen gültigen Typ.';
+					return;
+				}
+				const selectedArea = new FormData(form).get('area');
+				if (!isContributionArea(selectedArea)) {
+					message.textContent = 'Bitte wähle einen gültigen Bereich.';
+					return;
+				}
+				const selectedPriority = new FormData(form).get('priority');
+				if (!isContributionPriority(selectedPriority)) {
+					message.textContent = 'Bitte wähle eine gültige Priorität.';
+					return;
+				}
+				const selectedStatus = statusInput.value;
+				if (!isContributionStatus(selectedStatus)) {
+					message.textContent = 'Bitte wähle einen gültigen Status.';
+					return;
+				}
+				const checklist = checklistEditor.items();
+				if (!checklist) return;
+				const fields = { type: selectedType, area: selectedArea, priority: selectedPriority, status: selectedStatus, title: titleInput.value.trim(), description: descriptionInput.value.trim(), checklist };
+				if (!fields.title) {
+					message.textContent = 'Bitte gib einen Titel ein.';
+					return;
+				}
+				save.disabled = true;
+				cancel.disabled = true;
+				remove.disabled = true;
+				typePicker.disabled = true;
+				areaPicker.disabled = true;
+				priorityPicker.disabled = true;
+				statusInput.disabled = true;
+				titleInput.disabled = true;
+				descriptionInput.disabled = true;
+				checklistEditor.element.disabled = true;
+				message.textContent = 'Beitrag wird gespeichert …';
+				try {
+					await changeContribution('PATCH', contribution, fields);
+					contribution = { ...contribution, ...fields };
+					entries.set(item, contribution);
+					render();
+					form.remove();
+					cancel.remove();
+					edit.hidden = false;
+					message.textContent = 'Beitrag wurde aktualisiert.';
+					updateCount();
+					if (item.hidden) status.focus();
+					else edit.focus();
+				} catch (error) {
+					console.error('Fehler beim Bearbeiten des Beitrags:', error);
+					message.textContent = error instanceof Error ? error.message : 'Der Beitrag konnte nicht geändert werden.';
+				} finally {
+					save.disabled = false;
+					cancel.disabled = false;
+					remove.disabled = false;
+					typePicker.disabled = false;
+					areaPicker.disabled = false;
+					priorityPicker.disabled = false;
+					statusInput.disabled = false;
+					titleInput.disabled = false;
+					descriptionInput.disabled = false;
+					checklistEditor.element.disabled = false;
+				}
+			});
+		});
+
+		render();
+		header.append(meta, actions);
+		item.append(header, title, description, message, footer);
+		if (prepend) list.prepend(item);
+		else list.append(item);
+		entries.set(item, contribution);
+	}
+
+	async function loadContributions() {
+		try {
+			const response = await fetch('/api/contributions', { cache: 'no-store' });
+			if (!response.ok) throw new Error('Die Beiträge konnten derzeit nicht geladen werden.');
+			const data: unknown = await response.json();
+			if (
+				typeof data !== 'object' || data === null || !('contributions' in data) ||
+				!Array.isArray(data.contributions) || !data.contributions.every(isContribution)
+			) {
+				throw new Error('Die Beitragsdaten haben ein ungültiges Format.');
+			}
+
+			for (const contribution of [...data.contributions].reverse()) {
+				addContribution(contribution);
+			}
+			listLoaded = true;
+			updateCount();
+		} catch (error) {
+			console.error('Fehler beim Laden der Beiträge:', error);
+			status.textContent = 'Die Beiträge konnten nicht geladen werden. Bitte versuche es später erneut.';
+		}
+	}
+
+	void loadContributions();
+</script>
