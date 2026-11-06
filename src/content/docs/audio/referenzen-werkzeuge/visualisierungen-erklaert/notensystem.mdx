@@ -10,6 +10,7 @@ import NotationPickupRepeat from '../../../../../components/NotationPickupRepeat
 import NotationTempo from '../../../../../components/NotationTempo.astro';
 import NotationArticulations from '../../../../../components/NotationArticulations.astro';
 import NotationDynamics from '../../../../../components/NotationDynamics.astro';
+import NotationBows from '../../../../../components/NotationBows.astro';
 
 ## Grundansicht
 
@@ -126,6 +127,12 @@ Das Beispiel zeigt zwei 4/4-Takte mit **Allegro** und der Metronomangabe **Viert
 Artikulationszeichen beschreiben, wie ein Ton gespielt und gestaltet wird. Das Beispiel zeigt **Staccato**, **Tenuto**, **Akzent** und **Marcato** jeweils oberhalb und unterhalb einer Note. Die Platzierung kann je nach Notenbild oberhalb oder unterhalb erfolgen: Staccato verkürzt den Ton, Tenuto hält ihn voll aus, der Akzent hebt ihn hervor und Marcato markiert einen besonders kräftigen Anschlag.
 
 <NotationArticulations />
+
+## Haltebogen und Bindebogen
+
+Ein **Haltebogen** verbindet Noten gleicher Tonhöhe; die Notenwerte werden zu einem gehaltenen Ton zusammengefasst. Ein **Bindebogen** verbindet unterschiedliche Tonhöhen und zeigt an, dass sie gebunden (legato) gespielt werden.
+
+<NotationBows />
 
 ## Dynamik
 

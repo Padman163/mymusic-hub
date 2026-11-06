@@ -67,7 +67,11 @@ const rows = [
 
   .pickup-row {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pickup-row:first-child {
+    grid-template-columns: minmax(110px, 0.7fr) repeat(2, minmax(0, 1fr));
   }
 
   .pickup-row + .pickup-row {
@@ -79,8 +83,10 @@ const rows = [
     min-width: 0;
   }
 
-  .pickup-row:first-child .pickup-measure:first-child {
-    grid-column: span 2;
+  @media (max-width: 420px) {
+    .pickup-row:first-child {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
 
   .measure-label {

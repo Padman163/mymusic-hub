@@ -61,8 +61,8 @@ const accidentalSymbols = {
 const articulationSymbols: Record<Articulation, { above: string; below: string; belowOffset: number; label: string }> = {
   staccato: { above: '\uE4A2', below: '\uE4A3', belowOffset: 12, label: 'Staccato' },
   tenuto: { above: '\uE4A4', below: '\uE4A5', belowOffset: 12, label: 'Tenuto' },
-  accent: { above: '\uE4A0', below: '\uE4A1', belowOffset: 18, label: 'Akzent' },
-  marcato: { above: '\uE4AC', below: '\uE4AD', belowOffset: 18, label: 'Marcato' }
+  accent: { above: '\uE4A0', below: '\uE4A1', belowOffset: 14, label: 'Akzent' },
+  marcato: { above: '\uE4AC', below: '\uE4AD', belowOffset: 14, label: 'Marcato' }
 };
 const accidentalStart = clef ? 36 : 6;
 const timeWidth = timeSignature ? Math.max(String(timeSignature.numerator).length, String(timeSignature.denominator).length) * 17 : 0;

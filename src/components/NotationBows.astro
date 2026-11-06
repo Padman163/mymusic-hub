@@ -1,0 +1,63 @@
+---
+import NotationClickable from './NotationClickable.astro';
+---
+
+<div class="bow-examples not-content" data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
+  <div class="bow-line">
+    <NotationClickable
+      embedded
+      clef="treble"
+      notes={[
+        { duration: 'quarter', step: 0 },
+        { duration: 'quarter', step: 0 },
+        { duration: 'quarter', step: 2 },
+        { duration: 'quarter', step: 4 }
+      ]}
+    />
+    <svg class="bow-marking" viewBox="0 0 100 92" preserveAspectRatio="none" role="img" aria-label="Haltebogen verbindet zwei Noten gleicher Tonhöhe">
+      <path d="M 21 66 C 26 71, 34 71, 39 66 C 34 73, 26 73, 21 66 Z" />
+    </svg>
+  </div>
+  <div class="bow-line">
+    <NotationClickable
+      embedded
+      clef="treble"
+      rightBarStyle="final"
+      notes={[
+        { duration: 'quarter', step: 0, articulation: 'accent', articulationPosition: 'below' },
+        { duration: 'quarter', step: 0, articulation: 'accent', articulationPosition: 'below' },
+        { duration: 'quarter', step: 2 },
+        { duration: 'quarter', step: 4 }
+      ]}
+    />
+    <svg class="bow-marking" viewBox="0 0 100 92" preserveAspectRatio="none" role="img" aria-label="Bindebogen verbindet zwei Noten unterschiedlicher Tonhöhe">
+      <path d="M 61 57 C 66 68, 74 63, 79 48 C 75 65, 66 70, 61 57 Z" />
+    </svg>
+  </div>
+</div>
+
+<style>
+  .bow-examples {
+    display: grid;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    background: #fff;
+    box-sizing: border-box;
+  }
+
+  .bow-line {
+    position: relative;
+    min-width: 0;
+  }
+
+  .bow-marking {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 92px;
+    fill: #111827;
+    pointer-events: none;
+  }
+</style>
