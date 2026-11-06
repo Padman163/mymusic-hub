@@ -1,7 +1,7 @@
-<form id="project-issue-form" class="todo-form">
+<form id="issue-tracker-form" class="issue-tracker-form">
 	<div class="field">
-		<label for="issue-type">Eintragstyp</label>
-		<select id="issue-type" name="type" required>
+		<label for="contribution-type">Typ</label>
+		<select id="contribution-type" name="type" required>
 			<option value="Bug">Bug</option>
 			<option value="Feature">Feature</option>
 			<option value="Decision">Decision</option>
@@ -9,9 +9,9 @@
 	</div>
 
 	<div class="field">
-		<label for="issue-title">Titel</label>
+		<label for="contribution-title">Titel</label>
 		<input
-			id="issue-title"
+			id="contribution-title"
 			name="title"
 			type="text"
 			maxlength="120"
@@ -21,9 +21,9 @@
 	</div>
 
 	<div class="field">
-		<label for="issue-description">Beschreibung</label>
+		<label for="contribution-description">Beschreibung</label>
 		<textarea
-			id="issue-description"
+			id="contribution-description"
 			name="description"
 			rows="7"
 			placeholder="Worum geht es? Ergänze bei Bugs gern die Schritte zum Nachstellen."
@@ -31,11 +31,12 @@
 		></textarea>
 	</div>
 
-	<button type="submit">Auf GitHub weiter</button>
+	<button type="submit">Beitrag speichern</button>
+	<p class="form-status" role="status" aria-live="polite"></p>
 </form>
 
 <style>
-	.todo-form {
+	.issue-tracker-form {
 		display: grid;
 		gap: 1rem;
 		max-width: 42rem;
@@ -84,6 +85,10 @@
 		color: var(--sl-color-text-accent);
 	}
 
+	.form-status {
+		margin: 0;
+	}
+
 	input:focus-visible,
 	select:focus-visible,
 	textarea:focus-visible,
@@ -94,13 +99,20 @@
 </style>
 
 <script>
-	const form = document.querySelector<HTMLFormElement>('#project-issue-form');
+	const form = document.querySelector<HTMLFormElement>('#issue-tracker-form');
 
 	if (!(form instanceof HTMLFormElement)) {
 		throw new Error('Das Projektierungsformular wurde nicht gefunden.');
 	}
 
-	form.addEventListener('submit', (event) => {
+	const submitButton = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+	const status = form.querySelector<HTMLParagraphElement>('.form-status');
+
+	if (!(submitButton instanceof HTMLButtonElement) || !(status instanceof HTMLParagraphElement)) {
+		throw new Error('Die Rückmeldung des Projektierungsformulars wurde nicht gefunden.');
+	}
+
+	form.addEventListener('submit', async (event) => {
 		event.preventDefault();
 
 		const typeField = form.elements.namedItem('type');
@@ -139,9 +151,37 @@
 			return;
 		}
 
-		const issueUrl = new URL('https://github.com/Padman163/mymusic-hub/issues/new');
-		issueUrl.searchParams.set('title', `[${type}] ${title}`);
-		issueUrl.searchParams.set('body', `## Typ\n${type}\n\n## Beschreibung\n${description}`);
-		window.open(issueUrl, '_blank', 'noopener,noreferrer');
+		status.textContent = 'Beitrag wird gespeichert …';
+		submitButton.disabled = true;
+
+		try {
+			const response = await fetch('/api/contributions', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ type, title, description }),
+			});
+
+			const result: unknown = await response.json();
+			if (!response.ok) {
+				const message =
+					typeof result === 'object' &&
+					result !== null &&
+					'error' in result &&
+					typeof result.error === 'string'
+						? result.error
+						: 'Der Beitrag konnte nicht gespeichert werden.';
+				throw new Error(message);
+			}
+
+			status.textContent = 'Beitrag wurde gespeichert.';
+			form.reset();
+		} catch (error) {
+			status.textContent =
+				error instanceof Error
+					? error.message
+					: 'Der Beitrag konnte wegen eines unerwarteten Fehlers nicht gespeichert werden.';
+		} finally {
+			submitButton.disabled = false;
+		}
 	});
 </script>
