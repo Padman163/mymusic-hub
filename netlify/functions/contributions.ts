@@ -1,4 +1,6 @@
 import type { Config } from '@netlify/functions';
+import { defaultContributionStatus, isContributionStatus } from '../../src/lib/contribution-status';
+import { isContributionArea } from '../../src/lib/contribution-area';
 import {
 	ContributionConflictError,
 	ContributionNotFoundError,
@@ -22,13 +24,15 @@ function isContributionType(value: unknown): value is Contribution['type'] {
 
 function contributionFields(value: unknown): ContributionFields | null {
 	if (!isRecord(value)) return null;
-	const { type, title, description } = value;
+	const { type, title, description, status, area } = value;
 	if (
 		!isContributionType(type) ||
 		typeof title !== 'string' || !title.trim() || title.trim().length > 120 ||
-		typeof description !== 'string' || !description.trim() || description.trim().length > 10_000
+		typeof description !== 'string' || !description.trim() || description.trim().length > 10_000 ||
+		(status !== undefined && !isContributionStatus(status)) ||
+		(area !== undefined && !isContributionArea(area))
 	) return null;
-	return { type, title: title.trim(), description: description.trim() };
+	return { type, title: title.trim(), description: description.trim(), ...(status === undefined ? {} : { status }), ...(area === undefined ? {} : { area }) };
 }
 
 function isContribution(value: unknown): value is Contribution {
@@ -37,7 +41,9 @@ function isContribution(value: unknown): value is Contribution {
 		isContributionType(value.type) &&
 		typeof value.title === 'string' && value.title.length <= 120 &&
 		typeof value.description === 'string' && value.description.length <= 10_000 &&
-		typeof value.createdAt === 'string' && value.createdAt.length <= 100;
+		typeof value.createdAt === 'string' && value.createdAt.length <= 100 &&
+		(value.status === undefined || isContributionStatus(value.status)) &&
+		(value.area === undefined || isContributionArea(value.area));
 }
 
 export const config: Config = {
@@ -91,7 +97,7 @@ export default async (request: Request): Promise<Response> => {
 		}
 		const fields = request.method === 'PATCH' ? contributionFields(body.fields) : null;
 		if (request.method === 'PATCH' && !fields) {
-			return jsonResponse(400, { error: 'Bitte gib einen gültigen Typ, Titel und eine Beschreibung ein.' });
+			return jsonResponse(400, { error: 'Bitte gib einen gültigen Typ, Bereich, Titel und eine Beschreibung ein.' });
 		}
 		try {
 			await modifyContribution(body.expected, fields);
@@ -109,11 +115,11 @@ export default async (request: Request): Promise<Response> => {
 	}
 
 	const fields = contributionFields(body);
-	if (!fields) {
-		return jsonResponse(400, { error: 'Bitte gib einen gültigen Typ, Titel (maximal 120 Zeichen) und eine Beschreibung (maximal 10000 Zeichen) ein.' });
+	if (!fields || !fields.area) {
+		return jsonResponse(400, { error: 'Bitte gib einen gültigen Typ und Bereich, einen Titel (maximal 120 Zeichen) und eine Beschreibung (maximal 10000 Zeichen) ein.' });
 	}
 
-	const contribution: Contribution = { id: crypto.randomUUID(), ...fields, createdAt: new Date().toISOString() };
+	const contribution: Contribution = { id: crypto.randomUUID(), ...fields, status: fields.status ?? defaultContributionStatus, createdAt: new Date().toISOString() };
 
 	try {
 		await saveContribution(contribution);

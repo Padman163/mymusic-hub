@@ -1,12 +1,17 @@
+import { defaultContributionStatus, type ContributionStatus } from '../../../src/lib/contribution-status';
+import type { ContributionArea } from '../../../src/lib/contribution-area';
+
 export interface Contribution {
 	id: string;
 	type: 'Bug' | 'Feature' | 'Decision';
 	title: string;
 	description: string;
 	createdAt: string;
+	status?: ContributionStatus;
+	area?: ContributionArea;
 }
 
-export type ContributionFields = Pick<Contribution, 'type' | 'title' | 'description'>;
+export type ContributionFields = Pick<Contribution, 'type' | 'title' | 'description' | 'status' | 'area'>;
 
 export class ContributionNotFoundError extends Error {}
 export class ContributionConflictError extends Error {}
@@ -137,7 +142,9 @@ export async function modifyContribution(
 				!('type' in item) || item.type !== expected.type ||
 				!('title' in item) || item.title !== expected.title ||
 				!('description' in item) || item.description !== expected.description ||
-				!('createdAt' in item) || item.createdAt !== expected.createdAt
+				!('createdAt' in item) || item.createdAt !== expected.createdAt ||
+				('area' in item ? item.area : undefined) !== expected.area ||
+				(('status' in item ? item.status : defaultContributionStatus) !== (expected.status ?? defaultContributionStatus))
 			) {
 				throw new ContributionConflictError();
 			}

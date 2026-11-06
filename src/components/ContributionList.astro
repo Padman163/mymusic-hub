@@ -1,5 +1,6 @@
 ---
 import IssueTrackerForm from './IssueTrackerForm.astro';
+import './contribution-tags.css';
 ---
 
 <section aria-label="Gespeicherte Beiträge">
@@ -132,10 +133,14 @@ import IssueTrackerForm from './IssueTrackerForm.astro';
 		font-size: 0.875rem;
 	}
 
-	.contribution-list :global(.contribution-tag) {
+	.contribution-list :global(.contribution-status),
+	.contribution-list :global(.contribution-area) {
 		display: inline-flex;
 		align-items: center;
-		gap: 0.3rem;
+		justify-content: center;
+		box-sizing: border-box;
+		width: 7rem;
+		flex-shrink: 0;
 		margin: 0;
 		border: 1px solid currentColor;
 		border-radius: 999px;
@@ -144,34 +149,29 @@ import IssueTrackerForm from './IssueTrackerForm.astro';
 		line-height: 1.4;
 	}
 
-	.contribution-list :global(.contribution-tag svg) {
-		width: 1rem;
-		height: 1rem;
-		margin: 0;
-		flex-shrink: 0;
+	.contribution-list :global(.contribution-status[data-status='New']) {
+		border-color: var(--sl-color-gray-4);
+		color: var(--sl-color-text);
 	}
 
-	.contribution-list :global(.contribution-tag[data-tag='Bug']) {
-		color: #b91c1c;
+	.contribution-list :global(.contribution-area) {
+		border-color: var(--sl-color-gray-4);
+		color: var(--sl-color-text);
 	}
 
-	.contribution-list :global(.contribution-tag[data-tag='Feature']) {
+	.contribution-list :global(.contribution-status[data-status='Active']) {
 		color: #1d4ed8;
 	}
 
-	.contribution-list :global(.contribution-tag[data-tag='Decision']) {
+	.contribution-list :global(.contribution-status[data-status='Resolved']) {
 		color: #15803d;
 	}
 
-	:global(:root[data-theme='dark']) .contribution-list :global(.contribution-tag[data-tag='Bug']) {
-		color: #fca5a5;
-	}
-
-	:global(:root[data-theme='dark']) .contribution-list :global(.contribution-tag[data-tag='Feature']) {
+	:global(:root[data-theme='dark']) .contribution-list :global(.contribution-status[data-status='Active']) {
 		color: #93c5fd;
 	}
 
-	:global(:root[data-theme='dark']) .contribution-list :global(.contribution-tag[data-tag='Decision']) {
+	:global(:root[data-theme='dark']) .contribution-list :global(.contribution-status[data-status='Resolved']) {
 		color: #86efac;
 	}
 
@@ -295,6 +295,10 @@ import IssueTrackerForm from './IssueTrackerForm.astro';
 </style>
 
 <script>
+	import { contributionStatuses, defaultContributionStatus, isContributionStatus, type ContributionStatus } from '../lib/contribution-status';
+	import { addIcon, createTypePicker, createTypeTag, isContributionType, type ContributionType } from '../lib/contribution-types';
+	import { contributionAreas, isContributionArea, type ContributionArea } from '../lib/contribution-area';
+
 	const list = document.querySelector<HTMLUListElement>('#contribution-list');
 	const status = document.querySelector<HTMLParagraphElement>('#contribution-list-status');
 	const newButton = document.querySelector<HTMLButtonElement>('#new-contribution');
@@ -317,7 +321,7 @@ import IssueTrackerForm from './IssueTrackerForm.astro';
 		newCard.hidden = false;
 		newButton.hidden = true;
 		newButton.setAttribute('aria-expanded', 'true');
-		newForm.querySelector<HTMLSelectElement>('select')?.focus();
+		newForm.querySelector<HTMLInputElement>('input[name="type"]:checked')?.focus();
 	});
 
 	closeButton.addEventListener('click', () => {
@@ -355,51 +359,32 @@ import IssueTrackerForm from './IssueTrackerForm.astro';
 
 	interface Contribution {
 		id: string;
-		type: 'Bug' | 'Feature' | 'Decision';
+		type: ContributionType;
 		title: string;
 		description: string;
 		createdAt: string;
-	}
-
-	const typeIcons: Record<Contribution['type'], string[]> = {
-		Bug: ['M8 7l-2-2', 'M16 7l2-2', 'M12 9v12', 'M4 13h3', 'M17 13h3', 'M5 18l3-1', 'M19 18l-3-1', 'M9 8a3 3 0 0 1 6 0', 'M7 12a5 5 0 0 1 10 0v4a5 5 0 0 1-10 0Z'],
-		Feature: ['M12 3v18', 'M3 12h18', 'M6 6l12 12', 'M18 6L6 18'],
-		Decision: ['M5 12l4 4L19 6', 'M12 3a9 9 0 1 1-9 9'],
-	};
-
-	function addIcon(container: HTMLElement, paths: string[]) {
-		const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-		svg.setAttribute('viewBox', '0 0 24 24');
-		svg.setAttribute('fill', 'none');
-		svg.setAttribute('stroke', 'currentColor');
-		svg.setAttribute('stroke-width', '2');
-		svg.setAttribute('stroke-linecap', 'round');
-		svg.setAttribute('stroke-linejoin', 'round');
-		svg.setAttribute('aria-hidden', 'true');
-		for (const d of paths) {
-			const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-			path.setAttribute('d', d);
-			svg.append(path);
-		}
-		container.append(svg);
+		status?: ContributionStatus;
+		area?: ContributionArea;
 	}
 
 	function isContribution(value: unknown): value is Contribution {
 		if (typeof value !== 'object' || value === null) return false;
 		return (
 			'id' in value && typeof value.id === 'string' && value.id.length > 0 &&
-			'type' in value && (value.type === 'Bug' || value.type === 'Feature' || value.type === 'Decision') &&
+			'type' in value && isContributionType(value.type) &&
 			'title' in value && typeof value.title === 'string' &&
 			'description' in value && typeof value.description === 'string' &&
 			'createdAt' in value && typeof value.createdAt === 'string' &&
-			Number.isFinite(Date.parse(value.createdAt))
+			Number.isFinite(Date.parse(value.createdAt)) &&
+			(!('status' in value) || isContributionStatus(value.status)) &&
+			(!('area' in value) || isContributionArea(value.area))
 		);
 	}
 
 	async function changeContribution(
 		method: 'PATCH' | 'DELETE',
 		expected: Contribution,
-		fields?: Pick<Contribution, 'type' | 'title' | 'description'>,
+		fields?: Pick<Contribution, 'type' | 'title' | 'description' | 'status' | 'area'>,
 	) {
 		const response = await fetch('/api/contributions', {
 			method,
@@ -449,15 +434,19 @@ import IssueTrackerForm from './IssueTrackerForm.astro';
 		message.setAttribute('aria-live', 'polite');
 
 		function render() {
-			const tag = document.createElement('span');
-			tag.className = 'contribution-tag';
-			tag.dataset.tag = contribution.type;
-			addIcon(tag, typeIcons[contribution.type]);
-			tag.append(document.createTextNode(contribution.type));
+			const tag = createTypeTag(contribution.type);
 			const date = document.createElement('time');
 			date.dateTime = contribution.createdAt;
 			date.textContent = new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(contribution.createdAt));
-			meta.replaceChildren(tag, date);
+			const contributionStatus = document.createElement('span');
+			contributionStatus.className = 'contribution-status';
+			contributionStatus.dataset.status = contribution.status ?? defaultContributionStatus;
+			contributionStatus.textContent = contribution.status ?? defaultContributionStatus;
+			const contributionArea = document.createElement('span');
+			contributionArea.className = 'contribution-area';
+			if (contribution.area) contributionArea.dataset.area = contribution.area;
+			contributionArea.textContent = contribution.area ?? 'Ohne Bereich';
+			meta.replaceChildren(tag, contributionArea, contributionStatus, date);
 			title.textContent = contribution.title;
 			description.textContent = contribution.description;
 			edit.setAttribute('aria-label', `${contribution.title} bearbeiten`);
@@ -467,17 +456,34 @@ import IssueTrackerForm from './IssueTrackerForm.astro';
 			edit.hidden = true;
 			message.textContent = '';
 			const form = document.createElement('form');
-			const typeLabel = document.createElement('label');
-			typeLabel.textContent = 'Typ';
-			const type = document.createElement('select');
-			for (const value of ['Bug', 'Feature', 'Decision']) {
+			const typePicker = createTypePicker(contribution.type);
+			const areaLabel = document.createElement('label');
+			areaLabel.textContent = 'Bereich';
+			const areaInput = document.createElement('select');
+			areaInput.required = true;
+			const areaPlaceholder = document.createElement('option');
+			areaPlaceholder.value = '';
+			areaPlaceholder.textContent = 'Bitte auswählen';
+			areaInput.append(areaPlaceholder);
+			for (const value of contributionAreas) {
 				const option = document.createElement('option');
 				option.value = value;
 				option.textContent = value;
-				type.append(option);
+				areaInput.append(option);
 			}
-			type.value = contribution.type;
-			typeLabel.append(type);
+			areaInput.value = contribution.area ?? '';
+			areaLabel.append(areaInput);
+			const statusLabel = document.createElement('label');
+			statusLabel.textContent = 'Status';
+			const statusInput = document.createElement('select');
+			for (const value of contributionStatuses) {
+				const option = document.createElement('option');
+				option.value = value;
+				option.textContent = value;
+				statusInput.append(option);
+			}
+			statusInput.value = contribution.status ?? defaultContributionStatus;
+			statusLabel.append(statusInput);
 			const titleLabel = document.createElement('label');
 			titleLabel.textContent = 'Titel';
 			const titleInput = document.createElement('input');
@@ -519,7 +525,7 @@ import IssueTrackerForm from './IssueTrackerForm.astro';
 				edit.focus();
 			});
 			formActions.append(save, remove);
-			form.append(typeLabel, titleLabel, descriptionLabel, formActions);
+			form.append(typePicker, areaLabel, statusLabel, titleLabel, descriptionLabel, formActions);
 			item.insertBefore(form, message);
 			titleInput.focus();
 
@@ -528,7 +534,9 @@ import IssueTrackerForm from './IssueTrackerForm.astro';
 				save.disabled = true;
 				cancel.disabled = true;
 				remove.disabled = true;
-				type.disabled = true;
+				typePicker.disabled = true;
+				areaInput.disabled = true;
+				statusInput.disabled = true;
 				titleInput.disabled = true;
 				descriptionInput.disabled = true;
 				message.textContent = 'Beitrag wird gelöscht …';
@@ -544,7 +552,9 @@ import IssueTrackerForm from './IssueTrackerForm.astro';
 					save.disabled = false;
 					cancel.disabled = false;
 					remove.disabled = false;
-					type.disabled = false;
+					typePicker.disabled = false;
+					areaInput.disabled = false;
+					statusInput.disabled = false;
 					titleInput.disabled = false;
 					descriptionInput.disabled = false;
 				}
@@ -552,12 +562,22 @@ import IssueTrackerForm from './IssueTrackerForm.astro';
 
 			form.addEventListener('submit', async (event) => {
 				event.preventDefault();
-				const selectedType = type.value;
-				if (selectedType !== 'Bug' && selectedType !== 'Feature' && selectedType !== 'Decision') {
+				const selectedType = new FormData(form).get('type');
+				if (!isContributionType(selectedType)) {
 					message.textContent = 'Bitte wähle einen gültigen Typ.';
 					return;
 				}
-				const fields = { type: selectedType, title: titleInput.value.trim(), description: descriptionInput.value.trim() };
+				const selectedArea = areaInput.value;
+				if (!isContributionArea(selectedArea)) {
+					message.textContent = 'Bitte wähle einen gültigen Bereich.';
+					return;
+				}
+				const selectedStatus = statusInput.value;
+				if (!isContributionStatus(selectedStatus)) {
+					message.textContent = 'Bitte wähle einen gültigen Status.';
+					return;
+				}
+				const fields = { type: selectedType, area: selectedArea, status: selectedStatus, title: titleInput.value.trim(), description: descriptionInput.value.trim() };
 				if (!fields.title || !fields.description) {
 					message.textContent = 'Bitte gib einen Titel und eine Beschreibung ein.';
 					return;
@@ -565,7 +585,9 @@ import IssueTrackerForm from './IssueTrackerForm.astro';
 				save.disabled = true;
 				cancel.disabled = true;
 				remove.disabled = true;
-				type.disabled = true;
+				typePicker.disabled = true;
+				areaInput.disabled = true;
+				statusInput.disabled = true;
 				titleInput.disabled = true;
 				descriptionInput.disabled = true;
 				message.textContent = 'Beitrag wird gespeichert …';
@@ -585,7 +607,9 @@ import IssueTrackerForm from './IssueTrackerForm.astro';
 					save.disabled = false;
 					cancel.disabled = false;
 					remove.disabled = false;
-					type.disabled = false;
+					typePicker.disabled = false;
+					areaInput.disabled = false;
+					statusInput.disabled = false;
 					titleInput.disabled = false;
 					descriptionInput.disabled = false;
 				}

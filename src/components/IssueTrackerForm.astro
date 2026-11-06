@@ -1,10 +1,12 @@
 <form id="issue-tracker-form" class="issue-tracker-form">
+	<div id="contribution-type-field"></div>
+
 	<div class="field">
-		<label for="contribution-type">Typ</label>
-		<select id="contribution-type" name="type" required>
-			<option value="Bug">Bug</option>
-			<option value="Feature">Feature</option>
-			<option value="Decision">Decision</option>
+		<label for="contribution-area">Bereich</label>
+		<select id="contribution-area" name="area" required>
+			<option value="">Bitte auswählen</option>
+			<option value="Theorie">Theorie</option>
+			<option value="Praxis">Praxis</option>
 		</select>
 	</div>
 
@@ -100,6 +102,9 @@
 </style>
 
 <script>
+	import { createTypePicker, isContributionType } from '../lib/contribution-types';
+	import { isContributionArea } from '../lib/contribution-area';
+
 	const form = document.querySelector<HTMLFormElement>('#issue-tracker-form');
 
 	if (!(form instanceof HTMLFormElement)) {
@@ -108,20 +113,26 @@
 
 	const submitButton = form.querySelector<HTMLButtonElement>('button[type="submit"]');
 	const status = form.querySelector<HTMLParagraphElement>('.form-status');
+	const typeContainer = form.querySelector<HTMLDivElement>('#contribution-type-field');
 
-	if (!(submitButton instanceof HTMLButtonElement) || !(status instanceof HTMLParagraphElement)) {
+	if (!(submitButton instanceof HTMLButtonElement) || !(status instanceof HTMLParagraphElement) || !(typeContainer instanceof HTMLDivElement)) {
 		throw new Error('Die Rückmeldung des Projektierungsformulars wurde nicht gefunden.');
 	}
+
+	const typePicker = createTypePicker('Bug');
+	typeContainer.append(typePicker);
 
 	form.addEventListener('submit', async (event) => {
 		event.preventDefault();
 
 		const typeField = form.elements.namedItem('type');
+		const areaField = form.elements.namedItem('area');
 		const titleField = form.elements.namedItem('title');
 		const descriptionField = form.elements.namedItem('description');
 
 		if (
-			!(typeField instanceof HTMLSelectElement) ||
+			!(typeField instanceof RadioNodeList) ||
+			!(areaField instanceof HTMLSelectElement) ||
 			!(titleField instanceof HTMLInputElement) ||
 			!(descriptionField instanceof HTMLTextAreaElement)
 		) {
@@ -129,10 +140,14 @@
 		}
 
 		const type = typeField.value;
-		if (type !== 'Bug' && type !== 'Feature' && type !== 'Decision') {
-			typeField.setCustomValidity('Bitte wähle einen gültigen Eintragstyp.');
-			typeField.reportValidity();
-			typeField.setCustomValidity('');
+		if (!isContributionType(type)) {
+			status.textContent = 'Bitte wähle einen gültigen Eintragstyp.';
+			return;
+		}
+
+		const area = areaField.value;
+		if (!isContributionArea(area)) {
+			status.textContent = 'Bitte wähle einen gültigen Bereich.';
 			return;
 		}
 
@@ -154,7 +169,8 @@
 
 		status.textContent = 'Beitrag wird gespeichert …';
 		submitButton.disabled = true;
-		typeField.disabled = true;
+		typePicker.disabled = true;
+		areaField.disabled = true;
 		titleField.disabled = true;
 		descriptionField.disabled = true;
 		form.dispatchEvent(new CustomEvent('contribution:busy', { bubbles: true, detail: true }));
@@ -163,7 +179,7 @@
 			const response = await fetch('/api/contributions', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ type, title, description }),
+				body: JSON.stringify({ type, area, title, description }),
 			});
 
 			const result: unknown = await response.json();
@@ -188,7 +204,8 @@
 					: 'Der Beitrag konnte wegen eines unerwarteten Fehlers nicht gespeichert werden.';
 		} finally {
 			submitButton.disabled = false;
-			typeField.disabled = false;
+			typePicker.disabled = false;
+			areaField.disabled = false;
 			titleField.disabled = false;
 			descriptionField.disabled = false;
 			form.dispatchEvent(new CustomEvent('contribution:busy', { bubbles: true, detail: false }));
