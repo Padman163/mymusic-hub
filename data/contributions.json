@@ -39,10 +39,24 @@
     "id": "efca5807-bde1-453b-a543-83e7bc169145",
     "type": "Feature",
     "title": "Interaktives Gitarren-Tuning & Frequenz-Check",
-    "description": "- Stimmen der Gitarre per Web-Audio-API\n- Stimmgerät-Referenz: E2 = 82,4Hz, E4 = 329,6 Hz\n- Stimmregel: Immer von unten nach oben stimmen",
+    "description": "",
     "area": "Praxis",
     "status": "New",
-    "createdAt": "2026-11-06T15:48:41.006Z"
+    "createdAt": "2026-11-06T15:48:41.006Z",
+    "checklist": [
+      {
+        "text": "Stimmen der Gitarre per Web-Audio-API",
+        "checked": false
+      },
+      {
+        "text": "Stimmgerät-Referenz: E2 = 82,4Hz, E4 = 329,6 Hz",
+        "checked": false
+      },
+      {
+        "text": "Stimmregel: Immer von unten nach oben stimmen",
+        "checked": false
+      }
+    ]
   },
   {
     "id": "85f9a0ba-9d5f-4756-893d-8d01f38b55e1",
