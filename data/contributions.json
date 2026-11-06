@@ -238,5 +238,28 @@
     ],
     "status": "New",
     "createdAt": "2026-11-06T16:15:26.904Z"
+  },
+  {
+    "id": "386f5ff7-12d0-46df-af26-00d0238fe761",
+    "type": "Feature",
+    "title": "Taktarten-Trainer & Formteil-Parcours",
+    "description": "Spielpraxis für wechselnde Taktarten (4/4, 3/4, 2/4, 2/2, 6/8) und das Umsetzen von Ablaufzeichen.",
+    "area": "Praxis",
+    "checklist": [
+      {
+        "text": "Übungsstück mit Auftakt und Wiederholungsklammern (1/2) schreiben",
+        "checked": false
+      },
+      {
+        "text": "D.C. al Fine, Ritardando und Fermate ($\\fermata$) in den Parcours integrieren",
+        "checked": false
+      },
+      {
+        "text": "Didaktik-Hinweis zum echten Vom-Blatt-Ablauf ergänzen",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-06T16:15:58.577Z"
   }
 ]
