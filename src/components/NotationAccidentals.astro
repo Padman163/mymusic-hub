@@ -16,6 +16,16 @@ const flatSteps = [4, 7, 3, 6, 2] as const;
     <div class="accidental-measure">
       <NotationClickable embedded accidentals={flatSteps.map((step) => ({ type: 'flat', step }))} />
     </div>
+    <div class="accidental-measure">
+      <NotationClickable
+        embedded
+        notes={[
+          { duration: 'quarter', step: 7, accidental: 'sharp' },
+          { duration: 'quarter', step: 4, accidental: 'natural' },
+          { duration: 'quarter', step: 2, accidental: 'flat' }
+        ]}
+      />
+    </div>
   </div>
 </div>
 

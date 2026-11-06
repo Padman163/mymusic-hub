@@ -73,6 +73,9 @@ const accidentalSymbols = {
   flat: { glyph: '\uE260', label: 'b-Vorzeichen' }
 } as const;
 
+const noteHeadHalfWidth = 6.5;
+const accidentalNoteGap = 4;
+
 function escapeXml(value: string): string {
   return value.replace(/[&<>"']/g, (character) => ({
     '&': '&amp;',
@@ -231,7 +234,6 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     const outerControlY = (startY + endY) / 2 + (archAbove ? -arch : arch);
     const thickness = type === 'tie' ? 3 : 5;
     const innerControlY = outerControlY + (archAbove ? thickness : -thickness);
-    const noteHeadHalfWidth = 6.5;
     const startX = `calc(${start.percent} + ${start.offset + noteHeadHalfWidth}px)`;
     const curveWidth = `max(0px, calc(${span * 100}% - ${noteInset * span + noteHeadHalfWidth * 2}px))`;
     parts.push(`<svg class="notation-curve ${type}" x="${startX}" y="0" width="${curveWidth}" height="92" viewBox="0 0 100 92" preserveAspectRatio="none" aria-hidden="true"><path d="M 0 ${startY} Q 50 ${outerControlY} 100 ${endY} Q 50 ${innerControlY} 0 ${startY} Z" /></svg>`);
@@ -260,7 +262,8 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     parts.push(glyphText(noteGlyph, x, y, 'notation-note', 'middle'));
     if (note.dotted) parts.push(`<circle cx="${x}" cy="${y - 3}" r="1.25" fill="currentColor" stroke="none" />`);
     if (note.accidental) {
-      parts.push(glyphText(accidentalSymbols[note.accidental].glyph, x, y, 'notation-accidental', 'end'));
+      const accidentalOffset = noteHeadHalfWidth + accidentalNoteGap;
+      parts.push(`<g transform="translate(${-accidentalOffset} 0)">${glyphText(accidentalSymbols[note.accidental].glyph, x, y, 'notation-accidental', 'end')}</g>`);
     }
     if (note.articulation) {
       const symbol = articulationSymbols[note.articulation];
