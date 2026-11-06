@@ -104,5 +104,24 @@
         "checked": false
       }
     ]
+  },
+  {
+    "id": "c90558c0-5024-4300-ba9c-4ccead06691d",
+    "type": "Feature",
+    "title": "Druck-Release-Test & Greifpunkt-Disziplin",
+    "description": "Übung zur minimalen Haltekraft (Fret Buzz bis Dead Note zu klarem Ton) und korrekten Fingerplatzierung.",
+    "area": "Praxis",
+    "checklist": [
+      {
+        "text": "Positions-Anleitung (1 mm hinter Bundstäbchen) formulieren",
+        "checked": false
+      },
+      {
+        "text": "Erklärung zu ungewolltem Mikro-Bending durch zu viel Druck ergänzen",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-06T16:10:35.823Z"
   }
 ]
