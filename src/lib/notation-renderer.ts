@@ -89,18 +89,25 @@ const accidentalSymbols = {
 const noteHeadHalfWidth = 6.5;
 const accidentalNoteGap = 4;
 
+function prefixGeometry(clef: NotationClef | undefined, accidentals: NotationAccidental[], timeSignature: TimeSignature | undefined, repeatStart: boolean) {
+  const timeStart = clef ? 36 : 6;
+  const timeEnd = timeSignature ? timeStart + timeSignatureWidth(timeSignature) + 10 : timeStart;
+  const accidentalStart = timeEnd;
+  const accidentalEnd = accidentalStart + accidentals.length * 12;
+  const repeatStartX = accidentals.length ? accidentalEnd + 6 : timeSignature ? timeEnd : clef ? 36 : 0;
+  const prefixEnd = Math.max(
+    clef ? 36 : 0,
+    accidentals.length ? accidentalEnd : 0,
+    timeSignature ? timeEnd : 0,
+    repeatStart ? repeatStartX + 12 : 0
+  );
+  return { accidentalStart, timeStart, repeatStartX, prefixEnd };
+}
+
 export function minimumFirstNoteX(options: Pick<NotationRenderOptions, 'clef' | 'timeSignature' | 'accidentals' | 'repeatStart' | 'notes' | 'noteStart'>): number {
   const { clef, timeSignature, accidentals = [], repeatStart = false, notes = [], noteStart = 0 } = options;
   if (timeSignature) validateTimeSignature(timeSignature);
-  const prefixStart = (clef ? 36 : 6) + (repeatStart ? 24 : 0);
-  const accidentalStart = timeSignature ? prefixStart + timeSignatureWidth(timeSignature) + 10 : prefixStart;
-  const prefixEnd = Math.max(
-    clef ? 36 : 0,
-    repeatStart ? (clef ? 36 : 0) + 12 : 0,
-    timeSignature ? accidentalStart : 0,
-    accidentals.length ? accidentalStart + accidentals.length * 12 : 0,
-    noteStart
-  );
+  const prefixEnd = Math.max(prefixGeometry(clef, accidentals, timeSignature, repeatStart).prefixEnd, noteStart);
   return prefixEnd + 10 + (notes[0]?.accidental ? 16 : 0);
 }
 
@@ -161,20 +168,11 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
 
   const clefGlyph = clef === 'treble' ? '\uE050' : clef === 'bass' ? '\uE062' : undefined;
   const clefY = clef === 'bass' ? 37 : 55;
-  const repeatStartX = clef ? 36 : 0;
-  const prefixStart = (clef ? 36 : 6) + (repeatStart ? 24 : 0);
+  const { accidentalStart, timeStart, repeatStartX, prefixEnd } = prefixGeometry(clef, accidentals, timeSignature, repeatStart);
   const timeWidth = timeSignature
     ? timeSignatureWidth(timeSignature)
     : 0;
-  const timeStart = prefixStart;
-  const accidentalStart = timeSignature ? timeStart + timeWidth + 10 : prefixStart;
-  const noteInset = firstNoteX ?? Math.max(noteStart, timeSignature
-    ? accidentalStart + accidentals.length * 12 + 10
-    : accidentals.length
-      ? accidentalStart + accidentals.length * 12 + 10
-      : clef
-        ? 36
-        : 0);
+  const noteInset = firstNoteX ?? Math.max(noteStart, prefixEnd + (timeSignature || accidentals.length ? 10 : 0));
   const repeatEndInset = repeatEnd ? 16 : 0;
   const rhythmic = spacing === 'rhythmic' ? rhythmicPositions(notes) : undefined;
   const notePosition = (index: number) => {

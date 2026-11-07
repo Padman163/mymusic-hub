@@ -186,6 +186,60 @@ test('system layout repeats the original clef on every rendered line', () => {
   assert.throws(() => arrangeNotationSystems(measures, 0), /mindestens einen Takt/);
 });
 
+test('key signatures persist across line breaks, changes and mixed system sizes', () => {
+  const sharps = [{ type: 'sharp', step: 8 }, { type: 'sharp', step: 5 }];
+  const flats = [{ type: 'flat', step: 4 }];
+  const measures = [
+    { clef: 'treble', accidentals: sharps },
+    { clef: false },
+    { clef: false },
+    { clef: false, accidentals: flats },
+    { clef: false },
+    { clef: false, accidentals: [] },
+    { clef: false },
+    { clef: false, accidentals: sharps },
+    { clef: false }
+  ];
+  const wide = arrangeNotationSystems(measures, [2, 2, 3, 2]);
+  assert.deepEqual(wide[0].map((m) => m.accidentals), [sharps, undefined]);
+  assert.deepEqual(wide[1][0].accidentals, sharps);
+  assert.deepEqual(wide[1][1].accidentals, [
+    { type: 'natural', step: 8 }, { type: 'natural', step: 5 }, ...flats
+  ]);
+  assert.deepEqual(wide[2].map((m) => m.accidentals), [flats, [{ type: 'natural', step: 4 }], undefined]);
+  assert.deepEqual(wide[3].map((m) => m.accidentals), [sharps, undefined]);
+  const narrow = arrangeNotationSystems(measures, 1);
+  assert.deepEqual(narrow[2][0].accidentals, sharps);
+  assert.deepEqual(narrow[3][0].accidentals, wide[1][1].accidentals);
+  assert.deepEqual(narrow[5][0].accidentals, [{ type: 'natural', step: 4 }]);
+  assert.deepEqual(narrow[6][0].accidentals, []);
+  assert.throws(() => arrangeNotationSystems(measures, [2, 2]), /alle Takte umfassen/);
+  assert.throws(() => arrangeNotationSystems([{ clef: 'treble', accidentals: [{ type: 'natural', step: 4 }] }], 1), /Tonartvorzeichnung/);
+});
+
+test('time signature precedes key signature and repeat marks without overlapping the first note', () => {
+  const options = {
+    clef: 'treble',
+    accidentals: [{ type: 'sharp', step: 8 }, { type: 'sharp', step: 5 }],
+    timeSignature: { numerator: 4, denominator: 4 },
+    repeatStart: true,
+    notes: [{ duration: 'quarter', step: 2 }]
+  };
+  const firstNoteX = minimumFirstNoteX(options);
+  const svg = renderNotationSvg({ ...options, firstNoteX });
+  const accidentalX = [...svg.matchAll(/class="notation-accidental" x="([\d.]+)"/g)].map((match) => Number(match[1]));
+  const timeX = Number(svg.match(/class="notation-time" x="([\d.]+)"/)[1]);
+  const repeatX = Number(svg.match(/<line x1="([\d.]+)" y1="28" x2="\1" y2="64" stroke-width="4"/)[1]);
+  assert.ok(timeX > 6 && timeX < accidentalX[0]);
+  assert.ok(accidentalX[0] < accidentalX[1] && accidentalX[1] + 18 <= repeatX && repeatX + 8 < firstNoteX);
+
+  const withoutTime = { ...options, timeSignature: undefined };
+  const repeatSvg = renderNotationSvg({ ...withoutTime, firstNoteX: minimumFirstNoteX(withoutTime) });
+  const lastAccidentalX = [...repeatSvg.matchAll(/class="notation-accidental" x="([\d.]+)"/g)].map((match) => Number(match[1])).at(-1);
+  const repeatWithoutTimeX = Number(repeatSvg.match(/<line x1="([\d.]+)" y1="28" x2="\1" y2="64" stroke-width="4"/)[1]);
+  assert.ok(repeatWithoutTimeX - lastAccidentalX >= 18);
+});
+
 test('first notes align by measure column while leaving space for the widest prefix', () => {
   const notes = [{ duration: 'quarter', step: 2 }];
   const layouts = [

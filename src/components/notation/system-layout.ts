@@ -1,11 +1,15 @@
-import { assertNoClefChanges, minimumFirstNoteX, type NotationClef, type NotationRenderOptions } from '../../lib/notation-renderer.ts';
+import { assertNoClefChanges, minimumFirstNoteX, type NotationAccidental, type NotationClef, type NotationRenderOptions } from '../../lib/notation-renderer.ts';
 
-export function arrangeNotationSystems<T extends { clef?: NotationClef | false }>(
+export function arrangeNotationSystems<T extends { clef?: NotationClef | false; accidentals?: NotationAccidental[] }>(
   measures: readonly T[],
-  measuresPerSystem: number
-): (Omit<T, 'clef'> & { clef: NotationClef | false; firstNoteX: number })[][] {
-  if (!Number.isSafeInteger(measuresPerSystem) || measuresPerSystem < 1) {
+  measuresPerSystem: number | readonly number[]
+): (Omit<T, 'clef' | 'accidentals'> & { clef: NotationClef | false; accidentals?: NotationAccidental[]; firstNoteX: number })[][] {
+  const counts = typeof measuresPerSystem === 'number' ? [measuresPerSystem] : measuresPerSystem;
+  if (counts.length === 0 || counts.some((count) => !Number.isSafeInteger(count) || count < 1)) {
     throw new Error('Ein Notensystem muss mindestens einen Takt enthalten.');
+  }
+  if (typeof measuresPerSystem !== 'number' && counts.reduce((sum, count) => sum + count, 0) !== measures.length) {
+    throw new Error('Die Taktzahlen der Systeme müssen zusammen alle Takte umfassen.');
   }
 
   if (measures.length === 0) return [];
@@ -13,12 +17,29 @@ export function arrangeNotationSystems<T extends { clef?: NotationClef | false }
   const clef = measures[0].clef;
   if (!clef) throw new Error('Für den Zeilenumbruch wird ein Anfangsschlüssel benötigt.');
 
-  const systems: (Omit<T, 'clef'> & { clef: NotationClef | false })[][] = [];
-  for (let index = 0; index < measures.length; index += measuresPerSystem) {
-    systems.push(measures.slice(index, index + measuresPerSystem).map((measure, offset) => ({
-      ...measure,
-      clef: offset === 0 ? clef : false
-    })));
+  const systems: (Omit<T, 'clef' | 'accidentals'> & { clef: NotationClef | false; accidentals?: NotationAccidental[] })[][] = [];
+  let active: NotationAccidental[] = [];
+  let index = 0;
+  let systemIndex = 0;
+  while (index < measures.length) {
+    const count = typeof measuresPerSystem === 'number' ? measuresPerSystem : counts[systemIndex];
+    systems.push(measures.slice(index, index + count).map((measure, offset) => {
+      const next = measure.accidentals;
+      if (next?.some((sign) => sign.type === 'natural')) {
+        throw new Error('Eine Tonartvorzeichnung darf nur Kreuze oder b-Vorzeichen enthalten.');
+      }
+      const changed = next !== undefined && (next.length !== active.length ||
+        next.some((sign, i) => sign.type !== active[i]?.type || sign.step !== active[i]?.step));
+      const cancellations: NotationAccidental[] = changed
+        ? active.filter((old) => !next.some((sign) => sign.type === old.type && (sign.step - old.step) % 7 === 0))
+          .map(({ step }) => ({ type: 'natural', step }))
+        : [];
+      if (changed) active = next;
+      const accidentals = changed ? [...cancellations, ...active] : offset === 0 ? active : undefined;
+      return { ...measure, clef: offset === 0 ? clef : false, accidentals };
+    }));
+    index += count;
+    systemIndex += 1;
   }
   return alignFirstNotesInSystems(systems);
 }

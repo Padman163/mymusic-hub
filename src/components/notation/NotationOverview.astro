@@ -2,7 +2,7 @@
 import NotationVisual from './NotationVisual.astro';
 import { type NotationAccidental, type NotationCurve, type NotationEvent } from '../../lib/notation-renderer';
 import { omitUnchangedTimeSignatures, type TimeSignature } from '../music/time-signature.ts';
-import { alignFirstNotesInSystems, arrangeNotationSystems } from './system-layout.ts';
+import { arrangeNotationSystems } from './system-layout.ts';
 interface Measure {
   measureNumber?: string | number;
   clef?: 'treble' | 'bass' | false;
@@ -241,10 +241,7 @@ const systems: Measure[][] = [
 const measures = systems.flat();
 const renderedMeasures = omitUnchangedTimeSignatures([measures])[0];
 const layouts = [
-  { className: 'overview-layout-wide', systems: alignFirstNotesInSystems([
-    ...arrangeNotationSystems(renderedMeasures.slice(0, 12), 2),
-    ...arrangeNotationSystems(renderedMeasures.slice(12), 3)
-  ]) },
+  { className: 'overview-layout-wide', systems: arrangeNotationSystems(renderedMeasures, [2, 2, 2, 2, 2, 2, 3, 3]) },
   { className: 'overview-layout-narrow', systems: arrangeNotationSystems(renderedMeasures, 1) }
 ];
 ---
