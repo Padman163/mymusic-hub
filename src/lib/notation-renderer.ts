@@ -1,5 +1,5 @@
 import { articulationPlacement, articulationSymbols, renderArticulation, type Articulation } from '../components/music/articulation.ts';
-import { renderBarLine, renderRepeatEnd, renderRepeatStart } from '../components/music/barline.ts';
+import { renderBarLine, renderRepeatEndAtBoundary, renderRepeatStart } from '../components/music/barline.ts';
 import { renderCurve, validateCurves, type MusicCurve } from '../components/music/curve.ts';
 import { collectBeamGroups, durationLabels, flagGlyph, renderBeam, renderDot, renderStem, type Duration } from '../components/music/rhythm.ts';
 import { escapeXml, glyphText } from '../components/music/svg.ts';
@@ -138,12 +138,13 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
       : clef
         ? 36
         : 0);
+  const repeatEndInset = repeatEnd ? 16 : 0;
   const notePosition = (index: number) => {
     const fraction = firstNoteX === undefined ? (index + 1) / (notes.length + 1) : index / notes.length;
     return {
       percent: `${fraction * 100}%`,
       fraction,
-      offset: noteInset * (1 - fraction)
+      offset: noteInset * (1 - fraction) - repeatEndInset * fraction
     };
   };
   const beamStemEnds = new Map<number, number>();
@@ -191,9 +192,9 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
   ];
 
   if (showLeftBar) parts.push(renderBarLine(0, 28, 64));
-  if (showRightBar && rightBarStyle === 'single') parts.push(renderBarLine('100%', 28, 64));
+  if (showRightBar && rightBarStyle === 'single' && !repeatEnd) parts.push(renderBarLine('100%', 28, 64));
   if (repeatEnd) {
-    parts.push(renderRepeatEnd('90%', '94%', '98%', 28, 64));
+    parts.push(renderRepeatEndAtBoundary(28, 64));
   }
   if (clefGlyph) parts.push(glyphText(clefGlyph, 6, clefY, 'notation-clef'));
   if (repeatStart) {
@@ -233,7 +234,7 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     const archAbove = placement ? placement === 'above' : notes[from].step >= 4;
     const span = end.fraction - start.fraction;
     const startX = `calc(${start.percent} + ${start.offset + noteHeadHalfWidth}px)`;
-    const curveWidth = `max(0px, calc(${span * 100}% - ${noteInset * span + noteHeadHalfWidth * 2}px))`;
+    const curveWidth = `max(0px, calc(${span * 100}% - ${(noteInset + repeatEndInset) * span + noteHeadHalfWidth * 2}px))`;
     parts.push(renderCurve(type, startX, curveWidth, 92, startY, endY, archAbove, 'notation-curve'));
   });
 

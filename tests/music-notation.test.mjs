@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { articulationPlacement, renderArticulation } from '../src/components/music/articulation.ts';
-import { renderRepeatEnd, renderRepeatStart } from '../src/components/music/barline.ts';
+import { renderRepeatEnd, renderRepeatEndAtBoundary, renderRepeatStart } from '../src/components/music/barline.ts';
 import { renderCurve, validateCurves } from '../src/components/music/curve.ts';
 import { dynamicsForHairpin } from '../src/components/music/dynamics.ts';
 import { collectBeamGroups, flagGlyph, renderDot } from '../src/components/music/rhythm.ts';
@@ -53,6 +53,22 @@ test('articulation and curves use caller-provided positions', () => {
 test('bar and repeat signs use the caller supplied system geometry', () => {
   assert.match(renderRepeatStart(10, 0, 45), /x1="10" y1="0" x2="10" y2="45"/);
   assert.match(renderRepeatEnd('90%', '94%', '98%', 0, 45), /x1="98%" y1="0" x2="98%" y2="45"/);
+  const boundary = renderRepeatEndAtBoundary(28, 64);
+  assert.match(boundary, /x="100%" y="28" width="13" height="36"/);
+  assert.match(boundary, /cx="2" cy="13\.5"/);
+  assert.match(boundary, /cx="2" cy="22\.5"/);
+  assert.match(boundary, /x1="5\.5" y1="0" x2="5\.5" y2="36"/);
+  assert.match(boundary, /x1="11" y1="0" x2="11" y2="36" stroke-width="4"/);
+});
+
+test('repeat end replaces the ordinary right bar and reserves space for the final note', () => {
+  const notes = Array.from({ length: 8 }, () => ({ duration: 'quarter', step: 2 }));
+  const svg = renderNotationSvg({ notes, repeatEnd: true, showRightBar: true });
+  assert.match(svg, /<svg x="100%" y="28" width="13" height="36"/);
+  assert.doesNotMatch(svg, /<line x1="100%" y1="28" x2="100%" y2="64"/);
+  const offsets = [...svg.matchAll(/<g transform="translate\(([-.\d]+) 0\)"><text class="notation-note"/g)];
+  assert.equal(offsets.length, 8);
+  assert.ok(Math.abs(Number(offsets[7][1]) + 16 * 8 / 9) < 0.000001);
 });
 
 test('system layout repeats the original clef on every rendered line', () => {
