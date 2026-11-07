@@ -1,5 +1,5 @@
 ---
-import NotationClickable from './NotationClickable.astro';
+import NotationVisual from './NotationVisual.astro';
 import { assertNoClefChanges } from '../../lib/notation-renderer';
 
 const articulations = [
@@ -20,7 +20,7 @@ assertNoClefChanges(clefs, 'NotationArticulations');
   <div class="articulation-row">
     {articulations.map(({ type, position, step }, index) => (
       <div class="articulation-measure">
-        <NotationClickable
+        <NotationVisual
           embedded
           clef={clefs[index]}
           rightBarStyle={index === articulations.length - 1 ? 'final' : 'single'}

@@ -1,0 +1,12 @@
+---
+import '../../styles/music.css';
+
+interface Props {
+  text: string;
+  beatsPerMinute: number;
+}
+
+const { text, beatsPerMinute } = Astro.props;
+---
+
+<div class="tempo-heading"><strong>{text}</strong><br /><span aria-label={`Viertelnote gleich ${beatsPerMinute}`}><span class="metronome-note" aria-hidden="true">{'\uECA5'}</span> = {beatsPerMinute}</span></div>

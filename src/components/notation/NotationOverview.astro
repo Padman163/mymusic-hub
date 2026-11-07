@@ -1,10 +1,12 @@
 ---
-import NotationClickable from './NotationClickable.astro';
-import { assertNoClefChanges, type NotationAccidental, type NotationCurve, type NotationNote } from '../../lib/notation-renderer';
+import NotationVisual from './NotationVisual.astro';
+import { type NotationAccidental, type NotationCurve, type NotationNote } from '../../lib/notation-renderer';
+import { omitUnchangedTimeSignatures, type TimeSignature } from '../music/time-signature.ts';
+import { arrangeNotationSystems } from './system-layout.ts';
 interface Measure {
   measureNumber?: string | number;
   clef?: 'treble' | 'bass' | false;
-  timeSignature?: { numerator: number; denominator: number };
+  timeSignature?: TimeSignature;
   accidentals?: NotationAccidental[];
   notes: NotationNote[];
   rightBarStyle: 'single' | 'final';
@@ -40,8 +42,8 @@ const systems: Measure[][] = [
       notes: [
         { duration: 'eighth', step: 2, beamGroup: 'eighths' },
         { duration: 'eighth', step: 3, beamGroup: 'eighths' },
-        { duration: 'sixteenth', step: 4, beamGroup: 'measure-2-sixteenths' },
-        { duration: 'sixteenth', step: 5, beamGroup: 'measure-2-sixteenths' },
+        { duration: 'sixteenth', step: 4 },
+        { duration: 'sixteenth', step: 5 },
         { duration: 'sixteenth', step: 6, beamGroup: 'measure-2-sixteenths' },
         { duration: 'sixteenth', step: 5, beamGroup: 'measure-2-sixteenths' },
         { duration: 'quarter', step: 4 },
@@ -57,8 +59,8 @@ const systems: Measure[][] = [
         { from: 2, to: 3, type: 'slur', placement: 'above' }
       ],
       notes: [
-        { duration: 'quarter', step: 5, articulation: 'accent', articulationPosition: 'below' },
-        { duration: 'quarter', step: 5 },
+        { duration: 'quarter', step: 2, articulation: 'accent', articulationPosition: 'below' },
+        { duration: 'quarter', step: 2 },
         { duration: 'quarter', step: 2 },
         { duration: 'quarter', step: 4, articulation: 'marcato', articulationPosition: 'below' }
       ],
@@ -67,7 +69,7 @@ const systems: Measure[][] = [
     {
       measureNumber: 4,
       clef: false,
-      notes: [{ duration: 'whole', step: 4 }],
+      notes: [{ duration: 'whole', step: -2 }],
       rightBarStyle: 'single'
     }
   ],
@@ -91,8 +93,8 @@ const systems: Measure[][] = [
       ritAt: 0,
       aTempoAt: 2,
       notes: [
-        { duration: 'quarter', step: 6, accidental: 'sharp', articulation: 'staccato', articulationPosition: 'below' },
-        { duration: 'quarter', step: 4, accidental: 'natural', articulation: 'tenuto', articulationPosition: 'below' },
+        { duration: 'quarter', step: 2, accidental: 'sharp', articulation: 'staccato', articulationPosition: 'below' },
+        { duration: 'quarter', step: 2, accidental: 'natural', articulation: 'tenuto', articulationPosition: 'below' },
         { duration: 'quarter', step: 5, accidental: 'flat' },
         { duration: 'quarter', step: 3 }
       ],
@@ -130,7 +132,7 @@ const systems: Measure[][] = [
       clef: 'treble',
       timeSignature: { numerator: 3, denominator: 4 },
       notes: [
-        { duration: 'half', step: 4 },
+        { duration: 'half', step: 10 },
         { duration: 'quarter', step: 6 }
       ],
       rightBarStyle: 'single'
@@ -167,58 +169,51 @@ const systems: Measure[][] = [
       notes: [
         { duration: 'quarter', step: 2 },
         { duration: 'quarter', step: 4 },
-        { duration: 'quarter', step: 7, articulation: 'marcato', articulationPosition: 'above' }
+        { duration: 'quarter', step: 1, articulation: 'marcato', articulationPosition: 'below' }
       ],
       rightBarStyle: 'final'
     }
   ]
 ] as const;
 
-assertNoClefChanges(systems.flatMap((system) => system.map(({ clef }) => clef)), 'NotationOverview');
-let activeTimeSignature: { numerator: number; denominator: number } | undefined;
-const renderedSystems = systems.map((system) => system.map((measure) => {
-  let timeSignature = measure.timeSignature;
-  if (timeSignature) {
-    const unchanged = activeTimeSignature
-      && activeTimeSignature.numerator === timeSignature.numerator
-      && activeTimeSignature.denominator === timeSignature.denominator;
-    if (unchanged) {
-      timeSignature = undefined;
-    } else {
-      activeTimeSignature = timeSignature;
-    }
-  }
-
-  return { ...measure, timeSignature };
-}));
+const measures = systems.flat();
+const renderedMeasures = omitUnchangedTimeSignatures([measures])[0];
+const layouts = [
+  { className: 'overview-layout-wide', systems: arrangeNotationSystems(renderedMeasures, 2) },
+  { className: 'overview-layout-narrow', systems: arrangeNotationSystems(renderedMeasures, 1) }
+];
 ---
 
 <div class="notation-overview not-content" data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
-  {renderedSystems.map((system) => (
-    <div class="overview-system">
-      {system.map((measure) => (
-        <div class="overview-measure">
-          <div class="measure-staff">
-            <NotationClickable
-              embedded
-              measureNumber={measure.measureNumber}
-              tempo={measure.tempo}
-              ritAt={measure.ritAt}
-              aTempoAt={measure.aTempoAt}
-              clef={measure.clef}
-              timeSignature={measure.timeSignature}
-              accidentals={measure.accidentals}
-              notes={measure.notes}
-              curves={measure.curves}
-              rightBarStyle={measure.rightBarStyle}
-              repeatStart={measure.repeatStart}
-              repeatEnd={measure.repeatEnd}
-              showRightBar={!measure.repeatEnd}
-              hairpin={measure.hairpin}
-              initialDynamic={measure.initialDynamic}
-            />
-          </div>
+  {layouts.map((layout) => (
+    <div class={layout.className}>
+      {layout.systems.map((system) => (
+        <div class="overview-system">
+          {system.map((measure) => (
+            <div class="overview-measure">
+              <div class="measure-staff">
+                <NotationVisual
+                  embedded
+                  measureNumber={measure.measureNumber}
+                  tempo={measure.tempo}
+                  ritAt={measure.ritAt}
+                  aTempoAt={measure.aTempoAt}
+                  clef={measure.clef}
+                  timeSignature={measure.timeSignature}
+                  accidentals={measure.accidentals}
+                  notes={measure.notes}
+                  curves={measure.curves}
+                  rightBarStyle={measure.rightBarStyle}
+                  repeatStart={measure.repeatStart}
+                  repeatEnd={measure.repeatEnd}
+                  showRightBar={!measure.repeatEnd}
+                  hairpin={measure.hairpin}
+                  initialDynamic={measure.initialDynamic}
+                />
         </div>
+            </div>
+          ))}
+          </div>
       ))}
     </div>
   ))}

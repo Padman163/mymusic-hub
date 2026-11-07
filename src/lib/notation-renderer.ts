@@ -1,5 +1,13 @@
-export type NotationDuration = 'whole' | 'half' | 'quarter' | 'eighth' | 'sixteenth';
-export type NotationArticulation = 'staccato' | 'tenuto' | 'accent' | 'marcato';
+import { articulationPlacement, articulationSymbols, renderArticulation, type Articulation } from '../components/music/articulation.ts';
+import { renderBarLine, renderRepeatEnd, renderRepeatStart } from '../components/music/barline.ts';
+import { renderCurve, validateCurves, type MusicCurve } from '../components/music/curve.ts';
+import { collectBeamGroups, durationLabels, flagGlyph, renderBeam, renderDot, renderStem, type Duration } from '../components/music/rhythm.ts';
+import { escapeXml, glyphText } from '../components/music/svg.ts';
+import { renderTempoMark, validateTempoChanges } from '../components/music/tempo.ts';
+import { renderTimeSignature, timeSignatureWidth, validateTimeSignature, type TimeSignature } from '../components/music/time-signature.ts';
+
+export type NotationDuration = Duration;
+export type NotationArticulation = Articulation;
 export type NotationClef = 'treble' | 'bass';
 export type NotationAccidental = { type: 'sharp' | 'natural' | 'flat'; step: number };
 export type NotationNote =
@@ -26,18 +34,13 @@ export type NotationNote =
       stem?: never;
     };
 
-export interface NotationCurve {
-  from: number;
-  to: number;
-  type: 'tie' | 'slur';
-  placement?: 'above' | 'below';
-}
+export type NotationCurve = MusicCurve;
 
 export interface NotationRenderOptions {
   clef?: NotationClef;
   notes?: NotationNote[];
   accidentals?: NotationAccidental[];
-  timeSignature?: { numerator: number; denominator: number };
+  timeSignature?: TimeSignature;
   noteStart?: number;
   showLeftBar?: boolean;
   showRightBar?: boolean;
@@ -61,26 +64,6 @@ export function assertNoClefChanges(clefs: readonly (NotationClef | false | unde
   }
 }
 
-const durationLabels: Record<NotationDuration, string> = {
-  whole: 'Ganze Note',
-  half: 'Halbe Note',
-  quarter: 'Viertelnote',
-  eighth: 'Achtelnote',
-  sixteenth: 'Sechzehntelnote'
-};
-
-const articulationSymbols: Record<NotationArticulation, {
-  above: string;
-  below: string;
-  belowOffset: number;
-  label: string;
-}> = {
-  staccato: { above: '\uE4A2', below: '\uE4A3', belowOffset: 12, label: 'Staccato' },
-  tenuto: { above: '\uE4A4', below: '\uE4A5', belowOffset: 12, label: 'Tenuto' },
-  accent: { above: '\uE4A0', below: '\uE4A1', belowOffset: 14, label: 'Akzent' },
-  marcato: { above: '\uE4AC', below: '\uE4AD', belowOffset: 14, label: 'Marcato' }
-};
-
 const accidentalSymbols = {
   sharp: { glyph: '\uE262', label: 'Kreuz' },
   natural: { glyph: '\uE261', label: 'Auflösungszeichen' },
@@ -89,20 +72,6 @@ const accidentalSymbols = {
 
 const noteHeadHalfWidth = 6.5;
 const accidentalNoteGap = 4;
-
-function escapeXml(value: string): string {
-  return value.replace(/[&<>"']/g, (character) => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&apos;'
-  })[character] as string);
-}
-
-function glyphText(glyph: string, x: string | number, y: string | number, className: string, anchor?: string): string {
-  return `<text class="${className}" x="${x}" y="${y}"${anchor ? ` text-anchor="${anchor}"` : ''}>${escapeXml(glyph)}</text>`;
-}
 
 export function renderNotationSvg(options: NotationRenderOptions): string {
   const {
@@ -122,55 +91,23 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     label
   } = options;
 
-  if (timeSignature && (!Number.isSafeInteger(timeSignature.numerator) || timeSignature.numerator <= 0 ||
-      !Number.isSafeInteger(timeSignature.denominator) || timeSignature.denominator <= 0 ||
-      !Number.isInteger(Math.log2(timeSignature.denominator)))) {
-    throw new Error('Ungültige Taktart: Der Zähler muss eine positive ganze Zahl und der Nenner eine positive Zweierpotenz sein.');
-  }
+  if (timeSignature) validateTimeSignature(timeSignature);
 
   notes.forEach((note) => {
     if (!Number.isInteger(note.step) || note.step < -2 || note.step > 10) {
       throw new Error(`Ungültige Notenposition: ${note.step}.`);
     }
   });
-  for (const [tempo, index] of [['rit.', ritAt], ['a tempo', aTempoAt]] as const) {
-    if (index !== undefined && (!Number.isInteger(index) || index < 0 || index >= notes.length)) {
-      throw new Error(`Ungültige Notenposition für "${tempo}": ${index}.`);
-    }
-  }
-  if (ritAt !== undefined && aTempoAt !== undefined && aTempoAt - ritAt < 2) {
-    throw new Error('"a tempo" muss mindestens zwei Notenpositionen nach "rit." stehen.');
-  }
-
-  const groups = new Map<string, { indices: number[]; duration: 'eighth' | 'sixteenth' }>();
-  notes.forEach((note, index) => {
-    if (note.beamGroup === undefined) return;
-    if (!note.beamGroup || (note.duration !== 'eighth' && note.duration !== 'sixteenth')) {
-      throw new Error('Balkengruppen benötigen einen Namen und dürfen nur Achtel- oder Sechzehntelnoten enthalten.');
-    }
-    const group = groups.get(note.beamGroup);
-    if (group && (group.duration !== note.duration || group.indices[group.indices.length - 1] !== index - 1)) {
-      throw new Error(`Balkengruppe "${note.beamGroup}" muss zusammenhängende Noten desselben Werts enthalten.`);
-    }
-    if (group) group.indices.push(index);
-    else groups.set(note.beamGroup, { indices: [index], duration: note.duration });
-  });
-  for (const [name, group] of groups) {
-    if (group.indices.length < 2) throw new Error(`Balkengruppe "${name}" benötigt mindestens zwei Noten.`);
-  }
-
-  curves.forEach(({ from, to }) => {
-    if (!Number.isInteger(from) || !Number.isInteger(to) || from < 0 || to >= notes.length || from >= to) {
-      throw new Error(`Ungültiger Bogen zwischen Noten ${from} und ${to}.`);
-    }
-  });
+  validateTempoChanges({ ritAt, aTempoAt }, notes.length);
+  const groups = collectBeamGroups(notes);
+  validateCurves(curves, notes.length);
 
   const clefGlyph = clef === 'treble' ? '\uE050' : clef === 'bass' ? '\uE062' : undefined;
   const clefY = clef === 'bass' ? 37 : 55;
   const repeatStartX = clef ? 36 : 0;
   const prefixStart = (clef ? 36 : 6) + (repeatStart ? 24 : 0);
   const timeWidth = timeSignature
-    ? Math.max(String(timeSignature.numerator).length, String(timeSignature.denominator).length) * 17
+    ? timeSignatureWidth(timeSignature)
     : 0;
   const timeStart = prefixStart;
   const accidentalStart = timeSignature ? timeStart + timeWidth + 10 : prefixStart;
@@ -204,8 +141,7 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
   const articulationPosition = (note: NotationNote, index: number): 'above' | 'below' => {
     const hasStem = note.duration ? note.duration !== 'whole' : note.stem === true;
     const stemUp = beamStemDirections.get(index) ?? note.step < 4;
-    if (hasStem && !stemUp) return 'above';
-    return note.articulationPosition ?? 'above';
+    return articulationPlacement(hasStem, stemUp, note.articulationPosition);
   };
 
   const description: string[] = [];
@@ -231,27 +167,19 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     ...[28, 37, 46, 55, 64].map((y) => `<line x1="0" y1="${y}" x2="100%" y2="${y}" />`)
   ];
 
-  if (showLeftBar) parts.push('<line x1="0" y1="28" x2="0" y2="64" />');
-  if (showRightBar && rightBarStyle === 'single') parts.push('<line x1="100%" y1="28" x2="100%" y2="64" />');
+  if (showLeftBar) parts.push(renderBarLine(0, 28, 64));
+  if (showRightBar && rightBarStyle === 'single') parts.push(renderBarLine('100%', 28, 64));
   if (repeatEnd) {
-    parts.push('<circle cx="90%" cy="41" r="1.5" fill="currentColor" stroke="none" />',
-      '<circle cx="90%" cy="51" r="1.5" fill="currentColor" stroke="none" />',
-      '<line x1="94%" y1="28" x2="94%" y2="64" />',
-      '<line x1="98%" y1="28" x2="98%" y2="64" stroke-width="4" />');
+    parts.push(renderRepeatEnd('90%', '94%', '98%', 28, 64));
   }
   if (clefGlyph) parts.push(glyphText(clefGlyph, 6, clefY, 'notation-clef'));
   if (repeatStart) {
-    parts.push(`<line x1="${repeatStartX}" y1="28" x2="${repeatStartX}" y2="64" stroke-width="4" />`,
-      `<line x1="${repeatStartX + 4}" y1="28" x2="${repeatStartX + 4}" y2="64" />`,
-      `<circle cx="${repeatStartX + 8}" cy="41" r="1.5" fill="currentColor" stroke="none" />`,
-      `<circle cx="${repeatStartX + 8}" cy="51" r="1.5" fill="currentColor" stroke="none" />`);
+    parts.push(renderRepeatStart(repeatStartX, 28, 64));
   }
 
   if (timeSignature) {
     const center = timeStart + timeWidth / 2;
-    const glyphs = (value: number) => [...String(value)].map((digit) => String.fromCodePoint(0xE080 + Number(digit))).join('');
-    parts.push(glyphText(glyphs(timeSignature.numerator), center, 37, 'notation-time', 'middle'));
-    parts.push(glyphText(glyphs(timeSignature.denominator), center, 55, 'notation-time', 'middle'));
+    parts.push(renderTimeSignature(timeSignature, center, 37, 55, 'notation-time'));
   }
 
   accidentals.forEach(({ type, step }, index) => {
@@ -270,7 +198,7 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     const lastBeamY = 64 - lastNote.step * 4.5 + (stemUp ? -31.5 : 31.5);
     for (let beam = 0; beam < (group.duration === 'sixteenth' ? 2 : 1); beam += 1) {
       const beamOffset = beam * (stemUp ? 6 : -6);
-      parts.push(`<line x1="calc(${first.percent} + ${first.offset + stemOffset}px)" y1="${firstBeamY + beamOffset}" x2="calc(${last.percent} + ${last.offset + stemOffset}px)" y2="${lastBeamY + beamOffset}" stroke-width="4" />`);
+      parts.push(renderBeam(`calc(${first.percent} + ${first.offset + stemOffset}px)`, firstBeamY + beamOffset, `calc(${last.percent} + ${last.offset + stemOffset}px)`, lastBeamY + beamOffset));
     }
   });
 
@@ -281,13 +209,9 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     const endY = 64 - notes[to].step * 4.5;
     const archAbove = placement ? placement === 'above' : notes[from].step >= 4;
     const span = end.fraction - start.fraction;
-    const arch = 18;
-    const outerControlY = (startY + endY) / 2 + (archAbove ? -arch : arch);
-    const thickness = type === 'tie' ? 3 : 5;
-    const innerControlY = outerControlY + (archAbove ? thickness : -thickness);
     const startX = `calc(${start.percent} + ${start.offset + noteHeadHalfWidth}px)`;
     const curveWidth = `max(0px, calc(${span * 100}% - ${noteInset * span + noteHeadHalfWidth * 2}px))`;
-    parts.push(`<svg class="notation-curve ${type}" x="${startX}" y="0" width="${curveWidth}" height="92" viewBox="0 0 100 92" preserveAspectRatio="none" aria-hidden="true"><path d="M 0 ${startY} Q 50 ${outerControlY} 100 ${endY} Q 50 ${innerControlY} 0 ${startY} Z" /></svg>`);
+    parts.push(renderCurve(type, startX, curveWidth, 92, startY, endY, archAbove, 'notation-curve'));
   });
 
   notes.forEach((note, index) => {
@@ -302,16 +226,16 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     }
     if (hasStem) {
       const stemOffset = position.offset + (stemUp ? 4.5 : -4.5);
-      parts.push(`<line x1="${x}" y1="${y}" x2="${x}" y2="${stemY}" transform="translate(${stemOffset} 0)" />`);
+      parts.push(renderStem(x, y, stemY, stemOffset));
     }
     const noteGlyph = note.duration === 'whole' ? '\uE0A2' : note.duration === 'half' || note.type === 'empty' ? '\uE0A3' : '\uE0A4';
     parts.push(`<g transform="translate(${position.offset} 0)">`);
     if (hasStem && (note.duration === 'eighth' || note.duration === 'sixteenth') && !note.beamGroup) {
-      const flag = note.duration === 'eighth' ? (stemUp ? '\uE240' : '\uE241') : (stemUp ? '\uE242' : '\uE243');
+      const flag = flagGlyph(note.duration, stemUp);
       parts.push(`<g transform="translate(${stemUp ? 4.5 : -4.5} 0)">${glyphText(flag, x, stemY, 'notation-note')}</g>`);
     }
     parts.push(glyphText(noteGlyph, x, y, 'notation-note', 'middle'));
-    if (note.dotted) parts.push(`<circle cx="${x}" cy="${y - 3}" r="1.5" transform="translate(${noteHeadHalfWidth + 3} 0)" fill="currentColor" stroke="none" />`);
+    if (note.dotted) parts.push(renderDot(x, y - 3, noteHeadHalfWidth + 3));
     if (note.accidental) {
       const accidentalOffset = noteHeadHalfWidth + accidentalNoteGap;
       parts.push(`<g transform="translate(${-accidentalOffset} 0)">${glyphText(accidentalSymbols[note.accidental].glyph, x, y, 'notation-accidental', 'end')}</g>`);
@@ -320,18 +244,18 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
       const symbol = articulationSymbols[note.articulation];
       const position = articulationPosition(note, index);
       const articulationY = y + (position === 'below' ? symbol.belowOffset : -12);
-      parts.push(glyphText(position === 'below' ? symbol.below : symbol.above, x, articulationY, 'notation-articulation', 'middle'));
+      parts.push(renderArticulation(note.articulation, position, x, articulationY, 'notation-articulation'));
     }
     parts.push('</g>');
   });
 
   if (ritAt !== undefined) {
     const position = notePosition(ritAt);
-    parts.push(`<text class="notation-tempo" x="${position.percent}" y="18" transform="translate(${position.offset} 0)" text-anchor="middle">rit.</text>`);
+    parts.push(renderTempoMark('rit.', position.percent, 18, position.offset, 'notation-tempo'));
   }
   if (aTempoAt !== undefined) {
     const position = notePosition(aTempoAt);
-    parts.push(`<text class="notation-tempo" x="${position.percent}" y="18" transform="translate(${position.offset} 0)" text-anchor="middle">a tempo</text>`);
+    parts.push(renderTempoMark('a tempo', position.percent, 18, position.offset, 'notation-tempo'));
   }
 
   parts.push('</svg>');

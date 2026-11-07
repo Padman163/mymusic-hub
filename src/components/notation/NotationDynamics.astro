@@ -1,6 +1,7 @@
 ﻿---
-import NotationClickable from './NotationClickable.astro';
-import NotationDynamicsMarks from './NotationDynamicsMarks.astro';
+import NotationVisual from './NotationVisual.astro';
+import DynamicsMarks from '../music/DynamicsMarks.astro';
+import { dynamicsForHairpin } from '../music/dynamics.ts';
 
 interface Props {
   type?: 'both' | 'crescendo' | 'decrescendo';
@@ -13,9 +14,8 @@ const { type = 'both', embedded = false, showStaff = true, initialDynamic } = As
 const examples = type === 'both' ? ['crescendo', 'decrescendo'] as const : [type] as const;
 let currentDynamic = initialDynamic;
 const dynamics = examples.map((example) => {
-  const endDynamic = example === 'crescendo' ? 'forte' : 'piano';
   const exampleInitialDynamic = currentDynamic;
-  currentDynamic = endDynamic;
+  currentDynamic = dynamicsForHairpin(example, currentDynamic).end;
   return { example, exampleInitialDynamic };
 });
 ---
@@ -24,7 +24,7 @@ const dynamics = examples.map((example) => {
   {dynamics.map(({ example, exampleInitialDynamic }) => (
     <div class="dynamics-row">
       {showStaff && (
-        <NotationClickable
+        <NotationVisual
           embedded
           notes={[
             { duration: 'quarter', step: 5 },
@@ -34,7 +34,7 @@ const dynamics = examples.map((example) => {
           ]}
         />
       )}
-      <NotationDynamicsMarks type={example} initialDynamic={exampleInitialDynamic} />
+      <DynamicsMarks type={example} initialDynamic={exampleInitialDynamic} />
     </div>
   ))}
 </div>

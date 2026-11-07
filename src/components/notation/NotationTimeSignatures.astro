@@ -1,5 +1,5 @@
 ---
-import NotationClickable from './NotationClickable.astro';
+import NotationVisual from './NotationVisual.astro';
 import { assertNoClefChanges } from '../../lib/notation-renderer';
 
 interface Props {
@@ -15,7 +15,7 @@ assertNoClefChanges(clefs, 'NotationTimeSignatures');
   <div class="time-signatures-row">
     {timeSignatures.map((timeSignature, index) => (
       <div class="time-signatures-measure">
-        <NotationClickable embedded clef={clefs[index]} timeSignature={timeSignature} />
+        <NotationVisual embedded clef={clefs[index]} timeSignature={timeSignature} />
       </div>
     ))}
   </div>

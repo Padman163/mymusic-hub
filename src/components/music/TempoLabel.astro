@@ -1,0 +1,11 @@
+---
+import '../../styles/music.css';
+
+interface Props {
+  text: string;
+}
+
+const { text } = Astro.props;
+---
+
+<span class="tempo-label">{text}</span>

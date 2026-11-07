@@ -6,9 +6,11 @@ import {
   type NotationNote
 } from '../../lib/notation-renderer';
 import '../../styles/notation.css';
-import NotationFinalBar from './NotationFinalBar.astro';
-import NotationMeasureNumber from './NotationMeasureNumber.astro';
-import NotationDynamicsMarks from './NotationDynamicsMarks.astro';
+import FinalBar from '../music/FinalBar.astro';
+import MeasureNumber from '../music/MeasureNumber.astro';
+import DynamicsMarks from '../music/DynamicsMarks.astro';
+import TempoLabel from '../music/TempoLabel.astro';
+import type { TimeSignature } from '../music/time-signature.ts';
 
 interface Props {
   showLeftBar?: boolean;
@@ -19,7 +21,7 @@ interface Props {
   clef?: 'treble' | 'bass' | false;
   notes?: NotationNote[];
   accidentals?: NotationAccidental[];
-  timeSignature?: { numerator: number; denominator: number };
+  timeSignature?: TimeSignature;
   curves?: NotationCurve[];
   measureNumber?: string | number;
   tempo?: string;
@@ -69,16 +71,16 @@ const notation = renderNotationSvg({
 });
 ---
 
-<div class:list={['notation-clickable', 'not-content', { embedded, 'has-header': Boolean(tempo), 'has-measure-number': measureNumber !== undefined, 'has-hairpin': Boolean(hairpin) }]} data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
-  {measureNumber !== undefined && <NotationMeasureNumber value={measureNumber} embedded />}
+<div class:list={['notation-visual', 'not-content', { embedded, 'has-header': Boolean(tempo), 'has-measure-number': measureNumber !== undefined, 'has-hairpin': Boolean(hairpin) }]} data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
+  {measureNumber !== undefined && <MeasureNumber value={measureNumber} embedded />}
   {tempo && (
     <div class="notation-header">
-      <span class="tempo-label">{tempo}</span>
+      <TempoLabel text={tempo} />
     </div>
   )}
   <Fragment set:html={notation} />
-  {hairpin && <NotationDynamicsMarks type={hairpin} initialDynamic={initialDynamic} placement="clickable" />}
+  {hairpin && <DynamicsMarks type={hairpin} initialDynamic={initialDynamic} placement="overlay" />}
   {showRightBar && rightBarStyle === 'final' && (
-    <div class="notation-final-bar"><NotationFinalBar height={36} /></div>
+    <div class="notation-final-bar"><FinalBar height={36} /></div>
   )}
 </div>

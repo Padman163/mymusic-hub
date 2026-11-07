@@ -1,13 +1,15 @@
 ---
+import '../../styles/music.css';
+import { dynamicsForHairpin, type Dynamic, type Hairpin } from './dynamics.ts';
+
 interface Props {
-  type: 'crescendo' | 'decrescendo';
-  initialDynamic?: 'piano' | 'forte';
-  placement?: 'row' | 'clickable';
+  type: Hairpin;
+  initialDynamic?: Dynamic;
+  placement?: 'row' | 'overlay';
 }
 
 const { type, initialDynamic, placement = 'row' } = Astro.props;
-const startDynamic = type === 'crescendo' ? 'piano' : 'forte';
-const showStartDynamic = initialDynamic !== startDynamic;
+const { showStart: showStartDynamic } = dynamicsForHairpin(type, initialDynamic);
 const crescendo = type === 'crescendo';
 ---
 

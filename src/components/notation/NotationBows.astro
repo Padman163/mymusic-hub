@@ -1,5 +1,5 @@
 ---
-import NotationClickable from './NotationClickable.astro';
+import NotationVisual from './NotationVisual.astro';
 import { assertNoClefChanges } from '../../lib/notation-renderer';
 
 const clefs = ['treble', 'treble'] as const;
@@ -8,7 +8,7 @@ assertNoClefChanges(clefs, 'NotationBows');
 
 <div class="bow-examples not-content" data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
   <div class="bow-line">
-    <NotationClickable
+    <NotationVisual
       embedded
       clef={clefs[0]}
       curves={[{ from: 0, to: 1, type: 'tie', placement: 'below' }]}
@@ -21,7 +21,7 @@ assertNoClefChanges(clefs, 'NotationBows');
     />
   </div>
   <div class="bow-line">
-    <NotationClickable
+    <NotationVisual
       embedded
       clef={clefs[1]}
       rightBarStyle="final"

@@ -1,5 +1,6 @@
 ---
-import NotationClickable from './NotationClickable.astro';
+import NotationVisual from './NotationVisual.astro';
+import RepeatMark from '../music/RepeatMark.astro';
 import { assertNoClefChanges } from '../../lib/notation-renderer';
 
 interface Props {
@@ -29,7 +30,7 @@ assertNoClefChanges(
     <div class="pickup-row">
     {row.map((measure) => (
       <div class="pickup-measure">
-        <NotationClickable
+        <NotationVisual
           embedded
           measureNumber={showMeasureNumbers ? measure.number : undefined}
           clef={measure.showClef ? 'treble' : false}
@@ -40,20 +41,10 @@ assertNoClefChanges(
           notes={measure.steps.map((step) => ({ duration: 'quarter' as const, step }))}
         />
         {measure.startRepeat && (
-          <svg class="repeat-start" width="13" height="36" viewBox="0 0 13 36" role="img" aria-label="Beginn der Wiederholung">
-            <rect x="0" y="0" width="4" height="36" />
-            <rect x="7" y="0" width="1" height="36" />
-            <circle cx="11" cy="13.5" r="1.5" />
-            <circle cx="11" cy="22.5" r="1.5" />
-          </svg>
+          <RepeatMark type="start" />
         )}
         {measure.endRepeat && (
-          <svg class="repeat-end" width="13" height="36" viewBox="0 0 13 36" role="img" aria-label="Ende der Wiederholung">
-            <circle cx="2" cy="13.5" r="1.5" />
-            <circle cx="2" cy="22.5" r="1.5" />
-            <rect x="5" y="0" width="1" height="36" />
-            <rect x="9" y="0" width="4" height="36" />
-          </svg>
+          <RepeatMark type="end" />
         )}
       </div>
     ))}

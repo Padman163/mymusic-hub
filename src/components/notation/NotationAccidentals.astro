@@ -1,5 +1,5 @@
 ---
-import NotationClickable from './NotationClickable.astro';
+import NotationVisual from './NotationVisual.astro';
 import { assertNoClefChanges } from '../../lib/notation-renderer';
 
 const sharpSteps = [8, 5, 9, 6, 3] as const;
@@ -11,16 +11,16 @@ assertNoClefChanges(clefs, 'NotationAccidentals');
 <div class="accidental-examples not-content" data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
   <div class="accidental-row">
     <div class="accidental-measure">
-      <NotationClickable embedded clef={clefs[0]} accidentals={sharpSteps.map((step) => ({ type: 'sharp', step }))} />
+      <NotationVisual embedded clef={clefs[0]} accidentals={sharpSteps.map((step) => ({ type: 'sharp', step }))} />
     </div>
     <div class="accidental-measure">
-      <NotationClickable embedded clef={clefs[1]} accidentals={sharpSteps.map((step) => ({ type: 'natural', step }))} />
+      <NotationVisual embedded clef={clefs[1]} accidentals={sharpSteps.map((step) => ({ type: 'natural', step }))} />
     </div>
     <div class="accidental-measure">
-      <NotationClickable embedded clef={clefs[2]} accidentals={flatSteps.map((step) => ({ type: 'flat', step }))} />
+      <NotationVisual embedded clef={clefs[2]} accidentals={flatSteps.map((step) => ({ type: 'flat', step }))} />
     </div>
     <div class="accidental-measure">
-      <NotationClickable
+      <NotationVisual
         embedded
         clef={clefs[3]}
         notes={[

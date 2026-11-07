@@ -1,5 +1,5 @@
 ---
-import NotationClickable from './NotationClickable.astro';
+import NotationVisual from './NotationVisual.astro';
 import { assertNoClefChanges } from '../../lib/notation-renderer';
 
 const examples = [
@@ -14,7 +14,7 @@ assertNoClefChanges(clefs, 'NotationDottedNotes');
 <div class="dotted-notes not-content" data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
   {examples.map(({ duration, label, value }, index) => (
     <div class="dotted-note-example">
-      <NotationClickable
+      <NotationVisual
         embedded
         clef={clefs[index]}
         notes={[{ duration, step: 4, dotted: true }]}

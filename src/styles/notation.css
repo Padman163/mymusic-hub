@@ -1,7 +1,4 @@
-@font-face {
-  font-family: 'NotationBravura';
-  src: url('/alphatab/font/Bravura.woff2') format('woff2');
-}
+@import './music.css';
 
 @font-face {
   font-family: 'KeyboardNotationBravura';
@@ -16,7 +13,7 @@
   --notation-dynamics-label-gap: 32px;
 }
 
-.notation-clickable,
+.notation-visual,
 .accidental-examples,
 .articulation-examples,
 .bow-examples,
@@ -32,21 +29,21 @@
   box-sizing: border-box;
 }
 
-.notation-clickable {
+.notation-visual {
   position: relative;
   padding: var(--notation-panel-padding);
 }
 
-.notation-clickable.has-hairpin {
+.notation-visual.has-hairpin {
   --notation-dynamics-top: calc(var(--notation-panel-padding) + 64px);
   padding-bottom: 32px;
 }
 
-.notation-clickable.has-hairpin.has-header {
+.notation-visual.has-hairpin.has-header {
   --notation-dynamics-top: calc(var(--notation-panel-padding) + 24px + 64px);
 }
 
-.notation-clickable.has-header .notation-header {
+.notation-visual.has-header .notation-header {
   height: 24px;
 }
 
@@ -57,12 +54,7 @@
   font: 10px/1.2 Georgia, serif;
 }
 
-.tempo-label {
-  display: block;
-  text-align: center;
-}
-
-.notation-clickable.has-measure-number .tempo-label {
+.notation-visual.has-measure-number .tempo-label {
   position: absolute;
   top: 12px;
   right: 0;
@@ -76,28 +68,28 @@
   right: var(--notation-panel-padding);
 }
 
-.notation-clickable.has-header:not(.embedded) .notation-final-bar {
+.notation-visual.has-header:not(.embedded) .notation-final-bar {
   top: calc(var(--notation-panel-padding) + 52px);
 }
 
-.notation-clickable.embedded {
+.notation-visual.embedded {
   padding: 0;
   border: 0;
   border-radius: 0;
   background: transparent;
 }
 
-.notation-clickable.embedded.has-hairpin {
+.notation-visual.embedded.has-hairpin {
   --notation-dynamics-top: 64px;
   padding-bottom: 32px;
 }
 
-.notation-clickable.embedded .notation-final-bar {
+.notation-visual.embedded .notation-final-bar {
   top: 28px;
   right: 0;
 }
 
-.notation-clickable.embedded.has-header .notation-final-bar {
+.notation-visual.embedded.has-header .notation-final-bar {
   top: 52px;
 }
 
@@ -131,25 +123,6 @@
 .notation-curve {
   fill: #111827;
   stroke: none;
-}
-
-.notation-measure-number {
-  position: absolute;
-  top: calc(var(--notation-panel-padding) + 13px);
-  left: calc(var(--notation-panel-padding) + 2px);
-  color: #111827;
-  font: 10px/1 Georgia, serif;
-}
-
-.notation-measure-number.embedded {
-  top: 13px;
-  left: 2px;
-}
-
-.final-bar {
-  display: block;
-  overflow: visible;
-  fill: #111827;
 }
 
 .accidental-examples,
@@ -193,8 +166,7 @@
 }
 
 .bow-examples,
-.dynamics-example:not(.embedded),
-.notation-overview {
+.dynamics-example:not(.embedded) {
   display: grid;
   gap: var(--notation-system-gap);
 }
@@ -244,81 +216,28 @@
   --dynamics-staff-bottom: 0px;
 }
 
-.dynamics-marks {
-  position: absolute;
-  inset: 0;
-  color: #111827;
-}
-
-.dynamic-word,
-.dynamic-mark,
-.hairpin {
-  position: absolute;
-  color: #111827;
-}
-
-.dynamic-word {
-  top: calc(var(--dynamics-staff-bottom) + var(--notation-dynamics-label-gap));
-  left: calc(20% - 6px);
-  font: italic 12px/1 Georgia, serif;
-}
-
-.dynamic-mark {
-  top: calc(var(--dynamics-staff-bottom) + var(--notation-dynamics-mark-gap));
-  font: 30px/1 'NotationBravura';
-}
-
-.dynamic-start {
-  right: calc(80% + 16px);
-}
-
-.dynamic-end {
-  left: calc(80% + 16px);
-}
-
-.hairpin {
-  top: calc(var(--dynamics-staff-bottom) + var(--notation-dynamics-hairpin-gap));
-  left: calc(20% - 6px);
-  width: calc(60% + 12px);
-  height: 10px;
-  overflow: visible;
-  stroke: currentColor;
-  stroke-width: 1;
-}
-
-.placement-clickable {
-  top: var(--notation-dynamics-top);
-  right: 0;
-  bottom: auto;
-  left: 0;
-  height: 48px;
-  --dynamics-staff-bottom: 0px;
-}
-
-.placement-clickable .dynamic-start {
-  right: calc(80% + 10px);
-}
-
-.placement-clickable .dynamic-end {
-  left: calc(80% + 10px);
-}
-
-.placement-clickable .dynamic-word {
-  left: calc(20% - 6px);
-}
-
 .notation-overview {
   padding: var(--notation-panel-padding) var(--notation-panel-padding) 2rem;
 }
 
+.overview-layout-wide,
+.overview-layout-narrow {
+  display: grid;
+  gap: var(--notation-system-gap);
+}
+
+.overview-layout-narrow {
+  display: none;
+}
+
 .overview-system {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   row-gap: var(--notation-system-gap);
 }
 
-.overview-system:first-child {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+.overview-layout-narrow .overview-system {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .overview-measure {
@@ -326,7 +245,7 @@
   min-width: 0;
 }
 
-.overview-measure .notation-clickable.embedded.has-header .notation-header {
+.overview-measure .notation-visual.embedded.has-header .notation-header {
   position: absolute;
   top: -12px;
   right: 0;
@@ -363,6 +282,8 @@
   top: 28px;
   display: block;
   fill: #111827;
+  color: #111827;
+  stroke: currentColor;
 }
 
 .repeat-start {
@@ -371,11 +292,6 @@
 
 .repeat-end {
   right: 0;
-}
-
-@font-face {
-  font-family: 'NotationTempoBravura';
-  src: url('/alphatab/font/Bravura.woff2') format('woff2');
 }
 
 .tempo-example {
@@ -392,18 +308,6 @@
   min-width: 0;
   padding-top: 40px;
   color: #111827;
-}
-
-.tempo-heading {
-  position: absolute;
-  top: 0;
-  left: 6px;
-  font: 14px/1.2 Georgia, serif;
-}
-
-.metronome-note {
-  font: 24px/1 'NotationTempoBravura';
-  vertical-align: -0.2em;
 }
 
 .time-signatures-row {
@@ -454,7 +358,7 @@
   stroke-width: 1;
 }
 
-.keyboard-staves .notation-clickable + .notation-clickable {
+.keyboard-staves .notation-visual + .notation-visual {
   margin-top: -38px;
 }
 
@@ -466,9 +370,16 @@
 
 @media (max-width: 520px) {
   .articulation-row,
-  .articulation-labels,
-  .overview-system {
+  .articulation-labels {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .overview-layout-wide {
+    display: none;
+  }
+
+  .overview-layout-narrow {
+    display: grid;
   }
 
   .dotted-notes {

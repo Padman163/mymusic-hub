@@ -1,0 +1,15 @@
+---
+import { renderRepeatEnd, renderRepeatStart } from './barline.ts';
+import '../../styles/music.css';
+
+interface Props {
+  type: 'start' | 'end';
+}
+
+const { type } = Astro.props;
+const mark = type === 'start'
+  ? renderRepeatStart(2, 0, 36, 5.5, 9, 4.5)
+  : renderRepeatEnd(2, 5.5, 11, 0, 36, 4.5);
+---
+
+<svg class={`repeat-${type}`} width="13" height="36" viewBox="0 0 13 36" stroke="currentColor" role="img" aria-label={type === 'start' ? 'Beginn der Wiederholung' : 'Ende der Wiederholung'} set:html={mark} />
