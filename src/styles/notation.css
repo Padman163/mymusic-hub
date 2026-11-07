@@ -12,6 +12,7 @@
 }
 
 .notation-visual,
+.notation-value-comparison,
 .accidental-examples,
 .articulation-examples,
 .bow-examples,
@@ -30,6 +31,17 @@
 .notation-visual {
   position: relative;
   padding: var(--notation-panel-padding);
+}
+
+.notation-value-comparison {
+  display: grid;
+  gap: var(--notation-system-gap);
+  padding: var(--notation-panel-padding);
+}
+
+.notation-value-comparison strong {
+  color: #111827;
+  font: bold var(--music-text-size)/1.2 Georgia, serif;
 }
 
 .notation-visual.has-hairpin {
@@ -101,6 +113,7 @@
 
 .notation-clef,
 .notation-note,
+.notation-rest,
 .notation-accidental,
 .notation-time,
 .notation-articulation {

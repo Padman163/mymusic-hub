@@ -1,0 +1,17 @@
+---
+import NotationVisual from './NotationVisual.astro';
+import type { Duration } from '../music/rhythm.ts';
+
+const values: Duration[] = ['whole', 'half', 'quarter', 'eighth', 'sixteenth'];
+---
+
+<div class="notation-value-comparison not-content" data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
+  <div>
+    <strong>Notenwerte</strong>
+    <NotationVisual embedded notes={values.map((duration) => ({ duration, step: 2 }))} />
+  </div>
+  <div>
+    <strong>Pausenwerte</strong>
+    <NotationVisual embedded notes={values.map((duration) => ({ type: 'rest' as const, duration }))} />
+  </div>
+</div>

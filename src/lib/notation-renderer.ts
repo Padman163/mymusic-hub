@@ -2,6 +2,7 @@ import { articulationPlacement, articulationSymbols, articulationY, renderArticu
 import { renderBarLine, renderRepeatEndAtBoundary, renderRepeatStart } from '../components/music/barline.ts';
 import { renderCurve, validateCurves, type MusicCurve } from '../components/music/curve.ts';
 import { collectBeamGroups, durationLabels, flagGlyph, renderBeam, renderDot, renderStem, type Duration } from '../components/music/rhythm.ts';
+import { renderRest, restSymbols } from '../components/music/rest.ts';
 import { escapeXml, glyphText } from '../components/music/svg.ts';
 import { renderTempoMark, validateTempoChanges } from '../components/music/tempo.ts';
 import { renderTimeSignature, timeSignatureWidth, validateTimeSignature, type TimeSignature } from '../components/music/time-signature.ts';
@@ -34,11 +35,24 @@ export type NotationNote =
       stem?: never;
     };
 
+export type NotationRest = {
+  type: 'rest';
+  duration: NotationDuration;
+  dotted?: boolean;
+  step?: never;
+  stem?: never;
+  beamGroup?: never;
+  articulation?: never;
+  articulationPosition?: never;
+  accidental?: never;
+};
+export type NotationEvent = NotationNote | NotationRest;
+
 export type NotationCurve = MusicCurve;
 
 export interface NotationRenderOptions {
   clef?: NotationClef;
-  notes?: NotationNote[];
+  notes?: NotationEvent[];
   accidentals?: NotationAccidental[];
   timeSignature?: TimeSignature;
   noteStart?: number;
@@ -114,6 +128,13 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
   }
 
   notes.forEach((note) => {
+    if (note.type === 'rest') {
+      if (!restSymbols[note.duration]) throw new Error(`Ungültiger Pausenwert: ${note.duration}.`);
+      if ('step' in note || 'stem' in note || 'beamGroup' in note || 'articulation' in note || 'articulationPosition' in note || 'accidental' in note) {
+        throw new Error('Pausen dürfen keine Notenhöhe, Hälse, Balkengruppen, Artikulationen oder Vorzeichen haben.');
+      }
+      return;
+    }
     if (!Number.isInteger(note.step) || note.step < -2 || note.step > 10) {
       throw new Error(`Ungültige Notenposition: ${note.step}.`);
     }
@@ -121,6 +142,20 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
   validateTempoChanges({ ritAt, aTempoAt }, notes.length);
   const groups = collectBeamGroups(notes);
   validateCurves(curves, notes.length);
+  curves.forEach(({ from, to, type }) => {
+    if (notes[from].type === 'rest' || notes[to].type === 'rest') {
+      throw new Error('Ein Bogen muss an Noten beginnen und enden, nicht an Pausen.');
+    }
+    if (type === 'tie' && notes.slice(from + 1, to).some((event) => event.type === 'rest')) {
+      throw new Error('Ein Haltebogen darf keine Pause überspannen.');
+    }
+  });
+
+  const pitchedNote = (index: number): NotationNote => {
+    const event = notes[index];
+    if (event.type === 'rest') throw new Error('Für Balken und Bögen wird eine Note statt einer Pause benötigt.');
+    return event;
+  };
 
   const clefGlyph = clef === 'treble' ? '\uE050' : clef === 'bass' ? '\uE062' : undefined;
   const clefY = clef === 'bass' ? 37 : 55;
@@ -150,12 +185,12 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
   const beamStemEnds = new Map<number, number>();
   const beamStemDirections = new Map<number, boolean>();
   groups.forEach((group) => {
-    const steps = group.indices.map((index) => notes[index].step);
+    const steps = group.indices.map((index) => pitchedNote(index).step);
     const stemUp = steps.reduce((sum, step) => sum + step, 0) / steps.length < 4;
     const firstIndex = group.indices[0];
     const lastIndex = group.indices[group.indices.length - 1];
-    const firstY = 64 - notes[firstIndex].step * 4.5 + (stemUp ? -31.5 : 31.5);
-    const lastY = 64 - notes[lastIndex].step * 4.5 + (stemUp ? -31.5 : 31.5);
+    const firstY = 64 - pitchedNote(firstIndex).step * 4.5 + (stemUp ? -31.5 : 31.5);
+    const lastY = 64 - pitchedNote(lastIndex).step * 4.5 + (stemUp ? -31.5 : 31.5);
     group.indices.forEach((index) => {
       const progress = (index - firstIndex) / (lastIndex - firstIndex);
       beamStemEnds.set(index, firstY + (lastY - firstY) * progress);
@@ -177,6 +212,10 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
   if (ritAt !== undefined) description.push(`rit. bei Note ${ritAt + 1}`);
   if (aTempoAt !== undefined) description.push(`a tempo bei Note ${aTempoAt + 1}`);
   notes.forEach((note, index) => {
+    if (note.type === 'rest') {
+      description.push(`${note.dotted ? 'Punktierte ' : ''}${restSymbols[note.duration].label}`);
+      return;
+    }
     const name = note.duration
       ? durationLabels[note.duration]
       : note.type === 'filled' ? 'gefüllter Notenkopf' : 'ungefüllter Notenkopf';
@@ -211,13 +250,13 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
   });
 
   groups.forEach((group) => {
-    const steps = group.indices.map((index) => notes[index].step);
+    const steps = group.indices.map((index) => pitchedNote(index).step);
     const stemUp = steps.reduce((sum, step) => sum + step, 0) / steps.length < 4;
     const first = notePosition(group.indices[0]);
     const last = notePosition(group.indices[group.indices.length - 1]);
     const stemOffset = stemUp ? 4.5 : -4.5;
-    const firstNote = notes[group.indices[0]];
-    const lastNote = notes[group.indices[group.indices.length - 1]];
+    const firstNote = pitchedNote(group.indices[0]);
+    const lastNote = pitchedNote(group.indices[group.indices.length - 1]);
     const firstBeamY = 64 - firstNote.step * 4.5 + (stemUp ? -31.5 : 31.5);
     const lastBeamY = 64 - lastNote.step * 4.5 + (stemUp ? -31.5 : 31.5);
     for (let beam = 0; beam < (group.duration === 'sixteenth' ? 2 : 1); beam += 1) {
@@ -229,9 +268,11 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
   curves.forEach(({ from, to, placement, type }) => {
     const start = notePosition(from);
     const end = notePosition(to);
-    const startY = 64 - notes[from].step * 4.5;
-    const endY = 64 - notes[to].step * 4.5;
-    const archAbove = placement ? placement === 'above' : notes[from].step >= 4;
+    const startNote = pitchedNote(from);
+    const endNote = pitchedNote(to);
+    const startY = 64 - startNote.step * 4.5;
+    const endY = 64 - endNote.step * 4.5;
+    const archAbove = placement ? placement === 'above' : startNote.step >= 4;
     const span = end.fraction - start.fraction;
     const startX = `calc(${start.percent} + ${start.offset + noteHeadHalfWidth}px)`;
     const curveWidth = `max(0px, calc(${span * 100}% - ${(noteInset + repeatEndInset) * span + noteHeadHalfWidth * 2}px))`;
@@ -240,6 +281,10 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
 
   notes.forEach((note, index) => {
     const position = notePosition(index);
+    if (note.type === 'rest') {
+      parts.push(`<g transform="translate(${position.offset} 0)">${renderRest(note.duration, position.percent, 46, note.dotted)}</g>`);
+      return;
+    }
     const y = 64 - note.step * 4.5;
     const stemUp = beamStemDirections.get(index) ?? note.step < 4;
     const hasStem = note.duration ? note.duration !== 'whole' : note.stem === true;

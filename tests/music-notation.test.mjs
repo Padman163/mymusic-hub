@@ -5,6 +5,7 @@ import { renderRepeatEnd, renderRepeatEndAtBoundary, renderRepeatStart } from '.
 import { renderCurve, validateCurves } from '../src/components/music/curve.ts';
 import { dynamicsForHairpin } from '../src/components/music/dynamics.ts';
 import { collectBeamGroups, flagGlyph, renderDot } from '../src/components/music/rhythm.ts';
+import { renderRest, restSymbols } from '../src/components/music/rest.ts';
 import { renderTempoMark, validateTempoChanges } from '../src/components/music/tempo.ts';
 import { omitUnchangedTimeSignatures, renderTimeSignature, validateTimeSignature } from '../src/components/music/time-signature.ts';
 import { minimumFirstNoteX, renderNotationSvg } from '../src/lib/notation-renderer.ts';
@@ -40,6 +41,39 @@ test('rhythm groups, flags and dots are reusable without pitch positions', () =>
   assert.throws(() => collectBeamGroups([events[0], { duration: 'sixteenth', beamGroup: 'a' }]), /zusammenhängende/);
   assert.notEqual(flagGlyph('eighth', true), flagGlyph('eighth', false));
   assert.match(renderDot(40, 20, 6), /cx="40" cy="20"/);
+});
+
+test('rests use shared glyphs, staff positions and optional dots', () => {
+  for (const [duration, glyph, y] of [
+    ['whole', '\uE4E3', 37], ['half', '\uE4E4', 46],
+    ['quarter', '\uE4E5', 46], ['eighth', '\uE4E6', 46], ['sixteenth', '\uE4E7', 46]
+  ]) {
+    const rest = renderRest(duration, '50%', 46);
+    assert.match(rest, new RegExp(`class="notation-rest" x="50%" y="${y}"[^>]*>${glyph}</text>`));
+    assert.ok(restSymbols[duration].label);
+    assert.doesNotMatch(rest, /<circle/);
+    assert.match(renderRest(duration, 20, 46, true), /cx="20" cy="41\.5" r="1\.5"/);
+  }
+  assert.throws(() => renderRest('invalid', 0, 46), /Ungültiger Pausenwert/);
+});
+
+test('renderer supports mixed notes and rests and rejects invalid rest combinations', () => {
+  const notes = [
+    { duration: 'quarter', step: 2 },
+    { type: 'rest', duration: 'eighth', dotted: true },
+    { duration: 'eighth', step: 4 }
+  ];
+  const svg = renderNotationSvg({ clef: 'treble', notes });
+  assert.match(svg, /Punktierte Achtelpause/);
+  assert.equal((svg.match(/class="notation-rest"/g) ?? []).length, 1);
+  assert.equal((svg.match(/class="notation-note"/g) ?? []).length, 3);
+  assert.match(svg, /cy="41\.5"/);
+  assert.throws(() => renderNotationSvg({ notes: [{ type: 'rest', duration: 'quarter', step: 2 }] }), /Pausen dürfen/);
+  assert.throws(() => renderNotationSvg({ notes: [{ type: 'rest', duration: 'eighth', beamGroup: 'a' }] }), /Pausen dürfen/);
+  assert.throws(() => renderNotationSvg({ notes, curves: [{ from: 0, to: 1, type: 'slur' }] }), /nicht an Pausen/);
+  assert.throws(() => renderNotationSvg({ notes, curves: [{ from: 1, to: 2, type: 'tie' }] }), /nicht an Pausen/);
+  assert.throws(() => renderNotationSvg({ notes, curves: [{ from: 0, to: 2, type: 'tie' }] }), /keine Pause überspannen/);
+  assert.doesNotThrow(() => renderNotationSvg({ notes, curves: [{ from: 0, to: 2, type: 'slur' }] }));
 });
 
 test('articulation and curves use caller-provided positions', () => {

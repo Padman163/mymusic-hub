@@ -1,6 +1,6 @@
 ---
 import NotationVisual from './NotationVisual.astro';
-import { type NotationAccidental, type NotationCurve, type NotationNote } from '../../lib/notation-renderer';
+import { type NotationAccidental, type NotationCurve, type NotationEvent } from '../../lib/notation-renderer';
 import { omitUnchangedTimeSignatures, type TimeSignature } from '../music/time-signature.ts';
 import { arrangeNotationSystems } from './system-layout.ts';
 interface Measure {
@@ -8,7 +8,7 @@ interface Measure {
   clef?: 'treble' | 'bass' | false;
   timeSignature?: TimeSignature;
   accidentals?: NotationAccidental[];
-  notes: NotationNote[];
+  notes: NotationEvent[];
   rightBarStyle: 'single' | 'final';
   tempo?: string;
   tempoDetail?: string;

@@ -7,6 +7,7 @@ sidebar:
 
 import SheetMusicPlayer from '../../../../../components/SheetMusicPlayer.astro';
 import StartAtTop from '../../../../../components/StartAtTop.astro';
+import NotationNoteRestValues from '../../../../../components/notation/NotationNoteRestValues.astro';
 
 <StartAtTop />
 
@@ -64,11 +65,15 @@ Die **Form der Note** zeigt ihren Notenwert: Eine ganze Note hat einen leeren No
 
 <SheetMusicPlayer musicXmlUrl="/scores/104-3-Note.musicxml" />
 
+Eine **Pause** bezeichnet eine Stille mit derselben Dauer wie der entsprechende Notenwert. Das Schaubild zeigt ganze, halbe, Viertel-, Achtel- und Sechzehntelwerte jeweils als Note und Pause. Die ganze Pause hängt unter der vierten Linie, die halbe liegt auf der dritten Linie (von unten gezählt). Eine ganze Pause kann auch einen vollständigen Takt unabhängig von der Taktart anzeigen.
+
+<NotationNoteRestValues />
+
 Auch in der **Tabulatur** kann der Rhythmus mitnotiert werden: Notenhälse mit Fähnchen oder Balken zeigen dann die Notenlängen. Ohne diese Rhythmuszeichen verraten die TAB-Zahlen allein nicht, wie lange ein Ton klingt. Im folgenden Beispiel ist auf der G-Saite immer derselbe Ton gegriffen; nur seine notierte Länge ändert sich.
 
 <SheetMusicPlayer musicXmlUrl="/scores/104-3-Tab-Notenwerte.musicxml" />
 
-Ein **Punkt hinter einer Note** verlängert ihren Wert um die Hälfte des ursprünglichen Notenwerts. Eine punktierte halbe Note dauert also drei Viertelschläge, eine punktierte Viertelnote drei Achtelschläge und eine punktierte Achtelnote drei Sechzehntelschläge. Der Punkt verändert die Tonhöhe nicht, sondern nur die Dauer.
+Ein **Punkt hinter einer Note oder Pause** verlängert ihren Wert um die Hälfte des ursprünglichen Werts. Eine punktierte halbe Note dauert also drei Viertelschläge, eine punktierte Viertelnote drei Achtelschläge und eine punktierte Achtelnote drei Sechzehntelschläge. Der Punkt verändert die Tonhöhe nicht, sondern nur die Dauer.
 
 Im TAB-Beispiel siehst du punktierte halbe, Viertel- und Achtelnoten. Die Rhythmuszeichen zeigen jeweils die verlängerte Dauer.
 

@@ -3,7 +3,7 @@ import {
   renderNotationSvg,
   type NotationAccidental,
   type NotationCurve,
-  type NotationNote
+  type NotationEvent
 } from '../../lib/notation-renderer';
 import '../../styles/notation.css';
 import FinalBar from '../music/FinalBar.astro';
@@ -19,7 +19,7 @@ interface Props {
   repeatStart?: boolean;
   repeatEnd?: boolean;
   clef?: 'treble' | 'bass' | false;
-  notes?: NotationNote[];
+  notes?: NotationEvent[];
   accidentals?: NotationAccidental[];
   timeSignature?: TimeSignature;
   curves?: NotationCurve[];

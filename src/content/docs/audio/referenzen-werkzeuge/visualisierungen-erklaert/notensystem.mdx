@@ -13,6 +13,7 @@ import NotationDynamics from '../../../../../components/notation/NotationDynamic
 import NotationBows from '../../../../../components/notation/NotationBows.astro';
 import NotationOverview from '../../../../../components/notation/NotationOverview.astro';
 import NotationDottedNotes from '../../../../../components/notation/NotationDottedNotes.astro';
+import NotationNoteRestValues from '../../../../../components/notation/NotationNoteRestValues.astro';
 
 ## Grundansicht
 
@@ -87,17 +88,13 @@ Das Schaubild zeigt im Violinschlüssel fünf Kreuze (F, C, G, D, A), ihre fünf
 
 Über `accidentals` lassen sich die Zeichen `sharp` (Kreuz), `natural` (Auflösungszeichen) und `flat` (b) mit einer Position `step` vorgeben. Sie stehen nach dem Schlüssel und vor einer optionalen Taktart. Einzelne Noten können über die Eigenschaft `accidental` ebenfalls jeweils ein eigenes Vorzeichen erhalten. Die Komponente stellt die Zeichen dar, berechnet aber noch keine Tonart oder Tonhöhenänderung.
 
-## Notenwerte
+## Noten- und Pausenwerte
 
-Mit `duration` zeigt die Komponente ganze (`whole`), halbe (`half`), Viertel- (`quarter`), Achtel- (`eighth`) und Sechzehntelnoten (`sixteenth`) an. Notenkopf, Hals und gegebenenfalls Fähnchen ergeben sich aus dem Notenwert; die Halsrichtung wird automatisch bestimmt.
+Das Schaubild zeigt oben die Noten und darunter die zugehörigen Pausen gleicher Dauer: von links nach rechts ganze, halbe, Viertel-, Achtel- und Sechzehntelwerte. Die ganze Pause hängt unter der vierten Notenlinie, die halbe liegt auf der dritten Linie (von unten gezählt). Eine ganze Pause kann außerdem einen vollständigen Takt beliebiger Taktart bezeichnen.
 
-<NotationVisual clef="treble" notes={[
-  { duration: 'whole', step: 2 },
-  { duration: 'half', step: 2 },
-  { duration: 'quarter', step: 2 },
-  { duration: 'eighth', step: 2 },
-  { duration: 'sixteenth', step: 2 }
-]} />
+<NotationNoteRestValues />
+
+Mit `duration` zeigt `NotationVisual` ganze (`whole`), halbe (`half`), Viertel- (`quarter`), Achtel- (`eighth`) und Sechzehntelnoten (`sixteenth`) an. Eine Pause wird in derselben `notes`-Liste mit `{ type: 'rest', duration: 'quarter' }` eingetragen und benötigt keine Tonhöhe. Noten und Pausen können gemischt werden; `dotted: true` punktiert auch eine Pause. Notenkopf, Hals und gegebenenfalls Fähnchen ergeben sich aus dem Notenwert; die Halsrichtung wird automatisch bestimmt.
 
 Aufeinanderfolgende Achtel- oder Sechzehntelnoten desselben Werts können mit demselben `beamGroup`-Namen verbunden werden. Eine Gruppe benötigt mindestens zwei Noten und erhält eine gemeinsame Halsrichtung. Bei unterschiedlichen Tonhöhen wird der Balken geneigt und die Hälse werden bis zum Balken geführt. Gemischte Notenwerte innerhalb einer Gruppe sind noch nicht vorgesehen.
 
@@ -108,7 +105,7 @@ Aufeinanderfolgende Achtel- oder Sechzehntelnoten desselben Werts können mit de
   { duration: 'sixteenth', step: 4, beamGroup: 'sechzehntel' }
 ]} />
 
-Die Beispiele zeigen die Zeichen zur Veranschaulichung; die Komponente prüft noch nicht, ob Notenwerte zusammen zur Taktart passen.
+Die Beispiele zeigen die Zeichen zur Veranschaulichung; die Komponente prüft noch nicht, ob Noten- und Pausenwerte zusammen zur Taktart passen. Die Abstände zwischen Ereignissen sind gleichmäßig und noch nicht proportional zu ihrer Dauer.
 
 ## Punktierte Noten
 
