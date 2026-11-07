@@ -271,15 +271,15 @@
     "area": "Theorie",
     "checklist": [
       {
-        "text": "Komponente <InteractiveScoreTrainer/> anlegen",
+        "text": "Komponente <Notation/> anlegen",
+        "checked": true
+      },
+      {
+        "text": "Komponenten minimieren und alles aus einer heraus",
         "checked": false
       },
       {
-        "text": "AlphaTab / SVG-Canvas zur Eingabevalidierung einbinden",
-        "checked": false
-      },
-      {
-        "text": "Level-Auswahl (Stufe 1 bis 3) programmieren",
+        "text": "4 Prüfungen mit 12 Takten durchführen",
         "checked": false
       }
     ],
