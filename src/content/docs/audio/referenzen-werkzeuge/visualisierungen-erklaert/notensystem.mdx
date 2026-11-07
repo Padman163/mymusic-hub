@@ -182,7 +182,7 @@ Für mehrzeilige Darstellungen bestimmt `arrangeNotationSystems` mit `alignFirst
 | Ganze bis Sechzehntelnoten, Punkt, Fähnchen und Balken | `music/rhythm.ts` und `renderNotationSvg` | Balkengruppen bestehen aus zusammenhängenden Achteln oder Sechzehnteln gleicher Dauer. |
 | Taktzahlen, Takt- und Schlussstriche | `MeasureNumber`, `music/barline.ts`, `FinalBar` | Takte 1 bis 12 sind nummeriert; Takt 12 endet mit dem Schlussstrich. |
 | Wiederholungszeichen | `music/barline.ts` | Wiederholung umfasst Takt 5 und 6; das Anfangszeichen folgt dem Schlüssel. |
-| Artikulationen | `music/articulation.ts` | Bei einem abwärts gerichteten Hals steht das Zeichen oberhalb der Note. |
+| Artikulationen | `music/articulation.ts` | Alle Zeichen haben ober- und unterhalb denselben Abstand zum Notenkopf. Bei einem abwärts gerichteten Hals steht das Zeichen oberhalb der Note. |
 | Halte- und Bindebögen | `music/curve.ts` | Der Haltebogen verbindet gleiche, der Bindebogen hier unterschiedliche Tonhöhen. |
 | Allegro, rit. und a tempo | `TempoLabel`, `music/tempo.ts` | `a tempo` liegt mindestens zwei Notenpositionen nach `rit.`. |
 | Piano, Forte und Dynamikkeile | `DynamicsMarks`, `music/dynamics.ts` | Bereits geltende Anfangsdynamik wird nicht erneut am Keil angezeigt. |

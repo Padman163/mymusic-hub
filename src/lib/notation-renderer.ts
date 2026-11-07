@@ -1,4 +1,4 @@
-import { articulationPlacement, articulationSymbols, renderArticulation, type Articulation } from '../components/music/articulation.ts';
+import { articulationPlacement, articulationSymbols, articulationY, renderArticulation, type Articulation } from '../components/music/articulation.ts';
 import { renderBarLine, renderRepeatEndAtBoundary, renderRepeatStart } from '../components/music/barline.ts';
 import { renderCurve, validateCurves, type MusicCurve } from '../components/music/curve.ts';
 import { collectBeamGroups, durationLabels, flagGlyph, renderBeam, renderDot, renderStem, type Duration } from '../components/music/rhythm.ts';
@@ -265,10 +265,9 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
       parts.push(`<g transform="translate(${-accidentalOffset} 0)">${glyphText(accidentalSymbols[note.accidental].glyph, x, y, 'notation-accidental', 'end')}</g>`);
     }
     if (note.articulation) {
-      const symbol = articulationSymbols[note.articulation];
       const position = articulationPosition(note, index);
-      const articulationY = y + (position === 'below' ? symbol.belowOffset : -12);
-      parts.push(renderArticulation(note.articulation, position, x, articulationY, 'notation-articulation'));
+      const noteEdgeY = y + (position === 'below' ? 4.5 : -4.5);
+      parts.push(renderArticulation(note.articulation, position, x, articulationY(noteEdgeY, position), 'notation-articulation'));
     }
     parts.push('</g>');
   });

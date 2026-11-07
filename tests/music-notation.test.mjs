@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { articulationPlacement, renderArticulation } from '../src/components/music/articulation.ts';
+import { articulationPlacement, articulationY, renderArticulation } from '../src/components/music/articulation.ts';
 import { renderRepeatEnd, renderRepeatEndAtBoundary, renderRepeatStart } from '../src/components/music/barline.ts';
 import { renderCurve, validateCurves } from '../src/components/music/curve.ts';
 import { dynamicsForHairpin } from '../src/components/music/dynamics.ts';
@@ -48,6 +48,19 @@ test('articulation and curves use caller-provided positions', () => {
   assert.match(renderArticulation('marcato', 'below', 10, 20, 'music-articulation'), /x="10" y="20"/);
   assert.throws(() => validateCurves([{ from: 1, to: 1, type: 'tie' }], 2), /Ungültiger Bogen/);
   assert.match(renderCurve('slur', '10', '50', 80, 20, 30, true, 'music-curve'), /viewBox="0 0 100 80"/);
+});
+
+test('all articulations share the same clearance above and below noteheads', () => {
+  assert.equal(articulationY(50, 'above'), 44);
+  assert.equal(articulationY(50, 'below'), 56);
+  for (const articulation of ['staccato', 'tenuto', 'accent', 'marcato']) {
+    for (const [step, position, expectedY] of [[7, 'above', 22], [2, 'below', 65.5]]) {
+      const svg = renderNotationSvg({ notes: [{ duration: 'quarter', step, articulation, articulationPosition: position }] });
+      const match = svg.match(/class="notation-articulation"[^>]*y="([\d.]+)"/);
+      assert.ok(match);
+      assert.equal(Number(match[1]), expectedY);
+    }
+  }
 });
 
 test('bar and repeat signs use the caller supplied system geometry', () => {
