@@ -281,6 +281,10 @@
       {
         "text": "4 Prüfungen mit 12 Takten durchführen",
         "checked": false
+      },
+      {
+        "text": "Schaubild wie sich die Komponenten was ziehen",
+        "checked": false
       }
     ],
     "status": "Active",
