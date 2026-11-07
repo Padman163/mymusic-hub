@@ -45,6 +45,10 @@
 }
 
 .dynamics-marks {
+  --dynamics-mark-gap: 12px;
+  --dynamics-hairpin-gap: 22px;
+  --dynamics-label-gap: 36px;
+  --dynamics-symbol-inset: 20px;
   position: absolute;
   inset: 0;
   color: #111827;
@@ -58,26 +62,26 @@
 }
 
 .dynamic-word {
-  top: calc(var(--dynamics-staff-bottom, 0px) + var(--notation-dynamics-label-gap, 32px));
+  top: calc(var(--dynamics-staff-bottom, 0px) + var(--dynamics-label-gap));
   left: calc(20% - 6px);
   font: italic 12px/1 Georgia, serif;
 }
 
 .dynamic-mark {
-  top: calc(var(--dynamics-staff-bottom, 0px) + var(--notation-dynamics-mark-gap, 8px));
+  top: calc(var(--dynamics-staff-bottom, 0px) + var(--dynamics-mark-gap));
   font: 30px/1 'NotationBravura';
 }
 
 .dynamic-start {
-  right: calc(80% + 16px);
+  right: calc(80% + var(--dynamics-symbol-inset));
 }
 
 .dynamic-end {
-  left: calc(80% + 16px);
+  left: calc(80% + var(--dynamics-symbol-inset));
 }
 
 .hairpin {
-  top: calc(var(--dynamics-staff-bottom, 0px) + var(--notation-dynamics-hairpin-gap, 18px));
+  top: calc(var(--dynamics-staff-bottom, 0px) + var(--dynamics-hairpin-gap));
   left: calc(20% - 6px);
   width: calc(60% + 12px);
   height: 10px;
@@ -93,14 +97,6 @@
   left: 0;
   height: 48px;
   --dynamics-staff-bottom: 0px;
-}
-
-.placement-overlay .dynamic-start {
-  right: calc(80% + 10px);
-}
-
-.placement-overlay .dynamic-end {
-  left: calc(80% + 10px);
 }
 
 .placement-overlay .dynamic-word {
