@@ -8,6 +8,7 @@ import {
 import '../styles/notation.css';
 import NotationFinalBar from './NotationFinalBar.astro';
 import NotationMeasureNumber from './NotationMeasureNumber.astro';
+import NotationDynamicsMarks from './NotationDynamicsMarks.astro';
 
 interface Props {
   showLeftBar?: boolean;
@@ -24,6 +25,8 @@ interface Props {
   tempo?: string;
   ritAt?: number;
   aTempoAt?: number;
+  hairpin?: 'crescendo' | 'decrescendo';
+  initialDynamic?: 'piano' | 'forte';
   noteStart?: number;
   embedded?: boolean;
 }
@@ -43,6 +46,8 @@ const {
   tempo,
   ritAt,
   aTempoAt,
+  hairpin,
+  initialDynamic,
   noteStart = 0,
   embedded = false
 } = Astro.props;
@@ -64,7 +69,7 @@ const notation = renderNotationSvg({
 });
 ---
 
-<div class:list={['notation-clickable', 'not-content', { embedded, 'has-header': Boolean(tempo), 'has-measure-number': measureNumber !== undefined }]} data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
+<div class:list={['notation-clickable', 'not-content', { embedded, 'has-header': Boolean(tempo), 'has-measure-number': measureNumber !== undefined, 'has-hairpin': Boolean(hairpin) }]} data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
   {measureNumber !== undefined && <NotationMeasureNumber value={measureNumber} embedded />}
   {tempo && (
     <div class="notation-header">
@@ -72,6 +77,7 @@ const notation = renderNotationSvg({
     </div>
   )}
   <Fragment set:html={notation} />
+  {hairpin && <NotationDynamicsMarks type={hairpin} initialDynamic={initialDynamic} placement="clickable" />}
   {showRightBar && rightBarStyle === 'final' && (
     <div class="notation-final-bar"><NotationFinalBar height={36} /></div>
   )}
@@ -85,6 +91,15 @@ const notation = renderNotationSvg({
     border-radius: 0.5rem;
     background: #fff;
     box-sizing: border-box;
+  }
+
+  .notation-clickable.has-hairpin {
+    --notation-dynamics-top: calc(var(--notation-panel-padding) + 64px);
+    padding-bottom: 32px;
+  }
+
+  .notation-clickable.has-hairpin.has-header {
+    --notation-dynamics-top: calc(var(--notation-panel-padding) + 24px + 64px);
   }
 
   .notation-clickable.has-header .notation-header {
@@ -158,6 +173,11 @@ const notation = renderNotationSvg({
     border: 0;
     border-radius: 0;
     background: transparent;
+  }
+
+  .notation-clickable.embedded.has-hairpin {
+    --notation-dynamics-top: 64px;
+    padding-bottom: 32px;
   }
 
   .notation-clickable.embedded .notation-final-bar {

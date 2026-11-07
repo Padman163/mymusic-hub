@@ -1,6 +1,5 @@
 ---
 import NotationClickable from './NotationClickable.astro';
-import NotationDynamics from './NotationDynamics.astro';
 import type { NotationAccidental, NotationCurve, NotationNote } from '../lib/notation-renderer';
 interface Measure {
   measureNumber?: string | number;
@@ -149,16 +148,10 @@ const systems: Measure[][] = [
               repeatStart={measure.repeatStart}
               repeatEnd={measure.repeatEnd}
               showRightBar={!measure.repeatEnd}
-            />
-          </div>
-          {measure.hairpin && (
-            <NotationDynamics
-              type={measure.hairpin}
-              embedded
-              showStaff={false}
+              hairpin={measure.hairpin}
               initialDynamic={measure.initialDynamic}
             />
-          )}
+          </div>
         </div>
       ))}
     </div>
@@ -198,15 +191,6 @@ const systems: Measure[][] = [
     left: 0;
     height: 12px;
     z-index: 2;
-  }
-
-  .overview-measure > :global(.dynamics-example.embedded) {
-    position: absolute;
-    top: 64px;
-    right: 0;
-    left: 0;
-    z-index: 1;
-    pointer-events: none;
   }
 
   .measure-staff {
