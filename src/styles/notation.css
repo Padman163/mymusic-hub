@@ -3,10 +3,481 @@
   src: url('/alphatab/font/Bravura.woff2') format('woff2');
 }
 
+@font-face {
+  font-family: 'KeyboardNotationBravura';
+  src: url('/alphatab/font/Bravura.woff2') format('woff2');
+}
+
 :root {
   --notation-system-gap: 1rem;
   --notation-panel-padding: 1.5rem;
   --notation-dynamics-mark-gap: 8px;
   --notation-dynamics-hairpin-gap: 18px;
   --notation-dynamics-label-gap: 32px;
+}
+
+.notation-clickable,
+.accidental-examples,
+.articulation-examples,
+.bow-examples,
+.dotted-notes,
+.dynamics-example:not(.embedded),
+.notation-overview,
+.pickup-example,
+.tempo-example,
+.time-signatures {
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.notation-clickable {
+  position: relative;
+  padding: var(--notation-panel-padding);
+}
+
+.notation-clickable.has-hairpin {
+  --notation-dynamics-top: calc(var(--notation-panel-padding) + 64px);
+  padding-bottom: 32px;
+}
+
+.notation-clickable.has-hairpin.has-header {
+  --notation-dynamics-top: calc(var(--notation-panel-padding) + 24px + 64px);
+}
+
+.notation-clickable.has-header .notation-header {
+  height: 24px;
+}
+
+.notation-header {
+  position: relative;
+  height: 24px;
+  color: #111827;
+  font: 10px/1.2 Georgia, serif;
+}
+
+.tempo-label {
+  display: block;
+  text-align: center;
+}
+
+.notation-clickable.has-measure-number .tempo-label {
+  position: absolute;
+  top: 12px;
+  right: 0;
+  left: 0;
+  font-size: 9px;
+}
+
+.notation-final-bar {
+  position: absolute;
+  top: calc(var(--notation-panel-padding) + 28px);
+  right: var(--notation-panel-padding);
+}
+
+.notation-clickable.has-header:not(.embedded) .notation-final-bar {
+  top: calc(var(--notation-panel-padding) + 52px);
+}
+
+.notation-clickable.embedded {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.notation-clickable.embedded.has-hairpin {
+  --notation-dynamics-top: 64px;
+  padding-bottom: 32px;
+}
+
+.notation-clickable.embedded .notation-final-bar {
+  top: 28px;
+  right: 0;
+}
+
+.notation-clickable.embedded.has-header .notation-final-bar {
+  top: 52px;
+}
+
+.notation-staff {
+  display: block;
+  width: 100%;
+  height: 92px;
+  overflow: visible;
+  stroke: #111827;
+  stroke-width: 1;
+  color: #111827;
+}
+
+.notation-clef,
+.notation-note,
+.notation-accidental,
+.notation-time,
+.notation-articulation {
+  font-family: 'NotationBravura';
+  font-size: 36px;
+  fill: #111827;
+  stroke: none;
+}
+
+.notation-tempo {
+  font: italic 14px Georgia, serif;
+  fill: #111827;
+  stroke: none;
+}
+
+.notation-curve {
+  fill: #111827;
+  stroke: none;
+}
+
+.notation-measure-number {
+  position: absolute;
+  top: calc(var(--notation-panel-padding) + 13px);
+  left: calc(var(--notation-panel-padding) + 2px);
+  color: #111827;
+  font: 10px/1 Georgia, serif;
+}
+
+.notation-measure-number.embedded {
+  top: 13px;
+  left: 2px;
+}
+
+.final-bar {
+  display: block;
+  overflow: visible;
+  fill: #111827;
+}
+
+.accidental-examples,
+.articulation-examples,
+.dotted-notes,
+.pickup-example,
+.tempo-example,
+.time-signatures {
+  padding: var(--notation-panel-padding);
+}
+
+.accidental-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  row-gap: var(--notation-system-gap);
+}
+
+.accidental-measure,
+.articulation-measure,
+.dotted-note-example,
+.time-signatures-measure {
+  min-width: 0;
+}
+
+.accidental-measure:first-child {
+  grid-column: span 2;
+}
+
+.articulation-row,
+.articulation-labels {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  row-gap: var(--notation-system-gap);
+}
+
+.articulation-labels,
+.dotted-note-label {
+  color: #111827;
+  font: 0.875rem/1.3 Georgia, serif;
+  text-align: center;
+}
+
+.bow-examples,
+.dynamics-example:not(.embedded),
+.notation-overview {
+  display: grid;
+  gap: var(--notation-system-gap);
+}
+
+.bow-examples {
+  padding: var(--notation-panel-padding);
+}
+
+.bow-line {
+  position: relative;
+  min-width: 0;
+}
+
+.dotted-notes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--notation-system-gap);
+}
+
+.dotted-note-label {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.dynamics-example:not(.embedded) {
+  padding: var(--notation-panel-padding);
+}
+
+.dynamics-row {
+  position: relative;
+  min-width: 0;
+  height: 108px;
+  margin-bottom: calc(-1 * var(--notation-system-gap));
+  --dynamics-staff-bottom: 64px;
+}
+
+.dynamics-example.embedded {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.dynamics-example.embedded .dynamics-row {
+  height: 48px;
+  margin-bottom: 0;
+  --dynamics-staff-bottom: 0px;
+}
+
+.dynamics-marks {
+  position: absolute;
+  inset: 0;
+  color: #111827;
+}
+
+.dynamic-word,
+.dynamic-mark,
+.hairpin {
+  position: absolute;
+  color: #111827;
+}
+
+.dynamic-word {
+  top: calc(var(--dynamics-staff-bottom) + var(--notation-dynamics-label-gap));
+  left: calc(20% - 6px);
+  font: italic 12px/1 Georgia, serif;
+}
+
+.dynamic-mark {
+  top: calc(var(--dynamics-staff-bottom) + var(--notation-dynamics-mark-gap));
+  font: 30px/1 'NotationBravura';
+}
+
+.dynamic-start {
+  right: calc(80% + 16px);
+}
+
+.dynamic-end {
+  left: calc(80% + 16px);
+}
+
+.hairpin {
+  top: calc(var(--dynamics-staff-bottom) + var(--notation-dynamics-hairpin-gap));
+  left: calc(20% - 6px);
+  width: calc(60% + 12px);
+  height: 10px;
+  overflow: visible;
+  stroke: currentColor;
+  stroke-width: 1;
+}
+
+.placement-clickable {
+  top: var(--notation-dynamics-top);
+  right: 0;
+  bottom: auto;
+  left: 0;
+  height: 48px;
+  --dynamics-staff-bottom: 0px;
+}
+
+.placement-clickable .dynamic-start {
+  right: calc(80% + 10px);
+}
+
+.placement-clickable .dynamic-end {
+  left: calc(80% + 10px);
+}
+
+.placement-clickable .dynamic-word {
+  left: calc(20% - 6px);
+}
+
+.notation-overview {
+  padding: var(--notation-panel-padding) var(--notation-panel-padding) 2rem;
+}
+
+.overview-system {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  row-gap: var(--notation-system-gap);
+}
+
+.overview-system:first-child {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.overview-measure {
+  position: relative;
+  min-width: 0;
+}
+
+.overview-measure .notation-clickable.embedded.has-header .notation-header {
+  position: absolute;
+  top: -12px;
+  right: 0;
+  left: 0;
+  height: 12px;
+  z-index: 2;
+}
+
+.measure-staff {
+  position: relative;
+}
+
+.pickup-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.pickup-row:first-child {
+  grid-template-columns: minmax(110px, 0.7fr) repeat(2, minmax(0, 1fr));
+}
+
+.pickup-row + .pickup-row {
+  margin-top: var(--notation-system-gap);
+}
+
+.pickup-measure {
+  position: relative;
+  min-width: 0;
+}
+
+.repeat-start,
+.repeat-end {
+  position: absolute;
+  top: 28px;
+  display: block;
+  fill: #111827;
+}
+
+.repeat-start {
+  left: 0;
+}
+
+.repeat-end {
+  right: 0;
+}
+
+@font-face {
+  font-family: 'NotationTempoBravura';
+  src: url('/alphatab/font/Bravura.woff2') format('woff2');
+}
+
+.tempo-example {
+  padding: var(--notation-panel-padding);
+}
+
+.tempo-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+}
+
+.tempo-measure {
+  position: relative;
+  min-width: 0;
+  padding-top: 40px;
+  color: #111827;
+}
+
+.tempo-heading {
+  position: absolute;
+  top: 0;
+  left: 6px;
+  font: 14px/1.2 Georgia, serif;
+}
+
+.metronome-note {
+  font: 24px/1 'NotationTempoBravura';
+  vertical-align: -0.2em;
+}
+
+.time-signatures-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+  row-gap: var(--notation-system-gap);
+}
+
+.time-signatures-measure:first-child {
+  grid-column: span 2;
+}
+
+.keyboard-notation {
+  display: flex;
+  padding: 0.75rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.keyboard-brace {
+  flex: none;
+  width: 14px;
+  height: 90px;
+  margin: 28px 4px 0 0;
+  fill: #111827;
+}
+
+.keyboard-brace text {
+  font-family: 'KeyboardNotationBravura';
+  font-size: 1000px;
+}
+
+.keyboard-staves {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.keyboard-left-bar {
+  position: absolute;
+  top: 28px;
+  left: -0.5px;
+  display: block;
+  overflow: visible;
+  stroke: #111827;
+  stroke-width: 1;
+}
+
+.keyboard-staves .notation-clickable + .notation-clickable {
+  margin-top: -38px;
+}
+
+.keyboard-final-bar {
+  position: absolute;
+  top: 28px;
+  right: 0;
+}
+
+@media (max-width: 520px) {
+  .articulation-row,
+  .articulation-labels,
+  .overview-system {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dotted-notes {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 420px) {
+  .pickup-row:first-child {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }

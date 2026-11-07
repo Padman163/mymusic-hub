@@ -8,18 +8,3 @@ const { value, embedded = false } = Astro.props;
 ---
 
 <span class:list={['notation-measure-number', { embedded }]}>{value}</span>
-
-<style>
-  .notation-measure-number {
-    position: absolute;
-    top: calc(var(--notation-panel-padding) + 13px);
-    left: calc(var(--notation-panel-padding) + 2px);
-    color: #111827;
-    font: 10px/1 Georgia, serif;
-  }
-
-  .notation-measure-number.embedded {
-    top: 13px;
-    left: 2px;
-  }
-</style>

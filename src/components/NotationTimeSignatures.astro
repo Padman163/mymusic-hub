@@ -20,27 +20,3 @@ assertNoClefChanges(clefs, 'NotationTimeSignatures');
     ))}
   </div>
 </div>
-
-<style>
-  .time-signatures {
-    padding: var(--notation-panel-padding);
-    border: 1px solid #d1d5db;
-    border-radius: 0.5rem;
-    background: #fff;
-    box-sizing: border-box;
-  }
-
-  .time-signatures-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
-    row-gap: var(--notation-system-gap);
-  }
-
-  .time-signatures-measure {
-    min-width: 0;
-  }
-
-  .time-signatures-measure:first-child {
-    grid-column: span 2;
-  }
-</style>

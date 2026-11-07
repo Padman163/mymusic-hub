@@ -1,7 +1,6 @@
 ﻿---
 import NotationClickable from './NotationClickable.astro';
 import NotationDynamicsMarks from './NotationDynamicsMarks.astro';
-import '../styles/notation.css';
 
 interface Props {
   type?: 'both' | 'crescendo' | 'decrescendo';
@@ -39,37 +38,3 @@ const dynamics = examples.map((example) => {
     </div>
   ))}
 </div>
-
-<style>
-  .dynamics-example {
-    display: grid;
-    gap: var(--notation-system-gap);
-    padding: var(--notation-panel-padding);
-    border: 1px solid #d1d5db;
-    border-radius: 0.5rem;
-    background: #fff;
-    box-sizing: border-box;
-  }
-
-  .dynamics-row {
-    position: relative;
-    min-width: 0;
-    height: 108px;
-    margin-bottom: calc(-1 * var(--notation-system-gap));
-    --dynamics-staff-bottom: 64px;
-  }
-
-  .dynamics-example.embedded {
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-  }
-
-  .dynamics-example.embedded .dynamics-row {
-    height: 48px;
-    margin-bottom: 0;
-    --dynamics-staff-bottom: 0px;
-  }
-
-</style>

@@ -32,27 +32,3 @@ assertNoClefChanges(clefs, 'NotationAccidentals');
     </div>
   </div>
 </div>
-
-<style>
-  .accidental-examples {
-    padding: var(--notation-panel-padding);
-    border: 1px solid #d1d5db;
-    border-radius: 0.5rem;
-    background: #fff;
-    box-sizing: border-box;
-  }
-
-  .accidental-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-    row-gap: var(--notation-system-gap);
-  }
-
-  .accidental-measure {
-    min-width: 0;
-  }
-
-  .accidental-measure:first-child {
-    grid-column: span 2;
-  }
-</style>
