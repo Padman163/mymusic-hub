@@ -3,9 +3,21 @@
   src: url('/alphatab/font/Bravura.woff2') format('woff2');
 }
 
+:root {
+  --music-text-size: 12px;
+  --music-heading-size: 16px;
+  --music-symbol-size: 30px;
+}
+
 .tempo-label {
   display: block;
-  text-align: center;
+  color: #111827;
+  font: bold var(--music-heading-size)/1.2 Georgia, serif;
+  white-space: nowrap;
+}
+
+.tempo-detail {
+  font: normal var(--music-text-size)/1.2 Georgia, serif;
 }
 
 @font-face {
@@ -17,11 +29,17 @@
   position: absolute;
   top: 0;
   left: 6px;
-  font: 14px/1.2 Georgia, serif;
+  color: #111827;
+  font: var(--music-text-size)/1.2 Georgia, serif;
+}
+
+.tempo-heading strong {
+  font-size: var(--music-heading-size);
+  line-height: 1;
 }
 
 .metronome-note {
-  font: 24px/1 'NotationTempoBravura';
+  font: var(--music-symbol-size)/1 'NotationTempoBravura';
   vertical-align: -0.2em;
 }
 
@@ -64,12 +82,12 @@
 .dynamic-word {
   top: calc(var(--dynamics-staff-bottom, 0px) + var(--dynamics-label-gap));
   left: calc(20% - 6px);
-  font: italic 12px/1 Georgia, serif;
+  font: italic var(--music-text-size)/1 Georgia, serif;
 }
 
 .dynamic-mark {
   top: calc(var(--dynamics-staff-bottom, 0px) + var(--dynamics-mark-gap));
-  font: 30px/1 'NotationBravura';
+  font: var(--music-symbol-size)/1 'NotationBravura';
 }
 
 .dynamic-start {

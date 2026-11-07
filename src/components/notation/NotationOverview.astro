@@ -11,6 +11,7 @@ interface Measure {
   notes: NotationNote[];
   rightBarStyle: 'single' | 'final';
   tempo?: string;
+  tempoDetail?: string;
   ritAt?: number;
   aTempoAt?: number;
   curves?: NotationCurve[];
@@ -27,7 +28,8 @@ const systems: Measure[][] = [
       clef: 'treble',
       timeSignature: { numerator: 4, denominator: 4 },
       accidentals: [{ type: 'sharp', step: 8 }, { type: 'sharp', step: 5 }],
-      tempo: 'Allegro · ♩ = 90',
+      tempo: 'Allegro',
+      tempoDetail: '♩ = 90',
       notes: [
         { duration: 'half', step: 4, articulation: 'staccato' },
         { duration: 'quarter', step: 5, articulation: 'tenuto' },
@@ -196,6 +198,7 @@ const layouts = [
                   embedded
                   measureNumber={measure.measureNumber}
                   tempo={measure.tempo}
+                  tempoDetail={measure.tempoDetail}
                   ritAt={measure.ritAt}
                   aTempoAt={measure.aTempoAt}
                   clef={measure.clef}

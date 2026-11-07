@@ -8,6 +8,7 @@
 :root {
   --notation-system-gap: 1rem;
   --notation-panel-padding: 1.5rem;
+  --notation-header-height: 36px;
 }
 
 .notation-visual,
@@ -37,26 +38,20 @@
 }
 
 .notation-visual.has-hairpin.has-header {
-  --notation-dynamics-top: calc(var(--notation-panel-padding) + 24px + 64px);
+  --notation-dynamics-top: calc(var(--notation-panel-padding) + var(--notation-header-height) + 64px);
 }
 
 .notation-visual.has-header .notation-header {
-  height: 24px;
+  height: var(--notation-header-height);
 }
 
 .notation-header {
   position: relative;
-  height: 24px;
   color: #111827;
-  font: 10px/1.2 Georgia, serif;
 }
 
-.notation-visual.has-measure-number .tempo-label {
-  position: absolute;
-  top: 12px;
-  right: 0;
-  left: 0;
-  font-size: 9px;
+.notation-visual.has-header > .notation-measure-number.embedded {
+  top: calc(var(--notation-header-height) + 13px);
 }
 
 .notation-final-bar {
@@ -66,7 +61,7 @@
 }
 
 .notation-visual.has-header:not(.embedded) .notation-final-bar {
-  top: calc(var(--notation-panel-padding) + 52px);
+  top: calc(var(--notation-panel-padding) + var(--notation-header-height) + 28px);
 }
 
 .notation-visual.embedded {
@@ -81,13 +76,17 @@
   padding-bottom: 32px;
 }
 
+.notation-visual.embedded.has-hairpin.has-header {
+  --notation-dynamics-top: calc(var(--notation-header-height) + 64px);
+}
+
 .notation-visual.embedded .notation-final-bar {
   top: 28px;
   right: 0;
 }
 
 .notation-visual.embedded.has-header .notation-final-bar {
-  top: 52px;
+  top: calc(var(--notation-header-height) + 28px);
 }
 
 .notation-staff {
@@ -112,7 +111,7 @@
 }
 
 .notation-tempo {
-  font: italic 14px Georgia, serif;
+  font: italic var(--music-text-size) Georgia, serif;
   fill: #111827;
   stroke: none;
 }
@@ -214,7 +213,7 @@
 }
 
 .notation-overview {
-  padding: var(--notation-panel-padding) var(--notation-panel-padding) 2rem;
+  padding: calc(var(--notation-panel-padding) + 14px) var(--notation-panel-padding) 2rem;
 }
 
 .notation-systems {
@@ -252,11 +251,23 @@
 
 .overview-measure .notation-visual.embedded.has-header .notation-header {
   position: absolute;
-  top: -12px;
+  top: -14px;
   right: 0;
-  left: 0;
-  height: 12px;
+  left: 18px;
+  height: var(--notation-header-height);
   z-index: 2;
+}
+
+.overview-measure .notation-visual.embedded.has-hairpin.has-header {
+  --notation-dynamics-top: 64px;
+}
+
+.overview-measure .notation-visual.embedded.has-header .notation-final-bar {
+  top: 28px;
+}
+
+.overview-measure .notation-visual.embedded.has-header > .notation-measure-number.embedded {
+  top: 13px;
 }
 
 .measure-staff {

@@ -25,6 +25,7 @@ interface Props {
   curves?: NotationCurve[];
   measureNumber?: string | number;
   tempo?: string;
+  tempoDetail?: string;
   ritAt?: number;
   aTempoAt?: number;
   hairpin?: 'crescendo' | 'decrescendo';
@@ -47,6 +48,7 @@ const {
   curves = [],
   measureNumber,
   tempo,
+  tempoDetail,
   ritAt,
   aTempoAt,
   hairpin,
@@ -78,7 +80,7 @@ const notation = renderNotationSvg({
   {measureNumber !== undefined && <MeasureNumber value={measureNumber} embedded />}
   {tempo && (
     <div class="notation-header">
-      <TempoLabel text={tempo} />
+      <TempoLabel text={tempo} detail={tempoDetail} />
     </div>
   )}
   <Fragment set:html={notation} />

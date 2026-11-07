@@ -145,6 +145,8 @@ Taktnummern sind standardmäßig ausgeblendet und werden in diesem Beispiel mit 
 
 Das Beispiel zeigt zwei 4/4-Takte mit **Allegro** und der Metronomangabe **Viertelnote = 90** (90 Viertelschläge pro Minute). Im zweiten Takt bedeutet **rit.**, allmählich langsamer zu werden; **a tempo** führt zum ursprünglichen Tempo zurück. Beide Angaben werden über `ritAt` und `aTempoAt` direkt an `NotationVisual` an nullbasierten Notenindizes gebunden. `aTempoAt` muss mindestens zwei Indizes nach `ritAt` liegen; dieselbe oder eine frühere Note ist unzulässig.
 
+Für Dynamik- und Tempotexte gelten zwei visuelle Größen: `cresc.`, `decresc.`, `rit.`, `a tempo` und Metronomdetails sind klein; die fette Tempoüberschrift ist optisch auf die Dynamikzeichen **p** und **f** abgestimmt. Da die Notenschrift andere Zeichenabmessungen als die Textschrift hat, unterscheiden sich ihre CSS-Schriftgrößen.
+
 <NotationTempo />
 
 ## Artikulation

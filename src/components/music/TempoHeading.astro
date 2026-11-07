@@ -9,4 +9,4 @@ interface Props {
 const { text, beatsPerMinute } = Astro.props;
 ---
 
-<div class="tempo-heading"><strong>{text}</strong><br /><span aria-label={`Viertelnote gleich ${beatsPerMinute}`}><span class="metronome-note" aria-hidden="true">{'\uECA5'}</span> = {beatsPerMinute}</span></div>
+<div class="tempo-heading"><strong>{text}</strong><br /><span class="tempo-detail" aria-label={`Viertelnote gleich ${beatsPerMinute}`}><span class="metronome-note" aria-hidden="true">{'\uECA5'}</span> = {beatsPerMinute}</span></div>

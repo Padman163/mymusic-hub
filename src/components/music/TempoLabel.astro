@@ -3,9 +3,10 @@ import '../../styles/music.css';
 
 interface Props {
   text: string;
+  detail?: string;
 }
 
-const { text } = Astro.props;
+const { text, detail } = Astro.props;
 ---
 
-<span class="tempo-label">{text}</span>
+<span class="tempo-label">{text}{detail && <span class="tempo-detail"> · {detail}</span>}</span>
