@@ -19,7 +19,7 @@ const articulations = [
       <div class="articulation-measure">
         <NotationClickable
           embedded
-          clef={index === 0 || index === 4 ? 'treble' : undefined}
+          clef={index === 0 || index === 4 ? 'treble' : false}
           rightBarStyle={index === articulations.length - 1 ? 'final' : 'single'}
           notes={[{ duration: 'quarter', step, articulation: type, articulationPosition: position }]}
         />

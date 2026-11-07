@@ -12,7 +12,7 @@ const { timeSignatures } = Astro.props;
   <div class="time-signatures-row">
     {timeSignatures.map((timeSignature, index) => (
       <div class="time-signatures-measure">
-        <NotationClickable embedded clef={index === 0 ? 'treble' : undefined} timeSignature={timeSignature} />
+        <NotationClickable embedded clef={index === 0 ? 'treble' : false} timeSignature={timeSignature} />
       </div>
     ))}
   </div>

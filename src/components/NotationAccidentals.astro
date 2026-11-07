@@ -11,14 +11,15 @@ const flatSteps = [4, 7, 3, 6, 2] as const;
       <NotationClickable embedded clef="treble" accidentals={sharpSteps.map((step) => ({ type: 'sharp', step }))} />
     </div>
     <div class="accidental-measure">
-      <NotationClickable embedded accidentals={sharpSteps.map((step) => ({ type: 'natural', step }))} />
+      <NotationClickable embedded clef={false} accidentals={sharpSteps.map((step) => ({ type: 'natural', step }))} />
     </div>
     <div class="accidental-measure">
-      <NotationClickable embedded accidentals={flatSteps.map((step) => ({ type: 'flat', step }))} />
+      <NotationClickable embedded clef={false} accidentals={flatSteps.map((step) => ({ type: 'flat', step }))} />
     </div>
     <div class="accidental-measure">
       <NotationClickable
         embedded
+        clef={false}
         notes={[
           { duration: 'quarter', step: 7, accidental: 'sharp' },
           { duration: 'quarter', step: 4, accidental: 'natural' },

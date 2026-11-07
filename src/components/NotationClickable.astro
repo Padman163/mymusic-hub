@@ -15,7 +15,7 @@ interface Props {
   rightBarStyle?: 'single' | 'final';
   repeatStart?: boolean;
   repeatEnd?: boolean;
-  clef?: 'treble' | 'bass';
+  clef?: 'treble' | 'bass' | false;
   notes?: NotationNote[];
   accidentals?: NotationAccidental[];
   timeSignature?: { numerator: number; denominator: number };
@@ -32,7 +32,7 @@ const {
   rightBarStyle = 'single',
   repeatStart = false,
   repeatEnd = false,
-  clef,
+  clef = 'treble',
   notes = [],
   accidentals = [],
   timeSignature,
@@ -44,7 +44,7 @@ const {
 } = Astro.props;
 
 const notation = renderNotationSvg({
-  clef,
+  clef: clef || undefined,
   notes,
   accidentals,
   timeSignature,

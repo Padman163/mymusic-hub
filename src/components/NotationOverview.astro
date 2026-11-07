@@ -5,7 +5,7 @@ import NotationTempoText from './NotationTempoText.astro';
 import type { NotationAccidental, NotationCurve, NotationNote } from '../lib/notation-renderer';
 interface Measure {
   measureNumber?: string | number;
-  clef?: 'treble' | 'bass';
+  clef?: 'treble' | 'bass' | false;
   timeSignature?: { numerator: number; denominator: number };
   accidentals?: NotationAccidental[];
   notes: NotationNote[];
@@ -16,6 +16,7 @@ interface Measure {
   repeatStart?: boolean;
   repeatEnd?: boolean;
   hairpin?: 'crescendo' | 'decrescendo';
+  initialDynamic?: 'piano' | 'forte';
 }
 
 const systems: Measure[][] = [
@@ -29,6 +30,7 @@ const systems: Measure[][] = [
     },
     {
       measureNumber: 1,
+      clef: false,
       notes: [
         { duration: 'quarter', step: 4, articulation: 'staccato' },
         { duration: 'quarter', step: 5, articulation: 'tenuto' },
@@ -39,6 +41,7 @@ const systems: Measure[][] = [
     },
     {
       measureNumber: 2,
+      clef: false,
       notes: [
         { duration: 'eighth', step: 2, beamGroup: 'eighths' },
         { duration: 'eighth', step: 3, beamGroup: 'eighths' },
@@ -52,6 +55,7 @@ const systems: Measure[][] = [
     },
     {
       measureNumber: 3,
+      clef: false,
       curves: [{ from: 1, to: 2, type: 'tie', placement: 'below' }],
       notes: [
         { duration: 'half', step: 4 },
@@ -77,6 +81,7 @@ const systems: Measure[][] = [
     },
     {
       measureNumber: 5,
+      clef: false,
       repeatStart: true,
       tempo: 'rit. · a tempo',
       tempoPosition: 'annotation',
@@ -90,6 +95,7 @@ const systems: Measure[][] = [
     },
     {
       measureNumber: 6,
+      clef: false,
       repeatEnd: true,
       notes: [
         { duration: 'quarter', step: 2, articulation: 'accent', articulationPosition: 'below' },
@@ -101,7 +107,9 @@ const systems: Measure[][] = [
     },
     {
       measureNumber: 7,
+      clef: false,
       hairpin: 'decrescendo',
+      initialDynamic: 'forte',
       notes: [
         { duration: 'half', step: 2 },
         { duration: 'quarter', step: 3 }
@@ -134,7 +142,14 @@ const systems: Measure[][] = [
               showRightBar={!measure.repeatEnd}
             />
           </div>
-          {measure.hairpin && <NotationDynamics type={measure.hairpin} embedded showStaff={false} />}
+          {measure.hairpin && (
+            <NotationDynamics
+              type={measure.hairpin}
+              embedded
+              showStaff={false}
+              initialDynamic={measure.initialDynamic}
+            />
+          )}
         </div>
       ))}
     </div>

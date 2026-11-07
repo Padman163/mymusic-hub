@@ -28,7 +28,7 @@ const rows = [
         {showMeasureNumbers && measure.number !== undefined && <NotationMeasureNumber value={measure.number} embedded />}
         <NotationClickable
           embedded
-          clef={measure.showClef ? 'treble' : undefined}
+          clef={measure.showClef ? 'treble' : false}
           timeSignature={measure.showTime ? { numerator: 4, denominator: 4 } : undefined}
           noteStart={measure.showClef && !measure.showTime ? 36 : 0}
           showRightBar={measure.showRightBar}

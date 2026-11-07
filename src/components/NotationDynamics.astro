@@ -6,19 +6,33 @@ interface Props {
   type?: 'both' | 'crescendo' | 'decrescendo';
   embedded?: boolean;
   showStaff?: boolean;
+  initialDynamic?: 'piano' | 'forte';
 }
 
-const { type = 'both', embedded = false, showStaff = true } = Astro.props;
+const { type = 'both', embedded = false, showStaff = true, initialDynamic } = Astro.props;
 const examples = type === 'both' ? ['crescendo', 'decrescendo'] as const : [type] as const;
+let currentDynamic = initialDynamic;
+const dynamics = examples.map((example) => {
+  const startDynamic = example === 'crescendo' ? 'piano' : 'forte';
+  const endDynamic = example === 'crescendo' ? 'forte' : 'piano';
+  const showStartDynamic = currentDynamic !== startDynamic;
+  currentDynamic = endDynamic;
+  return { example, showStartDynamic };
+});
 ---
 
 <div class:list={['dynamics-example', 'not-content', { embedded }]} data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
-  {examples.map((example) => (
-    <div class="dynamics-row" role="img" aria-label={example === 'crescendo' ? 'Crescendo von piano zu forte' : 'Decrescendo von forte zu piano'}>
+  {dynamics.map(({ example, showStartDynamic }) => (
+    <div
+      class="dynamics-row"
+      role="img"
+      aria-label={example === 'crescendo'
+        ? showStartDynamic ? 'Crescendo von piano zu forte' : 'Crescendo bis forte'
+        : showStartDynamic ? 'Decrescendo von forte zu piano' : 'Decrescendo bis piano'}
+    >
       {showStaff && (
         <NotationClickable
           embedded
-          clef={example === 'crescendo' ? 'treble' : undefined}
           notes={[
             { duration: 'quarter', step: 5 },
             { duration: 'quarter', step: 4 },
@@ -28,7 +42,7 @@ const examples = type === 'both' ? ['crescendo', 'decrescendo'] as const : [type
         />
       )}
       <span class="dynamic-word">{example === 'crescendo' ? 'cresc.' : 'decresc.'}</span>
-      <span class="dynamic-mark dynamic-start">{example === 'crescendo' ? '\uE520' : '\uE522'}</span>
+      {showStartDynamic && <span class="dynamic-mark dynamic-start">{example === 'crescendo' ? '\uE520' : '\uE522'}</span>}
       <span class="dynamic-mark dynamic-end">{example === 'crescendo' ? '\uE522' : '\uE520'}</span>
       <svg class="hairpin" viewBox="0 0 100 12" preserveAspectRatio="none" aria-hidden="true">
         {example === 'crescendo' ? (
