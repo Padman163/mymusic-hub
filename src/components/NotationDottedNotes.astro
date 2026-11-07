@@ -1,0 +1,59 @@
+---
+import NotationClickable from './NotationClickable.astro';
+import { assertNoClefChanges } from '../lib/notation-renderer';
+
+const examples = [
+  { duration: 'half', label: 'Punktierte halbe Note', value: '3 Viertelschläge' },
+  { duration: 'quarter', label: 'Punktierte Viertelnote', value: '3 Achtelschläge' },
+  { duration: 'eighth', label: 'Punktierte Achtelnote', value: '3 Sechzehntelschläge' }
+] as const;
+const clefs = examples.map((_, index) => index === 0 ? 'treble' as const : false);
+assertNoClefChanges(clefs, 'NotationDottedNotes');
+---
+
+<div class="dotted-notes not-content" data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
+  {examples.map(({ duration, label, value }, index) => (
+    <div class="dotted-note-example">
+      <NotationClickable
+        embedded
+        clef={clefs[index]}
+        notes={[{ duration, step: 4, dotted: true }]}
+      />
+      <div class="dotted-note-label">
+        <strong>{label}</strong>
+        <span>{value}</span>
+      </div>
+    </div>
+  ))}
+</div>
+
+<style>
+  .dotted-notes {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--notation-system-gap);
+    padding: var(--notation-panel-padding);
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    background: #fff;
+    box-sizing: border-box;
+  }
+
+  .dotted-note-example {
+    min-width: 0;
+  }
+
+  .dotted-note-label {
+    display: grid;
+    gap: 0.25rem;
+    color: #111827;
+    font: 0.875rem/1.3 Georgia, serif;
+    text-align: center;
+  }
+
+  @media (max-width: 520px) {
+    .dotted-notes {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

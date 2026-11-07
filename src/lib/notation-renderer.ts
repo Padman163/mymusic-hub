@@ -310,7 +310,7 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
       parts.push(`<g transform="translate(${stemUp ? 4.5 : -4.5} 0)">${glyphText(flag, x, stemY, 'notation-note')}</g>`);
     }
     parts.push(glyphText(noteGlyph, x, y, 'notation-note', 'middle'));
-    if (note.dotted) parts.push(`<circle cx="${x}" cy="${y - 3}" r="1.25" fill="currentColor" stroke="none" />`);
+    if (note.dotted) parts.push(`<circle cx="${x}" cy="${y - 3}" r="1.5" transform="translate(${noteHeadHalfWidth + 3} 0)" fill="currentColor" stroke="none" />`);
     if (note.accidental) {
       const accidentalOffset = noteHeadHalfWidth + accidentalNoteGap;
       parts.push(`<g transform="translate(${-accidentalOffset} 0)">${glyphText(accidentalSymbols[note.accidental].glyph, x, y, 'notation-accidental', 'end')}</g>`);

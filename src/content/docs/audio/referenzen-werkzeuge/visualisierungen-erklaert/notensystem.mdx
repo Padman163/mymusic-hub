@@ -12,6 +12,7 @@ import NotationArticulations from '../../../../../components/NotationArticulatio
 import NotationDynamics from '../../../../../components/NotationDynamics.astro';
 import NotationBows from '../../../../../components/NotationBows.astro';
 import NotationOverview from '../../../../../components/NotationOverview.astro';
+import NotationDottedNotes from '../../../../../components/NotationDottedNotes.astro';
 
 ## Grundansicht
 
@@ -108,6 +109,12 @@ Aufeinanderfolgende Achtel- oder Sechzehntelnoten desselben Werts können mit de
 ]} />
 
 Die Beispiele zeigen die Zeichen zur Veranschaulichung; die Komponente prüft noch nicht, ob Notenwerte zusammen zur Taktart passen.
+
+## Punktierte Noten
+
+Ein Punkt rechts neben dem Notenkopf verlängert den Notenwert um die Hälfte. Das Schaubild zeigt punktierte halbe, Viertel- und Achtelnoten.
+
+<NotationDottedNotes />
 
 ## Schlussstrich
 
