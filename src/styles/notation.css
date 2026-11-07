@@ -220,10 +220,18 @@
   padding: var(--notation-panel-padding) var(--notation-panel-padding) 2rem;
 }
 
-.overview-layout-wide,
-.overview-layout-narrow {
+.notation-systems {
   display: grid;
+  grid-auto-rows: 1fr;
   gap: var(--notation-system-gap);
+}
+
+.notation-systems .notation-visual.embedded.has-hairpin {
+  padding-bottom: 0;
+}
+
+.notation-systems:has(> :last-child .notation-visual.has-hairpin) {
+  padding-bottom: 32px;
 }
 
 .overview-layout-narrow {

@@ -186,7 +186,7 @@ const layouts = [
 
 <div class="notation-overview not-content" data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
   {layouts.map((layout) => (
-    <div class={layout.className}>
+    <div class:list={['notation-systems', layout.className]}>
       {layout.systems.map((system) => (
         <div class="overview-system">
           {system.map((measure) => (
