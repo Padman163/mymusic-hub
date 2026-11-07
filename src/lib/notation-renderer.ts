@@ -167,7 +167,8 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
 
   const clefGlyph = clef === 'treble' ? '\uE050' : clef === 'bass' ? '\uE062' : undefined;
   const clefY = clef === 'bass' ? 37 : 55;
-  const prefixStart = clef ? 36 : 6;
+  const repeatStartX = clef ? 36 : 0;
+  const prefixStart = (clef ? 36 : 6) + (repeatStart ? 24 : 0);
   const timeWidth = timeSignature
     ? Math.max(String(timeSignature.numerator).length, String(timeSignature.denominator).length) * 17
     : 0;
@@ -232,12 +233,6 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
 
   if (showLeftBar) parts.push('<line x1="0" y1="28" x2="0" y2="64" />');
   if (showRightBar && rightBarStyle === 'single') parts.push('<line x1="100%" y1="28" x2="100%" y2="64" />');
-  if (repeatStart) {
-    parts.push('<line x1="0" y1="28" x2="0" y2="64" stroke-width="4" />',
-      '<line x1="4" y1="28" x2="4" y2="64" />',
-      '<circle cx="8" cy="41" r="1.5" fill="currentColor" stroke="none" />',
-      '<circle cx="8" cy="51" r="1.5" fill="currentColor" stroke="none" />');
-  }
   if (repeatEnd) {
     parts.push('<circle cx="90%" cy="41" r="1.5" fill="currentColor" stroke="none" />',
       '<circle cx="90%" cy="51" r="1.5" fill="currentColor" stroke="none" />',
@@ -245,6 +240,12 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
       '<line x1="98%" y1="28" x2="98%" y2="64" stroke-width="4" />');
   }
   if (clefGlyph) parts.push(glyphText(clefGlyph, 6, clefY, 'notation-clef'));
+  if (repeatStart) {
+    parts.push(`<line x1="${repeatStartX}" y1="28" x2="${repeatStartX}" y2="64" stroke-width="4" />`,
+      `<line x1="${repeatStartX + 4}" y1="28" x2="${repeatStartX + 4}" y2="64" />`,
+      `<circle cx="${repeatStartX + 8}" cy="41" r="1.5" fill="currentColor" stroke="none" />`,
+      `<circle cx="${repeatStartX + 8}" cy="51" r="1.5" fill="currentColor" stroke="none" />`);
+  }
 
   if (timeSignature) {
     const center = timeStart + timeWidth / 2;
