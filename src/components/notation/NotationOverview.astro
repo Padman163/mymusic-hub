@@ -202,6 +202,7 @@ const layouts = [
                   timeSignature={measure.timeSignature}
                   accidentals={measure.accidentals}
                   notes={measure.notes}
+                  firstNoteX={measure.firstNoteX}
                   curves={measure.curves}
                   rightBarStyle={measure.rightBarStyle}
                   repeatStart={measure.repeatStart}
@@ -210,10 +211,10 @@ const layouts = [
                   hairpin={measure.hairpin}
                   initialDynamic={measure.initialDynamic}
                 />
-        </div>
+              </div>
             </div>
           ))}
-          </div>
+        </div>
       ))}
     </div>
   ))}

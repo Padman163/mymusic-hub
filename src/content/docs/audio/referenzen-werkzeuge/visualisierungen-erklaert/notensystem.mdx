@@ -173,6 +173,8 @@ Das abschließende Testbeispiel bündelt Notationszeichen in zwölf vollständig
 
 Bei ausreichend Platz stehen jeweils zwei Takte in einem System, auf schmalen Bildschirmen jeweils einer. Jede Zeile beginnt mit dem Violinschlüssel; es ist kein horizontales Scrollen nötig. Alle Systeme werden pro Takt aus `NotationVisual` aufgebaut. `renderNotationSvg` ordnet Notenschlüssel, Vorzeichen und Noten im Notensystem an und nutzt für gemeinsame musikalische Zeichen und Regeln die Bausteine in `src/components/music/`. Taktzahlen kommen aus `MeasureNumber`, Dynamikzeichen und Keile aus `DynamicsMarks`, der Schlussstrich aus `FinalBar`. `NotationOverview` enthält die Taktdaten; `arrangeNotationSystems` ordnet sie auf Zeilen und wiederholt den Schlüssel. Der Schlüssel bleibt durch das ganze Stück unverändert; die Prüfregel wird mit `assertNoClefChanges` abgesichert.
 
+Für mehrzeilige Darstellungen bestimmt `arrangeNotationSystems` mit `alignFirstNotesInSystems` automatisch eine gemeinsame Position für die erste Note jeder Taktspalte. Dabei wird genug Platz für Schlüssel, Taktart, Vorzeichnung, Wiederholungszeichen und gegebenenfalls das Vorzeichen der ersten Note reserviert. `NotationVisual` übergibt diese Position an den Renderer; einzelne Schaubilder ohne diese Ausrichtung behalten ihre bisherige Verteilung.
+
 | Zeichen im Test | Baustein | Regel oder Verwendung |
 |---|---|---|
 | Violinschlüssel, Notenköpfe, Hilfslinien und Vorzeichen | `NotationVisual`, `renderNotationSvg` | Ein Schlüssel am Zeilenbeginn; kein Schlüsselwechsel im Stück. Die Vorzeichnung folgt der Taktart. |

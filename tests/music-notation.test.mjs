@@ -7,8 +7,8 @@ import { dynamicsForHairpin } from '../src/components/music/dynamics.ts';
 import { collectBeamGroups, flagGlyph, renderDot } from '../src/components/music/rhythm.ts';
 import { renderTempoMark, validateTempoChanges } from '../src/components/music/tempo.ts';
 import { omitUnchangedTimeSignatures, renderTimeSignature, validateTimeSignature } from '../src/components/music/time-signature.ts';
-import { renderNotationSvg } from '../src/lib/notation-renderer.ts';
-import { arrangeNotationSystems } from '../src/components/notation/system-layout.ts';
+import { minimumFirstNoteX, renderNotationSvg } from '../src/lib/notation-renderer.ts';
+import { alignFirstNotesInSystems, arrangeNotationSystems } from '../src/components/notation/system-layout.ts';
 
 test('time signatures validate and render for arbitrary positions', () => {
   assert.throws(() => validateTimeSignature({ numerator: 4, denominator: 3 }), /Ungültige Taktart/);
@@ -59,9 +59,36 @@ test('system layout repeats the original clef on every rendered line', () => {
   const measures = [{ clef: 'treble', id: 1 }, { clef: false, id: 2 }, { clef: false, id: 3 }];
   const systems = arrangeNotationSystems(measures, 2);
   assert.deepEqual(systems.map((system) => system.map((measure) => measure.clef)), [['treble', false], ['treble']]);
+  assert.equal(systems[0][0].firstNoteX, systems[1][0].firstNoteX);
   assert.deepEqual(arrangeNotationSystems(measures, 1).map((system) => system[0].id), [1, 2, 3]);
   assert.throws(() => arrangeNotationSystems([{ clef: 'treble' }, { clef: 'bass' }], 1), /Notenschlüsselwechsel/);
   assert.throws(() => arrangeNotationSystems(measures, 0), /mindestens einen Takt/);
+});
+
+test('first notes align by measure column while leaving space for the widest prefix', () => {
+  const notes = [{ duration: 'quarter', step: 2 }];
+  const layouts = [
+    [{ clef: 'treble', timeSignature: { numerator: 4, denominator: 4 }, accidentals: [{ type: 'sharp', step: 8 }, { type: 'sharp', step: 5 }], notes },
+      { clef: false, notes }],
+    [{ clef: 'treble', repeatStart: true, notes },
+      { clef: false, notes: [{ duration: 'quarter', step: 2, accidental: 'sharp' }, ...notes] }],
+    [{ clef: 'treble', timeSignature: { numerator: 3, denominator: 4 }, notes: [...notes, ...notes] },
+      { clef: false, notes: [...notes, ...notes, ...notes] }]
+  ];
+  const aligned = alignFirstNotesInSystems(layouts);
+  for (const column of [0, 1]) {
+    const positions = aligned.map((system) => system[column].firstNoteX);
+    assert.equal(new Set(positions).size, 1);
+    assert.ok(positions[0] >= Math.max(...layouts.map((row) => minimumFirstNoteX({ ...row[column], clef: row[column].clef || undefined }))));
+  }
+  for (const system of aligned) {
+    for (const measure of system) {
+      const svg = renderNotationSvg({ ...measure, clef: measure.clef || undefined });
+      assert.match(svg, new RegExp(`<g transform="translate\\(${measure.firstNoteX} 0\\)">`));
+      assert.match(svg, /class="notation-note" x="0%"[^>]*text-anchor="middle"/);
+    }
+  }
+  assert.throws(() => renderNotationSvg({ clef: 'treble', notes, firstNoteX: 10 }), /Abstand zum Taktanfang/);
 });
 
 test('notation renderer still enforces shared rules and renders their signs', () => {

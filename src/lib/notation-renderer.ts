@@ -42,6 +42,7 @@ export interface NotationRenderOptions {
   accidentals?: NotationAccidental[];
   timeSignature?: TimeSignature;
   noteStart?: number;
+  firstNoteX?: number;
   showLeftBar?: boolean;
   showRightBar?: boolean;
   rightBarStyle?: 'single' | 'final';
@@ -73,6 +74,21 @@ const accidentalSymbols = {
 const noteHeadHalfWidth = 6.5;
 const accidentalNoteGap = 4;
 
+export function minimumFirstNoteX(options: Pick<NotationRenderOptions, 'clef' | 'timeSignature' | 'accidentals' | 'repeatStart' | 'notes' | 'noteStart'>): number {
+  const { clef, timeSignature, accidentals = [], repeatStart = false, notes = [], noteStart = 0 } = options;
+  if (timeSignature) validateTimeSignature(timeSignature);
+  const prefixStart = (clef ? 36 : 6) + (repeatStart ? 24 : 0);
+  const accidentalStart = timeSignature ? prefixStart + timeSignatureWidth(timeSignature) + 10 : prefixStart;
+  const prefixEnd = Math.max(
+    clef ? 36 : 0,
+    repeatStart ? (clef ? 36 : 0) + 12 : 0,
+    timeSignature ? accidentalStart : 0,
+    accidentals.length ? accidentalStart + accidentals.length * 12 : 0,
+    noteStart
+  );
+  return prefixEnd + 10 + (notes[0]?.accidental ? 16 : 0);
+}
+
 export function renderNotationSvg(options: NotationRenderOptions): string {
   const {
     clef,
@@ -80,6 +96,7 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     accidentals = [],
     timeSignature,
     noteStart = 0,
+    firstNoteX,
     showLeftBar = false,
     showRightBar = true,
     rightBarStyle = 'single',
@@ -92,6 +109,9 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
   } = options;
 
   if (timeSignature) validateTimeSignature(timeSignature);
+  if (firstNoteX !== undefined && (!Number.isFinite(firstNoteX) || firstNoteX < minimumFirstNoteX(options))) {
+    throw new Error(`Ungültige Position der ersten Note: ${firstNoteX}; der Abstand zum Taktanfang ist zu klein.`);
+  }
 
   notes.forEach((note) => {
     if (!Number.isInteger(note.step) || note.step < -2 || note.step > 10) {
@@ -111,18 +131,21 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     : 0;
   const timeStart = prefixStart;
   const accidentalStart = timeSignature ? timeStart + timeWidth + 10 : prefixStart;
-  const noteInset = Math.max(noteStart, timeSignature
+  const noteInset = firstNoteX ?? Math.max(noteStart, timeSignature
     ? accidentalStart + accidentals.length * 12 + 10
     : accidentals.length
       ? accidentalStart + accidentals.length * 12 + 10
       : clef
         ? 36
         : 0);
-  const notePosition = (index: number) => ({
-    percent: `${((index + 1) / (notes.length + 1)) * 100}%`,
-    fraction: (index + 1) / (notes.length + 1),
-    offset: noteInset * (1 - (index + 1) / (notes.length + 1))
-  });
+  const notePosition = (index: number) => {
+    const fraction = firstNoteX === undefined ? (index + 1) / (notes.length + 1) : index / notes.length;
+    return {
+      percent: `${fraction * 100}%`,
+      fraction,
+      offset: noteInset * (1 - fraction)
+    };
+  };
   const beamStemEnds = new Map<number, number>();
   const beamStemDirections = new Map<number, boolean>();
   groups.forEach((group) => {
