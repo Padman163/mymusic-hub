@@ -175,7 +175,8 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
         : 0);
   const repeatEndInset = repeatEnd ? 16 : 0;
   const notePosition = (index: number) => {
-    const fraction = firstNoteX === undefined ? (index + 1) / (notes.length + 1) : index / notes.length;
+    const wholeMeasureRest = notes.length === 1 && notes[0].type === 'rest' && notes[0].duration === 'whole' && !notes[0].dotted;
+    const fraction = firstNoteX === undefined || wholeMeasureRest ? (index + 1) / (notes.length + 1) : index / notes.length;
     return {
       percent: `${fraction * 100}%`,
       fraction,

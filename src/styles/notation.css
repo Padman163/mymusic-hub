@@ -227,6 +227,7 @@
 
 .notation-overview {
   padding: calc(var(--notation-panel-padding) + 14px) var(--notation-panel-padding) 2rem;
+  container: notation-overview / inline-size;
 }
 
 .notation-systems {
@@ -251,6 +252,10 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   row-gap: var(--notation-system-gap);
+}
+
+.overview-system.three-measures {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .overview-layout-narrow .overview-system {
@@ -403,16 +408,18 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .dotted-notes {
+    grid-template-columns: 1fr;
+  }
+}
+
+@container notation-overview (max-width: 540px) {
   .overview-layout-wide {
     display: none;
   }
 
   .overview-layout-narrow {
     display: grid;
-  }
-
-  .dotted-notes {
-    grid-template-columns: 1fr;
   }
 }
 

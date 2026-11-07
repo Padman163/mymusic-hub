@@ -76,6 +76,13 @@ test('renderer supports mixed notes and rests and rejects invalid rest combinati
   assert.doesNotThrow(() => renderNotationSvg({ notes, curves: [{ from: 0, to: 2, type: 'slur' }] }));
 });
 
+test('a whole-measure rest remains centered when first notes are aligned', () => {
+  const svg = renderNotationSvg({ notes: [{ type: 'rest', duration: 'whole' }], firstNoteX: 20 });
+  assert.match(svg, /transform="translate\(10 0\)"><text class="notation-rest" x="50%"/);
+  const dotted = renderNotationSvg({ notes: [{ type: 'rest', duration: 'whole', dotted: true }], firstNoteX: 20 });
+  assert.match(dotted, /transform="translate\(20 0\)"><text class="notation-rest" x="0%"/);
+});
+
 test('articulation and curves use caller-provided positions', () => {
   assert.equal(articulationPlacement(true, false, 'below'), 'above');
   assert.equal(articulationPlacement(true, true, 'below'), 'below');
@@ -152,6 +159,25 @@ test('first notes align by measure column while leaving space for the widest pre
     }
   }
   assert.throws(() => renderNotationSvg({ clef: 'treble', notes, firstNoteX: 10 }), /Abstand zum Taktanfang/);
+});
+
+test('mixed system lengths align their first events and share a safe inset in later measures', () => {
+  const note = { duration: 'quarter', step: 2 };
+  const rest = { type: 'rest', duration: 'quarter' };
+  const systems = alignFirstNotesInSystems([
+    [{ clef: 'treble', accidentals: [{ type: 'sharp', step: 8 }], notes: [note] },
+      { clef: false, notes: [{ ...note, accidental: 'sharp' }, note] }],
+    [{ clef: 'treble', timeSignature: { numerator: 4, denominator: 4 }, notes: [note, rest] },
+      { clef: false, notes: [rest, note] }, { clef: false, notes: [rest, note] }]
+  ]);
+  assert.equal(systems[0][0].firstNoteX, systems[1][0].firstNoteX);
+  assert.equal(systems[0][1].firstNoteX, systems[1][1].firstNoteX);
+  assert.equal(systems[0][1].firstNoteX, systems[1][2].firstNoteX);
+  assert.ok(systems[1][2].firstNoteX >= minimumFirstNoteX({ notes: [{ ...note, accidental: 'sharp' }] }));
+  for (const measure of systems[1].slice(1)) {
+    const svg = renderNotationSvg({ ...measure, clef: undefined });
+    assert.match(svg, new RegExp(`<g transform="translate\\(${measure.firstNoteX} 0\\)"><text class="notation-rest" x="0%"`));
+  }
 });
 
 test('notation renderer still enforces shared rules and renders their signs', () => {

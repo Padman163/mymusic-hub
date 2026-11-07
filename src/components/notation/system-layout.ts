@@ -33,8 +33,9 @@ export function alignFirstNotesInSystems<T extends Omit<NotationRenderOptions, '
       columns[index] = Math.max(columns[index] ?? 0, minimum);
     });
   }
+  const followingMeasureStart = Math.max(0, ...columns.slice(1));
   return systems.map((system) => system.map((measure, index) => ({
     ...measure,
-    firstNoteX: columns[index]
+    firstNoteX: index === 0 ? columns[0] : followingMeasureStart
   })));
 }

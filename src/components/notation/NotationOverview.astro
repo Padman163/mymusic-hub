@@ -2,7 +2,7 @@
 import NotationVisual from './NotationVisual.astro';
 import { type NotationAccidental, type NotationCurve, type NotationEvent } from '../../lib/notation-renderer';
 import { omitUnchangedTimeSignatures, type TimeSignature } from '../music/time-signature.ts';
-import { arrangeNotationSystems } from './system-layout.ts';
+import { alignFirstNotesInSystems, arrangeNotationSystems } from './system-layout.ts';
 interface Measure {
   measureNumber?: string | number;
   clef?: 'treble' | 'bass' | false;
@@ -173,6 +173,66 @@ const systems: Measure[][] = [
         { duration: 'quarter', step: 4 },
         { duration: 'quarter', step: 1, articulation: 'marcato', articulationPosition: 'below' }
       ],
+      rightBarStyle: 'single'
+    }
+  ],
+  [
+    {
+      measureNumber: 13,
+      clef: 'treble',
+      timeSignature: { numerator: 4, denominator: 4 },
+      notes: [
+        { duration: 'half', step: 3 },
+        { type: 'rest', duration: 'half' }
+      ],
+      rightBarStyle: 'single'
+    },
+    {
+      measureNumber: 14,
+      clef: false,
+      notes: [
+        { type: 'rest', duration: 'quarter' },
+        { duration: 'quarter', step: 4 },
+        { duration: 'half', step: 2 }
+      ],
+      rightBarStyle: 'single'
+    },
+    {
+      measureNumber: 15,
+      clef: false,
+      notes: [{ type: 'rest', duration: 'whole' }],
+      rightBarStyle: 'single'
+    }
+  ],
+  [
+    {
+      measureNumber: 16,
+      clef: 'treble',
+      timeSignature: { numerator: 3, denominator: 4 },
+      notes: [
+        { duration: 'quarter', step: 2 },
+        { type: 'rest', duration: 'quarter' },
+        { duration: 'quarter', step: 4 }
+      ],
+      rightBarStyle: 'single'
+    },
+    {
+      measureNumber: 17,
+      clef: false,
+      notes: [
+        { type: 'rest', duration: 'half' },
+        { duration: 'quarter', step: 5 }
+      ],
+      rightBarStyle: 'single'
+    },
+    {
+      measureNumber: 18,
+      clef: false,
+      notes: [
+        { type: 'rest', duration: 'eighth' },
+        { duration: 'quarter', step: 3, dotted: true },
+        { duration: 'quarter', step: 2 }
+      ],
       rightBarStyle: 'final'
     }
   ]
@@ -181,7 +241,10 @@ const systems: Measure[][] = [
 const measures = systems.flat();
 const renderedMeasures = omitUnchangedTimeSignatures([measures])[0];
 const layouts = [
-  { className: 'overview-layout-wide', systems: arrangeNotationSystems(renderedMeasures, 2) },
+  { className: 'overview-layout-wide', systems: alignFirstNotesInSystems([
+    ...arrangeNotationSystems(renderedMeasures.slice(0, 12), 2),
+    ...arrangeNotationSystems(renderedMeasures.slice(12), 3)
+  ]) },
   { className: 'overview-layout-narrow', systems: arrangeNotationSystems(renderedMeasures, 1) }
 ];
 ---
@@ -190,7 +253,7 @@ const layouts = [
   {layouts.map((layout) => (
     <div class:list={['notation-systems', layout.className]}>
       {layout.systems.map((system) => (
-        <div class="overview-system">
+        <div class:list={['overview-system', { 'three-measures': system.length === 3 }]}>
           {system.map((measure) => (
             <div class="overview-measure">
               <div class="measure-staff">
