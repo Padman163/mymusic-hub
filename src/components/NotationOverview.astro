@@ -1,6 +1,6 @@
 ---
 import NotationClickable from './NotationClickable.astro';
-import type { NotationAccidental, NotationCurve, NotationNote } from '../lib/notation-renderer';
+import { assertNoClefChanges, type NotationAccidental, type NotationCurve, type NotationNote } from '../lib/notation-renderer';
 interface Measure {
   measureNumber?: string | number;
   clef?: 'treble' | 'bass' | false;
@@ -78,8 +78,7 @@ const systems: Measure[][] = [
   [
     {
       measureNumber: 5,
-      clef: 'bass',
-      timeSignature: { numerator: 4, denominator: 4 },
+      clef: 'treble',
       accidentals: [{ type: 'flat', step: 7 }, { type: 'flat', step: 4 }],
       notes: [{ duration: 'whole', step: 4 }],
       rightBarStyle: 'single'
@@ -125,10 +124,28 @@ const systems: Measure[][] = [
     }
   ]
 ] as const;
+
+assertNoClefChanges(systems.flatMap((system) => system.map(({ clef }) => clef)), 'NotationOverview');
+let activeTimeSignature: { numerator: number; denominator: number } | undefined;
+const renderedSystems = systems.map((system) => system.map((measure) => {
+  let timeSignature = measure.timeSignature;
+  if (timeSignature) {
+    const unchanged = activeTimeSignature
+      && activeTimeSignature.numerator === timeSignature.numerator
+      && activeTimeSignature.denominator === timeSignature.denominator;
+    if (unchanged) {
+      timeSignature = undefined;
+    } else {
+      activeTimeSignature = timeSignature;
+    }
+  }
+
+  return { ...measure, timeSignature };
+}));
 ---
 
 <div class="notation-overview not-content" data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
-  {systems.map((system) => (
+  {renderedSystems.map((system) => (
     <div class="overview-system">
       {system.map((measure) => (
         <div class="overview-measure">

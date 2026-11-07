@@ -1,25 +1,28 @@
 ---
 import NotationClickable from './NotationClickable.astro';
+import { assertNoClefChanges } from '../lib/notation-renderer';
 
 const sharpSteps = [8, 5, 9, 6, 3] as const;
 const flatSteps = [4, 7, 3, 6, 2] as const;
+const clefs = ['treble', false, false, false] as const;
+assertNoClefChanges(clefs, 'NotationAccidentals');
 ---
 
 <div class="accidental-examples not-content" data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
   <div class="accidental-row">
     <div class="accidental-measure">
-      <NotationClickable embedded clef="treble" accidentals={sharpSteps.map((step) => ({ type: 'sharp', step }))} />
+      <NotationClickable embedded clef={clefs[0]} accidentals={sharpSteps.map((step) => ({ type: 'sharp', step }))} />
     </div>
     <div class="accidental-measure">
-      <NotationClickable embedded clef={false} accidentals={sharpSteps.map((step) => ({ type: 'natural', step }))} />
+      <NotationClickable embedded clef={clefs[1]} accidentals={sharpSteps.map((step) => ({ type: 'natural', step }))} />
     </div>
     <div class="accidental-measure">
-      <NotationClickable embedded clef={false} accidentals={flatSteps.map((step) => ({ type: 'flat', step }))} />
+      <NotationClickable embedded clef={clefs[2]} accidentals={flatSteps.map((step) => ({ type: 'flat', step }))} />
     </div>
     <div class="accidental-measure">
       <NotationClickable
         embedded
-        clef={false}
+        clef={clefs[3]}
         notes={[
           { duration: 'quarter', step: 7, accidental: 'sharp' },
           { duration: 'quarter', step: 4, accidental: 'natural' },

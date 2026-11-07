@@ -1,5 +1,6 @@
 export type NotationDuration = 'whole' | 'half' | 'quarter' | 'eighth' | 'sixteenth';
 export type NotationArticulation = 'staccato' | 'tenuto' | 'accent' | 'marcato';
+export type NotationClef = 'treble' | 'bass';
 export type NotationAccidental = { type: 'sharp' | 'natural' | 'flat'; step: number };
 export type NotationNote =
   | {
@@ -33,7 +34,7 @@ export interface NotationCurve {
 }
 
 export interface NotationRenderOptions {
-  clef?: 'treble' | 'bass';
+  clef?: NotationClef;
   notes?: NotationNote[];
   accidentals?: NotationAccidental[];
   timeSignature?: { numerator: number; denominator: number };
@@ -47,6 +48,17 @@ export interface NotationRenderOptions {
   ritAt?: number;
   aTempoAt?: number;
   label?: string;
+}
+
+export function assertNoClefChanges(clefs: readonly (NotationClef | false | undefined)[], pieceName: string): void {
+  let activeClef: NotationClef | undefined;
+  for (const clef of clefs) {
+    if (!clef) continue;
+    if (activeClef && clef !== activeClef) {
+      throw new Error(`Ein Notenschlüsselwechsel von ${activeClef} zu ${clef} ist im Notationsstück "${pieceName}" nicht erlaubt.`);
+    }
+    activeClef = clef;
+  }
 }
 
 const durationLabels: Record<NotationDuration, string> = {
@@ -155,15 +167,16 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
 
   const clefGlyph = clef === 'treble' ? '\uE050' : clef === 'bass' ? '\uE062' : undefined;
   const clefY = clef === 'bass' ? 37 : 55;
-  const accidentalStart = clef ? 36 : 6;
+  const prefixStart = clef ? 36 : 6;
   const timeWidth = timeSignature
     ? Math.max(String(timeSignature.numerator).length, String(timeSignature.denominator).length) * 17
     : 0;
-  const timeStart = accidentalStart + accidentals.length * 12;
+  const timeStart = prefixStart;
+  const accidentalStart = timeSignature ? timeStart + timeWidth + 10 : prefixStart;
   const noteInset = Math.max(noteStart, timeSignature
-    ? timeStart + timeWidth + 10
+    ? accidentalStart + accidentals.length * 12 + 10
     : accidentals.length
-      ? timeStart + 10
+      ? accidentalStart + accidentals.length * 12 + 10
       : clef
         ? 36
         : 0);
@@ -233,16 +246,16 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
   }
   if (clefGlyph) parts.push(glyphText(clefGlyph, 6, clefY, 'notation-clef'));
 
-  accidentals.forEach(({ type, step }, index) => {
-    parts.push(glyphText(accidentalSymbols[type].glyph, accidentalStart + index * 12, 64 - step * 4.5, 'notation-accidental'));
-  });
-
   if (timeSignature) {
     const center = timeStart + timeWidth / 2;
     const glyphs = (value: number) => [...String(value)].map((digit) => String.fromCodePoint(0xE080 + Number(digit))).join('');
     parts.push(glyphText(glyphs(timeSignature.numerator), center, 37, 'notation-time', 'middle'));
     parts.push(glyphText(glyphs(timeSignature.denominator), center, 55, 'notation-time', 'middle'));
   }
+
+  accidentals.forEach(({ type, step }, index) => {
+    parts.push(glyphText(accidentalSymbols[type].glyph, accidentalStart + index * 12, 64 - step * 4.5, 'notation-accidental'));
+  });
 
   groups.forEach((group) => {
     const steps = group.indices.map((index) => notes[index].step);

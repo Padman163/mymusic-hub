@@ -1,5 +1,6 @@
 ---
 import NotationClickable from './NotationClickable.astro';
+import { assertNoClefChanges } from '../lib/notation-renderer';
 
 const articulations = [
   { type: 'staccato', label: 'Staccato', position: 'above', step: 7 },
@@ -11,6 +12,8 @@ const articulations = [
   { type: 'accent', label: 'Akzent', position: 'below', step: 2 },
   { type: 'marcato', label: 'Marcato', position: 'below', step: 2 }
 ] as const;
+const clefs = articulations.map((_, index) => index === 0 || index === 4 ? 'treble' as const : false);
+assertNoClefChanges(clefs, 'NotationArticulations');
 ---
 
 <div class="articulation-examples not-content" data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
@@ -19,7 +22,7 @@ const articulations = [
       <div class="articulation-measure">
         <NotationClickable
           embedded
-          clef={index === 0 || index === 4 ? 'treble' : false}
+          clef={clefs[index]}
           rightBarStyle={index === articulations.length - 1 ? 'final' : 'single'}
           notes={[{ duration: 'quarter', step, articulation: type, articulationPosition: position }]}
         />

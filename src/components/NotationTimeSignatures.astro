@@ -1,18 +1,21 @@
 ---
 import NotationClickable from './NotationClickable.astro';
+import { assertNoClefChanges } from '../lib/notation-renderer';
 
 interface Props {
   timeSignatures: { numerator: number; denominator: number }[];
 }
 
 const { timeSignatures } = Astro.props;
+const clefs = timeSignatures.map((_, index) => index === 0 ? 'treble' as const : false);
+assertNoClefChanges(clefs, 'NotationTimeSignatures');
 ---
 
 <div class="time-signatures not-content" data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
   <div class="time-signatures-row">
     {timeSignatures.map((timeSignature, index) => (
       <div class="time-signatures-measure">
-        <NotationClickable embedded clef={index === 0 ? 'treble' : false} timeSignature={timeSignature} />
+        <NotationClickable embedded clef={clefs[index]} timeSignature={timeSignature} />
       </div>
     ))}
   </div>

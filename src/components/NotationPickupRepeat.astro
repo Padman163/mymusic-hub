@@ -1,5 +1,6 @@
 ---
 import NotationClickable from './NotationClickable.astro';
+import { assertNoClefChanges } from '../lib/notation-renderer';
 
 interface Props {
   showMeasureNumbers?: boolean;
@@ -17,6 +18,10 @@ const rows = [
     { number: 4, steps: [3, 2, 0], showClef: false, showTime: false, startRepeat: false, endRepeat: false, showRightBar: true, final: true }
   ]
 ] as const;
+assertNoClefChanges(
+  rows.flatMap((row) => row.map((measure) => measure.showClef ? 'treble' : false)),
+  'NotationPickupRepeat'
+);
 ---
 
 <div class="pickup-example not-content" data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>

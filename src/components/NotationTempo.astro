@@ -1,5 +1,9 @@
 ---
 import NotationClickable from './NotationClickable.astro';
+import { assertNoClefChanges } from '../lib/notation-renderer';
+
+const clefs = ['treble', false] as const;
+assertNoClefChanges(clefs, 'NotationTempo');
 ---
 
 <div class="tempo-example not-content" data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
@@ -8,7 +12,7 @@ import NotationClickable from './NotationClickable.astro';
       <div class="tempo-heading"><strong>Allegro</strong><br /><span aria-label="Viertelnote gleich 90"><span class="metronome-note" aria-hidden="true">{'\uECA5'}</span> = 90</span></div>
       <NotationClickable
         embedded
-        clef="treble"
+        clef={clefs[0]}
         timeSignature={{ numerator: 4, denominator: 4 }}
         notes={[
           { duration: 'quarter', step: 0 },
@@ -21,7 +25,7 @@ import NotationClickable from './NotationClickable.astro';
     <div class="tempo-measure">
       <NotationClickable
         embedded
-        clef={false}
+        clef={clefs[1]}
         rightBarStyle="final"
         ritAt={0}
         aTempoAt={2}
