@@ -175,6 +175,12 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
       beamStemDirections.set(index, stemUp);
     });
   });
+  const articulationPosition = (note: NotationNote, index: number): 'above' | 'below' => {
+    const hasStem = note.duration ? note.duration !== 'whole' : note.stem === true;
+    const stemUp = beamStemDirections.get(index) ?? note.step < 4;
+    if (hasStem && !stemUp) return 'above';
+    return note.articulationPosition ?? 'above';
+  };
 
   const description: string[] = [];
   if (clef) description.push(clef === 'treble' ? 'Violinschlüssel' : 'Bassschlüssel');
@@ -182,12 +188,12 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
   if (accidentals.length) {
     description.push(`Vorzeichen: ${accidentals.map(({ type, step }) => `${accidentalSymbols[type].label} auf Position ${step}`).join(', ')}`);
   }
-  notes.forEach((note) => {
+  notes.forEach((note, index) => {
     const name = note.duration
       ? durationLabels[note.duration]
       : note.type === 'filled' ? 'gefüllter Notenkopf' : 'ungefüllter Notenkopf';
     const articulation = note.articulation
-      ? ` mit ${articulationSymbols[note.articulation].label}${note.articulationPosition === 'below' ? ' unterhalb' : ''}`
+      ? ` mit ${articulationSymbols[note.articulation].label}${articulationPosition(note, index) === 'below' ? ' unterhalb' : ''}`
       : '';
     description.push(`${name} auf Position ${note.step}${articulation}`);
   });
@@ -284,8 +290,9 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     }
     if (note.articulation) {
       const symbol = articulationSymbols[note.articulation];
-      const articulationY = y + (note.articulationPosition === 'below' ? symbol.belowOffset : -12);
-      parts.push(glyphText(note.articulationPosition === 'below' ? symbol.below : symbol.above, x, articulationY, 'notation-articulation', 'middle'));
+      const position = articulationPosition(note, index);
+      const articulationY = y + (position === 'below' ? symbol.belowOffset : -12);
+      parts.push(glyphText(position === 'below' ? symbol.below : symbol.above, x, articulationY, 'notation-articulation', 'middle'));
     }
     parts.push('</g>');
   });

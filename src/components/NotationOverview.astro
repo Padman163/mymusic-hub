@@ -22,20 +22,16 @@ interface Measure {
 const systems: Measure[][] = [
   [
     {
+      measureNumber: 1,
       clef: 'treble',
       timeSignature: { numerator: 4, denominator: 4 },
+      accidentals: [{ type: 'sharp', step: 8 }, { type: 'sharp', step: 5 }],
       tempo: 'Allegro · ♩ = 90',
-      notes: [{ duration: 'quarter', step: 2 }],
-      rightBarStyle: 'single'
-    },
-    {
-      measureNumber: 1,
-      clef: false,
       notes: [
-        { duration: 'quarter', step: 4, articulation: 'staccato' },
+        { duration: 'half', step: 4, articulation: 'staccato' },
         { duration: 'quarter', step: 5, articulation: 'tenuto' },
-        { duration: 'quarter', step: 6 },
-        { duration: 'quarter', step: 4 }
+        { duration: 'eighth', step: 6, beamGroup: 'measure-1-eighths' },
+        { duration: 'eighth', step: 5, beamGroup: 'measure-1-eighths' }
       ],
       rightBarStyle: 'single'
     },
@@ -45,32 +41,32 @@ const systems: Measure[][] = [
       notes: [
         { duration: 'eighth', step: 2, beamGroup: 'eighths' },
         { duration: 'eighth', step: 3, beamGroup: 'eighths' },
-        { duration: 'sixteenth', step: 4, beamGroup: 'sixteenths' },
-        { duration: 'sixteenth', step: 5, beamGroup: 'sixteenths' },
-        { duration: 'quarter', step: 6 },
+        { duration: 'sixteenth', step: 4, beamGroup: 'measure-2-sixteenths' },
+        { duration: 'sixteenth', step: 5, beamGroup: 'measure-2-sixteenths' },
+        { duration: 'sixteenth', step: 6, beamGroup: 'measure-2-sixteenths' },
+        { duration: 'sixteenth', step: 5, beamGroup: 'measure-2-sixteenths' },
         { duration: 'quarter', step: 4 },
-        { duration: 'eighth', step: 3 }
+        { duration: 'quarter', step: 2 }
       ],
       rightBarStyle: 'single'
     },
     {
       measureNumber: 3,
       clef: false,
-      curves: [{ from: 1, to: 2, type: 'tie', placement: 'below' }],
+      curves: [
+        { from: 0, to: 1, type: 'slur', placement: 'above' },
+        { from: 1, to: 2, type: 'tie', placement: 'below' }
+      ],
       notes: [
-        { duration: 'half', step: 4 },
+        { duration: 'half', step: 4, articulation: 'accent', articulationPosition: 'below' },
         { duration: 'quarter', step: 2 },
-        { duration: 'quarter', step: 2 }
+        { duration: 'quarter', step: 2, articulation: 'marcato', articulationPosition: 'below' }
       ],
       rightBarStyle: 'single'
-    }
-  ],
-  [
+    },
     {
       measureNumber: 4,
-      clef: 'treble',
-      timeSignature: { numerator: 4, denominator: 4 },
-      hairpin: 'crescendo',
+      clef: false,
       notes: [
         { duration: 'quarter', step: 2 },
         { duration: 'quarter', step: 4 },
@@ -78,35 +74,47 @@ const systems: Measure[][] = [
         { duration: 'quarter', step: 7 }
       ],
       rightBarStyle: 'single'
-    },
+    }
+  ],
+  [
     {
       measureNumber: 5,
-      clef: false,
-      repeatStart: true,
-      tempo: 'rit. · a tempo',
-      tempoPosition: 'annotation',
-      curves: [{ from: 1, to: 2, type: 'slur', placement: 'below' }],
-      notes: [
-        { duration: 'half', step: 6 },
-        { duration: 'quarter', step: 4, accidental: 'flat' },
-        { duration: 'quarter', step: 5 }
-      ],
+      clef: 'bass',
+      timeSignature: { numerator: 4, denominator: 4 },
+      accidentals: [{ type: 'flat', step: 7 }, { type: 'flat', step: 4 }],
+      notes: [{ duration: 'whole', step: 4 }],
       rightBarStyle: 'single'
     },
     {
       measureNumber: 6,
       clef: false,
-      repeatEnd: true,
+      repeatStart: true,
+      tempo: 'rit. · a tempo',
+      tempoPosition: 'annotation',
       notes: [
-        { duration: 'quarter', step: 2, articulation: 'accent', articulationPosition: 'below' },
-        { duration: 'quarter', step: 6, articulation: 'marcato', articulationPosition: 'above' },
-        { duration: 'quarter', step: 5 },
-        { duration: 'quarter', step: 4 }
+        { duration: 'quarter', step: 6, accidental: 'sharp', articulation: 'staccato', articulationPosition: 'below' },
+        { duration: 'quarter', step: 4, accidental: 'natural', articulation: 'tenuto', articulationPosition: 'below' },
+        { duration: 'quarter', step: 5, accidental: 'flat' },
+        { duration: 'quarter', step: 3 }
       ],
       rightBarStyle: 'single'
     },
     {
       measureNumber: 7,
+      clef: false,
+      repeatEnd: true,
+      hairpin: 'crescendo',
+      notes: [
+        { duration: 'quarter', step: 2, dotted: true },
+        { duration: 'eighth', step: 3 },
+        { duration: 'eighth', step: 4, beamGroup: 'measure-7-eighths', articulation: 'accent', articulationPosition: 'above' },
+        { duration: 'eighth', step: 5, beamGroup: 'measure-7-eighths', articulation: 'marcato', articulationPosition: 'above' },
+        { duration: 'quarter', step: 6 }
+      ],
+      rightBarStyle: 'single'
+    },
+    {
+      measureNumber: 8,
       clef: false,
       hairpin: 'decrescendo',
       initialDynamic: 'forte',
@@ -174,7 +182,7 @@ const systems: Measure[][] = [
   }
 
   .overview-system:first-child {
-    grid-template-columns: minmax(0, 0.65fr) repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .overview-measure {
@@ -208,8 +216,5 @@ const systems: Measure[][] = [
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .overview-system:first-child {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
   }
 </style>
