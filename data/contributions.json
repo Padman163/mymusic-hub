@@ -276,7 +276,7 @@
       },
       {
         "text": "Komponenten minimieren und alles aus einer heraus",
-        "checked": false
+        "checked": true
       },
       {
         "text": "4 Prüfungen mit 12 Takten durchführen",
@@ -284,6 +284,18 @@
       },
       {
         "text": "Schaubild wie sich die Komponenten was ziehen",
+        "checked": false
+      },
+      {
+        "text": "abstände ganz links msüsengleich sein, wie bei einem normalen taktbeginn außer es sind vorzeichen davor.",
+        "checked": false
+      },
+      {
+        "text": "taktbegnn nochmal anpassen, sieht manchmal komisch aus.",
+        "checked": false
+      },
+      {
+        "text": "Alle Visuals für theorie und referenzwerkzeuge sollen gleich sein mru text so wie er gerade ist.",
         "checked": false
       }
     ],
