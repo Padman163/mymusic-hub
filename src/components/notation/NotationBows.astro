@@ -1,6 +1,6 @@
 ---
 import NotationClickable from './NotationClickable.astro';
-import { assertNoClefChanges } from '../lib/notation-renderer';
+import { assertNoClefChanges } from '../../lib/notation-renderer';
 
 const clefs = ['treble', 'treble'] as const;
 assertNoClefChanges(clefs, 'NotationBows');
