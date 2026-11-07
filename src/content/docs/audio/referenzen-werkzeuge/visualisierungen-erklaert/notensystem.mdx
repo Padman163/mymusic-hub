@@ -3,7 +3,7 @@ title: Notensystem
 ---
 
 import NotationClickable from '../../../../../components/NotationClickable.astro';
-import KeyboardNotation from '../../../../../components/KeyboardNotation.astro';
+import NotationKeyboard from '../../../../../components/NotationKeyboard.astro';
 import NotationTimeSignatures from '../../../../../components/NotationTimeSignatures.astro';
 import NotationAccidentals from '../../../../../components/NotationAccidentals.astro';
 import NotationPickupRepeat from '../../../../../components/NotationPickupRepeat.astro';
@@ -126,9 +126,9 @@ Der Schlussstrich besteht aus einer dünnen und einer dicken Linie. `NotationCli
 
 Das Klaviersystem zeigt oben den Violin- und unten den Bassschlüssel. Das mittlere C (C4) steht im oberen System auf der ersten Hilfslinie darunter und im unteren System auf der ersten Hilfslinie darüber. Beide Darstellungen liegen hier genau übereinander und zeigen denselben Ton.
 
-<KeyboardNotation />
+<NotationKeyboard />
 
-Der Schlussstrich erstreckt sich über beide Systeme. Mit `rightBarStyle="single"` erscheinen stattdessen die einfachen Taktstriche. Die geschweifte Klammer ist standardmäßig sichtbar und lässt sich beim Einbinden mit `<KeyboardNotation showBrace={false} />` ausblenden.
+Der Schlussstrich erstreckt sich über beide Systeme. Mit `rightBarStyle="single"` erscheinen stattdessen die einfachen Taktstriche. Die geschweifte Klammer ist standardmäßig sichtbar und lässt sich beim Einbinden mit `<NotationKeyboard showBrace={false} />` ausblenden.
 
 Die Visualisierung trägt die Tags `Allgemein` und `Notensystem`. Mehr zur geplanten Verwendung steht unter [EXP und Tags](../../exp-und-tags/).
 
