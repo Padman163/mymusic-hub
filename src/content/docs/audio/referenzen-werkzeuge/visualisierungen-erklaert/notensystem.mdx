@@ -136,7 +136,7 @@ Taktnummern sind standardmäßig ausgeblendet und werden in diesem Beispiel mit 
 
 ## Tempoangaben
 
-Das Beispiel zeigt zwei 4/4-Takte mit **Allegro** und der Metronomangabe **Viertelnote = 90** (90 Viertelschläge pro Minute). Im zweiten Takt bedeutet **rit.**, allmählich langsamer zu werden; **a tempo** führt zum ursprünglichen Tempo zurück. Die Zahl ist hier die konkrete Tempovorgabe.
+Das Beispiel zeigt zwei 4/4-Takte mit **Allegro** und der Metronomangabe **Viertelnote = 90** (90 Viertelschläge pro Minute). Im zweiten Takt bedeutet **rit.**, allmählich langsamer zu werden; **a tempo** führt zum ursprünglichen Tempo zurück. Beide Angaben werden über `ritAt` und `aTempoAt` direkt an `NotationClickable` an nullbasierten Notenindizes gebunden. `aTempoAt` muss mindestens zwei Indizes nach `ritAt` liegen; dieselbe oder eine frühere Note ist unzulässig.
 
 <NotationTempo />
 
@@ -164,6 +164,6 @@ Das abschließende Beispiel bündelt die hier gezeigten Notationszeichen in acht
 
 <NotationOverview />
 
-Die Takte und Notenzeilen werden mit `NotationClickable` aufgebaut. Diese ruft den gemeinsamen `renderNotationSvg`-Renderer für Schlüssel, Taktart, Vorzeichen, Noten, Hälse, Balken, Artikulationen, Bögen und Taktstriche auf. Taktzahlen kommen aus `NotationMeasureNumber`, Tempoangaben aus `NotationTempoText`, Dynamik und Keile aus `NotationDynamics` und der Schlussstrich aus `NotationFinalBar`. `NotationOverview` ordnet diese wiederverwendbaren Komponenten als Beispiel an; es zeichnet die Notationszeichen nicht separat.
+Die Takte und Notenzeilen werden mit `NotationClickable` aufgebaut. Diese ruft den gemeinsamen `renderNotationSvg`-Renderer für Schlüssel, Taktart, Vorzeichen, Noten, Hälse, Balken, Artikulationen, Bögen, Tempoangaben und Taktstriche auf. Taktzahlen kommen aus `NotationMeasureNumber`, Dynamik und Keile aus `NotationDynamics` und der Schlussstrich aus `NotationFinalBar`. `NotationOverview` ordnet diese wiederverwendbaren Komponenten als Beispiel an; es zeichnet die Notationszeichen nicht separat.
 
 Alle Notenbilder verwenden dieselbe Renderinglogik: Astro-Schaubilder binden `NotationClickable` ein, interaktive Quizbilder rufen `renderNotationSvg` aus `src/lib/notation-renderer.ts` auf. Neue Notationszeichen und ihre Positionierung werden dort ergänzt; in Übersichten oder Quiz-Komponenten dürfen sie nicht als separate SVGs nachgebaut werden.

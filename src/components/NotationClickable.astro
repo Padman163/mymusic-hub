@@ -22,6 +22,8 @@ interface Props {
   curves?: NotationCurve[];
   measureNumber?: string | number;
   tempo?: string;
+  ritAt?: number;
+  aTempoAt?: number;
   noteStart?: number;
   embedded?: boolean;
 }
@@ -39,6 +41,8 @@ const {
   curves = [],
   measureNumber,
   tempo,
+  ritAt,
+  aTempoAt,
   noteStart = 0,
   embedded = false
 } = Astro.props;
@@ -54,7 +58,9 @@ const notation = renderNotationSvg({
   rightBarStyle,
   repeatStart,
   repeatEnd,
-  curves
+  curves,
+  ritAt,
+  aTempoAt
 });
 ---
 
@@ -132,6 +138,12 @@ const notation = renderNotationSvg({
   :global(.notation-articulation) {
     font-family: 'NotationBravura';
     font-size: 36px;
+    fill: #111827;
+    stroke: none;
+  }
+
+  :global(.notation-tempo) {
+    font: italic 14px Georgia, serif;
     fill: #111827;
     stroke: none;
   }

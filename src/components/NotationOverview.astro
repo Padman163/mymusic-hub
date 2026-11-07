@@ -1,7 +1,6 @@
 ---
 import NotationClickable from './NotationClickable.astro';
 import NotationDynamics from './NotationDynamics.astro';
-import NotationTempoText from './NotationTempoText.astro';
 import type { NotationAccidental, NotationCurve, NotationNote } from '../lib/notation-renderer';
 interface Measure {
   measureNumber?: string | number;
@@ -11,7 +10,8 @@ interface Measure {
   notes: NotationNote[];
   rightBarStyle: 'single' | 'final';
   tempo?: string;
-  tempoPosition?: 'annotation';
+  ritAt?: number;
+  aTempoAt?: number;
   curves?: NotationCurve[];
   repeatStart?: boolean;
   repeatEnd?: boolean;
@@ -89,8 +89,8 @@ const systems: Measure[][] = [
       measureNumber: 6,
       clef: false,
       repeatStart: true,
-      tempo: 'rit. · a tempo',
-      tempoPosition: 'annotation',
+      ritAt: 0,
+      aTempoAt: 2,
       notes: [
         { duration: 'quarter', step: 6, accidental: 'sharp', articulation: 'staccato', articulationPosition: 'below' },
         { duration: 'quarter', step: 4, accidental: 'natural', articulation: 'tenuto', articulationPosition: 'below' },
@@ -134,11 +134,12 @@ const systems: Measure[][] = [
       {system.map((measure) => (
         <div class="overview-measure">
           <div class="measure-staff">
-            {measure.tempo && measure.tempoPosition === 'annotation' && <NotationTempoText value={measure.tempo} placement="annotation" />}
             <NotationClickable
               embedded
               measureNumber={measure.measureNumber}
-              tempo={measure.tempoPosition === 'annotation' ? undefined : measure.tempo}
+              tempo={measure.tempo}
+              ritAt={measure.ritAt}
+              aTempoAt={measure.aTempoAt}
               clef={measure.clef}
               timeSignature={measure.timeSignature}
               accidentals={measure.accidentals}

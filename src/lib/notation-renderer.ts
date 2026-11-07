@@ -44,6 +44,8 @@ export interface NotationRenderOptions {
   repeatStart?: boolean;
   repeatEnd?: boolean;
   curves?: NotationCurve[];
+  ritAt?: number;
+  aTempoAt?: number;
   label?: string;
 }
 
@@ -103,6 +105,8 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     repeatStart = false,
     repeatEnd = false,
     curves = [],
+    ritAt,
+    aTempoAt,
     label
   } = options;
 
@@ -117,6 +121,14 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
       throw new Error(`Ungültige Notenposition: ${note.step}.`);
     }
   });
+  for (const [tempo, index] of [['rit.', ritAt], ['a tempo', aTempoAt]] as const) {
+    if (index !== undefined && (!Number.isInteger(index) || index < 0 || index >= notes.length)) {
+      throw new Error(`Ungültige Notenposition für "${tempo}": ${index}.`);
+    }
+  }
+  if (ritAt !== undefined && aTempoAt !== undefined && aTempoAt - ritAt < 2) {
+    throw new Error('"a tempo" muss mindestens zwei Notenpositionen nach "rit." stehen.');
+  }
 
   const groups = new Map<string, { indices: number[]; duration: 'eighth' | 'sixteenth' }>();
   notes.forEach((note, index) => {
@@ -188,6 +200,8 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
   if (accidentals.length) {
     description.push(`Vorzeichen: ${accidentals.map(({ type, step }) => `${accidentalSymbols[type].label} auf Position ${step}`).join(', ')}`);
   }
+  if (ritAt !== undefined) description.push(`rit. bei Note ${ritAt + 1}`);
+  if (aTempoAt !== undefined) description.push(`a tempo bei Note ${aTempoAt + 1}`);
   notes.forEach((note, index) => {
     const name = note.duration
       ? durationLabels[note.duration]
@@ -296,6 +310,15 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     }
     parts.push('</g>');
   });
+
+  if (ritAt !== undefined) {
+    const position = notePosition(ritAt);
+    parts.push(`<text class="notation-tempo" x="${position.percent}" y="18" transform="translate(${position.offset} 0)" text-anchor="middle">rit.</text>`);
+  }
+  if (aTempoAt !== undefined) {
+    const position = notePosition(aTempoAt);
+    parts.push(`<text class="notation-tempo" x="${position.percent}" y="18" transform="translate(${position.offset} 0)" text-anchor="middle">a tempo</text>`);
+  }
 
   parts.push('</svg>');
   return parts.join('');

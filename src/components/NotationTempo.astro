@@ -1,6 +1,5 @@
 ---
 import NotationClickable from './NotationClickable.astro';
-import NotationTempoText from './NotationTempoText.astro';
 ---
 
 <div class="tempo-example not-content" data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
@@ -20,12 +19,12 @@ import NotationTempoText from './NotationTempoText.astro';
       />
     </div>
     <div class="tempo-measure">
-      <NotationTempoText value="rit." placement="rit" />
-      <NotationTempoText value="a tempo" placement="return" />
       <NotationClickable
         embedded
         clef={false}
         rightBarStyle="final"
+        ritAt={0}
+        aTempoAt={2}
         notes={[
           { duration: 'quarter', step: 2 },
           { duration: 'quarter', step: 3 },
