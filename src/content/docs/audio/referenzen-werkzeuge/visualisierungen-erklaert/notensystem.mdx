@@ -29,7 +29,7 @@ Die Taktstriche lassen sich beim Einbinden der Komponente unabhängig voneinande
 
 ## Notenschlüssel
 
-Jede eigenständige Notenzeile zeigt standardmäßig einen Violinschlüssel. Über `clef` lässt sich der Schlüssel ändern; `clef="bass"` zeigt den Bassschlüssel. Mit `clef={false}` wird der Schlüssel ausgeblendet, zum Beispiel bei weiteren Takten derselben Zeile. Die Schlüssel verwenden die gleiche Notenschrift wie die AlphaTab-Beispiele.
+Jede eigenständige Notenzeile zeigt standardmäßig einen Violinschlüssel. Für ein einzelnes Beispiel kann `clef="bass"` den Bassschlüssel wählen. Innerhalb eines Stücks, das von einer `.astro`-Komponente aufgebaut wird, bleibt der Schlüssel jedoch unverändert; `assertNoClefChanges` prüft das. Mit `clef={false}` wird der Schlüssel ausgeblendet, zum Beispiel bei weiteren Takten oder Systemen desselben Stücks. Die Schlüssel verwenden die gleiche Notenschrift wie die AlphaTab-Beispiele.
 
 **Violinschlüssel** (`treble`):
 
@@ -158,12 +158,12 @@ Dynamikzeichen geben an, wie laut oder leise gespielt wird. **p** (*piano*) bede
 
 <NotationDynamics />
 
-## Abschlussbeispiel: acht Takte
+## Abschlussbeispiel: zwölf Takte
 
-Das abschließende Beispiel bündelt die hier gezeigten Notationszeichen in acht vollständigen, nummerierten Takten im Violinschlüssel. Die Taktart 4/4 steht am Anfang und wird ohne Wechsel nicht wiederholt. Das Beispiel zeigt Tonart- und Einzelvorzeichen, ganze bis Sechzehntelnoten, Punktierung, Balkengruppen mit unterschiedlichen Tonhöhen, Artikulationen über und unter Noten, Halte- und Bindebögen, Tempo, Crescendo und Decrescendo, Wiederholungszeichen sowie den Schlussstrich.
+Das abschließende Beispiel bündelt die hier gezeigten Notationszeichen in zwölf vollständigen, nummerierten Takten im Violinschlüssel. Die Takte 1 bis 8 stehen im 4/4-Takt; ab Takt 9 wechselt das Beispiel in den 3/4-Takt. Die Taktart steht nur am Anfang und beim Wechsel. Das Beispiel enthält eine Tonartvorzeichnung, einzelne Kreuze, Bs und Auflösungszeichen, ganze bis Sechzehntelnoten, Punktierung, Balkengruppen mit unterschiedlichen Tonhöhen, Artikulationen oberhalb und unterhalb von Noten, Halte- und Bindebögen, Allegro, rit. und a tempo mit mindestens zwei Noten Abstand, Crescendo und Decrescendo, Wiederholungszeichen sowie den Schlussstrich.
 
 <NotationOverview />
 
-Die Takte und Notenzeilen werden mit `NotationClickable` aufgebaut. Diese ruft den gemeinsamen `renderNotationSvg`-Renderer für Schlüssel, Taktart, Vorzeichen, Noten, Hälse, Balken, Artikulationen, Bögen und Tempoangaben auf. Die Taktart wird vor den Vorzeichen gezeichnet. Eine `.astro`-Datei, die ein Notationsbeispiel zusammensetzt, gilt als ein Stück: Der wiederverwendbare `assertNoClefChanges`-Check weist darin jeden Wechsel zwischen Violin- und Bassschlüssel zurück, auch am Beginn eines neuen Systems. Nicht angezeigte Schlüssel (`clef={false}`) lösen keinen Wechsel aus. `NotationClickable` bindet außerdem die wiederverwendbaren Komponenten für Taktzahlen, Dynamik und Keile sowie den Schlussstrich ein. `NotationOverview` ordnet diese Notenzeilen als Beispiel an; es zeichnet oder positioniert diese Zeichen nicht selbst.
+Die zwölf Takte sind in drei Notensysteme mit je vier Takten gegliedert. Alle Systeme werden pro Takt aus `NotationClickable` aufgebaut. Der gemeinsame `renderNotationSvg`-Renderer zeichnet Schlüssel, Taktart, Vorzeichen, Noten, Hälse, Balken, Artikulationen, Bögen, Tempoangaben, Wiederholungen und Taktstriche. Taktzahlen kommen aus `NotationMeasureNumber`, Dynamikzeichen und Keile aus `NotationDynamicsMarks`, der Schlussstrich aus `NotationFinalBar`; `NotationDynamics` verwendet dieselbe Dynamik-Komponente auch für das eigenständige Dynamik-Schaubild. `NotationOverview` enthält nur die Taktdaten und ordnet die Komponenten an, es legt keine eigenen Zeichenregeln fest. Der Schlüssel bleibt durch das ganze Stück unverändert; die Prüfregel wird mit `assertNoClefChanges` abgesichert.
 
 Alle Notenbilder verwenden dieselbe Renderinglogik: Astro-Schaubilder binden `NotationClickable` ein, interaktive Quizbilder rufen `renderNotationSvg` aus `src/lib/notation-renderer.ts` auf. Neue Notationszeichen und ihre Positionierung werden dort ergänzt; in Übersichten oder Quiz-Komponenten dürfen sie nicht als separate SVGs nachgebaut werden.
