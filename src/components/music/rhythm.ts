@@ -18,6 +18,30 @@ export const durationLabels: Record<Duration, string> = {
   sixteenth: 'Sechzehntelnote'
 };
 
+const durationUnits: Record<Duration, number> = {
+  whole: 16,
+  half: 8,
+  quarter: 4,
+  eighth: 2,
+  sixteenth: 1
+};
+
+export function rhythmicPositions(events: readonly RhythmEvent[]): number[] | undefined {
+  if (events.some((event) => event.duration === undefined)) return undefined;
+  const durations = events.map((event) => {
+    const units = event.duration === undefined ? undefined : durationUnits[event.duration];
+    if (units === undefined) throw new Error(`Ungültiger Noten- oder Pausenwert: ${event.duration}.`);
+    return units * (event.dotted ? 1.5 : 1);
+  });
+  const total = durations.reduce((sum, duration) => sum + duration, 0);
+  let elapsed = 0;
+  return durations.map((duration) => {
+    const position = elapsed / total;
+    elapsed += duration;
+    return position;
+  });
+}
+
 export function collectBeamGroups(events: readonly RhythmEvent[]): Map<string, BeamGroup> {
   const groups = new Map<string, BeamGroup>();
   events.forEach((event, index) => {

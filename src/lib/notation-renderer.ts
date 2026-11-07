@@ -1,7 +1,7 @@
 import { articulationPlacement, articulationSymbols, articulationY, renderArticulation, type Articulation } from '../components/music/articulation.ts';
 import { renderBarLine, renderRepeatEndAtBoundary, renderRepeatStart } from '../components/music/barline.ts';
 import { renderCurve, validateCurves, type MusicCurve } from '../components/music/curve.ts';
-import { collectBeamGroups, durationLabels, flagGlyph, renderBeam, renderDot, renderStem, type Duration } from '../components/music/rhythm.ts';
+import { collectBeamGroups, durationLabels, flagGlyph, renderBeam, renderDot, renderStem, rhythmicPositions, type Duration } from '../components/music/rhythm.ts';
 import { renderRest, restSymbols } from '../components/music/rest.ts';
 import { escapeXml, glyphText } from '../components/music/svg.ts';
 import { renderTempoMark, validateTempoChanges } from '../components/music/tempo.ts';
@@ -57,6 +57,7 @@ export interface NotationRenderOptions {
   timeSignature?: TimeSignature;
   noteStart?: number;
   firstNoteX?: number;
+  spacing?: 'rhythmic' | 'equal';
   showLeftBar?: boolean;
   showRightBar?: boolean;
   rightBarStyle?: 'single' | 'final';
@@ -111,6 +112,7 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     timeSignature,
     noteStart = 0,
     firstNoteX,
+    spacing = 'rhythmic',
     showLeftBar = false,
     showRightBar = true,
     rightBarStyle = 'single',
@@ -174,9 +176,14 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
         ? 36
         : 0);
   const repeatEndInset = repeatEnd ? 16 : 0;
+  const rhythmic = spacing === 'rhythmic' ? rhythmicPositions(notes) : undefined;
   const notePosition = (index: number) => {
     const wholeMeasureRest = notes.length === 1 && notes[0].type === 'rest' && notes[0].duration === 'whole' && !notes[0].dotted;
-    const fraction = firstNoteX === undefined || wholeMeasureRest ? (index + 1) / (notes.length + 1) : index / notes.length;
+    const centered = wholeMeasureRest || (firstNoteX === undefined && notes.length === 1);
+    const start = firstNoteX === undefined ? 1 / (notes.length + 1) : 0;
+    const fraction = centered ? 0.5
+      : rhythmic ? start + (1 - start) * rhythmic[index]
+      : firstNoteX === undefined ? (index + 1) / (notes.length + 1) : index / notes.length;
     return {
       percent: `${fraction * 100}%`,
       fraction,
@@ -192,8 +199,10 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     const lastIndex = group.indices[group.indices.length - 1];
     const firstY = 64 - pitchedNote(firstIndex).step * 4.5 + (stemUp ? -31.5 : 31.5);
     const lastY = 64 - pitchedNote(lastIndex).step * 4.5 + (stemUp ? -31.5 : 31.5);
+    const firstFraction = notePosition(firstIndex).fraction;
+    const lastFraction = notePosition(lastIndex).fraction;
     group.indices.forEach((index) => {
-      const progress = (index - firstIndex) / (lastIndex - firstIndex);
+      const progress = (notePosition(index).fraction - firstFraction) / (lastFraction - firstFraction);
       beamStemEnds.set(index, firstY + (lastY - firstY) * progress);
       beamStemDirections.set(index, stemUp);
     });

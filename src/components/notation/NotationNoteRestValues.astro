@@ -8,10 +8,10 @@ const values: Duration[] = ['whole', 'half', 'quarter', 'eighth', 'sixteenth'];
 <div class="notation-value-comparison not-content" data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
   <div>
     <strong>Notenwerte</strong>
-    <NotationVisual embedded notes={values.map((duration) => ({ duration, step: 2 }))} />
+    <NotationVisual embedded spacing="equal" notes={values.map((duration) => ({ duration, step: 2 }))} />
   </div>
   <div>
     <strong>Pausenwerte</strong>
-    <NotationVisual embedded notes={values.map((duration) => ({ type: 'rest' as const, duration }))} />
+    <NotationVisual embedded spacing="equal" notes={values.map((duration) => ({ type: 'rest' as const, duration }))} />
   </div>
 </div>

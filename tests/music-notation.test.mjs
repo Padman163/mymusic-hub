@@ -4,7 +4,7 @@ import { articulationPlacement, articulationY, renderArticulation } from '../src
 import { renderRepeatEnd, renderRepeatEndAtBoundary, renderRepeatStart } from '../src/components/music/barline.ts';
 import { renderCurve, validateCurves } from '../src/components/music/curve.ts';
 import { dynamicsForHairpin } from '../src/components/music/dynamics.ts';
-import { collectBeamGroups, flagGlyph, renderDot } from '../src/components/music/rhythm.ts';
+import { collectBeamGroups, flagGlyph, renderDot, rhythmicPositions } from '../src/components/music/rhythm.ts';
 import { renderRest, restSymbols } from '../src/components/music/rest.ts';
 import { renderTempoMark, validateTempoChanges } from '../src/components/music/tempo.ts';
 import { omitUnchangedTimeSignatures, renderTimeSignature, validateTimeSignature } from '../src/components/music/time-signature.ts';
@@ -41,6 +41,57 @@ test('rhythm groups, flags and dots are reusable without pitch positions', () =>
   assert.throws(() => collectBeamGroups([events[0], { duration: 'sixteenth', beamGroup: 'a' }]), /zusammenhängende/);
   assert.notEqual(flagGlyph('eighth', true), flagGlyph('eighth', false));
   assert.match(renderDot(40, 20, 6), /cx="40" cy="20"/);
+});
+
+test('rhythmic positions reflect notes, rests and dotted durations', () => {
+  const events = [
+    { type: 'rest', duration: 'eighth' },
+    { duration: 'quarter', dotted: true },
+    { duration: 'quarter' }
+  ];
+  assert.deepEqual(rhythmicPositions(events), [0, 1 / 6, 4 / 6]);
+  assert.deepEqual(rhythmicPositions([{ duration: 'sixteenth', dotted: true }, { duration: 'sixteenth' }]), [0, 0.6]);
+  assert.deepEqual(rhythmicPositions([]), []);
+  assert.equal(rhythmicPositions([{ duration: 'quarter' }, {}]), undefined);
+  assert.throws(() => rhythmicPositions([{ duration: 'invalid' }]), /Ungültiger Noten- oder Pausenwert/);
+});
+
+test('renderer places timed events proportionally and preserves equal-spacing examples', () => {
+  const notes = [
+    { type: 'rest', duration: 'eighth' },
+    { duration: 'quarter', step: 3, dotted: true },
+    { duration: 'quarter', step: 2 }
+  ];
+  const positions = (svg) => [...svg.matchAll(/class="notation-(?:rest|note)" x="([\d.]+)%"/g)].map((match) => Number(match[1]));
+  const svg = renderNotationSvg({ notes, firstNoteX: 26, rightBarStyle: 'final' });
+  const actual = positions(svg);
+  assert.equal(actual.length, 3);
+  for (const [actualValue, expected] of actual.map((value, index) => [value, [0, 100 / 6, 400 / 6][index]])) {
+    assert.ok(Math.abs(actualValue - expected) < 1e-10);
+  }
+  const grouped = [...svg.matchAll(/<g transform="translate\(([-.\d]+) 0\)"><text class="notation-(?:rest|note)" x="([\d.]+)%"/g)];
+  const x = grouped.map((match) => Number(match[1]) + Number(match[2]) * 3);
+  const distances = [x[1] - x[0], x[2] - x[1], 300 - x[2]];
+  assert.ok(Math.abs(distances[1] / distances[0] - 3) < 1e-10);
+  assert.ok(Math.abs(distances[2] / distances[0] - 2) < 1e-10);
+  const equal = positions(renderNotationSvg({ notes, firstNoteX: 26, spacing: 'equal' }));
+  assert.deepEqual(equal, [0, (1 / 3) * 100, (2 / 3) * 100]);
+  const unaligned = positions(renderNotationSvg({ notes }));
+  assert.deepEqual(unaligned, [25, 37.5, 75]);
+  const untimed = renderNotationSvg({ notes: [{ type: 'filled', step: 2 }, { type: 'empty', step: 3 }] });
+  assert.deepEqual(positions(untimed), [(1 / 3) * 100, (2 / 3) * 100]);
+});
+
+test('beam stems follow their rhythmic x positions with dotted notes', () => {
+  const notes = [
+    { duration: 'eighth', step: 0, dotted: true, beamGroup: 'a' },
+    { duration: 'eighth', step: 1, beamGroup: 'a' },
+    { duration: 'eighth', step: 2, beamGroup: 'a' }
+  ];
+  const svg = renderNotationSvg({ notes, firstNoteX: 10 });
+  const stems = [...svg.matchAll(/<line x1="[\d.]+%" y1="[\d.]+?" x2="[\d.]+%" y2="([\d.]+)" transform="translate\([^)]+\)" \/>/g)];
+  assert.equal(stems.length, 3);
+  assert.ok(Math.abs(Number(stems[1][1]) - 27.1) < 1e-10);
 });
 
 test('rests use shared glyphs, staff positions and optional dots', () => {
