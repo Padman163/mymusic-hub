@@ -1,5 +1,6 @@
 ---
 import NotationClickable from './NotationClickable.astro';
+import NotationTempoText from './NotationTempoText.astro';
 ---
 
 <div class="tempo-example not-content" data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
@@ -19,8 +20,8 @@ import NotationClickable from './NotationClickable.astro';
       />
     </div>
     <div class="tempo-measure">
-      <span class="tempo-rit">rit.</span>
-      <span class="tempo-return">a tempo</span>
+      <NotationTempoText value="rit." placement="rit" />
+      <NotationTempoText value="a tempo" placement="return" />
       <NotationClickable
         embedded
         rightBarStyle="final"
@@ -61,9 +62,7 @@ import NotationClickable from './NotationClickable.astro';
     color: #111827;
   }
 
-  .tempo-heading,
-  .tempo-rit,
-  .tempo-return {
+  .tempo-heading {
     position: absolute;
     font: 14px/1.2 Georgia, serif;
   }
@@ -73,24 +72,9 @@ import NotationClickable from './NotationClickable.astro';
     left: 6px;
   }
 
-  .tempo-rit,
-  .tempo-return {
-    top: 43px;
-    font-style: italic;
-  }
-
   .metronome-note {
     font: 24px/1 'NotationTempoBravura';
     vertical-align: -0.2em;
   }
 
-  .tempo-rit {
-    left: 20%;
-    transform: translateX(-50%);
-  }
-
-  .tempo-return {
-    left: 60%;
-    transform: translateX(-50%);
-  }
 </style>
