@@ -22,7 +22,7 @@
 	gap: 0.5rem;
 }
 
-:root .checklist-editor input[type='text'] {
+:root .checklist-editor input[type="text"] {
 	box-sizing: border-box;
 	width: 100%;
 	border: 1px solid var(--sl-color-gray-5);
@@ -33,14 +33,14 @@
 	font: inherit;
 }
 
-:root .checklist-row input[type='checkbox'] {
+:root .checklist-row input[type="checkbox"] {
 	flex: none;
 	width: auto;
 	margin: 0;
 	padding: 0;
 }
 
-.checklist-row input[type='text'] {
+.checklist-row input[type="text"] {
 	min-width: 0;
 	flex: 1;
 }

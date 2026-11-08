@@ -1,19 +1,21 @@
 ---
-import NotationVisual from './NotationVisual.astro';
-import { assertNoClefChanges } from '../../lib/notation-renderer';
+import { assertNoClefChanges } from "../../lib/notation-renderer";
+import NotationVisual from "./NotationVisual.astro";
 
 const articulations = [
-  { type: 'staccato', label: 'Staccato', position: 'above', step: 7 },
-  { type: 'tenuto', label: 'Tenuto', position: 'above', step: 7 },
-  { type: 'accent', label: 'Akzent', position: 'above', step: 7 },
-  { type: 'marcato', label: 'Marcato', position: 'above', step: 7 },
-  { type: 'staccato', label: 'Staccato', position: 'below', step: 2 },
-  { type: 'tenuto', label: 'Tenuto', position: 'below', step: 2 },
-  { type: 'accent', label: 'Akzent', position: 'below', step: 2 },
-  { type: 'marcato', label: 'Marcato', position: 'below', step: 2 }
+	{ type: "staccato", label: "Staccato", position: "above", step: 7 },
+	{ type: "tenuto", label: "Tenuto", position: "above", step: 7 },
+	{ type: "accent", label: "Akzent", position: "above", step: 7 },
+	{ type: "marcato", label: "Marcato", position: "above", step: 7 },
+	{ type: "staccato", label: "Staccato", position: "below", step: 2 },
+	{ type: "tenuto", label: "Tenuto", position: "below", step: 2 },
+	{ type: "accent", label: "Akzent", position: "below", step: 2 },
+	{ type: "marcato", label: "Marcato", position: "below", step: 2 },
 ] as const;
-const clefs = articulations.map((_, index) => index === 0 || index === 4 ? 'treble' as const : false);
-assertNoClefChanges(clefs, 'NotationArticulations');
+const clefs = articulations.map((_, index) =>
+	index === 0 || index === 4 ? ("treble" as const) : false,
+);
+assertNoClefChanges(clefs, "NotationArticulations");
 ---
 
 <div class="articulation-examples not-content" data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>

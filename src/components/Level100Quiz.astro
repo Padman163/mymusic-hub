@@ -1,350 +1,942 @@
 ---
-import FretboardClickable from './FretboardClickable.astro';
-import DrumPattern from './DrumPattern.astro';
-import SheetMusicPlayer from './SheetMusicPlayer.astro';
-import '../styles/notation.css';
+import DrumPattern from "./DrumPattern.astro";
+import FretboardClickable from "./FretboardClickable.astro";
+import SheetMusicPlayer from "./SheetMusicPlayer.astro";
+import "../styles/notation.css";
 
 interface Question {
-  id: string;
-  prompt: string;
-  options: string[];
-  answer: string;
+	id: string;
+	prompt: string;
+	options: string[];
+	answer: string;
 }
 
 interface FretboardQuestion extends Question {
-  stringIndex: number;
-  fret: number;
+	stringIndex: number;
+	fret: number;
 }
 
 type NotationDiagram =
-  | { type: "staff-note"; step: number }
-  | { type: "note-value"; value: "whole" | "half" | "quarter" | "eighth" | "sixteenth"; dotted?: boolean }
-  | { type: "time-signature"; numerator: number; denominator: number }
-  | { type: "repeat" };
+	| { type: "staff-note"; step: number }
+	| {
+			type: "note-value";
+			value: "whole" | "half" | "quarter" | "eighth" | "sixteenth";
+			dotted?: boolean;
+	  }
+	| { type: "time-signature"; numerator: number; denominator: number }
+	| { type: "repeat" };
 
 interface NotationQuestion extends Question {
-  diagram?: NotationDiagram;
-  musicXmlUrl?: string;
-  group?: number;
+	diagram?: NotationDiagram;
+	musicXmlUrl?: string;
+	group?: number;
 }
 
 interface RhythmPattern {
-  id: string;
-  answer: string;
-  options: string[];
-  timeSignature: string;
-  resolution: "1/8" | "1/16";
-  steps: number;
-  activeSteps: number[];
+	id: string;
+	answer: string;
+	options: string[];
+	timeSignature: string;
+	resolution: "1/8" | "1/16";
+	steps: number;
+	activeSteps: number[];
 }
 
 interface DifficultyBank {
-  basics: Question[];
-  fretboard: FretboardQuestion[];
-  rhythm: Question[];
-  notation: NotationQuestion[];
-  patterns: RhythmPattern[];
+	basics: Question[];
+	fretboard: FretboardQuestion[];
+	rhythm: Question[];
+	notation: NotationQuestion[];
+	patterns: RhythmPattern[];
 }
 
-const pitchNames = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"];
+const pitchNames = [
+	"C",
+	"C♯",
+	"D",
+	"D♯",
+	"E",
+	"F",
+	"F♯",
+	"G",
+	"G♯",
+	"A",
+	"A♯",
+	"B",
+];
 const openStringMidi = [64, 59, 55, 50, 45, 40];
 const stringNames = ["hohen e", "B", "G", "D", "A", "tiefen E"];
 
 function pitchLabel(midi: number): string {
-  return `${pitchNames[midi % 12]}${Math.floor(midi / 12) - 1}`;
+	return `${pitchNames[midi % 12]}${Math.floor(midi / 12) - 1}`;
 }
 
-function createFretboardQuestion(stringIndex: number, fret: number): FretboardQuestion {
-  const midi = openStringMidi[stringIndex] + fret;
-  const answer = pitchLabel(midi);
-  return {
-    id: `${stringIndex}-${fret}`,
-    stringIndex,
-    fret,
-    prompt: `Welche Note liegt auf der ${stringNames[stringIndex]}-Saite ${fret === 0 ? "leer" : `am ${fret}. Bund`}?`,
-    options: [pitchLabel(midi - 1), pitchLabel(midi + 1), answer],
-    answer
-  };
+function createFretboardQuestion(
+	stringIndex: number,
+	fret: number,
+): FretboardQuestion {
+	const midi = openStringMidi[stringIndex] + fret;
+	const answer = pitchLabel(midi);
+	return {
+		id: `${stringIndex}-${fret}`,
+		stringIndex,
+		fret,
+		prompt: `Welche Note liegt auf der ${stringNames[stringIndex]}-Saite ${fret === 0 ? "leer" : `am ${fret}. Bund`}?`,
+		options: [pitchLabel(midi - 1), pitchLabel(midi + 1), answer],
+		answer,
+	};
 }
 
-function question(id: string, prompt: string, answer: string, wrong: string[]): Question {
-  return { id, prompt, answer, options: [answer, ...wrong] };
+function question(
+	id: string,
+	prompt: string,
+	answer: string,
+	wrong: string[],
+): Question {
+	return { id, prompt, answer, options: [answer, ...wrong] };
 }
 
 function notationQuestion(
-  id: string,
-  prompt: string,
-  answer: string,
-  wrong: string[],
-  diagram: NotationDiagram
+	id: string,
+	prompt: string,
+	answer: string,
+	wrong: string[],
+	diagram: NotationDiagram,
 ): NotationQuestion {
-  return { ...question(id, prompt, answer, wrong), diagram };
+	return { ...question(id, prompt, answer, wrong), diagram };
 }
 
 function scoreQuestion(
-  id: string,
-  prompt: string,
-  answer: string,
-  wrong: string[],
-  musicXmlUrl: string,
-  group: number
+	id: string,
+	prompt: string,
+	answer: string,
+	wrong: string[],
+	musicXmlUrl: string,
+	group: number,
 ): NotationQuestion {
-  return { ...question(id, prompt, answer, wrong), musicXmlUrl, group };
+	return { ...question(id, prompt, answer, wrong), musicXmlUrl, group };
 }
 
-const staffPitchExamples = ([
-  ["E4", "D4", "F4"],
-  ["F4", "E4", "G4"],
-  ["G4", "F4", "A4"],
-  ["A4", "G4", "B4"],
-  ["B4", "A4", "C5"],
-  ["C5", "B4", "D5"],
-  ["D5", "C5", "E5"],
-  ["E5", "D5", "F5"],
-  ["F5", "E5", "G5"]
-] as const).map(([answer, lower, higher]) =>
-  scoreQuestion(
-    `staff-note-${answer.toLowerCase()}`,
-    "Welche Note ist im Violinschlüssel notiert?",
-    answer,
-    [lower, higher],
-    `/scores/105-1-note-${answer.toLowerCase()}.musicxml`,
-    1
-  )
+const staffPitchExamples = (
+	[
+		["E4", "D4", "F4"],
+		["F4", "E4", "G4"],
+		["G4", "F4", "A4"],
+		["A4", "G4", "B4"],
+		["B4", "A4", "C5"],
+		["C5", "B4", "D5"],
+		["D5", "C5", "E5"],
+		["E5", "D5", "F5"],
+		["F5", "E5", "G5"],
+	] as const
+).map(([answer, lower, higher]) =>
+	scoreQuestion(
+		`staff-note-${answer.toLowerCase()}`,
+		"Welche Note ist im Violinschlüssel notiert?",
+		answer,
+		[lower, higher],
+		`/scores/105-1-note-${answer.toLowerCase()}.musicxml`,
+		1,
+	),
 );
 
-const noteValueExamples = ([
-  ["whole", "Ganze Note", "Halbe Note", "Viertelnote"],
-  ["half", "Halbe Note", "Viertelnote", "Ganze Note"],
-  ["quarter", "Viertelnote", "Achtelnote", "Halbe Note"],
-  ["eighth", "Achtelnote", "Sechzehntelnote", "Viertelnote"],
-  ["sixteenth", "Sechzehntelnote", "Achtelnote", "Viertelnote"]
-] as const).map(([file, answer, wrongOne, wrongTwo]) =>
-  scoreQuestion(
-    `note-value-${file}`,
-    "Welcher Notenwert ist dargestellt?",
-    answer,
-    [wrongOne, wrongTwo],
-    `/scores/${file === "half" ? "105-2-halbe-noten" : `105-2-note-${file}`}.musicxml`,
-    2
-  )
+const noteValueExamples = (
+	[
+		["whole", "Ganze Note", "Halbe Note", "Viertelnote"],
+		["half", "Halbe Note", "Viertelnote", "Ganze Note"],
+		["quarter", "Viertelnote", "Achtelnote", "Halbe Note"],
+		["eighth", "Achtelnote", "Sechzehntelnote", "Viertelnote"],
+		["sixteenth", "Sechzehntelnote", "Achtelnote", "Viertelnote"],
+	] as const
+).map(([file, answer, wrongOne, wrongTwo]) =>
+	scoreQuestion(
+		`note-value-${file}`,
+		"Welcher Notenwert ist dargestellt?",
+		answer,
+		[wrongOne, wrongTwo],
+		`/scores/${file === "half" ? "105-2-halbe-noten" : `105-2-note-${file}`}.musicxml`,
+		2,
+	),
 );
 
-const guitarStringNames = ["hohe e-Saite", "B-Saite", "G-Saite", "D-Saite", "A-Saite", "tiefe E-Saite"];
-const guitarStringExamples = ([
-  ["high-e", "hohe e-Saite"],
-  ["b", "B-Saite"],
-  ["g", "G-Saite"],
-  ["d", "D-Saite"],
-  ["a", "A-Saite"],
-  ["low-e", "tiefe E-Saite"]
-] as const).map(([file, answer]) => {
-  const correctIndex = guitarStringNames.indexOf(answer);
-  return scoreQuestion(
-    `tab-string-${file}`,
-    "Welche Saite wird in der Tabulatur gespielt?",
-    answer,
-    [
-      guitarStringNames[(correctIndex + 1) % guitarStringNames.length],
-      guitarStringNames[(correctIndex + 2) % guitarStringNames.length]
-    ],
-    `/scores/${file === "g" ? "105-3-tab-bundnummer" : `105-3-saite-${file}`}.musicxml`,
-    3
-  );
+const guitarStringNames = [
+	"hohe e-Saite",
+	"B-Saite",
+	"G-Saite",
+	"D-Saite",
+	"A-Saite",
+	"tiefe E-Saite",
+];
+const guitarStringExamples = (
+	[
+		["high-e", "hohe e-Saite"],
+		["b", "B-Saite"],
+		["g", "G-Saite"],
+		["d", "D-Saite"],
+		["a", "A-Saite"],
+		["low-e", "tiefe E-Saite"],
+	] as const
+).map(([file, answer]) => {
+	const correctIndex = guitarStringNames.indexOf(answer);
+	return scoreQuestion(
+		`tab-string-${file}`,
+		"Welche Saite wird in der Tabulatur gespielt?",
+		answer,
+		[
+			guitarStringNames[(correctIndex + 1) % guitarStringNames.length],
+			guitarStringNames[(correctIndex + 2) % guitarStringNames.length],
+		],
+		`/scores/${file === "g" ? "105-3-tab-bundnummer" : `105-3-saite-${file}`}.musicxml`,
+		3,
+	);
 });
 
 const mixedNoteValueExamples = [
-  {
-    id: "half-two-quarters",
-    file: "105-4-notenwerte",
-    answer: "Halbe und Viertelnoten",
-    wrong: ["Ganze und Viertelnoten", "Viertel- und Achtelnoten"]
-  },
-  {
-    id: "four-quarters",
-    file: "105-4-vier-viertel",
-    answer: "Viertelnoten",
-    wrong: ["Halbe und Viertelnoten", "Viertel- und Achtelnoten"]
-  },
-  {
-    id: "quarters-and-eighths",
-    file: "105-4-viertel-achtel",
-    answer: "Viertel- und Achtelnoten",
-    wrong: ["Halbe und Viertelnoten", "Ganze und Viertelnoten"]
-  },
-  {
-    id: "dotted-half-quarter",
-    file: "105-4-punktierte-halbe",
-    answer: "Punktierte halbe und Viertelnoten",
-    wrong: ["Halbe und Viertelnoten", "Punktierte Viertel- und Achtelnoten"]
-  }
+	{
+		id: "half-two-quarters",
+		file: "105-4-notenwerte",
+		answer: "Halbe und Viertelnoten",
+		wrong: ["Ganze und Viertelnoten", "Viertel- und Achtelnoten"],
+	},
+	{
+		id: "four-quarters",
+		file: "105-4-vier-viertel",
+		answer: "Viertelnoten",
+		wrong: ["Halbe und Viertelnoten", "Viertel- und Achtelnoten"],
+	},
+	{
+		id: "quarters-and-eighths",
+		file: "105-4-viertel-achtel",
+		answer: "Viertel- und Achtelnoten",
+		wrong: ["Halbe und Viertelnoten", "Ganze und Viertelnoten"],
+	},
+	{
+		id: "dotted-half-quarter",
+		file: "105-4-punktierte-halbe",
+		answer: "Punktierte halbe und Viertelnoten",
+		wrong: ["Halbe und Viertelnoten", "Punktierte Viertel- und Achtelnoten"],
+	},
 ].map(({ id, file, answer, wrong }) =>
-  scoreQuestion(
-    `mixed-values-${id}`,
-    "Welche Notenwerte sind abgebildet?",
-    answer,
-    wrong,
-    `/scores/${file}.musicxml`,
-    4
-  )
+	scoreQuestion(
+		`mixed-values-${id}`,
+		"Welche Notenwerte sind abgebildet?",
+		answer,
+		wrong,
+		`/scores/${file}.musicxml`,
+		4,
+	),
 );
 
-const timeSignatureExamples = ([
-  ["three-four", "3/4", "2/2", "4/4"],
-  ["two-two", "2/2", "3/4", "4/4"],
-  ["four-four", "4/4", "2/2", "6/8"],
-  ["six-eight", "6/8", "3/4", "2/2"]
-] as const).map(([file, answer, wrongOne, wrongTwo]) =>
-  scoreQuestion(
-    `time-signature-${file}`,
-    "Welche Taktart hat dieses Notenbeispiel?",
-    answer,
-    [wrongOne, wrongTwo],
-    `/scores/${file === "four-four" ? "105-5-achtelnoten" : `105-5-${file}`}.musicxml`,
-    5
-  )
+const timeSignatureExamples = (
+	[
+		["three-four", "3/4", "2/2", "4/4"],
+		["two-two", "2/2", "3/4", "4/4"],
+		["four-four", "4/4", "2/2", "6/8"],
+		["six-eight", "6/8", "3/4", "2/2"],
+	] as const
+).map(([file, answer, wrongOne, wrongTwo]) =>
+	scoreQuestion(
+		`time-signature-${file}`,
+		"Welche Taktart hat dieses Notenbeispiel?",
+		answer,
+		[wrongOne, wrongTwo],
+		`/scores/${file === "four-four" ? "105-5-achtelnoten" : `105-5-${file}`}.musicxml`,
+		5,
+	),
 );
 
 const questionBanks: Record<"1" | "2", DifficultyBank> = {
-  "1": {
-    basics: [
-      question("octave", "Aus wie vielen Halbtonschritten besteht eine Oktave?", "12", ["10", "14"]),
-      question("open-strings", "Wie heißen die Leersaiten der Gitarre von der tiefsten zur höchsten?", "E – A – D – G – B – E", ["A – D – G – B – E – A", "E – G – D – A – B – E"]),
-      question("e-f", "Welcher Abstand liegt zwischen E und F?", "Ein Halbton", ["Ein Ganzton", "Eine Quinte"]),
-      question("tab-zero", "Was zeigt die Zahl 0 in einer Tabulatur an?", "Die Saite wird leer gespielt", ["Der erste Bund wird gegriffen", "Die Saite wird nicht gespielt"]),
-      question("position", "Was beschreibt eine Lage auf dem Gitarrenhals?", "Den Bundbereich, in dem die Greifhand spielt", ["Die Lautstärke des Anschlags", "Die Stimmung der Leersaiten"]),
-      question("semitone", "Wie weit liegt der nächste Bund auf derselben Saite entfernt?", "Einen Halbton", ["Einen Ganzton", "Eine Oktave"]),
-      question("sharp", "Was bewirkt ein Kreuz vor einer Note?", "Erhöht die Note um einen Halbton", ["Erniedrigt die Note um einen Halbton", "Verlängert die Note"]),
-      question("flat", "Was bewirkt ein b vor einer Note?", "Erniedrigt die Note um einen Halbton", ["Erhöht die Note um einen Halbton", "Macht die Note doppelt so lang"]),
-      question("staff-lines", "Wie viele Linien hat ein gewöhnliches Notensystem?", "Fünf", ["Vier", "Sechs"]),
-      question("treble-clef", "Welcher Schlüssel wird für viele Melodien und Gitarrennoten verwendet?", "Violinschlüssel", ["Bassschlüssel", "Alt-Schlüssel"]),
-      question("tab-lines", "Wofür stehen die sechs Linien einer Gitarrentabulatur?", "Für die sechs Gitarrensaiten", ["Für die sechs Bünde", "Für sechs Takte"]),
-      question("fret-number", "Was bedeutet eine Zahl auf einer TAB-Linie?", "Den zu greifenden Bund auf dieser Saite", ["Die Zählzeit", "Die Lautstärke"]),
-      question("note-stem", "Was zeigt der Notenhals zusammen mit der Füllung des Notenkopfs?", "Den Notenwert", ["Die Tonhöhe", "Die Saite"]),
-      question("barline", "Was trennt ein gewöhnlicher Taktstrich?", "Zwei Takte", ["Zwei Notensysteme", "Zwei Stimmen"]),
-      question("pick-hand", "Welche Hand zupft oder schlägt die Saiten an?", "Die Anschlaghand", ["Die Greifhand", "Die Schreibhand"]),
-      question("fretting-hand", "Welche Hand drückt die Saiten auf die Bünde?", "Die Greifhand", ["Die Anschlaghand", "Die Schlagzeughand"])
-    ],
-    fretboard: [
-      createFretboardQuestion(0, 1), createFretboardQuestion(0, 2), createFretboardQuestion(0, 3), createFretboardQuestion(0, 5),
-      createFretboardQuestion(1, 0), createFretboardQuestion(1, 1), createFretboardQuestion(1, 3), createFretboardQuestion(1, 5),
-      createFretboardQuestion(2, 0), createFretboardQuestion(2, 2), createFretboardQuestion(2, 4), createFretboardQuestion(2, 5),
-      createFretboardQuestion(3, 0), createFretboardQuestion(3, 2), createFretboardQuestion(3, 3), createFretboardQuestion(3, 5),
-      createFretboardQuestion(4, 0), createFretboardQuestion(4, 2), createFretboardQuestion(4, 3), createFretboardQuestion(4, 5),
-      createFretboardQuestion(5, 0), createFretboardQuestion(5, 1), createFretboardQuestion(5, 3), createFretboardQuestion(5, 5)
-    ],
-    rhythm: [
-      question("four-four", "Wie viele Viertelnotenwerte passen in einen 4/4-Takt?", "Vier", ["Drei", "Sechs"]),
-      question("dotted", "Um welchen Anteil wird eine punktierte Note verlängert?", "Um die Hälfte ihres ursprünglichen Werts", ["Um ihren ganzen ursprünglichen Wert", "Gar nicht"]),
-      question("eighths-per-beat", "Wie viele Achtelnoten passen in einen Viertelschlag?", "Zwei", ["Eine", "Drei"]),
-      question("triplet", "In wie viele gleich große Teile teilt eine Triole üblicherweise die Dauer von zwei Noten?", "Drei", ["Zwei", "Vier"]),
-      question("bpm", "Wofür steht BPM?", "Schläge pro Minute", ["Takte pro Minute", "Bünde pro Melodie"]),
-      question("quarter-duration", "Wie viele Schläge dauert eine Viertelnote im 4/4-Takt?", "Einen Schlag", ["Zwei Schläge", "Einen halben Schlag"]),
-      question("half-duration", "Wie viele Viertelschläge dauert eine halbe Note?", "Zwei", ["Einen", "Vier"]),
-      question("whole-duration", "Wie viele Viertelschläge dauert eine ganze Note im 4/4-Takt?", "Vier", ["Zwei", "Acht"]),
-      question("rest", "Was bedeutet eine Pause in der Notation?", "Während ihrer Dauer wird nicht gespielt", ["Die Note wird leiser gespielt", "Der Takt wird beendet"]),
-      question("time-signature-top", "Was gibt die obere Zahl einer Taktangabe meist an?", "Die Anzahl der Zählzeiten im Takt", ["Das Tempo", "Die Anzahl der Notenlinien"]),
-      question("time-signature-bottom", "Was gibt die untere Zahl einer Taktangabe an?", "Welche Noteneinheit als Zählzeit gilt", ["Wie viele Takte gespielt werden", "Wie laut gespielt wird"]),
-      question("eighth-count", "Wie zählt man die beiden Achtel eines Viertelschlags oft?", "1 und &", ["1 und 3", "1 und 2 und 3 und"])
-    ],
-    notation: [
-      ...staffPitchExamples,
-      ...noteValueExamples,
-      ...guitarStringExamples,
-      ...mixedNoteValueExamples,
-      ...timeSignatureExamples
-    ],
-    patterns: [
-      { id: "4-4-16-eighth-pulses", answer: "Acht Anschläge liegen gleichmäßig auf den Zählzeiten und dazwischen.", options: ["Acht Anschläge liegen gleichmäßig auf den Zählzeiten und dazwischen.", "Acht Anschläge liegen auf den Zählzeiten und jeweils direkt danach.", "Vier Anschläge liegen auf den vier Zählzeiten."], timeSignature: "4/4", resolution: "1/16", steps: 16, activeSteps: [0, 2, 4, 6, 8, 10, 12, 14] },
-      { id: "4-4-8-syncopated", answer: "Anschläge liegen auf „1“, „1&“, „3“ und „4&“.", options: ["Anschläge liegen auf „1“, „1&“, „3“ und „4&“.", "Anschläge liegen auf „1“, „1&“, „3&“ und „4&“.", "Anschläge liegen auf „1&“, „2“, „3“ und „4&“."], timeSignature: "4/4", resolution: "1/8", steps: 8, activeSteps: [0, 1, 4, 7] },
-      { id: "3-4-8-quarterbeats", answer: "Je ein Anschlag liegt auf den Zählzeiten 1, 2 und 3.", options: ["Je ein Anschlag liegt auf den Zählzeiten 1, 2 und 3.", "Anschläge liegen auf 1, 2& und 3.", "Anschläge liegen auf 1, 2 und 3&."], timeSignature: "3/4", resolution: "1/8", steps: 6, activeSteps: [0, 2, 4] },
-      { id: "2-4-8-offbeat", answer: "Die Anschläge liegen auf „1“ und „2&“.", options: ["Die Anschläge liegen auf „1“ und „2&“.", "Die Anschläge liegen auf „1“ und „2“.", "Die Anschläge liegen auf „1&“ und „2“."], timeSignature: "2/4", resolution: "1/8", steps: 4, activeSteps: [0, 3] },
-      { id: "2-4-16-quarters", answer: "Je ein Anschlag liegt auf den Zählzeiten 1 und 2.", options: ["Je ein Anschlag liegt auf den Zählzeiten 1 und 2.", "Die Anschläge liegen auf „1“ und „2&“.", "Die Anschläge liegen auf „1&“ und „2“."], timeSignature: "2/4", resolution: "1/16", steps: 8, activeSteps: [0, 4] },
-      { id: "6-8-8-eighths", answer: "Sechs Achtel sind gleichmäßig in zwei Dreiergruppen aufgeteilt.", options: ["Sechs Achtel sind gleichmäßig in zwei Dreiergruppen aufgeteilt.", "Sechs Achtel sind gleichmäßig in drei Zweiergruppen aufgeteilt.", "Drei Viertel bilden drei gleichmäßige Zählzeiten."], timeSignature: "6/8", resolution: "1/8", steps: 6, activeSteps: [0, 1, 2, 3, 4, 5] }
-    ]
-  },
-  "2": {
-    basics: [
-      question("whole-step", "Wie viele Halbtonschritte umfasst ein Ganzton?", "Zwei", ["Einen", "Drei"]),
-      question("enharmonic", "Welche Aussage zu F♯ und G♭ trifft zu?", "Sie klingen gleich, werden aber unterschiedlich notiert", ["F♯ klingt höher", "G♭ ist eine Oktave tiefer"]),
-      question("natural", "Was bewirkt ein Auflösungszeichen?", "Es hebt ein vorheriges Kreuz oder b für den Takt auf", ["Es erhöht die Note um zwei Halbtöne", "Es verlängert den Notenwert"]),
-      question("interval-octave", "Wie viele Stammtöne umfasst eine Oktave, den Anfangston mitgezählt?", "Acht", ["Sieben", "Zwölf"]),
-      question("accidental-measure", "Wie lange gilt ein Vorzeichen innerhalb eines Takts normalerweise?", "Bis zum Taktstrich für dieselbe Tonhöhe", ["Nur für die direkt folgende Note", "Für das ganze Stück"]),
-      question("fret-octave", "Was passiert mit der Tonhöhe auf derselben Saite nach zwölf Bünden?", "Sie liegt eine Oktave höher", ["Sie liegt einen Halbton höher", "Sie bleibt gleich"]),
-      question("ledger-line", "Wozu dienen Hilfslinien im Notensystem?", "Sie zeigen Noten oberhalb oder unterhalb der fünf Linien", ["Sie trennen Takte", "Sie markieren die Lautstärke"]),
-      question("beam", "Welche Notenwerte werden häufig durch einen Balken verbunden?", "Achtel- und kleinere Notenwerte", ["Ganze Noten", "Halbe Noten"]),
-      question("dotted-eighth", "Welchen Wert hat eine punktierte Achtelnote?", "Drei Sechzehntel", ["Zwei Sechzehntel", "Vier Sechzehntel"]),
-      question("metronome", "Was bedeutet eine Metronomangabe von 90 BPM?", "90 Schläge pro Minute", ["90 Takte pro Sekunde", "90 Noten pro Takt"]),
-      question("pickup", "Was ist ein Auftakt?", "Ein unvollständiger Takt vor dem ersten vollständigen Takt", ["Der letzte Takt eines Stücks", "Ein wiederholter Abschnitt"]),
-      question("tie", "Was bewirkt ein Haltebogen zwischen zwei gleichen Tonhöhen?", "Die Notenwerte werden zu einem längeren Ton verbunden", ["Der zweite Ton wird leiser", "Die Tonhöhe wird verändert"]),
-      question("rhythm-beam", "Was zeigt ein zusätzlicher Balken bei einer Note an?", "Eine feinere rhythmische Unterteilung", ["Eine höhere Tonlage", "Einen stärkeren Anschlag"]),
-      question("tab-x", "Was bedeutet ein x auf einer TAB-Linie häufig?", "Ein perkussiv gedämpfter oder unbestimmter Ton", ["Ein Kreuzvorzeichen", "Den zehnten Bund"]),
-      question("accent", "Was bedeutet ein Akzentzeichen über einer Note?", "Die Note soll betont werden", ["Die Note soll ausgelassen werden", "Das Tempo wird halbiert"])
-    ],
-    fretboard: [
-      ...[0, 1, 2, 3, 4, 5].flatMap((stringIndex) => [2, 4, 6, 8].map((fret) => createFretboardQuestion(stringIndex, fret))),
-      ...[0, 1, 2, 3, 4, 5].map((stringIndex) => createFretboardQuestion(stringIndex, 7))
-    ],
-    rhythm: [
-      question("sixteenths", "Wie viele Sechzehntelnoten entsprechen einer Viertelnote?", "Vier", ["Zwei", "Acht"]),
-      question("dotted-quarter", "Wie viele Achtelnotenwerte hat eine punktierte Viertelnote?", "Drei", ["Zwei", "Vier"]),
-      question("six-eight", "Wie viele Achtelnotenwerte enthält ein 6/8-Takt?", "Sechs", ["Drei", "Acht"]),
-      question("three-four-beats", "Wie viele Viertelschläge hat ein 3/4-Takt?", "Drei", ["Vier", "Sechs"]),
-      question("syncopation", "Was kennzeichnet eine Synkope häufig?", "Eine Betonung liegt auf einer sonst schwachen Zählzeit", ["Jede Note beginnt auf einem Taktstrich", "Alle Noten sind gleich lang"]),
-      question("sixteenth-count", "Wie viele Sechzehntel liegen in einem Achtelschlag?", "Zwei", ["Drei", "Vier"]),
-      question("dotted-half", "Wie viele Viertelschläge dauert eine punktierte halbe Note?", "Drei", ["Zwei", "Vier"]),
-      question("compound-meter", "Welche Gruppierung ist für einen 6/8-Takt typisch?", "Zwei Gruppen aus je drei Achteln", ["Drei Gruppen aus je zwei Vierteln", "Sechs Gruppen aus je drei Vierteln"]),
-      question("rest-value", "Wie lange dauert eine Viertelpause?", "Einen Viertelschlag", ["Zwei Viertelschläge", "Einen halben Viertelschlag"]),
-      question("tie-duration", "Eine Viertelnote ist mit einer halben Note gleicher Tonhöhe verbunden. Wie lange klingt der Ton?", "Drei Viertelschläge", ["Zwei Viertelschläge", "Vier Viertelschläge"]),
-      question("tempo-double", "Was passiert mit dem Tempo, wenn BPM von 60 auf 120 steigt?", "Die Schläge pro Minute verdoppeln sich", ["Die Taktart wird doppelt so groß", "Die Noten werden doppelt so lang"]),
-      question("measure-total", "Wie viele Viertelschläge umfasst ein vollständiger 4/4-Takt?", "Vier", ["Drei", "Acht"])
-    ],
-    notation: [
-      notationQuestion("staff-c5", "Welche Note liegt im Violinschlüssel auf der ersten Hilfslinie unter dem System?", "C4", ["D4", "E4"], { type: "staff-note", step: -2 }),
-      notationQuestion("staff-f5", "Welche Note liegt im Violinschlüssel auf der obersten Notenlinie?", "F5", ["E5", "G5"], { type: "staff-note", step: 8 }),
-      notationQuestion("staff-a4", "Welche Note liegt im Violinschlüssel im zweiten Zwischenraum von unten?", "A4", ["G4", "B4"], { type: "staff-note", step: 3 }),
-      notationQuestion("staff-c5-line", "Welche Note liegt im Violinschlüssel im dritten Zwischenraum von unten?", "C5", ["B4", "D5"], { type: "staff-note", step: 5 }),
-      notationQuestion("dotted-quarter", "Welcher Notenwert ist dargestellt?", "Punktierte Viertelnote", ["Viertelnote", "Punktierte halbe Note"], { type: "note-value", value: "quarter", dotted: true }),
-      notationQuestion("dotted-half", "Welcher Notenwert ist dargestellt?", "Punktierte halbe Note", ["Halbe Note", "Ganze Note"], { type: "note-value", value: "half", dotted: true }),
-      notationQuestion("sixteenth-note", "Welcher Notenwert ist mit zwei Balken dargestellt?", "Sechzehntelnote", ["Achtelnote", "Zweiunddreißigstelnote"], { type: "note-value", value: "sixteenth" }),
-      notationQuestion("eighth-note", "Welcher Notenwert ist mit einem Balken dargestellt?", "Achtelnote", ["Viertelnote", "Sechzehntelnote"], { type: "note-value", value: "eighth" }),
-      notationQuestion("six-eight", "Welche Taktart ist dargestellt?", "6/8", ["3/4", "4/4"], { type: "time-signature", numerator: 6, denominator: 8 }),
-      notationQuestion("two-four", "Welche Taktart ist dargestellt?", "2/4", ["3/4", "4/4"], { type: "time-signature", numerator: 2, denominator: 4 }),
-      notationQuestion("four-four", "Welche Taktart ist dargestellt?", "4/4", ["2/4", "6/8"], { type: "time-signature", numerator: 4, denominator: 4 }),
-      notationQuestion("repeat", "Welche Funktion hat der doppelte Taktstrich mit Punkten?", "Er zeigt einen Wiederholungsabschnitt an", ["Er zeigt eine Fermate an", "Er markiert einen Tonartwechsel"], { type: "repeat" })
-    ],
-    patterns: [
-      { id: "4-4-16-syncopation", answer: "Anschläge liegen auf „1“, „1a“, „2&“, „3e“ und „4&“.", options: ["Anschläge liegen auf „1“, „1a“, „2&“, „3e“ und „4&“.", "Anschläge liegen auf „1“, „1a“, „2e“, „3e“ und „4&“.", "Anschläge liegen auf „1“, „1a“, „2&“, „3&“ und „4&“."], timeSignature: "4/4", resolution: "1/16", steps: 16, activeSteps: [0, 3, 6, 9, 14] },
-      { id: "4-4-8-offbeats", answer: "Anschläge liegen auf „1&“, „2&“, „3“ und „4&“.", options: ["Anschläge liegen auf „1&“, „2&“, „3“ und „4&“.", "Anschläge liegen auf „1&“, „2“, „3“ und „4&“.", "Anschläge liegen auf „1&“, „2&“, „3&“ und „4&“."], timeSignature: "4/4", resolution: "1/8", steps: 8, activeSteps: [1, 3, 4, 7] },
-      { id: "3-4-16-mixed", answer: "Anschläge liegen auf „1“, „1a“, „2&“ und „3“.", options: ["Anschläge liegen auf „1“, „1a“, „2&“ und „3“.", "Anschläge liegen auf „1“, „1a“, „2&“ und „3&“.", "Anschläge liegen auf „1“, „1&“, „2&“ und „3“."], timeSignature: "3/4", resolution: "1/16", steps: 12, activeSteps: [0, 3, 6, 8] },
-      { id: "3-4-8-mixed", answer: "Anschläge liegen auf „1“, „2&“ und „3&“.", options: ["Anschläge liegen auf „1“, „2&“ und „3&“.", "Anschläge liegen auf „1“, „2“ und „3&“.", "Anschläge liegen auf „1&“, „2&“ und „3&“."], timeSignature: "3/4", resolution: "1/8", steps: 6, activeSteps: [0, 3, 5] },
-      { id: "2-4-16-mixed", answer: "Anschläge liegen auf „1e“, „1a“ und „2&“.", options: ["Anschläge liegen auf „1e“, „1a“ und „2&“.", "Anschläge liegen auf „1e“, „1a“ und „2“.", "Anschläge liegen auf „1e“, „1&“ und „2&“."], timeSignature: "2/4", resolution: "1/16", steps: 8, activeSteps: [1, 3, 6] },
-      { id: "2-4-8-offbeats", answer: "Je ein Anschlag liegt auf „1&“ und „2&“.", options: ["Je ein Anschlag liegt auf „1&“ und „2&“.", "Je ein Anschlag liegt auf „1&“ und „2“.", "Je ein Anschlag liegt auf „1“ und „2&“."], timeSignature: "2/4", resolution: "1/8", steps: 4, activeSteps: [1, 3] },
-      { id: "6-8-16-mixed", answer: "Anschläge liegen auf „1“, „2&“, „4“ und „6&“.", options: ["Anschläge liegen auf „1“, „2&“, „4“ und „6&“.", "Anschläge liegen auf „1“, „2&“, „4&“ und „6&“.", "Anschläge liegen auf „1“, „2“, „4“ und „6&“."], timeSignature: "6/8", resolution: "1/16", steps: 12, activeSteps: [0, 3, 6, 11] },
-      { id: "6-8-8-mixed", answer: "Drei Achtelanschläge liegen auf den Positionen 1, 3 und 5.", options: ["Drei Achtelanschläge liegen auf den Positionen 1, 3 und 5.", "Drei Achtelanschläge liegen auf den Positionen 1, 3 und 6.", "Drei Achtelanschläge liegen auf den Positionen 1, 4 und 5."], timeSignature: "6/8", resolution: "1/8", steps: 6, activeSteps: [0, 2, 4] }
-    ]
-  }
+	"1": {
+		basics: [
+			question(
+				"octave",
+				"Aus wie vielen Halbtonschritten besteht eine Oktave?",
+				"12",
+				["10", "14"],
+			),
+			question(
+				"open-strings",
+				"Wie heißen die Leersaiten der Gitarre von der tiefsten zur höchsten?",
+				"E – A – D – G – B – E",
+				["A – D – G – B – E – A", "E – G – D – A – B – E"],
+			),
+			question(
+				"e-f",
+				"Welcher Abstand liegt zwischen E und F?",
+				"Ein Halbton",
+				["Ein Ganzton", "Eine Quinte"],
+			),
+			question(
+				"tab-zero",
+				"Was zeigt die Zahl 0 in einer Tabulatur an?",
+				"Die Saite wird leer gespielt",
+				["Der erste Bund wird gegriffen", "Die Saite wird nicht gespielt"],
+			),
+			question(
+				"position",
+				"Was beschreibt eine Lage auf dem Gitarrenhals?",
+				"Den Bundbereich, in dem die Greifhand spielt",
+				["Die Lautstärke des Anschlags", "Die Stimmung der Leersaiten"],
+			),
+			question(
+				"semitone",
+				"Wie weit liegt der nächste Bund auf derselben Saite entfernt?",
+				"Einen Halbton",
+				["Einen Ganzton", "Eine Oktave"],
+			),
+			question(
+				"sharp",
+				"Was bewirkt ein Kreuz vor einer Note?",
+				"Erhöht die Note um einen Halbton",
+				["Erniedrigt die Note um einen Halbton", "Verlängert die Note"],
+			),
+			question(
+				"flat",
+				"Was bewirkt ein b vor einer Note?",
+				"Erniedrigt die Note um einen Halbton",
+				["Erhöht die Note um einen Halbton", "Macht die Note doppelt so lang"],
+			),
+			question(
+				"staff-lines",
+				"Wie viele Linien hat ein gewöhnliches Notensystem?",
+				"Fünf",
+				["Vier", "Sechs"],
+			),
+			question(
+				"treble-clef",
+				"Welcher Schlüssel wird für viele Melodien und Gitarrennoten verwendet?",
+				"Violinschlüssel",
+				["Bassschlüssel", "Alt-Schlüssel"],
+			),
+			question(
+				"tab-lines",
+				"Wofür stehen die sechs Linien einer Gitarrentabulatur?",
+				"Für die sechs Gitarrensaiten",
+				["Für die sechs Bünde", "Für sechs Takte"],
+			),
+			question(
+				"fret-number",
+				"Was bedeutet eine Zahl auf einer TAB-Linie?",
+				"Den zu greifenden Bund auf dieser Saite",
+				["Die Zählzeit", "Die Lautstärke"],
+			),
+			question(
+				"note-stem",
+				"Was zeigt der Notenhals zusammen mit der Füllung des Notenkopfs?",
+				"Den Notenwert",
+				["Die Tonhöhe", "Die Saite"],
+			),
+			question(
+				"barline",
+				"Was trennt ein gewöhnlicher Taktstrich?",
+				"Zwei Takte",
+				["Zwei Notensysteme", "Zwei Stimmen"],
+			),
+			question(
+				"pick-hand",
+				"Welche Hand zupft oder schlägt die Saiten an?",
+				"Die Anschlaghand",
+				["Die Greifhand", "Die Schreibhand"],
+			),
+			question(
+				"fretting-hand",
+				"Welche Hand drückt die Saiten auf die Bünde?",
+				"Die Greifhand",
+				["Die Anschlaghand", "Die Schlagzeughand"],
+			),
+		],
+		fretboard: [
+			createFretboardQuestion(0, 1),
+			createFretboardQuestion(0, 2),
+			createFretboardQuestion(0, 3),
+			createFretboardQuestion(0, 5),
+			createFretboardQuestion(1, 0),
+			createFretboardQuestion(1, 1),
+			createFretboardQuestion(1, 3),
+			createFretboardQuestion(1, 5),
+			createFretboardQuestion(2, 0),
+			createFretboardQuestion(2, 2),
+			createFretboardQuestion(2, 4),
+			createFretboardQuestion(2, 5),
+			createFretboardQuestion(3, 0),
+			createFretboardQuestion(3, 2),
+			createFretboardQuestion(3, 3),
+			createFretboardQuestion(3, 5),
+			createFretboardQuestion(4, 0),
+			createFretboardQuestion(4, 2),
+			createFretboardQuestion(4, 3),
+			createFretboardQuestion(4, 5),
+			createFretboardQuestion(5, 0),
+			createFretboardQuestion(5, 1),
+			createFretboardQuestion(5, 3),
+			createFretboardQuestion(5, 5),
+		],
+		rhythm: [
+			question(
+				"four-four",
+				"Wie viele Viertelnotenwerte passen in einen 4/4-Takt?",
+				"Vier",
+				["Drei", "Sechs"],
+			),
+			question(
+				"dotted",
+				"Um welchen Anteil wird eine punktierte Note verlängert?",
+				"Um die Hälfte ihres ursprünglichen Werts",
+				["Um ihren ganzen ursprünglichen Wert", "Gar nicht"],
+			),
+			question(
+				"eighths-per-beat",
+				"Wie viele Achtelnoten passen in einen Viertelschlag?",
+				"Zwei",
+				["Eine", "Drei"],
+			),
+			question(
+				"triplet",
+				"In wie viele gleich große Teile teilt eine Triole üblicherweise die Dauer von zwei Noten?",
+				"Drei",
+				["Zwei", "Vier"],
+			),
+			question("bpm", "Wofür steht BPM?", "Schläge pro Minute", [
+				"Takte pro Minute",
+				"Bünde pro Melodie",
+			]),
+			question(
+				"quarter-duration",
+				"Wie viele Schläge dauert eine Viertelnote im 4/4-Takt?",
+				"Einen Schlag",
+				["Zwei Schläge", "Einen halben Schlag"],
+			),
+			question(
+				"half-duration",
+				"Wie viele Viertelschläge dauert eine halbe Note?",
+				"Zwei",
+				["Einen", "Vier"],
+			),
+			question(
+				"whole-duration",
+				"Wie viele Viertelschläge dauert eine ganze Note im 4/4-Takt?",
+				"Vier",
+				["Zwei", "Acht"],
+			),
+			question(
+				"rest",
+				"Was bedeutet eine Pause in der Notation?",
+				"Während ihrer Dauer wird nicht gespielt",
+				["Die Note wird leiser gespielt", "Der Takt wird beendet"],
+			),
+			question(
+				"time-signature-top",
+				"Was gibt die obere Zahl einer Taktangabe meist an?",
+				"Die Anzahl der Zählzeiten im Takt",
+				["Das Tempo", "Die Anzahl der Notenlinien"],
+			),
+			question(
+				"time-signature-bottom",
+				"Was gibt die untere Zahl einer Taktangabe an?",
+				"Welche Noteneinheit als Zählzeit gilt",
+				["Wie viele Takte gespielt werden", "Wie laut gespielt wird"],
+			),
+			question(
+				"eighth-count",
+				"Wie zählt man die beiden Achtel eines Viertelschlags oft?",
+				"1 und &",
+				["1 und 3", "1 und 2 und 3 und"],
+			),
+		],
+		notation: [
+			...staffPitchExamples,
+			...noteValueExamples,
+			...guitarStringExamples,
+			...mixedNoteValueExamples,
+			...timeSignatureExamples,
+		],
+		patterns: [
+			{
+				id: "4-4-16-eighth-pulses",
+				answer:
+					"Acht Anschläge liegen gleichmäßig auf den Zählzeiten und dazwischen.",
+				options: [
+					"Acht Anschläge liegen gleichmäßig auf den Zählzeiten und dazwischen.",
+					"Acht Anschläge liegen auf den Zählzeiten und jeweils direkt danach.",
+					"Vier Anschläge liegen auf den vier Zählzeiten.",
+				],
+				timeSignature: "4/4",
+				resolution: "1/16",
+				steps: 16,
+				activeSteps: [0, 2, 4, 6, 8, 10, 12, 14],
+			},
+			{
+				id: "4-4-8-syncopated",
+				answer: "Anschläge liegen auf „1“, „1&“, „3“ und „4&“.",
+				options: [
+					"Anschläge liegen auf „1“, „1&“, „3“ und „4&“.",
+					"Anschläge liegen auf „1“, „1&“, „3&“ und „4&“.",
+					"Anschläge liegen auf „1&“, „2“, „3“ und „4&“.",
+				],
+				timeSignature: "4/4",
+				resolution: "1/8",
+				steps: 8,
+				activeSteps: [0, 1, 4, 7],
+			},
+			{
+				id: "3-4-8-quarterbeats",
+				answer: "Je ein Anschlag liegt auf den Zählzeiten 1, 2 und 3.",
+				options: [
+					"Je ein Anschlag liegt auf den Zählzeiten 1, 2 und 3.",
+					"Anschläge liegen auf 1, 2& und 3.",
+					"Anschläge liegen auf 1, 2 und 3&.",
+				],
+				timeSignature: "3/4",
+				resolution: "1/8",
+				steps: 6,
+				activeSteps: [0, 2, 4],
+			},
+			{
+				id: "2-4-8-offbeat",
+				answer: "Die Anschläge liegen auf „1“ und „2&“.",
+				options: [
+					"Die Anschläge liegen auf „1“ und „2&“.",
+					"Die Anschläge liegen auf „1“ und „2“.",
+					"Die Anschläge liegen auf „1&“ und „2“.",
+				],
+				timeSignature: "2/4",
+				resolution: "1/8",
+				steps: 4,
+				activeSteps: [0, 3],
+			},
+			{
+				id: "2-4-16-quarters",
+				answer: "Je ein Anschlag liegt auf den Zählzeiten 1 und 2.",
+				options: [
+					"Je ein Anschlag liegt auf den Zählzeiten 1 und 2.",
+					"Die Anschläge liegen auf „1“ und „2&“.",
+					"Die Anschläge liegen auf „1&“ und „2“.",
+				],
+				timeSignature: "2/4",
+				resolution: "1/16",
+				steps: 8,
+				activeSteps: [0, 4],
+			},
+			{
+				id: "6-8-8-eighths",
+				answer:
+					"Sechs Achtel sind gleichmäßig in zwei Dreiergruppen aufgeteilt.",
+				options: [
+					"Sechs Achtel sind gleichmäßig in zwei Dreiergruppen aufgeteilt.",
+					"Sechs Achtel sind gleichmäßig in drei Zweiergruppen aufgeteilt.",
+					"Drei Viertel bilden drei gleichmäßige Zählzeiten.",
+				],
+				timeSignature: "6/8",
+				resolution: "1/8",
+				steps: 6,
+				activeSteps: [0, 1, 2, 3, 4, 5],
+			},
+		],
+	},
+	"2": {
+		basics: [
+			question(
+				"whole-step",
+				"Wie viele Halbtonschritte umfasst ein Ganzton?",
+				"Zwei",
+				["Einen", "Drei"],
+			),
+			question(
+				"enharmonic",
+				"Welche Aussage zu F♯ und G♭ trifft zu?",
+				"Sie klingen gleich, werden aber unterschiedlich notiert",
+				["F♯ klingt höher", "G♭ ist eine Oktave tiefer"],
+			),
+			question(
+				"natural",
+				"Was bewirkt ein Auflösungszeichen?",
+				"Es hebt ein vorheriges Kreuz oder b für den Takt auf",
+				["Es erhöht die Note um zwei Halbtöne", "Es verlängert den Notenwert"],
+			),
+			question(
+				"interval-octave",
+				"Wie viele Stammtöne umfasst eine Oktave, den Anfangston mitgezählt?",
+				"Acht",
+				["Sieben", "Zwölf"],
+			),
+			question(
+				"accidental-measure",
+				"Wie lange gilt ein Vorzeichen innerhalb eines Takts normalerweise?",
+				"Bis zum Taktstrich für dieselbe Tonhöhe",
+				["Nur für die direkt folgende Note", "Für das ganze Stück"],
+			),
+			question(
+				"fret-octave",
+				"Was passiert mit der Tonhöhe auf derselben Saite nach zwölf Bünden?",
+				"Sie liegt eine Oktave höher",
+				["Sie liegt einen Halbton höher", "Sie bleibt gleich"],
+			),
+			question(
+				"ledger-line",
+				"Wozu dienen Hilfslinien im Notensystem?",
+				"Sie zeigen Noten oberhalb oder unterhalb der fünf Linien",
+				["Sie trennen Takte", "Sie markieren die Lautstärke"],
+			),
+			question(
+				"beam",
+				"Welche Notenwerte werden häufig durch einen Balken verbunden?",
+				"Achtel- und kleinere Notenwerte",
+				["Ganze Noten", "Halbe Noten"],
+			),
+			question(
+				"dotted-eighth",
+				"Welchen Wert hat eine punktierte Achtelnote?",
+				"Drei Sechzehntel",
+				["Zwei Sechzehntel", "Vier Sechzehntel"],
+			),
+			question(
+				"metronome",
+				"Was bedeutet eine Metronomangabe von 90 BPM?",
+				"90 Schläge pro Minute",
+				["90 Takte pro Sekunde", "90 Noten pro Takt"],
+			),
+			question(
+				"pickup",
+				"Was ist ein Auftakt?",
+				"Ein unvollständiger Takt vor dem ersten vollständigen Takt",
+				["Der letzte Takt eines Stücks", "Ein wiederholter Abschnitt"],
+			),
+			question(
+				"tie",
+				"Was bewirkt ein Haltebogen zwischen zwei gleichen Tonhöhen?",
+				"Die Notenwerte werden zu einem längeren Ton verbunden",
+				["Der zweite Ton wird leiser", "Die Tonhöhe wird verändert"],
+			),
+			question(
+				"rhythm-beam",
+				"Was zeigt ein zusätzlicher Balken bei einer Note an?",
+				"Eine feinere rhythmische Unterteilung",
+				["Eine höhere Tonlage", "Einen stärkeren Anschlag"],
+			),
+			question(
+				"tab-x",
+				"Was bedeutet ein x auf einer TAB-Linie häufig?",
+				"Ein perkussiv gedämpfter oder unbestimmter Ton",
+				["Ein Kreuzvorzeichen", "Den zehnten Bund"],
+			),
+			question(
+				"accent",
+				"Was bedeutet ein Akzentzeichen über einer Note?",
+				"Die Note soll betont werden",
+				["Die Note soll ausgelassen werden", "Das Tempo wird halbiert"],
+			),
+		],
+		fretboard: [
+			...[0, 1, 2, 3, 4, 5].flatMap((stringIndex) =>
+				[2, 4, 6, 8].map((fret) => createFretboardQuestion(stringIndex, fret)),
+			),
+			...[0, 1, 2, 3, 4, 5].map((stringIndex) =>
+				createFretboardQuestion(stringIndex, 7),
+			),
+		],
+		rhythm: [
+			question(
+				"sixteenths",
+				"Wie viele Sechzehntelnoten entsprechen einer Viertelnote?",
+				"Vier",
+				["Zwei", "Acht"],
+			),
+			question(
+				"dotted-quarter",
+				"Wie viele Achtelnotenwerte hat eine punktierte Viertelnote?",
+				"Drei",
+				["Zwei", "Vier"],
+			),
+			question(
+				"six-eight",
+				"Wie viele Achtelnotenwerte enthält ein 6/8-Takt?",
+				"Sechs",
+				["Drei", "Acht"],
+			),
+			question(
+				"three-four-beats",
+				"Wie viele Viertelschläge hat ein 3/4-Takt?",
+				"Drei",
+				["Vier", "Sechs"],
+			),
+			question(
+				"syncopation",
+				"Was kennzeichnet eine Synkope häufig?",
+				"Eine Betonung liegt auf einer sonst schwachen Zählzeit",
+				[
+					"Jede Note beginnt auf einem Taktstrich",
+					"Alle Noten sind gleich lang",
+				],
+			),
+			question(
+				"sixteenth-count",
+				"Wie viele Sechzehntel liegen in einem Achtelschlag?",
+				"Zwei",
+				["Drei", "Vier"],
+			),
+			question(
+				"dotted-half",
+				"Wie viele Viertelschläge dauert eine punktierte halbe Note?",
+				"Drei",
+				["Zwei", "Vier"],
+			),
+			question(
+				"compound-meter",
+				"Welche Gruppierung ist für einen 6/8-Takt typisch?",
+				"Zwei Gruppen aus je drei Achteln",
+				[
+					"Drei Gruppen aus je zwei Vierteln",
+					"Sechs Gruppen aus je drei Vierteln",
+				],
+			),
+			question(
+				"rest-value",
+				"Wie lange dauert eine Viertelpause?",
+				"Einen Viertelschlag",
+				["Zwei Viertelschläge", "Einen halben Viertelschlag"],
+			),
+			question(
+				"tie-duration",
+				"Eine Viertelnote ist mit einer halben Note gleicher Tonhöhe verbunden. Wie lange klingt der Ton?",
+				"Drei Viertelschläge",
+				["Zwei Viertelschläge", "Vier Viertelschläge"],
+			),
+			question(
+				"tempo-double",
+				"Was passiert mit dem Tempo, wenn BPM von 60 auf 120 steigt?",
+				"Die Schläge pro Minute verdoppeln sich",
+				[
+					"Die Taktart wird doppelt so groß",
+					"Die Noten werden doppelt so lang",
+				],
+			),
+			question(
+				"measure-total",
+				"Wie viele Viertelschläge umfasst ein vollständiger 4/4-Takt?",
+				"Vier",
+				["Drei", "Acht"],
+			),
+		],
+		notation: [
+			notationQuestion(
+				"staff-c5",
+				"Welche Note liegt im Violinschlüssel auf der ersten Hilfslinie unter dem System?",
+				"C4",
+				["D4", "E4"],
+				{ type: "staff-note", step: -2 },
+			),
+			notationQuestion(
+				"staff-f5",
+				"Welche Note liegt im Violinschlüssel auf der obersten Notenlinie?",
+				"F5",
+				["E5", "G5"],
+				{ type: "staff-note", step: 8 },
+			),
+			notationQuestion(
+				"staff-a4",
+				"Welche Note liegt im Violinschlüssel im zweiten Zwischenraum von unten?",
+				"A4",
+				["G4", "B4"],
+				{ type: "staff-note", step: 3 },
+			),
+			notationQuestion(
+				"staff-c5-line",
+				"Welche Note liegt im Violinschlüssel im dritten Zwischenraum von unten?",
+				"C5",
+				["B4", "D5"],
+				{ type: "staff-note", step: 5 },
+			),
+			notationQuestion(
+				"dotted-quarter",
+				"Welcher Notenwert ist dargestellt?",
+				"Punktierte Viertelnote",
+				["Viertelnote", "Punktierte halbe Note"],
+				{ type: "note-value", value: "quarter", dotted: true },
+			),
+			notationQuestion(
+				"dotted-half",
+				"Welcher Notenwert ist dargestellt?",
+				"Punktierte halbe Note",
+				["Halbe Note", "Ganze Note"],
+				{ type: "note-value", value: "half", dotted: true },
+			),
+			notationQuestion(
+				"sixteenth-note",
+				"Welcher Notenwert ist mit zwei Balken dargestellt?",
+				"Sechzehntelnote",
+				["Achtelnote", "Zweiunddreißigstelnote"],
+				{ type: "note-value", value: "sixteenth" },
+			),
+			notationQuestion(
+				"eighth-note",
+				"Welcher Notenwert ist mit einem Balken dargestellt?",
+				"Achtelnote",
+				["Viertelnote", "Sechzehntelnote"],
+				{ type: "note-value", value: "eighth" },
+			),
+			notationQuestion(
+				"six-eight",
+				"Welche Taktart ist dargestellt?",
+				"6/8",
+				["3/4", "4/4"],
+				{ type: "time-signature", numerator: 6, denominator: 8 },
+			),
+			notationQuestion(
+				"two-four",
+				"Welche Taktart ist dargestellt?",
+				"2/4",
+				["3/4", "4/4"],
+				{ type: "time-signature", numerator: 2, denominator: 4 },
+			),
+			notationQuestion(
+				"four-four",
+				"Welche Taktart ist dargestellt?",
+				"4/4",
+				["2/4", "6/8"],
+				{ type: "time-signature", numerator: 4, denominator: 4 },
+			),
+			notationQuestion(
+				"repeat",
+				"Welche Funktion hat der doppelte Taktstrich mit Punkten?",
+				"Er zeigt einen Wiederholungsabschnitt an",
+				["Er zeigt eine Fermate an", "Er markiert einen Tonartwechsel"],
+				{ type: "repeat" },
+			),
+		],
+		patterns: [
+			{
+				id: "4-4-16-syncopation",
+				answer: "Anschläge liegen auf „1“, „1a“, „2&“, „3e“ und „4&“.",
+				options: [
+					"Anschläge liegen auf „1“, „1a“, „2&“, „3e“ und „4&“.",
+					"Anschläge liegen auf „1“, „1a“, „2e“, „3e“ und „4&“.",
+					"Anschläge liegen auf „1“, „1a“, „2&“, „3&“ und „4&“.",
+				],
+				timeSignature: "4/4",
+				resolution: "1/16",
+				steps: 16,
+				activeSteps: [0, 3, 6, 9, 14],
+			},
+			{
+				id: "4-4-8-offbeats",
+				answer: "Anschläge liegen auf „1&“, „2&“, „3“ und „4&“.",
+				options: [
+					"Anschläge liegen auf „1&“, „2&“, „3“ und „4&“.",
+					"Anschläge liegen auf „1&“, „2“, „3“ und „4&“.",
+					"Anschläge liegen auf „1&“, „2&“, „3&“ und „4&“.",
+				],
+				timeSignature: "4/4",
+				resolution: "1/8",
+				steps: 8,
+				activeSteps: [1, 3, 4, 7],
+			},
+			{
+				id: "3-4-16-mixed",
+				answer: "Anschläge liegen auf „1“, „1a“, „2&“ und „3“.",
+				options: [
+					"Anschläge liegen auf „1“, „1a“, „2&“ und „3“.",
+					"Anschläge liegen auf „1“, „1a“, „2&“ und „3&“.",
+					"Anschläge liegen auf „1“, „1&“, „2&“ und „3“.",
+				],
+				timeSignature: "3/4",
+				resolution: "1/16",
+				steps: 12,
+				activeSteps: [0, 3, 6, 8],
+			},
+			{
+				id: "3-4-8-mixed",
+				answer: "Anschläge liegen auf „1“, „2&“ und „3&“.",
+				options: [
+					"Anschläge liegen auf „1“, „2&“ und „3&“.",
+					"Anschläge liegen auf „1“, „2“ und „3&“.",
+					"Anschläge liegen auf „1&“, „2&“ und „3&“.",
+				],
+				timeSignature: "3/4",
+				resolution: "1/8",
+				steps: 6,
+				activeSteps: [0, 3, 5],
+			},
+			{
+				id: "2-4-16-mixed",
+				answer: "Anschläge liegen auf „1e“, „1a“ und „2&“.",
+				options: [
+					"Anschläge liegen auf „1e“, „1a“ und „2&“.",
+					"Anschläge liegen auf „1e“, „1a“ und „2“.",
+					"Anschläge liegen auf „1e“, „1&“ und „2&“.",
+				],
+				timeSignature: "2/4",
+				resolution: "1/16",
+				steps: 8,
+				activeSteps: [1, 3, 6],
+			},
+			{
+				id: "2-4-8-offbeats",
+				answer: "Je ein Anschlag liegt auf „1&“ und „2&“.",
+				options: [
+					"Je ein Anschlag liegt auf „1&“ und „2&“.",
+					"Je ein Anschlag liegt auf „1&“ und „2“.",
+					"Je ein Anschlag liegt auf „1“ und „2&“.",
+				],
+				timeSignature: "2/4",
+				resolution: "1/8",
+				steps: 4,
+				activeSteps: [1, 3],
+			},
+			{
+				id: "6-8-16-mixed",
+				answer: "Anschläge liegen auf „1“, „2&“, „4“ und „6&“.",
+				options: [
+					"Anschläge liegen auf „1“, „2&“, „4“ und „6&“.",
+					"Anschläge liegen auf „1“, „2&“, „4&“ und „6&“.",
+					"Anschläge liegen auf „1“, „2“, „4“ und „6&“.",
+				],
+				timeSignature: "6/8",
+				resolution: "1/16",
+				steps: 12,
+				activeSteps: [0, 3, 6, 11],
+			},
+			{
+				id: "6-8-8-mixed",
+				answer: "Drei Achtelanschläge liegen auf den Positionen 1, 3 und 5.",
+				options: [
+					"Drei Achtelanschläge liegen auf den Positionen 1, 3 und 5.",
+					"Drei Achtelanschläge liegen auf den Positionen 1, 3 und 6.",
+					"Drei Achtelanschläge liegen auf den Positionen 1, 4 und 5.",
+				],
+				timeSignature: "6/8",
+				resolution: "1/8",
+				steps: 6,
+				activeSteps: [0, 2, 4],
+			},
+		],
+	},
 };
 
 function rhythmLayoutId(timeSignature: string, resolution: string): string {
-  return `${timeSignature.replace("/", "-")}-${resolution.replace("/", "-")}`;
+	return `${timeSignature.replace("/", "-")}-${resolution.replace("/", "-")}`;
 }
 
-const patternLayouts = Array.from(new Map(
-  Object.values(questionBanks).flatMap(({ patterns }) => patterns.map((pattern) => {
-    const id = rhythmLayoutId(pattern.timeSignature, pattern.resolution);
-    return [id, {
-      id,
-      timeSignature: pattern.timeSignature,
-      resolution: pattern.resolution,
-      steps: pattern.steps
-    }] as const;
-  }))
-).values());
+const patternLayouts = Array.from(
+	new Map(
+		Object.values(questionBanks).flatMap(({ patterns }) =>
+			patterns.map((pattern) => {
+				const id = rhythmLayoutId(pattern.timeSignature, pattern.resolution);
+				return [
+					id,
+					{
+						id,
+						timeSignature: pattern.timeSignature,
+						resolution: pattern.resolution,
+						steps: pattern.steps,
+					},
+				] as const;
+			}),
+		),
+	).values(),
+);
 
 const totalPoints = 21;
 const passingPoints = Math.ceil(totalPoints * 0.8);
-
 ---
 
 <div

@@ -3,7 +3,15 @@
 	font-weight: 700;
 }
 
-.sidebar-content > .top-level > li > details > ul > li > details > summary .large {
+.sidebar-content
+	> .top-level
+	> li
+	> details
+	> ul
+	> li
+	> details
+	> summary
+	.large {
 	font-size: var(--sl-text-base);
 	font-weight: 400 !important;
 }

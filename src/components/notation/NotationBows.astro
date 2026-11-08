@@ -1,9 +1,9 @@
 ---
-import NotationVisual from './NotationVisual.astro';
-import { assertNoClefChanges } from '../../lib/notation-renderer';
+import { assertNoClefChanges } from "../../lib/notation-renderer";
+import NotationVisual from "./NotationVisual.astro";
 
-const clefs = ['treble', 'treble'] as const;
-assertNoClefChanges(clefs, 'NotationBows');
+const clefs = ["treble", "treble"] as const;
+assertNoClefChanges(clefs, "NotationBows");
 ---
 
 <div class="bow-examples not-content" data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>

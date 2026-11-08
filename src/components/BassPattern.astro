@@ -1,114 +1,165 @@
 ---
 export interface BassBar {
-  chord: string;
-  note: string;
-  velocity?: number;
-  noteLengthSteps?: number;
+	chord: string;
+	note: string;
+	velocity?: number;
+	noteLengthSteps?: number;
 }
 
 export interface Props {
-  bars: BassBar[];
-  keyRoot?: string;
-  scale?: "major" | "naturalMinor";
-  stepsPerBar?: number;
-  timeSignature?: string;
-  resolution?: string;
-  startBar?: number;
+	bars: BassBar[];
+	keyRoot?: string;
+	scale?: "major" | "naturalMinor";
+	stepsPerBar?: number;
+	timeSignature?: string;
+	resolution?: string;
+	startBar?: number;
 }
 
 const {
-  bars,
-  keyRoot = "E",
-  scale = "naturalMinor",
-  stepsPerBar = 8,
-  timeSignature = "4/4",
-  resolution = "1/8",
-  startBar = 1
+	bars,
+	keyRoot = "E",
+	scale = "naturalMinor",
+	stepsPerBar = 8,
+	timeSignature = "4/4",
+	resolution = "1/8",
+	startBar = 1,
 } = Astro.props;
 
 const totalSteps = bars.length * stepsPerBar;
-const stepLabels = Array.from({ length: stepsPerBar }, (_, step) => (
-  step % 2 === 0 ? `${step / 2 + 1}` : "+"
-));
-const pitchClasses = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+const stepLabels = Array.from({ length: stepsPerBar }, (_, step) =>
+	step % 2 === 0 ? `${step / 2 + 1}` : "+",
+);
+const pitchClasses = [
+	"C",
+	"C#",
+	"D",
+	"D#",
+	"E",
+	"F",
+	"F#",
+	"G",
+	"G#",
+	"A",
+	"A#",
+	"B",
+];
 const notePattern = /^([A-G])(#?)(-?\d+)$/;
 const parseNote = (note: string) => {
-  const match = note.match(notePattern);
-  if (!match) {
-    throw new Error(`Ungültige Bassnote "${note}". Erwartet wird z. B. E1 oder F#2.`);
-  }
+	const match = note.match(notePattern);
+	if (!match) {
+		throw new Error(
+			`Ungültige Bassnote "${note}". Erwartet wird z. B. E1 oder F#2.`,
+		);
+	}
 
-  const [, letter, accidental, octaveText] = match;
-  const pitchClass = `${letter}${accidental}`;
-  const midi = (Number(octaveText) + 1) * 12 + pitchClasses.indexOf(pitchClass);
-  return { midi, pitchClass, octave: Number(octaveText) };
+	const [, letter, accidental, octaveText] = match;
+	const pitchClass = `${letter}${accidental}`;
+	const midi = (Number(octaveText) + 1) * 12 + pitchClasses.indexOf(pitchClass);
+	return { midi, pitchClass, octave: Number(octaveText) };
 };
 const rootMatch = keyRoot.match(/^([A-G])(#?)$/);
 if (!rootMatch) {
-  throw new Error(`Ungültiger Tonart-Grundton "${keyRoot}". Erwartet wird z. B. E oder F#.`);
+	throw new Error(
+		`Ungültiger Tonart-Grundton "${keyRoot}". Erwartet wird z. B. E oder F#.`,
+	);
 }
 
 const rootPitchClass = pitchClasses.indexOf(`${rootMatch[1]}${rootMatch[2]}`);
-const scaleIntervals = scale === "major" ? [0, 2, 4, 5, 7, 9, 11] : [0, 2, 3, 5, 7, 8, 10];
-const romanDegrees = scale === "major"
-  ? ["I", "ii", "iii", "IV", "V", "vi", "vii°"]
-  : ["i", "ii°", "III", "iv", "v", "VI", "VII"];
-const scalePitchClasses = new Set(scaleIntervals.map((interval) => (rootPitchClass + interval) % 12));
+const scaleIntervals =
+	scale === "major" ? [0, 2, 4, 5, 7, 9, 11] : [0, 2, 3, 5, 7, 8, 10];
+const romanDegrees =
+	scale === "major"
+		? ["I", "ii", "iii", "IV", "V", "vi", "vii°"]
+		: ["i", "ii°", "III", "iv", "v", "VI", "VII"];
+const scalePitchClasses = new Set(
+	scaleIntervals.map((interval) => (rootPitchClass + interval) % 12),
+);
 const chordLabel = (chord: string) => {
-  const match = chord.match(/^([A-G])(#?)/);
-  if (!match) return chord;
-  const chordRoot = pitchClasses.indexOf(`${match[1]}${match[2]}`);
-  const degree = scaleIntervals.findIndex((interval) => (rootPitchClass + interval) % 12 === chordRoot);
-  return degree < 0 ? chord : `${chord} · ${romanDegrees[degree]}`;
+	const match = chord.match(/^([A-G])(#?)/);
+	if (!match) return chord;
+	const chordRoot = pitchClasses.indexOf(`${match[1]}${match[2]}`);
+	const degree = scaleIntervals.findIndex(
+		(interval) => (rootPitchClass + interval) % 12 === chordRoot,
+	);
+	return degree < 0 ? chord : `${chord} · ${romanDegrees[degree]}`;
 };
 const parsedBars = bars.map((bar) => {
-  const noteLengthSteps = bar.noteLengthSteps ?? 1;
-  if (!Number.isInteger(noteLengthSteps) || noteLengthSteps < 1 || noteLengthSteps > stepsPerBar) {
-    throw new Error(`Ungültige Notenlänge ${noteLengthSteps} für "${bar.note}". Erlaubt sind 1 bis ${stepsPerBar} Steps.`);
-  }
-  return { ...bar, parsedNote: parseNote(bar.note) };
+	const noteLengthSteps = bar.noteLengthSteps ?? 1;
+	if (
+		!Number.isInteger(noteLengthSteps) ||
+		noteLengthSteps < 1 ||
+		noteLengthSteps > stepsPerBar
+	) {
+		throw new Error(
+			`Ungültige Notenlänge ${noteLengthSteps} für "${bar.note}". Erlaubt sind 1 bis ${stepsPerBar} Steps.`,
+		);
+	}
+	return { ...bar, parsedNote: parseNote(bar.note) };
 });
-const lowestMidi = Math.min(...parsedBars.map(({ parsedNote }) => parsedNote.midi));
-const highestMidi = Math.max(...parsedBars.map(({ parsedNote }) => parsedNote.midi));
-const pitches = Array.from({ length: highestMidi - lowestMidi + 1 }, (_, index) => {
-  const midi = lowestMidi + index;
-  const pitchClass = pitchClasses[midi % 12];
-  return scalePitchClasses.has(midi % 12)
-    ? { midi, label: `${pitchClass}${Math.floor(midi / 12) - 1}`, pitchClass }
-    : null;
-}).filter((pitch) => pitch !== null).reverse();
+const lowestMidi = Math.min(
+	...parsedBars.map(({ parsedNote }) => parsedNote.midi),
+);
+const highestMidi = Math.max(
+	...parsedBars.map(({ parsedNote }) => parsedNote.midi),
+);
+const pitches = Array.from(
+	{ length: highestMidi - lowestMidi + 1 },
+	(_, index) => {
+		const midi = lowestMidi + index;
+		const pitchClass = pitchClasses[midi % 12];
+		return scalePitchClasses.has(midi % 12)
+			? { midi, label: `${pitchClass}${Math.floor(midi / 12) - 1}`, pitchClass }
+			: null;
+	},
+)
+	.filter((pitch) => pitch !== null)
+	.reverse();
 const keyLabel = `${keyRoot} ${scale === "major" ? "Dur" : "Moll"}`;
 const velocities = [...new Set(bars.map(({ velocity }) => velocity ?? 102))];
 
 // Neue Farb-Definitionen für die Intervalle
 const intervalColors: Record<string, string> = {
-  "1":  "#F38181",
-  "♭2": "#FFAAA6",
-  "2":  "#F4C7AB",
-  "♭3": "#EAA0E3",
-  "3":  "#D382DC",
-  "4":  "#B862D3",
-  "♭5": "#7F8BE8",
-  "5":  "#64C4ED",
-  "♭6": "#52DEE5",
-  "6":  "#6BE4C6",
-  "♭7": "#83E8BA",
-  "7":  "#CBDD7B"
+	"1": "#F38181",
+	"♭2": "#FFAAA6",
+	"2": "#F4C7AB",
+	"♭3": "#EAA0E3",
+	"3": "#D382DC",
+	"4": "#B862D3",
+	"♭5": "#7F8BE8",
+	"5": "#64C4ED",
+	"♭6": "#52DEE5",
+	"6": "#6BE4C6",
+	"♭7": "#83E8BA",
+	"7": "#CBDD7B",
 };
-const intervalMap = ["1", "♭2", "2", "♭3", "3", "4", "♭5", "5", "♭6", "6", "♭7", "7"];
+const intervalMap = [
+	"1",
+	"♭2",
+	"2",
+	"♭3",
+	"3",
+	"4",
+	"♭5",
+	"5",
+	"♭6",
+	"6",
+	"♭7",
+	"7",
+];
 
 // Berechnet die Farbe basierend auf dem Abstand zum Akkord-Grundton
 const getIntervalColor = (notePitchClass: string, chord: string) => {
-  const match = chord.match(/^([A-G])(#?)/);
-  if (!match) return "#a78bfa"; // Fallback
-  const chordRoot = `${match[1]}${match[2]}`;
-  const rootIndex = pitchClasses.indexOf(chordRoot);
-  const noteIndex = pitchClasses.indexOf(notePitchClass);
-  
-  if (rootIndex === -1 || noteIndex === -1) return "#a78bfa";
-  const semitones = (noteIndex - rootIndex + 12) % 12;
-  
-  return intervalColors[intervalMap[semitones]] ?? "#a78bfa";
+	const match = chord.match(/^([A-G])(#?)/);
+	if (!match) return "#a78bfa"; // Fallback
+	const chordRoot = `${match[1]}${match[2]}`;
+	const rootIndex = pitchClasses.indexOf(chordRoot);
+	const noteIndex = pitchClasses.indexOf(notePitchClass);
+
+	if (rootIndex === -1 || noteIndex === -1) return "#a78bfa";
+	const semitones = (noteIndex - rootIndex + 12) % 12;
+
+	return intervalColors[intervalMap[semitones]] ?? "#a78bfa";
 };
 ---
 

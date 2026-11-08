@@ -1,14 +1,14 @@
-@import './music.css';
+@import "./music.css";
 
 @font-face {
-  font-family: 'KeyboardNotationBravura';
-  src: url('/alphatab/font/Bravura.woff2') format('woff2');
+	font-family: "KeyboardNotationBravura";
+	src: url("/alphatab/font/Bravura.woff2") format("woff2");
 }
 
 :root {
-  --notation-system-gap: 1rem;
-  --notation-panel-padding: 1.5rem;
-  --notation-header-height: 36px;
+	--notation-system-gap: 1rem;
+	--notation-panel-padding: 1.5rem;
+	--notation-header-height: 36px;
 }
 
 .notation-visual,
@@ -22,93 +22,103 @@
 .pickup-example,
 .tempo-example,
 .time-signatures {
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  background: #fff;
-  box-sizing: border-box;
+	border: 1px solid #d1d5db;
+	border-radius: 0.5rem;
+	background: #fff;
+	box-sizing: border-box;
 }
 
 .notation-visual {
-  position: relative;
-  padding: var(--notation-panel-padding);
+	position: relative;
+	padding: var(--notation-panel-padding);
 }
 
 .notation-value-comparison {
-  display: grid;
-  gap: var(--notation-system-gap);
-  padding: var(--notation-panel-padding);
+	display: grid;
+	gap: var(--notation-system-gap);
+	padding: var(--notation-panel-padding);
 }
 
 .notation-value-comparison strong {
-  color: #111827;
-  font: bold var(--music-text-size)/1.2 Georgia, serif;
+	color: #111827;
+	font:
+		bold var(--music-text-size) / 1.2 Georgia,
+		serif;
 }
 
 .notation-visual.has-hairpin {
-  --notation-dynamics-top: calc(var(--notation-panel-padding) + 64px);
-  padding-bottom: 32px;
+	--notation-dynamics-top: calc(var(--notation-panel-padding) + 64px);
+	padding-bottom: 32px;
 }
 
 .notation-visual.has-hairpin.has-header {
-  --notation-dynamics-top: calc(var(--notation-panel-padding) + var(--notation-header-height) + 64px);
+	--notation-dynamics-top: calc(
+		var(--notation-panel-padding) +
+		var(--notation-header-height) +
+		64px
+	);
 }
 
 .notation-visual.has-header .notation-header {
-  height: var(--notation-header-height);
+	height: var(--notation-header-height);
 }
 
 .notation-header {
-  position: relative;
-  color: #111827;
+	position: relative;
+	color: #111827;
 }
 
 .notation-visual.has-header > .notation-measure-number.embedded {
-  top: calc(var(--notation-header-height) + 13px);
+	top: calc(var(--notation-header-height) + 13px);
 }
 
 .notation-final-bar {
-  position: absolute;
-  top: calc(var(--notation-panel-padding) + 28px);
-  right: var(--notation-panel-padding);
+	position: absolute;
+	top: calc(var(--notation-panel-padding) + 28px);
+	right: var(--notation-panel-padding);
 }
 
 .notation-visual.has-header:not(.embedded) .notation-final-bar {
-  top: calc(var(--notation-panel-padding) + var(--notation-header-height) + 28px);
+	top: calc(
+		var(--notation-panel-padding) +
+		var(--notation-header-height) +
+		28px
+	);
 }
 
 .notation-visual.embedded {
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
 }
 
 .notation-visual.embedded.has-hairpin {
-  --notation-dynamics-top: 64px;
-  padding-bottom: 32px;
+	--notation-dynamics-top: 64px;
+	padding-bottom: 32px;
 }
 
 .notation-visual.embedded.has-hairpin.has-header {
-  --notation-dynamics-top: calc(var(--notation-header-height) + 64px);
+	--notation-dynamics-top: calc(var(--notation-header-height) + 64px);
 }
 
 .notation-visual.embedded .notation-final-bar {
-  top: 28px;
-  right: 0;
+	top: 28px;
+	right: 0;
 }
 
 .notation-visual.embedded.has-header .notation-final-bar {
-  top: calc(var(--notation-header-height) + 28px);
+	top: calc(var(--notation-header-height) + 28px);
 }
 
 .notation-staff {
-  display: block;
-  width: 100%;
-  height: 92px;
-  overflow: visible;
-  stroke: #111827;
-  stroke-width: 1;
-  color: #111827;
+	display: block;
+	width: 100%;
+	height: 92px;
+	overflow: visible;
+	stroke: #111827;
+	stroke-width: 1;
+	color: #111827;
 }
 
 .notation-clef,
@@ -117,21 +127,23 @@
 .notation-accidental,
 .notation-time,
 .notation-articulation {
-  font-family: 'NotationBravura';
-  font-size: 36px;
-  fill: #111827;
-  stroke: none;
+	font-family: "NotationBravura";
+	font-size: 36px;
+	fill: #111827;
+	stroke: none;
 }
 
 .notation-tempo {
-  font: italic var(--music-text-size) Georgia, serif;
-  fill: #111827;
-  stroke: none;
+	font:
+		italic var(--music-text-size) Georgia,
+		serif;
+	fill: #111827;
+	stroke: none;
 }
 
 .notation-curve {
-  fill: #111827;
-  stroke: none;
+	fill: #111827;
+	stroke: none;
 }
 
 .accidental-examples,
@@ -140,291 +152,296 @@
 .pickup-example,
 .tempo-example,
 .time-signatures {
-  padding: var(--notation-panel-padding);
+	padding: var(--notation-panel-padding);
 }
 
 .accidental-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-  row-gap: var(--notation-system-gap);
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+	row-gap: var(--notation-system-gap);
 }
 
 .accidental-measure,
 .articulation-measure,
 .dotted-note-example,
 .time-signatures-measure {
-  min-width: 0;
+	min-width: 0;
 }
 
 .accidental-measure:first-child {
-  grid-column: span 2;
+	grid-column: span 2;
 }
 
 .articulation-row,
 .articulation-labels {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  row-gap: var(--notation-system-gap);
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	row-gap: var(--notation-system-gap);
 }
 
 .articulation-labels,
 .dotted-note-label {
-  color: #111827;
-  font: 0.875rem/1.3 Georgia, serif;
-  text-align: center;
+	color: #111827;
+	font:
+		0.875rem / 1.3 Georgia,
+		serif;
+	text-align: center;
 }
 
 .bow-examples,
 .dynamics-example:not(.embedded) {
-  display: grid;
-  gap: var(--notation-system-gap);
+	display: grid;
+	gap: var(--notation-system-gap);
 }
 
 .bow-examples {
-  padding: var(--notation-panel-padding);
+	padding: var(--notation-panel-padding);
 }
 
 .bow-line {
-  position: relative;
-  min-width: 0;
+	position: relative;
+	min-width: 0;
 }
 
 .dotted-notes {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--notation-system-gap);
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: var(--notation-system-gap);
 }
 
 .dotted-note-label {
-  display: grid;
-  gap: 0.25rem;
+	display: grid;
+	gap: 0.25rem;
 }
 
 .dynamics-example:not(.embedded) {
-  padding: var(--notation-panel-padding);
+	padding: var(--notation-panel-padding);
 }
 
 .dynamics-row {
-  position: relative;
-  min-width: 0;
-  height: 108px;
-  margin-bottom: calc(-1 * var(--notation-system-gap));
-  --dynamics-staff-bottom: 64px;
+	position: relative;
+	min-width: 0;
+	height: 108px;
+	margin-bottom: calc(-1 * var(--notation-system-gap));
+	--dynamics-staff-bottom: 64px;
 }
 
 .dynamics-example.embedded {
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	background: transparent;
 }
 
 .dynamics-example.embedded .dynamics-row {
-  height: 48px;
-  margin-bottom: 0;
-  --dynamics-staff-bottom: 0px;
+	height: 48px;
+	margin-bottom: 0;
+	--dynamics-staff-bottom: 0px;
 }
 
 .notation-overview {
-  padding: calc(var(--notation-panel-padding) + 14px) var(--notation-panel-padding) 2rem;
-  container: notation-overview / inline-size;
+	padding: calc(var(--notation-panel-padding) + 14px)
+		var(--notation-panel-padding) 2rem;
+	container: notation-overview / inline-size;
 }
 
 .notation-systems {
-  display: grid;
-  grid-auto-rows: 1fr;
-  gap: var(--notation-system-gap);
+	display: grid;
+	grid-auto-rows: 1fr;
+	gap: var(--notation-system-gap);
 }
 
 .notation-systems .notation-visual.embedded.has-hairpin {
-  padding-bottom: 0;
+	padding-bottom: 0;
 }
 
 .notation-systems:has(> :last-child .notation-visual.has-hairpin) {
-  padding-bottom: 32px;
+	padding-bottom: 32px;
 }
 
 .overview-layout-narrow {
-  display: none;
+	display: none;
 }
 
 .overview-system {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  row-gap: var(--notation-system-gap);
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	row-gap: var(--notation-system-gap);
 }
 
 .overview-system.three-measures {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+	grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .overview-layout-narrow .overview-system {
-  grid-template-columns: minmax(0, 1fr);
+	grid-template-columns: minmax(0, 1fr);
 }
 
 .overview-measure {
-  position: relative;
-  min-width: 0;
+	position: relative;
+	min-width: 0;
 }
 
 .overview-measure .notation-visual.embedded.has-header .notation-header {
-  position: absolute;
-  top: -14px;
-  right: 0;
-  left: 18px;
-  height: var(--notation-header-height);
-  z-index: 2;
+	position: absolute;
+	top: -14px;
+	right: 0;
+	left: 18px;
+	height: var(--notation-header-height);
+	z-index: 2;
 }
 
 .overview-measure .notation-visual.embedded.has-hairpin.has-header {
-  --notation-dynamics-top: 64px;
+	--notation-dynamics-top: 64px;
 }
 
 .overview-measure .notation-visual.embedded.has-header .notation-final-bar {
-  top: 28px;
+	top: 28px;
 }
 
-.overview-measure .notation-visual.embedded.has-header > .notation-measure-number.embedded {
-  top: 13px;
+.overview-measure
+	.notation-visual.embedded.has-header
+	> .notation-measure-number.embedded {
+	top: 13px;
 }
 
 .measure-staff {
-  position: relative;
+	position: relative;
 }
 
 .pickup-row {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .pickup-row:first-child {
-  grid-template-columns: minmax(110px, 0.7fr) repeat(2, minmax(0, 1fr));
+	grid-template-columns: minmax(110px, 0.7fr) repeat(2, minmax(0, 1fr));
 }
 
 .pickup-row + .pickup-row {
-  margin-top: var(--notation-system-gap);
+	margin-top: var(--notation-system-gap);
 }
 
 .pickup-measure {
-  position: relative;
-  min-width: 0;
+	position: relative;
+	min-width: 0;
 }
 
 .repeat-start,
 .repeat-end {
-  position: absolute;
-  top: 28px;
-  display: block;
-  fill: #111827;
-  color: #111827;
-  stroke: currentColor;
+	position: absolute;
+	top: 28px;
+	display: block;
+	fill: #111827;
+	color: #111827;
+	stroke: currentColor;
 }
 
 .repeat-start {
-  left: 0;
+	left: 0;
 }
 
 .repeat-end {
-  right: 0;
+	right: 0;
 }
 
 .tempo-example {
-  padding: var(--notation-panel-padding);
+	padding: var(--notation-panel-padding);
 }
 
 .tempo-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
 }
 
 .tempo-measure {
-  position: relative;
-  min-width: 0;
-  padding-top: 40px;
-  color: #111827;
+	position: relative;
+	min-width: 0;
+	padding-top: 40px;
+	color: #111827;
 }
 
 .time-signatures-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
-  row-gap: var(--notation-system-gap);
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+	row-gap: var(--notation-system-gap);
 }
 
 .time-signatures-measure:first-child {
-  grid-column: span 2;
+	grid-column: span 2;
 }
 
 .keyboard-notation {
-  display: flex;
-  padding: 0.75rem 1rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  background: #fff;
-  box-sizing: border-box;
+	display: flex;
+	padding: 0.75rem 1rem;
+	border: 1px solid #d1d5db;
+	border-radius: 0.5rem;
+	background: #fff;
+	box-sizing: border-box;
 }
 
 .keyboard-brace {
-  flex: none;
-  width: 14px;
-  height: 90px;
-  margin: 28px 4px 0 0;
-  fill: #111827;
+	flex: none;
+	width: 14px;
+	height: 90px;
+	margin: 28px 4px 0 0;
+	fill: #111827;
 }
 
 .keyboard-brace text {
-  font-family: 'KeyboardNotationBravura';
-  font-size: 1000px;
+	font-family: "KeyboardNotationBravura";
+	font-size: 1000px;
 }
 
 .keyboard-staves {
-  position: relative;
-  flex: 1;
-  min-width: 0;
+	position: relative;
+	flex: 1;
+	min-width: 0;
 }
 
 .keyboard-left-bar {
-  position: absolute;
-  top: 28px;
-  left: -0.5px;
-  display: block;
-  overflow: visible;
-  stroke: #111827;
-  stroke-width: 1;
+	position: absolute;
+	top: 28px;
+	left: -0.5px;
+	display: block;
+	overflow: visible;
+	stroke: #111827;
+	stroke-width: 1;
 }
 
 .keyboard-staves .notation-visual + .notation-visual {
-  margin-top: -38px;
+	margin-top: -38px;
 }
 
 .keyboard-final-bar {
-  position: absolute;
-  top: 28px;
-  right: 0;
+	position: absolute;
+	top: 28px;
+	right: 0;
 }
 
 @media (max-width: 520px) {
-  .articulation-row,
-  .articulation-labels {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+	.articulation-row,
+	.articulation-labels {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
 
-  .dotted-notes {
-    grid-template-columns: 1fr;
-  }
+	.dotted-notes {
+		grid-template-columns: 1fr;
+	}
 }
 
 @container notation-overview (max-width: 540px) {
-  .overview-layout-wide {
-    display: none;
-  }
+	.overview-layout-wide {
+		display: none;
+	}
 
-  .overview-layout-narrow {
-    display: grid;
-  }
+	.overview-layout-narrow {
+		display: grid;
+	}
 }
 
 @media (max-width: 420px) {
-  .pickup-row:first-child {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+	.pickup-row:first-child {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
 }

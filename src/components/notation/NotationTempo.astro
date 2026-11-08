@@ -1,10 +1,10 @@
 ---
-import NotationVisual from './NotationVisual.astro';
-import TempoHeading from '../music/TempoHeading.astro';
-import { assertNoClefChanges } from '../../lib/notation-renderer';
+import { assertNoClefChanges } from "../../lib/notation-renderer";
+import TempoHeading from "../music/TempoHeading.astro";
+import NotationVisual from "./NotationVisual.astro";
 
-const clefs = ['treble', false] as const;
-assertNoClefChanges(clefs, 'NotationTempo');
+const clefs = ["treble", false] as const;
+assertNoClefChanges(clefs, "NotationTempo");
 ---
 
 <div class="tempo-example not-content" data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>

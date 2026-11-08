@@ -2,7 +2,7 @@
 const strings = ["e", "B", "G", "D", "A", "E"];
 // Vergrößerte Saitenabstände analog zum FretboardClickable
 const stringY = [37.5, 82.5, 127.5, 172.5, 217.5, 262.5];
-const fretWidth = 75; 
+const fretWidth = 75;
 const startX = 60; // Start-X für das Griffbrettholz (Platz für Saiten-Labels)
 
 // Wir zeigen nun 6 Bünde: 11 bis 16
@@ -11,117 +11,132 @@ const fretWireX = (fretIndex) => startX + fretIndex * fretWidth;
 
 // Farbpalette
 const intervalColors = {
-  "1":  "#F38181", // Grundton
-  "♭2": "#FFAAA6",
-  "2":  "#F4C7AB",
-  "♭3": "#EAA0E3", // kleine Terz
-  "3":  "#D382DC",
-  "4":  "#B862D3", // reine Quarte
-  "♭5": "#7F8BE8", // Tritonus
-  "5":  "#64C4ED", // reine Quinte
-  "♭6": "#52DEE5",
-  "6":  "#6BE4C6",
-  "♭7": "#83E8BA", // kleine Septime
-  "7":  "#CBDD7B",
-  "8":  "#F38181"  // Oktave
+	"1": "#F38181", // Grundton
+	"♭2": "#FFAAA6",
+	"2": "#F4C7AB",
+	"♭3": "#EAA0E3", // kleine Terz
+	"3": "#D382DC",
+	"4": "#B862D3", // reine Quarte
+	"♭5": "#7F8BE8", // Tritonus
+	"5": "#64C4ED", // reine Quinte
+	"♭6": "#52DEE5",
+	"6": "#6BE4C6",
+	"♭7": "#83E8BA", // kleine Septime
+	"7": "#CBDD7B",
+	"8": "#F38181", // Oktave
 };
 
 const intervalNames = {
-  "1": "Grundton",
-  "♭2": "kleine Sekunde",
-  "2": "große Sekunde",
-  "♭3": "kleine Terz",
-  "3": "große Terz",
-  "4": "reine Quarte",
-  "♭5": "Tritonus",
-  "5": "reine Quinte",
-  "♭6": "kleine Sexte",
-  "6": "große Sexte",
-  "♭7": "kleine Septime",
-  "7": "große Septime",
-  "8": "Oktave"
+	"1": "Grundton",
+	"♭2": "kleine Sekunde",
+	"2": "große Sekunde",
+	"♭3": "kleine Terz",
+	"3": "große Terz",
+	"4": "reine Quarte",
+	"♭5": "Tritonus",
+	"5": "reine Quinte",
+	"♭6": "kleine Sexte",
+	"6": "große Sexte",
+	"♭7": "kleine Septime",
+	"7": "große Septime",
+	"8": "Oktave",
 };
 
 // Definition der vier Galerie-Ansichten
 const views = [
-  {
-    id: "roots",
-    title: "Root-Noten",
-    subtitle: "1",
-    scaleNotes: ["E"],
-    notes: [
-      { stringIndex: 0, fret: 12, note: "E", degree: "1" },
-      { stringIndex: 3, fret: 14, note: "E", degree: "1" },
-      { stringIndex: 5, fret: 12, note: "E", degree: "1" }
-    ]
-  },
-  {
-    id: "triad",
-    title: "Dreiklang",
-    subtitle: "1 · ♭3 · 5",
-    scaleNotes: ["E", "G", "B"],
-    notes: [
-      { stringIndex: 0, fret: 12, note: "E", degree: "1" },
-      { stringIndex: 0, fret: 15, note: "G", degree: "♭3" },
-      { stringIndex: 1, fret: 12, note: "B", degree: "5" },
-      { stringIndex: 2, fret: 12, note: "G", degree: "♭3" },
-      { stringIndex: 3, fret: 14, note: "E", degree: "1" },
-      { stringIndex: 4, fret: 14, note: "B", degree: "5" },
-      { stringIndex: 5, fret: 12, note: "E", degree: "1" },
-      { stringIndex: 5, fret: 15, note: "G", degree: "♭3" }
-    ]
-  },
-  {
-    id: "pentatonic",
-    title: "Pentatonik",
-    subtitle: "1 · ♭3 · 4 · 5 · ♭7",
-    scaleNotes: ["E", "G", "A", "B", "D"],
-    notes: [
-      { stringIndex: 0, fret: 12, note: "E", degree: "1" },
-      { stringIndex: 0, fret: 15, note: "G", degree: "♭3" },
-      { stringIndex: 1, fret: 12, note: "B", degree: "5" },
-      { stringIndex: 1, fret: 15, note: "D", degree: "♭7" },
-      { stringIndex: 2, fret: 12, note: "G", degree: "♭3" },
-      { stringIndex: 2, fret: 14, note: "A", degree: "4" },
-      { stringIndex: 3, fret: 12, note: "D", degree: "♭7" },
-      { stringIndex: 3, fret: 14, note: "E", degree: "1" },
-      { stringIndex: 4, fret: 12, note: "A", degree: "4" },
-      { stringIndex: 4, fret: 14, note: "B", degree: "5" },
-      { stringIndex: 5, fret: 12, note: "E", degree: "1" },
-      { stringIndex: 5, fret: 15, note: "G", degree: "♭3" }
-    ]
-  },
-  {
-    id: "minor",
-    title: "Natürliches Moll",
-    subtitle: "1 · 2 · ♭3 · 4 · 5 · ♭6 · ♭7",
-    scaleNotes: ["E", "F#", "G", "A", "B", "C", "D"],
-    notes: [
-      { stringIndex: 0, fret: 12, note: "E", degree: "1" },
-      { stringIndex: 0, fret: 14, note: "F#", degree: "2" },
-      { stringIndex: 0, fret: 15, note: "G", degree: "♭3" },
-      { stringIndex: 1, fret: 12, note: "B", degree: "5" },
-      { stringIndex: 1, fret: 13, note: "C", degree: "♭6" },
-      { stringIndex: 1, fret: 15, note: "D", degree: "♭7" },
-      { stringIndex: 2, fret: 11, note: "F#", degree: "2" },
-      { stringIndex: 2, fret: 12, note: "G", degree: "♭3" },
-      { stringIndex: 2, fret: 14, note: "A", degree: "4" },
-      { stringIndex: 3, fret: 12, note: "D", degree: "♭7" },
-      { stringIndex: 3, fret: 14, note: "E", degree: "1" },
-      { stringIndex: 4, fret: 12, note: "A", degree: "4" },
-      { stringIndex: 4, fret: 14, note: "B", degree: "5" },
-      { stringIndex: 4, fret: 15, note: "C", degree: "♭6" },
-      { stringIndex: 5, fret: 12, note: "E", degree: "1" },
-      { stringIndex: 5, fret: 14, note: "F#", degree: "2" },
-      { stringIndex: 5, fret: 15, note: "G", degree: "♭3" }
-    ]
-  }
+	{
+		id: "roots",
+		title: "Root-Noten",
+		subtitle: "1",
+		scaleNotes: ["E"],
+		notes: [
+			{ stringIndex: 0, fret: 12, note: "E", degree: "1" },
+			{ stringIndex: 3, fret: 14, note: "E", degree: "1" },
+			{ stringIndex: 5, fret: 12, note: "E", degree: "1" },
+		],
+	},
+	{
+		id: "triad",
+		title: "Dreiklang",
+		subtitle: "1 · ♭3 · 5",
+		scaleNotes: ["E", "G", "B"],
+		notes: [
+			{ stringIndex: 0, fret: 12, note: "E", degree: "1" },
+			{ stringIndex: 0, fret: 15, note: "G", degree: "♭3" },
+			{ stringIndex: 1, fret: 12, note: "B", degree: "5" },
+			{ stringIndex: 2, fret: 12, note: "G", degree: "♭3" },
+			{ stringIndex: 3, fret: 14, note: "E", degree: "1" },
+			{ stringIndex: 4, fret: 14, note: "B", degree: "5" },
+			{ stringIndex: 5, fret: 12, note: "E", degree: "1" },
+			{ stringIndex: 5, fret: 15, note: "G", degree: "♭3" },
+		],
+	},
+	{
+		id: "pentatonic",
+		title: "Pentatonik",
+		subtitle: "1 · ♭3 · 4 · 5 · ♭7",
+		scaleNotes: ["E", "G", "A", "B", "D"],
+		notes: [
+			{ stringIndex: 0, fret: 12, note: "E", degree: "1" },
+			{ stringIndex: 0, fret: 15, note: "G", degree: "♭3" },
+			{ stringIndex: 1, fret: 12, note: "B", degree: "5" },
+			{ stringIndex: 1, fret: 15, note: "D", degree: "♭7" },
+			{ stringIndex: 2, fret: 12, note: "G", degree: "♭3" },
+			{ stringIndex: 2, fret: 14, note: "A", degree: "4" },
+			{ stringIndex: 3, fret: 12, note: "D", degree: "♭7" },
+			{ stringIndex: 3, fret: 14, note: "E", degree: "1" },
+			{ stringIndex: 4, fret: 12, note: "A", degree: "4" },
+			{ stringIndex: 4, fret: 14, note: "B", degree: "5" },
+			{ stringIndex: 5, fret: 12, note: "E", degree: "1" },
+			{ stringIndex: 5, fret: 15, note: "G", degree: "♭3" },
+		],
+	},
+	{
+		id: "minor",
+		title: "Natürliches Moll",
+		subtitle: "1 · 2 · ♭3 · 4 · 5 · ♭6 · ♭7",
+		scaleNotes: ["E", "F#", "G", "A", "B", "C", "D"],
+		notes: [
+			{ stringIndex: 0, fret: 12, note: "E", degree: "1" },
+			{ stringIndex: 0, fret: 14, note: "F#", degree: "2" },
+			{ stringIndex: 0, fret: 15, note: "G", degree: "♭3" },
+			{ stringIndex: 1, fret: 12, note: "B", degree: "5" },
+			{ stringIndex: 1, fret: 13, note: "C", degree: "♭6" },
+			{ stringIndex: 1, fret: 15, note: "D", degree: "♭7" },
+			{ stringIndex: 2, fret: 11, note: "F#", degree: "2" },
+			{ stringIndex: 2, fret: 12, note: "G", degree: "♭3" },
+			{ stringIndex: 2, fret: 14, note: "A", degree: "4" },
+			{ stringIndex: 3, fret: 12, note: "D", degree: "♭7" },
+			{ stringIndex: 3, fret: 14, note: "E", degree: "1" },
+			{ stringIndex: 4, fret: 12, note: "A", degree: "4" },
+			{ stringIndex: 4, fret: 14, note: "B", degree: "5" },
+			{ stringIndex: 4, fret: 15, note: "C", degree: "♭6" },
+			{ stringIndex: 5, fret: 12, note: "E", degree: "1" },
+			{ stringIndex: 5, fret: 14, note: "F#", degree: "2" },
+			{ stringIndex: 5, fret: 15, note: "G", degree: "♭3" },
+		],
+	},
 ];
 
 // Dynamische Legende
-const degreeOrder = ["1", "♭2", "2", "♭3", "3", "4", "♭5", "5", "♭6", "6", "♭7", "7", "8"];
-const usedDegrees = Array.from(new Set(views.flatMap(v => v.notes.map(n => n.degree))))
-  .sort((a, b) => degreeOrder.indexOf(a) - degreeOrder.indexOf(b));
+const degreeOrder = [
+	"1",
+	"♭2",
+	"2",
+	"♭3",
+	"3",
+	"4",
+	"♭5",
+	"5",
+	"♭6",
+	"6",
+	"♭7",
+	"7",
+	"8",
+];
+const usedDegrees = Array.from(
+	new Set(views.flatMap((v) => v.notes.map((n) => n.degree))),
+).sort((a, b) => degreeOrder.indexOf(a) - degreeOrder.indexOf(b));
 ---
 
 <!-- Startklasse: show-intervals -->

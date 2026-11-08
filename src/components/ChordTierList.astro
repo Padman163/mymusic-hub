@@ -5,34 +5,124 @@ const sY = [5, 12, 19, 26, 33, 40]; // Y-Koordinaten der 6 Saiten (0=e, 1=B, 2=G
 const fX = [7.5, 22.5, 37.5, 52.5]; // X-Koordinaten für 4 Bünde (relativ zum Startbund)
 
 const tiers = [
-  {
-    level: 'S',
-    color: '#F38181', // Root-Rot für S-Tier
-    items: [
-      { name: 'E-Shape (E-Saite)', desc: '2 & 3 Töne (Standard)', inv: false, dots: [{s:5, f:0, t:'R'}, {s:4, f:2, t:'5'}, {s:3, f:2, t:'R'}] },
-      { name: 'A-Shape (A-Saite)', desc: '2 & 3 Töne (Standard)', inv: false, dots: [{s:4, f:0, t:'R'}, {s:3, f:2, t:'5'}, {s:2, f:2, t:'R'}] },
-      { name: 'D-Shape (D-Saite)', desc: '2 & 3 Töne (Standard)', inv: false, dots: [{s:3, f:0, t:'R'}, {s:2, f:2, t:'5'}, {s:1, f:3, t:'R'}] },
-      { name: 'Inverted A-Shape', desc: 'Grundton A-Saite (Bass E)', inv: true, dots: [{s:5, f:0, t:'5'}, {s:4, f:0, t:'R'}, {s:3, f:2, t:'5'}] },
-      { name: 'Inverted D-Shape', desc: 'Grundton D-Saite (Bass A)', inv: true, dots: [{s:4, f:0, t:'5'}, {s:3, f:0, t:'R'}, {s:2, f:2, t:'5'}] },
-    ]
-  },
-  {
-    level: 'B',
-    color: '#fcd34d', // Warmes Gelb für B-Tier
-    items: [
-      { name: 'G-Shape (G-Saite)', desc: '2 & 3 Töne (Verliert an Druck)', inv: false, dots: [{s:2, f:0, t:'R'}, {s:1, f:3, t:'5'}, {s:0, f:3, t:'R'}] },
-      { name: 'Inverted G-Shape', desc: 'Grundton G-Saite (Bass D)', inv: true, dots: [{s:3, f:0, t:'5'}, {s:2, f:0, t:'R'}, {s:1, f:3, t:'5'}] },
-    ]
-  },
-  {
-    level: 'C',
-    color: '#6BE4C6', // Mint-Grün für C-Tier
-    items: [
-      { name: 'B-Shape (B-Saite)', desc: 'Nur 2 Töne (Keine Oktave)', inv: false, thin: true, dots: [{s:1, f:0, t:'R'}, {s:0, f:2, t:'5'}] },
-      { name: 'Inverted B-Shape', desc: 'Grundton B-Saite (Bass G)', inv: true, thin: true, dots: [{s:2, f:0, t:'5'}, {s:1, f:1, t:'R'}] },
-      { name: 'Inverted e-Shape', desc: 'Grundton e-Saite (Bass B)', inv: true, thin: true, dots: [{s:1, f:0, t:'5'}, {s:0, f:0, t:'R'}] },
-    ]
-  }
+	{
+		level: "S",
+		color: "#F38181", // Root-Rot für S-Tier
+		items: [
+			{
+				name: "E-Shape (E-Saite)",
+				desc: "2 & 3 Töne (Standard)",
+				inv: false,
+				dots: [
+					{ s: 5, f: 0, t: "R" },
+					{ s: 4, f: 2, t: "5" },
+					{ s: 3, f: 2, t: "R" },
+				],
+			},
+			{
+				name: "A-Shape (A-Saite)",
+				desc: "2 & 3 Töne (Standard)",
+				inv: false,
+				dots: [
+					{ s: 4, f: 0, t: "R" },
+					{ s: 3, f: 2, t: "5" },
+					{ s: 2, f: 2, t: "R" },
+				],
+			},
+			{
+				name: "D-Shape (D-Saite)",
+				desc: "2 & 3 Töne (Standard)",
+				inv: false,
+				dots: [
+					{ s: 3, f: 0, t: "R" },
+					{ s: 2, f: 2, t: "5" },
+					{ s: 1, f: 3, t: "R" },
+				],
+			},
+			{
+				name: "Inverted A-Shape",
+				desc: "Grundton A-Saite (Bass E)",
+				inv: true,
+				dots: [
+					{ s: 5, f: 0, t: "5" },
+					{ s: 4, f: 0, t: "R" },
+					{ s: 3, f: 2, t: "5" },
+				],
+			},
+			{
+				name: "Inverted D-Shape",
+				desc: "Grundton D-Saite (Bass A)",
+				inv: true,
+				dots: [
+					{ s: 4, f: 0, t: "5" },
+					{ s: 3, f: 0, t: "R" },
+					{ s: 2, f: 2, t: "5" },
+				],
+			},
+		],
+	},
+	{
+		level: "B",
+		color: "#fcd34d", // Warmes Gelb für B-Tier
+		items: [
+			{
+				name: "G-Shape (G-Saite)",
+				desc: "2 & 3 Töne (Verliert an Druck)",
+				inv: false,
+				dots: [
+					{ s: 2, f: 0, t: "R" },
+					{ s: 1, f: 3, t: "5" },
+					{ s: 0, f: 3, t: "R" },
+				],
+			},
+			{
+				name: "Inverted G-Shape",
+				desc: "Grundton G-Saite (Bass D)",
+				inv: true,
+				dots: [
+					{ s: 3, f: 0, t: "5" },
+					{ s: 2, f: 0, t: "R" },
+					{ s: 1, f: 3, t: "5" },
+				],
+			},
+		],
+	},
+	{
+		level: "C",
+		color: "#6BE4C6", // Mint-Grün für C-Tier
+		items: [
+			{
+				name: "B-Shape (B-Saite)",
+				desc: "Nur 2 Töne (Keine Oktave)",
+				inv: false,
+				thin: true,
+				dots: [
+					{ s: 1, f: 0, t: "R" },
+					{ s: 0, f: 2, t: "5" },
+				],
+			},
+			{
+				name: "Inverted B-Shape",
+				desc: "Grundton B-Saite (Bass G)",
+				inv: true,
+				thin: true,
+				dots: [
+					{ s: 2, f: 0, t: "5" },
+					{ s: 1, f: 1, t: "R" },
+				],
+			},
+			{
+				name: "Inverted e-Shape",
+				desc: "Grundton e-Saite (Bass B)",
+				inv: true,
+				thin: true,
+				dots: [
+					{ s: 1, f: 0, t: "5" },
+					{ s: 0, f: 0, t: "R" },
+				],
+			},
+		],
+	},
 ];
 ---
 

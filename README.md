@@ -48,7 +48,7 @@ HEAD~2 ist der Vor-Vorgänger-Commit (2 Schritte zurück).
 
 
 ## Mergen des Branch
-```git merge origin/main```
+```git merge origin main```
 ## Sonstige Befehle
 1. Kopiert branch mit anderem Namen in z.b. das Archiv ```git branch -m <kopierter-branch> archive/<eingefügter-branch>```
 2. Pusht den kopierten branch auf GitHub ```git push origin -u archive/<eingefügter-branch>```
@@ -61,6 +61,12 @@ HEAD~2 ist der Vor-Vorgänger-Commit (2 Schritte zurück).
 
 ## IssueTracker-Beiträge speichern
 Die Netlify Function unter `netlify/functions/contributions.ts` nimmt Beiträge entgegen und speichert sie zunächst in `data/contributions.json` im GitHub-Repository. In Netlify müssen dafür folgende Umgebungsvariablen gesetzt werden:
+
+## Testing
+
+```npm install --save-dev --save-exact @biomejs/biome```
+```npx biome init```
+```npm install --save-dev @astrojs/check typescript```
 
 - `GITHUB_TOKEN`: Fine-grained Personal Access Token mit Lese- und Schreibzugriff auf den Repository-Inhalt. Darf NICHT als Secret definiert werden
 - `GITHUB_REPOSITORY`: Repository im Format `owner/repository`.

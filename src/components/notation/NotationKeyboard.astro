@@ -1,13 +1,13 @@
 ---
-import NotationVisual from './NotationVisual.astro';
-import FinalBar from '../music/FinalBar.astro';
+import FinalBar from "../music/FinalBar.astro";
+import NotationVisual from "./NotationVisual.astro";
 
 interface Props {
-  showBrace?: boolean;
-  rightBarStyle?: 'single' | 'final';
+	showBrace?: boolean;
+	rightBarStyle?: "single" | "final";
 }
 
-const { showBrace = true, rightBarStyle = 'final' } = Astro.props;
+const { showBrace = true, rightBarStyle = "final" } = Astro.props;
 ---
 
 <div class="keyboard-notation not-content" data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
