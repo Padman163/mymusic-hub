@@ -16,9 +16,9 @@
 ```npx netlify-cli dev```
 
 ## Aktuellsten Branch holen
-1. ```git switch <aktuellsten-branch>```
-2. ```git fetch origin```
-3. ```git reset --hard origin/<aktuellsten-branch>```
+```git fetch origin``` 
+```git switch <aktuellsten-branch>```
+```git reset --hard origin/<aktuellsten-branch>```
 
 ## Älteren Branch holen
 1. ```git switch <älteren-branch>```
@@ -33,6 +33,17 @@
 
 5. Löscht anstehende commits: ```git clean -fd```
 6. Löscht push :  ```git reset --hard origin/<älteren-branch>```
+
+## Commits die abgeschickt sind löschen
+```git reset HEAD```
+HEAD ist der Zeiger auf deinen aktuellen Commit.
+
+HEAD~1 ist der direkte Vorgänger-Commit (1 Schritt zurück).
+
+HEAD~2 ist der Vor-Vorgänger-Commit (2 Schritte zurück).
+
+## Auf Origin zurücksetzen
+```git reset --hard origin/<branch-name>```
 
 ## Sonstige Befehle
 1. Kopiert branch mit anderem Namen in z.b. das Archiv ```git branch -m <kopierter-branch> archive/<eingefügter-branch>```
