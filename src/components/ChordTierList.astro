@@ -134,7 +134,7 @@ const tiers = [
       </div>
       <div class="tier-content">
         {tier.items.map(item => (
-          <div class={`tier-item ${item.inv ? 'inverted' : ''} ${item.thin ? 'thin' : ''}`}>
+          <div class={`tier-item ${item.inv ? 'inverted' : ''} ${'thin' in item && item.thin ? 'thin' : ''}`}>
             
             <div class="mini-diagram" aria-hidden="true">
               <svg viewBox="0 0 60 45" width="60" height="45" class="mini-fretboard">

@@ -567,10 +567,11 @@ const stepLabels = Array.from(
 </style>
 
 <script>
-  function updateVelocityCell(cell, velocity) {
+  function updateVelocityCell(cell: HTMLDivElement, velocity: number) {
     const value = Math.max(0, Math.min(127, Math.round(velocity)));
-    const bar = cell.querySelector('.velocity-bar');
-    const label = cell.querySelector('.velocity-label');
+    const bar = cell.querySelector<HTMLSpanElement>('.velocity-bar');
+    const label = cell.querySelector<HTMLSpanElement>('.velocity-label');
+    if (!bar || !label) return;
 
     cell.dataset.velocity = String(value);
     cell.setAttribute('aria-valuenow', String(value));
@@ -581,21 +582,21 @@ const stepLabels = Array.from(
   }
 
   function setupDrumPatterns() {
-    const patterns = document.querySelectorAll('.studio-one-pattern');
+    const patterns = document.querySelectorAll<HTMLElement>('.studio-one-pattern');
     
     patterns.forEach(pattern => {
-      const rows = pattern.querySelectorAll('.track-row:not(.velocity-row)');
-      const velocityRow = pattern.querySelector('.velocity-row');
-      const velocityCells = pattern.querySelectorAll('.velocity-cell');
+      const rows = pattern.querySelectorAll<HTMLDivElement>('.track-row:not(.velocity-row)');
+      const velocityRow = pattern.querySelector<HTMLDivElement>('.velocity-row');
+      const velocityCells = pattern.querySelectorAll<HTMLDivElement>('.velocity-cell');
       const isInteractive = pattern.dataset.interactive === 'true';
       const hasVelocity = pattern.dataset.showVelocity === 'true';
-      let selectedTrack = pattern.querySelector('.track-row.selected') || rows[0];
+      let selectedTrack = pattern.querySelector<HTMLDivElement>('.track-row.selected') || rows[0];
 
       if (!isInteractive && !hasVelocity) return;
 
-      function renderVelocity(row) {
-        const values = JSON.parse(row.dataset.velocities);
-        const stepCells = row.querySelectorAll('.step-cell');
+      function renderVelocity(row: HTMLDivElement) {
+        const values = JSON.parse(row.dataset.velocities ?? '[]') as number[];
+        const stepCells = row.querySelectorAll<HTMLDivElement>('.step-cell');
 
         velocityCells.forEach((velocityCell, stepIndex) => {
           const isActive = stepCells[stepIndex].classList.contains('active');
@@ -608,14 +609,14 @@ const stepLabels = Array.from(
           }
           velocityCell.setAttribute(
             'aria-label',
-            `${row.querySelector('.track-name').textContent}, Step ${stepIndex + 1}, Anschlag`
+            `${row.querySelector<HTMLElement>('.track-name')?.textContent ?? ''}, Step ${stepIndex + 1}, Anschlag`
           );
           velocityCell.tabIndex = isInteractive && isActive ? 0 : -1;
           updateVelocityCell(velocityCell, value);
         });
       }
 
-      function selectRow(row) {
+      function selectRow(row: HTMLDivElement) {
         selectedTrack = row;
         rows.forEach(candidate => candidate.classList.toggle('selected', candidate === row));
         if (hasVelocity) {
@@ -626,8 +627,8 @@ const stepLabels = Array.from(
       }
 
       rows.forEach(row => {
-        const color = row.getAttribute('data-color');
-        const cells = row.querySelectorAll('.step-cell');
+        const color = row.dataset.color ?? '#18181b';
+        const cells = row.querySelectorAll<HTMLDivElement>('.step-cell');
         if (row.dataset.bound !== 'true') {
           row.dataset.bound = 'true';
           row.addEventListener('click', () => selectRow(row));
@@ -648,7 +649,7 @@ const stepLabels = Array.from(
             const isActive = cell.classList.toggle('active');
             cell.style.backgroundColor = isActive ? color : '#18181b';
 
-            const values = JSON.parse(row.dataset.velocities);
+            const values = JSON.parse(row.dataset.velocities ?? '[]') as number[];
             const stepIndex = Number(cell.dataset.step);
             values[stepIndex] = isActive ? (values[stepIndex] || 90) : 0;
             row.dataset.velocities = JSON.stringify(values);
@@ -657,7 +658,7 @@ const stepLabels = Array.from(
         });
       });
 
-      const selectedRow = pattern.querySelector('.track-row.selected') || rows[0];
+      const selectedRow = pattern.querySelector<HTMLDivElement>('.track-row.selected') || rows[0];
       if (selectedRow) selectRow(selectedRow);
 
       velocityCells.forEach(cell => {
@@ -665,13 +666,13 @@ const stepLabels = Array.from(
         if (cell.dataset.bound === 'true') return;
         cell.dataset.bound = 'true';
 
-        const setFromPointer = (event) => {
+        const setFromPointer = (event: PointerEvent) => {
           const bounds = cell.getBoundingClientRect();
           const ratio = 1 - (event.clientY - bounds.top) / bounds.height;
           updateVelocityCell(cell, ratio * 127);
 
           if (selectedTrack) {
-            const values = JSON.parse(selectedTrack.dataset.velocities);
+            const values = JSON.parse(selectedTrack.dataset.velocities ?? '[]') as number[];
             values[Number(cell.dataset.step)] = Number(cell.dataset.velocity);
             selectedTrack.dataset.velocities = JSON.stringify(values);
           }
@@ -690,7 +691,7 @@ const stepLabels = Array.from(
           if (cell.dataset.active !== 'true') return;
 
           const current = Number(cell.dataset.velocity);
-          const changes = {
+          const changes: Record<string, number> = {
             ArrowUp: 1,
             ArrowRight: 1,
             ArrowDown: -1,
@@ -705,7 +706,7 @@ const stepLabels = Array.from(
           updateVelocityCell(cell, current + changes[event.key]);
 
           if (selectedTrack) {
-            const values = JSON.parse(selectedTrack.dataset.velocities);
+            const values = JSON.parse(selectedTrack.dataset.velocities ?? '[]') as number[];
             values[Number(cell.dataset.step)] = Number(cell.dataset.velocity);
             selectedTrack.dataset.velocities = JSON.stringify(values);
           }

@@ -103,6 +103,7 @@ const lowestMidi = Math.min(
 const highestMidi = Math.max(
   ...parsedBars.map(({ parsedNote }) => parsedNote.midi),
 );
+// biome-ignore lint/correctness/noUnusedVariables: Used by the Astro template below.
 const pitches = Array.from(
   { length: highestMidi - lowestMidi + 1 },
   (_, index) => {
@@ -115,6 +116,7 @@ const pitches = Array.from(
 )
   .filter((pitch) => pitch !== null)
   .reverse();
+// biome-ignore lint/correctness/noUnusedVariables: Used by the Astro template below.
 const keyLabel = `${keyRoot} ${scale === "major" ? "Dur" : "Moll"}`;
 const velocities = [...new Set(bars.map(({ velocity }) => velocity ?? 102))];
 

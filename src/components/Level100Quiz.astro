@@ -1361,7 +1361,11 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
     | { type: 'note-value'; value: 'whole' | 'half' | 'quarter' | 'eighth' | 'sixteenth'; dotted?: boolean }
     | { type: 'time-signature'; numerator: number; denominator: number }
     | { type: 'repeat' };
-  type NotationQuestion = QuizQuestion & { diagram: Diagram };
+  type NotationQuestion = QuizQuestion & {
+    diagram?: Diagram;
+    musicXmlUrl: string;
+    group: number;
+  };
   type Pattern = {
     id: string;
     answer: string;
@@ -1388,7 +1392,7 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
     return items;
   }
 
-  function renderNotationDiagram(diagram: NotationDiagram, index: number): HTMLElement {
+  function renderNotationDiagram(diagram: Diagram, index: number): HTMLElement {
     const figure = document.createElement('figure');
     figure.className = 'notation-diagram';
     const options = { label: `Schaubild ${index + 1} zur Notationsfrage` };
@@ -1679,7 +1683,7 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
           return selected;
         });
 
-      const createQuestion = (item: QuizQuestion, category: string, index: number, diagram?: NotationDiagram) => {
+      const createQuestion = (item: QuizQuestion, category: string, index: number, diagram?: Diagram) => {
         const fieldset = document.createElement('fieldset');
         fieldset.className = `quiz-question${diagram ? ' notation-question' : ''}`;
         fieldset.dataset.answer = item.answer;

@@ -6,11 +6,11 @@ const fretWidth = 75;
 const startX = 60; // Start-X für das Griffbrettholz (Platz für Saiten-Labels)
 
 // Wir zeigen nun 6 Bünde: 11 bis 16
-const fretX = (fret) => startX + (fret - 11 + 0.5) * fretWidth;
-const fretWireX = (fretIndex) => startX + fretIndex * fretWidth;
+const fretX = (fret: number) => startX + (fret - 11 + 0.5) * fretWidth;
+const fretWireX = (fretIndex: number) => startX + fretIndex * fretWidth;
 
 // Farbpalette
-const intervalColors = {
+const intervalColors: Record<string, string> = {
   "1": "#F38181", // Grundton
   "♭2": "#FFAAA6",
   "2": "#F4C7AB",
@@ -26,7 +26,7 @@ const intervalColors = {
   "8": "#F38181", // Oktave
 };
 
-const intervalNames = {
+const intervalNames: Record<string, string> = {
   "1": "Grundton",
   "♭2": "kleine Sekunde",
   "2": "große Sekunde",

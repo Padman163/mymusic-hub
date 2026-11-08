@@ -7,12 +7,16 @@ export interface ScoreEvent {
   startStep: number;
   lengthSteps: number;
   pitchOffset?: number;
-  expandedNotes?: {
-    label: string;
-    color: string;
-    pitchOffset: number;
-    pitchClass: string;
-  }[];
+  expandedNotes?: ExpandedScoreNote[];
+}
+
+interface ExpandedScoreNote {
+  event: ScoreEvent;
+  label: string;
+  color: string;
+  pitchOffset?: number;
+  pitchClass: string;
+  midi: number;
 }
 
 interface ParsedScoreEvent extends ScoreEvent {
@@ -343,7 +347,7 @@ const parsedTracks = tracks.map((track) => {
           event.expandedNotes = eventPitches.map((pitch) =>
             parsePitch(pitch, event, barIndex),
           );
-          return event.expandedNotes;
+          return event.expandedNotes ?? [];
         }),
       ),
     );

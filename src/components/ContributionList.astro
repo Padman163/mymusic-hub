@@ -55,7 +55,7 @@ import "./contribution-checklist.css";
 			<svg class="list-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
 				<path d="M4 6h2M10 6h10M4 12h2M10 12h10M4 18h2M10 18h10"></path>
 			</svg>
-			<svg class="cards-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true" hidden>
+			<svg class="cards-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true" style="display: none">
 				<path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"></path>
 			</svg>
 		</button>
@@ -590,8 +590,8 @@ import "./contribution-checklist.css";
 		const label = listView ? 'Kartenansicht anzeigen' : 'Listenansicht anzeigen';
 		viewToggle.setAttribute('aria-label', label);
 		viewToggle.title = label;
-		listIcon.toggleAttribute('hidden', listView);
-		cardsIcon.toggleAttribute('hidden', !listView);
+		listIcon.style.display = listView ? 'none' : '';
+		cardsIcon.style.display = listView ? '' : 'none';
 	});
 
 	newButton.addEventListener('click', () => {
@@ -689,37 +689,37 @@ import "./contribution-checklist.css";
 
 	function updateCount() {
 		const sorted = Array.from(entries.entries()).sort(([, a], [, b]) => {
-			if (sortSelect.value === 'priority') {
+			if (sortSelect!.value === 'priority') {
 				const priorityOrder = contributionPriorities.indexOf(a.priority ?? defaultContributionPriority) -
 					contributionPriorities.indexOf(b.priority ?? defaultContributionPriority);
 				if (priorityOrder !== 0) return priorityOrder;
 			}
 			const dateOrder = Date.parse(a.createdAt) - Date.parse(b.createdAt);
-			return sortSelect.value === 'oldest' ? dateOrder : -dateOrder;
+			return sortSelect!.value === 'oldest' ? dateOrder : -dateOrder;
 		});
 		let visible = 0;
 		sorted.forEach(([element, contribution]) => {
-			const matches = (!filterType.value || contribution.type === filterType.value) &&
-				(!filterArea.value || (contribution.area ?? 'none') === filterArea.value) &&
-				(!filterPriority.value || (contribution.priority ?? defaultContributionPriority) === filterPriority.value);
+			const matches = (!filterType!.value || contribution.type === filterType!.value) &&
+				(!filterArea!.value || (contribution.area ?? 'none') === filterArea!.value) &&
+				(!filterPriority!.value || (contribution.priority ?? defaultContributionPriority) === filterPriority!.value);
 			element.hidden = !matches;
 			if (matches) visible += 1;
 		});
 		const focused = document.activeElement;
 		for (let index = 0; index < sorted.length; index += 1) {
 			const element = sorted[index][0];
-			if (list.children[index] !== element) list.insertBefore(element, list.children[index] ?? null);
+			if (list!.children[index] !== element) list!.insertBefore(element, list!.children[index] ?? null);
 		}
 		if (focused instanceof HTMLElement && focused.isConnected && !focused.closest('[hidden]') && document.activeElement !== focused) {
 			focused.focus({ preventScroll: true });
 		}
-		status.textContent = entries.size === 0 ? 'Noch keine Beiträge vorhanden.' :
+		status!.textContent = entries.size === 0 ? 'Noch keine Beiträge vorhanden.' :
 			visible === 0 ? 'Keine Beiträge entsprechen den gewählten Filtern.' :
 			`${visible} von ${entries.size} Beiträgen angezeigt.`;
 	}
 
 	function addContribution(contribution: Contribution, prepend = false) {
-		if (Array.from(list.children).some((item) => item.getAttribute('data-contribution-id') === contribution.id)) return;
+		if (Array.from(list!.children).some((item) => item.getAttribute('data-contribution-id') === contribution.id)) return;
 		const item = document.createElement('li');
 		item.setAttribute('data-contribution-id', contribution.id);
 		const header = document.createElement('div');
@@ -857,7 +857,7 @@ import "./contribution-checklist.css";
 					item.remove();
 					entries.delete(item);
 					updateCount();
-					status.focus();
+					status!.focus();
 				} catch (error) {
 					console.error('Fehler beim Löschen des Beitrags:', error);
 					message.textContent = error instanceof Error ? error.message : 'Der Beitrag konnte nicht gelöscht werden.';
@@ -925,7 +925,7 @@ import "./contribution-checklist.css";
 					edit.hidden = false;
 					message.textContent = 'Beitrag wurde aktualisiert.';
 					updateCount();
-					if (item.hidden) status.focus();
+					if (item.hidden) status!.focus();
 					else edit.focus();
 				} catch (error) {
 					console.error('Fehler beim Bearbeiten des Beitrags:', error);
@@ -948,8 +948,8 @@ import "./contribution-checklist.css";
 		render();
 		header.append(meta, actions);
 		item.append(header, title, description, message, footer);
-		if (prepend) list.prepend(item);
-		else list.append(item);
+		if (prepend) list!.prepend(item);
+		else list!.append(item);
 		entries.set(item, contribution);
 	}
 
@@ -972,7 +972,7 @@ import "./contribution-checklist.css";
 			updateCount();
 		} catch (error) {
 			console.error('Fehler beim Laden der Beiträge:', error);
-			status.textContent = 'Die Beiträge konnten nicht geladen werden. Bitte versuche es später erneut.';
+			status!.textContent = 'Die Beiträge konnten nicht geladen werden. Bitte versuche es später erneut.';
 		}
 	}
 

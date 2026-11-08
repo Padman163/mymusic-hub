@@ -332,12 +332,12 @@ const noteColors: Record<string, string> = {
     const container = document.getElementById('fretboard-widget');
     if (!container || container.dataset.readonly === 'true') return;
 
-    const nodes = container.querySelectorAll('.note-node');
-    const clearBtn = container.querySelector('.btn-clear-all');
+    const nodes = container.querySelectorAll<SVGElement>('.note-node');
+    const clearBtn = container.querySelector<HTMLButtonElement>('.btn-clear-all');
 
     nodes.forEach((node) => {
-      const cleanNode = node.cloneNode(true);
-      node.parentNode.replaceChild(cleanNode, node);
+      const cleanNode = node.cloneNode(true) as SVGElement;
+      node.replaceWith(cleanNode);
 
       cleanNode.addEventListener('click', () => {
         cleanNode.classList.toggle('active');
@@ -345,8 +345,8 @@ const noteColors: Record<string, string> = {
     });
 
     if (clearBtn) {
-      const cleanBtn = clearBtn.cloneNode(true);
-      clearBtn.parentNode.replaceChild(cleanBtn, clearBtn);
+      const cleanBtn = clearBtn.cloneNode(true) as HTMLButtonElement;
+      clearBtn.replaceWith(cleanBtn);
 
       cleanBtn.addEventListener('click', () => {
         container.querySelectorAll('.note-node.active').forEach((activeNode) => {
