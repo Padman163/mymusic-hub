@@ -1,182 +1,182 @@
 ---
 export interface VocalLyricEvent {
-	text: string;
-	pitch: string;
-	startStep: number;
-	lengthSteps: number;
+  text: string;
+  pitch: string;
+  startStep: number;
+  lengthSteps: number;
 }
 
 export interface VocalBar {
-	chord: string;
-	lyrics: VocalLyricEvent[];
+  chord: string;
+  lyrics: VocalLyricEvent[];
 }
 
 export interface Props {
-	bars: VocalBar[];
-	stepsPerBar?: number;
-	timeSignature?: string;
-	resolution?: string;
-	startBar?: number;
+  bars: VocalBar[];
+  stepsPerBar?: number;
+  timeSignature?: string;
+  resolution?: string;
+  startBar?: number;
 }
 
 const {
-	bars,
-	stepsPerBar = 8,
-	timeSignature = "4/4",
-	resolution = "1/8",
-	startBar = 1,
+  bars,
+  stepsPerBar = 8,
+  timeSignature = "4/4",
+  resolution = "1/8",
+  startBar = 1,
 } = Astro.props;
 
 if (!Number.isInteger(stepsPerBar) || stepsPerBar < 1) {
-	throw new Error(
-		`Ungültige Step-Anzahl ${stepsPerBar}. Erwartet wird eine positive ganze Zahl.`,
-	);
+  throw new Error(
+    `Ungültige Step-Anzahl ${stepsPerBar}. Erwartet wird eine positive ganze Zahl.`,
+  );
 }
 if (bars.length === 0) {
-	throw new Error("Ein Gesangspattern muss mindestens einen Takt enthalten.");
+  throw new Error("Ein Gesangspattern muss mindestens einen Takt enthalten.");
 }
 
 const pitchClasses = [
-	"C",
-	"C#",
-	"D",
-	"D#",
-	"E",
-	"F",
-	"F#",
-	"G",
-	"G#",
-	"A",
-	"A#",
-	"B",
+  "C",
+  "C#",
+  "D",
+  "D#",
+  "E",
+  "F",
+  "F#",
+  "G",
+  "G#",
+  "A",
+  "A#",
+  "B",
 ];
 const notePattern = /^([A-G])(#?)(-?\d+)$/;
 const parsePitch = (pitch: string) => {
-	const match = pitch.match(notePattern);
-	if (!match) {
-		throw new Error(
-			`Ungültige Gesangstonhöhe "${pitch}". Erwartet wird z. B. E3 oder F#4.`,
-		);
-	}
+  const match = pitch.match(notePattern);
+  if (!match) {
+    throw new Error(
+      `Ungültige Gesangstonhöhe "${pitch}". Erwartet wird z. B. E3 oder F#4.`,
+    );
+  }
 
-	const [, letter, accidental, octaveText] = match;
-	const pitchClass = `${letter}${accidental}`;
-	return {
-		midi: (Number(octaveText) + 1) * 12 + pitchClasses.indexOf(pitchClass),
-		pitchClass,
-	};
+  const [, letter, accidental, octaveText] = match;
+  const pitchClass = `${letter}${accidental}`;
+  return {
+    midi: (Number(octaveText) + 1) * 12 + pitchClasses.indexOf(pitchClass),
+    pitchClass,
+  };
 };
 
 // Neue Farb-Definitionen für die Intervalle
 const intervalColors: Record<string, string> = {
-	"1": "#F38181",
-	"♭2": "#FFAAA6",
-	"2": "#F4C7AB",
-	"♭3": "#EAA0E3",
-	"3": "#D382DC",
-	"4": "#B862D3",
-	"♭5": "#7F8BE8",
-	"5": "#64C4ED",
-	"♭6": "#52DEE5",
-	"6": "#6BE4C6",
-	"♭7": "#83E8BA",
-	"7": "#CBDD7B",
+  "1": "#F38181",
+  "♭2": "#FFAAA6",
+  "2": "#F4C7AB",
+  "♭3": "#EAA0E3",
+  "3": "#D382DC",
+  "4": "#B862D3",
+  "♭5": "#7F8BE8",
+  "5": "#64C4ED",
+  "♭6": "#52DEE5",
+  "6": "#6BE4C6",
+  "♭7": "#83E8BA",
+  "7": "#CBDD7B",
 };
 const intervalMap = [
-	"1",
-	"♭2",
-	"2",
-	"♭3",
-	"3",
-	"4",
-	"♭5",
-	"5",
-	"♭6",
-	"6",
-	"♭7",
-	"7",
+  "1",
+  "♭2",
+  "2",
+  "♭3",
+  "3",
+  "4",
+  "♭5",
+  "5",
+  "♭6",
+  "6",
+  "♭7",
+  "7",
 ];
 
 // Berechnet die Farbe basierend auf dem Abstand zum Akkord-Grundton
 const getIntervalColor = (notePitchClass: string, chord: string) => {
-	const match = chord.match(/^([A-G])(#?)/);
-	if (!match) return "#a78bfa";
-	const chordRoot = `${match[1]}${match[2]}`;
-	const rootIndex = pitchClasses.indexOf(chordRoot);
-	const noteIndex = pitchClasses.indexOf(notePitchClass);
+  const match = chord.match(/^([A-G])(#?)/);
+  if (!match) return "#a78bfa";
+  const chordRoot = `${match[1]}${match[2]}`;
+  const rootIndex = pitchClasses.indexOf(chordRoot);
+  const noteIndex = pitchClasses.indexOf(notePitchClass);
 
-	if (rootIndex === -1 || noteIndex === -1) return "#a78bfa";
-	const semitones = (noteIndex - rootIndex + 12) % 12;
+  if (rootIndex === -1 || noteIndex === -1) return "#a78bfa";
+  const semitones = (noteIndex - rootIndex + 12) % 12;
 
-	return intervalColors[intervalMap[semitones]] ?? "#a78bfa";
+  return intervalColors[intervalMap[semitones]] ?? "#a78bfa";
 };
 
 const parsedBars = bars.map((bar) => {
-	const parsedLyrics = bar.lyrics.map((event) => {
-		if (!event.text.trim()) {
-			throw new Error(
-				`Eine Textsilbe im Gesangstakt "${bar.chord}" darf nicht leer sein.`,
-			);
-		}
-		if (
-			!Number.isInteger(event.startStep) ||
-			!Number.isInteger(event.lengthSteps) ||
-			event.startStep < 0 ||
-			event.lengthSteps < 1 ||
-			event.startStep + event.lengthSteps > stepsPerBar
-		) {
-			throw new Error(
-				`Ungültige Position oder Länge für Textsilbe "${event.text}" im Gesangstakt "${bar.chord}".`,
-			);
-		}
-		return { ...event, ...parsePitch(event.pitch) };
-	});
+  const parsedLyrics = bar.lyrics.map((event) => {
+    if (!event.text.trim()) {
+      throw new Error(
+        `Eine Textsilbe im Gesangstakt "${bar.chord}" darf nicht leer sein.`,
+      );
+    }
+    if (
+      !Number.isInteger(event.startStep) ||
+      !Number.isInteger(event.lengthSteps) ||
+      event.startStep < 0 ||
+      event.lengthSteps < 1 ||
+      event.startStep + event.lengthSteps > stepsPerBar
+    ) {
+      throw new Error(
+        `Ungültige Position oder Länge für Textsilbe "${event.text}" im Gesangstakt "${bar.chord}".`,
+      );
+    }
+    return { ...event, ...parsePitch(event.pitch) };
+  });
 
-	parsedLyrics.forEach((event, index) => {
-		if (
-			parsedLyrics.some(
-				(other, otherIndex) =>
-					otherIndex !== index &&
-					other.midi === event.midi &&
-					event.startStep < other.startStep + other.lengthSteps &&
-					other.startStep < event.startStep + event.lengthSteps,
-			)
-		) {
-			throw new Error(
-				`Überlappende Gesangsnoten auf ${event.pitch} im Takt "${bar.chord}".`,
-			);
-		}
-	});
+  parsedLyrics.forEach((event, index) => {
+    if (
+      parsedLyrics.some(
+        (other, otherIndex) =>
+          otherIndex !== index &&
+          other.midi === event.midi &&
+          event.startStep < other.startStep + other.lengthSteps &&
+          other.startStep < event.startStep + event.lengthSteps,
+      )
+    ) {
+      throw new Error(
+        `Überlappende Gesangsnoten auf ${event.pitch} im Takt "${bar.chord}".`,
+      );
+    }
+  });
 
-	return { ...bar, parsedLyrics };
+  return { ...bar, parsedLyrics };
 });
 
 const allPitches = parsedBars.flatMap(({ parsedLyrics }) =>
-	parsedLyrics.map(({ midi }) => midi),
+  parsedLyrics.map(({ midi }) => midi),
 );
 if (allPitches.length === 0) {
-	throw new Error(
-		"Ein Gesangspattern muss mindestens eine Textsilbe enthalten.",
-	);
+  throw new Error(
+    "Ein Gesangspattern muss mindestens eine Textsilbe enthalten.",
+  );
 }
 
 const lowestMidi = Math.min(...allPitches);
 const highestMidi = Math.max(...allPitches);
 const pitches = Array.from(
-	{ length: highestMidi - lowestMidi + 1 },
-	(_, index) => {
-		const midi = lowestMidi + index;
-		const pitchClass = pitchClasses[((midi % 12) + 12) % 12];
-		return {
-			midi,
-			label: `${pitchClass}${Math.floor(midi / 12) - 1}`,
-			pitchClass,
-		};
-	},
+  { length: highestMidi - lowestMidi + 1 },
+  (_, index) => {
+    const midi = lowestMidi + index;
+    const pitchClass = pitchClasses[((midi % 12) + 12) % 12];
+    return {
+      midi,
+      label: `${pitchClass}${Math.floor(midi / 12) - 1}`,
+      pitchClass,
+    };
+  },
 ).reverse();
 const totalSteps = bars.length * stepsPerBar;
 const stepLabels = Array.from({ length: stepsPerBar }, (_, step) =>
-	step % 2 === 0 ? `${step / 2 + 1}` : "+",
+  step % 2 === 0 ? `${step / 2 + 1}` : "+",
 );
 ---
 

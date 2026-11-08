@@ -3,12 +3,12 @@ import { assertNoClefChanges } from "../../lib/notation-renderer";
 import NotationVisual from "./NotationVisual.astro";
 
 interface Props {
-	timeSignatures: { numerator: number; denominator: number }[];
+  timeSignatures: { numerator: number; denominator: number }[];
 }
 
 const { timeSignatures } = Astro.props;
 const clefs = timeSignatures.map((_, index) =>
-	index === 0 ? ("treble" as const) : false,
+  index === 0 ? ("treble" as const) : false,
 );
 assertNoClefChanges(clefs, "NotationTimeSignatures");
 ---

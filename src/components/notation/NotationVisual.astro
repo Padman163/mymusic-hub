@@ -1,9 +1,9 @@
 ---
 import {
-	type NotationAccidental,
-	type NotationCurve,
-	type NotationEvent,
-	renderNotationSvg,
+  type NotationAccidental,
+  type NotationCurve,
+  type NotationEvent,
+  renderNotationSvg,
 } from "../../lib/notation-renderer";
 import "../../styles/notation.css";
 import DynamicsMarks from "../music/DynamicsMarks.astro";
@@ -13,69 +13,69 @@ import TempoLabel from "../music/TempoLabel.astro";
 import type { TimeSignature } from "../music/time-signature.ts";
 
 interface Props {
-	showLeftBar?: boolean;
-	showRightBar?: boolean;
-	rightBarStyle?: "single" | "final";
-	repeatStart?: boolean;
-	repeatEnd?: boolean;
-	clef?: "treble" | "bass" | false;
-	notes?: NotationEvent[];
-	accidentals?: NotationAccidental[];
-	timeSignature?: TimeSignature;
-	curves?: NotationCurve[];
-	measureNumber?: string | number;
-	tempo?: string;
-	tempoDetail?: string;
-	ritAt?: number;
-	aTempoAt?: number;
-	hairpin?: "crescendo" | "decrescendo";
-	initialDynamic?: "piano" | "forte";
-	noteStart?: number;
-	firstNoteX?: number;
-	spacing?: "rhythmic" | "equal";
-	embedded?: boolean;
+  showLeftBar?: boolean;
+  showRightBar?: boolean;
+  rightBarStyle?: "single" | "final";
+  repeatStart?: boolean;
+  repeatEnd?: boolean;
+  clef?: "treble" | "bass" | false;
+  notes?: NotationEvent[];
+  accidentals?: NotationAccidental[];
+  timeSignature?: TimeSignature;
+  curves?: NotationCurve[];
+  measureNumber?: string | number;
+  tempo?: string;
+  tempoDetail?: string;
+  ritAt?: number;
+  aTempoAt?: number;
+  hairpin?: "crescendo" | "decrescendo";
+  initialDynamic?: "piano" | "forte";
+  noteStart?: number;
+  firstNoteX?: number;
+  spacing?: "rhythmic" | "equal";
+  embedded?: boolean;
 }
 
 const {
-	showLeftBar = false,
-	showRightBar = true,
-	rightBarStyle = "single",
-	repeatStart = false,
-	repeatEnd = false,
-	clef = "treble",
-	notes = [],
-	accidentals = [],
-	timeSignature,
-	curves = [],
-	measureNumber,
-	tempo,
-	tempoDetail,
-	ritAt,
-	aTempoAt,
-	hairpin,
-	initialDynamic,
-	noteStart = 0,
-	firstNoteX,
-	spacing,
-	embedded = false,
+  showLeftBar = false,
+  showRightBar = true,
+  rightBarStyle = "single",
+  repeatStart = false,
+  repeatEnd = false,
+  clef = "treble",
+  notes = [],
+  accidentals = [],
+  timeSignature,
+  curves = [],
+  measureNumber,
+  tempo,
+  tempoDetail,
+  ritAt,
+  aTempoAt,
+  hairpin,
+  initialDynamic,
+  noteStart = 0,
+  firstNoteX,
+  spacing,
+  embedded = false,
 } = Astro.props;
 
 const notation = renderNotationSvg({
-	clef: clef || undefined,
-	notes,
-	accidentals,
-	timeSignature,
-	noteStart,
-	firstNoteX,
-	spacing,
-	showLeftBar,
-	showRightBar,
-	rightBarStyle,
-	repeatStart,
-	repeatEnd,
-	curves,
-	ritAt,
-	aTempoAt,
+  clef: clef || undefined,
+  notes,
+  accidentals,
+  timeSignature,
+  noteStart,
+  firstNoteX,
+  spacing,
+  showLeftBar,
+  showRightBar,
+  rightBarStyle,
+  repeatStart,
+  repeatEnd,
+  curves,
+  ritAt,
+  aTempoAt,
 });
 ---
 

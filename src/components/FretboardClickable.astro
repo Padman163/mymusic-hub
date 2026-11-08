@@ -3,27 +3,27 @@
 // Auf 150% vergrößerte Version für optimale Lesbarkeit bei Standard-Zoom.
 
 export interface Props {
-	readOnly?: boolean;
-	showNoteNames?: boolean;
-	fixedPositions?: { stringIndex: number; fret: number }[];
-	dropTargets?: boolean;
+  readOnly?: boolean;
+  showNoteNames?: boolean;
+  fixedPositions?: { stringIndex: number; fret: number }[];
+  dropTargets?: boolean;
 }
 
 const {
-	readOnly = false,
-	showNoteNames = true,
-	fixedPositions,
-	dropTargets = false,
+  readOnly = false,
+  showNoteNames = true,
+  fixedPositions,
+  dropTargets = false,
 } = Astro.props;
 
 const isFixedPosition = (stringIndex: number, fret: number) =>
-	readOnly &&
-	(fixedPositions
-		? fixedPositions.some(
-				(position) =>
-					position.stringIndex === stringIndex && position.fret === fret,
-			)
-		: fret === 0);
+  readOnly &&
+  (fixedPositions
+    ? fixedPositions.some(
+        (position) =>
+          position.stringIndex === stringIndex && position.fret === fret,
+      )
+    : fret === 0);
 
 const tuning = ["e", "B", "G", "D", "A", "E"];
 // Saitenabstand um 150% vergrößert (Abstand 45px statt 30px)
@@ -32,27 +32,27 @@ const fretWidth = 75;
 const nutX = 50; // Dein Wunschwert beibehalten
 
 const fretboardNotes = [
-	["E", "F", "F#", "G", "G#", "A", "A#", "B", "C", "C#", "D", "D#", "E"],
-	["B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
-	["G", "G#", "A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G"],
-	["D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "C", "C#", "D"],
-	["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A"],
-	["E", "F", "F#", "G", "G#", "A", "A#", "B", "C", "C#", "D", "D#", "E"],
+  ["E", "F", "F#", "G", "G#", "A", "A#", "B", "C", "C#", "D", "D#", "E"],
+  ["B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
+  ["G", "G#", "A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G"],
+  ["D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "C", "C#", "D"],
+  ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A"],
+  ["E", "F", "F#", "G", "G#", "A", "A#", "B", "C", "C#", "D", "D#", "E"],
 ];
 
 const noteColors: Record<string, string> = {
-	C: "#f87171",
-	"C#": "#fb923c",
-	D: "#fbbf24",
-	"D#": "#f472b6",
-	E: "#a3e635",
-	F: "#e879f9",
-	"F#": "#2dd4bf",
-	G: "#60a5fa",
-	"G#": "#38bdf8",
-	A: "#c084fc",
-	"A#": "#4ade80",
-	B: "#facc15",
+  C: "#f87171",
+  "C#": "#fb923c",
+  D: "#fbbf24",
+  "D#": "#f472b6",
+  E: "#a3e635",
+  F: "#e879f9",
+  "F#": "#2dd4bf",
+  G: "#60a5fa",
+  "G#": "#38bdf8",
+  A: "#c084fc",
+  "A#": "#4ade80",
+  B: "#facc15",
 };
 ---
 

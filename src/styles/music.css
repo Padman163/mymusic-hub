@@ -1,132 +1,132 @@
 @font-face {
-	font-family: "NotationBravura";
-	src: url("/alphatab/font/Bravura.woff2") format("woff2");
+  font-family: "NotationBravura";
+  src: url("/alphatab/font/Bravura.woff2") format("woff2");
 }
 
 :root {
-	--music-text-size: 12px;
-	--music-heading-size: 16px;
-	--music-symbol-size: 30px;
+  --music-text-size: 12px;
+  --music-heading-size: 16px;
+  --music-symbol-size: 30px;
 }
 
 .tempo-label {
-	display: block;
-	color: #111827;
-	font:
-		bold var(--music-heading-size) / 1.2 Georgia,
-		serif;
-	white-space: nowrap;
+  display: block;
+  color: #111827;
+  font:
+    bold var(--music-heading-size) / 1.2 Georgia,
+    serif;
+  white-space: nowrap;
 }
 
 .tempo-detail {
-	font:
-		normal var(--music-text-size) / 1.2 Georgia,
-		serif;
+  font:
+    normal var(--music-text-size) / 1.2 Georgia,
+    serif;
 }
 
 @font-face {
-	font-family: "NotationTempoBravura";
-	src: url("/alphatab/font/Bravura.woff2") format("woff2");
+  font-family: "NotationTempoBravura";
+  src: url("/alphatab/font/Bravura.woff2") format("woff2");
 }
 
 .tempo-heading {
-	position: absolute;
-	top: 0;
-	left: 6px;
-	color: #111827;
-	font:
-		var(--music-text-size) / 1.2 Georgia,
-		serif;
+  position: absolute;
+  top: 0;
+  left: 6px;
+  color: #111827;
+  font:
+    var(--music-text-size) / 1.2 Georgia,
+    serif;
 }
 
 .tempo-heading strong {
-	font-size: var(--music-heading-size);
-	line-height: 1;
+  font-size: var(--music-heading-size);
+  line-height: 1;
 }
 
 .metronome-note {
-	font: var(--music-symbol-size) / 1 "NotationTempoBravura";
-	vertical-align: -0.2em;
+  font: var(--music-symbol-size) / 1 "NotationTempoBravura";
+  vertical-align: -0.2em;
 }
 
 .notation-measure-number {
-	position: absolute;
-	top: calc(var(--notation-panel-padding, 1.5rem) + 13px);
-	left: calc(var(--notation-panel-padding, 1.5rem) + 2px);
-	color: #111827;
-	font:
-		10px / 1 Georgia,
-		serif;
+  position: absolute;
+  top: calc(var(--notation-panel-padding, 1.5rem) + 13px);
+  left: calc(var(--notation-panel-padding, 1.5rem) + 2px);
+  color: #111827;
+  font:
+    10px / 1 Georgia,
+    serif;
 }
 
 .notation-measure-number.embedded {
-	top: 13px;
-	left: 2px;
+  top: 13px;
+  left: 2px;
 }
 
 .final-bar {
-	display: block;
-	overflow: visible;
-	fill: #111827;
+  display: block;
+  overflow: visible;
+  fill: #111827;
 }
 
 .dynamics-marks {
-	--dynamics-mark-gap: 12px;
-	--dynamics-hairpin-gap: 22px;
-	--dynamics-label-gap: 36px;
-	--dynamics-symbol-inset: 20px;
-	position: absolute;
-	inset: 0;
-	color: #111827;
+  --dynamics-mark-gap: 12px;
+  --dynamics-hairpin-gap: 22px;
+  --dynamics-label-gap: 36px;
+  --dynamics-symbol-inset: 20px;
+  position: absolute;
+  inset: 0;
+  color: #111827;
 }
 
 .dynamic-word,
 .dynamic-mark,
 .hairpin {
-	position: absolute;
-	color: #111827;
+  position: absolute;
+  color: #111827;
 }
 
 .dynamic-word {
-	top: calc(var(--dynamics-staff-bottom, 0px) + var(--dynamics-label-gap));
-	left: calc(20% - 6px);
-	font:
-		italic var(--music-text-size) / 1 Georgia,
-		serif;
+  top: calc(var(--dynamics-staff-bottom, 0px) + var(--dynamics-label-gap));
+  left: calc(20% - 6px);
+  font:
+    italic var(--music-text-size) / 1 Georgia,
+    serif;
 }
 
 .dynamic-mark {
-	top: calc(var(--dynamics-staff-bottom, 0px) + var(--dynamics-mark-gap));
-	font: var(--music-symbol-size) / 1 "NotationBravura";
+  top: calc(var(--dynamics-staff-bottom, 0px) + var(--dynamics-mark-gap));
+  font: var(--music-symbol-size) / 1 "NotationBravura";
 }
 
 .dynamic-start {
-	right: calc(80% + var(--dynamics-symbol-inset));
+  right: calc(80% + var(--dynamics-symbol-inset));
 }
 
 .dynamic-end {
-	left: calc(80% + var(--dynamics-symbol-inset));
+  left: calc(80% + var(--dynamics-symbol-inset));
 }
 
 .hairpin {
-	top: calc(var(--dynamics-staff-bottom, 0px) + var(--dynamics-hairpin-gap));
-	left: calc(20% - 6px);
-	width: calc(60% + 12px);
-	height: 10px;
-	overflow: visible;
-	stroke: currentColor;
-	stroke-width: 1;
+  top: calc(var(--dynamics-staff-bottom, 0px) + var(--dynamics-hairpin-gap));
+  left: calc(20% - 6px);
+  width: calc(60% + 12px);
+  height: 10px;
+  overflow: visible;
+  stroke: currentColor;
+  stroke-width: 1;
 }
 
 .placement-overlay {
-	top: var(--notation-dynamics-top, 0px);
-	right: 0;
-	bottom: auto;
-	left: 0;
-	height: 48px;
-	--dynamics-staff-bottom: 0px;
+  top: var(--notation-dynamics-top, 0px);
+  right: 0;
+  bottom: auto;
+  left: 0;
+  height: 48px;
+  --dynamics-staff-bottom: 0px;
 }
 
 .placement-overlay .dynamic-word {
-	left: calc(20% - 6px);
+  left: calc(20% - 6px);
 }

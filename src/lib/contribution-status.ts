@@ -3,7 +3,7 @@ export type ContributionStatus = (typeof contributionStatuses)[number];
 export const defaultContributionStatus: ContributionStatus = "New";
 
 export function isContributionStatus(
-	value: unknown,
+  value: unknown,
 ): value is ContributionStatus {
-	return contributionStatuses.some((status) => status === value);
+  return contributionStatuses.some((status) => status === value);
 }

@@ -1,68 +1,68 @@
 ---
 export interface ChordPosition {
-	stringIndex: number;
-	stringName: string;
-	fret: number;
-	note: string;
-	octave: number;
-	// Unterstützt sowohl die alten englischen Begriffe als auch direkte Intervalle
-	role:
-		| "root"
-		| "second"
-		| "third"
-		| "fourth"
-		| "fifth"
-		| "sixth"
-		| "seventh"
-		| "octave"
-		| "ninth"
-		| "eleventh"
-		| "thirteenth"
-		| "1"
-		| "♭2"
-		| "2"
-		| "♭3"
-		| "3"
-		| "4"
-		| "♭5"
-		| "5"
-		| "♭6"
-		| "6"
-		| "♭7"
-		| "7"
-		| "8";
+  stringIndex: number;
+  stringName: string;
+  fret: number;
+  note: string;
+  octave: number;
+  // Unterstützt sowohl die alten englischen Begriffe als auch direkte Intervalle
+  role:
+    | "root"
+    | "second"
+    | "third"
+    | "fourth"
+    | "fifth"
+    | "sixth"
+    | "seventh"
+    | "octave"
+    | "ninth"
+    | "eleventh"
+    | "thirteenth"
+    | "1"
+    | "♭2"
+    | "2"
+    | "♭3"
+    | "3"
+    | "4"
+    | "♭5"
+    | "5"
+    | "♭6"
+    | "6"
+    | "♭7"
+    | "7"
+    | "8";
 }
 
 export interface Barre {
-	fret: number;
-	startString: number;
-	endString: number;
+  fret: number;
+  startString: number;
+  endString: number;
 }
 
 export interface ChordDiagram {
-	bar?: number;
-	chord: string;
-	degree: string;
-	function: string;
-	contextLabel?: string;
-	barre?: Barre;
-	positions: ChordPosition[];
+  bar?: number;
+  chord: string;
+  degree: string;
+  function: string;
+  contextLabel?: string;
+  barre?: Barre;
+  positions: ChordPosition[];
 }
 
 export interface Props {
-	chords: ChordDiagram[];
-	keyLabel: string;
-	showLegend?: boolean;
-	gallery?: boolean;
-	compact?: boolean;
+  chords: ChordDiagram[];
+  keyLabel: string;
+  showLegend?: boolean;
+  gallery?: boolean;
+  compact?: boolean;
 }
 
 const {
-	chords,
-	keyLabel,
-	showLegend = true,
-	gallery = false,
-	compact = false,
+  chords,
+  keyLabel,
+  showLegend = true,
+  gallery = false,
+  compact = false,
 } = Astro.props;
 
 const tuning = ["e", "B", "G", "D", "A", "E"];
@@ -72,86 +72,86 @@ const fretWidth = 62;
 
 // Neue Farbpalette + Abwärtskompatibilität für alte Rollenbezeichnungen
 const colors: Record<string, string> = {
-	// Alte Fallbacks
-	root: "#F38181",
-	second: "#F4C7AB",
-	third: "#D382DC", // große Terz als Standard für 'third'
-	fourth: "#B862D3",
-	fifth: "#64C4ED",
-	sixth: "#6BE4C6",
-	seventh: "#83E8BA", // kleine Septime als Standard für 'seventh' (Dominant)
-	octave: "#F38181",
-	ninth: "#F4C7AB",
-	eleventh: "#B862D3",
-	thirteenth: "#6BE4C6",
-	// Exakte Intervalle
-	"1": "#F38181",
-	"♭2": "#FFAAA6",
-	"2": "#F4C7AB",
-	"♭3": "#EAA0E3",
-	"3": "#D382DC",
-	"4": "#B862D3",
-	"♭5": "#7F8BE8",
-	"5": "#64C4ED",
-	"♭6": "#52DEE5",
-	"6": "#6BE4C6",
-	"♭7": "#83E8BA",
-	"7": "#CBDD7B",
-	"8": "#F38181",
+  // Alte Fallbacks
+  root: "#F38181",
+  second: "#F4C7AB",
+  third: "#D382DC", // große Terz als Standard für 'third'
+  fourth: "#B862D3",
+  fifth: "#64C4ED",
+  sixth: "#6BE4C6",
+  seventh: "#83E8BA", // kleine Septime als Standard für 'seventh' (Dominant)
+  octave: "#F38181",
+  ninth: "#F4C7AB",
+  eleventh: "#B862D3",
+  thirteenth: "#6BE4C6",
+  // Exakte Intervalle
+  "1": "#F38181",
+  "♭2": "#FFAAA6",
+  "2": "#F4C7AB",
+  "♭3": "#EAA0E3",
+  "3": "#D382DC",
+  "4": "#B862D3",
+  "♭5": "#7F8BE8",
+  "5": "#64C4ED",
+  "♭6": "#52DEE5",
+  "6": "#6BE4C6",
+  "♭7": "#83E8BA",
+  "7": "#CBDD7B",
+  "8": "#F38181",
 };
 
 const roleLabels: Record<string, string> = {
-	root: "Grundton",
-	second: "Sekunde",
-	third: "Terz",
-	fourth: "Quarte",
-	fifth: "Quinte",
-	sixth: "Sexte",
-	seventh: "Septime",
-	octave: "Oktave",
-	ninth: "None",
-	eleventh: "Undezime",
-	thirteenth: "Tredezime",
-	"1": "Grundton",
-	"♭2": "kleine Sekunde",
-	"2": "große Sekunde",
-	"♭3": "kleine Terz",
-	"3": "große Terz",
-	"4": "reine Quarte",
-	"♭5": "Tritonus",
-	"5": "reine Quinte",
-	"♭6": "kleine Sexte",
-	"6": "große Sexte",
-	"♭7": "kleine Septime",
-	"7": "große Septime",
-	"8": "Oktave",
+  root: "Grundton",
+  second: "Sekunde",
+  third: "Terz",
+  fourth: "Quarte",
+  fifth: "Quinte",
+  sixth: "Sexte",
+  seventh: "Septime",
+  octave: "Oktave",
+  ninth: "None",
+  eleventh: "Undezime",
+  thirteenth: "Tredezime",
+  "1": "Grundton",
+  "♭2": "kleine Sekunde",
+  "2": "große Sekunde",
+  "♭3": "kleine Terz",
+  "3": "große Terz",
+  "4": "reine Quarte",
+  "♭5": "Tritonus",
+  "5": "reine Quinte",
+  "♭6": "kleine Sexte",
+  "6": "große Sexte",
+  "♭7": "kleine Septime",
+  "7": "große Septime",
+  "8": "Oktave",
 };
 
 const roleDisplay: Record<string, string> = {
-	root: "R",
-	"1": "R",
-	"♭2": "♭2",
-	second: "2",
-	"2": "2",
-	"♭3": "♭3",
-	third: "3",
-	"3": "3",
-	fourth: "4",
-	"4": "4",
-	"♭5": "♭5",
-	fifth: "5",
-	"5": "5",
-	"♭6": "♭6",
-	sixth: "6",
-	"6": "6",
-	seventh: "♭7",
-	"♭7": "♭7",
-	"7": "7",
-	octave: "8",
-	"8": "8",
-	ninth: "9",
-	eleventh: "11",
-	thirteenth: "13",
+  root: "R",
+  "1": "R",
+  "♭2": "♭2",
+  second: "2",
+  "2": "2",
+  "♭3": "♭3",
+  third: "3",
+  "3": "3",
+  fourth: "4",
+  "4": "4",
+  "♭5": "♭5",
+  fifth: "5",
+  "5": "5",
+  "♭6": "♭6",
+  sixth: "6",
+  "6": "6",
+  seventh: "♭7",
+  "♭7": "♭7",
+  "7": "7",
+  octave: "8",
+  "8": "8",
+  ninth: "9",
+  eleventh: "11",
+  thirteenth: "13",
 };
 
 const usedRoles = new Set<ChordPosition["role"]>();
@@ -162,52 +162,52 @@ chords.forEach((chord) => {
 });
 
 const roleOrder: ChordPosition["role"][] = [
-	"1",
-	"root",
-	"♭2",
-	"2",
-	"second",
-	"ninth",
-	"♭3",
-	"3",
-	"third",
-	"4",
-	"fourth",
-	"eleventh",
-	"♭5",
-	"5",
-	"fifth",
-	"♭6",
-	"6",
-	"sixth",
-	"thirteenth",
-	"♭7",
-	"seventh",
-	"7",
-	"8",
-	"octave",
+  "1",
+  "root",
+  "♭2",
+  "2",
+  "second",
+  "ninth",
+  "♭3",
+  "3",
+  "third",
+  "4",
+  "fourth",
+  "eleventh",
+  "♭5",
+  "5",
+  "fifth",
+  "♭6",
+  "6",
+  "sixth",
+  "thirteenth",
+  "♭7",
+  "seventh",
+  "7",
+  "8",
+  "octave",
 ];
 const activeLegendRoles = roleOrder.filter((role) => usedRoles.has(role));
 
 if (chords.length === 0) {
-	throw new Error("Mindestens ein Akkorddiagramm ist erforderlich.");
+  throw new Error("Mindestens ein Akkorddiagramm ist erforderlich.");
 }
 
 for (const chord of chords) {
-	if (
-		chord.positions.length < 2 ||
-		!chord.positions.some(({ fret }) => fret > 0) ||
-		chord.positions.some(
-			({ stringIndex, fret }) =>
-				!Number.isInteger(stringIndex) ||
-				stringIndex < 0 ||
-				stringIndex >= tuning.length ||
-				!Number.isInteger(fret) ||
-				fret < 0,
-		)
-	) {
-		throw new Error(`Ungültige Griffbrettpositionen für ${chord.chord}.`);
-	}
+  if (
+    chord.positions.length < 2 ||
+    !chord.positions.some(({ fret }) => fret > 0) ||
+    chord.positions.some(
+      ({ stringIndex, fret }) =>
+        !Number.isInteger(stringIndex) ||
+        stringIndex < 0 ||
+        stringIndex >= tuning.length ||
+        !Number.isInteger(fret) ||
+        fret < 0,
+    )
+  ) {
+    throw new Error(`Ungültige Griffbrettpositionen für ${chord.chord}.`);
+  }
 }
 ---
 

@@ -3,24 +3,24 @@ import { assertNoClefChanges } from "../../lib/notation-renderer";
 import NotationVisual from "./NotationVisual.astro";
 
 const examples = [
-	{
-		duration: "half",
-		label: "Punktierte halbe Note",
-		value: "3 Viertelschläge",
-	},
-	{
-		duration: "quarter",
-		label: "Punktierte Viertelnote",
-		value: "3 Achtelschläge",
-	},
-	{
-		duration: "eighth",
-		label: "Punktierte Achtelnote",
-		value: "3 Sechzehntelschläge",
-	},
+  {
+    duration: "half",
+    label: "Punktierte halbe Note",
+    value: "3 Viertelschläge",
+  },
+  {
+    duration: "quarter",
+    label: "Punktierte Viertelnote",
+    value: "3 Achtelschläge",
+  },
+  {
+    duration: "eighth",
+    label: "Punktierte Achtelnote",
+    value: "3 Sechzehntelschläge",
+  },
 ] as const;
 const clefs = examples.map((_, index) =>
-	index === 0 ? ("treble" as const) : false,
+  index === 0 ? ("treble" as const) : false,
 );
 assertNoClefChanges(clefs, "NotationDottedNotes");
 ---

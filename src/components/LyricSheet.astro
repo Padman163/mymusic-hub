@@ -1,6 +1,6 @@
 ---
 export interface Props {
-	lyrics: string;
+  lyrics: string;
 }
 
 const { lyrics } = Astro.props;
@@ -8,17 +8,17 @@ const { lyrics } = Astro.props;
 // Teilt den Text in einzelne Zeilen (div) auf.
 // Dadurch können wir Zeilenabstand und Akkord-Abstand getrennt steuern.
 const formattedLyrics = lyrics
-	.trim()
-	.split("\n")
-	.map((line) => {
-		const parsed = line.replace(
-			/\[(.*?)\]/g,
-			'<span class="chord" data-chord="$1"></span>',
-		);
-		// Leere Zeilen erhalten ein Leerzeichen, damit der Absatzabstand erhalten bleibt
-		return `<div class="lyric-line">${parsed || "&nbsp;"}</div>`;
-	})
-	.join("");
+  .trim()
+  .split("\n")
+  .map((line) => {
+    const parsed = line.replace(
+      /\[(.*?)\]/g,
+      '<span class="chord" data-chord="$1"></span>',
+    );
+    // Leere Zeilen erhalten ein Leerzeichen, damit der Absatzabstand erhalten bleibt
+    return `<div class="lyric-line">${parsed || "&nbsp;"}</div>`;
+  })
+  .join("");
 ---
 
 <div class="lyric-sheet" set:html={formattedLyrics} />

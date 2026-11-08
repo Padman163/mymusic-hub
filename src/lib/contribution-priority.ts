@@ -3,10 +3,10 @@ export type ContributionPriority = (typeof contributionPriorities)[number];
 export const defaultContributionPriority: ContributionPriority = "Mittel";
 
 export function isContributionPriority(
-	value: unknown,
+  value: unknown,
 ): value is ContributionPriority {
-	return (
-		typeof value === "string" &&
-		contributionPriorities.some((priority) => priority === value)
-	);
+  return (
+    typeof value === "string" &&
+    contributionPriorities.some((priority) => priority === value)
+  );
 }

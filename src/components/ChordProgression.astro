@@ -1,58 +1,58 @@
 ---
 export interface Props {
-	chords: string[];
-	keyRoot?: string;
-	scale?: "major" | "naturalMinor";
+  chords: string[];
+  keyRoot?: string;
+  scale?: "major" | "naturalMinor";
 }
 
 const { chords, keyRoot = "E", scale = "naturalMinor" } = Astro.props;
 
 if (chords.length === 0) {
-	throw new Error("Eine Akkordfolge muss mindestens einen Akkord enthalten.");
+  throw new Error("Eine Akkordfolge muss mindestens einen Akkord enthalten.");
 }
 
 const pitchClasses = [
-	"C",
-	"C#",
-	"D",
-	"D#",
-	"E",
-	"F",
-	"F#",
-	"G",
-	"G#",
-	"A",
-	"A#",
-	"B",
+  "C",
+  "C#",
+  "D",
+  "D#",
+  "E",
+  "F",
+  "F#",
+  "G",
+  "G#",
+  "A",
+  "A#",
+  "B",
 ];
 const rootMatch = keyRoot.match(/^([A-G])(#?)$/);
 if (!rootMatch) {
-	throw new Error(
-		`Ungültiger Tonart-Grundton "${keyRoot}". Erwartet wird z. B. E oder F#.`,
-	);
+  throw new Error(
+    `Ungültiger Tonart-Grundton "${keyRoot}". Erwartet wird z. B. E oder F#.`,
+  );
 }
 
 const rootPitchClass = pitchClasses.indexOf(`${rootMatch[1]}${rootMatch[2]}`);
 const scaleIntervals =
-	scale === "major" ? [0, 2, 4, 5, 7, 9, 11] : [0, 2, 3, 5, 7, 8, 10];
+  scale === "major" ? [0, 2, 4, 5, 7, 9, 11] : [0, 2, 3, 5, 7, 8, 10];
 const romanDegrees =
-	scale === "major"
-		? ["I", "ii", "iii", "IV", "V", "vi", "vii°"]
-		: ["i", "ii°", "III", "iv", "v", "VI", "VII"];
+  scale === "major"
+    ? ["I", "ii", "iii", "IV", "V", "vi", "vii°"]
+    : ["i", "ii°", "III", "iv", "v", "VI", "VII"];
 const progression = chords.map((chord) => {
-	if (!chord.trim()) {
-		throw new Error(
-			"Akkordsymbole in einer Akkordfolge dürfen nicht leer sein.",
-		);
-	}
-	const match = chord.match(/^([A-G])(#?)/);
-	if (!match) return { chord, degree: "" };
+  if (!chord.trim()) {
+    throw new Error(
+      "Akkordsymbole in einer Akkordfolge dürfen nicht leer sein.",
+    );
+  }
+  const match = chord.match(/^([A-G])(#?)/);
+  if (!match) return { chord, degree: "" };
 
-	const chordRoot = pitchClasses.indexOf(`${match[1]}${match[2]}`);
-	const degree = scaleIntervals.findIndex(
-		(interval) => (rootPitchClass + interval) % 12 === chordRoot,
-	);
-	return { chord, degree: degree < 0 ? "" : romanDegrees[degree] };
+  const chordRoot = pitchClasses.indexOf(`${match[1]}${match[2]}`);
+  const degree = scaleIntervals.findIndex(
+    (interval) => (rootPitchClass + interval) % 12 === chordRoot,
+  );
+  return { chord, degree: degree < 0 ? "" : romanDegrees[degree] };
 });
 ---
 
