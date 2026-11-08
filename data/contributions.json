@@ -288,14 +288,18 @@
       },
       {
         "text": "abstände ganz links msüsengleich sein, wie bei einem normalen taktbeginn außer es sind vorzeichen davor.",
-        "checked": false
+        "checked": true
       },
       {
         "text": "taktbegnn nochmal anpassen, sieht manchmal komisch aus.",
-        "checked": false
+        "checked": true
       },
       {
         "text": "Alle Visuals für theorie und referenzwerkzeuge sollen gleich sein mru text so wie er gerade ist.",
+        "checked": false
+      },
+      {
+        "text": "Mit Handoff in neuem chat beginnen. Optimierungen nach Beispielen und dann alle visuals anpassen",
         "checked": false
       }
     ],
