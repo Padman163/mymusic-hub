@@ -36,6 +36,7 @@
 
 ## Commits die abgeschickt sind löschen
 ```git reset HEAD```
+
 HEAD ist der Zeiger auf deinen aktuellen Commit.
 
 HEAD~1 ist der direkte Vorgänger-Commit (1 Schritt zurück).
@@ -45,6 +46,9 @@ HEAD~2 ist der Vor-Vorgänger-Commit (2 Schritte zurück).
 ## Auf Origin zurücksetzen
 ```git reset --hard origin/<branch-name>```
 
+
+## Mergen des Branch
+```git merge origin/main```
 ## Sonstige Befehle
 1. Kopiert branch mit anderem Namen in z.b. das Archiv ```git branch -m <kopierter-branch> archive/<eingefügter-branch>```
 2. Pusht den kopierten branch auf GitHub ```git push origin -u archive/<eingefügter-branch>```
