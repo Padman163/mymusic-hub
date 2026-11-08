@@ -17,7 +17,7 @@
 
 ## Aktuellsten Branch holen
 ```git fetch origin``` 
-```git switch <aktuellsten-branch>```
+```git switch/checkout <aktuellsten-branch>```
 ```git reset --hard origin/<aktuellsten-branch>```
 
 ## Älteren Branch holen
