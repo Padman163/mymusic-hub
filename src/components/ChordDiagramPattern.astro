@@ -156,7 +156,9 @@ const roleDisplay: Record<string, string> = {
 
 const usedRoles = new Set<ChordPosition["role"]>();
 chords.forEach((chord) => {
-	chord.positions.forEach((pos) => usedRoles.add(pos.role));
+  chord.positions.forEach((pos) => {
+    usedRoles.add(pos.role);
+  });
 });
 
 const roleOrder: ChordPosition["role"][] = [
