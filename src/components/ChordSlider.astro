@@ -295,7 +295,6 @@ const colorFifth = "#64C4ED";
       const tickLabels = card.querySelectorAll<SVGTextElement>('.tick-label');
       
       const chordType = card.getAttribute('data-chord-type');
-      const is3Note = (chordType === '3' || chordType === '3-inv');
       const isInverted = (chordType === '2-inv' || chordType === '3-inv');
       
       const dotRoot = card.querySelector<SVGGElement>('.dot-root');

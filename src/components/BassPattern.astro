@@ -184,7 +184,7 @@ const getIntervalColor = (notePitchClass: string, chord: string) => {
 
   <div class="step-header">
     <div aria-hidden="true"></div>
-    {bars.flatMap((_, barIndex) => stepLabels.map((label, stepIndex) => (
+    {bars.flatMap((_, barIndex) => stepLabels.map((label) => (
       <div class={`step-label ${barIndex % 2 === 1 ? "alternate-bar" : ""}`}>
         {label}
       </div>
