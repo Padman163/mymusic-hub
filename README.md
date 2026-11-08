@@ -10,7 +10,7 @@
 ```npm run dev```
 
 ## Anwendung starten ( mit Netlify )
- ```npm install```
+```npm install```
 ```npx netlify-cli login```
 ```npx netlify-cli link```
 ```npx netlify-cli dev```
