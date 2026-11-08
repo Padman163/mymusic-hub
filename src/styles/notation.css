@@ -127,7 +127,7 @@
 .notation-accidental,
 .notation-time,
 .notation-articulation {
-	font-family: "NotationBravura";
+	font-family: "NotationBravura", sans-serif;
 	font-size: 36px;
 	fill: #111827;
 	stroke: none;
@@ -389,7 +389,7 @@
 }
 
 .keyboard-brace text {
-	font-family: "KeyboardNotationBravura";
+	font-family: "KeyboardNotationBravura", serif;
 	font-size: 1000px;
 }
 

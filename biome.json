@@ -28,7 +28,7 @@
         "noImportantStyles": "off"
       },
       "correctness": {
-        "noUnusedVariables": "off"
+        "noUnusedVariables": "warn"
       },
       "style": {
         "noDescendingSpecificity": "off"
