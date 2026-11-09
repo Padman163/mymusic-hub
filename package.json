@@ -10,8 +10,8 @@
     "astro": "astro",
     "format": "biome check --write src/",
     "check": "astro check",
-    "verify": "biome check --write src/ && astro check"
-
+    "verify": "biome check --write src/ && astro check",
+    "status": "git status --short && printf '\\n--- root ---\\n' && ls -la && printf '\\n--- package scripts ---\\n' && node -e \"console.log(JSON.stringify(require('./package.json').scripts,null,2))\""
   },
   "dependencies": {
     "@astrojs/markdown-remark": "^7.3.5",

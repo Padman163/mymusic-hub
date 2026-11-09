@@ -1,0 +1,90 @@
+---
+const pageTitle = 'Seite nicht gefunden';
+---
+
+<!doctype html>
+<html lang="de">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="robots" content="noindex" />
+		<title>{pageTitle} | Mein Musik-Hub</title>
+		<style>
+			:root {
+				color-scheme: light dark;
+				font-family: system-ui, sans-serif;
+				background: #10131a;
+				color: #f4f4f5;
+			}
+
+			* {
+				box-sizing: border-box;
+			}
+
+			body {
+				display: grid;
+				min-height: 100vh;
+				margin: 0;
+				padding: 1.5rem;
+				place-items: center;
+			}
+
+			main {
+				width: min(100%, 38rem);
+				padding: clamp(2rem, 8vw, 4rem);
+				border: 1px solid #343946;
+				border-radius: 1rem;
+				background: #191d27;
+				text-align: center;
+			}
+
+			.error-code {
+				margin: 0;
+				color: #a5b4fc;
+				font-size: clamp(4rem, 18vw, 7rem);
+				font-weight: 800;
+				letter-spacing: -0.08em;
+				line-height: 1;
+			}
+
+			h1 {
+				margin: 1rem 0 0.75rem;
+				font-size: clamp(1.5rem, 5vw, 2rem);
+			}
+
+			main > p:not(.error-code) {
+				margin: 0;
+				color: #c4c7d0;
+				line-height: 1.6;
+			}
+
+			a {
+				display: inline-block;
+				margin-top: 1.75rem;
+				padding: 0.75rem 1.25rem;
+				border-radius: 0.5rem;
+				background: #a5b4fc;
+				color: #171923;
+				font-weight: 700;
+				text-decoration: none;
+			}
+
+			a:hover {
+				background: #c7d2fe;
+			}
+
+			a:focus-visible {
+				outline: 3px solid #f4f4f5;
+				outline-offset: 3px;
+			}
+		</style>
+	</head>
+	<body>
+		<main>
+			<p class="error-code" aria-hidden="true">404</p>
+			<h1>{pageTitle}</h1>
+			<p>Diese Seite existiert nicht oder wurde verschoben.</p>
+			<a href="/">Zur Startseite</a>
+		</main>
+	</body>
+</html>
