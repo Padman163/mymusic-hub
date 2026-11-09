@@ -3,6 +3,7 @@ import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
 import { unified } from "@astrojs/markdown-remark";
 import remarkMath from "remark-math";
+// @ts-ignore - rehype-katex liefert keine eigenen TS-Deklarationsdateien mit
 import rehypeKatex from "rehype-katex";
 
 // https://astro.build/config
@@ -10,7 +11,9 @@ export default defineConfig({
   site: "http://localhost:8888",
   markdown: {
     processor: unified({
+      // @ts-ignore - Behebt die Diskrepanz zwischen unist-Node und mdast-Root
       remarkPlugins: [remarkMath],
+      // @ts-ignore
       rehypePlugins: [rehypeKatex],
     }),
   },
