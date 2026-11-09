@@ -10,11 +10,7 @@ import {
   renderRepeatEndAtBoundary,
   renderRepeatStart,
 } from "./barline.ts";
-import {
-  type MusicCurve,
-  renderCurve,
-  validateCurves,
-} from "./curve.ts";
+import { type MusicCurve, renderCurve, validateCurves } from "./curve.ts";
 import { renderRest, restSymbols } from "./rest.ts";
 import {
   collectBeamGroups,
@@ -27,10 +23,7 @@ import {
   rhythmicPositions,
 } from "./rhythm.ts";
 import { escapeXml, glyphText } from "./svg.ts";
-import {
-  renderTempoMark,
-  validateTempoChanges,
-} from "./tempo.ts";
+import { renderTempoMark, validateTempoChanges } from "./tempo.ts";
 import {
   renderTimeSignature,
   type TimeSignature,

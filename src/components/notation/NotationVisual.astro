@@ -6,11 +6,11 @@ import {
   renderNotationSvg,
 } from "../../lib/notation-renderer";
 import "../../styles/notation.css";
+import type { TimeSignature } from "../../lib/time-signature.ts";
 import DynamicsMarks from "../ui/DynamicsMarks.astro";
 import FinalBar from "../ui/FinalBar.astro";
 import MeasureNumber from "../ui/MeasureNumber.astro";
 import TempoLabel from "../ui/TempoLabel.astro";
-import type { TimeSignature } from "../../lib/time-signature.ts";
 
 interface Props {
   showLeftBar?: boolean;
