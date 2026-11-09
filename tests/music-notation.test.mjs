@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { articulationPlacement, articulationY, renderArticulation } from '../src/components/music/articulation.ts';
-import { renderRepeatEnd, renderRepeatEndAtBoundary, renderRepeatStart } from '../src/components/music/barline.ts';
-import { renderCurve, validateCurves } from '../src/components/music/curve.ts';
-import { dynamicsForHairpin } from '../src/components/music/dynamics.ts';
-import { collectBeamGroups, flagGlyph, renderDot, rhythmicPositions } from '../src/components/music/rhythm.ts';
-import { renderRest, restSymbols } from '../src/components/music/rest.ts';
-import { renderTempoMark, validateTempoChanges } from '../src/components/music/tempo.ts';
-import { omitUnchangedTimeSignatures, renderTimeSignature, validateTimeSignature } from '../src/components/music/time-signature.ts';
+import { articulationPlacement, articulationY, renderArticulation } from '../src/lib/articulation.ts';
+import { renderRepeatEnd, renderRepeatEndAtBoundary, renderRepeatStart } from '../src/lib/barline.ts';
+import { renderCurve, validateCurves } from '../src/lib/curve.ts';
+import { dynamicsForHairpin } from '../src/lib/dynamics.ts';
+import { collectBeamGroups, flagGlyph, renderDot, rhythmicPositions } from '../src/lib/rhythm.ts';
+import { renderRest, restSymbols } from '../src/lib/rest.ts';
+import { renderTempoMark, validateTempoChanges } from '../src/lib/tempo.ts';
+import { omitUnchangedTimeSignatures, renderTimeSignature, validateTimeSignature } from '../src/lib/time-signature.ts';
 import { minimumFirstNoteX, renderNotationSvg } from '../src/lib/notation-renderer.ts';
 import { alignFirstNotesInSystems, arrangeNotationSystems } from '../src/components/notation/system-layout.ts';
 
