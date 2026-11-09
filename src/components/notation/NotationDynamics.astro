@@ -1,7 +1,7 @@
 ﻿---
 import NotationVisual from './NotationVisual.astro';
-import DynamicsMarks from '../music/DynamicsMarks.astro';
-import { dynamicsForHairpin } from '../music/dynamics.ts';
+import DynamicsMarks from '../ui/DynamicsMarks.astro';
+import { dynamicsForHairpin } from '../../lib/dynamics.ts';
 
 interface Props {
   type?: 'both' | 'crescendo' | 'decrescendo';

@@ -4,18 +4,18 @@ import {
   articulationSymbols,
   articulationY,
   renderArticulation,
-} from "../components/music/articulation.ts";
+} from "./articulation.ts";
 import {
   renderBarLine,
   renderRepeatEndAtBoundary,
   renderRepeatStart,
-} from "../components/music/barline.ts";
+} from "./barline.ts";
 import {
   type MusicCurve,
   renderCurve,
   validateCurves,
-} from "../components/music/curve.ts";
-import { renderRest, restSymbols } from "../components/music/rest.ts";
+} from "./curve.ts";
+import { renderRest, restSymbols } from "./rest.ts";
 import {
   collectBeamGroups,
   type Duration,
@@ -25,18 +25,18 @@ import {
   renderDot,
   renderStem,
   rhythmicPositions,
-} from "../components/music/rhythm.ts";
-import { escapeXml, glyphText } from "../components/music/svg.ts";
+} from "./rhythm.ts";
+import { escapeXml, glyphText } from "./svg.ts";
 import {
   renderTempoMark,
   validateTempoChanges,
-} from "../components/music/tempo.ts";
+} from "./tempo.ts";
 import {
   renderTimeSignature,
   type TimeSignature,
   timeSignatureWidth,
   validateTimeSignature,
-} from "../components/music/time-signature.ts";
+} from "./time-signature.ts";
 
 export type NotationDuration = Duration;
 export type NotationArticulation = Articulation;
