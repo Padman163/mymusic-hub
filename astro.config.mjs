@@ -22,6 +22,7 @@ export default defineConfig({
   integrations: [
     starlight({
       title: "Mein Musik-Hub",
+      disable404Route: true,
       locales: {
         root: {
           label: "Deutsch",

@@ -1,0 +1,13 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+---
+
+<StarlightPage frontmatter={{ title: '404 – Nicht gefunden', template: 'splash', editUrl: false }}>
+  <div style="text-align: center; padding: 3rem 1rem;">
+    <h1 style="font-size: 3rem; margin-bottom: 1rem;">404</h1>
+    <p style="font-size: 1.2rem; margin-bottom: 2rem;">
+      Diese Seite existiert nicht oder wurde verschoben.
+    </p>
+    <a href="/" class="sl-link-button">Zur Startseite</a>
+  </div>
+</StarlightPage>
