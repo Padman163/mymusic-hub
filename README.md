@@ -62,11 +62,7 @@ HEAD~2 ist der Vor-Vorgänger-Commit (2 Schritte zurück).
 ## IssueTracker-Beiträge speichern
 Die Netlify Function unter `netlify/functions/contributions.ts` nimmt Beiträge entgegen und speichert sie zunächst in `data/contributions.json` im GitHub-Repository. In Netlify müssen dafür folgende Umgebungsvariablen gesetzt werden:
 
-## Testing
-
-```npm install --save-dev --save-exact @biomejs/biome```
-```npx biome init```
-```npm install --save-dev @astrojs/check typescript```
+# Environment
 
 - `GITHUB_TOKEN`: Fine-grained Personal Access Token mit Lese- und Schreibzugriff auf den Repository-Inhalt. Darf NICHT als Secret definiert werden
 - `GITHUB_REPOSITORY`: Repository im Format `owner/repository`.
@@ -91,3 +87,114 @@ Für den Deploy-Preview-Kontext müssen die Umgebungsvariablen in Netlify separa
 Die Produktionskonfiguration in `netlify.toml` überspringt Builds, wenn seit dem letzten erfolgreichen Build ausschließlich `data/contributions.json` geändert wurde. Dadurch löst nicht jeder gespeicherte Beitrag einen Produktions-Deploy aus. Wird `GITHUB_DATA_PATH` geändert, muss die Ignore-Regel entsprechend angepasst werden. Dokumentationsseiten unter `src/content/docs` bleiben buildrelevant.
 
 Deploy Previews haben laut aktueller Netlify-Preisliste keine Produktions-Deploy-Gebühr, sind aber nicht grundsätzlich ohne Credit-Verbrauch: Zugriffe, Datenverkehr und Function-Ausführungen können Credits verbrauchen. Die genauen Konditionen hängen vom Tarif ab und sind im Netlify-Dashboard und in der [Preisliste](https://www.netlify.com/pricing/) zu prüfen.
+
+# Testing
+
+```npm install --save-dev --save-exact @biomejs/biome```
+```npx biome init```
+```npx @biomejs/biome check```
+
+### Astro Typen- & Komponentenprüfung (```astro check```)
+```npm install --save-dev @astrojs/check typescript```
+
+### Produktions-Build testen (`astro build`)
+
+## 🛠️ Phase 1: Code-Hygiene & Automatisierte Prüfungen
+
+- [ ] **Linter & Formatter (`biome check`)**
+  - Installation: ```npm install --save-dev --save-exact @biomejs/biome```
+```npx biome init```
+  - Befehl: `npx @biomejs/biome check .`
+  - Keine Syntaxfehler, ungenutzten Variablen oder toten Imports mehr vorhanden.
+- [ ] **Astro Typen- & Komponentenprüfung (`astro check`)**
+  - Befehl: `npx astro check`
+  - Alle Props, Datenübergaben und `.astro`-Templates sind fehlerfrei typisiert.
+- [ ] **Produktions-Build testen (`astro build`)**
+  - Befehl: `npm run build`
+  - Der Build läuft lokal mit **0 Fehlern** durch und erzeugt den Ordner `dist/`.
+- [ ] **Bereinigung von Debug-Code**
+  - Keine verbliebenen `console.log(...)`-Befehle im Client-Code.
+  - Veraltete Kommentare und Test-Dateien der KI entfernt.
+- [ ] **Sicherheit: Geheimnisse & API-Keys**
+  - Keine Passwörter, Token oder geheimen Keys im Quellcode oder Git-Repository.
+  - Nur öffentlich vorgesehene Variablen nutzen das Präfix `PUBLIC_`.
+  - `.env` ist in der `.gitignore` eingetragen; eine `.env.example` dient als Vorlage.
+
+---
+
+## 🧠 Phase 2: Inhalt & Logik-Audit (manuelle Checks)
+
+- [ ] **Vollständige Entfernung von Dummy-Inhalten**
+  - Volltextsuche nach Begriffen wie: `Lorem`, `TODO`, `Test`, `Mock`, `Placeholder`, `asdf`.
+  - Alle Lektionen, Quizzes und Erklärungen enthalten echte, fachlich geprüfte Inhalte.
+- [ ] **Interaktionsprüfung aller Buttons & Links**
+  - Keine „Dead Buttons“ mit leerem Link (`href="#"`) oder Dummy-Klickhandlern.
+  - Alle internen Links leiten zur richtigen Lektion oder Unterseite.
+  - Alle externen Links öffnen korrekt (idealerweise mit `rel="noopener noreferrer"`).
+- [ ] **Lernpfad-Navigation & Ablauflogik**
+  - Vor- und Zurück-Buttons führen in der didaktisch korrekten Reihenfolge.
+  - Abgeschlossene Module werden visuell eindeutig als erledigt gekennzeichnet.
+- [ ] **Zustandsspeicherung (State / Progress)**
+  - Lernfortschritte (z. B. über `localStorage` gespeichert) bleiben nach Neuladen der Seite erhalten.
+  - Falls vorhanden: Reset-Funktion („Fortschritt zurücksetzen“) funktioniert wie erwartet.
+
+---
+
+## 📱 Phase 3: Responsivität & Geräte-Kompatibilität
+- [ ] **Echtes Smartphone-Testing**
+  - Auf mindestens einem physischen Smartphone (iOS oder Android) getestet.
+  - Keine horizontalen Scrollbalken (horizontales Ausbrechen des Layouts).
+  - Alle Schaltflächen und Navigationspunkte sind mit dem Daumen gut treffbar (mind. 44x44 Pixel).
+- [ ] **Cross-Browser-Gegenprobe**
+  - **Chrome / Chromium:** Standardprüfung für Desktop und Android.
+  - **Safari (iOS / macOS):** Wichtig, da WebKit CSS-Flexbox/Grid und Abstände oft anders interpretiert.
+  - **Firefox:** Prüfung auf Rendering-Auffälligkeiten.
+- [ ] **Dark- / Light-Mode (falls integriert)**
+  - Texte bleiben in beiden Modi kontrastreich und lesbar.
+  - Grafiken und Icons passen sich farblich an.
+
+---
+
+## ⚡ Phase 4: Performance, SEO & Barrierefreiheit (A11y)
+
+- [ ] **Bilder & Medien-Optimierung**
+  - Bilder liegen in modernen Formaten vor (WebP oder AVIF).
+  - Bilder werden über die Astro-eigene `<Image />`-Komponente geladen (automatische Größenanpassung).
+  - Keine unkomprimierten Multi-Megabyte-Dateien im Verzeichnis `public/`.
+- [ ] **Barrierefreiheit (Accessibility)**
+  - Alle informativen Bilder besitzen ein aussagekräftiges `alt`-Attribut.
+  - Logische Überschriftenstruktur eingehalten (nur ein einziges `h1` pro Seite, danach saubere `h2` und `h3`).
+  - Text-zu-Hintergrund-Kontraste genügen mindestens dem WCAG AA-Standard.
+- [ ] **Favicon & Meta-Informationen**
+  - Standard-Astro-Favicon (`favicon.svg`) durch eigenes Logo/Icon ersetzt.
+  - Jede Seite verfügt über einen aussagekräftigen `<title>` und eine `<meta name="description">`.
+  - Social-Media-Vorschau (Open Graph / Twitter Card Tags inkl. `og:image`) konfiguriert.
+- [ ] **Lighthouse-Audit**
+  - Google Chrome DevTools -> Lighthouse-Audit ausführen.
+  - Ziel: Performance, Accessibility, Best Practices und SEO jeweils bei **90+ Punkten**.
+
+---
+## ⚖️ Phase 5: Rechtliches & Server-Infrastruktur
+
+- [ ] **Rechtliche Pflichtseiten (DACH-Raum)**
+  - Vollständiges, leicht auffindbares **Impressum** (Diensteanbieter, Anschrift, Kontakt).
+  - DSGVO-konforme **Datenschutzerklärung** (Angabe von Hosting-Provider, Analysetools, Schriftarten).
+- [ ] **Eigene 404-Fehlerseite (`src/pages/404.astro`)**
+  - Nutzerfreundliche Fehlerseite vorhanden.
+  - Enthält einen direkten Link zurück zur Startseite oder zum Lernpfad.
+- [ ] **Hosting & Domain**
+  - SSL/HTTPS-Zertifikat ist aktiv (automatisch bei Vercel, Netlify, Cloudflare Pages etc.).
+  - Eigene Domain erfolgreich verbunden (inkl. Weiterleitung von `http` auf `https` und `www` auf non-`www`).
+- [ ] **Build-Umgebungsvariablen**
+  - Alle für den Produktionsbetrieb nötigen Variablen im Dashboard des Hoster-Dienstes hinterlegt.
+
+---
+## 📋 Definition of Done (DoD)
+
+Das Projekt gilt erst dann als **bereit für den Release**, wenn:
+1. Alle Befehle des Pre-Flight-Skripts mit Exit-Code `0` durchlaufen:
+   ```bash
+   npx @biomejs/biome check . && npx astro check && npm run build
+   ```
+2. Mindestens ein vollständiger Durchlauf des Lernpfads auf einem mobilen Endgerät erfolgreich protokolliert wurde.
+3. Impressum, Datenschutzerklärung und 404-Seite funktionstüchtig live geschaltet sind.
