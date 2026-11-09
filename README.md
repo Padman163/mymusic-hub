@@ -11,6 +11,7 @@
 
 ## Anwendung starten ( mit Netlify )
 ```npm install```
+```npm run build```
 ```npx netlify-cli login```
 ```npx netlify-cli link```
 ```npx netlify-cli dev```
