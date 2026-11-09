@@ -70,10 +70,3 @@
 * Es liegt derzeit kein neuer Render-Implementierungsauftrag vor; auf die nächste konkrete Nutzeranforderung warten.
 * **Gould-Layout-Klärung:** Falls künftig eine lesbarkeitsorientierte statt streng proportionaler Verteilung gewünscht wird, müssen Anforderungen und Quellen zunächst geklärt werden; keine unbelegte Formel als Gould-Regel darstellen.
 * **Anbindung:** Vorbereitung der Komponenten-Schnittstelle für die geplante interaktive Komponente `<InteractiveScoreTrainer.astro>` in Level 104.
-
-## 5. Relevante Prüfkommandos
-```bash
-node --test tests/music-notation.test.mjs
-npx --yes --package typescript tsc --noEmit
-npm run build
-git diff --check
