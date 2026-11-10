@@ -175,3 +175,17 @@ git commit --amend --no-edit
 ```
 
 
+## Worktree mit neuen Infos füllen
+
+### Älteren Branch aktivieren
+git switch <aelteren-branch>
+git fetch origin
+
+### Arbeitsbaum gezielt mit dem Stand des Zielbranches auffüllen
+git restore --source=origin/<aktuellsten-branch> --worktree -- .
+
+### Rückgängig
+```bash
+git reset --hard origin/<aelteren-branch>
+git clean -fd
+```
