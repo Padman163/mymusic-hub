@@ -72,6 +72,7 @@ npx netlify-cli dev
 ```bash
 # 1. Chromium inklusive Systemabhängigkeiten für Playwright installieren
 npx playwright install --with-deps chromium
+npx playwright install --with-deps webkit
 
 ```
 

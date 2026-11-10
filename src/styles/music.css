@@ -45,7 +45,9 @@
 }
 
 .metronome-note {
-  font: var(--music-symbol-size) / 1 "NotationTempoBravura", sans-serif;
+  font:
+    var(--music-symbol-size) / 1 "NotationTempoBravura",
+    sans-serif;
   vertical-align: -0.2em;
 }
 
@@ -97,7 +99,9 @@
 
 .dynamic-mark {
   top: calc(var(--dynamics-staff-bottom, 0px) + var(--dynamics-mark-gap));
-  font: var(--music-symbol-size) / 1 "NotationBravura", sans-serif;
+  font:
+    var(--music-symbol-size) / 1 "NotationBravura",
+    sans-serif;
 }
 
 .dynamic-start {
