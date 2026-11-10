@@ -3,6 +3,16 @@
 Dieses Dokument definiert den architektonischen Standard für modulare, wartbare und skalierbare Webanwendungen auf Basis von Astro. Es erläutert das **Lego-Prinzip (Separation of Concerns & Kapselung)** und unterscheidet strikt zwischen dem minimal notwendigen Kern und optionalen Erweiterungsbausteinen.
 
 ---
+### Projekt-Initialisierung & Kanonische Konfiguration
+
+#### 1. CLI Scaffolding-Kommandos
+Um ein neues Astro-Projekt mit Starlight von Grund auf zu initialisieren[cite: 1]:
+```bash
+# Neues Starlight-Projekt anlegen
+npm create astro@latest mein-projekt -- --template starlight
+cd mein-projekt
+npm install
+```
 
 ## 1. Das Lego-Prinzip: Grundphilosophie
 
@@ -36,13 +46,18 @@ mein-minimal-projekt/
 
 ### Der minimale Konfigurations-Standard (`astro.config.mjs`)
 ```javascript
-// @ts-check
 import { defineConfig } from 'astro/config';
+import starlight from '@astrojs/starlight';
 
 export default defineConfig({
-  // Zwingend erforderlich für korrekte Canonical-Tags und Sitemap-Erstellung
-  site: 'https://deine-domain.de',
-  output: 'static', // Reine Static Site Generation (SSG)
+  // Kanonische Produktions-URL (verhindert Sitemap- und OG-Fehler)
+  site: '[https://deine-domain.netlify.app](https://deine-domain.netlify.app)',
+  integrations: [
+    starlight({
+      title: 'Mein Musik-Hub',
+      // ...
+    }),
+  ],
 });
 ```
 

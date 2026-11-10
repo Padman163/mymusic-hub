@@ -130,12 +130,30 @@ git push -u origin feature/mein-neues-feature
 
 ---
 
+### Stufe 5: Branch umbenennen
+
+# Lokalen Branch in Archiv-Namensraum umbenennen
+git branch -m <branch-name> archive/<branch-name>
+
+# Archivierten Branch zu GitHub pushen
+git push origin -u archive/<branch-name>
+
+# Alten oder obsoleten Remote-Branch auf GitHub löschen
+git push origin --delete <branch-name>
+
+
 ## 3. Notfall-Workflows & Problembehebung
 
 ### Windows/Git-Lock-Datei blockiert
 Wenn ein Prozess unerwartet abgebrochen wurde und Git blockiert ist:
 ```powershell
 Remove-Item .git\index.lock -Force -ErrorAction SilentlyContinue
+```
+
+```bash
+# Linux / macOS / Codespaces
+rm -f .git/index.lock
+git checkout -f main
 ```
 
 ### Lokalen Stand komplett verwerfen und mit GitHub synchronisieren
@@ -155,3 +173,5 @@ git commit --amend -m "feat: korrigierte nachricht"
 git add <vergessene-datei>
 git commit --amend --no-edit
 ```
+
+
