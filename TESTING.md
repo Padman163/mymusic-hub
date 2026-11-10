@@ -138,10 +138,10 @@ npx tsc --noEmit
   # Fix, falls nötig
   npm audit fix
 
-  # Verifizieren, dass .env nicht im Git-Index getrackt wird
-  git ls-files --error-unmatch .env
+  # Verifizieren, dass .env nicht im Git-Index getrackt wird - Leere Ausgabe ist gut!
+  git ls-files .env
 
-  # Exponierte Geheimnisse mit PUBLIC_-Präfix im Quellcode aufspüren
+  # Exponierte Geheimnisse mit PUBLIC_-Präfix im Quellcode aufspüren - Leere Ausgabe ist gut!
   git grep -i "PUBLIC_.*\(KEY\|SECRET\|TOKEN\|PASSWORD\)"
   ```
 * **Wann nutzen:**
@@ -187,6 +187,9 @@ npx tsc --noEmit
 
   # Ganzheitliche Prüfung im Lighthouse-Lauf
   npx lhci autorun
+
+  # Analyse der Ergebnisse
+  npx serve .lighthouseci
   ```
 * **Wann nutzen:**
   * **Beim Erstellen interaktiver UI-Elemente:** Wenn Steuerelemente, Navigationsmenüs, Modals oder Noten-Widgets entwickelt werden.

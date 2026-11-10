@@ -73,9 +73,93 @@ npx netlify-cli dev
 # 1. Chromium inklusive Systemabhängigkeiten für Playwright installieren
 npx playwright install --with-deps chromium
 
+```
+
+```bash
+
 # 2. Lighthouse CI CLI installieren (falls noch nicht in devDependencies vorhanden)
 npm install -D @lhci/cli@latest
+
+#create lighthouserc.cjs
+module.exports = {
+  ci: {
+    collect: {
+      // Testet direkt den generierten Astro-Build-Ordner ohne separaten Server-Prozess
+      staticDistDir: './dist',
+      numberOfRuns: 1,
+      settings: {
+        // Unverzichtbar in Linux-Container-/Codespace-Umgebungen
+        chromeFlags: '--no-sandbox --headless --disable-gpu',
+      },
+    },
+    assert: {
+      assertions: {
+        'categories:performance': ['warn', { minScore: 0.8 }],
+        'categories:accessibility': ['error', { minScore: 0.9 }],
+        'categories:best-practices': ['warn', { minScore: 0.9 }],
+        'categories:seo': ['warn', { minScore: 0.9 }],
+      },
+    },
+    upload: {
+      target: 'temporary-public-storage',
+    },
+  },
+};
+
+#create CHROME_PATH
+export CHROME_PATH=$(node -p "require('@playwright/test').chromium.executablePath()")
 ```
+
+### Lighthouse CI: `autorun` im Detail
+
+Der Befehl `lhci autorun` ist der primäre All-in-One-Ausführungsbefehl der **Lighthouse CI CLI (`@lhci/cli`)**. Anstatt einzelne Teilprozesse manuell im Terminal oder Skript zu verketten, steuert `autorun` den gesamten Lebenszyklus eines Audits als automatisierte 4-Phasen-Pipeline.
+
+---
+
+### Die 4 Phasen der Pipeline
+
+```text
+[ 1. healthcheck ] ──▶ [ 2. collect ] ──▶ [ 3. assert ] ──▶ [ 4. upload ]
+```
+
+### 1. `lhci healthcheck` (Umgebungsprüfung)
+* **Ziel:** Sicherstellen, dass das System alle technischen Voraussetzungen für den Testlauf erfüllt.
+* **Ablauf:**
+  * Prüft, ob eine Konfigurationsdatei (`lighthouserc.cjs`, `lighthouserc.js` oder `lighthouserc.json`) existiert.
+  * Validiert Schreibrechte für das lokale Arbeitsverzeichnis (`.lighthouseci/`).
+  * Überprüft, ob ein lauffähiger Chrome- bzw. Chromium-Browser gefunden wird (z. B. via Systempfad oder `CHROME_PATH`).
+* **Fehlerfall:** Fehlt eine Voraussetzung (z. B. Browser nicht auffindbar), bricht der gesamte Lauf sofort vor der Messung mit Exit-Code `1` ab.
+
+---
+
+### 2. `lhci collect` (Messungen durchführen)
+* **Ziel:** Webseiten automatisiert aufrufen und Performance-/Qualitätsmetriken erheben.
+* **Ablauf:**
+  * **Server-Bereitstellung:** Startet entweder einen temporären integrierten Webserver für statische Dateien (`staticDistDir: './dist'`) oder wartet auf einen benutzerdefinierten Server-Befehl (`startServerCommand`).
+  * **Headless-Browser:** Startet Chromium im Hintergrund mit den definierten Flags (z. B. `--no-sandbox --headless`).
+  * **Messläufe:** Öffnet jede konfigurierte URL mehrfach (gesteuert durch `numberOfRuns`, Standard: `3`), um Schwankungen durch Netzwerklatenz oder CPU-Spikes zu mitteln.
+  * **Artefakte:** Speichert Rohdaten (JSON-Auditdaten und interaktive HTML-Reports) lokal im Verzeichnis `.lighthouseci/`.
+
+---
+
+### 3. `lhci assert` (Qualitätsgrenzen prüfen)
+* **Ziel:** Automatisierte Qualitätskontrolle gegen definierte Zielwerte (SLA/Budgets).
+* **Ablauf:**
+  * Vergleicht die aggregierten Messergebnisse mit den Regeln im Block `assert.assertions` der Konfiguration.
+  * Unterscheidet zwischen zwei Eskalationsstufen:
+    * `'warn'`: Gibt eine Warnung in gelber Schrift aus; der Build läuft weiter.
+    * `'error'`: Markiert den Test als fehlgeschlagen (rotes Terminal-Highlight).
+* **Auswirkung auf CI/CD:** Sobald eine einzige Assertion mit `'error'` fehlschlägt, beendet sich `lhci` mit einem Exit-Code ungleich 0 (`Exit Code 1`). In Plattformen wie GitHub Actions bricht der Job ab und markiert den Pull Request mit einem roten Statuskreuz.
+
+---
+
+### 4. `lhci upload` (Berichterstellung & Ablage)
+* **Ziel:** Bereitstellung der Ergebnisse für Entwickler und Teams.
+* **Optionen je nach Konfiguration:**
+  * `target: 'temporary-public-storage'`: Lädt Berichte auf einen temporären Google-Cloud-Bucket hoch und generiert sofort anklickbare Links im Konsolen-Output (Verfallszeit: wenige Tage).
+  * `target: 'lhci'`: Übermittelt Daten an einen selbst gehosteten Lighthouse CI Server für historische Trendanalysen.
+  * `target: 'filesystem'`: Belässt die Berichte rein lokal zur Weiterverarbeitung.
+* **GitHub Integration:** Kann Status-Checks oder Kommentare direkt an Pull Requests anhängen.
 
 ---
 

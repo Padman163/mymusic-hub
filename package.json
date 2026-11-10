@@ -22,6 +22,7 @@
     "test:visual": "playwright test --update-snapshots",
     "test:all": "npm run test && npm run build && npm run test:e2e",
     "audit": "npm audit --audit-level=high",
+    "audit:lhci": "CHROME_PATH=$(node -p \"require('@playwright/test').chromium.executablePath()\") lhci autorun",
     "preflight": "npm run validate && npm run audit && npm run test:all && git diff --check"
   },
   "dependencies": {
