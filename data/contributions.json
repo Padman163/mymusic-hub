@@ -304,10 +304,15 @@
       {
         "text": "Transfer-Aufgabe zum Nachspielen auf dem Griffbrett definieren",
         "checked": false
+      },
+      {
+        "text": "test",
+        "checked": false
       }
     ],
     "status": "New",
-    "createdAt": "2026-11-06T16:16:56.882Z"
+    "createdAt": "2026-11-06T16:16:56.882Z",
+    "priority": "Mittel"
   },
   {
     "id": "559c96d8-658c-4f41-83be-f722f71a9ed6",
