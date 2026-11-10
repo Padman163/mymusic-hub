@@ -130,15 +130,35 @@ git push -u origin feature/mein-neues-feature
 
 ---
 
-### Stufe 5: Branch umbenennen
+### Stufe 5: Branch umbenennen ( wenn Branch lokal ist)
 
-# Lokalen Branch in Archiv-Namensraum umbenennen
+# 0. Prüfen wo der Branch liegt
+git branch -a
+
+Wenn Branch in der Liste nur in Rot angezeigt wird, ist er nicht lokal
+
+# 1. Branch lokal auschecken
+git checkout <branch-name>
+
+# 2. Zurück auf main wechseln (falls gewünscht)
+git checkout main
+
+# 3. Nun lokal umbenennen
 git branch -m <branch-name> archive/<branch-name>
 
-# Archivierten Branch zu GitHub pushen
+# 4. Den neuen Branch pushen
 git push origin -u archive/<branch-name>
 
-# Alten oder obsoleten Remote-Branch auf GitHub löschen
+# 5. Den alten Remote-Branch löschen
+git push origin --delete <branch-name>
+
+
+### Branch umbenennen ( wenn Branch nur auf Github ist)
+
+# 1. Den Remote-Branch unter neuem Namen pushen
+git push origin origin/<branch-name>:refs/heads/archive/<branch-name>
+
+# 2. Den alten Remote-Branch löschen
 git push origin --delete <branch-name>
 
 
