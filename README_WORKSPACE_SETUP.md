@@ -20,6 +20,7 @@ npm -v
 ### Schritt 2: Abhängigkeiten installieren
 ```bash
 npm install
+npm install @astrojs/netlify
 ```
 * **Warum dieser Schritt nötig ist:** Ein frisch geklonter Workspace enthält keinen Ordner `node_modules/`. Dieser Befehl liest die `package-lock.json` ein und installiert exakt die benötigten Frameworks (Astro, Starlight, Sharp, KaTeX, Biome, Vitest, Playwright).
 

@@ -9,6 +9,7 @@ import rehypeKatex from "rehype-katex";
 // https://astro.build/config
 export default defineConfig({
   site: "http://localhost:8888",
+  output: "static",
   markdown: {
     processor: unified({
       // @ts-ignore - Behebt die Diskrepanz zwischen unist-Node und mdast-Root
