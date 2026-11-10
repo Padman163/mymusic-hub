@@ -1,96 +1,273 @@
 # [Projektname] – Modulare Web- & Dokumentationsplattform
 
-> Universeller Architektur-Leitfaden, Entwickler-Handbuch und Release-Standard für modulare Webanwendungen und inhaltsgetriebene Plattformen auf Basis von Astro, TypeScript, modernen Linter-Tools und Serverless Functions.
+> Offizieller Architektur-Standard, Entwickler-Handbuch, Testing-Plan und Release-Leitfaden für moderne Webanwendungen und Dokumentationsplattformen auf Basis von Astro, TypeScript, Serverless Functions und automatisierter Qualitätssicherung.
 
 ---
 
 ## Inhaltsverzeichnis
 
-1. [TEIL 1: Chronologischer Projekt-Aufbau (Step-by-Step Template)](#teil-1-chronologischer-projekt-aufbau-step-by-step-template)
-   - [1. Initialisierung & Scaffolding](#1-initialisierung--scaffolding)
-   - [2. Tooling, Linter & Typenprüfung](#2-tooling-linter--typenprüfung)
-   - [3. Design-Tokens, globale Stile & Schriften](#3-design-tokens-globale-stile--schriften)
-   - [4. Zentrale Konfiguration (astro.config.mjs & tsconfig.json)](#4-zentrale-konfiguration-astroconfigmjs--tsconfigjson)
-   - [5. Komponenten- & Verzeichnis-Architektur](#5-komponenten---verzeichnis-architektur)
-   - [6. Serverless Backend & Datenspeicher](#6-serverless-backend--datenspeicher)
-   - [7. Testumgebung einrichten](#7-testumgebung-einrichten)
-2. [TEIL 2: Entwickler-Workflows & Git-Cheatsheet](#teil-2-entwickler-workflows--git-cheatsheet)
-   - [1. Start in einem neuen / geklonten Workspace](#1-start-in-einem-neuen--geklonten-workspace)
-   - [2. Pre-Flight Qualitätsprüfung (Quality Gate)](#2-pre-flight-qualitätsprüfung-quality-gate)
-   - [3. Git-Alltags-Workflows & Befehlsreferenz](#3-git-alltags-workflows--befehlsreferenz)
-   - [4. Serverless API & Datenspeicher-Architektur](#4-serverless-api--datenspeicher-architektur)
-   - [5. Deploy-Preview-Workflow für Teams & PRs](#5-deploy-preview-workflow-für-teams--prs)
-3. [TEIL 3: Universelle Feature-Entwicklungs-Pipeline](#teil-3-universelle-feature-entwicklungs-pipeline)
-4. [TEIL 4: Vollständige Release-Checkliste (Phasen 1 bis 5)](#teil-4-vollständige-release-checkliste-phasen-1-bis-5)
-   - [Phase 1: Code-Hygiene & Automatisierte Prüfungen](#-phase-1-code-hygiene--automatisierte-prüfungen)
-   - [Phase 2: Inhalt & Logik-Audit (Manuelle Checks)](#-phase-2-inhalt--logik-audit-manuelle-checks)
-   - [Phase 3: Responsivität & Geräte-Kompatibilität](#-phase-3-responsivität--geräte-kompatibilität)
-   - [Phase 4: Performance, SEO & Barrierefreiheit (A11y)](#-phase-4-performance-seo--barrierefreiheit-a11y)
-   - [Phase 5: Rechtliches & Server-Infrastruktur](#-phase-5-rechtliches--server-infrastruktur)
-   - [Definition of Done (DoD)](#-definition-of-done-dod)
-5. [TEIL 5: Projekt-Audit – Was für den ersten Release noch fehlt](#teil-5-projekt-audit--was-für-den-ersten-release-noch-fehlt)
+1. [TEIL 1: Daily Workflow & Cheatsheet](#teil-1-daily-workflow--cheatsheet)
+   * [1.1 Der Standard-Entwicklungszyklus (4-Stufen-Workflow)](#11-der-standard-entwicklungszyklus-4-stufen-workflow)
+   * [1.2 Tägliches Befehls-Cheatsheet (Terminal & npm run)](#12-tägliches-befehls-cheatsheet-terminal--npm-run)
+   * [1.3 Git-Alltags-Workflows, Branch-Management & Notfall-Fixes](#13-git-alltags-workflows-branch-management--notfall-fixes)
+   * [1.4 Workspace-Initialisierung (Lokal vs. Fullstack mit Netlify)](#14-workspace-initialisierung-lokal-vs-fullstack-mit-netlify)
+2. [TEIL 2: Chronologischer Projekt-Aufbau (Scaffolding-Standard)](#teil-2-chronologischer-projekt-aufbau-scaffolding-standard)
+   * [2.1 Verzeichnisarchitektur nach dem Lego-Prinzip](#21-verzeichnisarchitektur-nach-dem-lego-prinzip)
+   * [2.2 Core-Konfigurationen (astro.config.mjs, tsconfig.json, package.json)](#22-core-konfigurationen-astroconfigmjs-tsconfigjson-packagejson)
+   * [2.3 Design-Tokens, globale CSS-Ebenen & Webfonts](#23-design-tokens-globale-css-ebenen--webfonts)
+   * [2.4 Typensicherer Content Layer mit Zod-Validierung](#24-typensicherer-content-layer-mit-zod-validierung)
+   * [2.5 Serverless Backend, GitHub REST API & Deploy Previews](#25-serverless-backend-github-rest-api--deploy-previews)
+3. [TEIL 3: Die Testpyramide & Stufenweiser Testing-Plan](#teil-3-die-testpyramide--stufenweiser-testing-plan)
+   * [3.1 Architektur der Pyramide & das 80/20-Prinzip](#31-architektur-der-pyramide--das-8020-prinzip)
+   * [3.2 Stufe 0: Statische Code-Analyse & Hygiene (Fundament)](#32-stufe-0-statische-code-analyse--hygiene-fundament)
+   * [3.3 Stufe 1: Unit Tests (Mathematik, Algorithmen, Datenlogik)](#33-stufe-1-unit-tests-mathematik-algorithmen-datenlogik)
+   * [3.4 Stufe 2: Component Tests (Astro-Container & UI-Isolierung)](#34-stufe-2-component-tests-astro-container--ui-isolierung)
+   * [3.5 Stufe 3: Integration Tests (Serverless Functions & Schnittstellen)](#35-stufe-3-integration-tests-serverless-functions--schnittstellen)
+   * [3.6 Stufe 4: End-to-End (E2E) & Visual Regression (Browser-Simulation)](#36-stufe-4-end-to-end-e2e--visual-regression-browser-simulation)
+   * [3.7 Flankierende Querschnitts-Tests (Performance, Security, Regression)](#37-flankierende-querschnitts-tests-performance-security-regression)
+   * [3.8 Schrittweiser Implementierungsplan (Komplexitäts-Stufen)](#38-schrittweiser-implementierungsplan-komplexitäts-stufen)
+   * [3.9 Das zentrale Pre-Flight Quality Gate](#39-das-zentrale-pre-flight-quality-gate)
+4. [TEIL 4: Der 5-Phasen-Release-Audit & Definition of Done (DoD)](#teil-4-der-5-phasen-release-audit--definition-of-done-dod)
+5. [TEIL 5: Step-by-Step Checkliste für dein Projekt (Roadmap)](#teil-5-step-by-step-checkliste-für-dein-projekt-roadmap)
 
 ---
 
-## TEIL 1: Chronologischer Projekt-Aufbau (Step-by-Step Template)
+## TEIL 1: Daily Workflow & Cheatsheet
 
-Dieser Ablauf dokumentiert die exakte Reihenfolge, in der ein neues Astro-Projekt von Grund auf sauber, typensicher und wartbar aufgesetzt wird:
+### 1.1 Der Standard-Entwicklungszyklus (4-Stufen-Workflow)
 
-### 1. Initialisierung & Scaffolding
+Um Regressionsfehler, Build-Abbrüche und instabile Stände auf dem Hauptbranch (`main`) auszuschließen, folgt jede Änderung verbindlich diesem linearen Zyklus:
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ SCHRITT 1: Feature-Branch erstellen                                         │
+│ └── Ausgehend von einem aktuellen 'main' isoliert abzweigen.                │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ SCHRITT 2: Komplettes Feature entwickeln & lokal verifizieren               │
+│ └── Typdefinition -> Geschäftslogik -> UI-Komponente -> Dokumentation.      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ SCHRITT 3: Testpyramide & Quality Gate sequenziell abarbeiten                │
+│ └── Statische Analyse -> Unit -> Component -> Integration -> E2E -> Audit.  │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ SCHRITT 4: Feature-Branch via Pull Request in main integrieren              │
+│ └── Deploy-Preview prüfen, automatisches CI abwarten, sauber mergen.        │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 1.2 Tägliches Befehls-Cheatsheet (Terminal & npm run)
+
+Alle Prüfungen und Server-Starts werden bevorzugt über standardisierte `npm run`-Befehle ausgeführt:
 
 ```bash
-# 1. Astro mit Starlight (für Dokumentationen) oder Minimal-Template initialisieren
-npm create astro@latest mein-projekt -- --template starlight
+# ---------------------------------------------------------
+# LOKALE ENTWICKLUNGSSERVER
+# ---------------------------------------------------------
+npm run dev                 # Startet Frontend/Doku unter http://localhost:4321
+npm run dev:all             # Startet Frontend + Netlify Functions unter http://localhost:8888
+npm run build               # Simuliert vollständigen Produktions-Build in dist/
+npm run preview             # Lokale Vorschau des fertigen Produktions-Builds
 
-# 2. In das Verzeichnis wechseln
-cd mein-projekt
+# ---------------------------------------------------------
+# QUALITÄTSPRÜFUNGEN & PYRAMIDEN-TESTS (VON UNTEN NACH OBEN)
+# ---------------------------------------------------------
+npm run lint                # Biome: Prüft Syntax, Formatierung & tote Imports
+npm run lint:fix            # Biome: Korrigiert Stil- & Formatierungsfehler automatisch
+npm run check               # Astro Check: Validiert .astro-Templates, Props & Frontmatter
+npm run typecheck           # TypeScript: Strikte Typprüfung ohne Dateiausgabe (tsc --noEmit)
 
-# 3. Basis-Abhängigkeiten installieren
+npm run test:unit           # Stufe 1: Schnelle Unit-Tests (Mathematik, Logik, Parser)
+npm run test:comp           # Stufe 2: Isolierte Komponententests (Astro-Container)
+npm run test:int            # Stufe 3: Integrationstests (Netlify Function, Payload, Store)
+npm run test:e2e            # Stufe 4: E2E-Browsertests (Playwright, Chromium/WebKit)
+npm run test:visual         # Stufe 4: Pixelgenaue visuelle Regressions-Snapshots
+
+npm run test:perf           # Flankierend: Lighthouse CI Core Web Vitals Audit
+npm run test:security       # Flankierend: npm audit Sicherheitscheck ab Schweregrad 'high'
+
+# ---------------------------------------------------------
+# DAS KOMBINIERTE QUALITY GATE (VOR JEDEM PUSH / PR)
+# ---------------------------------------------------------
+npm run preflight           # Führt die gesamte Kette sequenziell mit Exit-Code 0 aus
+```
+
+---
+
+### 1.3 Git-Alltags-Workflows, Branch-Management & Notfall-Fixes
+
+#### 1. Feature-Branch anlegen & wechseln
+```bash
+# Vor Beginn: Lokalen main auf den neuesten Remote-Stand bringen
+git switch main
+git pull origin main
+
+# Neuen Feature-Branch anlegen und sofort aktivieren
+git switch -c feature/mein-neues-feature
+
+# Zwischen existierenden Branches wechseln
+git switch feature/mein-neues-feature
+git switch main
+
+# Alle lokalen und Remote-Branches auflisten
+git branch -a
+```
+
+#### 2. Änderungen versionieren & pushen
+```bash
+# Arbeitsbaum-Status und modifizierte Dateien prüfen
+git status
+
+# Alle Änderungen vormerken (Staging)
+git add .
+
+# Konventionellen Commit mit klarer Signatur erstellen
+git commit -m "feat(renderer): proportionale notenabstaende implementiert"
+
+# Neuen Branch erstmals an GitHub übertragen (Upstream-Tracking setzen)
+git push -u origin feature/mein-neues-feature
+
+# Nachfolgende Pushes auf diesem Branch
+git push
+```
+
+#### 3. Synchronisation & Remote-Merge
+```bash
+# Neueste Stände vom Server abfragen (ohne lokalen Code zu manipulieren)
+git fetch origin
+
+# Main-Änderungen in den eigenen Feature-Branch integrieren
+git merge origin/main
+```
+
+#### 4. Branches synchronisieren & Stände gezielt übernehmen
+```bash
+# Aktuellsten Stand eines Remote-Branches holen und lokalen Stand hart überschreiben
+git fetch origin
+git switch <branch-name>
+git reset --hard origin/<branch-name>
+
+# Älteren historischen Stand laden
+git switch <aelterer-branch>
+git fetch origin
+git reset --hard origin/<aelterer-branch>
+
+# Arbeitsbaum gezielt mit dem Stand eines neueren Branches auffüllen
+git restore --source=origin/<aktuellster-branch> --worktree -- .
+```
+
+#### 5. Commits zurücknehmen & HEAD-Verständnis
+```bash
+# Letzten Commit zurücknehmen (Änderungen bleiben im Arbeitsverzeichnis erhalten)
+git reset HEAD~1
+```
+* **`HEAD`:** Zeiger auf den aktuellen Commit, auf dem du dich befindest.
+* **`HEAD~1`:** Der direkte Vorgänger-Commit (1 Schritt zurück in der Historie).
+* **`HEAD~2`:** Der Vor-Vorgänger-Commit (2 Schritte zurück).
+
+#### 6. Aufräumen, Archivieren & Windows-Notfall-Fixes
+```bash
+# Nicht getrackte Restdateien und Build-Reste radikal löschen
+git clean -fd
+
+# Branch umbenennen bzw. ins Archiv verschieben
+git branch -m <branch-name> archive/<branch-name>
+git push origin -u archive/<branch-name>
+
+# Remote-Branch auf GitHub löschen
+git push origin --delete <branch-name>
+
+# Windows PowerShell Notfall: Blockierte Git-Lock-Datei nach Crash entfernen
+Remove-Item .git\index.lock -Force -ErrorAction SilentlyContinue
+git checkout -f main
+```
+
+---
+
+### 1.4 Workspace-Initialisierung (Lokal vs. Fullstack mit Netlify)
+
+#### Reines Frontend & Dokumentation (Schnellstart)
+```bash
 npm install
+npm run dev
 ```
+*Die Seite läuft unter `http://localhost:4321`. Serverless Functions sind inaktiv.*
 
-### 2. Tooling, Linter & Typenprüfung
-
-Zur Sicherstellung einheitlicher Code-Standards vor dem ersten geschriebenen Feature:
-
+#### Fullstack-Entwicklung (Frontend + Netlify Serverless API)
 ```bash
-# Biome als extrem schneller All-in-One Linter & Formatter
-npm install --save-dev --save-exact @biomejs/biome
-npx biome init
+npm install
+npm run build
 
-# Astro-Komponenten- & Typenprüfung (prüft .astro-Templates & Frontmatter)
-npm install --save-dev @astrojs/check typescript @types/node
+# Einmalige Verknüpfung der Netlify CLI
+npx netlify-cli login
+npx netlify-cli link
 
-# Markdown- & Formel-Pipelines (optional für wissenschaftliche/technische Projekte)
-npm install remark-math rehype-katex katex
+# Synchronen Devserver starten
+npx netlify-cli dev
+```
+*Startet Frontend und Netlify Functions synchron unter `http://localhost:8888`.*
 
-# Serverless Backend & Bildoptimierung
-npm install @netlify/functions sharp
+---
+
+## TEIL 2: Chronologischer Projekt-Aufbau (Scaffolding-Standard)
+
+### 2.1 Verzeichnisarchitektur nach dem Lego-Prinzip
+
+Die Codebasis trennt Geschäftslogik, visuelle Darstellung, Datenmodelle und Inhalte strikt nach dem Prinzip der **Separation of Concerns**:
+
+```text
+mein-projekt/
+├── public/                     # Statische Assets (unverändert ausgeliefert)
+│   ├── favicon.svg             # Vektor-Favicon
+│   ├── robots.txt              # Suchmaschinen-Führung mit Sitemap-Link
+│   └── fonts/                  # Lokale Webfonts (kein Google Fonts CDN)
+├── src/
+│   ├── assets/                 # Lokale Grafiken für Astros Optimierungs-Pipeline
+│   ├── components/             # Astro- & UI-Komponenten
+│   │   ├── ui/                 # Zustandslose Präsentationsbausteine (Buttons, Badges)
+│   │   └── features/           # Fachliche Manager-Komponenten (Logik + Layout)
+│   ├── content/                # Strukturierte Inhalte (Markdown / MDX)
+│   ├── content.config.ts       # Typisierte Frontmatter-Schemata via Zod
+│   ├── layouts/                # HTML-Skelette (<BaseLayout.astro>)
+│   ├── lib/                    # Reine Geschäftslogik & Algorithmen (100% TypeScript)
+│   ├── pages/                  # Datei-basiertes Routing (404.astro, index.astro)
+│   └── styles/                 # Globale Design-Tokens, Resets & CSS-Module
+├── tests/                      # Automatisierte Test-Suites
+│   ├── unit/                   # Schnelle Unit-Tests (*.unit.test.ts)
+│   ├── components/             # Astro-Container Komponententests (*.comp.test.ts)
+│   ├── integration/            # Schnittstellentests (*.int.test.ts)
+│   └── e2e/                    # Playwright E2E- & Visual-Tests (*.spec.ts)
+├── netlify/                    # Serverless Functions & Backend-Endpunkte
+│   └── functions/              # Netlify Handlers (contributions.ts)
+├── data/                       # Strukturierte Datendateien (contributions.json)
+├── .env.example                # Dokumentierte Vorlage aller Umgebungsvariablen
+├── .gitignore                  # Git-Ausschlussregeln
+├── astro.config.mjs            # Zentrale Framework- & Integrationskonfiguration
+├── biome.json                  # Linter- & Formatter-Konfiguration
+├── package.json                # Skripte, Werkzeuge & Abhängigkeiten
+├── playwright.config.ts        # E2E-Testkonfiguration
+├── tsconfig.json               # Strikte TypeScript-Compileroptionen
+└── vitest.config.ts            # Component- & Integration-Testrunner
 ```
 
-### 3. Design-Tokens, globale Stile & Schriften
+---
 
-Trennung der visuellen Ebenen unter `src/styles/`:
-* `src/styles/variables.css`: Zentrale Design-Tokens (Farbpalette, Abstände, Schriftgrößen).
-* `src/styles/layout.css`: Globale Anpassungen für Navigation, Sidebar, Raster und Inhaltsbreiten.
-* `src/styles/components.css`: Wiederverwendbare Basisstile für interaktive UI-Elemente.
-* **Webfonts & Symbole:** Lokale Schriftdateien (`.woff2`) gehören unter `public/fonts/`, um DSGVO-Konformität und minimale Latenzen ohne externe CDN-Aufrufe zu sichern.
-
-### 4. Zentrale Konfiguration (`astro.config.mjs` & `tsconfig.json`)
+### 2.2 Core-Konfigurationen (`astro.config.mjs`, `tsconfig.json`, `package.json`)
 
 #### `astro.config.mjs`
 ```javascript
 // @ts-check
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import sitemap from '@astrojs/sitemap';
 import { unified } from '@astrojs/markdown-remark';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 
 export default defineConfig({
-  // Kanonische Basis-URL (Zwingend nötig für korrekte Sitemaps und OpenGraph-Tags)
+  // Kanonische Basis-URL für korrekte Sitemaps und OpenGraph-Tags
   site: 'https://deine-domain.netlify.app',
-  output: 'static', // 'static' für SSG, 'server' für SSR mit Adapter
+  output: 'static',
   markdown: {
     processor: unified({
       remarkPlugins: [remarkMath],
@@ -98,6 +275,7 @@ export default defineConfig({
     }),
   },
   integrations: [
+    sitemap(),
     starlight({
       title: 'Plattform-Hub',
       defaultLocale: 'root',
@@ -115,7 +293,7 @@ export default defineConfig({
           items: [{ label: 'Beiträge & Feedback', slug: 'projektierung/beitraege' }],
         },
         {
-          label: 'Dokumentation & Module',
+          label: 'Dokumentation & Wissen',
           autogenerate: { directory: 'docs' },
         },
       ],
@@ -133,46 +311,101 @@ export default defineConfig({
     "baseUrl": ".",
     "paths": {
       "@components/*": ["src/components/*"],
+      "@layouts/*": ["src/layouts/*"],
       "@lib/*": ["src/lib/*"],
       "@styles/*": ["src/styles/*"]
     }
+  },
+  "include": [".astro/types.d.ts", "**/*"],
+  "exclude": ["dist", "node_modules"]
+}
+```
+
+#### `package.json`
+```json
+{
+  "name": "astro-enterprise-app",
+  "type": "module",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "astro dev",
+    "dev:all": "netlify dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "check": "astro check",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run test:unit",
+    "test:unit": "node --test tests/**/*.test.mjs",
+    "test:comp": "vitest run tests/**/*.comp.test.ts",
+    "test:int": "vitest run tests/**/*.int.test.ts",
+    "test:e2e": "playwright test",
+    "test:visual": "playwright test --update-snapshots",
+    "test:perf": "lhci autorun",
+    "test:security": "npm audit --audit-level=high",
+    "preflight": "npm run lint && npm run check && npm run typecheck && npm run test:security && npm run test:unit && npm run build && git diff --check"
+  },
+  "dependencies": {
+    "@astrojs/markdown-remark": "^7.3.5",
+    "@astrojs/sitemap": "^3.2.1",
+    "@astrojs/starlight": "^0.42.8",
+    "@netlify/functions": "^6.1.0",
+    "astro": "^7.4.5",
+    "katex": "^0.19.1",
+    "rehype-katex": "^7.0.1",
+    "remark-math": "^6.0.0",
+    "sharp": "^0.35.3",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.4",
+    "@biomejs/biome": "^1.9.4",
+    "@lhci/cli": "^0.14.0",
+    "@playwright/test": "^1.49.0",
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
   }
 }
 ```
 
-### 5. Komponenten- & Verzeichnis-Architektur
+---
 
-Die Architektur folgt dem **Lego-Prinzip (Separation of Concerns)**:
+### 2.3 Design-Tokens, globale CSS-Ebenen & Webfonts
 
-```text
-mein-projekt/
-├── public/                     # Statische Dateien (unverändert ausgeliefert)
-│   ├── favicon.svg             # Vektor-Favicon
-│   ├── robots.txt              # Crawler-Führung & Sitemap-Verweis
-│   └── fonts/                  # Lokale DSGVO-konforme Webfonts
-├── src/
-│   ├── assets/                 # Lokale Bilder & Grafiken für Astros Optimierungs-Pipeline
-│   ├── components/             # Astro- & UI-Komponenten
-│   │   ├── ui/                 # Zustandslose Präsentationskomponenten (Buttons, Badges, Tabs)
-│   │   └── features/           # Fachliche Manager-Komponenten (bündeln Logik & Teilbausteine)
-│   ├── content/                # Strukturierter Inhaltsbestand (MDX/Markdown)
-│   ├── content.config.ts       # Typisierte Frontmatter-Schemata via Zod
-│   ├── layouts/                # HTML-Grundgerüste (<BaseLayout.astro>)
-│   ├── lib/                    # Reine Geschäftslogik & Datenberechnungen (100% TypeScript)
-│   ├── pages/                  # Datei-basiertes Routing (404.astro, index.astro)
-│   └── styles/                 # Globale Design-Tokens, Resets und CSS-Module
-├── tests/                      # Automatisierte Unit-Tests (*.test.mjs)
-├── netlify/                    # Serverless Functions & Endpunkte
-├── data/                       # Datendateien (z. B. contributions.json)
-├── .env.example                # Dokumentierte Vorlage aller Umgebungsvariablen
-├── .gitignore                  # Git-Ausschlussregeln
-├── astro.config.mjs            # Framework-Konfiguration
-├── biome.json                  # Linter- & Formatter-Regeln
-├── package.json                # Skripte und Paketabhängigkeiten
-└── tsconfig.json               # Strikte TypeScript-Compileroptionen
+1. **`src/styles/variables.css`:** Zentrale Design-Tokens (Farben, Abstände, Typografie, Intervalle).
+2. **`src/styles/layout.css`:** Responsive Breakpoints, Container, Starlight-Sidebar-Anpassungen.
+3. **`src/styles/components.css`:** Wiederverwendbare Basisstile für interaktive UI-Elemente.
+4. **Schriftarten:** Lokale Bereitstellung unter `public/fonts/` mit `font-display: swap;` im CSS, um DSGVO-Konformität und minimale Latenzen ohne externe CDN-Aufrufe zu sichern.
+
+---
+
+### 2.4 Typensicherer Content Layer mit Zod-Validierung
+
+In `src/content.config.ts` wird das Frontmatter jeder Content-Sammlung verbindlich validiert. Syntax- oder Typfehler führen sofort zum Abbruch des Builds:
+
+```typescript
+import { defineCollection, z } from 'astro:content';
+
+const docs = defineCollection({
+  schema: z.object({
+    title: z.string().min(1, 'Titel darf nicht leer sein'),
+    description: z.string(),
+    publishDate: z.date().optional(),
+    draft: z.boolean().default(false),
+    tags: z.array(z.string()).default([]),
+  }),
+});
+
+export const collections = { docs };
 ```
 
-### 6. Serverless Backend & Datenspeicher
+---
+
+### 2.5 Serverless Backend, GitHub REST API & Deploy Previews
 
 1. **Netlify-Konfigurationsdatei (`netlify.toml`):**
    ```toml
@@ -185,242 +418,262 @@ mein-projekt/
    [context.production]
      ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- . ':(exclude)data/**'"
    ```
-2. **Serverless Function anlegen (`netlify/functions/contributions.ts`):** Verarbeitet Lese- und Schreiboperationen über eine entkoppelte API.
-3. **Datenspeicher (`data/contributions.json`):** Als leeres JSON-Array `[]` initialisieren.
+2. **Serverless Function (`netlify/functions/contributions.ts`):** Verarbeitet Lese- und Schreibzugriffe und sichert Schreib-Konflikte (HTTP 409) über eine automatische Retry-Logik mit bis zu 3 Versuchen ab.
+3. **Datenspeicher (`data/contributions.json`):** Initiales leeres JSON-Array `[]`.
+4. **Deploy-Preview-Regeln:** Im Netlify-Dashboard müssen Umgebungsvariablen für *Deploy Previews* separat gepflegt werden, damit Test-Previews nicht direkt in den Produktions-Ast (`main`) schreiben.
 
-### 7. Testumgebung einrichten
+#### Erforderliche Umgebungsvariablen (`.env.example`)
 
-Astro-Projekte nutzen den nativen Node.js Test-Runner (schnell, typsicher, ohne schwere Dritt-Frameworks):
-* Testdatei anlegen: `tests/core-logic.test.mjs`
-* In `package.json` unter `"scripts"` registrieren:
-  ```json
-  "scripts": {
-    "dev": "astro dev",
-    "start": "astro dev",
-    "build": "astro build",
-    "preview": "astro preview",
-    "check": "astro check",
-    "lint": "biome check .",
-    "format": "biome format --write .",
-    "test": "node --test tests/*.test.mjs",
-    "preflight": "npx @biomejs/biome check . && npx astro check && npx tsc --noEmit && npm test && npm run build && git diff --check"
-  }
+```bash
+# Kanonische Basis-URL
+SITE_URL=https://deine-domain.netlify.app
+
+# GitHub REST API Anbindung (Serverless Backend)
+GITHUB_TOKEN=ghp_deinFeingranularerPersonalAccessTokenHier
+GITHUB_REPOSITORY=owner/repository-name
+GITHUB_BRANCH=main
+GITHUB_DATA_PATH=data/contributions.json
+```
+
+---
+
+## TEIL 3: Die Testpyramide & Stufenweiser Testing-Plan
+
+### 3.1 Architektur der Pyramide & das 80/20-Prinzip
+
+Die Teststrategie folgt der klassischen Pyramide: **Breite Basis mit vielen, extrem schnellen und günstigen Tests; schmale Spitze mit wenigen, langsameren Browser-Tests.**
+
+```text
+                     ▲
+                    / \
+                   /   \
+                  / E2E \                <-- Stufe 4: Playwright (wenige, kritische Pfade)
+                 /-------\
+                /  INTE-  \              <-- Stufe 3: Vitest + Netlify Handler Mocks (Schnittstellen)
+               /  GRATION  \
+              /-------------\
+             /   COMPONENT   \           <-- Stufe 2: Vitest + astro/container (UI-Isolierung)
+            /-----------------\
+           /    UNIT TESTS     \         <-- Stufe 1: Node.js Test-Runner (Mathematik & Logik)
+          /---------------------\
+         /    STATISCHE ANALYSE  \       <-- Stufe 0: Biome, Astro Check, TypeScript strict
+        /-------------------------\
+
+ ┌─────────────────────────────────────────────────────────────────────────────┐
+ │  FLANKIERENDE QUERSCHNITTS-TESTS (Über alle Ebenen hinweg):                 │
+ │  • Performance (Lighthouse)  • Visual Regression  • Security (npm audit)    │
+ └─────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### Der Mythos der „100 % Testabdeckung“:
+* **Line Coverage $\neq$ Fehlerfreiheit:** Ein Test kann $100\,\%$ der Codezeilen berühren, ohne Randwerte (z. B. Division durch $0$ oder leere Arrays) zu prüfen.
+* **Pareto-Prinzip ($80/20$):** Die letzten $10\text{--}15\,\%$ Testabdeckung fressen $80\,\%$ der Entwicklungszeit für praxisferne Edge-Cases.
+* **Zielwerte:**
+  * $90\text{--}100\,\%$ Abdeckung bei Unit Tests (reine Geschäftslogik in `src/lib/`).
+  * $70\text{--}80\,\%$ Abdeckung bei Integration & Serverless Functions.
+  * 3 bis 5 kritische Pfade bei E2E (Quiz, Feature-Speicherung, Navigation).
+
+---
+
+### 3.2 Stufe 0: Statische Code-Analyse & Hygiene (Fundament)
+
+Prüft Code ohne Ausführung in Millisekunden auf Syntaxfehler, Formatierungsabweichungen, Typfehler und unsaubere Git-Artefakte:
+
+```bash
+# Linter und Formatierer ausführen
+npm run lint
+
+# Astro-Templates und Props prüfen
+npm run check
+
+# TypeScript-Compiler ohne Dateiausgabe durchlaufen lassen
+npm run typecheck
+
+# Git-Baum auf Whitespace-Fehler und ungelöste Merge-Konflikte prüfen
+git diff --check
+```
+
+---
+
+### 3.3 Stufe 1: Unit Tests (Mathematik, Algorithmen, Datenlogik)
+
+* **Zweck:** Testet isolierte TypeScript-Funktionen vollständig ohne DOM, Browser oder Server.
+* **Typische Bereiche:**
+  * Koordinatenberechnungen, SVG-Pfade, Taktmaße, Frequenzen ($E_2 \approx 82{,}4\text{ Hz}$).
+  * Daten-Transformationen, Sortier- und Filteralgorithmen.
+* **Befehl:**
+  ```bash
+  npm run test:unit
+  ```
+* **Beispiel-Implementierung (`tests/unit/math-logic.test.mjs`):**
+  ```javascript
+  import test from 'node:test';
+  import assert from 'node:assert/strict';
+
+  test('berechnet proportionale Abstände fehlerfrei', () => {
+    const calcSpacing = (duration, base) => (duration === 'quarter' ? base : base * 2);
+    assert.equal(calcSpacing('quarter', 20), 20);
+    assert.equal(calcSpacing('half', 20), 40);
+  });
   ```
 
 ---
 
-## TEIL 2: Entwickler-Workflows & Git-Cheatsheet
+### 3.4 Stufe 2: Component Tests (Astro-Container & UI-Isolierung)
 
-### 1. Start in einem neuen / geklonten Workspace
+* **Zweck:** Rendert Astro-Komponenten im Speicher (ohne vollständigen Browser), um Props, CSS-Klassen und Barrierefreiheitsattribute (`aria-*`) abzusichern.
+* **Befehl:**
+  ```bash
+  npm run test:comp
+  ```
+* **Beispiel-Implementierung (`tests/components/card.comp.test.ts`):**
+  ```typescript
+  import { experimental_AstroContainer as AstroContainer } from 'astro/container';
+  import { describe, it, expect } from 'vitest';
+  import UiButton from '../../src/components/ui/UiButton.astro';
 
-#### Anwendung starten (Reines Frontend / Dokumentation)
-```bash
-# 1. Abhängigkeiten installieren
-npm install
-
-# 2. Lokalen Entwicklungsserver starten
-npm run dev
-```
-*Erreichbar unter `http://localhost:4321`. Serverless Functions sind in diesem Modus inaktiv.*
-
-#### Anwendung starten (Mit Serverless Functions & Backend)
-```bash
-# 1. Abhängigkeiten installieren & Produktions-Build vorbereiten
-npm install
-npm run build
-
-# 2. Netlify CLI mit Projekt verknüpfen (einmalig)
-npx netlify-cli login
-npx netlify-cli link
-
-# 3. Synchronen Dev-Server starten
-npx netlify-cli dev
-```
-*Frontend und Serverless Functions laufen synchron unter `http://localhost:8888`.*
+  describe('Component: <UiButton />', () => {
+    it('rendert Label und barrierefreies Attribut', async () => {
+      const container = await AstroContainer.create();
+      const result = await container.renderToString(UiButton, {
+        props: { label: 'Starten', ariaLabel: 'Lektion starten' },
+      });
+      expect(result).toContain('Lektion starten');
+      expect(result).toContain('Starten');
+    });
+  });
+  ```
 
 ---
 
-### 2. Pre-Flight Qualitätsprüfung (Quality Gate)
+### 3.5 Stufe 3: Integration Tests (Serverless Functions & Schnittstellen)
 
-Vor jedem Push oder Pull Request muss die automatisierte Prüfkette fehlerfrei mit Exit-Code `0` durchlaufen:
+* **Zweck:** Prüft das Zusammenspiel mehrerer Einheiten, HTTP-Statuscodes und API-Mocks.
+* **Befehl:**
+  ```bash
+  npm run test:int
+  ```
+* **Beispiel-Implementierung (`tests/integration/contributions.int.test.ts`):**
+  ```typescript
+  import { describe, it, expect } from 'vitest';
+  import { handler } from '../../netlify/functions/contributions';
+
+  describe('Integration: Contributions Netlify Function', () => {
+    it('weist Payloads ohne Titel mit HTTP 400 ab', async () => {
+      const event = {
+        httpMethod: 'POST',
+        body: JSON.stringify({ description: 'Fehlender Titel' }),
+        headers: {},
+      } as any;
+
+      const response = await handler(event, {} as any);
+      expect(response.statusCode).toBe(400);
+    });
+  });
+  ```
+
+---
+
+### 3.6 Stufe 4: End-to-End (E2E) & Visual Regression (Browser-Simulation)
+
+* **Zweck:** Ein ferngesteuerter Browser (Chromium/WebKit) simuliert reale Nutzerpfade über die gebaute Anwendung.
+* **Befehl:**
+  ```bash
+  npm run test:e2e
+  ```
+* **Beispiel-Implementierung (`tests/e2e/workflow.spec.ts`):**
+  ```typescript
+  import { test, expect } from '@playwright/test';
+
+  test('Lernpfad-Navigation und Visual Snapshot', async ({ page }) => {
+    await page.goto('/');
+    await page.click('text=Dokumentation');
+    await expect(page).toHaveURL(/.*docs/);
+
+    const mainHeading = page.locator('h1');
+    await expect(mainHeading).toBeVisible();
+
+    // Visual Regression Prüfung
+    await expect(page).toHaveScreenshot('landing-page.png', {
+      maxDiffPixelRatio: 0.02,
+    });
+  });
+  ```
+
+---
+
+### 3.7 Flankierende Querschnitts-Tests (Performance, Security, Regression)
+
+#### 1. Security Testing (`npm run test:security`)
+```bash
+npm audit --audit-level=high
+```
+* Prüft alle Abhängigkeiten gegen die GitHub Advisory Database.
+* Bricht nur bei Lücken der Stufen `high` und `critical` ab.
+* Verhindert das Eindringen bekannter Sicherheitsrisiken in Serverless Functions.
+
+#### 2. Performance Testing (`npm run test:perf`)
+```bash
+npm run build && lhci autorun
+```
+* Überprüft Core Web Vitals (LCP, CLS, FID) und sichert einen Lighthouse-Score von mindestens 90 Punkten ab.
+
+#### 3. Visual Regression Testing (`npm run test:visual`)
+```bash
+playwright test --update-snapshots
+```
+* Gleicht gerenderte Grafiken und Notensysteme pixelgenau mit Referenzbildern ab.
+
+---
+
+### 3.8 Schrittweiser Implementierungsplan (Komplexitäts-Stufen)
+
+Gehe bei der Integration der Testschichten exakt in dieser Reihenfolge vor, um dich schrittweise von unten nach oben vorzuarbeiten:
+
+```text
+Stufe 1 (Fundament): Statische Analyse & Unit Tests
+├── 1. Biome und Astro Check in package.json verankern
+└── 2. Reine TypeScript-Funktionen in tests/unit/ absichern (npm test / npm run test:unit)
+
+Stufe 2 (Komponenten): Astro Container API
+├── 1. Vitest installieren (npm install -D vitest)
+├── 2. vitest.config.ts anlegen
+└── 3. Isolierte UI-Tests in tests/components/ anlegen (npm run test:comp)
+
+Stufe 3 (Integration): Serverless & Schnittstellen
+├── 1. Netlify Functions Handler über Vitest ansteuern
+└── 2. Validierung & Fehler-Codes abprüfen (npm run test:int)
+
+Stufe 4 (Spitze): End-to-End & Audits
+├── 1. Playwright installieren (npx playwright install --with-deps chromium)
+├── 2. E2E-Klickpfade in tests/e2e/ etablieren (npm run test:e2e)
+├── 3. npm audit in die Pre-Flight-Kette aufnehmen (npm run test:security)
+└── 4. Lighthouse CI für Performance-Limits konfigurieren (npm run test:perf)
+```
+
+---
+
+### 3.9 Das zentrale Pre-Flight Quality Gate
+
+Vor jedem Commit oder Pull Request muss die automatisierte Prüfkette fehlerfrei mit Exit-Code `0` durchlaufen:
 
 ```bash
-# Einzeiler für alle Prüfungen
 npm run preflight
 ```
 
-#### Die Prüfschritte im Detail:
-1. `npx @biomejs/biome check .`: Prüft Syntax, Formatierung und ungenutzte Imports.
-2. `npx astro check`: Prüft `.astro`-Templates, Frontmatter und Props.
-3. `npx tsc --noEmit`: Führt eine strikte TypeScript-Typprüfung im gesamten Projekt durch.
-4. `npm test`: Führt alle Unit-Tests in `tests/` über den Node-Testrunner aus.
-5. `npm run build`: Simuliert den Produktions-Build und validiert Chunk-Größen.
-6. `git diff --check`: Findet Whitespace-Fehler und verbliebene Merge-Konflikt-Marker.
-
 ---
 
-### 3. Git-Alltags-Workflows & Befehlsreferenz
-
-#### Feature-Branches erstellen & wechseln
-```bash
-# Neuen Branch anlegen und direkt aktivieren
-git switch -c feature/mein-feature
-
-# Zwischen Branches wechseln
-git switch main
-git switch feature/mein-feature
-
-# Alle lokalen und entfernten Branches anzeigen
-git branch -a
-```
-
-#### Änderungen versionieren & übertragen
-```bash
-# Status modifizierter Dateien prüfen
-git status
-
-# Alle Änderungen vormerken
-git add .
-
-# Konventionellen Commit mit prägnanter Nachricht erstellen
-git commit -m "feat(api): token-basierte validierung implementiert"
-
-# Neuen Branch erstmals an Remote übertragen
-git push -u origin feature/mein-feature
-
-# Folge-Commits pushen
-git push
-```
-
-#### Synchronisation & Merging
-```bash
-# Neuesten Stand vom Server laden (ohne lokalen Arbeitsstand zu verändern)
-git fetch origin
-
-# Main-Branch lokal aktualisieren
-git switch main
-git pull origin main
-
-# Remote-Main in den aktuellen Branch integrieren
-git merge origin main
-```
-
-#### Aktuellsten oder älteren Branch holen & synchronisieren
-```bash
-# Aktuellsten Stand eines Branches holen und lokalen Stand hart überschreiben
-git fetch origin
-git switch <aktuellsten-branch>
-git reset --hard origin/<aktuellsten-branch>
-
-# Älteren historischen Branch holen
-git switch <aelteren-branch>
-git fetch origin
-git reset --hard origin/<aelteren-branch>
-
-# Älteren Branch holen und Arbeitsbaum gezielt mit dem Stand eines neueren Branches auffüllen
-git switch <aelteren-branch>
-git fetch origin
-git reset --hard origin/<aelteren-branch>
-git restore --source=origin/<aktuellsten-branch> --worktree -- .
-```
-
-#### Commits zurücknehmen & HEAD-Erklärung
-```bash
-# Letzten Commit zurücknehmen (Änderungen bleiben im Dateisystem als modifiziert erhalten)
-git reset HEAD~1
-```
-* **`HEAD`:** Zeiger auf den aktuellen Commit, auf dem du dich befindest.
-* **`HEAD~1`:** Der direkte Vorgänger-Commit (1 Schritt zurück).
-* **`HEAD~2`:** Der Vor-Vorgänger-Commit (2 Schritte zurück).
-
-#### Aufräumen, Archivieren & Notfall-Fixes
-```bash
-# Ungetrackte Restdateien und Build-Reste radikal löschen
-git clean -fd
-
-# Branch umbenennen / ins Archiv verschieben
-git branch -m <branch-name> archive/<branch-name>
-
-# Archivierten Branch auf GitHub übertragen
-git push origin -u archive/<branch-name>
-
-# Remote-Branch auf GitHub löschen
-git push origin --delete <branch-name>
-
-# Windows/PowerShell Notfall-Reset (nach Terminal-Absturz oder blockierter index.lock)
-Remove-Item .git\index.lock -Force -ErrorAction SilentlyContinue
-git checkout -f main
-```
-
----
-
-### 4. Serverless API & Datenspeicher-Architektur
-
-Die Netlify Function (`netlify/functions/contributions.ts`) nimmt strukturierte Daten entgegen und speichert sie via GitHub REST API in `data/contributions.json`.
-
-#### Umgebungsvariablen (`.env`)
-| Variable | Beschreibung | Standard / Beispiel |
-| :--- | :--- | :--- |
-| `GITHUB_TOKEN` | Fine-grained Personal Access Token (Repo-Schreibrechte) | `ghp_abc123...` |
-| `GITHUB_REPOSITORY` | Pfad zum Zielrepository | `owner/repository` |
-| `GITHUB_BRANCH` | Zielbranch für Datenspeicherung | `main` |
-| `GITHUB_DATA_PATH` | Pfad zur JSON-Datei im Repository | `data/contributions.json` |
-
-#### Sicherheits- und Architektur-Regeln:
-1. **Kein Token ins Frontend:** Das GitHub-Token darf **niemals** mit dem Präfix `PUBLIC_` versehen oder in statische Komponenten importiert werden.
-2. **Entkopplung:** Die API ist unabhängig von der Speicherschicht gekapselt. Die GitHub-REST-Speicherung kann jederzeit ohne Frontend-Umbau gegen eine echte Datenbank (Supabase, PostgreSQL) ausgetauscht werden.
-3. **Schreib-Konflikte (HTTP 409):** Bei simultanen Schreibvorgängen auf die JSON-Datei fängt eine automatische Retry-Logik (bis zu 3 Versuche mit Exponential-Backoff) Versionskonflikte des GitHub-Blobs ab.
-4. **Beitrags-Manager Regeln:**
-   - **Typen:** `Feature`, `Bug`, `Decision`.
-   - **Bereiche:** Frei definierbare Kategorien (z. B. `Theorie`, `Praxis`, `Komponente`).
-   - **Prioritäten:** `Hoch`, `Mittel` (Standard), `Niedrig`.
-   - **Status:** `New` (Standard), `Active`, `Resolved`.
-   - **Checklisten:** Jeder Eintrag unterstützt bis zu 100 Checklistenpunkte à maximal 200 Zeichen. Das Abhaken erfolgt über State-Updates und persistiert beim Speichern.
-
----
-
-### 5. Deploy-Preview-Workflow für Teams & PRs
-
-1. **Repository verknüpfen:** `main` als Produktionsbranch in Netlify definieren und Deploy Previews aktivieren.
-2. **Pull Request öffnen:** Vom Feature-Branch einen PR gegen `main` erstellen. Netlify baut eine isolierte Preview-URL.
-3. **Vorsicht bei Preview-Schreibzugriffen:** In Netlify müssen Umgebungsvariablen für den Kontext *Deploy Previews* separat konfiguriert werden! Ohne explizite Zuweisung eines Test-Branches schreibt die Serverless Function auch in einer Test-Preview direkt in den Produktions-Ast (`main`).
-4. **Schutz vor Endlosschleifen:** Die `netlify.toml` ignoriert Commits an `data/**`, damit Datenspeichervorgänge der API nicht fortlaufend neue Deploy-Vorgänge triggern.
-
----
-
-## TEIL 3: Universelle Feature-Entwicklungs-Pipeline
-
-Jedes neue Modul und jedes neue Feature wird modular in 5 Schritten aufgebaut:
-
-```text
-Stufe 1: Typ- & Datendefinition (src/lib/types.ts oder src/content.config.ts)
-         └── Zod-Schemata, Interfaces und Datenmodelle festlegen
-
-Stufe 2: Reine Geschäfts- & Berechnungslogik (src/lib/feature-logic.ts)
-         └── Algorithmen, Parser, Validatoren (100% TypeScript, DOM-frei)
-
-Stufe 3: Automatisierte Unit-Tests (tests/feature-logic.test.mjs)
-         └── Mathematische Logik, Parsing & Randfälle mit 'node --test' absichern
-
-Stufe 4: UI- & Manager-Komponenten (src/components/features/FeatureManager.astro)
-         └── Bündelt Präsentationsbausteine aus src/components/ui/ und kapselt die Logik
-
-Stufe 5: Dokumentation & Lektions-Integration (src/content/docs/...)
-         └── Rein deklaratives MDX; bindet Manager-Komponenten über Props ein
-```
-
----
-
-## TEIL 4: Vollständige Release-Checkliste (Phasen 1 bis 5)
+## TEIL 4: Der 5-Phasen-Release-Audit & Definition of Done (DoD)
 
 ### 🛠️ Phase 1: Code-Hygiene & Automatisierte Prüfungen
-- [ ] **Linter & Formatter (`biome check .`):** Keine Syntaxabweichungen, ungenutzten Variablen oder toten Imports.
-- [ ] **Astro Template-Prüfung (`astro check`):** Alle Props, Datentypen und `.astro`-Dateien fehlerfrei validiert.
-- [ ] **TypeScript-Check (`tsc --noEmit`):** Compiler wirft 0 Typfehler bei strikter Konfiguration.
-- [ ] **Unit-Testabdeckung (`npm test`):** Alle Logik-, Validierungs- und Parsingtests sind grün.
+- [ ] **Linter & Formatter (`npm run lint`):** Keine Syntaxabweichungen, ungenutzten Variablen oder toten Imports.
+- [ ] **Astro Template-Check (`npm run check`):** Alle Props, Datentypen und `.astro`-Templates fehlerfrei validiert.
+- [ ] **TypeScript-Prüfung (`npm run typecheck`):** Der Compiler wirft 0 Typfehler im Strict-Modus.
+- [ ] **Sicherheits-Audit (`npm run test:security`):** Keine Lücken der Stufen `high` oder `critical`.
+- [ ] **Unit- & Integrationstests (`npm test`):** Alle Testdateien sind grün.
 - [ ] **Produktions-Build (`npm run build`):** Generiert fehlerfrei das Verzeichnis `dist/`.
-- [ ] **Bereinigung von Debug-Code:** Volltextsuche nach `console.log(...)` im Client-Code durchgeführt; temporäre KI-Notizen entfernt.
-- [ ] **Secret-Hygiene:** Keine API-Tokens oder Passwörter im Repository; `.env` steht in `.gitignore`; `.env.example` ist aktuell.
+- [ ] **Debug-Bereinigung:** Volltextsuche nach `console.log(...)` im Client-Code durchgeführt; temporäre Notizen entfernt.
+- [ ] **Secret-Hygiene:** Keine API-Tokens oder Passwörter im Quellcode; `.env` steht in `.gitignore`.
 
 ---
 
@@ -447,8 +700,8 @@ Stufe 5: Dokumentation & Lektions-Integration (src/content/docs/...)
 - [ ] **Keine Asset-Schwergewichte:** Keine unkomprimierten Multi-Megabyte-Dateien im Verzeichnis `public/`.
 - [ ] **Barrierefreiheit (WCAG AA):** Alle informativen Grafiken haben ein `alt`-Attribut; semantische Überschriftenfolge ($h1 \rightarrow h2 \rightarrow h3$).
 - [ ] **SEO & Meta-Tags:** Aussagekräftige `<title>`- und `<meta name="description">`-Tags pro Seite; Social-Media-Vorschau (`og:image`) konfiguriert.
-- [ ] **Favicon-Matrix:** Standard-Astro-Icon durch eigenes Set (`favicon.svg`, `apple-touch-icon.png`) ersetzt.
-- [ ] **Lighthouse-Audit:** Google Chrome Lighthouse Score von **90+ Punkten** in Performance, Accessibility, Best Practices und SEO.
+- [ ] **Favicon-Matrix:** Standard-Astro-Icon durch ein eigenes Favicon-Set (`favicon.svg`, `apple-touch-icon.png`) ersetzt.
+- [ ] **Lighthouse-Audit:** Score von mindestens **90+ Punkten** in Performance, Accessibility, Best Practices und SEO.
 
 ---
 
@@ -469,36 +722,39 @@ Ein Release gilt erst dann als **fertiggestellt und freigegeben**, wenn:
 
 ---
 
-## TEIL 5: Projekt-Audit – Was für den ersten Release noch fehlt
+## TEIL 5: Step-by-Step Checkliste für dein Projekt (Roadmap)
 
-Die folgende projektspezifische Checkliste fasst alle Abweichungen zusammen, die in deiner Codebase vor dem offiziellen Livegang noch behoben werden müssen:
+Arbeite die folgenden Schritte nacheinander ab, um dein aktuelles Repository in eine solide, produktionsreife Web-App zu transformieren:
 
-### 1. Konfiguration & Build-Warnungen
-- [ ] **`site`-Parameter in `astro.config.mjs` ergänzen:**
-  Aktuell fehlt die Basis-URL. Trage `site: 'https://deine-domain.netlify.app'` ein, um die Warnungen bei der Sitemap- und RSS-Erstellung zu beheben.
-- [ ] **Eigene 404-Fehlerseite anlegen:**
-  Erstelle die Datei `src/pages/404.astro` mit Link zurück zur Startseite, um die Build-Warnung für fehlende Fehler-Routen zu schließen.
-- [ ] **Leere i18n-Spracheinträge bereinigen:**
-  In `astro.config.mjs` unvollständige Locale-Blöcke vervollständigen oder ungenutzte Sprachen entfernen.
-- [ ] **Bundle-Splitting für schwere Bibliotheken:**
-  Chunk-Größen von großen Paketen (wie KaTeX oder AlphaTab) optimieren und nur seitenweise dynamisch importieren.
+### Schritt 1: Baseline-Fixes in der Konfiguration
+- [ ] **`site`-Parameter eintragen:** Öffne `astro.config.mjs` und trage `site: 'https://deine-domain.netlify.app'` ein (behebt die Sitemap- und Build-Warnungen).
+- [ ] **Eigene 404-Fehlerseite anlegen:** Erstelle die Datei `src/pages/404.astro` mit Link zurück zur Startseite.
+- [ ] **Leere i18n-Spracheinträge bereinigen:** Vervollständige oder entferne unvollständige Sprachkonfigurationen in `astro.config.mjs`.
+- [ ] **Vorlage `.env.example` anlegen:** Erstelle im Root-Verzeichnis die Datei `.env.example` mit `GITHUB_TOKEN=`, `GITHUB_REPOSITORY=` und `GITHUB_BRANCH=`.
 
-### 2. Sicherheit & Backend-Infrastruktur
-- [ ] **Vorlage `.env.example` im Root-Verzeichnis einchecken:**
-  Hinterlege eine Beispieldatei mit `GITHUB_TOKEN=`, `GITHUB_REPOSITORY=` und `GITHUB_BRANCH=`.
-- [ ] **Serverless API absichern (`netlify/functions/contributions.ts`):**
-  Aktuell kann jeder Webseitenbesucher unkontrolliert Schreibvorgänge in dein GitHub-Repository auslösen. Füge ein Authentifizierungs-Token, ein Shared-Secret im Header oder ein Captcha/Rate-Limiting ein.
-- [ ] **Deploy-Preview-Branches in Netlify isolieren:**
-  Setze im Netlify-Dashboard für den Deploy-Preview-Kontext eine abweichende Variable `GITHUB_BRANCH` (z. B. auf einen Test-Branch), damit Test-Previews nicht in den `main`-Zweig schreiben.
+### Schritt 2: Skripte & Pyramiden-Fundament in `package.json` etablieren
+- [ ] **Biome installieren & initialisieren:**
+  ```bash
+  npm install --save-dev --save-exact @biomejs/biome
+  npx biome init
+  ```
+- [ ] **`package.json`-Skripte aktualisieren:** Hinterlege `"test:unit"`, `"lint"`, `"check"`, `"typecheck"`, `"test:security"` und `"preflight"` wie in Teil 2.2 dokumentiert.
+- [ ] **Ersten Pre-Flight-Lauf ausführen:**
+  ```bash
+  npm run preflight
+  ```
 
-### 3. Tooling & Skripte (`package.json`)
-- [ ] **Pre-Flight-Befehl vereinheitlichen:**
-  Füge `"preflight": "npx @biomejs/biome check . && npx astro check && npx tsc --noEmit && npm test && npm run build && git diff --check"` in die `scripts` deiner `package.json` ein.
-- [ ] **Biome-Konfiguration initialisieren:**
-  Führe `npx biome init` aus, um einheitliche Einrückungen und Linter-Regeln festzuschreiben.
+### Schritt 3: Backend & Serverless API absichern
+- [ ] **API-Zugriffsschutz ergänzen:** Füge in `netlify/functions/contributions.ts` eine Token- oder Secret-Prüfung ein, um unbefugte externe Schreiboperationen abzuwehren.
+- [ ] **Deploy-Preview-Branches isolieren:** Hinterlege im Netlify-Dashboard unter *Deploy Previews* einen separaten Branch für `GITHUB_BRANCH`, damit Previews nicht in `main` schreiben.
 
-### 4. Rechtliches & Asset-Branding
-- [ ] **Astro-Favicon austauschen:**
-  Ersetze `public/favicon.svg` durch dein eigenes Plattform-Logo.
-- [ ] **Rechtliche Pflichtseiten erstellen:**
-  Erstelle `src/content/docs/impressum.mdx` und `src/content/docs/datenschutz.mdx` (inklusive Hinweisen zum Hosting und zu lokalen Schriften).
+### Schritt 4: Testpyramide schrittweise hochklettern
+- [ ] **Stufe 1 (Unit):** Bestehende Tests in `tests/music-notation.test.mjs` über `npm run test:unit` fest in den Pre-Commit-Workflow einbinden.
+- [ ] **Stufe 2 (Component):** Vitest installieren (`npm install -D vitest`), `vitest.config.ts` anlegen und erste Komponententests mit `astro/container` schreiben (`npm run test:comp`).
+- [ ] **Stufe 3 (Integration):** Handler-Aufrufe der Serverless Function über Vitest mit Mock-Payloads testen (`npm run test:int`).
+- [ ] **Stufe 4 (E2E & Visual):** Playwright installieren (`npm install -D @playwright/test`), `playwright.config.ts` konfigurieren und erste Browser-Simulationen für das Quiz aufsetzen (`npm run test:e2e`).
+
+### Schritt 5: Rechtliches & Branding (Finaler Release-Schritt)
+- [ ] **Favicon austauschen:** Ersetze `public/favicon.svg` durch dein eigenes Projekt-Logo.
+- [ ] **Rechtliche Pflichtseiten veröffentlichen:** Lege Impressum und Datenschutzerklärung unter `src/content/docs/` an.
+- [ ] **Abschluss-Audit nach Teil 4:** Führe den 5-Phasen-Auditkatalog durch und prüfe die Definition of Done (DoD).

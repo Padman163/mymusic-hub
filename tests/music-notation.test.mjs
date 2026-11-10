@@ -1,4 +1,4 @@
-import test from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { articulationPlacement, articulationY, renderArticulation } from '../src/lib/articulation.ts';
 import { renderRepeatEnd, renderRepeatEndAtBoundary, renderRepeatStart } from '../src/lib/barline.ts';
