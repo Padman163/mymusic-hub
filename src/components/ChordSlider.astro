@@ -5,8 +5,8 @@ const tuning = ["e", "B", "G", "D", "A", "E"];
 // Schmales Layout (passt perfekt in die Textspalte)
 const nutX = 125;
 const fretWidth = 46;
-const fretCount = 14; 
-const svgWidth = 784; 
+const fretCount = 14;
+const svgWidth = 784;
 const svgHeight = 260;
 
 // Y-Achsen der Saiten
@@ -16,8 +16,8 @@ const stringY = (index: number) => 30 + index * 26; // Y: 30, 56, 82, 108, 134, 
 const openNoteX = 105;
 
 // Farbpalette
-const colorRoot = "#F38181"; 
-const colorFifth = "#64C4ED"; 
+const colorRoot = "#F38181";
+const colorFifth = "#64C4ED";
 ---
 
 <div class="powerchord-interactive">
@@ -270,10 +270,10 @@ const colorFifth = "#64C4ED";
 
 <script>
   function setupPowerChordInteractive() {
-    const cards = document.querySelectorAll('.interactive-card');
+    const cards = document.querySelectorAll<HTMLElement>('.interactive-card');
     
     // Vollständiges Mapping
-    const notesByString = {
+    const notesByString: Record<number, string[]> = {
       5: ['E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G'],
       4: ['A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'C'],
       3: ['D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F'],
@@ -285,25 +285,25 @@ const colorFifth = "#64C4ED";
     const nutX = 125;
     const fretWidth = 46;
     const openNoteX = 105;
-    const getStringY = (idx) => 30 + idx * 26;
-    const getX = (f) => f === 0 ? openNoteX : nutX + (f - 0.5) * fretWidth;
+    const getStringY = (idx: number) => 30 + idx * 26;
+    const getX = (f: number) => f === 0 ? openNoteX : nutX + (f - 0.5) * fretWidth;
 
     cards.forEach(card => {
-      const vSlider = card.querySelector('.vertical-string-slider');
-      const hSlider = card.querySelector('.horizontal-fret-slider');
-      const nameDisplay = card.querySelector('.chord-name-display');
-      const tickLabels = card.querySelectorAll('.tick-label');
+      const vSlider = card.querySelector<HTMLInputElement>('.vertical-string-slider');
+      const hSlider = card.querySelector<HTMLInputElement>('.horizontal-fret-slider');
+      const nameDisplay = card.querySelector<HTMLElement>('.chord-name-display');
+      const tickLabels = card.querySelectorAll<SVGTextElement>('.tick-label');
       
       const chordType = card.getAttribute('data-chord-type');
-      const is3Note = (chordType === '3' || chordType === '3-inv');
       const isInverted = (chordType === '2-inv' || chordType === '3-inv');
       
-      const dotRoot = card.querySelector('.dot-root');
-      const dotHighFifth = card.querySelector('.dot-high-fifth');
-      const dotOctave = card.querySelector('.dot-octave');
-      const dotBassFifth = card.querySelector('.dot-bass-fifth');
+      const dotRoot = card.querySelector<SVGGElement>('.dot-root');
+      const dotHighFifth = card.querySelector<SVGGElement>('.dot-high-fifth');
+      const dotOctave = card.querySelector<SVGGElement>('.dot-octave');
+      const dotBassFifth = card.querySelector<SVGGElement>('.dot-bass-fifth');
 
       function updateDiagram() {
+        if (!hSlider || !vSlider) return;
         const fret = parseInt(hSlider.value, 10);
         const rootString = parseInt(vSlider.value, 10);
         
@@ -336,7 +336,7 @@ const colorFifth = "#64C4ED";
         const bassFifthFret = fret + bassFifthFretOffset;
 
         // Hilfsfunktion zum sauberen Animieren/Verstecken der SVG-Noten
-        const updateDot = (dot, string, f) => {
+        const updateDot = (dot: SVGGElement | null, string: number, f: number) => {
           if (!dot) return;
           // Wenn die Saite nicht existiert oder der Bund negativ ist (z.B. B-Saite im 0. Bund rückwärts), ausblenden
           if (f < 0 || string < 0 || string > 5) {
@@ -345,10 +345,12 @@ const colorFifth = "#64C4ED";
           }
           dot.style.display = '';
           dot.style.transform = `translate(${getX(f)}px, ${getStringY(string)}px)`;
-          const txt = dot.querySelector('text');
+          const txt = dot.querySelector<SVGTextElement>('text');
           const noteName = notesByString[string][f];
-          txt.textContent = noteName;
-          txt.setAttribute('font-size', noteName.length > 1 ? '10' : '12');
+          if (txt) {
+            txt.textContent = noteName;
+            txt.setAttribute('font-size', noteName.length > 1 ? '10' : '12');
+          }
         };
 
         updateDot(dotRoot, rootString, fret);
@@ -365,13 +367,13 @@ const colorFifth = "#64C4ED";
         if (nameDisplay) nameDisplay.textContent = displayName;
 
         // Gemutete Saiten aktualisieren
-        const activeStrings = [rootString];
+        const activeStrings: number[] = [rootString];
         if (dotHighFifth && highFifthString >= 0) activeStrings.push(highFifthString);
         if (dotOctave && octaveString >= 0) activeStrings.push(octaveString);
         if (dotBassFifth && bassFifthString <= 5 && bassFifthFret >= 0) activeStrings.push(bassFifthString);
           
         card.querySelectorAll('.muted-string').forEach(muted => {
-          const sIdx = parseInt(muted.getAttribute('data-string'), 10);
+          const sIdx = Number(muted.getAttribute('data-string') ?? -1);
           muted.setAttribute('opacity', activeStrings.includes(sIdx) ? '0' : '1');
         });
       }

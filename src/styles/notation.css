@@ -1,8 +1,8 @@
-@import './music.css';
+@import "./music.css";
 
 @font-face {
-  font-family: 'KeyboardNotationBravura';
-  src: url('/alphatab/font/Bravura.woff2') format('woff2');
+  font-family: "KeyboardNotationBravura";
+  src: url("/alphatab/font/Bravura.woff2") format("woff2");
 }
 
 :root {
@@ -41,7 +41,9 @@
 
 .notation-value-comparison strong {
   color: #111827;
-  font: bold var(--music-text-size)/1.2 Georgia, serif;
+  font:
+    bold var(--music-text-size) / 1.2 Georgia,
+    serif;
 }
 
 .notation-visual.has-hairpin {
@@ -50,7 +52,11 @@
 }
 
 .notation-visual.has-hairpin.has-header {
-  --notation-dynamics-top: calc(var(--notation-panel-padding) + var(--notation-header-height) + 64px);
+  --notation-dynamics-top: calc(
+    var(--notation-panel-padding) +
+    var(--notation-header-height) +
+    64px
+  );
 }
 
 .notation-visual.has-header .notation-header {
@@ -73,7 +79,11 @@
 }
 
 .notation-visual.has-header:not(.embedded) .notation-final-bar {
-  top: calc(var(--notation-panel-padding) + var(--notation-header-height) + 28px);
+  top: calc(
+    var(--notation-panel-padding) +
+    var(--notation-header-height) +
+    28px
+  );
 }
 
 .notation-visual.embedded {
@@ -117,14 +127,16 @@
 .notation-accidental,
 .notation-time,
 .notation-articulation {
-  font-family: 'NotationBravura';
+  font-family: "NotationBravura", sans-serif;
   font-size: 36px;
   fill: #111827;
   stroke: none;
 }
 
 .notation-tempo {
-  font: italic var(--music-text-size) Georgia, serif;
+  font:
+    italic var(--music-text-size) Georgia,
+    serif;
   fill: #111827;
   stroke: none;
 }
@@ -170,7 +182,9 @@
 .articulation-labels,
 .dotted-note-label {
   color: #111827;
-  font: 0.875rem/1.3 Georgia, serif;
+  font:
+    0.875rem / 1.3 Georgia,
+    serif;
   text-align: center;
 }
 
@@ -226,7 +240,8 @@
 }
 
 .notation-overview {
-  padding: calc(var(--notation-panel-padding) + 14px) var(--notation-panel-padding) 2rem;
+  padding: calc(var(--notation-panel-padding) + 14px)
+    var(--notation-panel-padding) 2rem;
   container: notation-overview / inline-size;
 }
 
@@ -284,7 +299,9 @@
   top: 28px;
 }
 
-.overview-measure .notation-visual.embedded.has-header > .notation-measure-number.embedded {
+.overview-measure
+  .notation-visual.embedded.has-header
+  > .notation-measure-number.embedded {
   top: 13px;
 }
 
@@ -372,7 +389,7 @@
 }
 
 .keyboard-brace text {
-  font-family: 'KeyboardNotationBravura';
+  font-family: "KeyboardNotationBravura", serif;
   font-size: 1000px;
 }
 

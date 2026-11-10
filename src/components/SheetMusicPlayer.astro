@@ -53,18 +53,12 @@ display: isQuizScore
   : {
   layoutMode: alphaTab.LayoutMode.Parchment, // Erzwingt strikte System- und Takt-Vorgaben
           // 1. Abstand ZWISCHEN den beiden Notenzeilen minimieren:
-          notationStaffPaddingBottom: 100, // Abstand unter der oberen Zeile (Standard: 15)
-          notationStaffPaddingTop: 100,    // Abstand über der unteren Zeile (Standard: 15)      
           notationStaffPaddingTop: -20, // Abstand unter der oberen Zeile (Standard: 15)
           notationStaffPaddingBottom: 0,    // Abstand über der unteren Zeile (Standard: 15)
 
           // 2. Korrekte Namen für den Rand ganz oben und ganz unten:
           firstNotationStaffPaddingTop: 0,
-          firstNotationStaffPaddingBottom: 100,
           lastNotationStaffPaddingBottom: 0,
-          lastNotationStaffPaddingTop: 100,
-          systemStaffDistance: -100,
-          stavesSpacing: -100,
           lastSystemFillThreshold: 0,
           scale: 1.0
           
@@ -73,7 +67,6 @@ display: isQuizScore
           enablePlayer: Boolean(sf2Url),
           enableUserInteraction: Boolean(sf2Url),
           soundFont: sf2Url ?? undefined,
-          workerFile: sf2Url ? '/alphatab/alphaTab.worker.mjs' : undefined
         }
       });
 
@@ -233,7 +226,7 @@ display: isQuizScore
             adjustTabDotPositions();
 
             tabDurationBeatIds.forEach((beatId) => {
-              container.querySelectorAll(`svg g.b${beatId} > text`).forEach((noteValue) => {
+              container.querySelectorAll<SVGTextElement>(`svg g.b${beatId} > text`).forEach((noteValue) => {
                 const bounds = noteValue.getBBox();
                 const matrix = noteValue.getCTM();
                 const svg = noteValue.ownerSVGElement;

@@ -1,7 +1,7 @@
 ---
-import NotationVisual from './NotationVisual.astro';
-import RepeatMark from '../music/RepeatMark.astro';
-import { assertNoClefChanges } from '../../lib/notation-renderer';
+import { assertNoClefChanges } from "../../lib/notation-renderer";
+import RepeatMark from "../ui/RepeatMark.astro";
+import NotationVisual from "./NotationVisual.astro";
 
 interface Props {
   showMeasureNumbers?: boolean;
@@ -10,18 +10,65 @@ interface Props {
 const { showMeasureNumbers = false } = Astro.props;
 const rows = [
   [
-    { number: undefined, steps: [2], showClef: true, showTime: true, startRepeat: false, endRepeat: false, showRightBar: true, final: false },
-    { number: 1, steps: [3, 4, 5, 2], showClef: false, showTime: false, startRepeat: false, endRepeat: false, showRightBar: false, final: false },
-    { number: 2, steps: [5, 6, 5, 4], showClef: false, showTime: false, startRepeat: true, endRepeat: false, showRightBar: true, final: false }
+    {
+      number: undefined,
+      steps: [2],
+      showClef: true,
+      showTime: true,
+      startRepeat: false,
+      endRepeat: false,
+      showRightBar: true,
+      final: false,
+    },
+    {
+      number: 1,
+      steps: [3, 4, 5, 2],
+      showClef: false,
+      showTime: false,
+      startRepeat: false,
+      endRepeat: false,
+      showRightBar: false,
+      final: false,
+    },
+    {
+      number: 2,
+      steps: [5, 6, 5, 4],
+      showClef: false,
+      showTime: false,
+      startRepeat: true,
+      endRepeat: false,
+      showRightBar: true,
+      final: false,
+    },
   ],
   [
-    { number: 3, steps: [3, 2, 1, 2], showClef: true, showTime: false, startRepeat: false, endRepeat: true, showRightBar: false, final: false },
-    { number: 4, steps: [3, 2, 0], showClef: false, showTime: false, startRepeat: false, endRepeat: false, showRightBar: true, final: true }
-  ]
+    {
+      number: 3,
+      steps: [3, 2, 1, 2],
+      showClef: true,
+      showTime: false,
+      startRepeat: false,
+      endRepeat: true,
+      showRightBar: false,
+      final: false,
+    },
+    {
+      number: 4,
+      steps: [3, 2, 0],
+      showClef: false,
+      showTime: false,
+      startRepeat: false,
+      endRepeat: false,
+      showRightBar: true,
+      final: true,
+    },
+  ],
 ] as const;
 assertNoClefChanges(
-  rows.flatMap((row) => row.map((measure) => measure.showClef ? 'treble' : false)),
-  'NotationPickupRepeat'
+  rows.flatMap((row) =>
+    row.map((measure) => (measure.showClef ? "treble" : false)),
+  ),
+  "NotationPickupRepeat",
 );
 ---
 

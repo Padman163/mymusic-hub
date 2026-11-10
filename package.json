@@ -4,23 +4,52 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",
-    "start": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "validate": "biome check . && astro check && tsc --noEmit",
+    "check": "astro check",
+    "lint": "biome lint .",
+    "format": "biome format --write .",
+    "fix": "biome check --write .",
+    "test": "vitest run",
+    "test:watch": "vitest --watch",
+    "test:ui": "vitest --ui",
+    "test:unit": "vitest run tests/music-notation.test.mjs",
+    "test:component": "vitest run tests/components",
+    "test:integration": "vitest run tests/integration",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:visual": "playwright test --update-snapshots",
+    "test:all": "npm run test && npm run build && npm run test:e2e",
+    "audit": "npm audit --audit-level=high",
+    "audit:lhci": "CHROME_PATH=$(node -p \"require('@playwright/test').chromium.executablePath()\") lhci autorun",
+    "preflight": "npm run validate && npm run audit && npm run test:all && git diff --check"
   },
   "dependencies": {
-    "@astrojs/markdown-remark": "^7.3.5",
-    "@astrojs/starlight": "^0.42.8",
+    "@astrojs/markdown-remark": "^7.3.6",
+    "@astrojs/starlight": "^0.42.10",
     "@coderline/alphatab": "^1.9.0",
-    "@netlify/functions": "^6.1.0",
-    "astro": "^7.4.5",
-    "katex": "^0.19.1",
+    "@netlify/functions": "^6.1.1",
+    "astro": "^7.4.8",
     "rehype-katex": "^7.0.1",
     "remark-math": "^6.0.0",
-    "sharp": "^0.35.3"
+    "sharp": "^0.35.5"
   },
   "allowScripts": {
     "esbuild": true
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.12",
+    "@biomejs/biome": "2.6.6",
+    "@lhci/cli": "^0.16.0",
+    "@playwright/test": "^1.65.0",
+    "@vitest/ui": "^5.1.0",
+    "happy-dom": "^21.0.4",
+    "typescript": "^6.0.3",
+    "vitest": "^5.1.0"
+  },
+  "overrides": {
+    "basic-ftp": "^6.2.1",
+    "katex": "^0.18.2"
   }
 }

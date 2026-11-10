@@ -1,15 +1,23 @@
 ---
-import NotationVisual from './NotationVisual.astro';
-import { type NotationAccidental, type NotationCurve, type NotationEvent } from '../../lib/notation-renderer';
-import { omitUnchangedTimeSignatures, type TimeSignature } from '../music/time-signature.ts';
-import { arrangeNotationSystems } from './system-layout.ts';
+import type {
+  NotationAccidental,
+  NotationCurve,
+  NotationEvent,
+} from "../../lib/notation-renderer";
+import {
+  omitUnchangedTimeSignatures,
+  type TimeSignature,
+} from "../../lib/time-signature.ts";
+import NotationVisual from "./NotationVisual.astro";
+import { arrangeNotationSystems } from "./system-layout.ts";
+
 interface Measure {
   measureNumber?: string | number;
-  clef?: 'treble' | 'bass' | false;
+  clef?: "treble" | "bass" | false;
   timeSignature?: TimeSignature;
   accidentals?: NotationAccidental[];
   notes: NotationEvent[];
-  rightBarStyle: 'single' | 'final';
+  rightBarStyle: "single" | "final";
   tempo?: string;
   tempoDetail?: string;
   ritAt?: number;
@@ -17,76 +25,89 @@ interface Measure {
   curves?: NotationCurve[];
   repeatStart?: boolean;
   repeatEnd?: boolean;
-  hairpin?: 'crescendo' | 'decrescendo';
-  initialDynamic?: 'piano' | 'forte';
+  hairpin?: "crescendo" | "decrescendo";
+  initialDynamic?: "piano" | "forte";
 }
 
 const systems: Measure[][] = [
   [
     {
       measureNumber: 1,
-      clef: 'treble',
+      clef: "treble",
       timeSignature: { numerator: 4, denominator: 4 },
-      accidentals: [{ type: 'sharp', step: 8 }, { type: 'sharp', step: 5 }],
-      tempo: 'Allegro',
-      tempoDetail: '♩ = 90',
-      notes: [
-        { duration: 'half', step: 4, articulation: 'staccato' },
-        { duration: 'quarter', step: 5, articulation: 'tenuto' },
-        { duration: 'eighth', step: 6, beamGroup: 'measure-1-eighths' },
-        { duration: 'eighth', step: 5, beamGroup: 'measure-1-eighths' }
+      accidentals: [
+        { type: "sharp", step: 8 },
+        { type: "sharp", step: 5 },
       ],
-      rightBarStyle: 'single'
+      tempo: "Allegro",
+      tempoDetail: "♩ = 90",
+      notes: [
+        { duration: "half", step: 4, articulation: "staccato" },
+        { duration: "quarter", step: 5, articulation: "tenuto" },
+        { duration: "eighth", step: 6, beamGroup: "measure-1-eighths" },
+        { duration: "eighth", step: 5, beamGroup: "measure-1-eighths" },
+      ],
+      rightBarStyle: "single",
     },
     {
       measureNumber: 2,
       clef: false,
       notes: [
-        { duration: 'eighth', step: 2, beamGroup: 'eighths' },
-        { duration: 'eighth', step: 3, beamGroup: 'eighths' },
-        { duration: 'sixteenth', step: 4 },
-        { duration: 'sixteenth', step: 5 },
-        { duration: 'sixteenth', step: 6, beamGroup: 'measure-2-sixteenths' },
-        { duration: 'sixteenth', step: 5, beamGroup: 'measure-2-sixteenths' },
-        { duration: 'quarter', step: 4 },
-        { duration: 'quarter', step: 2 }
+        { duration: "eighth", step: 2, beamGroup: "eighths" },
+        { duration: "eighth", step: 3, beamGroup: "eighths" },
+        { duration: "sixteenth", step: 4 },
+        { duration: "sixteenth", step: 5 },
+        { duration: "sixteenth", step: 6, beamGroup: "measure-2-sixteenths" },
+        { duration: "sixteenth", step: 5, beamGroup: "measure-2-sixteenths" },
+        { duration: "quarter", step: 4 },
+        { duration: "quarter", step: 2 },
       ],
-      rightBarStyle: 'single'
+      rightBarStyle: "single",
     },
     {
       measureNumber: 3,
       clef: false,
       curves: [
-        { from: 0, to: 1, type: 'tie', placement: 'below' },
-        { from: 2, to: 3, type: 'slur', placement: 'above' }
+        { from: 0, to: 1, type: "tie", placement: "below" },
+        { from: 2, to: 3, type: "slur", placement: "above" },
       ],
       notes: [
-        { duration: 'quarter', step: 2, articulation: 'accent', articulationPosition: 'below' },
-        { duration: 'quarter', step: 2 },
-        { duration: 'quarter', step: 2 },
-        { duration: 'quarter', step: 4, articulation: 'marcato', articulationPosition: 'below' }
+        {
+          duration: "quarter",
+          step: 2,
+          articulation: "accent",
+          articulationPosition: "below",
+        },
+        { duration: "quarter", step: 2 },
+        { duration: "quarter", step: 2 },
+        {
+          duration: "quarter",
+          step: 4,
+          articulation: "marcato",
+          articulationPosition: "below",
+        },
       ],
-      rightBarStyle: 'single'
+      rightBarStyle: "single",
     },
     {
       measureNumber: 4,
       clef: false,
-      notes: [{ duration: 'whole', step: -2 }],
-      rightBarStyle: 'single'
-    }
+      notes: [{ duration: "whole", step: -2 }],
+      rightBarStyle: "single",
+    },
   ],
   [
     {
       measureNumber: 5,
-      clef: 'treble',
+      clef: "treble",
       repeatStart: true,
       notes: [
-        { duration: 'quarter', step: 2 },
-        { duration: 'quarter', step: 4 },
-        { duration: 'quarter', step: 5 },
-        { duration: 'quarter', step: 7 }
+        { duration: "quarter", step: 2 },
+        { duration: "quarter", step: 4 },
+        { duration: "quarter", step: 5 },
+        { duration: "quarter", step: 7 },
       ],
-      rightBarStyle: 'single'
+      rightBarStyle: "single",
     },
     {
       measureNumber: 6,
@@ -95,154 +116,194 @@ const systems: Measure[][] = [
       ritAt: 0,
       aTempoAt: 2,
       notes: [
-        { duration: 'quarter', step: 2, accidental: 'sharp', articulation: 'staccato', articulationPosition: 'below' },
-        { duration: 'quarter', step: 2, accidental: 'natural', articulation: 'tenuto', articulationPosition: 'below' },
-        { duration: 'quarter', step: 5, accidental: 'flat' },
-        { duration: 'quarter', step: 3 }
+        {
+          duration: "quarter",
+          step: 2,
+          accidental: "sharp",
+          articulation: "staccato",
+          articulationPosition: "below",
+        },
+        {
+          duration: "quarter",
+          step: 2,
+          accidental: "natural",
+          articulation: "tenuto",
+          articulationPosition: "below",
+        },
+        { duration: "quarter", step: 5, accidental: "flat" },
+        { duration: "quarter", step: 3 },
       ],
-      rightBarStyle: 'single'
+      rightBarStyle: "single",
     },
     {
       measureNumber: 7,
       clef: false,
-      hairpin: 'crescendo',
+      hairpin: "crescendo",
       notes: [
-        { duration: 'quarter', step: 2, dotted: true },
-        { duration: 'eighth', step: 3 },
-        { duration: 'eighth', step: 4, beamGroup: 'measure-7-eighths' },
-        { duration: 'eighth', step: 5, beamGroup: 'measure-7-eighths', articulation: 'accent', articulationPosition: 'below' },
-        { duration: 'quarter', step: 6 }
+        { duration: "quarter", step: 2, dotted: true },
+        { duration: "eighth", step: 3 },
+        { duration: "eighth", step: 4, beamGroup: "measure-7-eighths" },
+        {
+          duration: "eighth",
+          step: 5,
+          beamGroup: "measure-7-eighths",
+          articulation: "accent",
+          articulationPosition: "below",
+        },
+        { duration: "quarter", step: 6 },
       ],
-      rightBarStyle: 'single'
+      rightBarStyle: "single",
     },
     {
       measureNumber: 8,
       clef: false,
-      hairpin: 'decrescendo',
-      initialDynamic: 'forte',
+      hairpin: "decrescendo",
+      initialDynamic: "forte",
       notes: [
-        { duration: 'half', step: 2 },
-        { duration: 'quarter', step: 3 },
-        { duration: 'quarter', step: 4 }
+        { duration: "half", step: 2 },
+        { duration: "quarter", step: 3 },
+        { duration: "quarter", step: 4 },
       ],
-      rightBarStyle: 'single'
-    }
+      rightBarStyle: "single",
+    },
   ],
   [
     {
       measureNumber: 9,
-      clef: 'treble',
+      clef: "treble",
       timeSignature: { numerator: 3, denominator: 4 },
       notes: [
-        { duration: 'half', step: 10 },
-        { duration: 'quarter', step: 6 }
+        { duration: "half", step: 10 },
+        { duration: "quarter", step: 6 },
       ],
-      rightBarStyle: 'single'
+      rightBarStyle: "single",
     },
     {
       measureNumber: 10,
       clef: false,
-      hairpin: 'crescendo',
-      initialDynamic: 'piano',
+      hairpin: "crescendo",
+      initialDynamic: "piano",
       notes: [
-        { duration: 'quarter', step: 2, dotted: true },
-        { duration: 'eighth', step: 3, beamGroup: 'measure-10-eighths' },
-        { duration: 'eighth', step: 5, beamGroup: 'measure-10-eighths' },
-        { duration: 'eighth', step: 6, beamGroup: 'measure-10-eighths', articulation: 'marcato', articulationPosition: 'below' }
+        { duration: "quarter", step: 2, dotted: true },
+        { duration: "eighth", step: 3, beamGroup: "measure-10-eighths" },
+        { duration: "eighth", step: 5, beamGroup: "measure-10-eighths" },
+        {
+          duration: "eighth",
+          step: 6,
+          beamGroup: "measure-10-eighths",
+          articulation: "marcato",
+          articulationPosition: "below",
+        },
       ],
-      rightBarStyle: 'single'
+      rightBarStyle: "single",
     },
     {
       measureNumber: 11,
       clef: false,
-      hairpin: 'decrescendo',
-      initialDynamic: 'forte',
+      hairpin: "decrescendo",
+      initialDynamic: "forte",
       notes: [
-        { duration: 'quarter', step: 6 },
-        { duration: 'quarter', step: 4, articulation: 'tenuto', articulationPosition: 'below' },
-        { duration: 'quarter', step: 2 }
+        { duration: "quarter", step: 6 },
+        {
+          duration: "quarter",
+          step: 4,
+          articulation: "tenuto",
+          articulationPosition: "below",
+        },
+        { duration: "quarter", step: 2 },
       ],
-      rightBarStyle: 'single'
+      rightBarStyle: "single",
     },
     {
       measureNumber: 12,
       clef: false,
-      curves: [{ from: 0, to: 1, type: 'slur', placement: 'above' }],
+      curves: [{ from: 0, to: 1, type: "slur", placement: "above" }],
       notes: [
-        { duration: 'quarter', step: 2 },
-        { duration: 'quarter', step: 4 },
-        { duration: 'quarter', step: 1, articulation: 'marcato', articulationPosition: 'below' }
+        { duration: "quarter", step: 2 },
+        { duration: "quarter", step: 4 },
+        {
+          duration: "quarter",
+          step: 1,
+          articulation: "marcato",
+          articulationPosition: "below",
+        },
       ],
-      rightBarStyle: 'single'
-    }
+      rightBarStyle: "single",
+    },
   ],
   [
     {
       measureNumber: 13,
-      clef: 'treble',
+      clef: "treble",
       timeSignature: { numerator: 4, denominator: 4 },
       notes: [
-        { duration: 'half', step: 3 },
-        { type: 'rest', duration: 'half' }
+        { duration: "half", step: 3 },
+        { type: "rest", duration: "half" },
       ],
-      rightBarStyle: 'single'
+      rightBarStyle: "single",
     },
     {
       measureNumber: 14,
       clef: false,
       notes: [
-        { type: 'rest', duration: 'quarter' },
-        { duration: 'quarter', step: 4 },
-        { duration: 'half', step: 2 }
+        { type: "rest", duration: "quarter" },
+        { duration: "quarter", step: 4 },
+        { duration: "half", step: 2 },
       ],
-      rightBarStyle: 'single'
+      rightBarStyle: "single",
     },
     {
       measureNumber: 15,
       clef: false,
-      notes: [{ type: 'rest', duration: 'whole' }],
-      rightBarStyle: 'single'
-    }
+      notes: [{ type: "rest", duration: "whole" }],
+      rightBarStyle: "single",
+    },
   ],
   [
     {
       measureNumber: 16,
-      clef: 'treble',
+      clef: "treble",
       timeSignature: { numerator: 3, denominator: 4 },
       notes: [
-        { duration: 'quarter', step: 2 },
-        { type: 'rest', duration: 'quarter' },
-        { duration: 'quarter', step: 4 }
+        { duration: "quarter", step: 2 },
+        { type: "rest", duration: "quarter" },
+        { duration: "quarter", step: 4 },
       ],
-      rightBarStyle: 'single'
+      rightBarStyle: "single",
     },
     {
       measureNumber: 17,
       clef: false,
       notes: [
-        { type: 'rest', duration: 'half' },
-        { duration: 'quarter', step: 5 }
+        { type: "rest", duration: "half" },
+        { duration: "quarter", step: 5 },
       ],
-      rightBarStyle: 'single'
+      rightBarStyle: "single",
     },
     {
       measureNumber: 18,
       clef: false,
       notes: [
-        { type: 'rest', duration: 'eighth' },
-        { duration: 'quarter', step: 3, dotted: true },
-        { duration: 'quarter', step: 2 }
+        { type: "rest", duration: "eighth" },
+        { duration: "quarter", step: 3, dotted: true },
+        { duration: "quarter", step: 2 },
       ],
-      rightBarStyle: 'final'
-    }
-  ]
+      rightBarStyle: "final",
+    },
+  ],
 ] as const;
 
 const measures = systems.flat();
 const renderedMeasures = omitUnchangedTimeSignatures([measures])[0];
 const layouts = [
-  { className: 'overview-layout-wide', systems: arrangeNotationSystems(renderedMeasures, [2, 2, 2, 2, 2, 2, 3, 3]) },
-  { className: 'overview-layout-narrow', systems: arrangeNotationSystems(renderedMeasures, 1) }
+  {
+    className: "overview-layout-wide",
+    systems: arrangeNotationSystems(renderedMeasures, [2, 2, 2, 2, 2, 2, 3, 3]),
+  },
+  {
+    className: "overview-layout-narrow",
+    systems: arrangeNotationSystems(renderedMeasures, 1),
+  },
 ];
 ---
 

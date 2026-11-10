@@ -1,24 +1,24 @@
 ---
 import {
-  renderNotationSvg,
   type NotationAccidental,
   type NotationCurve,
-  type NotationEvent
-} from '../../lib/notation-renderer';
-import '../../styles/notation.css';
-import FinalBar from '../music/FinalBar.astro';
-import MeasureNumber from '../music/MeasureNumber.astro';
-import DynamicsMarks from '../music/DynamicsMarks.astro';
-import TempoLabel from '../music/TempoLabel.astro';
-import type { TimeSignature } from '../music/time-signature.ts';
+  type NotationEvent,
+  renderNotationSvg,
+} from "../../lib/notation-renderer";
+import "../../styles/notation.css";
+import type { TimeSignature } from "../../lib/time-signature.ts";
+import DynamicsMarks from "../ui/DynamicsMarks.astro";
+import FinalBar from "../ui/FinalBar.astro";
+import MeasureNumber from "../ui/MeasureNumber.astro";
+import TempoLabel from "../ui/TempoLabel.astro";
 
 interface Props {
   showLeftBar?: boolean;
   showRightBar?: boolean;
-  rightBarStyle?: 'single' | 'final';
+  rightBarStyle?: "single" | "final";
   repeatStart?: boolean;
   repeatEnd?: boolean;
-  clef?: 'treble' | 'bass' | false;
+  clef?: "treble" | "bass" | false;
   notes?: NotationEvent[];
   accidentals?: NotationAccidental[];
   timeSignature?: TimeSignature;
@@ -28,21 +28,21 @@ interface Props {
   tempoDetail?: string;
   ritAt?: number;
   aTempoAt?: number;
-  hairpin?: 'crescendo' | 'decrescendo';
-  initialDynamic?: 'piano' | 'forte';
+  hairpin?: "crescendo" | "decrescendo";
+  initialDynamic?: "piano" | "forte";
   noteStart?: number;
   firstNoteX?: number;
-  spacing?: 'rhythmic' | 'equal';
+  spacing?: "rhythmic" | "equal";
   embedded?: boolean;
 }
 
 const {
   showLeftBar = false,
   showRightBar = true,
-  rightBarStyle = 'single',
+  rightBarStyle = "single",
   repeatStart = false,
   repeatEnd = false,
-  clef = 'treble',
+  clef = "treble",
   notes = [],
   accidentals = [],
   timeSignature,
@@ -57,7 +57,7 @@ const {
   noteStart = 0,
   firstNoteX,
   spacing,
-  embedded = false
+  embedded = false,
 } = Astro.props;
 
 const notation = renderNotationSvg({
@@ -75,7 +75,7 @@ const notation = renderNotationSvg({
   repeatEnd,
   curves,
   ritAt,
-  aTempoAt
+  aTempoAt,
 });
 ---
 

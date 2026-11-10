@@ -1,6 +1,6 @@
 @font-face {
-  font-family: 'NotationBravura';
-  src: url('/alphatab/font/Bravura.woff2') format('woff2');
+  font-family: "NotationBravura";
+  src: url("/alphatab/font/Bravura.woff2") format("woff2");
 }
 
 :root {
@@ -12,17 +12,21 @@
 .tempo-label {
   display: block;
   color: #111827;
-  font: bold var(--music-heading-size)/1.2 Georgia, serif;
+  font:
+    bold var(--music-heading-size) / 1.2 Georgia,
+    serif;
   white-space: nowrap;
 }
 
 .tempo-detail {
-  font: normal var(--music-text-size)/1.2 Georgia, serif;
+  font:
+    normal var(--music-text-size) / 1.2 Georgia,
+    serif;
 }
 
 @font-face {
-  font-family: 'NotationTempoBravura';
-  src: url('/alphatab/font/Bravura.woff2') format('woff2');
+  font-family: "NotationTempoBravura";
+  src: url("/alphatab/font/Bravura.woff2") format("woff2");
 }
 
 .tempo-heading {
@@ -30,7 +34,9 @@
   top: 0;
   left: 6px;
   color: #111827;
-  font: var(--music-text-size)/1.2 Georgia, serif;
+  font:
+    var(--music-text-size) / 1.2 Georgia,
+    serif;
 }
 
 .tempo-heading strong {
@@ -39,7 +45,9 @@
 }
 
 .metronome-note {
-  font: var(--music-symbol-size)/1 'NotationTempoBravura';
+  font:
+    var(--music-symbol-size) / 1 "NotationTempoBravura",
+    sans-serif;
   vertical-align: -0.2em;
 }
 
@@ -48,7 +56,9 @@
   top: calc(var(--notation-panel-padding, 1.5rem) + 13px);
   left: calc(var(--notation-panel-padding, 1.5rem) + 2px);
   color: #111827;
-  font: 10px/1 Georgia, serif;
+  font:
+    10px / 1 Georgia,
+    serif;
 }
 
 .notation-measure-number.embedded {
@@ -82,12 +92,16 @@
 .dynamic-word {
   top: calc(var(--dynamics-staff-bottom, 0px) + var(--dynamics-label-gap));
   left: calc(20% - 6px);
-  font: italic var(--music-text-size)/1 Georgia, serif;
+  font:
+    italic var(--music-text-size) / 1 Georgia,
+    serif;
 }
 
 .dynamic-mark {
   top: calc(var(--dynamics-staff-bottom, 0px) + var(--dynamics-mark-gap));
-  font: var(--music-symbol-size)/1 'NotationBravura';
+  font:
+    var(--music-symbol-size) / 1 "NotationBravura",
+    sans-serif;
 }
 
 .dynamic-start {

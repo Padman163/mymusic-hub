@@ -1,16 +1,23 @@
 ---
-import '../../styles/music.css';
-import { dynamicsForHairpin, type Dynamic, type Hairpin } from './dynamics.ts';
+import "../../styles/music.css";
+import {
+  type Dynamic,
+  dynamicsForHairpin,
+  type Hairpin,
+} from "../../lib/dynamics.ts";
 
 interface Props {
   type: Hairpin;
   initialDynamic?: Dynamic;
-  placement?: 'row' | 'overlay';
+  placement?: "row" | "overlay";
 }
 
-const { type, initialDynamic, placement = 'row' } = Astro.props;
-const { showStart: showStartDynamic } = dynamicsForHairpin(type, initialDynamic);
-const crescendo = type === 'crescendo';
+const { type, initialDynamic, placement = "row" } = Astro.props;
+const { showStart: showStartDynamic } = dynamicsForHairpin(
+  type,
+  initialDynamic,
+);
+const crescendo = type === "crescendo";
 ---
 
 <div

@@ -1,14 +1,16 @@
 ---
-import NotationVisual from './NotationVisual.astro';
-import { assertNoClefChanges } from '../../lib/notation-renderer';
+import { assertNoClefChanges } from "../../lib/notation-renderer";
+import NotationVisual from "./NotationVisual.astro";
 
 interface Props {
   timeSignatures: { numerator: number; denominator: number }[];
 }
 
 const { timeSignatures } = Astro.props;
-const clefs = timeSignatures.map((_, index) => index === 0 ? 'treble' as const : false);
-assertNoClefChanges(clefs, 'NotationTimeSignatures');
+const clefs = timeSignatures.map((_, index) =>
+  index === 0 ? ("treble" as const) : false,
+);
+assertNoClefChanges(clefs, "NotationTimeSignatures");
 ---
 
 <div class="time-signatures not-content" data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>

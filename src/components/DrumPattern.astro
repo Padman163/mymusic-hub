@@ -24,7 +24,7 @@ export interface Props {
   }[];
 }
 
-const { 
+const {
   steps = 8,
   timeSignature = "4/4",
   resolution = "1/8",
@@ -38,49 +38,82 @@ const {
   stepLabels: customStepLabels,
   patternData = [
     { name: "Kick - Hit", note: "C1", color: "#ef4444", activeSteps: [0, 4] },
-    { name: "Snare - Center", note: "D1", color: "#f97316", activeSteps: [2, 6] },
+    {
+      name: "Snare - Center",
+      note: "D1",
+      color: "#f97316",
+      activeSteps: [2, 6],
+    },
     { name: "Snare - Edge", note: "A0", color: "#f97316", activeSteps: [] },
-    { name: "Floortom 2 - Center", note: "F1", color: "#eab308", activeSteps: [] },
-    { name: "Hi-Hat - Closed Edge", note: "A#-1", color: "#22c55e", activeSteps: [0, 1, 2, 3, 4, 5, 6, 7] },
-    { name: "Hi-Hat - Open Edge 0", note: "E3", color: "#22c55e", activeSteps: [] },
-    { name: "Hi-Hat - Open Edge 3", note: "D0", color: "#22c55e", activeSteps: [] },
-    { name: "Crash 1 - Crash", note: "D5", color: "#0ea5e9", activeSteps: [] }
-  ]
+    {
+      name: "Floortom 2 - Center",
+      note: "F1",
+      color: "#eab308",
+      activeSteps: [],
+    },
+    {
+      name: "Hi-Hat - Closed Edge",
+      note: "A#-1",
+      color: "#22c55e",
+      activeSteps: [0, 1, 2, 3, 4, 5, 6, 7],
+    },
+    {
+      name: "Hi-Hat - Open Edge 0",
+      note: "E3",
+      color: "#22c55e",
+      activeSteps: [],
+    },
+    {
+      name: "Hi-Hat - Open Edge 3",
+      note: "D0",
+      color: "#22c55e",
+      activeSteps: [],
+    },
+    { name: "Crash 1 - Crash", note: "D5", color: "#0ea5e9", activeSteps: [] },
+  ],
 } = Astro.props;
 
 const noteColors: Record<string, string> = {
-  C: '#f87171',
-  'C#': '#fb923c',
-  D: '#fbbf24',
-  'D#': '#f472b6',
-  E: '#a3e635',
-  F: '#e879f9',
-  'F#': '#2dd4bf',
-  G: '#60a5fa',
-  'G#': '#38bdf8',
-  A: '#c084fc',
-  'A#': '#4ade80',
-  B: '#facc15'
+  C: "#f87171",
+  "C#": "#fb923c",
+  D: "#fbbf24",
+  "D#": "#f472b6",
+  E: "#a3e635",
+  F: "#e879f9",
+  "F#": "#2dd4bf",
+  G: "#60a5fa",
+  "G#": "#38bdf8",
+  A: "#c084fc",
+  "A#": "#4ade80",
+  B: "#facc15",
 };
 
 const visiblePatternData = patternData
-  .filter((track) => keepEmptyTracks || track.activeSteps.length > 0 || (track.eventPositions?.length ?? 0) > 0)
+  .filter(
+    (track) =>
+      keepEmptyTracks ||
+      track.activeSteps.length > 0 ||
+      (track.eventPositions?.length ?? 0) > 0,
+  )
   .map((track) => ({
     ...track,
     color: useTrackColors
       ? track.color
-      : noteColors[track.note.match(/^[A-G]#?/)?.[0] ?? ''] ?? track.color,
-    velocities: Array.from({ length: steps }, (_, stepIndex) => (
+      : (noteColors[track.note.match(/^[A-G]#?/)?.[0] ?? ""] ?? track.color),
+    velocities: Array.from({ length: steps }, (_, stepIndex) =>
       track.activeSteps.includes(stepIndex)
         ? Math.min(127, Math.max(0, track.velocities?.[stepIndex] ?? 90))
-        : 0
-    ))
+        : 0,
+    ),
   }));
 
 const initialTrack = visiblePatternData[0];
-const stepLabels = Array.from({ length: steps }, (_, index) => (
-  customStepLabels?.[index] ?? (index % 2 === 0 ? `${(Math.floor(index / 2) % 4) + 1}` : "+")
-));
+const stepLabels = Array.from(
+  { length: steps },
+  (_, index) =>
+    customStepLabels?.[index] ??
+    (index % 2 === 0 ? `${(Math.floor(index / 2) % 4) + 1}` : "+"),
+);
 ---
 
 <div
@@ -534,10 +567,11 @@ const stepLabels = Array.from({ length: steps }, (_, index) => (
 </style>
 
 <script>
-  function updateVelocityCell(cell, velocity) {
+  function updateVelocityCell(cell: HTMLDivElement, velocity: number) {
     const value = Math.max(0, Math.min(127, Math.round(velocity)));
-    const bar = cell.querySelector('.velocity-bar');
-    const label = cell.querySelector('.velocity-label');
+    const bar = cell.querySelector<HTMLSpanElement>('.velocity-bar');
+    const label = cell.querySelector<HTMLSpanElement>('.velocity-label');
+    if (!bar || !label) return;
 
     cell.dataset.velocity = String(value);
     cell.setAttribute('aria-valuenow', String(value));
@@ -548,21 +582,21 @@ const stepLabels = Array.from({ length: steps }, (_, index) => (
   }
 
   function setupDrumPatterns() {
-    const patterns = document.querySelectorAll('.studio-one-pattern');
+    const patterns = document.querySelectorAll<HTMLElement>('.studio-one-pattern');
     
     patterns.forEach(pattern => {
-      const rows = pattern.querySelectorAll('.track-row:not(.velocity-row)');
-      const velocityRow = pattern.querySelector('.velocity-row');
-      const velocityCells = pattern.querySelectorAll('.velocity-cell');
+      const rows = pattern.querySelectorAll<HTMLDivElement>('.track-row:not(.velocity-row)');
+      const velocityRow = pattern.querySelector<HTMLDivElement>('.velocity-row');
+      const velocityCells = pattern.querySelectorAll<HTMLDivElement>('.velocity-cell');
       const isInteractive = pattern.dataset.interactive === 'true';
       const hasVelocity = pattern.dataset.showVelocity === 'true';
-      let selectedTrack = pattern.querySelector('.track-row.selected') || rows[0];
+      let selectedTrack = pattern.querySelector<HTMLDivElement>('.track-row.selected') || rows[0];
 
       if (!isInteractive && !hasVelocity) return;
 
-      function renderVelocity(row) {
-        const values = JSON.parse(row.dataset.velocities);
-        const stepCells = row.querySelectorAll('.step-cell');
+      function renderVelocity(row: HTMLDivElement) {
+        const values = JSON.parse(row.dataset.velocities ?? '[]') as number[];
+        const stepCells = row.querySelectorAll<HTMLDivElement>('.step-cell');
 
         velocityCells.forEach((velocityCell, stepIndex) => {
           const isActive = stepCells[stepIndex].classList.contains('active');
@@ -575,14 +609,14 @@ const stepLabels = Array.from({ length: steps }, (_, index) => (
           }
           velocityCell.setAttribute(
             'aria-label',
-            `${row.querySelector('.track-name').textContent}, Step ${stepIndex + 1}, Anschlag`
+            `${row.querySelector<HTMLElement>('.track-name')?.textContent ?? ''}, Step ${stepIndex + 1}, Anschlag`
           );
           velocityCell.tabIndex = isInteractive && isActive ? 0 : -1;
           updateVelocityCell(velocityCell, value);
         });
       }
 
-      function selectRow(row) {
+      function selectRow(row: HTMLDivElement) {
         selectedTrack = row;
         rows.forEach(candidate => candidate.classList.toggle('selected', candidate === row));
         if (hasVelocity) {
@@ -593,8 +627,8 @@ const stepLabels = Array.from({ length: steps }, (_, index) => (
       }
 
       rows.forEach(row => {
-        const color = row.getAttribute('data-color');
-        const cells = row.querySelectorAll('.step-cell');
+        const color = row.dataset.color ?? '#18181b';
+        const cells = row.querySelectorAll<HTMLDivElement>('.step-cell');
         if (row.dataset.bound !== 'true') {
           row.dataset.bound = 'true';
           row.addEventListener('click', () => selectRow(row));
@@ -615,7 +649,7 @@ const stepLabels = Array.from({ length: steps }, (_, index) => (
             const isActive = cell.classList.toggle('active');
             cell.style.backgroundColor = isActive ? color : '#18181b';
 
-            const values = JSON.parse(row.dataset.velocities);
+            const values = JSON.parse(row.dataset.velocities ?? '[]') as number[];
             const stepIndex = Number(cell.dataset.step);
             values[stepIndex] = isActive ? (values[stepIndex] || 90) : 0;
             row.dataset.velocities = JSON.stringify(values);
@@ -624,7 +658,7 @@ const stepLabels = Array.from({ length: steps }, (_, index) => (
         });
       });
 
-      const selectedRow = pattern.querySelector('.track-row.selected') || rows[0];
+      const selectedRow = pattern.querySelector<HTMLDivElement>('.track-row.selected') || rows[0];
       if (selectedRow) selectRow(selectedRow);
 
       velocityCells.forEach(cell => {
@@ -632,13 +666,13 @@ const stepLabels = Array.from({ length: steps }, (_, index) => (
         if (cell.dataset.bound === 'true') return;
         cell.dataset.bound = 'true';
 
-        const setFromPointer = (event) => {
+        const setFromPointer = (event: PointerEvent) => {
           const bounds = cell.getBoundingClientRect();
           const ratio = 1 - (event.clientY - bounds.top) / bounds.height;
           updateVelocityCell(cell, ratio * 127);
 
           if (selectedTrack) {
-            const values = JSON.parse(selectedTrack.dataset.velocities);
+            const values = JSON.parse(selectedTrack.dataset.velocities ?? '[]') as number[];
             values[Number(cell.dataset.step)] = Number(cell.dataset.velocity);
             selectedTrack.dataset.velocities = JSON.stringify(values);
           }
@@ -657,7 +691,7 @@ const stepLabels = Array.from({ length: steps }, (_, index) => (
           if (cell.dataset.active !== 'true') return;
 
           const current = Number(cell.dataset.velocity);
-          const changes = {
+          const changes: Record<string, number> = {
             ArrowUp: 1,
             ArrowRight: 1,
             ArrowDown: -1,
@@ -672,7 +706,7 @@ const stepLabels = Array.from({ length: steps }, (_, index) => (
           updateVelocityCell(cell, current + changes[event.key]);
 
           if (selectedTrack) {
-            const values = JSON.parse(selectedTrack.dataset.velocities);
+            const values = JSON.parse(selectedTrack.dataset.velocities ?? '[]') as number[];
             values[Number(cell.dataset.step)] = Number(cell.dataset.velocity);
             selectedTrack.dataset.velocities = JSON.stringify(values);
           }
