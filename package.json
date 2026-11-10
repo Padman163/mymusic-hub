@@ -11,6 +11,9 @@
     "test:watch": "vitest --watch",
     "test": "vitest run",
     "test:ui": "vitest --ui",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:visual": "playwright test --update-snapshots",
     "test:node": "node --test tests/**/*.test.mjs",
     "check": "astro check",
     "audit": "npm audit --audit-level=high",
@@ -33,6 +36,7 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.12",
     "@biomejs/biome": "2.6.6",
+    "@playwright/test": "^1.65.0",
     "typescript": "^6.0.3",
     "vitest": "^5.1.0"
   }
