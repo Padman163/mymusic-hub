@@ -17,15 +17,15 @@
    * [2.3 Design-Tokens, globale CSS-Ebenen & Webfonts](#23-design-tokens-globale-css-ebenen--webfonts)
    * [2.4 Typensicherer Content Layer mit Zod-Validierung](#24-typensicherer-content-layer-mit-zod-validierung)
    * [2.5 Serverless Backend, GitHub REST API & Deploy Previews](#25-serverless-backend-github-rest-api--deploy-previews)
-3. [TEIL 3: Die Testpyramide & Stufenweiser Testing-Plan](#teil-3-die-testpyramide--stufenweiser-testing-plan)
-   * [3.1 Architektur der Pyramide & das 80/20-Prinzip](#31-architektur-der-pyramide--das-8020-prinzip)
-   * [3.2 Stufe 0: Statische Code-Analyse & Hygiene (Fundament)](#32-stufe-0-statische-code-analyse--hygiene-fundament)
-   * [3.3 Stufe 1: Unit Tests (Mathematik, Algorithmen, Datenlogik)](#33-stufe-1-unit-tests-mathematik-algorithmen-datenlogik)
-   * [3.4 Stufe 2: Component Tests (Astro-Container & UI-Isolierung)](#34-stufe-2-component-tests-astro-container--ui-isolierung)
-   * [3.5 Stufe 3: Integration Tests (Serverless Functions & Schnittstellen)](#35-stufe-3-integration-tests-serverless-functions--schnittstellen)
-   * [3.6 Stufe 4: End-to-End (E2E) & Visual Regression (Browser-Simulation)](#36-stufe-4-end-to-end-e2e--visual-regression-browser-simulation)
-   * [3.7 Flankierende Querschnitts-Tests (Performance, Security, Regression)](#37-flankierende-querschnitts-tests-performance-security-regression)
-   * [3.8 Schrittweiser Implementierungsplan (Komplexitäts-Stufen)](#38-schrittweiser-implementierungsplan-komplexitäts-stufen)
+3. [TEIL 3: Die Testpyramide & stufenweiser Testing-Plan](#teil-3-die-testpyramide--stufenweiser-testing-plan)
+   * [3.1 Pyramidenebenen und aktueller Stand](#31-pyramidenebenen-und-aktueller-stand)
+   * [3.2 Stufe 0: Statische Prüfungen (Fundament)](#32-stufe-0-statische-prüfungen-fundament)
+   * [3.3 Stufe 1: Unit-Tests – reine Logik](#33-stufe-1-unit-tests--reine-logik)
+   * [3.4 Stufe 2: Komponenten- und DOM-Verhalten](#34-stufe-2-komponenten--und-dom-verhalten)
+   * [3.5 Stufe 3: Integration – HTTP-Verhalten der Contributions-API](#35-stufe-3-integration--http-verhalten-der-contributions-api)
+   * [3.6 Stufe 4: End-to-End im Browser](#36-stufe-4-end-to-end-im-browser)
+   * [3.7 Querschnittsprüfungen](#37-querschnittsprüfungen)
+   * [3.8 Testkommandos im Alltag](#38-testkommandos-im-alltag)
    * [3.9 Das zentrale Pre-Flight Quality Gate](#39-das-zentrale-pre-flight-quality-gate)
 4. [TEIL 4: Der 5-Phasen-Release-Audit & Definition of Done (DoD)](#teil-4-der-5-phasen-release-audit--definition-of-done-dod)
 5. [TEIL 5: Step-by-Step Checkliste für dein Projekt (Roadmap)](#teil-5-step-by-step-checkliste-für-dein-projekt-roadmap)
@@ -72,24 +72,23 @@ npm run preview             # Lokale Vorschau des fertigen Produktions-Builds
 # ---------------------------------------------------------
 # QUALITÄTSPRÜFUNGEN & PYRAMIDEN-TESTS (VON UNTEN NACH OBEN)
 # ---------------------------------------------------------
-npm run lint                # Biome: Prüft Syntax, Formatierung & tote Imports
-npm run lint:fix            # Biome: Korrigiert Stil- & Formatierungsfehler automatisch
-npm run check               # Astro Check: Validiert .astro-Templates, Props & Frontmatter
-npm run typecheck           # TypeScript: Strikte Typprüfung ohne Dateiausgabe (tsc --noEmit)
+npm run lint                # Stufe 0: Biome-Lint
+npm run check               # Stufe 0: Astro-Templates, Content und Frontmatter
+npm run typecheck           # Stufe 0: TypeScript ohne Dateiausgabe
+npm run audit               # Querschnitt: npm audit ab Schweregrad high
 
-npm run test:unit           # Stufe 1: Schnelle Unit-Tests (Mathematik, Logik, Parser)
-npm run test:comp           # Stufe 2: Isolierte Komponententests (Astro-Container)
-npm run test:int            # Stufe 3: Integrationstests (Netlify Function, Payload, Store)
-npm run test:e2e            # Stufe 4: E2E-Browsertests (Playwright, Chromium/WebKit)
-npm run test:visual         # Stufe 4: Pixelgenaue visuelle Regressions-Snapshots
-
-npm run test:perf           # Flankierend: Lighthouse CI Core Web Vitals Audit
-npm run test:security       # Flankierend: npm audit Sicherheitscheck ab Schweregrad 'high'
+npm run test:unit           # Stufe 1: Notations- und Layoutlogik mit Vitest
+npm run test:component      # Stufe 2: DOM-Verhalten des Checklisten-Editors mit happy-dom
+npm run test:integration    # Stufe 3: HTTP-Verhalten und Validierung des Contributions-Handlers
+npm run build                # Voraussetzung für E2E: Produktions-Build
+npm run test:e2e            # Stufe 4: Playwright-Smoke-Tests in Desktop Chrome und Mobile Safari
+npm run test:all            # Alle implementierten Testebenen plus Build
+npm test                    # Alias für test:all
 
 # ---------------------------------------------------------
 # DAS KOMBINIERTE QUALITY GATE (VOR JEDEM PUSH / PR)
 # ---------------------------------------------------------
-npm run preflight           # Führt die gesamte Kette sequenziell mit Exit-Code 0 aus
+npm run preflight           # Statische Prüfungen, Audit, test:all und git diff --check
 ```
 
 ---
@@ -338,15 +337,15 @@ export default defineConfig({
     "format": "biome format --write .",
     "check": "astro check",
     "typecheck": "tsc --noEmit",
-    "test": "npm run test:unit",
-    "test:unit": "node --test tests/**/*.test.mjs",
-    "test:comp": "vitest run tests/**/*.comp.test.ts",
-    "test:int": "vitest run tests/**/*.int.test.ts",
+    "test": "npm run test:all",
+    "test:unit": "vitest run tests/music-notation.test.mjs",
+    "test:component": "vitest run tests/components",
+    "test:integration": "vitest run tests/integration",
+    "test:all": "npm run test:unit && npm run test:component && npm run test:integration && npm run build && npm run test:e2e",
     "test:e2e": "playwright test",
     "test:visual": "playwright test --update-snapshots",
-    "test:perf": "lhci autorun",
-    "test:security": "npm audit --audit-level=high",
-    "preflight": "npm run lint && npm run check && npm run typecheck && npm run test:security && npm run test:unit && npm run build && git diff --check"
+    "audit": "npm audit --audit-level=high",
+    "preflight": "npm run lint && npm run check && npm run typecheck && npm run audit && npm run test:all && git diff --check"
   },
   "dependencies": {
     "@astrojs/markdown-remark": "^7.3.5",
@@ -365,6 +364,7 @@ export default defineConfig({
     "@biomejs/biome": "^1.9.4",
     "@lhci/cli": "^0.14.0",
     "@playwright/test": "^1.49.0",
+    "happy-dom": "^21.0.4",
     "@types/node": "^22.10.0",
     "typescript": "^5.7.0",
     "vitest": "^2.1.0"
@@ -437,225 +437,110 @@ GITHUB_DATA_PATH=data/contributions.json
 
 ---
 
-## TEIL 3: Die Testpyramide & Stufenweiser Testing-Plan
+## TEIL 3: Die Testpyramide & stufenweiser Testing-Plan
 
-### 3.1 Architektur der Pyramide & das 80/20-Prinzip
+### 3.1 Pyramidenebenen und aktueller Stand
 
-Die Teststrategie folgt der klassischen Pyramide: **Breite Basis mit vielen, extrem schnellen und günstigen Tests; schmale Spitze mit wenigen, langsameren Browser-Tests.**
-
-```text
-                     ▲
-                    / \
-                   /   \
-                  / E2E \                <-- Stufe 4: Playwright (wenige, kritische Pfade)
-                 /-------\
-                /  INTE-  \              <-- Stufe 3: Vitest + Netlify Handler Mocks (Schnittstellen)
-               /  GRATION  \
-              /-------------\
-             /   COMPONENT   \           <-- Stufe 2: Vitest + astro/container (UI-Isolierung)
-            /-----------------\
-           /    UNIT TESTS     \         <-- Stufe 1: Node.js Test-Runner (Mathematik & Logik)
-          /---------------------\
-         /    STATISCHE ANALYSE  \       <-- Stufe 0: Biome, Astro Check, TypeScript strict
-        /-------------------------\
-
- ┌─────────────────────────────────────────────────────────────────────────────┐
- │  FLANKIERENDE QUERSCHNITTS-TESTS (Über alle Ebenen hinweg):                 │
- │  • Performance (Lighthouse)  • Visual Regression  • Security (npm audit)    │
- └─────────────────────────────────────────────────────────────────────────────┘
-```
-
-#### Der Mythos der „100 % Testabdeckung“:
-* **Line Coverage $\neq$ Fehlerfreiheit:** Ein Test kann $100\,\%$ der Codezeilen berühren, ohne Randwerte (z. B. Division durch $0$ oder leere Arrays) zu prüfen.
-* **Pareto-Prinzip ($80/20$):** Die letzten $10\text{--}15\,\%$ Testabdeckung fressen $80\,\%$ der Entwicklungszeit für praxisferne Edge-Cases.
-* **Zielwerte:**
-  * $90\text{--}100\,\%$ Abdeckung bei Unit Tests (reine Geschäftslogik in `src/lib/`).
-  * $70\text{--}80\,\%$ Abdeckung bei Integration & Serverless Functions.
-  * 3 bis 5 kritische Pfade bei E2E (Quiz, Feature-Speicherung, Navigation).
-
----
-
-### 3.2 Stufe 0: Statische Code-Analyse & Hygiene (Fundament)
-
-Prüft Code ohne Ausführung in Millisekunden auf Syntaxfehler, Formatierungsabweichungen, Typfehler und unsaubere Git-Artefakte:
-
-```bash
-# Linter und Formatierer ausführen
-npm run lint
-
-# Astro-Templates und Props prüfen
-npm run check
-
-# TypeScript-Compiler ohne Dateiausgabe durchlaufen lassen
-npm run typecheck
-
-# Git-Baum auf Whitespace-Fehler und ungelöste Merge-Konflikte prüfen
-git diff --check
-```
-
----
-
-### 3.3 Stufe 1: Unit Tests (Mathematik, Algorithmen, Datenlogik)
-
-* **Zweck:** Testet isolierte TypeScript-Funktionen vollständig ohne DOM, Browser oder Server.
-* **Typische Bereiche:**
-  * Koordinatenberechnungen, SVG-Pfade, Taktmaße, Frequenzen ($E_2 \approx 82{,}4\text{ Hz}$).
-  * Daten-Transformationen, Sortier- und Filteralgorithmen.
-* **Befehl:**
-  ```bash
-  npm run test:unit
-  ```
-* **Beispiel-Implementierung (`tests/unit/math-logic.test.mjs`):**
-  ```javascript
-  import test from 'node:test';
-  import assert from 'node:assert/strict';
-
-  test('berechnet proportionale Abstände fehlerfrei', () => {
-    const calcSpacing = (duration, base) => (duration === 'quarter' ? base : base * 2);
-    assert.equal(calcSpacing('quarter', 20), 20);
-    assert.equal(calcSpacing('half', 20), 40);
-  });
-  ```
-
----
-
-### 3.4 Stufe 2: Component Tests (Astro-Container & UI-Isolierung)
-
-* **Zweck:** Rendert Astro-Komponenten im Speicher (ohne vollständigen Browser), um Props, CSS-Klassen und Barrierefreiheitsattribute (`aria-*`) abzusichern.
-* **Befehl:**
-  ```bash
-  npm run test:comp
-  ```
-* **Beispiel-Implementierung (`tests/components/card.comp.test.ts`):**
-  ```typescript
-  import { experimental_AstroContainer as AstroContainer } from 'astro/container';
-  import { describe, it, expect } from 'vitest';
-  import UiButton from '../../src/components/ui/UiButton.astro';
-
-  describe('Component: <UiButton />', () => {
-    it('rendert Label und barrierefreies Attribut', async () => {
-      const container = await AstroContainer.create();
-      const result = await container.renderToString(UiButton, {
-        props: { label: 'Starten', ariaLabel: 'Lektion starten' },
-      });
-      expect(result).toContain('Lektion starten');
-      expect(result).toContain('Starten');
-    });
-  });
-  ```
-
----
-
-### 3.5 Stufe 3: Integration Tests (Serverless Functions & Schnittstellen)
-
-* **Zweck:** Prüft das Zusammenspiel mehrerer Einheiten, HTTP-Statuscodes und API-Mocks.
-* **Befehl:**
-  ```bash
-  npm run test:int
-  ```
-* **Beispiel-Implementierung (`tests/integration/contributions.int.test.ts`):**
-  ```typescript
-  import { describe, it, expect } from 'vitest';
-  import { handler } from '../../netlify/functions/contributions';
-
-  describe('Integration: Contributions Netlify Function', () => {
-    it('weist Payloads ohne Titel mit HTTP 400 ab', async () => {
-      const event = {
-        httpMethod: 'POST',
-        body: JSON.stringify({ description: 'Fehlender Titel' }),
-        headers: {},
-      } as any;
-
-      const response = await handler(event, {} as any);
-      expect(response.statusCode).toBe(400);
-    });
-  });
-  ```
-
----
-
-### 3.6 Stufe 4: End-to-End (E2E) & Visual Regression (Browser-Simulation)
-
-* **Zweck:** Ein ferngesteuerter Browser (Chromium/WebKit) simuliert reale Nutzerpfade über die gebaute Anwendung.
-* **Befehl:**
-  ```bash
-  npm run test:e2e
-  ```
-* **Beispiel-Implementierung (`tests/e2e/workflow.spec.ts`):**
-  ```typescript
-  import { test, expect } from '@playwright/test';
-
-  test('Lernpfad-Navigation und Visual Snapshot', async ({ page }) => {
-    await page.goto('/');
-    await page.click('text=Dokumentation');
-    await expect(page).toHaveURL(/.*docs/);
-
-    const mainHeading = page.locator('h1');
-    await expect(mainHeading).toBeVisible();
-
-    // Visual Regression Prüfung
-    await expect(page).toHaveScreenshot('landing-page.png', {
-      maxDiffPixelRatio: 0.02,
-    });
-  });
-  ```
-
----
-
-### 3.7 Flankierende Querschnitts-Tests (Performance, Security, Regression)
-
-#### 1. Security Testing (`npm run test:security`)
-```bash
-npm audit --audit-level=high
-```
-* Prüft alle Abhängigkeiten gegen die GitHub Advisory Database.
-* Bricht nur bei Lücken der Stufen `high` und `critical` ab.
-* Verhindert das Eindringen bekannter Sicherheitsrisiken in Serverless Functions.
-
-#### 2. Performance Testing (`npm run test:perf`)
-```bash
-npm run build && lhci autorun
-```
-* Überprüft Core Web Vitals (LCP, CLS, FID) und sichert einen Lighthouse-Score von mindestens 90 Punkten ab.
-
-#### 3. Visual Regression Testing (`npm run test:visual`)
-```bash
-playwright test --update-snapshots
-```
-* Gleicht gerenderte Grafiken und Notensysteme pixelgenau mit Referenzbildern ab.
-
----
-
-### 3.8 Schrittweiser Implementierungsplan (Komplexitäts-Stufen)
-
-Gehe bei der Integration der Testschichten exakt in dieser Reihenfolge vor, um dich schrittweise von unten nach oben vorzuarbeiten:
+Die Testpyramide ordnet Prüfungen nach Umfang und Kosten. Kleine, schnelle Tests bilden die Basis; wenige Tests im echten Browser sichern die wichtigsten Nutzerpfade an der Spitze ab. Die folgende Übersicht beschreibt, was dieses Repository **heute tatsächlich ausführt**.
 
 ```text
-Stufe 1 (Fundament): Statische Analyse & Unit Tests
-├── 1. Biome und Astro Check in package.json verankern
-└── 2. Reine TypeScript-Funktionen in tests/unit/ absichern (npm test / npm run test:unit)
-
-Stufe 2 (Komponenten): Astro Container API
-├── 1. Vitest installieren (npm install -D vitest)
-├── 2. vitest.config.ts anlegen
-└── 3. Isolierte UI-Tests in tests/components/ anlegen (npm run test:comp)
-
-Stufe 3 (Integration): Serverless & Schnittstellen
-├── 1. Netlify Functions Handler über Vitest ansteuern
-└── 2. Validierung & Fehler-Codes abprüfen (npm run test:int)
-
-Stufe 4 (Spitze): End-to-End & Audits
-├── 1. Playwright installieren (npx playwright install --with-deps chromium)
-├── 2. E2E-Klickpfade in tests/e2e/ etablieren (npm run test:e2e)
-├── 3. npm audit in die Pre-Flight-Kette aufnehmen (npm run test:security)
-└── 4. Lighthouse CI für Performance-Limits konfigurieren (npm run test:perf)
+                         ▲
+                        / \
+                       / E2E \          Stufe 4: Playwright, Desktop + Mobile
+                      /-------\
+                     / INTEGRA-\         Stufe 3: Vitest, HTTP-Verhalten der API
+                    /   TION    \
+                   /-------------\
+                  / KOMPONENTE &   \     Stufe 2: Vitest + happy-dom, DOM-Verhalten
+                 /  BROWSER-LOGIK   \
+                /-------------------\
+               /      UNIT-TESTS     \   Stufe 1: Vitest, Notations- und Layoutlogik
+              /-----------------------\
+             / STATISCHE PRÜFUNGEN     \ Stufe 0: Biome, Astro, TypeScript
+            /___________________________\
 ```
 
----
+### 3.2 Stufe 0: Statische Prüfungen (Fundament)
+
+Diese Prüfungen führen die Anwendung nicht aus. Sie finden Stil-, Astro-, Typ- und Abhängigkeitsprobleme:
+
+| Prüfung | Werkzeug | Kommando |
+|---|---|---|
+| Lint | Biome | `npm run lint` |
+| Astro-Templates, Content und Frontmatter | Astro Check | `npm run check` |
+| TypeScript-Typen | TypeScript | `npm run typecheck` |
+| Abhängigkeiten ab Schweregrad `high` | npm Audit | `npm run audit` |
+| Whitespace- und Konfliktmarkerprüfung | Git | `git diff --check` |
+
+### 3.3 Stufe 1: Unit-Tests – reine Logik
+
+**Werkzeug:** Vitest. **Datei:** `tests/music-notation.test.mjs`.
+
+Die Tests prüfen Notations- und Layoutfunktionen isoliert: Takt- und Tempomarkierungen, Rhythmuspositionen, Pausen, Artikulationen, Bögen, Wiederholungszeichen sowie die Anordnung von Notensystemen. Dabei werden Randfälle und ungültige Eingaben mitgeprüft. Es wird weder ein Browser noch ein echter Server benötigt.
+
+```bash
+npm run test:unit
+```
+
+### 3.4 Stufe 2: Komponenten- und DOM-Verhalten
+
+**Werkzeuge:** Vitest und `happy-dom`. **Datei:** `tests/components/checklist-editor.test.ts`.
+
+`happy-dom` stellt eine leichte DOM-Umgebung bereit, aber keinen echten Browser. Die Tests prüfen den Checklisten-Editor aus `src/lib/checklist-editor.ts`: Enter fügt bereinigte Einträge hinzu, Entfernen aktualisiert das Limit, vorhandene Häkchen bleiben erhalten und `clear()` leert den Editor. So werden Interaktionen der wiederverwendbaren UI-Logik schnell und isoliert geprüft.
+
+```bash
+npm run test:component
+```
+
+Diese Ebene rendert nicht die vollständigen Astro-Seiten oder -Komponenten. Layout, echte Browser-Ereignisse und responsive Darstellung gehören zu Stufe 4.
+
+### 3.5 Stufe 3: Integration – HTTP-Verhalten der Contributions-API
+
+**Werkzeug:** Vitest. **Datei:** `tests/integration/contributions.test.ts`.
+
+Die Tests rufen den Netlify-Handler mit echten `Request`-Objekten auf und prüfen HTTP-Status sowie Fehlerantworten: nicht unterstützte Methoden, fehlende GitHub-Konfiguration, ungültiges JSON und ungültige Beitragsdaten. Die getesteten Fehlerpfade brechen vor einem GitHub-Schreibzugriff ab. Es werden daher keine Live-GitHub-Daten verändert; der erfolgreiche Schreibpfad mit GitHub-API-Mocks ist derzeit noch nicht abgedeckt.
+
+```bash
+npm run test:integration
+```
+
+### 3.6 Stufe 4: End-to-End im Browser
+
+**Werkzeug:** Playwright. **Datei:** `tests/e2e/smoke.spec.ts`.
+
+Playwright startet den lokalen Preview-Server auf dem gebauten `dist/` und prüft Startseite sowie Rock-Kompositionsseite in zwei Projekten: Desktop Chrome und Mobile Safari (iPhone 14). Für jede Seite werden HTTP 200, eine sichtbare Überschrift und das Ausbleiben ungefangener JavaScript-Fehler erwartet.
+
+```bash
+npm run build
+npm run test:e2e
+```
+
+Die E2E-Suite ist aktuell ein Seiten-Smoke-Test, kein vollständiger Klickpfad- oder Screenshot-Vergleich. Der vorhandene Befehl `npm run test:visual` aktualisiert Playwright-Snapshots; ohne `toHaveScreenshot`-Assertions gibt es derzeit keine automatisierte visuelle Regressionserkennung.
+
+### 3.7 Querschnittsprüfungen
+
+- **Security:** `npm run audit` bricht bei npm-Sicherheitsmeldungen ab Schweregrad `high` ab.
+- **Performance:** Lighthouse- oder Core-Web-Vitals-Schwellen sind derzeit nicht Teil der Skripte und werden nicht vom Preflight geprüft.
+- **Browserabdeckung:** Der E2E-Lauf deckt Desktop Chrome und Mobile Safari ab; Firefox ist nicht konfiguriert.
+
+### 3.8 Testkommandos im Alltag
+
+```bash
+npm run test:unit         # Stufe 1: isolierte Notations- und Layoutlogik
+npm run test:component    # Stufe 2: DOM-Verhalten mit happy-dom
+npm run test:integration  # Stufe 3: HTTP-Handler und API-Validierung
+npm run build             # Produktions-Build für den Preview-Server
+npm run test:e2e          # Stufe 4: Browser-Smoke-Tests
+npm run test:all          # alle implementierten Testebenen und Build
+npm test                  # Alias für test:all
+npm run test:watch        # Vitest im Watch-Modus
+```
+
+`test:all` führt Unit-, DOM- und Integrationstests aus, erstellt danach den Produktions-Build und startet schließlich Playwright. Es umfasst alle aktuell implementierten automatisierten Testebenen; nicht eingerichtete Lighthouse-, Screenshot- oder Live-GitHub-Prüfungen werden nicht vorgetäuscht.
 
 ### 3.9 Das zentrale Pre-Flight Quality Gate
 
-Vor jedem Commit oder Pull Request muss die automatisierte Prüfkette fehlerfrei mit Exit-Code `0` durchlaufen:
+Vor einem Commit oder Pull Request führt der Preflight statische Prüfungen, Abhängigkeits-Audit, die gesamte Testpyramide und die Git-Diff-Prüfung sequenziell aus. Ein Fehler stoppt die Kette mit einem Fehlercode:
 
 ```bash
 npm run preflight
@@ -669,8 +554,8 @@ npm run preflight
 - [ ] **Linter & Formatter (`npm run lint`):** Keine Syntaxabweichungen, ungenutzten Variablen oder toten Imports.
 - [ ] **Astro Template-Check (`npm run check`):** Alle Props, Datentypen und `.astro`-Templates fehlerfrei validiert.
 - [ ] **TypeScript-Prüfung (`npm run typecheck`):** Der Compiler wirft 0 Typfehler im Strict-Modus.
-- [ ] **Sicherheits-Audit (`npm run test:security`):** Keine Lücken der Stufen `high` oder `critical`.
-- [ ] **Unit- & Integrationstests (`npm test`):** Alle Testdateien sind grün.
+- [ ] **Sicherheits-Audit (`npm run audit`):** Keine npm-Meldungen ab Schweregrad `high`.
+- [ ] **Gesamte Testpyramide (`npm test`):** Alle implementierten Unit-, DOM-, API- und E2E-Tests sind grün.
 - [ ] **Produktions-Build (`npm run build`):** Generiert fehlerfrei das Verzeichnis `dist/`.
 - [ ] **Debug-Bereinigung:** Volltextsuche nach `console.log(...)` im Client-Code durchgeführt; temporäre Notizen entfernt.
 - [ ] **Secret-Hygiene:** Keine API-Tokens oder Passwörter im Quellcode; `.env` steht in `.gitignore`.
@@ -732,14 +617,10 @@ Arbeite die folgenden Schritte nacheinander ab, um dein aktuelles Repository in 
 - [ ] **Leere i18n-Spracheinträge bereinigen:** Vervollständige oder entferne unvollständige Sprachkonfigurationen in `astro.config.mjs`.
 - [ ] **Vorlage `.env.example` anlegen:** Erstelle im Root-Verzeichnis die Datei `.env.example` mit `GITHUB_TOKEN=`, `GITHUB_REPOSITORY=` und `GITHUB_BRANCH=`.
 
-### Schritt 2: Skripte & Pyramiden-Fundament in `package.json` etablieren
-- [ ] **Biome installieren & initialisieren:**
-  ```bash
-  npm install --save-dev --save-exact @biomejs/biome
-  npx biome init
-  ```
-- [ ] **`package.json`-Skripte aktualisieren:** Hinterlege `"test:unit"`, `"lint"`, `"check"`, `"typecheck"`, `"test:security"` und `"preflight"` wie in Teil 2.2 dokumentiert.
-- [ ] **Ersten Pre-Flight-Lauf ausführen:**
+### Schritt 2: Testpyramide ausführen
+- [ ] **Einzelne Ebene gezielt prüfen:** `npm run test:unit`, `npm run test:component`, `npm run test:integration` oder `npm run test:e2e`.
+- [ ] **Alle Tests und Produktions-Build ausführen:** `npm run test:all` (alternativ `npm test`).
+- [ ] **Vollständiges Quality Gate ausführen:**
   ```bash
   npm run preflight
   ```
@@ -748,11 +629,11 @@ Arbeite die folgenden Schritte nacheinander ab, um dein aktuelles Repository in 
 - [ ] **API-Zugriffsschutz ergänzen:** Füge in `netlify/functions/contributions.ts` eine Token- oder Secret-Prüfung ein, um unbefugte externe Schreiboperationen abzuwehren.
 - [ ] **Deploy-Preview-Branches isolieren:** Hinterlege im Netlify-Dashboard unter *Deploy Previews* einen separaten Branch für `GITHUB_BRANCH`, damit Previews nicht in `main` schreiben.
 
-### Schritt 4: Testpyramide schrittweise hochklettern
-- [ ] **Stufe 1 (Unit):** Bestehende Tests in `tests/music-notation.test.mjs` über `npm run test:unit` fest in den Pre-Commit-Workflow einbinden.
-- [ ] **Stufe 2 (Component):** Vitest installieren (`npm install -D vitest`), `vitest.config.ts` anlegen und erste Komponententests mit `astro/container` schreiben (`npm run test:comp`).
-- [ ] **Stufe 3 (Integration):** Handler-Aufrufe der Serverless Function über Vitest mit Mock-Payloads testen (`npm run test:int`).
-- [ ] **Stufe 4 (E2E & Visual):** Playwright installieren (`npm install -D @playwright/test`), `playwright.config.ts` konfigurieren und erste Browser-Simulationen für das Quiz aufsetzen (`npm run test:e2e`).
+### Schritt 4: Testpyramide schrittweise erweitern
+- [ ] **Stufe 1 (Unit):** Notations- und Layoutlogik in `tests/music-notation.test.mjs` absichern.
+- [ ] **Stufe 2 (DOM):** Checklisten-Editor-Interaktionen in `tests/components/` mit Vitest und happy-dom testen.
+- [ ] **Stufe 3 (Integration):** Contributions-Handler in `tests/integration/` mit HTTP-Requests und ungültigen Payloads prüfen; erfolgreichen GitHub-Schreibpfad künftig mit API-Mocks ergänzen.
+- [ ] **Stufe 4 (E2E):** Smoke-Tests der Startseite und Rock-Kompositionsseite in `tests/e2e/` auf Desktop und Mobile erweitern; danach kritische Nutzerpfade ergänzen.
 
 ### Schritt 5: Rechtliches & Branding (Finaler Release-Schritt)
 - [ ] **Favicon austauschen:** Ersetze `public/favicon.svg` durch dein eigenes Projekt-Logo.

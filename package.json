@@ -9,15 +9,20 @@
     "format": "biome format --write .",
     "lint": "biome lint .",
     "test:watch": "vitest --watch",
-    "test": "vitest run",
+    "test": "npm run test:all",
     "test:ui": "vitest --ui",
+    "test:unit": "vitest run tests/music-notation.test.mjs",
+    "test:component": "vitest run tests/components",
+    "test:integration": "vitest run tests/integration",
+    "test:all": "npm run test:unit && npm run test:component && npm run test:integration && npm run build && npm run test:e2e",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:visual": "playwright test --update-snapshots",
-    "test:node": "node --test tests/**/*.test.mjs",
+    "test:node": "npm run test:unit",
     "check": "astro check",
     "audit": "npm audit --audit-level=high",
-    "preflight": "npm run lint && npm run check && npx tsc --noEmit && npm run audit && npm test && npm run build && git diff --check"
+    "typecheck": "tsc --noEmit",
+    "preflight": "npm run lint && npm run check && npm run typecheck && npm run audit && npm run test:all && git diff --check"
   },
   "dependencies": {
     "@astrojs/markdown-remark": "^7.3.5",
