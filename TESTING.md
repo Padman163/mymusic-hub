@@ -135,6 +135,8 @@ npx tsc --noEmit
   ```bash
   # Fremdpakete auf Schweregrad High/Critical scannen
   npm run audit
+  # Fix, falls nötig
+  npm audit fix
 
   # Verifizieren, dass .env nicht im Git-Index getrackt wird
   git ls-files --error-unmatch .env

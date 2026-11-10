@@ -67,10 +67,14 @@ npx netlify-cli dev
 
 * Die Netlify Function `netlify/functions/contributions.ts` benötigt Schreibrechte über die GitHub REST API, um Beiträge in `data/contributions.json` zu persistieren. Fehlen diese Schlüssel, antwortet die Schnittstelle mit HTTP 503.
 
-### Schritt 6: E2E-Testbrowser installieren (Optional)
-Wenn End-to-End-Browsertests ausgeführt werden sollen:
+### Schritt 6: E2E-Testbrowser & Lighthouse CI einrichten (Optional)
+
 ```bash
+# 1. Chromium inklusive Systemabhängigkeiten für Playwright installieren
 npx playwright install --with-deps chromium
+
+# 2. Lighthouse CI CLI installieren (falls noch nicht in devDependencies vorhanden)
+npm install -D @lhci/cli@latest
 ```
 
 ---
