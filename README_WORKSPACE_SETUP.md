@@ -26,13 +26,16 @@ npm -v
 
 ### Schritt 2: Abhängigkeiten installieren
 ```bash
+# Installiert /node_modules
 npm install
+
 npm install @astrojs/netlify
 ```
 * **Warum dieser Schritt nötig ist:** Ein frisch geklonter Workspace enthält keinen Ordner `node_modules/`. Dieser Befehl liest die `package-lock.json` ein und installiert exakt die benötigten Frameworks (Astro, Starlight, Sharp, KaTeX, Biome, Vitest, Playwright).
 
 ### Schritt 3: Basis-Frontend starten & prüfen (Isolierter Modus)
 ```bash
+# Updated /.astro und startet App ohne Serverfunktionen und APIs bleiben inaktiv
 npm run dev
 ```
 * **URL:** Öffne `http://localhost:4321` im Browser.
