@@ -471,6 +471,7 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     );
   });
 
+  const beams: string[] = [];
   groups.forEach((group) => {
     const steps = group.indices.map((index) => pitchedNote(index).step);
     const stemUp = steps[0] < 4;
@@ -489,13 +490,13 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
           end.offset + (noteHeadHalfWidth - STEM_WIDTH / 2) * (endUp ? 1 : -1);
         const startY = beamStemEnds.get(index)!;
         const endY = beamStemEnds.get(nextIndex)!;
-        const startX = `calc(${start.percent} + ${startOffset}px)`;
-        const endX = `calc(${end.percent} + ${endOffset}px)`;
-        parts.push(renderBeam(startX, startY, endX, endY, BEAM_WIDTH));
+        const startX = `calc(${start.percent} + ${startOffset - STEM_WIDTH / 2}px)`;
+        const endX = `calc(${end.percent} + ${endOffset + STEM_WIDTH / 2}px)`;
+        beams.push(renderBeam(startX, startY, endX, endY, BEAM_WIDTH));
         if (group.duration === "sixteenth") {
           if (startUp === endUp) {
             const offset = sp(0.75) * (startUp ? 1 : -1);
-            parts.push(
+            beams.push(
               renderBeam(
                 startX,
                 startY + offset,
@@ -508,7 +509,7 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
             const middleX = `calc(${(start.fraction + end.fraction) * 50}% + ${(startOffset + endOffset) / 2}px)`;
             const middleY = (startY + endY) / 2;
             const offset = sp(0.75) * (startUp ? 1 : -1);
-            parts.push(
+            beams.push(
               renderBeam(
                 startX,
                 startY + offset,
@@ -517,7 +518,7 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
                 BEAM_WIDTH,
               ),
             );
-            parts.push(
+            beams.push(
               renderBeam(
                 middleX,
                 middleY - offset,
@@ -544,11 +545,11 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
       beam += 1
     ) {
       const beamOffset = beam * sp(0.75) * (stemUp ? 1 : -1);
-      parts.push(
+      beams.push(
         renderBeam(
-          `calc(${first.percent} + ${first.offset + stemOffset}px)`,
+          `calc(${first.percent} + ${first.offset + stemOffset - STEM_WIDTH / 2}px)`,
           firstBeamY + beamOffset,
-          `calc(${last.percent} + ${last.offset + stemOffset}px)`,
+          `calc(${last.percent} + ${last.offset + stemOffset + STEM_WIDTH / 2}px)`,
           lastBeamY + beamOffset,
           BEAM_WIDTH,
         ),
@@ -663,6 +664,7 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     }
     parts.push("</g>");
   });
+  parts.push(...beams);
 
   if (ritAt !== undefined) {
     const position = notePosition(ritAt);

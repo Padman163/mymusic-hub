@@ -12,6 +12,25 @@ import { omitUnchangedTimeSignatures, renderTimeSignature, validateTimeSignature
 import { minimumFirstNoteX, renderNotationSvg, SPATIUM, sp } from '../src/lib/notation-renderer.ts';
 import { alignFirstNotesInSystems, arrangeNotationSystems } from '../src/components/notation/system-layout.ts';
 
+function beamSegments(svg) {
+  const pattern = /<svg x="(calc\([^)]+\))" y="(-?[\d.]+)" width="calc\((calc\([^)]+\)) - (calc\([^)]+\))\)" height="([\d.]+)" overflow="hidden" aria-hidden="true"><line x1="0" y1="(-?[\d.]+)" x2="100%" y2="(-?[\d.]+)" stroke-width="([\d.]+)" stroke-linecap="square" \/><\/svg>/g;
+  return [...svg.matchAll(pattern)].map((match) => ({
+    index: match.index,
+    start: match[1],
+    end: match[3],
+    widthStart: match[4],
+    y1: Number(match[2]) + Number(match[6]),
+    y2: Number(match[2]) + Number(match[7]),
+    thickness: Number(match[8])
+  }));
+}
+
+function beamX(expression, width) {
+  const match = expression.match(/^calc\(([-.\d]+)% \+ ([-.\d]+)px\)$/);
+  assert.ok(match);
+  return Number(match[1]) * width / 100 + Number(match[2]);
+}
+
 test('time signatures validate and render for arbitrary positions', () => {
   assert.throws(() => validateTimeSignature({ numerator: 4, denominator: 3 }), /Ungültige Taktart/);
   assert.throws(() => validateTimeSignature({ numerator: 0, denominator: 4 }), /Ungültige Taktart/);
@@ -128,12 +147,39 @@ test('notation geometry uses spatium for staff, heads, stems, beams and ledger l
       assert.ok(steps[i] < 4 ? end <= 44 : end >= 44);
       assert.ok(Math.abs(Number(stem[3]) - centerOffset - (steps[i] < 4 ? 6.15 : -6.15)) < 1e-10);
     }
-    const beams = [...beamed.matchAll(/<line x1="calc\([^)]+\)" y1="(-?[\d.]+)" x2="calc\([^)]+\)" y2="(-?[\d.]+)" stroke-width="5"/g)];
+    const beams = beamSegments(beamed);
     assert.equal(beams.length, 6);
-    assert.equal(Number(beams[0][1]), Number(stems[0][2]));
-    assert.equal(Number(beams[0][2]), Number(stems[1][2]));
-    assert.equal(Number(beams[3][1]), Number(stems[1][2]));
-    assert.equal(Number(beams[3][2]), Number(stems[2][2]));
+    assert.equal(beams[0].y1, Number(stems[0][2]));
+    assert.equal(beams[0].y2, Number(stems[1][2]));
+    assert.equal(beams[3].y1, Number(stems[1][2]));
+    assert.equal(beams[3].y2, Number(stems[2][2]));
+  }
+});
+
+test('beams cover stem edges and are painted after stems', () => {
+  for (const [duration, steps] of [
+    ['eighth', [0, 3]], ['sixteenth', [7, 4]],
+    ['sixteenth', [0, 7, 2]]
+  ]) {
+    const svg = renderNotationSvg({ firstNoteX: 10, notes: steps.map((step) => ({ duration, step, beamGroup: 'a' })) });
+    const stems = [...svg.matchAll(/<line x1="([\d.]+)%" y1="(-?[\d.]+)" x2="[\d.]+%" y2="(-?[\d.]+)" transform="translate\(([-.\d]+) 0\)" stroke-width="1\.2" \/>/g)];
+    const beams = beamSegments(svg);
+    const mixed = steps.some((step) => (step < 4) !== (steps[0] < 4));
+    const primary = mixed ? [beams[0], beams[3]] : [beams[0]];
+    assert.equal(stems.length, steps.length);
+    assert.ok(beams.every((beam) => beam.thickness === sp(0.5) && beam.index > stems.at(-1).index));
+    for (const [i, beam] of primary.entries()) {
+      const start = stems[mixed ? i : 0];
+      const end = stems[mixed ? i + 1 : stems.length - 1];
+      assert.equal(beam.start, beam.widthStart);
+      assert.equal(beam.y1, Number(start[3]));
+      assert.equal(beam.y2, Number(end[3]));
+      for (const width of [180, 400]) {
+        const stemX = (stem) => Number(stem[1]) * width / 100 + Number(stem[4]);
+        assert.ok(Math.abs(beamX(beam.start, width) - (stemX(start) - sp(0.12) / 2)) < 1e-9);
+        assert.ok(Math.abs(beamX(beam.end, width) - (stemX(end) + sp(0.12) / 2)) < 1e-9);
+      }
+    }
   }
 });
 

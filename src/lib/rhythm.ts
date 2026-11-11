@@ -109,7 +109,10 @@ export function renderBeam(
   y2: number,
   width: number,
 ): string {
-  return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke-width="${width}" />`;
+  // Clip square caps at the stem edges, even when the beam is sloped.
+  const top = Math.min(y1, y2) - width;
+  const height = Math.abs(y2 - y1) + 2 * width;
+  return `<svg x="${x1}" y="${top}" width="calc(${x2} - ${x1})" height="${height}" overflow="hidden" aria-hidden="true"><line x1="0" y1="${y1 - top}" x2="100%" y2="${y2 - top}" stroke-width="${width}" stroke-linecap="square" /></svg>`;
 }
 
 export function renderStem(
