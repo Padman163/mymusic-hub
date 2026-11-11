@@ -8,7 +8,7 @@ sidebar:
 import SheetMusicPlayer from "../../../../../components/SheetMusicPlayer.astro";
 import NotationNoteRestValues from "../../../../../components/notation/NotationNoteRestValues.astro";
 import NotationVisual from "../../../../../components/notation/NotationVisual.astro";
-import NotationKeyboard from "../../../../../components/notation/NotationKeyboard.astro";
+import NotationSystem from "../../../../../components/notation/NotationSystem.astro";
 
 Ein Rhythmus kann auf verschiedene Arten notiert werden. In **Standardnotation** erkennst du Tonhöhe und Rhythmus an den Noten im Notensystem. Eine **Tabulatur (TAB)** zeigt dir, auf welcher Saite und in welchem Bund du greifst. Häufig stehen beide Systeme gemeinsam untereinander. In 103 hast du bereits Rhythmuswerte, Takt und Metrum kennengelernt. Hier geht es darum, wie du diese Informationen in einer Notation wiederfindest.
 
@@ -130,58 +130,31 @@ Gitarren werden in der Standardnotation üblicherweise **eine Oktave höher noti
 Die **Form der Note** zeigt ihren Notenwert: Eine ganze Note hat einen leeren Notenkopf ohne Hals, eine halbe einen leeren Notenkopf mit Hals und eine Viertelnote einen ausgefüllten Notenkopf mit Hals. Fähnchen oder Balken am Hals kennzeichnen kürzere Noten, zum Beispiel Achtelnoten. Mehrere Achtelnoten hintereinander verbindet man meist mit einem gemeinsamen Balken statt jedes Fähnchen einzeln zu zeichnen. So erkennt man ihre rhythmische Zusammengehörigkeit auf einen Blick; die Gruppierung orientiert sich meist an den Zählzeiten.
 
 
-<div class="notation-system-box">
-  {/* ================= ZEILE 1 (Takt 1 & 2) ================= */}
-  <div class="notation-system-row">
-    {/* Takt 1: Ganze Note (G4) mit Schlüssel und 4/4-Taktart */}
-    <NotationVisual
-      clef="treble"
-      timeSignature={{ numerator: 4, denominator: 4 }}
-      showLeftBar={false}
-      showRightBar={true}
-      embedded={true}
-      notes={[
-        { duration: 'whole', step: 2 }
-      ]}
-    />
-
-    {/* Takt 2: Zwei halbe Noten (G4) ohne Schlüssel/Taktart */}
-    <NotationVisual
-      clef={false}
-      showLeftBar={false}
-      showRightBar={true}
-      embedded={true}
-      notes={[
+<NotationSystem
+  measuresPerRow={3}
+  fitToWidth
+  measures={[
+    {
+      timeSignature: { numerator: 4, denominator: 4 },
+      notes: [{ duration: 'whole', step: 2 }],
+    },
+    {
+      notes: [
         { duration: 'half', step: 2 },
-        { duration: 'half', step: 2 }
-      ]}
-    />
-  </div>
-
-  {/* ================= ZEILE 2 (Takt 3 & 4) ================= */}
-  <div class="notation-system-row">
-    {/* Takt 3: Vier Viertelnoten (G4) - Zeilenanfang mit Schlüssel, ohne Taktart */}
-    <NotationVisual
-      clef="treble"
-      showLeftBar={false}
-      showRightBar={true}
-      embedded={true}
-      notes={[
+        { duration: 'half', step: 2 },
+      ],
+    },
+    {
+      notes: [
         { duration: 'quarter', step: 2 },
         { duration: 'quarter', step: 2 },
         { duration: 'quarter', step: 2 },
-        { duration: 'quarter', step: 2 }
-      ]}
-    />
-
-    {/* Takt 4: Acht Achtelnoten (zwei 4er-Balkengruppen) mit doppeltem Schlussstrich */}
-    <NotationVisual
-      clef={false}
-      showLeftBar={false}
-      showRightBar={true}
-      rightBarStyle="final"
-      embedded={true}
-      notes={[
+        { duration: 'quarter', step: 2 },
+      ],
+    },
+    {
+      rightBarStyle: 'final',
+      notes: [
         { duration: 'eighth', step: 2 },
         { duration: 'eighth', step: 2 },
         { duration: 'eighth', step: 2 },
@@ -189,12 +162,11 @@ Die **Form der Note** zeigt ihren Notenwert: Eine ganze Note hat einen leeren No
         { duration: 'eighth', step: 2, beamGroup: 'b2' },
         { duration: 'eighth', step: 2, beamGroup: 'b2' },
         { duration: 'eighth', step: 2, beamGroup: 'b2' },
-        { duration: 'eighth', step: 2, beamGroup: 'b2' }
-      ]}
-    />
-  </div>
-</div>
-
+        { duration: 'eighth', step: 2, beamGroup: 'b2' },
+      ],
+    },
+  ]}
+/>
 
 Eine **Pause** bezeichnet eine Stille mit derselben Dauer wie der entsprechende Notenwert. Das Schaubild zeigt ganze, halbe, Viertel-, Achtel- und Sechzehntelwerte jeweils als Note und Pause. Die ganze Pause hängt unter der vierten Linie, die halbe liegt auf der dritten Linie (von unten gezählt). Eine ganze Pause kann auch einen vollständigen Takt unabhängig von der Taktart anzeigen.
 

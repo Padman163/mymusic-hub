@@ -1,0 +1,95 @@
+---
+import type { ComponentProps } from "astro/types";
+import NotationVisual from "./NotationVisual.astro";
+import { arrangeNotationSystems } from "./system-layout.ts";
+
+interface Props {
+  measures: Omit<ComponentProps<typeof NotationVisual>, "embedded" | "firstNoteX">[];
+  measuresPerRow?: number;
+  fitToWidth?: boolean;
+}
+
+const { measures, measuresPerRow = 3, fitToWidth = false } = Astro.props;
+const preparedMeasures = measures.map((measure, index) =>
+  index === 0 && measure.clef === undefined
+    ? { ...measure, clef: "treble" as const }
+    : measure,
+);
+const systems = arrangeNotationSystems(preparedMeasures, measuresPerRow);
+---
+
+<div class="notation-system-box" data-fit-to-width={fitToWidth ? "" : undefined} style={`--notation-columns: ${measuresPerRow}`}>
+  <div class="notation-system-grid">
+    {systems.map((system) => (
+      <div class="notation-system-row">
+        {system.map((measure) => <NotationVisual {...measure} embedded />)}
+      </div>
+    ))}
+  </div>
+</div>
+
+<style>
+  .notation-system-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--notation-columns), minmax(max-content, 1fr));
+    row-gap: var(--notation-system-gap);
+    align-items: start;
+  }
+
+  .notation-system-row {
+    display: contents;
+  }
+
+  [data-fit-to-width] .notation-system-grid {
+    width: max-content;
+    min-width: 100%;
+  }
+
+  [data-fit-to-width][data-fitted] {
+    overflow-x: hidden;
+  }
+</style>
+
+<script>
+  if ("ResizeObserver" in window && CSS.supports("zoom", "0.5")) {
+    const observed = new Set<HTMLElement>();
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const box = entry.target;
+        if (!(box instanceof HTMLElement)) continue;
+        const grid = box.querySelector<HTMLElement>(".notation-system-grid");
+        if (!grid) throw new Error("Notensystem-Raster nicht gefunden.");
+
+        if (entry.contentRect.width <= 0) continue;
+        grid.style.zoom = "1";
+        const width = grid.scrollWidth;
+        if (width > 0) {
+          grid.style.zoom = String(Math.min(1, entry.contentRect.width / width));
+          box.dataset.fitted = "";
+        }
+      }
+    });
+
+    function observeSystems() {
+      document.querySelectorAll<HTMLElement>("[data-fit-to-width]").forEach((box) => {
+        if (!observed.has(box)) {
+          observed.add(box);
+          resizeObserver.observe(box);
+        }
+      });
+    }
+
+    observeSystems();
+    document.addEventListener("astro:page-load", observeSystems);
+    document.addEventListener("astro:before-swap", () => {
+      resizeObserver.disconnect();
+      observed.clear();
+    });
+    document.fonts.addEventListener("loadingdone", () => {
+      for (const box of observed) {
+        resizeObserver.unobserve(box);
+        resizeObserver.observe(box);
+      }
+    });
+  }
+</script>

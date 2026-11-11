@@ -3,6 +3,7 @@ title: Notensystem
 ---
 
 import NotationVisual from '../../../../../components/notation/NotationVisual.astro';
+import NotationSystem from '../../../../../components/notation/NotationSystem.astro';
 import NotationKeyboard from '../../../../../components/notation/NotationKeyboard.astro';
 import NotationTimeSignatures from '../../../../../components/notation/NotationTimeSignatures.astro';
 import NotationAccidentals from '../../../../../components/notation/NotationAccidentals.astro';
@@ -20,6 +21,36 @@ import NotationNoteRestValues from '../../../../../components/notation/NotationN
 Das erste Schaubild zeigt fünf Notenlinien auf weißem Hintergrund, ohne Taktstriche.
 
 <NotationVisual showRightBar={false} />
+
+## Mehrere Takte mit Zeilenumbruch
+
+Nach dem Import von `NotationSystem` nimmt die Komponente die Takte direkt als `measures` entgegen. `measuresPerRow` bestimmt die maximale Anzahl pro Zeile und ist standardmäßig `3`. Der Violinschlüssel steht automatisch am Anfang jeder Zeile; für den Bassschlüssel wird im ersten Takt `clef: 'bass'` gesetzt. Taktart und Schlussstrich werden bei Bedarf am jeweiligen Takt angegeben.
+
+```mdx
+<NotationSystem
+  measuresPerRow={3}
+  fitToWidth
+  measures={[
+    { timeSignature: { numerator: 4, denominator: 4 }, notes: [{ duration: 'whole', step: 2 }] },
+    { notes: [{ duration: 'whole', step: 3 }] },
+    { notes: [{ duration: 'whole', step: 4 }] },
+    { rightBarStyle: 'final', notes: [{ duration: 'whole', step: 5 }] },
+  ]}
+/>
+```
+
+Hier mit Bassschlüssel und zwei Takten pro Zeile:
+
+<NotationSystem
+  measuresPerRow={2}
+  measures={[
+    { clef: 'bass', timeSignature: { numerator: 4, denominator: 4 }, notes: [{ duration: 'whole', step: 2 }] },
+    { notes: [{ duration: 'whole', step: 3 }] },
+    { rightBarStyle: 'final', notes: [{ duration: 'whole', step: 4 }] },
+  ]}
+/>
+
+Standardmäßig lässt sich der Kasten bei Platzmangel horizontal scrollen. Mit `fitToWidth` wird stattdessen das ganze System proportional verkleinert, sodass die vorgegebene Taktzahl in die Breite passt. Auf sehr schmalen Bildschirmen können die Noten dadurch klein werden. Ohne JavaScript oder bei fehlender Browser-Unterstützung bleibt das System scrollbar. `measuresPerRow` muss eine positive ganze Zahl sein; ein Schlüsselwechsel innerhalb desselben Systems wird nicht unterstützt.
 
 ## Taktstriche
 
