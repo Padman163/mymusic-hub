@@ -74,6 +74,9 @@ GITHUB_DATA_PATH=data/contributions.json
 GITHUB_REPOSITORY=owner/repository-name
 GITHUB_TOKEN=ghp_deinPersoenlicherFineGrainedTokenHier
 
+# Prüfen ob die Variablen mit denen auf Netlify übereinstimmen
+npx netlify-cli status
+npx netlify-cli dev:exec -- node -p process.env.GITHUB_BRANCH
 
 # Fullstack-Entwicklungsserver starten
 npx netlify-cli dev
