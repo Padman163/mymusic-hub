@@ -212,6 +212,13 @@ export function minimumFirstNoteX(
     prefixGeometry(clef, accidentals, timeSignature, repeatStart).prefixEnd,
     noteStart,
   );
+  if (clef || timeSignature || accidentals.length || repeatStart) {
+    return (
+      prefixEnd +
+      sp(1.8) +
+      (notes[0] ? eventExtents(notes[0]).left : noteHeadHalfWidth)
+    );
+  }
   return prefixEnd + 10 + (notes[0]?.accidental ? 16 : 0);
 }
 
@@ -301,14 +308,20 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
   const timeWidth = timeSignature ? timeSignatureWidth(timeSignature) : 0;
   const noteInset =
     firstNoteX ??
-    Math.max(
-      noteStart,
-      prefixEnd + (timeSignature || accidentals.length ? 10 : 0),
-    );
+    (clef || timeSignature || accidentals.length || repeatStart
+      ? minimumFirstNoteX(options)
+      : Math.max(noteStart, prefixEnd));
   const repeatEndInset = repeatEnd ? 16 : 0;
   const rhythmic =
     spacing === "rhythmic" ? rhythmicPositions(notes) : undefined;
+  const singleWholeNote =
+    notes.length === 1 &&
+    notes[0].type !== "rest" &&
+    notes[0].duration === "whole";
   const notePosition = (index: number) => {
+    if (singleWholeNote) {
+      return { percent: "41%", fraction: 0.41, offset: 0 };
+    }
     const wholeMeasureRest =
       notes.length === 1 &&
       notes[0].type === "rest" &&
@@ -331,13 +344,32 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     };
   };
   const positions = notes.map((_, index) => notePosition(index));
-  const minimumWidth = notes.reduce((minimum, note, index) => {
+  let minimumWidth = notes.reduce((minimum, note, index) => {
     if (index === 0) return minimum;
     const distance =
       eventExtents(notes[index - 1]).right + sp(1) + eventExtents(note).left;
     const fraction = positions[index].fraction - positions[index - 1].fraction;
     return Math.max(minimum, noteInset + repeatEndInset + distance / fraction);
   }, noteInset + repeatEndInset);
+  if (singleWholeNote) {
+    minimumWidth = Math.max(minimumWidth, noteInset / 0.41);
+  }
+  if (notes.length > 0) {
+    const last = positions[positions.length - 1];
+    const rightInset = repeatEnd
+      ? repeatEndInset
+      : showRightBar && rightBarStyle === "final"
+        ? 8
+        : 0;
+    minimumWidth = Math.max(
+      minimumWidth,
+      (last.offset +
+        eventExtents(notes[notes.length - 1]).right +
+        sp(1.5) +
+        rightInset) /
+        (1 - last.fraction),
+    );
+  }
   const beamStemEnds = new Map<number, number>();
   groups.forEach((group) => {
     const steps = group.indices.map((index) => pitchedNote(index).step);
