@@ -10,6 +10,7 @@ import { renderRest, restSymbols } from '../src/lib/rest.ts';
 import { renderTempoMark, validateTempoChanges } from '../src/lib/tempo.ts';
 import { omitUnchangedTimeSignatures, renderTimeSignature, validateTimeSignature } from '../src/lib/time-signature.ts';
 import { minimumFirstNoteX, renderNotationSvg, SPATIUM, sp } from '../src/lib/notation-renderer.ts';
+import { layoutNotationEvents } from '../src/lib/notation-layout.ts';
 import { alignFirstNotesInSystems, arrangeNotationSystems } from '../src/components/notation/system-layout.ts';
 
 function beamSegments(svg) {
@@ -85,6 +86,24 @@ test('rhythmic positions reflect notes, rests and dotted durations', () => {
   for (let i = 1; i < gaps.length; i++) {
     assert.ok(Math.abs(gaps[i] / gaps[i - 1] - Math.SQRT2) < 1e-10);
   }
+});
+
+test('four quarter notes share the available aligned measure width', () => {
+  const notes = Array.from({ length: 4 }, () => ({ duration: 'quarter', step: 2 }));
+  const positions = layoutNotationEvents(notes, {
+    noteInset: 40, repeatEndInset: 0, aligned: true, spacing: 'rhythmic'
+  });
+  for (const width of [200, 400]) {
+    const actual = positions.map(({ fraction, offset }) => fraction * width + offset);
+    const interval = (width - 40) / 4;
+    assert.deepEqual(actual, [40, 40 + interval, 40 + 2 * interval, 40 + 3 * interval]);
+    assert.equal(width - actual[3], interval);
+  }
+  const svg = renderNotationSvg({ notes, firstNoteX: 40 });
+  assert.deepEqual(
+    [...svg.matchAll(/class="notation-note" x="([\d.]+)%"/g)].map((match) => Number(match[1])),
+    [0, 25, 50, 75]
+  );
 });
 
 test('renderer places timed events proportionally and preserves equal-spacing examples', () => {

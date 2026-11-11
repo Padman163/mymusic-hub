@@ -174,6 +174,8 @@ Bei ausreichend Platz stehen die ersten zwölf Takte zu zweit, die letzten sechs
 
 Für mehrzeilige Darstellungen bestimmen `arrangeNotationSystems` und `alignFirstNotesInSystems` eine gemeinsame Position für das erste Ereignis: am Systemanfang auch bei unterschiedlich vielen Takten pro Zeile, in den folgenden Takten mit einem einheitlichen Abstand zum Taktstrich. Das gilt für Noten ebenso wie für Pausen; eine einzelne ganze Taktpause bleibt mittig und eine einzelne ganze Note steht bei 41 % der Taktbreite. Dabei wird genug Platz für Schlüssel, Taktart, Vorzeichnung, Wiederholungszeichen und gegebenenfalls das Vorzeichen der ersten Note reserviert. Die gemeinsame Klasse `notation-systems` sorgt für gleich hohe Zeilen und damit gleichmäßige Abstände zwischen den Notensystemen, auch wenn nur einzelne Zeilen Dynamikzeichen enthalten. `NotationVisual` übergibt die Position an den Renderer; ohne diese Ausrichtung beginnt die Verteilung mit zusätzlichem Abstand.
 
+Die horizontalen Positionen der Ereignisse berechnet `layoutNotationEvents` in `src/lib/notation-layout.ts` unabhängig von der SVG-Ausgabe. Der Renderer verwendet diese Positionen auch für Mindestbreite, Balken, Bögen und Tempoangaben. Die Aufteilung der Takte auf Zeilen und die Grid-Spaltenbreiten bleiben davon getrennt.
+
 | Zeichen im Test | Baustein | Regel oder Verwendung |
 |---|---|---|
 | Violinschlüssel, Notenköpfe, Hilfslinien und Vorzeichen | `NotationVisual`, `renderNotationSvg` | Am Zeilenbeginn stehen Schlüssel, gegebenenfalls Taktart und gültige Vorzeichnung in dieser Reihenfolge; kein Schlüsselwechsel im Stück. |

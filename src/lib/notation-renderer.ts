@@ -11,6 +11,7 @@ import {
   renderRepeatStart,
 } from "./barline.ts";
 import { type MusicCurve, renderCurve, validateCurves } from "./curve.ts";
+import { layoutNotationEvents } from "./notation-layout.ts";
 import { renderRest, restSymbols } from "./rest.ts";
 import {
   collectBeamGroups,
@@ -20,7 +21,6 @@ import {
   renderBeam,
   renderDot,
   renderStem,
-  rhythmicPositions,
 } from "./rhythm.ts";
 import { escapeXml, glyphText } from "./svg.ts";
 import { renderTempoMark, validateTempoChanges } from "./tempo.ts";
@@ -312,38 +312,17 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
       ? minimumFirstNoteX(options)
       : Math.max(noteStart, prefixEnd));
   const repeatEndInset = repeatEnd ? 16 : 0;
-  const rhythmic =
-    spacing === "rhythmic" ? rhythmicPositions(notes) : undefined;
   const singleWholeNote =
     notes.length === 1 &&
     notes[0].type !== "rest" &&
     notes[0].duration === "whole";
-  const notePosition = (index: number) => {
-    if (singleWholeNote) {
-      return { percent: "41%", fraction: 0.41, offset: 0 };
-    }
-    const wholeMeasureRest =
-      notes.length === 1 &&
-      notes[0].type === "rest" &&
-      notes[0].duration === "whole" &&
-      !notes[0].dotted;
-    const centered =
-      wholeMeasureRest || (firstNoteX === undefined && notes.length === 1);
-    const start = firstNoteX === undefined ? 1 / (notes.length + 1) : 0;
-    const fraction = centered
-      ? 0.5
-      : rhythmic
-        ? start + (1 - start) * rhythmic[index]
-        : firstNoteX === undefined
-          ? (index + 1) / (notes.length + 1)
-          : index / notes.length;
-    return {
-      percent: `${fraction * 100}%`,
-      fraction,
-      offset: noteInset * (1 - fraction) - repeatEndInset * fraction,
-    };
-  };
-  const positions = notes.map((_, index) => notePosition(index));
+  const positions = layoutNotationEvents(notes, {
+    noteInset,
+    repeatEndInset,
+    aligned: firstNoteX !== undefined,
+    spacing,
+  });
+  const notePosition = (index: number) => positions[index];
   let minimumWidth = notes.reduce((minimum, note, index) => {
     if (index === 0) return minimum;
     const distance =
