@@ -32,6 +32,21 @@ import {
 } from "./time-signature.ts";
 
 export type NotationDuration = Duration;
+export const SPATIUM = 10;
+export const sp = (val: number) => val * SPATIUM;
+
+const NOTE_WIDTH = sp(1.35);
+const NOTE_HEIGHT = sp(1.0);
+const STEM_WIDTH = sp(0.12);
+const STEM_LEN = sp(3.5);
+const MIN_STEM_LEN = sp(2.5);
+const BEAM_WIDTH = sp(0.5);
+const LEDGER_OVERHANG = sp(0.5);
+const STAFF_BOTTOM = 64;
+const STAFF_TOP = STAFF_BOTTOM - sp(4);
+const STAFF_MIDDLE = STAFF_BOTTOM - sp(2);
+const stepY = (step: number) => STAFF_BOTTOM - step * sp(0.5);
+
 export type NotationArticulation = Articulation;
 export type NotationClef = "treble" | "bass";
 export type NotationAccidental = {
@@ -118,7 +133,7 @@ const accidentalSymbols = {
   flat: { glyph: "\uE260", label: "b-Vorzeichen" },
 } as const;
 
-const noteHeadHalfWidth = 6.5;
+const noteHeadHalfWidth = NOTE_WIDTH / 2;
 const accidentalNoteGap = 4;
 
 function prefixGeometry(
@@ -256,7 +271,7 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
 
   const clefGlyph =
     clef === "treble" ? "\uE050" : clef === "bass" ? "\uE062" : undefined;
-  const clefY = clef === "bass" ? 37 : 55;
+  const clefY = clef === "bass" ? STAFF_TOP + sp(1) : STAFF_BOTTOM - sp(1);
   const { accidentalStart, timeStart, repeatStartX, prefixEnd } =
     prefixGeometry(clef, accidentals, timeSignature, repeatStart);
   const timeWidth = timeSignature ? timeSignatureWidth(timeSignature) : 0;
@@ -300,16 +315,30 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     const firstIndex = group.indices[0];
     const lastIndex = group.indices[group.indices.length - 1];
     const firstY =
-      64 - pitchedNote(firstIndex).step * 4.5 + (stemUp ? -31.5 : 31.5);
+      stepY(pitchedNote(firstIndex).step) + (stemUp ? -STEM_LEN : STEM_LEN);
     const lastY =
-      64 - pitchedNote(lastIndex).step * 4.5 + (stemUp ? -31.5 : 31.5);
+      stepY(pitchedNote(lastIndex).step) + (stemUp ? -STEM_LEN : STEM_LEN);
     const firstFraction = notePosition(firstIndex).fraction;
     const lastFraction = notePosition(lastIndex).fraction;
-    group.indices.forEach((index) => {
+    const stemEnds = group.indices.map((index) => {
       const progress =
         (notePosition(index).fraction - firstFraction) /
         (lastFraction - firstFraction);
-      beamStemEnds.set(index, firstY + (lastY - firstY) * progress);
+      return firstY + (lastY - firstY) * progress;
+    });
+    const adjustment = Math.max(
+      0,
+      ...group.indices.map((index, i) => {
+        const length =
+          (stemEnds[i] - stepY(pitchedNote(index).step)) * (stemUp ? -1 : 1);
+        return Math.max(MIN_STEM_LEN, length) - length;
+      }),
+    );
+    group.indices.forEach((index, i) => {
+      beamStemEnds.set(
+        index,
+        stemEnds[i] + (stemUp ? -adjustment : adjustment),
+      );
       beamStemDirections.set(index, stemUp);
     });
   });
@@ -358,27 +387,33 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
   });
 
   const parts = [
-    `<svg class="notation-staff" height="92" role="img" aria-label="${escapeXml(label ?? `${notes.length || accidentals.length ? "Notensystem" : "Leeres Notensystem"} mit fünf Linien${description.length ? `; ${description.join("; ")}` : ""}`)}" xmlns="http://www.w3.org/2000/svg">`,
-    ...[28, 37, 46, 55, 64].map(
+    `<svg class="notation-staff" height="92" style="--notation-spatium:${SPATIUM}px" role="img" aria-label="${escapeXml(label ?? `${notes.length || accidentals.length ? "Notensystem" : "Leeres Notensystem"} mit fünf Linien${description.length ? `; ${description.join("; ")}` : ""}`)}" xmlns="http://www.w3.org/2000/svg">`,
+    ...Array.from({ length: 5 }, (_, i) => STAFF_TOP + i * sp(1)).map(
       (y) => `<line x1="0" y1="${y}" x2="100%" y2="${y}" />`,
     ),
   ];
 
-  if (showLeftBar) parts.push(renderBarLine(0, 28, 64));
+  if (showLeftBar) parts.push(renderBarLine(0, STAFF_TOP, STAFF_BOTTOM));
   if (showRightBar && rightBarStyle === "single" && !repeatEnd)
-    parts.push(renderBarLine("100%", 28, 64));
+    parts.push(renderBarLine("100%", STAFF_TOP, STAFF_BOTTOM));
   if (repeatEnd) {
-    parts.push(renderRepeatEndAtBoundary(28, 64));
+    parts.push(renderRepeatEndAtBoundary(STAFF_TOP, STAFF_BOTTOM));
   }
   if (clefGlyph) parts.push(glyphText(clefGlyph, 6, clefY, "notation-clef"));
   if (repeatStart) {
-    parts.push(renderRepeatStart(repeatStartX, 28, 64));
+    parts.push(renderRepeatStart(repeatStartX, STAFF_TOP, STAFF_BOTTOM));
   }
 
   if (timeSignature) {
     const center = timeStart + timeWidth / 2;
     parts.push(
-      renderTimeSignature(timeSignature, center, 37, 55, "notation-time"),
+      renderTimeSignature(
+        timeSignature,
+        center,
+        STAFF_TOP + sp(1),
+        STAFF_BOTTOM - sp(1),
+        "notation-time",
+      ),
     );
   }
 
@@ -387,7 +422,7 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
       glyphText(
         accidentalSymbols[type].glyph,
         accidentalStart + index * 12,
-        64 - step * 4.5,
+        stepY(step),
         "notation-accidental",
       ),
     );
@@ -399,23 +434,24 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
       steps.reduce((sum, step) => sum + step, 0) / steps.length < 4;
     const first = notePosition(group.indices[0]);
     const last = notePosition(group.indices[group.indices.length - 1]);
-    const stemOffset = stemUp ? 4.5 : -4.5;
-    const firstNote = pitchedNote(group.indices[0]);
-    const lastNote = pitchedNote(group.indices[group.indices.length - 1]);
-    const firstBeamY = 64 - firstNote.step * 4.5 + (stemUp ? -31.5 : 31.5);
-    const lastBeamY = 64 - lastNote.step * 4.5 + (stemUp ? -31.5 : 31.5);
+    const stemOffset = (noteHeadHalfWidth - STEM_WIDTH / 2) * (stemUp ? 1 : -1);
+    const firstBeamY = beamStemEnds.get(group.indices[0])!;
+    const lastBeamY = beamStemEnds.get(
+      group.indices[group.indices.length - 1],
+    )!;
     for (
       let beam = 0;
       beam < (group.duration === "sixteenth" ? 2 : 1);
       beam += 1
     ) {
-      const beamOffset = beam * (stemUp ? 6 : -6);
+      const beamOffset = beam * sp(0.75) * (stemUp ? 1 : -1);
       parts.push(
         renderBeam(
           `calc(${first.percent} + ${first.offset + stemOffset}px)`,
           firstBeamY + beamOffset,
           `calc(${last.percent} + ${last.offset + stemOffset}px)`,
           lastBeamY + beamOffset,
+          BEAM_WIDTH,
         ),
       );
     }
@@ -426,8 +462,8 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     const end = notePosition(to);
     const startNote = pitchedNote(from);
     const endNote = pitchedNote(to);
-    const startY = 64 - startNote.step * 4.5;
-    const endY = 64 - endNote.step * 4.5;
+    const startY = stepY(startNote.step);
+    const endY = stepY(endNote.step);
     const archAbove = placement ? placement === "above" : startNote.step >= 4;
     const span = end.fraction - start.fraction;
     const startX = `calc(${start.percent} + ${start.offset + noteHeadHalfWidth}px)`;
@@ -450,25 +486,29 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     const position = notePosition(index);
     if (note.type === "rest") {
       parts.push(
-        `<g transform="translate(${position.offset} 0)">${renderRest(note.duration, position.percent, 46, note.dotted)}</g>`,
+        `<g transform="translate(${position.offset} 0)">${renderRest(note.duration, position.percent, STAFF_MIDDLE, note.dotted, SPATIUM)}</g>`,
       );
       return;
     }
-    const y = 64 - note.step * 4.5;
+    const y = stepY(note.step);
     const stemUp = beamStemDirections.get(index) ?? note.step < 4;
     const hasStem = note.duration
       ? note.duration !== "whole"
       : note.stem === true;
-    const stemY = beamStemEnds.get(index) ?? y + (stemUp ? -31.5 : 31.5);
+    const stemY =
+      beamStemEnds.get(index) ??
+      y + (stemUp ? -1 : 1) * Math.max(MIN_STEM_LEN, STEM_LEN);
     const x = position.percent;
     if (note.step === -2 || note.step === 10) {
       parts.push(
-        `<rect x="${x}" y="${y - 0.5}" width="18" height="1" transform="translate(${position.offset - 9} 0)" fill="currentColor" stroke="none" />`,
+        `<rect x="${x}" y="${y - 0.5}" width="${NOTE_WIDTH + 2 * LEDGER_OVERHANG}" height="1" transform="translate(${position.offset - noteHeadHalfWidth - LEDGER_OVERHANG} 0)" fill="currentColor" stroke="none" />`,
       );
     }
     if (hasStem) {
-      const stemOffset = position.offset + (stemUp ? 4.5 : -4.5);
-      parts.push(renderStem(x, y, stemY, stemOffset));
+      const stemOffset =
+        position.offset +
+        (noteHeadHalfWidth - STEM_WIDTH / 2) * (stemUp ? 1 : -1);
+      parts.push(renderStem(x, y, stemY, stemOffset, STEM_WIDTH));
     }
     const noteGlyph =
       note.duration === "whole"
@@ -484,10 +524,12 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     ) {
       const flag = flagGlyph(note.duration, stemUp);
       parts.push(
-        `<g transform="translate(${stemUp ? 4.5 : -4.5} 0)">${glyphText(flag, x, stemY, "notation-note")}</g>`,
+        `<g transform="translate(${(noteHeadHalfWidth - STEM_WIDTH / 2) * (stemUp ? 1 : -1)} 0)">${glyphText(flag, x, stemY, "notation-note")}</g>`,
       );
     }
-    parts.push(glyphText(noteGlyph, x, y, "notation-note", "middle"));
+    parts.push(
+      glyphText(noteGlyph, x, y, "notation-note", "middle", NOTE_WIDTH),
+    );
     if (note.dotted) parts.push(renderDot(x, y - 3, noteHeadHalfWidth + 3));
     if (note.accidental) {
       const accidentalOffset = noteHeadHalfWidth + accidentalNoteGap;
@@ -497,13 +539,16 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     }
     if (note.articulation) {
       const position = articulationPosition(note, index);
-      const noteEdgeY = y + (position === "below" ? 4.5 : -4.5);
+      const noteEdgeY =
+        hasStem && (position === "above") === stemUp
+          ? stemY
+          : y + (position === "below" ? NOTE_HEIGHT / 2 : -NOTE_HEIGHT / 2);
       parts.push(
         renderArticulation(
           note.articulation,
           position,
           x,
-          articulationY(noteEdgeY, position),
+          articulationY(noteEdgeY, position, sp(0.75)),
           "notation-articulation",
         ),
       );

@@ -1,5 +1,6 @@
 ---
 import { renderRepeatEndSymbol, renderRepeatStart } from "../../lib/barline.ts";
+import { sp } from "../../lib/notation-renderer.ts";
 import "../../styles/music.css";
 
 interface Props {
@@ -7,10 +8,11 @@ interface Props {
 }
 
 const { type } = Astro.props;
+const height = sp(4);
 const mark =
   type === "start"
-    ? renderRepeatStart(2, 0, 36, 5.5, 9, 4.5)
-    : renderRepeatEndSymbol(36);
+    ? renderRepeatStart(2, 0, height, 5.5, 9, sp(0.5))
+    : renderRepeatEndSymbol(height);
 ---
 
-<svg class={`repeat-${type}`} width="13" height="36" viewBox="0 0 13 36" stroke="currentColor" role="img" aria-label={type === 'start' ? 'Beginn der Wiederholung' : 'Ende der Wiederholung'} set:html={mark} />
+<svg class={`repeat-${type}`} width="13" height={height} viewBox={`0 0 13 ${height}`} stroke="currentColor" role="img" aria-label={type === 'start' ? 'Beginn der Wiederholung' : 'Ende der Wiederholung'} set:html={mark} />

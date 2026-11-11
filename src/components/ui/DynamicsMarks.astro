@@ -1,5 +1,6 @@
 ---
 import "../../styles/music.css";
+import { sp } from "../../lib/notation-renderer.ts";
 import {
   type Dynamic,
   dynamicsForHairpin,
@@ -22,6 +23,7 @@ const crescendo = type === "crescendo";
 
 <div
   class:list={['dynamics-marks', `placement-${placement}`]}
+  style={`--dynamics-mark-gap: ${sp(1.75)}px`}
   role="img"
   aria-label={crescendo
     ? showStartDynamic ? 'Crescendo von piano zu forte' : 'Crescendo bis forte'

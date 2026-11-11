@@ -107,8 +107,9 @@ export function renderBeam(
   y1: number,
   x2: string,
   y2: number,
+  width: number,
 ): string {
-  return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke-width="4" />`;
+  return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke-width="${width}" />`;
 }
 
 export function renderStem(
@@ -116,6 +117,7 @@ export function renderStem(
   startY: number,
   endY: number,
   offset: number,
+  width: number,
 ): string {
-  return `<line x1="${x}" y1="${startY}" x2="${x}" y2="${endY}" transform="translate(${offset} 0)" />`;
+  return `<line x1="${x}" y1="${startY}" x2="${x}" y2="${endY}" transform="translate(${offset} 0)" stroke-width="${width}" />`;
 }

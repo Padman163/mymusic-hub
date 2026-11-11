@@ -1,4 +1,5 @@
-import { test } from 'vitest';
+// @vitest-environment node
+const { test } = process.env.VITEST ? await import('vitest') : await import('node:test');
 import assert from 'node:assert/strict';
 import { articulationPlacement, articulationY, renderArticulation } from '../src/lib/articulation.ts';
 import { renderRepeatEnd, renderRepeatEndAtBoundary, renderRepeatStart } from '../src/lib/barline.ts';
@@ -8,7 +9,7 @@ import { collectBeamGroups, flagGlyph, renderDot, rhythmicPositions } from '../s
 import { renderRest, restSymbols } from '../src/lib/rest.ts';
 import { renderTempoMark, validateTempoChanges } from '../src/lib/tempo.ts';
 import { omitUnchangedTimeSignatures, renderTimeSignature, validateTimeSignature } from '../src/lib/time-signature.ts';
-import { minimumFirstNoteX, renderNotationSvg } from '../src/lib/notation-renderer.ts';
+import { minimumFirstNoteX, renderNotationSvg, SPATIUM, sp } from '../src/lib/notation-renderer.ts';
 import { alignFirstNotesInSystems, arrangeNotationSystems } from '../src/components/notation/system-layout.ts';
 
 test('time signatures validate and render for arbitrary positions', () => {
@@ -89,9 +90,34 @@ test('beam stems follow their rhythmic x positions with dotted notes', () => {
     { duration: 'eighth', step: 2, beamGroup: 'a' }
   ];
   const svg = renderNotationSvg({ notes, firstNoteX: 10 });
-  const stems = [...svg.matchAll(/<line x1="[\d.]+%" y1="[\d.]+?" x2="[\d.]+%" y2="([\d.]+)" transform="translate\([^)]+\)" \/>/g)];
+  const stems = [...svg.matchAll(/<line x1="[\d.]+%" y1="[\d.]+?" x2="[\d.]+%" y2="([\d.]+)" transform="translate\([^)]+\)" stroke-width="1\.2" \/>/g)];
   assert.equal(stems.length, 3);
-  assert.ok(Math.abs(Number(stems[1][1]) - 27.1) < 1e-10);
+  assert.ok(Math.abs(Number(stems[1][1]) - 23) < 1e-10);
+});
+
+test('notation geometry uses spatium for staff, heads, stems, beams and ledger lines', () => {
+  assert.equal(SPATIUM, 10);
+  assert.equal(sp(1.35), 13.5);
+  const svg = renderNotationSvg({ notes: [
+    { duration: 'quarter', step: -2 },
+    { duration: 'whole', step: 10 }
+  ], firstNoteX: 10 });
+  assert.deepEqual([...svg.matchAll(/<line x1="0" y1="(\d+)" x2="100%"/g)].map((m) => Number(m[1])), [24, 34, 44, 54, 64]);
+  assert.equal((svg.match(/textLength="13\.5" lengthAdjust="spacingAndGlyphs"/g) ?? []).length, 2);
+  assert.match(svg, /y="73\.5" width="23\.5" height="1" transform="translate\(-1\.75 0\)"/);
+  assert.match(svg, /y="13\.5" width="23\.5" height="1"/);
+  assert.match(svg, /y1="74"[^>]*y2="39"[^>]*stroke-width="1\.2"/);
+
+  for (const steps of [[0, 10, 0], [8, -2, 8]]) {
+    const beamed = renderNotationSvg({ firstNoteX: 10, notes: steps.map((step) => ({ duration: 'sixteenth', beamGroup: 'a', step })) });
+    const stems = [...beamed.matchAll(/<line x1="[\d.]+%" y1="(-?[\d.]+)" x2="[\d.]+%" y2="(-?[\d.]+)" transform="translate\([^)]+\)" stroke-width="1\.2"/g)];
+    assert.equal(stems.length, 3);
+    for (const stem of stems) assert.ok(Math.abs(Number(stem[2]) - Number(stem[1])) >= sp(2.5));
+    const beams = [...beamed.matchAll(/<line x1="calc\([^)]+\)" y1="(-?[\d.]+)" x2="calc\([^)]+\)" y2="(-?[\d.]+)" stroke-width="5"/g)];
+    assert.equal(beams.length, 2);
+    assert.equal(Number(beams[0][1]), Number(stems[0][2]));
+    assert.equal(Number(beams[0][2]), Number(stems[2][2]));
+  }
 });
 
 test('rests use shared glyphs, staff positions and optional dots', () => {
@@ -118,7 +144,7 @@ test('renderer supports mixed notes and rests and rejects invalid rest combinati
   assert.match(svg, /Punktierte Achtelpause/);
   assert.equal((svg.match(/class="notation-rest"/g) ?? []).length, 1);
   assert.equal((svg.match(/class="notation-note"/g) ?? []).length, 3);
-  assert.match(svg, /cy="41\.5"/);
+  assert.match(svg, /cy="39"/);
   assert.throws(() => renderNotationSvg({ notes: [{ type: 'rest', duration: 'quarter', step: 2 }] }), /Pausen dürfen/);
   assert.throws(() => renderNotationSvg({ notes: [{ type: 'rest', duration: 'eighth', beamGroup: 'a' }] }), /Pausen dürfen/);
   assert.throws(() => renderNotationSvg({ notes, curves: [{ from: 0, to: 1, type: 'slur' }] }), /nicht an Pausen/);
@@ -143,16 +169,18 @@ test('articulation and curves use caller-provided positions', () => {
 });
 
 test('all articulations share the same clearance above and below noteheads', () => {
-  assert.equal(articulationY(50, 'above'), 44);
-  assert.equal(articulationY(50, 'below'), 56);
+  assert.equal(articulationY(50, 'above', sp(0.75)), 42.5);
+  assert.equal(articulationY(50, 'below', sp(0.75)), 57.5);
   for (const articulation of ['staccato', 'tenuto', 'accent', 'marcato']) {
-    for (const [step, position, expectedY] of [[7, 'above', 22], [2, 'below', 65.5]]) {
+    for (const [step, position, expectedY] of [[7, 'above', 16.5], [2, 'below', 66.5]]) {
       const svg = renderNotationSvg({ notes: [{ duration: 'quarter', step, articulation, articulationPosition: position }] });
       const match = svg.match(/class="notation-articulation"[^>]*y="([\d.]+)"/);
       assert.ok(match);
       assert.equal(Number(match[1]), expectedY);
     }
   }
+  const stemSide = renderNotationSvg({ notes: [{ duration: 'quarter', step: 2, articulation: 'staccato', articulationPosition: 'above' }] });
+  assert.match(stemSide, /class="notation-articulation"[^>]*y="11\.5"/);
 });
 
 test('bar and repeat signs use the caller supplied system geometry', () => {
@@ -169,8 +197,8 @@ test('bar and repeat signs use the caller supplied system geometry', () => {
 test('repeat end replaces the ordinary right bar and reserves space for the final note', () => {
   const notes = Array.from({ length: 8 }, () => ({ duration: 'quarter', step: 2 }));
   const svg = renderNotationSvg({ notes, repeatEnd: true, showRightBar: true });
-  assert.match(svg, /<svg x="100%" y="28" width="13" height="36"/);
-  assert.doesNotMatch(svg, /<line x1="100%" y1="28" x2="100%" y2="64"/);
+  assert.match(svg, /<svg x="100%" y="24" width="13" height="40"/);
+  assert.doesNotMatch(svg, /<line x1="100%" y1="24" x2="100%" y2="64"/);
   const offsets = [...svg.matchAll(/<g transform="translate\(([-.\d]+) 0\)"><text class="notation-note"/g)];
   assert.equal(offsets.length, 8);
   assert.ok(Math.abs(Number(offsets[7][1]) + 16 * 8 / 9) < 0.000001);
@@ -229,14 +257,14 @@ test('time signature precedes key signature and repeat marks without overlapping
   const svg = renderNotationSvg({ ...options, firstNoteX });
   const accidentalX = [...svg.matchAll(/class="notation-accidental" x="([\d.]+)"/g)].map((match) => Number(match[1]));
   const timeX = Number(svg.match(/class="notation-time" x="([\d.]+)"/)[1]);
-  const repeatX = Number(svg.match(/<line x1="([\d.]+)" y1="28" x2="\1" y2="64" stroke-width="4"/)[1]);
+  const repeatX = Number(svg.match(/<line x1="([\d.]+)" y1="24" x2="\1" y2="64" stroke-width="4"/)[1]);
   assert.ok(timeX > 6 && timeX < accidentalX[0]);
   assert.ok(accidentalX[0] < accidentalX[1] && accidentalX[1] + 18 <= repeatX && repeatX + 8 < firstNoteX);
 
   const withoutTime = { ...options, timeSignature: undefined };
   const repeatSvg = renderNotationSvg({ ...withoutTime, firstNoteX: minimumFirstNoteX(withoutTime) });
   const lastAccidentalX = [...repeatSvg.matchAll(/class="notation-accidental" x="([\d.]+)"/g)].map((match) => Number(match[1])).at(-1);
-  const repeatWithoutTimeX = Number(repeatSvg.match(/<line x1="([\d.]+)" y1="28" x2="\1" y2="64" stroke-width="4"/)[1]);
+  const repeatWithoutTimeX = Number(repeatSvg.match(/<line x1="([\d.]+)" y1="24" x2="\1" y2="64" stroke-width="4"/)[1]);
   assert.ok(repeatWithoutTimeX - lastAccidentalX >= 18);
 });
 

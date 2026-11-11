@@ -18,6 +18,7 @@ export function glyphText(
   y: string | number,
   className: string,
   anchor?: string,
+  textLength?: number,
 ): string {
-  return `<text class="${className}" x="${x}" y="${y}"${anchor ? ` text-anchor="${anchor}"` : ""}>${escapeXml(glyph)}</text>`;
+  return `<text class="${className}" x="${x}" y="${y}"${anchor ? ` text-anchor="${anchor}"` : ""}${textLength === undefined ? "" : ` textLength="${textLength}" lengthAdjust="spacingAndGlyphs"`}>${escapeXml(glyph)}</text>`;
 }

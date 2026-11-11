@@ -74,7 +74,7 @@
 
 .notation-final-bar {
   position: absolute;
-  top: calc(var(--notation-panel-padding) + 28px);
+  top: calc(var(--notation-panel-padding) + 24px);
   right: var(--notation-panel-padding);
 }
 
@@ -82,7 +82,7 @@
   top: calc(
     var(--notation-panel-padding) +
     var(--notation-header-height) +
-    28px
+    24px
   );
 }
 
@@ -103,12 +103,12 @@
 }
 
 .notation-visual.embedded .notation-final-bar {
-  top: 28px;
+  top: 24px;
   right: 0;
 }
 
 .notation-visual.embedded.has-header .notation-final-bar {
-  top: calc(var(--notation-header-height) + 28px);
+  top: calc(var(--notation-header-height) + 24px);
 }
 
 .notation-staff {
@@ -128,7 +128,7 @@
 .notation-time,
 .notation-articulation {
   font-family: "NotationBravura", sans-serif;
-  font-size: 36px;
+  font-size: calc(4 * var(--notation-spatium, 10px));
   fill: #111827;
   stroke: none;
 }
@@ -259,6 +259,41 @@
   padding-bottom: 32px;
 }
 
+/* Der weiße Umfassungskasten für das gesamte mehrzeilige Notenbeispiel */
+.notation-system-box {
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  padding: 1.5rem 1rem;
+  margin: 1.5rem 0;
+  box-sizing: border-box;
+  overflow-x: auto;
+}
+
+/* Einzelne Notenzeile innerhalb des Kastens */
+.notation-system-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+}
+
+/* Vertikaler Abstand zwischen Zeile 1 und Zeile 2 */
+.notation-system-row + .notation-system-row {
+  margin-top: 1.25rem;
+}
+.notation-system-row > * {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0 !important; /* Verhindert das Hochrutschen von Takt 1 */
+}
+
+/* Stellt sicher, dass auch das innere SVG keine Verschiebung erzeugt */
+.notation-system-row svg {
+  display: block;
+}
+
+
 .overview-layout-narrow {
   display: none;
 }
@@ -296,7 +331,7 @@
 }
 
 .overview-measure .notation-visual.embedded.has-header .notation-final-bar {
-  top: 28px;
+  top: 24px;
 }
 
 .overview-measure
@@ -330,7 +365,7 @@
 .repeat-start,
 .repeat-end {
   position: absolute;
-  top: 28px;
+  top: 24px;
   display: block;
   fill: #111827;
   color: #111827;
@@ -383,8 +418,8 @@
 .keyboard-brace {
   flex: none;
   width: 14px;
-  height: 90px;
-  margin: 28px 4px 0 0;
+  height: 94px;
+  margin: 24px 4px 0 0;
   fill: #111827;
 }
 
@@ -401,7 +436,7 @@
 
 .keyboard-left-bar {
   position: absolute;
-  top: 28px;
+  top: 24px;
   left: -0.5px;
   display: block;
   overflow: visible;
@@ -415,7 +450,7 @@
 
 .keyboard-final-bar {
   position: absolute;
-  top: 28px;
+  top: 24px;
   right: 0;
 }
 
