@@ -46,7 +46,11 @@ npx tsc --noEmit
   * **Nach Dependency-Updates:** Um inkompatible Typdefinitionen oder veraltete Imports unmittelbar aufzudecken.
   * **Als erstes CI-Gate:** Der schnellste Filter in GitHub Actions, der fehlerhafte Builds nach wenigen Sekunden abbricht, bevor zeit- und ressourcenintensive Jobs starten.
 
-
+```bash
+npm run fix
+# oder separat als execute:
+npx @biomejs/biome check --write .
+```
 
 ### Stufe 1: Unit-Tests (Reine Logik & Mathematik)
 
