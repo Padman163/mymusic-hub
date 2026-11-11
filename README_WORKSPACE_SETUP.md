@@ -67,11 +67,13 @@ npx netlify-cli link
 # .env im Projekt erstellen lassen und GitHub-Infos eintragen lassen
 npx netlify-cli env:list --plain > .env
 
-# GitHub-API-Zugang für den IssueTracker / Datenspeicher werden in .env erstellt
-GITHUB_TOKEN=ghp_deinPersoenlicherFineGrainedTokenHier
-GITHUB_REPOSITORY=owner/repository-name
+# GitHub-API-Zugang für den IssueTracker / Datenspeicher werden in .env erstellt und nicht synchronisiert
+# .env muss bei Verbindungsproblemen geprüft werden
 GITHUB_BRANCH=main
 GITHUB_DATA_PATH=data/contributions.json
+GITHUB_REPOSITORY=owner/repository-name
+GITHUB_TOKEN=ghp_deinPersoenlicherFineGrainedTokenHier
+
 
 # Fullstack-Entwicklungsserver starten
 npx netlify-cli dev
