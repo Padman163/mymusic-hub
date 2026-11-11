@@ -32,16 +32,29 @@ npm run dev
 * **Was geprüft wird:** Lädt das Astro-Frontend? Werden Styles, die Starlight-Sidebar und statische Komponenten gerendert?
 * **Warum dieser Schritt nötig ist:** Serverless Functions und externe APIs bleiben inaktiv. Du stellst sicher, dass die Kern-Anwendung fehlerfrei kompiliert, ohne von Backend-Token oder externen Diensten abhängig zu sein.
 
-### Schritt 4: Statische Hygiene & Code-Validierung prüfen
+### Schritt 4: Statische Hygiene & Code-Validierung prüfen und anpassen
 Stelle sicher, dass im geklonten Branch keine Typen- oder Syntaxkonflikte vorliegen:
 ```bash
 npm run validate
 ```
 **Was geprüft wird:** 
 
-```biome check .```: Prüft Code-Style, Formatting und Linter-Regeln.
+```biome check .```: Prüft Code-Style, Formatting und Linter-Regeln. Enthält: ```biome lint .```
 
 ```astro check```: Validiert Astro-Templates, Props und TypeScript-Typen über das gesamte Projekt hinweg.
+
+```tsc --noEmit```: Führt die echte Typüberprüfung über dein gesamtes Projekt hinweg durch. Das Flag --noEmit sorgt dafür, dass nur Fehler gemeldet werden, ohne kompilierte .js-Dateien auf die Festplatte zu schreiben.
+
+```bash
+npm run fix
+```
+**Was angepasst wird:** 
+
+```biome check --write .```: Wendet automatische Korrekturen für all das an: Er formatiert den Code, sortiert Imports und behebt automatisch behebbare Linter-Warnungen direkt in den Dateien.
+
+Verwende ```npm run fix``` im Alltag, um alles Automatische (Formatierung + sichere Lint-Korrekturen) auf einmal schreiben zu lassen.
+
+Typfehler, die danach noch bei npm run validate durch astro check oder tsc gemeldet werden, müssen manuell behoben werden.
 
 ### Schritt 5: Netlify CLI verknüpfen, Umgebungsvariablen für das Backend einrichten & Fullstack starten
 ```bash
