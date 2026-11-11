@@ -44,15 +44,16 @@ npm run preflight            # Kombinierte Kette vor jedem Push / Pull Request:
 
 ### 1.5 Häufigste Git-Kommandos
 ```bash
-git switch -c feature/<name> # Neuen isolierten Feature-Branch erstellen und dorthin wechseln
 git switch main              # Zurück zum Hauptbranch wechseln
-git switch <branch-name>     # Zu einem vorhandenen Feature-Branch wechseln
+git switch <branch-name>   # Zu einem vorhandenen Feature-Branch wechseln
+git switch -c feature/<name> # Neuen isolierten Feature-Branch erstellen und dorthin wechseln
+git fetch origin             # Remote-Änderungen abfragen ohne lokalen Code zu veränder
+n
 git status                   # Zeigt modifizierte, gelöschte und ungetrackte Dateien an
 git add .                    # Alle Änderungen für den nächsten Commit stagen
 git commit -m "feat: text"   # Commit mit konventioneller Nachricht erstellen
 git push -u origin <branch>  # Neuen lokalen Branch erstmals auf GitHub veröffentlichen
 git push                     # Nachfolgende Commits auf den Tracking-Branch übertragen
-git fetch origin             # Remote-Änderungen abfragen ohne lokalen Code zu verändern
 git pull origin main         # Lokalen Stand mit dem Remote-Hauptbranch synchronisieren
 git merge main               # Neueste Änderungen aus main in den aktuellen Feature-Branch holen
 git reset HEAD~1             # Letzten Commit verwerfen (Dateiänderungen bleiben im Editor)

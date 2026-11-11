@@ -6,6 +6,13 @@ Dieser Leitfaden beschreibt Schritt für Schritt, wie ein bestehendes Projekt in
 
 ## 1. Erstmaliges Setup (Schritt-für-Schritt)
 
+```bash
+cd <FOLDER>
+git clone <REPO_URL>
+git switch main
+git fetch origin
+```
+
 Wenn du das Repository frisch geklont hast, aktiviere die Subsysteme in der folgenden Reihenfolge, um Fehlern gezielt vorzubeugen:
 
 ### Schritt 1: Laufzeitumgebung validieren
