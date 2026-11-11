@@ -96,7 +96,7 @@ Das Schaubild zeigt oben die Noten und darunter die zugehörigen Pausen gleicher
 
 Mit `duration` zeigt `NotationVisual` ganze (`whole`), halbe (`half`), Viertel- (`quarter`), Achtel- (`eighth`) und Sechzehntelnoten (`sixteenth`) an. Eine Pause wird in derselben `notes`-Liste mit `{ type: 'rest', duration: 'quarter' }` eingetragen und benötigt keine Tonhöhe. Noten und Pausen können gemischt werden; `dotted: true` punktiert auch eine Pause. Notenkopf, Hals und gegebenenfalls Fähnchen ergeben sich aus dem Notenwert; die Halsrichtung wird automatisch bestimmt.
 
-Aufeinanderfolgende Achtel- oder Sechzehntelnoten desselben Werts können mit demselben `beamGroup`-Namen verbunden werden. Eine Gruppe benötigt mindestens zwei Noten und erhält eine gemeinsame Halsrichtung. Bei unterschiedlichen Tonhöhen wird der Balken geneigt und die Hälse werden bis zum Balken geführt. Gemischte Notenwerte innerhalb einer Gruppe sind noch nicht vorgesehen.
+Aufeinanderfolgende Achtel- oder Sechzehntelnoten desselben Werts können mit demselben `beamGroup`-Namen verbunden werden. Eine Gruppe benötigt mindestens zwei Noten. Die Halsrichtung richtet sich nach der Position jeder Note; bei wechselnden Halsrichtungen wird der Balken entsprechend geknickt. Gemischte Notenwerte innerhalb einer Gruppe sind noch nicht vorgesehen.
 
 <NotationVisual clef="treble" notes={[
   { duration: 'eighth', step: 2, beamGroup: 'achtel' },
@@ -105,7 +105,7 @@ Aufeinanderfolgende Achtel- oder Sechzehntelnoten desselben Werts können mit de
   { duration: 'sixteenth', step: 4, beamGroup: 'sechzehntel' }
 ]} />
 
-Für Noten und Pausen mit `duration` entsprechen die Abstände ihren Dauern, einschließlich Punktierungen: Im letzten 3/4-Takt des Abschlussbeispiels belegen Achtelpause, punktierte Viertelnote und Viertelnote jeweils eine, drei und zwei Achtel-Einheiten. Der verbleibende Abstand zum Taktende entspricht der Dauer des letzten Ereignisses. Die Komponente prüft noch nicht, ob die Werte zusammen zur Taktart passen; der verfügbare Platz wird anhand der Summe der angegebenen Dauern verteilt. Unvollständige Notenköpfe ohne `duration` werden weiterhin gleichmäßig verteilt. Für reine Zeichenvergleiche wie das obige Schaubild kann mit `spacing="equal"` eine gleichmäßige Verteilung gewählt werden.
+Für Noten und Pausen mit `duration` wachsen die Abstände optisch komprimiert mit der Dauer, einschließlich Punktierungen: Eine Verdopplung der Dauer ergibt den 1,5-fachen Abstand. Der verbleibende Abstand zum Taktende wird nach demselben Verhältnis berechnet. Zwischen aufeinanderfolgenden Ereignissen bleibt mindestens ein Spatium frei; bei schmalen Darstellungen kann horizontal gescrollt werden. Die Komponente prüft noch nicht, ob die Werte zusammen zur Taktart passen. Unvollständige Notenköpfe ohne `duration` werden weiterhin gleichmäßig verteilt. Für reine Zeichenvergleiche wie das obige Schaubild kann mit `spacing="equal"` eine gleichmäßige Verteilung gewählt werden.
 
 ## Punktierte Noten
 

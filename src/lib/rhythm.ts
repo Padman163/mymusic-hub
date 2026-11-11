@@ -35,7 +35,7 @@ export function rhythmicPositions(
       event.duration === undefined ? undefined : durationUnits[event.duration];
     if (units === undefined)
       throw new Error(`Ungültiger Noten- oder Pausenwert: ${event.duration}.`);
-    return units * (event.dotted ? 1.5 : 1);
+    return (units * (event.dotted ? 1.5 : 1)) ** Math.log2(1.5);
   });
   const total = durations.reduce((sum, duration) => sum + duration, 0);
   let elapsed = 0;

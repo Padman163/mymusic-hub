@@ -50,8 +50,12 @@ test('rhythmic positions reflect notes, rests and dotted durations', () => {
     { duration: 'quarter', dotted: true },
     { duration: 'quarter' }
   ];
-  assert.deepEqual(rhythmicPositions(events), [0, 1 / 6, 4 / 6]);
-  assert.deepEqual(rhythmicPositions([{ duration: 'sixteenth', dotted: true }, { duration: 'sixteenth' }]), [0, 0.6]);
+  const positions = rhythmicPositions(events);
+  const dottedFactor = 1.5 ** Math.log2(1.5);
+  assert.ok(Math.abs((positions[2] - positions[1]) / positions[1] - 1.5 * dottedFactor) < 1e-10);
+  assert.ok(Math.abs((1 - positions[2]) / positions[1] - 1.5) < 1e-10);
+  const dotted = rhythmicPositions([{ duration: 'sixteenth', dotted: true }, { duration: 'sixteenth' }]);
+  assert.ok(Math.abs(dotted[1] / (1 - dotted[1]) - dottedFactor) < 1e-10);
   assert.deepEqual(rhythmicPositions([]), []);
   assert.equal(rhythmicPositions([{ duration: 'quarter' }, {}]), undefined);
   assert.throws(() => rhythmicPositions([{ duration: 'invalid' }]), /Ungültiger Noten- oder Pausenwert/);
@@ -67,18 +71,20 @@ test('renderer places timed events proportionally and preserves equal-spacing ex
   const svg = renderNotationSvg({ notes, firstNoteX: 26, rightBarStyle: 'final' });
   const actual = positions(svg);
   assert.equal(actual.length, 3);
-  for (const [actualValue, expected] of actual.map((value, index) => [value, [0, 100 / 6, 400 / 6][index]])) {
+  for (const [actualValue, expected] of actual.map((value, index) => [value, rhythmicPositions(notes)[index] * 100])) {
     assert.ok(Math.abs(actualValue - expected) < 1e-10);
   }
   const grouped = [...svg.matchAll(/<g transform="translate\(([-.\d]+) 0\)"><text class="notation-(?:rest|note)" x="([\d.]+)%"/g)];
   const x = grouped.map((match) => Number(match[1]) + Number(match[2]) * 3);
   const distances = [x[1] - x[0], x[2] - x[1], 300 - x[2]];
-  assert.ok(Math.abs(distances[1] / distances[0] - 3) < 1e-10);
-  assert.ok(Math.abs(distances[2] / distances[0] - 2) < 1e-10);
+  assert.ok(Math.abs(distances[1] / distances[0] - 1.5 * 1.5 ** Math.log2(1.5)) < 1e-10);
+  assert.ok(Math.abs(distances[2] / distances[0] - 1.5) < 1e-10);
   const equal = positions(renderNotationSvg({ notes, firstNoteX: 26, spacing: 'equal' }));
   assert.deepEqual(equal, [0, (1 / 3) * 100, (2 / 3) * 100]);
   const unaligned = positions(renderNotationSvg({ notes }));
-  assert.deepEqual(unaligned, [25, 37.5, 75]);
+  for (let i = 0; i < unaligned.length; i++) {
+    assert.ok(Math.abs(unaligned[i] - (25 + 75 * rhythmicPositions(notes)[i])) < 1e-10);
+  }
   const untimed = renderNotationSvg({ notes: [{ type: 'filled', step: 2 }, { type: 'empty', step: 3 }] });
   assert.deepEqual(positions(untimed), [(1 / 3) * 100, (2 / 3) * 100]);
 });
@@ -92,7 +98,8 @@ test('beam stems follow their rhythmic x positions with dotted notes', () => {
   const svg = renderNotationSvg({ notes, firstNoteX: 10 });
   const stems = [...svg.matchAll(/<line x1="[\d.]+%" y1="[\d.]+?" x2="[\d.]+%" y2="([\d.]+)" transform="translate\([^)]+\)" stroke-width="1\.2" \/>/g)];
   assert.equal(stems.length, 3);
-  assert.ok(Math.abs(Number(stems[1][1]) - 23) < 1e-10);
+  const factor = 1.5 ** Math.log2(1.5);
+  assert.ok(Math.abs(Number(stems[1][1]) - (29 - 10 * factor / (factor + 1))) < 1e-10);
 });
 
 test('notation geometry uses spatium for staff, heads, stems, beams and ledger lines', () => {
@@ -110,14 +117,63 @@ test('notation geometry uses spatium for staff, heads, stems, beams and ledger l
 
   for (const steps of [[0, 10, 0], [8, -2, 8]]) {
     const beamed = renderNotationSvg({ firstNoteX: 10, notes: steps.map((step) => ({ duration: 'sixteenth', beamGroup: 'a', step })) });
-    const stems = [...beamed.matchAll(/<line x1="[\d.]+%" y1="(-?[\d.]+)" x2="[\d.]+%" y2="(-?[\d.]+)" transform="translate\([^)]+\)" stroke-width="1\.2"/g)];
+    const stems = [...beamed.matchAll(/<line x1="[\d.]+%" y1="(-?[\d.]+)" x2="[\d.]+%" y2="(-?[\d.]+)" transform="translate\(([-.\d]+) 0\)" stroke-width="1\.2"/g)];
     assert.equal(stems.length, 3);
-    for (const stem of stems) assert.ok(Math.abs(Number(stem[2]) - Number(stem[1])) >= sp(2.5));
+    for (const [i, stem] of stems.entries()) {
+      const start = Number(stem[1]);
+      const end = Number(stem[2]);
+      const fraction = [0, 1 / 3, 2 / 3][i];
+      const centerOffset = 10 * (1 - fraction);
+      assert.ok(Math.abs(end - start) >= sp(2.5));
+      assert.ok(steps[i] < 4 ? end <= 44 : end >= 44);
+      assert.ok(Math.abs(Number(stem[3]) - centerOffset - (steps[i] < 4 ? 6.15 : -6.15)) < 1e-10);
+    }
     const beams = [...beamed.matchAll(/<line x1="calc\([^)]+\)" y1="(-?[\d.]+)" x2="calc\([^)]+\)" y2="(-?[\d.]+)" stroke-width="5"/g)];
-    assert.equal(beams.length, 2);
+    assert.equal(beams.length, 6);
     assert.equal(Number(beams[0][1]), Number(stems[0][2]));
-    assert.equal(Number(beams[0][2]), Number(stems[2][2]));
+    assert.equal(Number(beams[0][2]), Number(stems[1][2]));
+    assert.equal(Number(beams[3][1]), Number(stems[1][2]));
+    assert.equal(Number(beams[3][2]), Number(stems[2][2]));
   }
+});
+
+test('stem directions, middle line and dot position follow the note step', () => {
+  for (const [step, expectedStart, expectedEnd, offset, dotY] of [
+    [-2, 74, 39, 6.15, 69], [3, 49, 14, 6.15, 49],
+    [4, 44, 79, -6.15, 39], [5, 39, 74, -6.15, 39],
+    [10, 14, 49, -6.15, 9]
+  ]) {
+    const svg = renderNotationSvg({ notes: [{ duration: 'quarter', step, dotted: true }], firstNoteX: 10 });
+    assert.match(svg, new RegExp(`y1="${expectedStart}" x2="0%" y2="${expectedEnd}" transform="translate\\(${10 + offset} 0\\)"`));
+    assert.match(svg, new RegExp(`cy="${dotY}" r="1\\.5" transform="translate\\(14\\.25 0\\)"`));
+  }
+  const svg = renderNotationSvg({ notes: [{ duration: 'quarter', step: 4, accidental: 'sharp' }] });
+  assert.match(svg, /transform="translate\(-12\.75 0\)"><text class="notation-accidental"/);
+});
+
+test('minimum width preserves clear event spacing in narrow measures', () => {
+  for (const spacing of ['rhythmic', 'equal']) {
+    const notes = [
+      { duration: 'quarter', step: 2, dotted: true },
+      { duration: 'quarter', step: 4, accidental: 'sharp' },
+      { type: 'rest', duration: 'sixteenth' }
+    ];
+    const svg = renderNotationSvg({ notes, spacing, firstNoteX: 26 });
+    const minWidth = Number(svg.match(/min-width:([\d.]+)px/)[1]);
+    const grouped = [...svg.matchAll(/<g transform="translate\(([-.\d]+) 0\)"><text class="notation-(?:rest|note)" x="([\d.]+)%"/g)];
+    const x = grouped.map((match) => Number(match[1]) + Number(match[2]) * minWidth / 100);
+    assert.equal(x.length, 3);
+    assert.ok(x[1] - x[0] >= 15.75 + 22.75 + sp(1) - 1e-9);
+    assert.ok(x[2] - x[1] >= 6.75 + 6.5 + sp(1) - 1e-9);
+  }
+  const ledger = renderNotationSvg({ firstNoteX: 10, notes: [
+    { duration: 'quarter', step: -2 },
+    { duration: 'quarter', step: 10 }
+  ] });
+  const width = Number(ledger.match(/min-width:([\d.]+)px/)[1]);
+  const heads = [...ledger.matchAll(/<g transform="translate\(([-.\d]+) 0\)"><text class="notation-note" x="([\d.]+)%"/g)];
+  const centers = heads.map((match) => Number(match[1]) + Number(match[2]) * width / 100);
+  assert.ok(centers[1] - centers[0] - 2 * (sp(1.35) / 2 + sp(0.5)) >= sp(1));
 });
 
 test('rests use shared glyphs, staff positions and optional dots', () => {

@@ -108,65 +108,6 @@ Gitarren werden in der Standardnotation üblicherweise **eine Oktave höher noti
 
 Die **Form der Note** zeigt ihren Notenwert: Eine ganze Note hat einen leeren Notenkopf ohne Hals, eine halbe einen leeren Notenkopf mit Hals und eine Viertelnote einen ausgefüllten Notenkopf mit Hals. Fähnchen oder Balken am Hals kennzeichnen kürzere Noten, zum Beispiel Achtelnoten. Mehrere Achtelnoten hintereinander verbindet man meist mit einem gemeinsamen Balken statt jedes Fähnchen einzeln zu zeichnen. So erkennt man ihre rhythmische Zusammengehörigkeit auf einen Blick; die Gruppierung orientiert sich meist an den Zählzeiten.
 
-<SheetMusicPlayer musicXmlUrl="/scores/104-3-Note.musicxml" />
-
-<div class="score-row">
-  {/* Takt 1: Ganze Note */}
-  <NotationVisual
-    clef="treble"
-    timeSignature={{ numerator: 4, denominator: 4 }}
-    showLeftBar={false}
-    showRightBar={true}
-    notes={[
-      { duration: 'whole', step: 2 }
-    ]}
-  />
-
-{/* Takt 2: Zwei halbe Noten */}
-
-<NotationVisual
-  clef={false}
-  showLeftBar={false}
-  showRightBar={true}
-  notes={[
-    { duration: "half", step: 2 },
-    { duration: "half", step: 2 },
-  ]}
-/>
-
-{/* Takt 3: Vier Viertelnoten */}
-
-<NotationVisual
-  clef={false}
-  showLeftBar={false}
-  showRightBar={true}
-  notes={[
-    { duration: "quarter", step: 2 },
-    { duration: "quarter", step: 2 },
-    { duration: "quarter", step: 2 },
-    { duration: "quarter", step: 2 },
-  ]}
-/>
-
-{/* Takt 4: Acht Achtelnoten mit Balken und Schlussstrich */}
-
-  <NotationVisual
-    clef={false}
-    showLeftBar={false}
-    showRightBar={true}
-    rightBarStyle="final"
-    notes={[
-      { duration: 'eighth', step: 2, beamGroup: 'b1' },
-      { duration: 'eighth', step: 2, beamGroup: 'b1' },
-      { duration: 'eighth', step: 2, beamGroup: 'b1' },
-      { duration: 'eighth', step: 2, beamGroup: 'b1' },
-      { duration: 'eighth', step: 2, beamGroup: 'b2' },
-      { duration: 'eighth', step: 2, beamGroup: 'b2' },
-      { duration: 'eighth', step: 2, beamGroup: 'b2' },
-      { duration: 'eighth', step: 2, beamGroup: 'b2' }
-    ]}
-  />
-</div>
 
 <div class="notation-system-box">
   {/* ================= ZEILE 1 (Takt 1 & 2) ================= */}

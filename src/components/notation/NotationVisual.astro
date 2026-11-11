@@ -87,9 +87,11 @@ const notation = renderNotationSvg({
       <TempoLabel text={tempo} detail={tempoDetail} />
     </div>
   )}
-  <Fragment set:html={notation} />
-  {hairpin && <DynamicsMarks type={hairpin} initialDynamic={initialDynamic} placement="overlay" />}
-  {showRightBar && rightBarStyle === 'final' && !repeatEnd && (
-    <div class="notation-final-bar"><FinalBar height={sp(4)} /></div>
-  )}
+  <div class="notation-staff-content">
+    <Fragment set:html={notation} />
+    {hairpin && <DynamicsMarks type={hairpin} initialDynamic={initialDynamic} placement="overlay" />}
+    {showRightBar && rightBarStyle === 'final' && !repeatEnd && (
+      <div class="notation-final-bar"><FinalBar height={sp(4)} /></div>
+    )}
+  </div>
 </div>

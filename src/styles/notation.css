@@ -31,12 +31,37 @@
 .notation-visual {
   position: relative;
   padding: var(--notation-panel-padding);
+  min-width: min-content;
 }
 
 .notation-value-comparison {
   display: grid;
   gap: var(--notation-system-gap);
   padding: var(--notation-panel-padding);
+}
+
+.notation-value-comparison,
+.accidental-examples,
+.articulation-examples,
+.bow-examples,
+.dotted-notes,
+.notation-overview,
+.pickup-example,
+.tempo-example,
+.time-signatures,
+.keyboard-notation {
+  overflow-x: auto;
+}
+
+.notation-visual:not(.embedded) {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.notation-staff-content {
+  position: relative;
+  min-width: min-content;
+  --notation-dynamics-top: 64px;
 }
 
 .notation-value-comparison strong {
@@ -74,16 +99,8 @@
 
 .notation-final-bar {
   position: absolute;
-  top: calc(var(--notation-panel-padding) + 24px);
-  right: var(--notation-panel-padding);
-}
-
-.notation-visual.has-header:not(.embedded) .notation-final-bar {
-  top: calc(
-    var(--notation-panel-padding) +
-    var(--notation-header-height) +
-    24px
-  );
+  top: 24px;
+  right: 0;
 }
 
 .notation-visual.embedded {
@@ -100,15 +117,6 @@
 
 .notation-visual.embedded.has-hairpin.has-header {
   --notation-dynamics-top: calc(var(--notation-header-height) + 64px);
-}
-
-.notation-visual.embedded .notation-final-bar {
-  top: 24px;
-  right: 0;
-}
-
-.notation-visual.embedded.has-header .notation-final-bar {
-  top: calc(var(--notation-header-height) + 24px);
 }
 
 .notation-staff {
@@ -165,7 +173,16 @@
 .articulation-measure,
 .dotted-note-example,
 .time-signatures-measure {
+  min-width: min-content;
+}
+
+.accidental-measure,
+.articulation-measure,
+.dotted-note-example,
+.time-signatures-measure,
+.tempo-measure {
   min-width: 0;
+  overflow-x: auto;
 }
 
 .accidental-measure:first-child {
@@ -200,7 +217,7 @@
 
 .bow-line {
   position: relative;
-  min-width: 0;
+  min-width: min-content;
 }
 
 .dotted-notes {
@@ -220,7 +237,7 @@
 
 .dynamics-row {
   position: relative;
-  min-width: 0;
+  min-width: min-content;
   height: 108px;
   margin-bottom: calc(-1 * var(--notation-system-gap));
   --dynamics-staff-bottom: 64px;
@@ -284,7 +301,7 @@
 }
 .notation-system-row > * {
   flex: 1 1 0;
-  min-width: 0;
+  min-width: min-content;
   margin: 0 !important; /* Verhindert das Hochrutschen von Takt 1 */
 }
 
@@ -305,16 +322,16 @@
 }
 
 .overview-system.three-measures {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(min-content, 1fr));
 }
 
 .overview-layout-narrow .overview-system {
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: minmax(min-content, 1fr);
 }
 
 .overview-measure {
   position: relative;
-  min-width: 0;
+  min-width: min-content;
 }
 
 .overview-measure .notation-visual.embedded.has-header .notation-header {
@@ -330,10 +347,6 @@
   --notation-dynamics-top: 64px;
 }
 
-.overview-measure .notation-visual.embedded.has-header .notation-final-bar {
-  top: 24px;
-}
-
 .overview-measure
   .notation-visual.embedded.has-header
   > .notation-measure-number.embedded {
@@ -346,11 +359,11 @@
 
 .pickup-row {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(min-content, 1fr));
 }
 
 .pickup-row:first-child {
-  grid-template-columns: minmax(110px, 0.7fr) repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(110px, 0.7fr) repeat(2, minmax(min-content, 1fr));
 }
 
 .pickup-row + .pickup-row {
@@ -359,7 +372,7 @@
 
 .pickup-measure {
   position: relative;
-  min-width: 0;
+  min-width: min-content;
 }
 
 .repeat-start,
@@ -391,7 +404,6 @@
 
 .tempo-measure {
   position: relative;
-  min-width: 0;
   padding-top: 40px;
   color: #111827;
 }
@@ -431,7 +443,7 @@
 .keyboard-staves {
   position: relative;
   flex: 1;
-  min-width: 0;
+  min-width: min-content;
 }
 
 .keyboard-left-bar {
@@ -457,11 +469,11 @@
 @media (max-width: 520px) {
   .articulation-row,
   .articulation-labels {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(min-content, 1fr));
   }
 
   .dotted-notes {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(min-content, 1fr);
   }
 }
 
@@ -477,6 +489,6 @@
 
 @media (max-width: 420px) {
   .pickup-row:first-child {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(min-content, 1fr));
   }
 }
