@@ -337,5 +337,21 @@
     "status": "New",
     "createdAt": "2026-11-06T16:17:39.475Z",
     "priority": "Mittel"
+  },
+  {
+    "id": "ba07ff31-ff44-438d-9e18-b193f2f0a4bf",
+    "type": "Feature",
+    "title": "Beiträge dürfen nicht in main gepostet werden",
+    "description": "Solange Beiträge in einer .json im Programm stehen, müssen sie in eine branch der nicht main ist gespeichert werden, sonst wird jedes mal main gepusht",
+    "area": "Komponente",
+    "priority": "Hoch",
+    "checklist": [
+      {
+        "text": "Komplett anderen Ansatz verfolgen, wie DB",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-12T14:22:10.472Z"
   }
 ]
