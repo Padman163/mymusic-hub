@@ -68,7 +68,14 @@ const fitToWidth = !scrollable;
           Boolean(measure.hairpin) ||
           Boolean(measure.hairpins && measure.hairpins.length > 0) ||
           measure.notes.some(
-            (note) => note.type !== "rest" && Boolean(note.dynamic),
+            (note) =>
+              note.type !== "rest" &&
+              Boolean(
+                note.dynamic ||
+                  note.dynamicText ||
+                  note.hairpinStart ||
+                  note.hairpinEnd,
+              ),
           ),
       );
       const widthPercent = Math.round(row.widthRatio * 10000) / 100;

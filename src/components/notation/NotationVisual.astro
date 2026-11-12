@@ -68,7 +68,12 @@ const hasDynamicsBelow =
   notes.some(
     (note) =>
       note.type !== "rest" &&
-      Boolean(note.dynamic || note.hairpinStart || note.hairpinEnd),
+      Boolean(
+        note.dynamic ||
+          note.dynamicText ||
+          note.hairpinStart ||
+          note.hairpinEnd,
+      ),
   );
 
 const notation = renderNotationSvg({

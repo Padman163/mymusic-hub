@@ -1,17 +1,43 @@
-import { glyphText } from "./svg.ts";
+import { escapeXml, glyphText } from "./svg.ts";
 
 export type Dynamic = "piano" | "forte";
 export type Hairpin = "crescendo" | "decrescendo";
 
 export type NotationDynamic =
+  | "pppp"
   | "ppp"
   | "pp"
   | "p"
   | "mp"
   | "mf"
+  | "pf"
   | "f"
   | "ff"
-  | "fff";
+  | "fff"
+  | "ffff"
+  | "fp"
+  | "fz"
+  | "sf"
+  | "sfp"
+  | "sfpp"
+  | "sfz"
+  | "sffz"
+  | "rf"
+  | "rfz"
+  | "n"
+  | "cresc."
+  | "decresc."
+  | "dim."
+  | "poco cresc."
+  | "poco dim."
+  | "molto cresc."
+  | "molto dim."
+  | "più p"
+  | "più f"
+  | "sub. p"
+  | "sub. f"
+  | "sempre p"
+  | "sempre f";
 
 export interface HairpinRange {
   from?: number;
@@ -37,16 +63,42 @@ export interface ResolvedHairpinSegment {
 
 export const dynamicSymbols: Record<
   NotationDynamic,
-  { glyph: string; label: string }
+  { glyph?: string; text?: string; label: string }
 > = {
+  pppp: { glyph: "\uE529", label: "pianissississimo" },
   ppp: { glyph: "\uE52A", label: "pianississimo" },
   pp: { glyph: "\uE52B", label: "pianissimo" },
   p: { glyph: "\uE520", label: "piano" },
   mp: { glyph: "\uE52C", label: "mezzopiano" },
   mf: { glyph: "\uE52D", label: "mezzoforte" },
+  pf: { glyph: "\uE52E", label: "poco forte" },
   f: { glyph: "\uE522", label: "forte" },
   ff: { glyph: "\uE52F", label: "fortissimo" },
   fff: { glyph: "\uE530", label: "fortississimo" },
+  ffff: { glyph: "\uE531", label: "fortissississimo" },
+  fp: { glyph: "\uE534", label: "fortepiano" },
+  fz: { glyph: "\uE535", label: "forzando" },
+  sf: { glyph: "\uE536", label: "sforzando" },
+  sfp: { glyph: "\uE537", label: "sforzando-piano" },
+  sfpp: { glyph: "\uE538", label: "sforzando-pianissimo" },
+  sfz: { glyph: "\uE539", label: "sforzato" },
+  sffz: { glyph: "\uE53B", label: "sforzato-fortissimo" },
+  rf: { glyph: "\uE53C", label: "rinforzando" },
+  rfz: { glyph: "\uE53D", label: "rinforzando" },
+  n: { glyph: "\uE526", label: "niente" },
+  "cresc.": { text: "cresc.", label: "crescendo" },
+  "decresc.": { text: "decresc.", label: "decrescendo" },
+  "dim.": { text: "dim.", label: "diminuendo" },
+  "poco cresc.": { text: "poco cresc.", label: "poco crescendo" },
+  "poco dim.": { text: "poco dim.", label: "poco diminuendo" },
+  "molto cresc.": { text: "molto cresc.", label: "molto crescendo" },
+  "molto dim.": { text: "molto dim.", label: "molto diminuendo" },
+  "più p": { text: "più p", label: "più piano" },
+  "più f": { text: "più f", label: "più forte" },
+  "sub. p": { text: "sub. p", label: "subito piano" },
+  "sub. f": { text: "sub. f", label: "subito forte" },
+  "sempre p": { text: "sempre p", label: "sempre piano" },
+  "sempre f": { text: "sempre f", label: "sempre forte" },
 };
 
 export function dynamicsForHairpin(
@@ -123,7 +175,23 @@ export function renderDynamicMark(
   if (!symbol) {
     throw new Error(`Ungültiges Dynamikzeichen: ${String(dynamic)}.`);
   }
-  return glyphText(symbol.glyph, x, y, className, "middle");
+  if (symbol.glyph) {
+    return glyphText(symbol.glyph, x, y, className, "middle");
+  }
+  return `<text class="${className}-text" x="${x}" y="${y}" text-anchor="middle">${escapeXml(symbol.text ?? dynamic)}</text>`;
+}
+
+export function renderDynamicText(
+  text: string,
+  x: string | number,
+  y: number,
+  className: string,
+  offsetPx?: number,
+): string {
+  if (offsetPx !== undefined) {
+    return `<text class="${className}-text" x="${x}" y="${y}" transform="translate(${offsetPx} 0)" text-anchor="start">${escapeXml(text)}</text>`;
+  }
+  return `<text class="${className}-text" x="${x}" y="${y}" text-anchor="middle">${escapeXml(text)}</text>`;
 }
 
 export function renderHairpinSvg(

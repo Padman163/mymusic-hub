@@ -17,6 +17,7 @@ import {
   type MeasureHairpin,
   type NotationDynamic,
   renderDynamicMark,
+  renderDynamicText,
   renderHairpinSvg,
   resolveHairpinRange,
 } from "./dynamics.ts";
@@ -73,6 +74,7 @@ export type NotationNote =
       articulationPosition?: "above" | "below";
       accidental?: "sharp" | "natural" | "flat";
       dynamic?: NotationDynamic;
+      dynamicText?: string;
       hairpinStart?: Hairpin;
       hairpinEnd?: boolean;
       duration?: never;
@@ -87,6 +89,7 @@ export type NotationNote =
       articulationPosition?: "above" | "below";
       accidental?: "sharp" | "natural" | "flat";
       dynamic?: NotationDynamic;
+      dynamicText?: string;
       hairpinStart?: Hairpin;
       hairpinEnd?: boolean;
       dotted?: boolean;
@@ -105,6 +108,7 @@ export type NotationRest = {
   articulationPosition?: never;
   accidental?: never;
   dynamic?: never;
+  dynamicText?: never;
   hairpinStart?: never;
   hairpinEnd?: never;
 };
@@ -310,6 +314,7 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
         "articulationPosition" in note ||
         "accidental" in note ||
         "dynamic" in note ||
+        "dynamicText" in note ||
         "hairpinStart" in note ||
         "hairpinEnd" in note
       ) {
@@ -823,6 +828,17 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     }
     if (note.dynamic) {
       parts.push(renderDynamicMark(note.dynamic, x, 96, "notation-dynamic"));
+    }
+    if (note.dynamicText) {
+      parts.push(
+        renderDynamicText(
+          note.dynamicText,
+          x,
+          96,
+          "notation-dynamic",
+          note.dynamic ? sp(1.3) : undefined,
+        ),
+      );
     }
     parts.push("</g>");
   });

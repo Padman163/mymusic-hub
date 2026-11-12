@@ -159,7 +159,8 @@ Jedes Element im `notes`-Array ist ein `NotationEvent` und gehört zu einer von 
   beamGroup?: string,            // Balkengruppen-ID für Achtel/Sechzehntel
   articulation?: "staccato" | "tenuto" | "accent" | "marcato",
   articulationPosition?: "above" | "below",
-  dynamic?: "ppp" | "pp" | "p" | "mp" | "mf" | "f" | "ff" | "fff", // Dynamikzeichen direkt unter der Note
+  dynamic?: NotationDynamic,     // Standard-Dynamiksymbol oder -text (siehe Abschnitt 3.7)
+  dynamicText?: string,          // Freier kursiver Dynamik-/Vortragstext (z. B. "cresc.", "dolce")
   hairpinStart?: "crescendo" | "decrescendo", // Startet eine Dynamikgabel an dieser Note (auch taktübergreifend)
   hairpinEnd?: boolean,          // Beendet die aktive Dynamikgabel an dieser Note
 }
@@ -175,7 +176,8 @@ Ideal für Tonleiter-, Intervall- oder Linien-Erklärungen, bei denen alle Noten
   accidental?: "sharp" | "natural" | "flat",
   articulation?: "staccato" | "tenuto" | "accent" | "marcato",
   articulationPosition?: "above" | "below",
-  dynamic?: "ppp" | "pp" | "p" | "mp" | "mf" | "f" | "ff" | "fff",
+  dynamic?: NotationDynamic,
+  dynamicText?: string,
   hairpinStart?: "crescendo" | "decrescendo",
   hairpinEnd?: boolean,
 }
@@ -246,6 +248,15 @@ Alle folgenden Props können pro Takt (`measures[...]`) oder im Einzeltakt-Modus
 | `ritAt` | `number` | `undefined` | 0-basierter Notenindex im Takt, über dem kursiv `rit.` (ritardando) gerendert wird. |
 | `aTempoAt` | `number` | `undefined` | 0-basierter Notenindex im Takt, über dem kursiv `a tempo` gerendert wird. Wenn sowohl `ritAt` als auch `aTempoAt` im selben Takt gesetzt sind, müssen mindestens 2 Notenpositionen Abstand dazwischen liegen (`\|aTempoAt - ritAt\| >= 2`). |
 | `hairpin` | `'crescendo' \| 'decrescendo' \| { type, from?, to? }` | `undefined` | Zeichnet unterhalb des Takts eine reine Dynamikgabel (`<` bzw. `>`) zwischen der ersten und letzten Note (oder optional zwischen den Notenindizes `from` und `to`). Vollständig unabhängig von Dynamikstufen (`dynamic` auf den einzelnen Noten). Hat die Start- oder Endnote ein `dynamic`-Zeichen (`p`, `f`, `mf` usw.), hält die Gabel automatisch horizontalen Abstand zum Symbol. |
+
+#### Verfügbare Dynamik-Symbole & -Texte pro Note (`dynamic` & `dynamicText`)
+
+| Kategorie | Werte für `dynamic` | Darstellung |
+| :--- | :--- | :--- |
+| **Lautstärkestufen (leise → laut)** | `'pppp'`, `'ppp'`, `'pp'`, `'p'`, `'mp'`, `'mf'`, `'pf'`, `'f'`, `'ff'`, `'fff'`, `'ffff'`, `'n'` (*niente*) | Offizielle Bravura-SMuFL-Glyphen (`U+E520`–`U+E531`), zentriert unter der Note. |
+| **Akzent- & Impuls-Dynamik** | `'fp'` (*fortepiano*), `'fz'` (*forzando*), `'sf'` (*sforzando*), `'sfp'`, `'sfpp'`, `'sfz'` (*sforzato*), `'sffz'`, `'rf'`, `'rfz'` (*rinforzando*) | Offizielle Bravura-SMuFL-Glyphen (`U+E534`–`U+E53D`), zentriert unter der Note. |
+| **Standard-Verlaufstexte** | `'cresc.'`, `'decresc.'`, `'dim.'`, `'poco cresc.'`, `'poco dim.'`, `'molto cresc.'`, `'molto dim.'`, `'più p'`, `'più f'`, `'sub. p'`, `'sub. f'`, `'sempre p'`, `'sempre f'` | Kursive Georgia-Serif-Vortragsbezeichnung unter der Note. |
+| **Freier Zusatztext (`dynamicText`)** | Beliebiger `string` (z. B. `dynamicText: "poco a poco"`, `"dolce"`, `"espr."`) | Wird allein zentriert unter der Note gerendert oder – falls zusätzlich `dynamic` gesetzt ist (z. B. `dynamic: "p", dynamicText: "cresc."`) – direkt rechts neben dem Dynamiksymbol platziert. |
 
 ---
 

@@ -853,6 +853,18 @@ test('note dynamics and measure hairpins render independently in SVG', () => {
   assert.equal(m1Hairpins[0].toBarline, true);
   assert.equal(m2Hairpins[0].fromBarline, true);
   assert.equal(m1Hairpins[0].endOpen, m2Hairpins[0].startOpen);
+
+  const extendedDynamics = renderNotationSvg({
+    notes: [
+      { duration: 'quarter', step: 0, dynamic: 'sfz' },
+      { duration: 'quarter', step: 1, dynamic: 'fp' },
+      { duration: 'quarter', step: 2, dynamic: 'cresc.' },
+      { duration: 'quarter', step: 3, dynamic: 'p', dynamicText: 'dolce' }
+    ]
+  });
+  assert.equal((extendedDynamics.match(/class="notation-dynamic"/g) ?? []).length, 3);
+  assert.match(extendedDynamics, /class="notation-dynamic-text"[^>]*>cresc\.<\/text>/);
+  assert.match(extendedDynamics, /class="notation-dynamic-text"[^>]*>dolce<\/text>/);
 });
 
 

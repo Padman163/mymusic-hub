@@ -139,7 +139,8 @@
   stroke-width: 1.2;
 }
 
-.notation-tempo {
+.notation-tempo,
+.notation-dynamic-text {
   font:
     italic var(--music-text-size) Georgia,
     serif;
@@ -692,6 +693,7 @@
   .notation-time,
   .notation-articulation,
   .notation-dynamic,
+  .notation-dynamic-text,
   .notation-tempo,
   .notation-curve,
   .final-bar,
