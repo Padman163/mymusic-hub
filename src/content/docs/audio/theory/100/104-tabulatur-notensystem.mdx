@@ -213,7 +213,7 @@ Ein **Punkt hinter einer Note oder Pause** verlängert ihren Wert um die Hälfte
 
 Im Beispiel siehst du punktierte halbe, Viertel- und Achtelnoten. Die Rhythmuszeichen zeigen jeweils die verlängerte Dauer.
 
-<SheetMusicPlayer musicXmlUrl="/scores/104-3-Punktierte-Noten.musicxml" />
+## SheetMusicPlayer musicXmlUrl="/scores/104-3-Punktierte-Noten.musicxml" />
 
 <Notation
   clef="treble"
@@ -223,7 +223,7 @@ Im Beispiel siehst du punktierte halbe, Viertel- und Achtelnoten. Die Rhythmusze
   measures={[
     {
       notes: [
-        { duration: "half", step: 2, dotted: true},
+        { duration: "half", step: 2, dotted: true },
         { duration: "quarter", step: 2 },
       ],
     },
@@ -264,9 +264,51 @@ Notenwert, der als Zähleinheit dient:
 - **3/4:** drei Viertelwerte pro Takt.
 - **6/8:** sechs Achtelwerte pro Takt.
 
-## SheetMusicPlayer musicXmlUrl="/scores/104-3-Taktart.musicxml" />
+<Notation
+  clef="treble"
+  timeSignature={{ numerator: 4, denominator: 4 }}
+  layout={3}
+  measureWidth="equal"
+  measures={[
+    {
+      // Takt 1: übernimmt 4/4 vom Top-Level
+      notes: [
+        { duration: "quarter", step: 2 },
+        { duration: "quarter", step: 2 },
+        { duration: "quarter", step: 2 },
+        { duration: "quarter", step: 2 },
+      ],
+    },
+    {
+      // Takt 2: Wechsel auf 3/4
+      timeSignature: { numerator: 3, denominator: 4 },
+      notes: [
+        { duration: "quarter", step: 2 },
+        { duration: "quarter", step: 2 },
+        { duration: "quarter", step: 2 },
+      ],
+    },
+    {
+      // Takt 3: Wechsel auf 6/8
+      timeSignature: { numerator: 6, denominator: 8 },
+      rightBarStyle: "final",
+      notes: [
+        { duration: "eighth", step: 2, beamGroup: "a" },
+        { duration: "eighth", step: 2, beamGroup: "a" },
+        { duration: "eighth", step: 2, beamGroup: "a" },
+        { duration: "eighth", step: 2, beamGroup: "b" },
+        { duration: "eighth", step: 2, beamGroup: "b" },
+        { duration: "eighth", step: 2, beamGroup: "b" },
+      ],
+    },
+  ]}
+/>
 
-Ein **Taktstrich** trennt einen Takt vom nächsten. Der doppelte Taktstrich kann einen Abschnitt oder ein Stück abschließen. Die Taktangabe findest du am Anfang der Notenzeile nach Schlüssel und Tonartvorzeichnung. Wir schauen uns die Bedeutung der verschiedenen Taktarten und ihres Metrums in Abschnitt 5 genauer an.
+Ein **Taktstrich** trennt einen Takt vom nächsten. Der doppelte Taktstrich kann
+einen Abschnitt oder ein Stück abschließen. Die Taktangabe findest du am Anfang
+der Notenzeile nach Schlüssel und Tonartvorzeichnung. Wir schauen uns die
+Bedeutung der verschiedenen Taktarten und ihres Metrums in Abschnitt 5 genauer
+an.
 
 ## 4. Tonartvorzeichnung und Tonleitern
 
@@ -372,7 +414,41 @@ Die **Tonartvorzeichnung** steht nach dem Schlüssel. Sie zeigt an, welche Töne
 
 Ein einzelnes **Kreuz** (♯) erhöht einen Ton um einen Halbton, ein **b** (♭) erniedrigt ihn um einen Halbton. Ist zum Beispiel in G-Dur ein **F♯** in der Tonartvorzeichnung festgelegt, muss das F nicht bei jeder Note erneut mit einem Kreuz notiert werden. Ein **Auflösungszeichen** (♮) hebt ein Kreuz oder b für die betreffende Note auf. Einzelne Vorzeichen innerhalb eines Takts gelten für die entsprechende Note bis zum nächsten Taktstrich.
 
-## SheetMusicPlayer musicXmlUrl="/scores/104-4-Tonart.musicxml" />
+<Notation
+  clef="treble"
+  layout={3}
+  measureWidth="equal"
+  measures={[
+    {
+      // Takt 1: B-Dur (5 Kreuze: F♯, C♯, G♯, D♯, A♯)
+      accidentals: [
+        { type: "sharp", step: 8 },
+        { type: "sharp", step: 5 },
+        { type: "sharp", step: 9 },
+        { type: "sharp", step: 6 },
+        { type: "sharp", step: 3 },
+      ],
+      notes: [],
+    },
+    {
+      // Takt 2: Auflösung nach C-Dur (erzeugt automatisch 5 Auflösungszeichen ♮)
+      accidentals: [],
+      notes: [],
+    },
+    {
+      // Takt 3: D♭-Dur (5 b-Vorzeichen: B♭, E♭, A♭, D♭, G♭)
+      accidentals: [
+        { type: "flat", step: 4 },
+        { type: "flat", step: 7 },
+        { type: "flat", step: 3 },
+        { type: "flat", step: 6 },
+        { type: "flat", step: 2 },
+      ],
+      rightBarStyle: "final",
+      notes: [],
+    },
+  ]}
+/>
 
 ### Die Dur-Tonleiter Schritt für Schritt: C-Dur
 
@@ -400,7 +476,90 @@ Die Zahlen in der Tabelle bezeichnen die **Stufen** der Tonleiter: C ist die ers
 
 Im Violinschlüssel kannst du die Folge im Notensystem verfolgen. Die Notenköpfe steigen Schritt für Schritt von C4 bis C5. Das Beispiel notiert jeden Ton als Viertelnote, damit die Tonhöhen gut zu erkennen sind. Die Viertelnoten beschreiben hier nur die Dauer der einzelnen Töne; die charakteristische Dur-Tonleiter entsteht durch die Abstände zwischen ihnen.
 
-## SheetMusicPlayer musicXmlUrl="/scores/104-4-Tonleiter.musicxml" />
+<Notation
+  clef="treble"
+  timeSignature={{ numerator: 4, denominator: 4 }}
+  layout={2}
+  measureWidth="equal"
+  measures={[
+    {
+      notes: [
+        { duration: "quarter", step: -2 },
+        { duration: "quarter", step: -1 },
+        { duration: "quarter", step: 0 },
+        { duration: "quarter", step: 1 },
+      ],
+    },
+    {
+      rightBarStyle: "final",
+      notes: [
+        { duration: "quarter", step: 2 },
+        { duration: "quarter", step: 3 },
+        { duration: "quarter", step: 4 },
+        { duration: "quarter", step: 5 },
+      ],
+    },
+  ]}
+/>
+
+Überträgst du dasselbe Dur-Muster (**Ganzton – Ganzton – Halbton – Ganzton – Ganzton – Ganzton – Halbton**) auf den Grundton **G**, lautet die Tonfolge **G – A – B – C – D – E – F♯ – G**. Damit zwischen der sechsten Stufe (**E**) und der siebten Stufe ein Ganztonschritt sowie zur Oktave (**G**) der charakteristische Halbtonschritt entsteht, muss das **F** zu **F♯** erhöht werden.
+
+In der Standardnotation steht dieses Kreuz für **G-Dur** einmalig als **Tonartvorzeichnung** (**F♯** auf der obersten Linie) direkt am Anfang des Notensystems und gilt dann automatisch für jedes F im Stück:
+
+<Notation
+  clef="treble"
+  timeSignature={{ numerator: 4, denominator: 4 }}
+  accidentals={[{ type: "sharp", step: 8 }]}
+  layout={2}
+  measureWidth="equal"
+  measures={[
+    {
+      notes: [
+        { duration: "quarter", step: 2 },
+        { duration: "quarter", step: 3 },
+        { duration: "quarter", step: 4 },
+        { duration: "quarter", step: 5 },
+      ],
+    },
+    {
+      rightBarStyle: "final",
+      notes: [
+        { duration: "quarter", step: 6 },
+        { duration: "quarter", step: 7 },
+        { duration: "quarter", step: 8 },
+        { duration: "quarter", step: 9 },
+      ],
+    },
+  ]}
+/>
+
+Notiert man dieselbe **G-Dur-Tonleiter ohne Tonartvorzeichnung** am Zeilenanfang, muss das Kreuz als einzelnes **Versetzungszeichen** direkt vor die siebte Note (**F♯**) gesetzt werden:
+
+<Notation
+  clef="treble"
+  timeSignature={{ numerator: 4, denominator: 4 }}
+  layout={2}
+  measureWidth="equal"
+  measures={[
+    {
+      notes: [
+        { duration: "quarter", step: 2 },
+        { duration: "quarter", step: 3 },
+        { duration: "quarter", step: 4 },
+        { duration: "quarter", step: 5 },
+      ],
+    },
+    {
+      rightBarStyle: "final",
+      notes: [
+        { duration: "quarter", step: 6 },
+        { duration: "quarter", step: 7 },
+        { duration: "quarter", step: 8, accidental: "sharp" },
+        { duration: "quarter", step: 9 },
+      ],
+    },
+  ]}
+/>
 
 Beim Aufwärtsgehen hörst und liest du die Tonleiter vom Grundton bis zur Oktave. Abwärts spielst du dieselben Töne in umgekehrter Reihenfolge. Eine Tonleiter ist damit noch keine Melodie, sondern zunächst das geordnete Tonmaterial, aus dem Melodien entstehen können.
 
@@ -426,7 +585,7 @@ Ein **Auftakt** beginnt vor dem ersten vollständigen Takt. Er enthält nur eine
 
 Im Beispiel enthält der verkürzte Auftakt einen stillen Viertelschlag und danach eine **Viertelnote**. Dadurch steht die Note nahe am rechten Taktstrich, direkt vor dem ersten vollständigen Takt. Nur Takt 2 wird wiederholt. Takt 3 enthält den Schlusston; seine halbe Note füllt die zwei im Auftakt fehlenden Viertelschläge aus.
 
-## SheetMusicPlayer musicXmlUrl="/scores/104-6-Auftakt-Wiederholung.musicxml" />
+<SheetMusicPlayer musicXmlUrl="/scores/104-6-Auftakt-Wiederholung.musicxml" />
 
 ## 7. Tempoangaben
 
