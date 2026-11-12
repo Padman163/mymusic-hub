@@ -358,5 +358,29 @@
     ],
     "status": "New",
     "createdAt": "2026-11-12T14:22:10.472Z"
+  },
+  {
+    "id": "8c0f8d22-7cef-4494-a0fc-da71ee2416ad",
+    "type": "Feature",
+    "title": "Notation komplett in Quiz einbinden",
+    "description": "",
+    "area": "Theorie",
+    "priority": "Mittel",
+    "checklist": [
+      {
+        "text": "Theorieteil",
+        "checked": false
+      },
+      {
+        "text": "Quiz",
+        "checked": false
+      },
+      {
+        "text": "Praxisübungen",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-12T14:24:58.752Z"
   }
 ]
