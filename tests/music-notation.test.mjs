@@ -865,6 +865,16 @@ test('note dynamics and measure hairpins render independently in SVG', () => {
   assert.equal((extendedDynamics.match(/class="notation-dynamic"/g) ?? []).length, 3);
   assert.match(extendedDynamics, /class="notation-dynamic-text"[^>]*>cresc\.<\/text>/);
   assert.match(extendedDynamics, /class="notation-dynamic-text"[^>]*>dolce<\/text>/);
+
+  const clefChangeRows = layoutNotationSystems({
+    layout: 1,
+    measures: [
+      { clef: 'treble', notes: [{ duration: 'whole', step: -2 }] },
+      { clef: 'bass', notes: [{ duration: 'whole', step: 10 }] }
+    ]
+  });
+  assert.equal(clefChangeRows[0].measures[0].clef, 'treble');
+  assert.equal(clefChangeRows[1].measures[0].clef, 'bass');
 });
 
 

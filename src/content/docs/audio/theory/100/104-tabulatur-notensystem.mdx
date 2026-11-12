@@ -6,8 +6,6 @@ sidebar:
 ---
 
 import SheetMusicPlayer from "../../../../../components/SheetMusicPlayer.astro";
-import NotationVisual from "../../../../../components/notation/NotationVisual.astro";
-import NotationSystem from "../../../../../components/notation/NotationSystem.astro";
 import Notation from "../../../../../components/notation/Notation.astro";
 
 Ein Rhythmus kann auf verschiedene Arten notiert werden. In **Standardnotation** erkennst du Tonhöhe und Rhythmus an den Noten im Notensystem. Eine **Tabulatur (TAB)** zeigt dir, auf welcher Saite und in welchem Bund du greifst. Häufig stehen beide Systeme gemeinsam untereinander. In 103 hast du bereits Rhythmuswerte, Takt und Metrum kennengelernt. Hier geht es darum, wie du diese Informationen in einer Notation wiederfindest.
@@ -80,36 +78,19 @@ Liegt ein Ton oberhalb oder unterhalb der fünf Notenlinien, werden **Hilfslinie
 
 Im folgenden Vergleich ist **C4 in beiden Notensystemen derselbe Ton**. Die Notenköpfe stehen wegen der unterschiedlichen Schlüssel an verschiedenen Stellen im Liniensystem, klingen aber gleich hoch.
 
-## ######Muss noch geändert werden zu Notation##########
-
-<div class="notation-system-box">
-  {/* Violinschlüssel: C4 auf der 1. Hilfslinie unten */}
-  <div class="notation-system-row">
-    <NotationVisual
-      clef="treble"
-      showLeftBar={true}
-      showRightBar={true}
-      embedded={true}
-      notes={[
-        { duration: 'whole', step: -2 }
-      ]}
-    />
-  </div>
-
-{/* Bassschlüssel: C4 auf der 1. Hilfslinie oben */}
-
-  <div class="notation-system-row">
-    <NotationVisual
-      clef="bass"
-      showLeftBar={true}
-      showRightBar={true}
-      embedded={true}
-      notes={[
-        { duration: 'whole', step: 10 }
-      ]}
-    />
-  </div>
-</div>
+<Notation
+  layout={1}
+  measures={[
+    {
+      clef: "treble",
+      notes: [{ duration: "whole", step: -2 }],
+    },
+    {
+      clef: "bass",
+      notes: [{ duration: "whole", step: 10 }],
+    },
+  ]}
+/>
 
 **C3** lässt sich in Standardstimmung zum Beispiel auf der tiefen E-Saite im **8. Bund** oder auf der A-Saite im **3. Bund** greifen. Beide Positionen erzeugen denselben Ton. Im Beispiel siehst du C3 zuerst auf der tiefen E-Saite und danach auf der A-Saite:
 

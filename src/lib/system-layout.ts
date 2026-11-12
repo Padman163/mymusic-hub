@@ -523,6 +523,7 @@ export function arrangeNotationSystems<
     layoutTimeSignature?: TimeSignature;
   })[][] = [];
   let active: NotationAccidental[] = [];
+  let activeClef: NotationClef = clef;
   let activeTimeSignature: TimeSignature | undefined;
   let index = 0;
   let systemIndex = 0;
@@ -535,6 +536,12 @@ export function arrangeNotationSystems<
           : measuresPerSystem[systemIndex];
     systems.push(
       measures.slice(index, index + count).map((measure, offset) => {
+        const clefChanged = Boolean(
+          measure.clef && measure.clef !== activeClef,
+        );
+        if (measure.clef) {
+          activeClef = measure.clef;
+        }
         const nextTimeSignature =
           measure.timeSignature ?? measure.layoutTimeSignature;
         if (nextTimeSignature) {
@@ -579,7 +586,7 @@ export function arrangeNotationSystems<
             : undefined;
         return {
           ...measure,
-          clef: offset === 0 ? clef : false,
+          clef: offset === 0 || clefChanged ? activeClef : false,
           accidentals,
           layoutTimeSignature: effectiveLayoutTimeSignature,
         };
