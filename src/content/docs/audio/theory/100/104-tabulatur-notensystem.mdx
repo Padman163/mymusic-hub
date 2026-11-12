@@ -22,7 +22,7 @@ Eine Gitarrentabulatur hat normalerweise **sechs Linien**, eine für jede Saite.
 
 Ein **X** oder **x** auf einer TAB-Linie steht häufig für einen **gedämpften, perkussiven Ton ohne festgelegte Tonhöhe**. Die Saite wird dabei so abgedämpft, dass kein klarer gegriffener Ton klingt. Das Zeichen ist weder ein Kreuzvorzeichen noch die Bundnummer 10. Die genaue Spielweise hängt vom musikalischen Zusammenhang ab.
 
-SheetMusicPlayer musicXmlUrl="/scores/104-1-emptytab.musicxml" />
+## SheetMusicPlayer musicXmlUrl="/scores/104-1-emptytab.musicxml" />
 
 | Notation         | Was sie dir zeigt                                                                                                           |
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------- |
@@ -113,13 +113,15 @@ Im folgenden Vergleich ist **C4 in beiden Notensystemen derselbe Ton**. Die Note
 
 **C3** lässt sich in Standardstimmung zum Beispiel auf der tiefen E-Saite im **8. Bund** oder auf der A-Saite im **3. Bund** greifen. Beide Positionen erzeugen denselben Ton. Im Beispiel siehst du C3 zuerst auf der tiefen E-Saite und danach auf der A-Saite:
 
-SheetMusicPlayer musicXmlUrl="/scores/104-2-Tabulatur.musicxml" />
+## SheetMusicPlayer musicXmlUrl="/scores/104-2-Tabulatur.musicxml" />
 
 Gitarren werden in der Standardnotation üblicherweise **eine Oktave höher notiert, als sie klingen**. Die notierte Tonhöhe lässt sich daher direkt lesen; beim Vergleich mit einem Klavier oder einer klingenden Aufnahme liegt der tatsächliche Gitarrenton eine Oktave tiefer. Bei den Notennamen verwenden wir die internationale Schreibweise, in der **B** der natürliche Ton und **B♭** der um einen Halbton erniedrigte Ton ist.
 
 ## 3. Notenwerte, Taktangabe und Taktstriche
 
 Die **Form der Note** zeigt ihren Notenwert: Eine ganze Note hat einen leeren Notenkopf ohne Hals, eine halbe einen leeren Notenkopf mit Hals und eine Viertelnote einen ausgefüllten Notenkopf mit Hals. Fähnchen oder Balken am Hals kennzeichnen kürzere Noten, zum Beispiel Achtelnoten. Mehrere Achtelnoten hintereinander verbindet man meist mit einem gemeinsamen Balken statt jedes Fähnchen einzeln zu zeichnen. So erkennt man ihre rhythmische Zusammengehörigkeit auf einen Blick; die Gruppierung orientiert sich meist an den Zählzeiten.
+
+Eine **Pause** bezeichnet eine Stille mit derselben Dauer wie der entsprechende Notenwert. Das Schaubild zeigt ganze, halbe, Viertel-, Achtel- und Sechzehntelwerte jeweils als Note und Pause. Die ganze Pause hängt unter der vierten Linie, die halbe liegt auf der dritten Linie (von unten gezählt). Eine ganze Pause kann auch einen vollständigen Takt unabhängig von der Taktart anzeigen.
 
 <Notation
   clef="treble"
@@ -157,18 +159,6 @@ Die **Form der Note** zeigt ihren Notenwert: Eine ganze Note hat einen leeren No
         { duration: "eighth", step: 2, beamGroup: "b2" },
       ],
     },
-  ]}
-/>
-
-Eine **Pause** bezeichnet eine Stille mit derselben Dauer wie der entsprechende Notenwert. Das Schaubild zeigt ganze, halbe, Viertel-, Achtel- und Sechzehntelwerte jeweils als Note und Pause. Die ganze Pause hängt unter der vierten Linie, die halbe liegt auf der dritten Linie (von unten gezählt). Eine ganze Pause kann auch einen vollständigen Takt unabhängig von der Taktart anzeigen.
-
-<Notation
-  clef="treble"
-  notes={[
-    { type: "rest", duration: "whole" },
-    { type: "rest", duration: "half" },
-    { type: "rest", duration: "quarter" },
-    { type: "rest", duration: "eighth" },
   ]}
 />
 
@@ -217,21 +207,64 @@ verraten die TAB-Zahlen allein nicht, wie lange ein Ton klingt. Im folgenden
 Beispiel ist auf der G-Saite immer derselbe Ton gegriffen; nur seine notierte
 Länge ändert sich.
 
-SheetMusicPlayer musicXmlUrl="/scores/104-3-Tab-Notenwerte.musicxml" />
+## SheetMusicPlayer musicXmlUrl="/scores/104-3-Tab-Notenwerte.musicxml" />
 
 Ein **Punkt hinter einer Note oder Pause** verlängert ihren Wert um die Hälfte des ursprünglichen Werts. Eine punktierte halbe Note dauert also drei Viertelschläge, eine punktierte Viertelnote drei Achtelschläge und eine punktierte Achtelnote drei Sechzehntelschläge. Der Punkt verändert die Tonhöhe nicht, sondern nur die Dauer.
 
-Im TAB-Beispiel siehst du punktierte halbe, Viertel- und Achtelnoten. Die Rhythmuszeichen zeigen jeweils die verlängerte Dauer.
+Im Beispiel siehst du punktierte halbe, Viertel- und Achtelnoten. Die Rhythmuszeichen zeigen jeweils die verlängerte Dauer.
 
-SheetMusicPlayer musicXmlUrl="/scores/104-3-Punktierte-Noten.musicxml" />
+<SheetMusicPlayer musicXmlUrl="/scores/104-3-Punktierte-Noten.musicxml" />
 
-Die **Taktangabe** besteht aus zwei übereinanderstehenden Zahlen. Die obere Zahl gibt an, wie viele Zählwerte in einen Takt passen. Die untere Zahl benennt den Notenwert, der als Zähleinheit dient:
+<Notation
+  clef="treble"
+  timeSignature={{ numerator: 4, denominator: 4 }}
+  layout={[2, 2]}
+  measureWidth="equal"
+  measures={[
+    {
+      notes: [
+        { duration: "half", step: 2, dotted: true},
+        { duration: "quarter", step: 2 },
+      ],
+    },
+    {
+      notes: [
+        { duration: "quarter", step: 2, dotted: true },
+        { duration: "eighth", step: 2 },
+        { duration: "half", step: 2 },
+      ],
+    },
+    {
+      notes: [
+        { duration: "eighth", step: 2, dotted: true, beamGroup: "b1" },
+        { duration: "sixteenth", step: 2, beamGroup: "b1" },
+        { duration: "eighth", step: 2, dotted: true, beamGroup: "b2" },
+        { duration: "sixteenth", step: 2, beamGroup: "b2" },
+        { duration: "quarter", step: 2 },
+        { duration: "quarter", step: 2 },
+      ],
+    },
+    {
+      rightBarStyle: "final",
+      notes: [
+        { duration: "quarter", step: 2, dotted: true },
+        { duration: "eighth", step: 2 },
+        { duration: "eighth", step: 2, dotted: true, beamGroup: "b3" },
+        { duration: "sixteenth", step: 2, beamGroup: "b3" },
+        { duration: "quarter", step: 2 },
+      ],
+    },
+  ]}
+/>
+Die **Taktangabe** besteht aus zwei übereinanderstehenden Zahlen. Die obere Zahl
+gibt an, wie viele Zählwerte in einen Takt passen. Die untere Zahl benennt den
+Notenwert, der als Zähleinheit dient:
 
 - **4/4:** vier Viertelwerte pro Takt.
 - **3/4:** drei Viertelwerte pro Takt.
 - **6/8:** sechs Achtelwerte pro Takt.
 
-SheetMusicPlayer musicXmlUrl="/scores/104-3-Taktart.musicxml" />
+## SheetMusicPlayer musicXmlUrl="/scores/104-3-Taktart.musicxml" />
 
 Ein **Taktstrich** trennt einen Takt vom nächsten. Der doppelte Taktstrich kann einen Abschnitt oder ein Stück abschließen. Die Taktangabe findest du am Anfang der Notenzeile nach Schlüssel und Tonartvorzeichnung. Wir schauen uns die Bedeutung der verschiedenen Taktarten und ihres Metrums in Abschnitt 5 genauer an.
 
@@ -339,7 +372,7 @@ Die **Tonartvorzeichnung** steht nach dem Schlüssel. Sie zeigt an, welche Töne
 
 Ein einzelnes **Kreuz** (♯) erhöht einen Ton um einen Halbton, ein **b** (♭) erniedrigt ihn um einen Halbton. Ist zum Beispiel in G-Dur ein **F♯** in der Tonartvorzeichnung festgelegt, muss das F nicht bei jeder Note erneut mit einem Kreuz notiert werden. Ein **Auflösungszeichen** (♮) hebt ein Kreuz oder b für die betreffende Note auf. Einzelne Vorzeichen innerhalb eines Takts gelten für die entsprechende Note bis zum nächsten Taktstrich.
 
-SheetMusicPlayer musicXmlUrl="/scores/104-4-Tonart.musicxml" />
+## SheetMusicPlayer musicXmlUrl="/scores/104-4-Tonart.musicxml" />
 
 ### Die Dur-Tonleiter Schritt für Schritt: C-Dur
 
@@ -367,7 +400,7 @@ Die Zahlen in der Tabelle bezeichnen die **Stufen** der Tonleiter: C ist die ers
 
 Im Violinschlüssel kannst du die Folge im Notensystem verfolgen. Die Notenköpfe steigen Schritt für Schritt von C4 bis C5. Das Beispiel notiert jeden Ton als Viertelnote, damit die Tonhöhen gut zu erkennen sind. Die Viertelnoten beschreiben hier nur die Dauer der einzelnen Töne; die charakteristische Dur-Tonleiter entsteht durch die Abstände zwischen ihnen.
 
-SheetMusicPlayer musicXmlUrl="/scores/104-4-Tonleiter.musicxml" />
+## SheetMusicPlayer musicXmlUrl="/scores/104-4-Tonleiter.musicxml" />
 
 Beim Aufwärtsgehen hörst und liest du die Tonleiter vom Grundton bis zur Oktave. Abwärts spielst du dieselben Töne in umgekehrter Reihenfolge. Eine Tonleiter ist damit noch keine Melodie, sondern zunächst das geordnete Tonmaterial, aus dem Melodien entstehen können.
 
@@ -393,7 +426,7 @@ Ein **Auftakt** beginnt vor dem ersten vollständigen Takt. Er enthält nur eine
 
 Im Beispiel enthält der verkürzte Auftakt einen stillen Viertelschlag und danach eine **Viertelnote**. Dadurch steht die Note nahe am rechten Taktstrich, direkt vor dem ersten vollständigen Takt. Nur Takt 2 wird wiederholt. Takt 3 enthält den Schlusston; seine halbe Note füllt die zwei im Auftakt fehlenden Viertelschläge aus.
 
-SheetMusicPlayer musicXmlUrl="/scores/104-6-Auftakt-Wiederholung.musicxml" />
+## SheetMusicPlayer musicXmlUrl="/scores/104-6-Auftakt-Wiederholung.musicxml" />
 
 ## 7. Tempoangaben
 
@@ -405,7 +438,7 @@ Im Beispiel steht **Allegro** über einer Tonfolge; darunter gibt die Metronoman
 
 Das Tempo kann sich im Verlauf eines Stücks ändern: **rit.** (_ritardando_) oder **rall.** (_rallentando_) fordert dazu auf, allmählich langsamer zu werden; **accel.** (_accelerando_) bedeutet, allmählich schneller zu werden. **a tempo** heißt, zum vorherigen Grundtempo zurückzukehren. Diese Angaben beschreiben meist eine allmähliche Veränderung und keinen abrupten Sprung auf eine bestimmte Metronomzahl. Im Beispiel zeigt **rit.** das Verlangsamen und **a tempo** die Rückkehr zum angegebenen Tempo.
 
-SheetMusicPlayer musicXmlUrl="/scores/104-7-Tempo.musicxml" />
+## SheetMusicPlayer musicXmlUrl="/scores/104-7-Tempo.musicxml" />
 
 ## 8. Artikulationszeichen
 
@@ -421,7 +454,7 @@ Die Zeichen in der Notation ergänzen die Spielweise, die du in [102: Mechanik, 
 
 Das Beispiel zeigt drei Notenzeilen: oben wechseln sich Tenuto und Staccato ab; in der Mitte verbindet ein Haltebogen zwei gleiche Töne; unten stehen ein Legatobogen und Akzente.
 
-SheetMusicPlayer musicXmlUrl="/scores/104-8-Artikulation.musicxml" />
+## SheetMusicPlayer musicXmlUrl="/scores/104-8-Artikulation.musicxml" />
 
 ## 9. Dynamik
 
@@ -431,4 +464,4 @@ Ein **Crescendo** (`cresc.`) bedeutet, allmählich lauter zu werden; ein **Decre
 
 Im Beispiel zeigt der erste Takt ein Crescendo von **p** zu **f**, der zweite ein Decrescendo von **f** zu **p**.
 
-SheetMusicPlayer musicXmlUrl="/scores/104-9-Dynamik-Tempo.musicxml" />
+## SheetMusicPlayer musicXmlUrl="/scores/104-9-Dynamik-Tempo.musicxml" />

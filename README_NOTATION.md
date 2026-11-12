@@ -186,9 +186,10 @@ Ideal für Tonleiter-, Intervall- oder Linien-Erklärungen, bei denen alle Noten
 
 #### Regeln für Balkengruppen (`beamGroup`)
 - Verbindet aufeinanderfolgende Achtel- (`"eighth"`) oder Sechzehntelnoten (`"sixteenth"`) mit einem gemeinsamen Balken statt einzelner Fähnchen.
+- Unterstützt neben Noten desselben Werts auch die klassische punktierte Kombination **punktierte Achtel (`duration: "eighth", dotted: true`) + Sechzehntel (`duration: "sixteenth"`)** inklusive kurzem Sechzehntel-Teilbalken (Haken).
 - Alle Noten mit derselben `beamGroup`-ID innerhalb eines Takts müssen:
   1. **direkt aufeinanderfolgen** (lückenlos),
-  2. **denselben Notenwert** (`"eighth"` oder `"sixteenth"`) besitzen,
+  2. **denselben Notenwert** (`"eighth"` oder `"sixteenth"`) besitzen *oder* eine Kombination aus **punktierter Achtel + Sechzehntel** sein,
   3. **mindestens 2 Noten** umfassen.
 - Die Halsrichtung und Balkensteigung (inkl. gemischter Halsrichtungen über die Mittellinie `step: 4` hinweg) wird automatisch berechnet.
 

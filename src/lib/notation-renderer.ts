@@ -229,7 +229,7 @@ export function defaultFirstNoteX(
 ): number {
   const first = options.notes?.[0];
   const minimum = minimumFirstNoteX(options);
-  if (!first || first.type === "rest") return minimum;
+  if (!first) return minimum;
   const prefixEnd = Math.max(
     prefixGeometry(
       options.clef,
@@ -584,21 +584,54 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     const firstBeamY = beamStemEnds.get(group.indices[0]) ?? STAFF_MIDDLE;
     const lastBeamY =
       beamStemEnds.get(group.indices[group.indices.length - 1]) ?? STAFF_MIDDLE;
-    for (
-      let beam = 0;
-      beam < (group.duration === "sixteenth" ? 2 : 1);
-      beam += 1
-    ) {
-      const beamOffset = beam * sp(0.75) * (stemUp ? 1 : -1);
-      beams.push(
-        renderBeam(
-          `calc(${first.percent} + ${first.offset + stemOffset - STEM_WIDTH / 2}px)`,
-          firstBeamY + beamOffset,
-          `calc(${last.percent} + ${last.offset + stemOffset + STEM_WIDTH / 2}px)`,
-          lastBeamY + beamOffset,
-          BEAM_WIDTH,
-        ),
-      );
+    const allSixteenth = group.indices.every(
+      (idx) => pitchedNote(idx).duration === "sixteenth",
+    );
+    beams.push(
+      renderBeam(
+        `calc(${first.percent} + ${first.offset + stemOffset - STEM_WIDTH / 2}px)`,
+        firstBeamY,
+        `calc(${last.percent} + ${last.offset + stemOffset + STEM_WIDTH / 2}px)`,
+        lastBeamY,
+        BEAM_WIDTH,
+      ),
+    );
+    if (group.duration === "sixteenth") {
+      const beamOffset = sp(0.75) * (stemUp ? 1 : -1);
+      if (allSixteenth) {
+        beams.push(
+          renderBeam(
+            `calc(${first.percent} + ${first.offset + stemOffset - STEM_WIDTH / 2}px)`,
+            firstBeamY + beamOffset,
+            `calc(${last.percent} + ${last.offset + stemOffset + STEM_WIDTH / 2}px)`,
+            lastBeamY + beamOffset,
+            BEAM_WIDTH,
+          ),
+        );
+      } else {
+        const stubWidth = sp(1.2);
+        group.indices.forEach((idx, posIdx) => {
+          if (pitchedNote(idx).duration !== "sixteenth") return;
+          const current = notePosition(idx);
+          const currentBeamY = beamStemEnds.get(idx) ?? STAFF_MIDDLE;
+          const isFirstInGroup = posIdx === 0;
+          const startX = isFirstInGroup
+            ? `calc(${current.percent} + ${current.offset + stemOffset - STEM_WIDTH / 2}px)`
+            : `calc(${current.percent} + ${current.offset + stemOffset + STEM_WIDTH / 2 - stubWidth}px)`;
+          const endX = isFirstInGroup
+            ? `calc(${current.percent} + ${current.offset + stemOffset - STEM_WIDTH / 2 + stubWidth}px)`
+            : `calc(${current.percent} + ${current.offset + stemOffset + STEM_WIDTH / 2}px)`;
+          beams.push(
+            renderBeam(
+              startX,
+              currentBeamY + beamOffset,
+              endX,
+              currentBeamY + beamOffset,
+              BEAM_WIDTH,
+            ),
+          );
+        });
+      }
     }
   });
 
@@ -664,11 +697,11 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
           ? "\uE0A3"
           : "\uE0A4";
     parts.push(`<g transform="translate(${position.offset} 0)">`);
-    if (
+    const hasFlag =
       hasStem &&
       (note.duration === "eighth" || note.duration === "sixteenth") &&
-      !note.beamGroup
-    ) {
+      !note.beamGroup;
+    if (hasFlag) {
       const flag = flagGlyph(note.duration, stemUp);
       parts.push(
         `<g transform="translate(${(noteHeadHalfWidth - STEM_WIDTH / 2) * (stemUp ? 1 : -1)} 0)">${glyphText(flag, x, stemY, "notation-note")}</g>`,
@@ -677,14 +710,19 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     parts.push(
       glyphText(noteGlyph, x, y, "notation-note", "middle", NOTE_WIDTH),
     );
-    if (note.dotted)
+    if (note.dotted) {
+      const dotOffset =
+        hasFlag && stemUp
+          ? noteHeadHalfWidth + sp(1.4) + dotRadius
+          : noteHeadHalfWidth + sp(0.6) + dotRadius;
       parts.push(
         renderDot(
           x,
           y - (note.step % 2 === 0 ? sp(0.5) : 0),
-          noteHeadHalfWidth + sp(0.6) + dotRadius,
+          dotOffset,
         ),
       );
+    }
     if (note.accidental) {
       const accidentalOffset = noteHeadHalfWidth + accidentalNoteGap;
       parts.push(

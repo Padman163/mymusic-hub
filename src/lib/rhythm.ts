@@ -73,17 +73,26 @@ export function collectBeamGroups(
       );
     }
     const group = groups.get(event.beamGroup);
-    if (
-      group &&
-      (group.duration !== event.duration ||
-        group.indices[group.indices.length - 1] !== index - 1)
-    ) {
-      throw new Error(
-        `Balkengruppe "${event.beamGroup}" muss zusammenhängende Noten desselben Werts enthalten.`,
-      );
-    }
-    if (group) group.indices.push(index);
-    else
+    if (group) {
+      const isAdjacent = group.indices[group.indices.length - 1] === index - 1;
+      const candidateIndices = [...group.indices, index];
+      const allSameDuration = group.duration === event.duration;
+      const isDottedEighthWithSixteenth =
+        candidateIndices.every(
+          (i) =>
+            events[i].duration === "sixteenth" ||
+            (events[i].duration === "eighth" && events[i].dotted === true),
+        ) && candidateIndices.some((i) => events[i].duration === "sixteenth");
+      if (!isAdjacent || (!allSameDuration && !isDottedEighthWithSixteenth)) {
+        throw new Error(
+          `Balkengruppe "${event.beamGroup}" muss zusammenhängende Noten desselben Werts enthalten.`,
+        );
+      }
+      group.indices.push(index);
+      if (event.duration === "sixteenth") {
+        group.duration = "sixteenth";
+      }
+    } else
       groups.set(event.beamGroup, {
         indices: [index],
         duration: event.duration,
