@@ -63,8 +63,12 @@ const fitToWidth = !scrollable;
       const hasRowMeasureNumber = row.measures.some(
         (measure) => measure.measureNumber !== undefined,
       );
-      const hasRowHairpin = row.measures.some((measure) =>
-        Boolean(measure.hairpin),
+      const hasRowHairpin = row.measures.some(
+        (measure) =>
+          Boolean(measure.hairpin) ||
+          measure.notes.some(
+            (note) => note.type !== "rest" && Boolean(note.dynamic),
+          ),
       );
       const widthPercent = Math.round(row.widthRatio * 10000) / 100;
 

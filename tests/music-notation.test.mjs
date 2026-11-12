@@ -793,3 +793,35 @@ test('pickup scales pickup and closing measures so their weights sum to one full
   assert.ok(Math.abs(closingWeight - pickupWeight * 3) <= 2);
 });
 
+test('note dynamics and measure hairpins render independently in SVG', () => {
+  const onlyHairpin = renderNotationSvg({
+    hairpin: 'crescendo',
+    notes: [
+      { duration: 'quarter', step: -2 },
+      { duration: 'quarter', step: 1 }
+    ]
+  });
+  assert.match(onlyHairpin, /class="notation-hairpin crescendo"/);
+  assert.doesNotMatch(onlyHairpin, /class="notation-dynamic"/);
+
+  const onlyDynamics = renderNotationSvg({
+    notes: [
+      { duration: 'quarter', step: -2, dynamic: 'p' },
+      { duration: 'quarter', step: 1, dynamic: 'f' }
+    ]
+  });
+  assert.doesNotMatch(onlyDynamics, /class="notation-hairpin/);
+  assert.equal((onlyDynamics.match(/class="notation-dynamic"/g) ?? []).length, 2);
+
+  const combined = renderNotationSvg({
+    hairpin: { type: 'decrescendo', from: 0, to: 1 },
+    notes: [
+      { duration: 'quarter', step: 2, dynamic: 'f' },
+      { duration: 'quarter', step: 0, dynamic: 'p' }
+    ]
+  });
+  assert.match(combined, /class="notation-hairpin decrescendo"/);
+  assert.equal((combined.match(/class="notation-dynamic"/g) ?? []).length, 2);
+});
+
+

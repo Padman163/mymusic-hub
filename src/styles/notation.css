@@ -127,6 +127,18 @@
   stroke: none;
 }
 
+.notation-dynamic {
+  font-family: "NotationBravura", sans-serif;
+  font-size: calc(3.2 * var(--notation-spatium, 10px));
+  fill: #111827;
+  stroke: none;
+}
+
+.notation-hairpin line {
+  stroke: #111827;
+  stroke-width: 1.2;
+}
+
 .notation-tempo {
   font:
     italic var(--music-text-size) Georgia,
@@ -663,6 +675,8 @@
 
   .notation-staff,
   .notation-staff line,
+  .notation-hairpin,
+  .notation-hairpin line,
   .hairpin,
   .hairpin line,
   .repeat-start,
@@ -677,6 +691,7 @@
   .notation-accidental,
   .notation-time,
   .notation-articulation,
+  .notation-dynamic,
   .notation-tempo,
   .notation-curve,
   .final-bar,

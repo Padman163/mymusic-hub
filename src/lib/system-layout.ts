@@ -2,6 +2,7 @@ import { layoutNotationEvents } from "./notation-layout.ts";
 import {
   assertNoClefChanges,
   defaultFirstNoteX,
+  type MeasureHairpin,
   type NotationAccidental,
   type NotationClef,
   type NotationCurve,
@@ -50,7 +51,7 @@ export interface NotationMeasure {
   tempoDetail?: string;
   ritAt?: number;
   aTempoAt?: number;
-  hairpin?: "crescendo" | "decrescendo";
+  hairpin?: MeasureHairpin;
   initialDynamic?: "piano" | "forte";
   spacing?: MeasureWidthMode | number;
   noteStart?: number;
@@ -80,7 +81,7 @@ export interface NotationBaseProps {
   measureNumber?: string | number;
   ritAt?: number;
   aTempoAt?: number;
-  hairpin?: "crescendo" | "decrescendo";
+  hairpin?: MeasureHairpin;
   initialDynamic?: "piano" | "forte";
 }
 

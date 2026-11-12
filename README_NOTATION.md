@@ -159,6 +159,7 @@ Jedes Element im `notes`-Array ist ein `NotationEvent` und gehört zu einer von 
   beamGroup?: string,            // Balkengruppen-ID für Achtel/Sechzehntel
   articulation?: "staccato" | "tenuto" | "accent" | "marcato",
   articulationPosition?: "above" | "below",
+  dynamic?: "ppp" | "pp" | "p" | "mp" | "mf" | "f" | "ff" | "fff", // Dynamikzeichen direkt unter der Note
 }
 ```
 
@@ -172,6 +173,7 @@ Ideal für Tonleiter-, Intervall- oder Linien-Erklärungen, bei denen alle Noten
   accidental?: "sharp" | "natural" | "flat",
   articulation?: "staccato" | "tenuto" | "accent" | "marcato",
   articulationPosition?: "above" | "below",
+  dynamic?: "ppp" | "pp" | "p" | "mp" | "mf" | "f" | "ff" | "fff",
 }
 ```
 
@@ -239,8 +241,7 @@ Alle folgenden Props können pro Takt (`measures[...]`) oder im Einzeltakt-Modus
 | `repeatEnd` | `boolean` | `false` | Zeichnet ein Wiederholungsendezeichen (`:\|\|`) am rechten Taktrand und reserviert automatisch `16px` Platz vor den Punkten. |
 | `ritAt` | `number` | `undefined` | 0-basierter Notenindex im Takt, über dem kursiv `rit.` (ritardando) gerendert wird. |
 | `aTempoAt` | `number` | `undefined` | 0-basierter Notenindex im Takt, über dem kursiv `a tempo` gerendert wird. Wenn sowohl `ritAt` als auch `aTempoAt` im selben Takt gesetzt sind, müssen mindestens 2 Notenpositionen Abstand dazwischen liegen (`\|aTempoAt - ritAt\| >= 2`). |
-| `hairpin` | `'crescendo' \| 'decrescendo'` | `undefined` | Zeichnet unterhalb des Takts eine Dynamikgabel (`<` bzw. `>`) inklusive Text (`cresc.` / `decresc.`) und Ziel-Dynamik (`p` / `f`). Aktiviert automatisch die untere vertikale Sicherheitszone (`32px`) der Zeile. |
-| `initialDynamic` | `'piano' \| 'forte'` | `undefined` | Steuert das Start-Dynamikzeichen vor der `hairpin`-Gabel:<br>• Ist `initialDynamic` bereits aus dem Vortakt aktiv (z. B. `'piano'` bei `'crescendo'` oder `'forte'` bei `'decrescendo'`), wird das redundante Startsymbol weggelassen und nur das Zielsymbol angezeigt.<br>• Bei Kontraststart (z. B. `hairpin="decrescendo"` mit `initialDynamic="piano"`) wird das Startsymbol explizit eingeblendet. |
+| `hairpin` | `'crescendo' \| 'decrescendo' \| { type, from?, to? }` | `undefined` | Zeichnet unterhalb des Takts eine reine Dynamikgabel (`<` bzw. `>`) zwischen der ersten und letzten Note (oder optional zwischen den Notenindizes `from` und `to`). Vollständig unabhängig von Dynamikstufen (`dynamic` auf den einzelnen Noten). Hat die Start- oder Endnote ein `dynamic`-Zeichen (`p`, `f`, `mf` usw.), hält die Gabel automatisch horizontalen Abstand zum Symbol. |
 
 ---
 
