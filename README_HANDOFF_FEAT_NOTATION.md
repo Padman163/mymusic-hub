@@ -54,7 +54,7 @@
 ## 3. Dateistruktur & Kernkomponenten
 * `src/lib/notation-renderer.ts`: Gemeinsamer SVG-Renderer und zentrale Geometrieberechnung (Reihenfolge, Platzbedarf von Schlüssel, Taktart, Vorzeichnung und Wiederholung).
 * `src/components/notation/NotationVisual.astro`: Wiederverwendbarer Astro-Wrapper für den Renderer.
-* `src/components/notation/system-layout.ts`: Systemaufteilung, Umbrüche, Wiederholung von Schlüssel und Vorzeichnung, Tonartwechsel und Ausrichtung erster Ereignisse.
+* `src/lib/system-layout.ts`: Systemaufteilung, Umbrüche, Wiederholung von Schlüssel und Vorzeichnung, Tonartwechsel und Ausrichtung erster Ereignisse.
 * `src/components/notation/NotationOverview.astro`: Taktdaten und Anordnung des 18-Takt-Abschlussbeispiels; komponiert vorhandene Bausteine.
 * `src/components/notation/NotationNoteRestValues.astro`: Vergleich von Noten- und Pausenwerten.
 * `src/components/notation/Notation*.astro`: Weitere thematische Schaubilder (Artikulation, Dynamik, Bögen, Tempo, Taktarten, Vorzeichen).

@@ -11,7 +11,7 @@ import { renderTempoMark, validateTempoChanges } from '../src/lib/tempo.ts';
 import { omitUnchangedTimeSignatures, renderTimeSignature, validateTimeSignature } from '../src/lib/time-signature.ts';
 import { minimumFirstNoteX, renderNotationSvg, SPATIUM, sp } from '../src/lib/notation-renderer.ts';
 import { layoutNotationEvents } from '../src/lib/notation-layout.ts';
-import { alignFirstNotesInSystems, arrangeNotationSystems } from '../src/components/notation/system-layout.ts';
+import { alignFirstNotesInSystems, arrangeNotationSystems } from '../src/lib/system-layout.ts';
 
 function beamSegments(svg) {
   const pattern = /<svg x="(calc\([^)]+\))" y="(-?[\d.]+)" width="calc\((calc\([^)]+\)) - (calc\([^)]+\))\)" height="([\d.]+)" overflow="hidden" aria-hidden="true"><line x1="0" y1="(-?[\d.]+)" x2="100%" y2="(-?[\d.]+)" stroke-width="([\d.]+)" stroke-linecap="square" \/><\/svg>/g;

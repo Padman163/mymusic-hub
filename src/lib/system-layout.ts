@@ -4,7 +4,7 @@ import {
   type NotationAccidental,
   type NotationClef,
   type NotationRenderOptions,
-} from "../../lib/notation-renderer.ts";
+} from "./notation-renderer.ts";
 
 export function arrangeNotationSystems<
   T extends { clef?: NotationClef | false; accidentals?: NotationAccidental[] },

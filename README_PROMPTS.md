@@ -23,7 +23,6 @@ src/
 │   │   └── svg.ts                   # SMuFL-Bravura-Glyphen & SVG-Hilfsfunktionen
 │   │
 │   ├── notation/                    # 🎼 Subkomponenten für Partituren & Systeme
-│   │   ├── system-layout.ts         # Zeilenumbruch & responsive Taktaufteilung
 │   │   ├── NotationVisual.astro     # Basis-Wrapper für den SVG-Renderer
 │   │   ├── NotationOverview.astro   # Kompositions-Schaubilder
 │   │   └── Notation*.astro          # Spezifische Notations-Karten (Artikulation, Bögen etc.)
@@ -50,6 +49,7 @@ src/
 │
 ├── lib/                             # 🧠 Framework-unabhängige Kernlogik & Stores
 │   ├── notation-renderer.ts         # SVG-Bravura Renderer-Pipeline
+│   ├── system-layout.ts             # Zeilenumbruch & Taktaufteilung
 │   ├── checklist-editor.ts          # DOM-Helfer für Checklisten
 │   └── contribution-*.ts            # Beitrags-Schemas, Store & Validierung
 │
@@ -62,6 +62,8 @@ src/
     ├── music-notation.test.mjs      # Geometrie-, Takt- und Renderer-Tests
     └── [feature].test.mjs           # Weitere isolierte Modul-Tests
 ```
+
+CSS-Regeln gehören in Dateien unter `src/styles/`, nicht in Komponenten. Dynamische Werte wie die Taktzahl und die berechnete Skalierung können weiterhin zur Laufzeit gesetzt werden.
 
 ---
 

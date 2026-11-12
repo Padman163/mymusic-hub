@@ -25,7 +25,7 @@ Die Plattform verbindet musiktheoretische Didaktik mit interaktiven Web-Technolo
 ## 2. Die Kern-Features im Detail
 
 ### 2.1 Der native SVG-Notationsrenderer
-* **Dateien:** `src/lib/notation-renderer.ts`, `src/components/notation/NotationVisual.astro`, `src/components/notation/system-layout.ts`, `src/components/notation/NotationOverview.astro`.
+* **Dateien:** `src/lib/notation-renderer.ts`, `src/components/notation/NotationVisual.astro`, `src/lib/system-layout.ts`, `src/components/notation/NotationOverview.astro`.
 * **Mathematische Module:** `src/components/music/` (`rhythm.ts`, `barline.ts`, `curve.ts`, `dynamics.ts`, `tempo.ts`, `time-signature.ts`, `rest.ts`, `svg.ts`).
 * **Funktionsweise:**
   * Rendert Notensysteme rein serverseitig als Vektorgrafik (SVG) ohne Einsatz von ressourcenhungrigem Canvas oder DOM.

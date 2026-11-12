@@ -310,6 +310,26 @@
   display: block;
 }
 
+.notation-system-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--notation-columns), minmax(max-content, 1fr));
+  row-gap: var(--notation-system-gap);
+  align-items: start;
+}
+
+.notation-system-grid .notation-system-row {
+  display: contents;
+}
+
+.notation-system-box[data-fit-to-width] .notation-system-grid {
+  width: max-content;
+  min-width: 100%;
+}
+
+.notation-system-box[data-fit-to-width][data-fitted] {
+  overflow-x: hidden;
+}
+
 
 .overview-layout-narrow {
   display: none;

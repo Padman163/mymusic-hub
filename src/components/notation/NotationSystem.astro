@@ -1,7 +1,8 @@
 ---
 import type { ComponentProps } from "astro/types";
+import { arrangeNotationSystems } from "../../lib/system-layout.ts";
+import "../../styles/notation.css";
 import NotationVisual from "./NotationVisual.astro";
-import { arrangeNotationSystems } from "./system-layout.ts";
 
 interface Props {
   measures: Omit<ComponentProps<typeof NotationVisual>, "embedded" | "firstNoteX">[];
@@ -27,28 +28,6 @@ const systems = arrangeNotationSystems(preparedMeasures, measuresPerRow);
     ))}
   </div>
 </div>
-
-<style>
-  .notation-system-grid {
-    display: grid;
-    grid-template-columns: repeat(var(--notation-columns), minmax(max-content, 1fr));
-    row-gap: var(--notation-system-gap);
-    align-items: start;
-  }
-
-  .notation-system-row {
-    display: contents;
-  }
-
-  [data-fit-to-width] .notation-system-grid {
-    width: max-content;
-    min-width: 100%;
-  }
-
-  [data-fit-to-width][data-fitted] {
-    overflow-x: hidden;
-  }
-</style>
 
 <script>
   if ("ResizeObserver" in window && CSS.supports("zoom", "0.5")) {
