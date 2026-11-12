@@ -228,9 +228,18 @@ export function defaultFirstNoteX(
   const first = options.notes?.[0];
   const minimum = minimumFirstNoteX(options);
   if (!first || first.type === "rest") return minimum;
+  const prefixEnd = Math.max(
+    prefixGeometry(
+      options.clef,
+      options.accidentals ?? [],
+      options.timeSignature,
+      options.repeatStart ?? false,
+    ).prefixEnd,
+    options.noteStart ?? 0,
+  );
   return Math.max(
     minimum,
-    defaultNoteHeadGap + noteHeadHalfWidth + (first.accidental ? 16 : 0),
+    prefixEnd + defaultNoteHeadGap + eventExtents(first).left - sp(0.2),
   );
 }
 
@@ -240,7 +249,6 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     notes = [],
     accidentals = [],
     timeSignature,
-    noteStart = 0,
     firstNoteX,
     showLeftBar = false,
     showRightBar = true,
@@ -317,31 +325,33 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
   const { accidentalStart, timeStart, repeatStartX, prefixEnd } =
     prefixGeometry(clef, accidentals, timeSignature, repeatStart);
   const timeWidth = timeSignature ? timeSignatureWidth(timeSignature) : 0;
-  const firstNote = notes[0];
-  const useDefaultNoteStart =
-    firstNote !== undefined &&
-    firstNote.type !== "rest" &&
-    firstNote.duration !== undefined &&
-    !clef &&
-    !timeSignature &&
-    accidentals.length === 0 &&
-    !repeatStart &&
-    noteStart === 0;
+  const repeatEndInset = repeatEnd ? 16 : 0;
+  const lastNote = notes[notes.length - 1];
+  const wholeMeasureRest =
+    notes.length === 1 &&
+    lastNote.type === "rest" &&
+    lastNote.duration === "whole" &&
+    !lastNote.dotted;
   const noteInset =
     firstNoteX ??
-    (useDefaultNoteStart
-      ? defaultFirstNoteX(options)
-      : clef || timeSignature || accidentals.length || repeatStart
-      ? minimumFirstNoteX(options)
-      : Math.max(noteStart, prefixEnd));
-  const repeatEndInset = repeatEnd ? 16 : 0;
+    (wholeMeasureRest && !clef && !timeSignature && !accidentals.length && !repeatStart
+      ? Math.max(options.noteStart ?? 0, prefixEnd)
+      : defaultFirstNoteX(options));
+  const endingMarkInset = repeatEnd
+    ? repeatEndInset
+    : showRightBar && rightBarStyle === "final"
+      ? 8
+      : 0;
+  const endInset =
+    wholeMeasureRest || !lastNote
+      ? repeatEndInset
+      : endingMarkInset +
+        defaultNoteHeadGap +
+        eventExtents(lastNote).right -
+        sp(0.2);
   const positions = layoutNotationEvents(notes, {
     noteInset,
-    repeatEndInset,
-    aligned:
-      firstNoteX !== undefined ||
-      useDefaultNoteStart ||
-      (notes.length === 1 && firstNote?.type !== "rest" && firstNote?.duration === "whole"),
+    endInset,
   });
   const notePosition = (index: number) => positions[index];
   let minimumWidth = notes.reduce((minimum, note, index) => {
@@ -349,21 +359,16 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     const distance =
       eventExtents(notes[index - 1]).right + sp(1) + eventExtents(note).left;
     const fraction = positions[index].fraction - positions[index - 1].fraction;
-    return Math.max(minimum, noteInset + repeatEndInset + distance / fraction);
-  }, noteInset + repeatEndInset);
-  if (notes.length > 0) {
+    return Math.max(minimum, noteInset + endInset + distance / fraction);
+  }, noteInset + endInset);
+  if (wholeMeasureRest) {
     const last = positions[positions.length - 1];
-    const rightInset = repeatEnd
-      ? repeatEndInset
-      : showRightBar && rightBarStyle === "final"
-        ? 8
-        : 0;
     minimumWidth = Math.max(
       minimumWidth,
       (last.offset +
-        eventExtents(notes[notes.length - 1]).right +
+        eventExtents(lastNote).right +
         sp(1.5) +
-        rightInset) /
+        endingMarkInset) /
         (1 - last.fraction),
     );
   }

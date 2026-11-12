@@ -29,7 +29,8 @@
   * Erste Ereignisse sind systemübergreifend exakt vertikal ausgerichtet; Zeilenabstände sind einheitlich.
   * Das Beispiel darf auf keinen Fall horizontal scrollen.
 * **Rhythmische Abstände & Spacing:**
-  * Abstände sind proportional zu den angegebenen Noten- und Pausendauern, einschließlich Punktierungen.
+  * Erste und letzte Note stehen standardmäßig 1,5 Notenkopfbreiten nach dem Anfangspräfix bzw. vor dem Taktende; Zeichen und Hilfslinien können zusätzliche Abstände erfordern. Eine einzelne Note steht am Anfang, eine ganze Taktpause mittig.
+  * Abstände zwischen den Ereignissen sind proportional zu den optisch komprimierten Dauern der jeweils vorhergehenden Noten oder Pausen, einschließlich Punktierungen. Ohne Dauer werden sie gleichmäßig verteilt.
 * **Tonartvorzeichnung (Key Signature Logik):**
   * Die Tonartvorzeichnung wird über Zeilenumbrüche hinweg beibehalten und am Anfang jeder Zeile wiederholt.
   * Ein neues `accidentals`-Array setzt eine neue Vorzeichnung; ein leeres Array `[]` hebt sie auf.

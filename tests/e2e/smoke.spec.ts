@@ -34,6 +34,32 @@ test('bricht das Notensystem nach drei Takten um und richtet sie aus', async ({ 
   expect(Math.max(...tops) - Math.min(...tops)).toBeLessThan(1);
 });
 
+test('hält die Standardabstände in den Schlüsselbeispielen ein', async ({ page }) => {
+  await page.goto('/audio/theory/100/104-tabulatur-notensystem/');
+  const measures = await page.locator('.notation-staff').evaluateAll((staffs) =>
+    staffs.flatMap((staff) => {
+      const notes = [...staff.querySelectorAll<SVGTextElement>('.notation-note')];
+      if (notes.length !== 11) return [];
+      const width = staff.getBoundingClientRect().width;
+      const positions = notes.map((note) => {
+        const fraction = Number(note.getAttribute('x')!.replace('%', '')) / 100;
+        const offset = note.parentElement!.getAttribute('transform')!.match(/translate\(([^ ]+)/)![1];
+        return fraction * width + Number(offset);
+      });
+      return [{ width, positions }];
+    }),
+  );
+  expect(measures).toHaveLength(2);
+  for (const [index, measure] of measures.entries()) {
+    expect(measure.positions[0]).toBeCloseTo(index === 0 ? 63 : 68, 5);
+    expect(measure.width - measure.positions[10]).toBeCloseTo(index === 0 ? 32 : 27, 5);
+    const interval = measure.positions[1] - measure.positions[0];
+    for (let i = 2; i < measure.positions.length; i++) {
+      expect(measure.positions[i] - measure.positions[i - 1]).toBeCloseTo(interval, 5);
+    }
+  }
+});
+
 test('unterstützt eine andere Taktzahl und den Bassschlüssel', async ({ page }) => {
   await page.goto('/audio/referenzen-werkzeuge/visualisierungen-erklaert/notensystem/');
 
