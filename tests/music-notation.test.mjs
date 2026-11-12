@@ -11,7 +11,13 @@ import { renderTempoMark, validateTempoChanges } from '../src/lib/tempo.ts';
 import { omitUnchangedTimeSignatures, renderTimeSignature, validateTimeSignature } from '../src/lib/time-signature.ts';
 import { defaultFirstNoteX, minimumFirstNoteX, renderNotationSvg, SPATIUM, sp } from '../src/lib/notation-renderer.ts';
 import { layoutNotationEvents } from '../src/lib/notation-layout.ts';
-import { alignFirstNotesInSystems, arrangeNotationSystems } from '../src/lib/system-layout.ts';
+import {
+  alignFirstNotesInSystems,
+  arrangeNotationSystems,
+  estimateMeasureMinWidth,
+  layoutNotationSystems,
+  normalizeNotationInput,
+} from '../src/lib/system-layout.ts';
 
 function beamSegments(svg) {
   const pattern = /<svg x="(calc\([^)]+\))" y="(-?[\d.]+)" width="calc\((calc\([^)]+\)) - (calc\([^)]+\))\)" height="([\d.]+)" overflow="hidden" aria-hidden="true"><line x1="0" y1="(-?[\d.]+)" x2="100%" y2="(-?[\d.]+)" stroke-width="([\d.]+)" stroke-linecap="square" \/><\/svg>/g;
@@ -644,4 +650,107 @@ test('notation renderer still enforces shared rules and renders their signs', ()
   assert.match(svg, /class="notation-tempo"[^>]*>rit\.<\/text>/);
   assert.match(svg, /class="notation-articulation"[^>]*><\/text>/);
   assert.match(svg, /r="1\.5"/);
+});
+
+test('normalizeNotationInput converts single-measure notes and inherits top-level context', () => {
+  const notes = [{ duration: 'quarter', step: 2 }, { duration: 'quarter', step: 4 }];
+  const single = normalizeNotationInput({ notes });
+  assert.equal(single.length, 1);
+  assert.equal(single[0].clef, 'treble');
+  assert.equal(single[0].timeSignature, undefined);
+  assert.equal(single[0].accidentals, undefined);
+  assert.deepEqual(single[0].notes, notes);
+
+  const sharps = [{ type: 'sharp', step: 8 }];
+  const fourFour = { numerator: 4, denominator: 4 };
+  const inherited = normalizeNotationInput({
+    clef: 'bass',
+    timeSignature: fourFour,
+    accidentals: sharps,
+    measures: [
+      { notes },
+      { notes: [{ duration: 'whole', step: 3 }] }
+    ]
+  });
+  assert.equal(inherited.length, 2);
+  assert.equal(inherited[0].clef, 'bass');
+  assert.deepEqual(inherited[0].timeSignature, fourFour);
+  assert.deepEqual(inherited[0].accidentals, sharps);
+  assert.equal(inherited[1].clef, undefined);
+  assert.equal(inherited[1].timeSignature, undefined);
+  assert.equal(inherited[1].accidentals, undefined);
+});
+
+test('measureWidth supports equal and rhythmic column weights', () => {
+  const sparseMeasure = {
+    clef: 'treble',
+    timeSignature: { numerator: 4, denominator: 4 },
+    notes: [{ duration: 'whole', step: 2 }]
+  };
+  const denseMeasure = {
+    notes: Array.from({ length: 8 }, (_, i) => ({
+      duration: 'eighth',
+      step: (i % 4) + 2,
+      beamGroup: i < 4 ? 'a' : 'b'
+    }))
+  };
+
+  const equalSystems = arrangeNotationSystems([sparseMeasure, denseMeasure], 2, { measureWidth: 'equal' });
+  assert.deepEqual(equalSystems[0].map((m) => m.columnWeight), [1, 1]);
+
+  const rhythmicSystems = arrangeNotationSystems([sparseMeasure, denseMeasure], 2, { measureWidth: 'rhythmic' });
+  assert.ok(rhythmicSystems[0][1].columnWeight > rhythmicSystems[0][0].columnWeight);
+  assert.equal(rhythmicSystems[0][0].columnWeight, rhythmicSystems[0][0].minWidth);
+  assert.equal(rhythmicSystems[0][1].columnWeight, rhythmicSystems[0][1].minWidth);
+});
+
+test('layout="auto" wraps systems based on summed minimum measure widths', () => {
+  const notes = Array.from({ length: 4 }, () => ({ duration: 'quarter', step: 2 }));
+  const measures = [
+    { clef: 'treble', timeSignature: { numerator: 4, denominator: 4 }, notes },
+    { notes },
+    { notes },
+    { notes }
+  ];
+  const singleMin = estimateMeasureMinWidth({ notes });
+  const twoMeasureBudget = estimateMeasureMinWidth(measures[0]) + singleMin + 10;
+
+  const autoWrapped = arrangeNotationSystems(measures, 'auto', { maxSystemWidth: twoMeasureBudget });
+  assert.equal(autoWrapped.length, 2);
+  assert.deepEqual(autoWrapped.map((row) => row.length), [2, 2]);
+  assert.equal(autoWrapped[1][0].clef, 'treble');
+
+  const wideWrapped = arrangeNotationSystems(measures, 'auto', { maxSystemWidth: 1200 });
+  assert.equal(wideWrapped.length, 1);
+  assert.equal(wideWrapped[0].length, 4);
+});
+
+test('incomplete last system row is proportionally bounded for justification', () => {
+  const notes = [{ duration: 'quarter', step: 2 }, { duration: 'quarter', step: 4 }];
+  const measures = [
+    { clef: 'treble', notes },
+    { notes },
+    { notes }
+  ];
+
+  const equalRows = layoutNotationSystems({
+    measures,
+    layout: 2,
+    measureWidth: 'equal'
+  });
+  assert.equal(equalRows.length, 2);
+  assert.equal(equalRows[0].widthRatio, 1);
+  assert.equal(equalRows[1].widthRatio, 0.5);
+
+  const rhythmicRows = layoutNotationSystems({
+    measures,
+    layout: 2,
+    measureWidth: 'rhythmic'
+  });
+  assert.equal(rhythmicRows[0].widthRatio, 1);
+  assert.ok(rhythmicRows[1].widthRatio >= 0.5 && rhythmicRows[1].widthRatio < 1);
+
+  const singleRow = layoutNotationSystems({ notes });
+  assert.equal(singleRow.length, 1);
+  assert.equal(singleRow[0].widthRatio, 1);
 });

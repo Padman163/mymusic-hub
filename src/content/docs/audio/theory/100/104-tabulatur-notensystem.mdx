@@ -9,6 +9,7 @@ import SheetMusicPlayer from "../../../../../components/SheetMusicPlayer.astro";
 import NotationNoteRestValues from "../../../../../components/notation/NotationNoteRestValues.astro";
 import NotationVisual from "../../../../../components/notation/NotationVisual.astro";
 import NotationSystem from "../../../../../components/notation/NotationSystem.astro";
+import Notation from "../../../../../components/notation/Notation.astro";
 
 Ein Rhythmus kann auf verschiedene Arten notiert werden. In **Standardnotation** erkennst du Tonhöhe und Rhythmus an den Noten im Notensystem. Eine **Tabulatur (TAB)** zeigt dir, auf welcher Saite und in welchem Bund du greifst. Häufig stehen beide Systeme gemeinsam untereinander. In 103 hast du bereits Rhythmuswerte, Takt und Metrum kennengelernt. Hier geht es darum, wie du diese Informationen in einer Notation wiederfindest.
 
@@ -16,13 +17,7 @@ Ein Rhythmus kann auf verschiedene Arten notiert werden. In **Standardnotation**
 
 Das Notensystem besteht aus **fünf waagerechten Linien** und den vier Zwischenräumen. Noten stehen auf einer Linie oder in einem Zwischenraum. Höhere Positionen bedeuten höhere Töne. Reichen die fünf Linien nicht aus, werden kurze **Hilfslinien** ergänzt.
 
-<NotationVisual
-  clef="treble"
-  showLeftBar={false}
-  showRightBar={true}
-  rightBarStyle="single"
-  measures={[{ notes: [] }]}
-/>
+<Notation clef="treble" notes={[]} />
 
 Eine Gitarrentabulatur hat normalerweise **sechs Linien**, eine für jede Saite. Die oberste Linie steht für die dünne hohe E-Saite, die unterste für die dicke tiefe E-Saite. Zahlen geben an, in welchem Bund du die Saite greifst; **0** bedeutet, dass du sie leer spielst.
 
@@ -45,43 +40,40 @@ Am Anfang des Notensystems steht ein **Schlüssel**. Er legt fest, welche Tonhö
 
 Am Ende eines Stücks oder Abschnitts steht häufig ein **doppelter Taktstrich**. Er kennzeichnet den Schluss und steht am Ende der Notenzeile.
 
-<NotationVisual
+<Notation
   clef="treble"
-  showLeftBar={false}
-  showRightBar={true}
   notes={[
-    { type: "filled", duration: "whole", step: 8 }, // F5 (oberste Linie)
-    { type: "filled", duration: "whole", step: 7 }, // E5 (4. Zwischenraum)
-    { type: "filled", duration: "whole", step: 6 }, // D5 (4. Linie)
-    { type: "filled", duration: "whole", step: 5 }, // C5 (3. Zwischenraum)
-    { type: "filled", duration: "whole", step: 4 }, // B4 / H (mittlere Linie)
-    { type: "filled", duration: "whole", step: 3 }, // A4 (2. Zwischenraum)
-    { type: "filled", duration: "whole", step: 2 }, // G4 (Schlüssellinie)
-    { type: "filled", duration: "whole", step: 1 }, // F4 (1. Zwischenraum)
-    { type: "filled", duration: "whole", step: 0 }, // E4 (unterste Linie)
-    { type: "filled", duration: "whole", step: -1 }, // D4 (unter dem System)
-    { type: "filled", duration: "whole", step: -2 }, // C4 (1. Hilfslinie unten)
+    { duration: "whole", step: 8 },
+    { duration: "whole", step: 7 },
+    { duration: "whole", step: 6 },
+    { duration: "whole", step: 5 },
+    { duration: "whole", step: 4 },
+    { duration: "whole", step: 3 },
+    { duration: "whole", step: 2 },
+    { duration: "whole", step: 1 },
+    { duration: "whole", step: 0 },
+    { duration: "whole", step: -1 },
+    { duration: "whole", step: -2 },
   ]}
 />
+Der **Bassschlüssel** wird für tiefe Tonlagen verwendet. Seine fünf Linien
+heißen von unten nach oben **G2, B2, D3, F3 und A3**. Welcher Schlüssel
+verwendet wird, erkennst du direkt am Anfang der Notenzeile.
 
-Der **Bassschlüssel** wird für tiefe Tonlagen verwendet. Seine fünf Linien heißen von unten nach oben **G2, B2, D3, F3 und A3**. Welcher Schlüssel verwendet wird, erkennst du direkt am Anfang der Notenzeile.
-
-<NotationVisual
+<Notation
   clef="bass"
-  showLeftBar={false}
-  showRightBar={true}
   notes={[
-    { type: "filled", duration: "whole", step: 10 }, // C4 (1. Hilfslinie oben)
-    { type: "filled", duration: "whole", step: 9 }, // B3 / H (über dem System)
-    { type: "filled", duration: "whole", step: 8 }, // A3 (oberste Linie)
-    { type: "filled", duration: "whole", step: 7 }, // G3 (4. Zwischenraum)
-    { type: "filled", duration: "whole", step: 6 }, // F3 (Schlüssellinie)
-    { type: "filled", duration: "whole", step: 5 }, // E3 (3. Zwischenraum)
-    { type: "filled", duration: "whole", step: 4 }, // D3 (mittlere Linie)
-    { type: "filled", duration: "whole", step: 3 }, // C3 (2. Zwischenraum)
-    { type: "filled", duration: "whole", step: 2 }, // B2 / H (2. Linie)
-    { type: "filled", duration: "whole", step: 1 }, // A2 (1. Zwischenraum)
-    { type: "filled", duration: "whole", step: 0 }, // G2 (unterste Linie)
+    { duration: "whole", step: 10 },
+    { duration: "whole", step: 9 },
+    { duration: "whole", step: 8 },
+    { duration: "whole", step: 7 },
+    { duration: "whole", step: 6 },
+    { duration: "whole", step: 5 },
+    { duration: "whole", step: 4 },
+    { duration: "whole", step: 3 },
+    { duration: "whole", step: 2 },
+    { duration: "whole", step: 1 },
+    { duration: "whole", step: 0 },
   ]}
 />
 
@@ -89,6 +81,7 @@ Liegt ein Ton oberhalb oder unterhalb der fünf Notenlinien, werden **Hilfslinie
 
 Im folgenden Vergleich ist **C4 in beiden Notensystemen derselbe Ton**. Die Notenköpfe stehen wegen der unterschiedlichen Schlüssel an verschiedenen Stellen im Liniensystem, klingen aber gleich hoch.
 
+## ######Muss noch geändert werden zu Notation##########
 <div class="notation-system-box">
   {/* Violinschlüssel: C4 auf der 1. Hilfslinie unten */}
   <div class="notation-system-row">
@@ -166,11 +159,51 @@ Die **Form der Note** zeigt ihren Notenwert: Eine ganze Note hat einen leeren No
   ]}
 />
 
+<Notation
+  clef="treble"
+  timeSignature={{ numerator: 4, denominator: 4 }}
+  layout={[3,1]}
+  measureWidth="equal"
+  measures={[
+    {
+      notes: [{ duration: "whole", step: 2 }],
+    },
+        {
+      notes: [
+        { duration: "half", step: 2 },
+        { duration: "half", step: 2 },
+        ],
+    },
+    {
+      notes: [
+        { duration: "quarter", step: 2 },
+        { duration: "quarter", step: 2 },
+        { duration: "quarter", step: 2 },
+        { duration: "quarter", step: 2 },
+      ],
+    },
+    {
+      rightBarStyle: "final",
+      notes: [
+        { duration: "eighth", step: 2 },
+        { duration: "eighth", step: 2 },
+        { duration: "eighth", step: 2 },
+        { duration: "eighth", step: 2 },
+        { duration: "eighth", step: 2, beamGroup: "b2" },
+        { duration: "eighth", step: 2, beamGroup: "b2" },
+        { duration: "eighth", step: 2, beamGroup: "b2" },
+        { duration: "eighth", step: 2, beamGroup: "b2" },
+      ],
+    },
+  ]}
+/>
+
 Eine **Pause** bezeichnet eine Stille mit derselben Dauer wie der entsprechende Notenwert. Das Schaubild zeigt ganze, halbe, Viertel-, Achtel- und Sechzehntelwerte jeweils als Note und Pause. Die ganze Pause hängt unter der vierten Linie, die halbe liegt auf der dritten Linie (von unten gezählt). Eine ganze Pause kann auch einen vollständigen Takt unabhängig von der Taktart anzeigen.
 
 <NotationNoteRestValues />
 
 ########1 Scrollen soll hier als standard aus sein############
+
 <div class="notation-system-box">
 <div class="notation-system-row">
   <NotationVisual
@@ -203,17 +236,19 @@ Eine **Pause** bezeichnet eine Stille mit derselben Dauer wie der entsprechende 
 </div>
 </div>
 
-
 ########rest müsste hier eine Pause sein############
+
 <NotationSystem
   measuresPerRow={4}
   fitToWidth
   measures={[
-    { timeSignature: { numerator: 4, denominator: 4 }, 
-    notes: [{ duration: 'whole', step: 2 }] },
-    { notes: [{ duration: 'whole', step: 3 }] },
-    { notes: [{ duration: 'whole', step: 4 }] },
-    { rest: [{ duration: 'whole'}] },
+    {
+      timeSignature: { numerator: 4, denominator: 4 },
+      notes: [{ duration: "whole", step: 2 }],
+    },
+    { notes: [{ duration: "whole", step: 3 }] },
+    { notes: [{ duration: "whole", step: 4 }] },
+    { rest: [{ duration: "whole" }] },
   ]}
 />
 

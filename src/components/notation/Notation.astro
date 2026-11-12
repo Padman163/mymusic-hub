@@ -1,0 +1,121 @@
+---
+import { SPATIUM } from "../../lib/notation-renderer.ts";
+import "../../styles/notation.css";
+import TempoLabel from "../ui/TempoLabel.astro";
+import NotationVisual from "./NotationVisual.astro";
+import {
+  layoutNotationSystems,
+  type NotationProps,
+  normalizeNotationInput,
+} from "./system-layout.ts";
+
+type Props = NotationProps;
+
+const props = Astro.props as NotationProps;
+const {
+  scale = 1,
+  scrollable = false,
+  measureWidth = "rhythmic",
+  title,
+  subtitle,
+  tempo,
+  tempoDetail,
+} = props;
+
+const normalizedMeasures = normalizeNotationInput(props);
+const rows =
+  normalizedMeasures.length > 0 ? layoutNotationSystems(props) : [];
+const hasPieceHeader = Boolean(title || subtitle || tempo || tempoDetail);
+const fitToWidth = !scrollable;
+---
+
+<div
+  class:list={[
+    "notation-component",
+    "not-content",
+    `measure-width-${measureWidth}`,
+    { "is-scrollable": scrollable, "has-piece-header": hasPieceHeader },
+  ]}
+  data-fit-to-width={fitToWidth ? "" : undefined}
+  data-scale={scale}
+  style={`--notation-scale: ${scale}; --notation-spatium: ${SPATIUM * scale}px`}
+  data-tags={JSON.stringify(["Allgemein", "Notensystem"])}
+>
+  {hasPieceHeader && (
+    <header class="notation-piece-header">
+      {(title || subtitle) && (
+        <div class="notation-title-group">
+          {title && <div class="notation-title">{title}</div>}
+          {subtitle && <div class="notation-subtitle">{subtitle}</div>}
+        </div>
+      )}
+      {(tempo || tempoDetail) && (
+        <div class="notation-piece-tempo">
+          <TempoLabel text={tempo ?? ""} detail={tempoDetail} />
+        </div>
+      )}
+    </header>
+  )}
+
+  <div class="notation-systems">
+    {rows.map((row) => {
+      const hasRowTempo = row.measures.some((measure) => Boolean(measure.tempo));
+      const hasRowMeasureNumber = row.measures.some(
+        (measure) => measure.measureNumber !== undefined,
+      );
+      const hasRowHairpin = row.measures.some((measure) =>
+        Boolean(measure.hairpin),
+      );
+      const widthPercent = Math.round(row.widthRatio * 10000) / 100;
+
+      return (
+        <div
+          class:list={[
+            "notation-row",
+            {
+              "has-row-tempo": hasRowTempo,
+              "has-row-measure-number": hasRowMeasureNumber,
+              "has-row-hairpin": hasRowHairpin,
+              "is-incomplete-row": row.widthRatio < 1,
+            },
+          ]}
+          style={`--notation-row-columns: ${row.measures.length}; --notation-grid-columns: ${row.gridTemplateColumns}; --notation-row-width: ${widthPercent}%`}
+        >
+          {row.measures.map((measure) => (
+            <div class="notation-cell" style={`min-width: ${measure.minWidth}px`}>
+              <NotationVisual
+                embedded={true}
+                measureNumber={measure.measureNumber}
+                tempo={measure.tempo}
+                tempoDetail={measure.tempoDetail}
+                ritAt={measure.ritAt}
+                aTempoAt={measure.aTempoAt}
+                clef={measure.clef}
+                timeSignature={measure.timeSignature}
+                layoutTimeSignature={measure.layoutTimeSignature}
+                accidentals={measure.accidentals}
+                notes={measure.notes}
+                firstNoteX={measure.firstNoteX}
+                curves={measure.curves}
+                showLeftBar={measure.showLeftBar}
+                showRightBar={
+                  measure.showRightBar ?? !measure.repeatEnd
+                }
+                rightBarStyle={measure.rightBarStyle}
+                repeatStart={measure.repeatStart}
+                repeatEnd={measure.repeatEnd}
+                hairpin={measure.hairpin}
+                initialDynamic={measure.initialDynamic}
+              />
+            </div>
+          ))}
+        </div>
+      );
+    })}
+  </div>
+</div>
+
+<script>
+  import { observeNotationFit } from "../../lib/notation-fit";
+  observeNotationFit();
+</script>

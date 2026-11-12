@@ -5,7 +5,10 @@ import "../../styles/notation.css";
 import NotationVisual from "./NotationVisual.astro";
 
 interface Props {
-  measures: Omit<ComponentProps<typeof NotationVisual>, "embedded" | "firstNoteX">[];
+  measures: Omit<
+    ComponentProps<typeof NotationVisual>,
+    "embedded" | "firstNoteX"
+  >[];
   measuresPerRow?: number;
   fitToWidth?: boolean;
 }

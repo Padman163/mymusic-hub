@@ -338,7 +338,11 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     !lastNote.dotted;
   const noteInset =
     firstNoteX ??
-    (wholeMeasureRest && !clef && !timeSignature && !accidentals.length && !repeatStart
+    (wholeMeasureRest &&
+    !clef &&
+    !timeSignature &&
+    !accidentals.length &&
+    !repeatStart
       ? Math.max(options.noteStart ?? 0, prefixEnd)
       : defaultFirstNoteX(options));
   const endingMarkInset = repeatEnd
@@ -530,8 +534,8 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
           (noteHeadHalfWidth - STEM_WIDTH / 2) * (startUp ? 1 : -1);
         const endOffset =
           end.offset + (noteHeadHalfWidth - STEM_WIDTH / 2) * (endUp ? 1 : -1);
-        const startY = beamStemEnds.get(index)!;
-        const endY = beamStemEnds.get(nextIndex)!;
+        const startY = beamStemEnds.get(index) ?? STAFF_MIDDLE;
+        const endY = beamStemEnds.get(nextIndex) ?? STAFF_MIDDLE;
         const startX = `calc(${start.percent} + ${startOffset - STEM_WIDTH / 2}px)`;
         const endX = `calc(${end.percent} + ${endOffset + STEM_WIDTH / 2}px)`;
         beams.push(renderBeam(startX, startY, endX, endY, BEAM_WIDTH));
@@ -577,10 +581,9 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     const first = notePosition(group.indices[0]);
     const last = notePosition(group.indices[group.indices.length - 1]);
     const stemOffset = (noteHeadHalfWidth - STEM_WIDTH / 2) * (stemUp ? 1 : -1);
-    const firstBeamY = beamStemEnds.get(group.indices[0])!;
-    const lastBeamY = beamStemEnds.get(
-      group.indices[group.indices.length - 1],
-    )!;
+    const firstBeamY = beamStemEnds.get(group.indices[0]) ?? STAFF_MIDDLE;
+    const lastBeamY =
+      beamStemEnds.get(group.indices[group.indices.length - 1]) ?? STAFF_MIDDLE;
     for (
       let beam = 0;
       beam < (group.duration === "sixteenth" ? 2 : 1);

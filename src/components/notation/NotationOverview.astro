@@ -4,12 +4,12 @@ import type {
   NotationCurve,
   NotationEvent,
 } from "../../lib/notation-renderer";
+import { arrangeNotationSystems } from "../../lib/system-layout.ts";
 import {
   omitUnchangedTimeSignatures,
   type TimeSignature,
 } from "../../lib/time-signature.ts";
 import NotationVisual from "./NotationVisual.astro";
-import { arrangeNotationSystems } from "../../lib/system-layout.ts";
 
 interface Measure {
   measureNumber?: string | number;

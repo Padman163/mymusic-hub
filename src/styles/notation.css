@@ -11,6 +11,7 @@
   --notation-header-height: 36px;
 }
 
+.notation-component,
 .notation-visual,
 .notation-value-comparison,
 .accidental-examples,
@@ -312,7 +313,10 @@
 
 .notation-system-grid {
   display: grid;
-  grid-template-columns: repeat(var(--notation-columns), minmax(max-content, 1fr));
+  grid-template-columns: repeat(
+      var(--notation-columns),
+      minmax(max-content, 1fr)
+    );
   row-gap: var(--notation-system-gap);
   align-items: start;
 }
@@ -329,7 +333,10 @@
 
 .notation-system-box[data-fit-to-width] .notation-system-row {
   display: grid;
-  grid-template-columns: repeat(var(--notation-row-columns), minmax(min-content, 1fr));
+  grid-template-columns: repeat(
+      var(--notation-row-columns),
+      minmax(min-content, 1fr)
+    );
   margin: 0;
 }
 
@@ -345,7 +352,6 @@
 .notation-overview[data-fit-to-width][data-fitted] {
   overflow-x: hidden;
 }
-
 
 .overview-layout-narrow {
   display: none;
@@ -399,7 +405,10 @@
 }
 
 .pickup-row:first-child {
-  grid-template-columns: minmax(110px, 0.7fr) repeat(2, minmax(min-content, 1fr));
+  grid-template-columns: minmax(110px, 0.7fr) repeat(
+      2,
+      minmax(min-content, 1fr)
+    );
 }
 
 .pickup-row + .pickup-row {
@@ -526,5 +535,176 @@
 @media (max-width: 420px) {
   .pickup-row:first-child {
     grid-template-columns: repeat(2, minmax(min-content, 1fr));
+  }
+}
+
+.notation-component {
+  position: relative;
+  padding: var(--notation-panel-padding);
+  margin: 1.5rem 0;
+  overflow-x: hidden;
+  --notation-scale: 1;
+}
+
+.notation-component.is-scrollable {
+  overflow-x: auto;
+}
+
+.notation-component[data-fit-to-width] .notation-systems {
+  width: min-content;
+  min-width: 100%;
+  zoom: var(--notation-scale, 1);
+}
+
+.notation-component.is-scrollable .notation-systems {
+  min-width: min-content;
+  zoom: var(--notation-scale, 1);
+}
+
+.notation-component[data-fit-to-width][data-fitted] {
+  overflow-x: hidden;
+}
+
+.notation-piece-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  color: #111827;
+}
+
+.notation-title-group {
+  text-align: center;
+}
+
+.notation-title {
+  font:
+    bold 1.25rem / 1.25 Georgia,
+    serif;
+  color: #111827;
+}
+
+.notation-subtitle {
+  margin-top: 0.2rem;
+  font:
+    italic 0.95rem / 1.3 Georgia,
+    serif;
+  color: #374151;
+}
+
+.notation-piece-tempo {
+  align-self: flex-start;
+}
+
+.notation-component .notation-systems {
+  display: flex;
+  flex-direction: column;
+  gap: var(--notation-system-gap);
+}
+
+.notation-row {
+  display: grid;
+  grid-template-columns: var(
+      --notation-grid-columns,
+      repeat(var(--notation-row-columns, 1), minmax(min-content, 1fr))
+    );
+  width: var(--notation-row-width, 100%);
+  max-width: 100%;
+  min-width: min-content;
+  align-items: start;
+  box-sizing: border-box;
+}
+
+.notation-row.has-row-measure-number {
+  padding-top: 6px;
+}
+
+.notation-row.has-row-tempo {
+  padding-top: 16px;
+}
+
+.notation-row.has-row-hairpin {
+  padding-bottom: 32px;
+}
+
+.notation-cell {
+  position: relative;
+  min-width: min-content;
+}
+
+.notation-cell .notation-visual.embedded.has-header .notation-header {
+  position: absolute;
+  top: -14px;
+  right: 0;
+  left: 18px;
+  height: var(--notation-header-height);
+  z-index: 2;
+}
+
+.notation-cell .notation-visual.embedded.has-hairpin.has-header {
+  --notation-dynamics-top: 64px;
+}
+
+.notation-cell
+  .notation-visual.embedded.has-header
+  > .notation-measure-number.embedded {
+  top: 13px;
+}
+
+@media print {
+  .notation-component,
+  .notation-row,
+  .notation-visual,
+  .notation-system-box,
+  .notation-overview {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    overflow: visible !important;
+  }
+
+  .notation-component {
+    padding-right: 0;
+    padding-left: 0;
+    margin: 1rem 0;
+  }
+
+  .notation-staff,
+  .notation-staff line,
+  .hairpin,
+  .hairpin line,
+  .repeat-start,
+  .repeat-end {
+    stroke: #000 !important;
+    color: #000 !important;
+  }
+
+  .notation-clef,
+  .notation-note,
+  .notation-rest,
+  .notation-accidental,
+  .notation-time,
+  .notation-articulation,
+  .notation-tempo,
+  .notation-curve,
+  .final-bar,
+  .final-bar rect,
+  .repeat-start,
+  .repeat-end {
+    fill: #000 !important;
+    color: #000 !important;
+  }
+
+  .notation-title,
+  .notation-subtitle,
+  .tempo-label,
+  .tempo-detail,
+  .notation-measure-number,
+  .dynamic-word,
+  .dynamic-mark {
+    color: #000 !important;
   }
 }
