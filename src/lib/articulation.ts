@@ -30,7 +30,9 @@ export function articulationPlacement(
   stemUp: boolean,
   requested?: Placement,
 ): Placement {
-  return hasStem && !stemUp ? "above" : (requested ?? "above");
+  if (hasStem && !stemUp) return "above";
+  if (requested) return requested;
+  return hasStem && stemUp ? "below" : "above";
 }
 
 export function renderArticulation(

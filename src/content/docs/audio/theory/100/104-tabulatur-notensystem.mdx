@@ -585,8 +585,6 @@ Ein **Auftakt** beginnt vor dem ersten vollständigen Takt. Er enthält nur eine
 
 Im Beispiel besteht der verkürzte Auftakt aus einer einzelnen **Viertelnote** (1 Schlag). Dadurch steht die Note nahe am rechten Taktstrich, direkt vor dem ersten vollständigen Takt. Nur Takt 2 wird wiederholt. Takt 3 enthält den Schlusston; seine **punktierte halbe Note** (3 Schläge) ergänzt die Viertelnote des Auftakts, sodass Auftakt und Schlusstakt zusammen genau einen vollständigen 4/4-Takt ergeben.
 
-<SheetMusicPlayer musicXmlUrl="/scores/104-6-Auftakt-Wiederholung.musicxml" />
-
 <Notation
   clef="treble"
   timeSignature={{ numerator: 4, denominator: 4 }}
@@ -635,7 +633,34 @@ Im Beispiel steht **Allegro** über einer Tonfolge; darunter gibt die Metronoman
 
 Das Tempo kann sich im Verlauf eines Stücks ändern: **rit.** (_ritardando_) oder **rall.** (_rallentando_) fordert dazu auf, allmählich langsamer zu werden; **accel.** (_accelerando_) bedeutet, allmählich schneller zu werden. **a tempo** heißt, zum vorherigen Grundtempo zurückzukehren. Diese Angaben beschreiben meist eine allmähliche Veränderung und keinen abrupten Sprung auf eine bestimmte Metronomzahl. Im Beispiel zeigt **rit.** das Verlangsamen und **a tempo** die Rückkehr zum angegebenen Tempo.
 
-## SheetMusicPlayer musicXmlUrl="/scores/104-7-Tempo.musicxml" />
+<Notation
+  clef="treble"
+  timeSignature={{ numerator: 4, denominator: 4 }}
+  layout={2}
+  measures={[
+    {
+      tempo: "Allegro",
+      tempoDetail: "♩ = 90",
+      ritAt: 2,
+      notes: [
+        { duration: "quarter", step: -2 },
+        { duration: "quarter", step: -1 },
+        { duration: "quarter", step: 0 },
+        { duration: "quarter", step: 1 },
+      ],
+    },
+    {
+      aTempoAt: 2,
+      rightBarStyle: "final",
+      notes: [
+        { duration: "quarter", step: 2 },
+        { duration: "quarter", step: 3 },
+        { duration: "quarter", step: 4 },
+        { duration: "quarter", step: 5 },
+      ],
+    },
+  ]}
+/>
 
 ## 8. Artikulationszeichen
 
@@ -651,7 +676,40 @@ Die Zeichen in der Notation ergänzen die Spielweise, die du in [102: Mechanik, 
 
 Das Beispiel zeigt drei Notenzeilen: oben wechseln sich Tenuto und Staccato ab; in der Mitte verbindet ein Haltebogen zwei gleiche Töne; unten stehen ein Legatobogen und Akzente.
 
-## SheetMusicPlayer musicXmlUrl="/scores/104-8-Artikulation.musicxml" />
+<Notation
+  clef="treble"
+  timeSignature={{ numerator: 4, denominator: 4 }}
+  layout={1}
+  measures={[
+    {
+      notes: [
+        { duration: "quarter", step: -2, articulation: "tenuto" },
+        { duration: "quarter", step: -1, articulation: "staccato" },
+        { duration: "quarter", step: 0, articulation: "tenuto" },
+        { duration: "quarter", step: 1, articulation: "staccato" },
+      ],
+    },
+    {
+      curves: [{ from: 0, to: 1, type: "tie" }],
+      notes: [
+        { duration: "quarter", step: -2 },
+        { duration: "quarter", step: -2 },
+        { duration: "quarter", step: -1 },
+        { duration: "quarter", step: 0 },
+      ],
+    },
+    {
+      curves: [{ from: 2, to: 3, type: "slur" }],
+      rightBarStyle: "final",
+      notes: [
+        { duration: "quarter", step: -2, articulation: "accent" },
+        { duration: "quarter", step: -1, articulation: "accent" },
+        { duration: "quarter", step: 0 },
+        { duration: "quarter", step: 1 },
+      ],
+    },
+  ]}
+/>
 
 ## 9. Dynamik
 

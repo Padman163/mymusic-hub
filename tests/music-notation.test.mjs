@@ -484,8 +484,12 @@ test('single notes of every type use the default start after the prefix', () => 
 });
 
 test('articulation and curves use caller-provided positions', () => {
+  assert.equal(articulationPlacement(true, true), 'below');
+  assert.equal(articulationPlacement(true, false), 'above');
+  assert.equal(articulationPlacement(false, true), 'above');
   assert.equal(articulationPlacement(true, false, 'below'), 'above');
   assert.equal(articulationPlacement(true, true, 'below'), 'below');
+  assert.equal(articulationPlacement(true, true, 'above'), 'above');
   assert.match(renderArticulation('marcato', 'below', 10, 20, 'music-articulation'), /x="10" y="20"/);
   assert.throws(() => validateCurves([{ from: 1, to: 1, type: 'tie' }], 2), /Ungültiger Bogen/);
   assert.match(renderCurve('slur', '10', '50', 80, 20, 30, true, 'music-curve'), /viewBox="0 0 100 80"/);
