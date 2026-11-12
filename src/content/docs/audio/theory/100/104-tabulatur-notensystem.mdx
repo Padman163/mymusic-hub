@@ -6,7 +6,6 @@ sidebar:
 ---
 
 import SheetMusicPlayer from "../../../../../components/SheetMusicPlayer.astro";
-import NotationNoteRestValues from "../../../../../components/notation/NotationNoteRestValues.astro";
 import NotationVisual from "../../../../../components/notation/NotationVisual.astro";
 import NotationSystem from "../../../../../components/notation/NotationSystem.astro";
 import Notation from "../../../../../components/notation/Notation.astro";
@@ -82,6 +81,7 @@ Liegt ein Ton oberhalb oder unterhalb der fünf Notenlinien, werden **Hilfslinie
 Im folgenden Vergleich ist **C4 in beiden Notensystemen derselbe Ton**. Die Notenköpfe stehen wegen der unterschiedlichen Schlüssel an verschiedenen Stellen im Liniensystem, klingen aber gleich hoch.
 
 ## ######Muss noch geändert werden zu Notation##########
+
 <div class="notation-system-box">
   {/* Violinschlüssel: C4 auf der 1. Hilfslinie unten */}
   <div class="notation-system-row">
@@ -121,58 +121,20 @@ Gitarren werden in der Standardnotation üblicherweise **eine Oktave höher noti
 
 Die **Form der Note** zeigt ihren Notenwert: Eine ganze Note hat einen leeren Notenkopf ohne Hals, eine halbe einen leeren Notenkopf mit Hals und eine Viertelnote einen ausgefüllten Notenkopf mit Hals. Fähnchen oder Balken am Hals kennzeichnen kürzere Noten, zum Beispiel Achtelnoten. Mehrere Achtelnoten hintereinander verbindet man meist mit einem gemeinsamen Balken statt jedes Fähnchen einzeln zu zeichnen. So erkennt man ihre rhythmische Zusammengehörigkeit auf einen Blick; die Gruppierung orientiert sich meist an den Zählzeiten.
 
-<NotationSystem
-  measuresPerRow={3}
-  fitToWidth
-  measures={[
-    {
-      timeSignature: { numerator: 4, denominator: 4 },
-      notes: [{ duration: "whole", step: 2 }],
-    },
-    {
-      notes: [
-        { duration: "half", step: 2 },
-        { duration: "half", step: 2 },
-      ],
-    },
-    {
-      notes: [
-        { duration: "quarter", step: 2 },
-        { duration: "quarter", step: 2 },
-        { duration: "quarter", step: 2 },
-        { duration: "quarter", step: 2 },
-      ],
-    },
-    {
-      rightBarStyle: "final",
-      notes: [
-        { duration: "eighth", step: 2 },
-        { duration: "eighth", step: 2 },
-        { duration: "eighth", step: 2 },
-        { duration: "eighth", step: 2 },
-        { duration: "eighth", step: 2, beamGroup: "b2" },
-        { duration: "eighth", step: 2, beamGroup: "b2" },
-        { duration: "eighth", step: 2, beamGroup: "b2" },
-        { duration: "eighth", step: 2, beamGroup: "b2" },
-      ],
-    },
-  ]}
-/>
-
 <Notation
   clef="treble"
   timeSignature={{ numerator: 4, denominator: 4 }}
-  layout={[3,1]}
+  layout={[3, 1]}
   measureWidth="equal"
   measures={[
     {
       notes: [{ duration: "whole", step: 2 }],
     },
-        {
+    {
       notes: [
         { duration: "half", step: 2 },
         { duration: "half", step: 2 },
-        ],
+      ],
     },
     {
       notes: [
@@ -200,55 +162,52 @@ Die **Form der Note** zeigt ihren Notenwert: Eine ganze Note hat einen leeren No
 
 Eine **Pause** bezeichnet eine Stille mit derselben Dauer wie der entsprechende Notenwert. Das Schaubild zeigt ganze, halbe, Viertel-, Achtel- und Sechzehntelwerte jeweils als Note und Pause. Die ganze Pause hängt unter der vierten Linie, die halbe liegt auf der dritten Linie (von unten gezählt). Eine ganze Pause kann auch einen vollständigen Takt unabhängig von der Taktart anzeigen.
 
-<NotationNoteRestValues />
+<Notation
+  clef="treble"
+  notes={[
+    { type: "rest", duration: "whole" },
+    { type: "rest", duration: "half" },
+    { type: "rest", duration: "quarter" },
+    { type: "rest", duration: "eighth" },
+  ]}
+/>
 
-########1 Scrollen soll hier als standard aus sein############
-
-<div class="notation-system-box">
-<div class="notation-system-row">
-  <NotationVisual
-    clef="treble"
-    showLeftBar={false}
-    showRightBar={true}
-    notes={[
-      { type: "rest", duration: "whole" },
-      { type: "rest", duration: "half" },
-      { type: "rest", duration: "quarter" },
-      { type: "rest", duration: "eighth" },
-      { type: "rest", duration: "sixteenth" }
-    ]}
-  />
-</div>
-
-<div class="notation-system-row">
-  <NotationVisual
-    clef="treble"
-    showLeftBar={false}
-    showRightBar={true}
-    notes={[
-      { type: "rest", duration: "whole" },
-      { type: "rest", duration: "half" },
-      { type: "rest", duration: "quarter" },
-      { type: "rest", duration: "eighth" },
-      { type: "rest", duration: "sixteenth" }
-    ]}
-  />
-</div>
-</div>
-
-########rest müsste hier eine Pause sein############
-
-<NotationSystem
-  measuresPerRow={4}
-  fitToWidth
+<Notation
+  clef="treble"
+  timeSignature={{ numerator: 4, denominator: 4 }}
+  layout={[3, 1]}
+  measureWidth="equal"
   measures={[
     {
-      timeSignature: { numerator: 4, denominator: 4 },
-      notes: [{ duration: "whole", step: 2 }],
+      notes: [{ type: "rest", duration: "whole" }],
     },
-    { notes: [{ duration: "whole", step: 3 }] },
-    { notes: [{ duration: "whole", step: 4 }] },
-    { rest: [{ duration: "whole" }] },
+    {
+      notes: [
+        { type: "rest", duration: "half" },
+        { type: "rest", duration: "half" },
+      ],
+    },
+    {
+      notes: [
+        { type: "rest", duration: "quarter" },
+        { type: "rest", duration: "quarter" },
+        { type: "rest", duration: "quarter" },
+        { type: "rest", duration: "quarter" },
+      ],
+    },
+    {
+      rightBarStyle: "final",
+      notes: [
+        { type: "rest", duration: "eighth" },
+        { type: "rest", duration: "eighth" },
+        { type: "rest", duration: "eighth" },
+        { type: "rest", duration: "eighth" },
+        { type: "rest", duration: "eighth" },
+        { type: "rest", duration: "eighth" },
+        { type: "rest", duration: "eighth" },
+        { type: "rest", duration: "eighth" },
+      ],
+    },
   ]}
 />
 
