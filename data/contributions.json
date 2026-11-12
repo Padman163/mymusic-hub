@@ -382,5 +382,16 @@
     ],
     "status": "New",
     "createdAt": "2026-11-12T14:24:58.752Z"
+  },
+  {
+    "id": "85b11932-b208-4d97-91eb-f6fca160fc28",
+    "type": "Decision",
+    "title": "Was solltest du zu diesem Zeitpunkt beherrschen",
+    "description": "In Verbindung mit Quiz",
+    "area": "Theorie",
+    "priority": "Niedrig",
+    "checklist": [],
+    "status": "New",
+    "createdAt": "2026-11-12T14:25:29.972Z"
   }
 ]
