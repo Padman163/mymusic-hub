@@ -99,7 +99,6 @@ export interface NotationRenderOptions {
   timeSignature?: TimeSignature;
   noteStart?: number;
   firstNoteX?: number;
-  spacing?: "rhythmic" | "equal";
   showLeftBar?: boolean;
   showRightBar?: boolean;
   rightBarStyle?: "single" | "final";
@@ -243,7 +242,6 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     timeSignature,
     noteStart = 0,
     firstNoteX,
-    spacing = "rhythmic",
     showLeftBar = false,
     showRightBar = true,
     rightBarStyle = "single",
@@ -324,7 +322,6 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     firstNote !== undefined &&
     firstNote.type !== "rest" &&
     firstNote.duration !== undefined &&
-    firstNote.duration !== "whole" &&
     !clef &&
     !timeSignature &&
     accidentals.length === 0 &&
@@ -338,15 +335,13 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
       ? minimumFirstNoteX(options)
       : Math.max(noteStart, prefixEnd));
   const repeatEndInset = repeatEnd ? 16 : 0;
-  const singleWholeNote =
-    notes.length === 1 &&
-    notes[0].type !== "rest" &&
-    notes[0].duration === "whole";
   const positions = layoutNotationEvents(notes, {
     noteInset,
     repeatEndInset,
-    aligned: firstNoteX !== undefined || useDefaultNoteStart,
-    spacing,
+    aligned:
+      firstNoteX !== undefined ||
+      useDefaultNoteStart ||
+      (notes.length === 1 && firstNote?.type !== "rest" && firstNote?.duration === "whole"),
   });
   const notePosition = (index: number) => positions[index];
   let minimumWidth = notes.reduce((minimum, note, index) => {
@@ -356,9 +351,6 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     const fraction = positions[index].fraction - positions[index - 1].fraction;
     return Math.max(minimum, noteInset + repeatEndInset + distance / fraction);
   }, noteInset + repeatEndInset);
-  if (singleWholeNote) {
-    minimumWidth = Math.max(minimumWidth, noteInset / 0.41);
-  }
   if (notes.length > 0) {
     const last = positions[positions.length - 1];
     const rightInset = repeatEnd

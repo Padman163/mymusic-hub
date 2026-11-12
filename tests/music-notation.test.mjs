@@ -91,7 +91,7 @@ test('rhythmic positions reflect notes, rests and dotted durations', () => {
 test('four quarter notes share the available aligned measure width', () => {
   const notes = Array.from({ length: 4 }, () => ({ duration: 'quarter', step: 2 }));
   const positions = layoutNotationEvents(notes, {
-    noteInset: 40, repeatEndInset: 0, aligned: true, spacing: 'rhythmic'
+    noteInset: 40, repeatEndInset: 0, aligned: true
   });
   for (const width of [200, 400]) {
     const actual = positions.map(({ fraction, offset }) => fraction * width + offset);
@@ -125,7 +125,7 @@ test('default first note starts one and a half notehead widths after the bar', (
   assert.match(renderNotationSvg({ notes, firstNoteX: 10 }), /translate\(10 0\)"><text class="notation-note" x="0%"/);
 });
 
-test('renderer places timed events proportionally and preserves equal-spacing examples', () => {
+test('renderer places timed events proportionally', () => {
   const notes = [
     { type: 'rest', duration: 'eighth' },
     { duration: 'quarter', step: 3, dotted: true },
@@ -143,8 +143,6 @@ test('renderer places timed events proportionally and preserves equal-spacing ex
   const distances = [x[1] - x[0], x[2] - x[1], 300 - x[2]];
   assert.ok(Math.abs(distances[1] / distances[0] - Math.SQRT2 * 1.3) < 1e-10);
   assert.ok(Math.abs(distances[2] / distances[0] - Math.SQRT2) < 1e-10);
-  const equal = positions(renderNotationSvg({ notes, firstNoteX: 26, spacing: 'equal' }));
-  assert.deepEqual(equal, [0, (1 / 3) * 100, (2 / 3) * 100]);
   const unaligned = positions(renderNotationSvg({ notes }));
   for (let i = 0; i < unaligned.length; i++) {
     assert.ok(Math.abs(unaligned[i] - (25 + 75 * rhythmicPositions(notes)[i])) < 1e-10);
@@ -243,13 +241,13 @@ test('stem directions, middle line and dot position follow the note step', () =>
 });
 
 test('minimum width preserves clear event spacing in narrow measures', () => {
-  for (const spacing of ['rhythmic', 'equal']) {
+  {
     const notes = [
       { duration: 'quarter', step: 2, dotted: true },
       { duration: 'quarter', step: 4, accidental: 'sharp' },
       { type: 'rest', duration: 'sixteenth' }
     ];
-    const svg = renderNotationSvg({ notes, spacing, firstNoteX: 26 });
+    const svg = renderNotationSvg({ notes, firstNoteX: 26 });
     const minWidth = Number(svg.match(/min-width:([\d.]+)px/)[1]);
     const grouped = [...svg.matchAll(/<g transform="translate\(([-.\d]+) 0\)"><text class="notation-(?:rest|note)" x="([\d.]+)%"/g)];
     const x = grouped.map((match) => Number(match[1]) + Number(match[2]) * minWidth / 100);
@@ -294,7 +292,7 @@ test('prefix and right bar have minimum clearances at narrow and wide widths', (
   }
 });
 
-test('a single whole note is at 41% while retaining prefix and bar clearance', () => {
+test('a single whole note uses the normal start position while retaining bar clearance', () => {
   for (const prefix of [{}, { clef: 'treble', timeSignature: { numerator: 4, denominator: 4 } }]) {
     for (const dotted of [false, true]) {
       const notes = [{ duration: 'whole', step: 2, dotted }];
@@ -302,11 +300,13 @@ test('a single whole note is at 41% while retaining prefix and bar clearance', (
       for (const aligned of [true, false]) {
         const svg = renderNotationSvg({ ...prefix, notes, rightBarStyle: 'final', ...(aligned ? { firstNoteX } : {}) });
         const minWidth = Number(svg.match(/min-width:([\d.]+)px/)[1]);
-        assert.match(svg, /transform="translate\(0 0\)"><text class="notation-note" x="41%"/);
+        const head = svg.match(/transform="translate\(([-.\d]+) 0\)"><text class="notation-note" x="([\d.]+)%"/);
+        assert.ok(head);
+        assert.equal(Number(head[2]), 0);
+        const x = Number(head[1]);
+        assert.equal(x, aligned || prefix.clef ? firstNoteX : 2 * sp(1.35));
         for (const requestedWidth of [50, 400]) {
           const width = Math.max(requestedWidth, minWidth);
-          const x = width * 0.41;
-          assert.ok(x >= firstNoteX - 1e-9 || !aligned && !prefix.clef);
           assert.ok(width - 8 - x - (dotted ? 15.75 : 6.75) >= sp(1.5) - 1e-9);
         }
       }

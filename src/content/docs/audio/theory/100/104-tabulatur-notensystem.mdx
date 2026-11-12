@@ -49,19 +49,18 @@ Am Ende eines Stücks oder Abschnitts steht häufig ein **doppelter Taktstrich**
   clef="treble"
   showLeftBar={false}
   showRightBar={true}
-  spacing="equal"
   notes={[
-    { type: 'filled', step: 8 },  // F5 (oberste Linie)
-    { type: 'filled', step: 7 },  // E5 (4. Zwischenraum)
-    { type: 'filled', step: 6 },  // D5 (4. Linie)
-    { type: 'filled', step: 5 },  // C5 (3. Zwischenraum)
-    { type: 'filled', step: 4 },  // B4 / H (mittlere Linie)
-    { type: 'filled', step: 3 },  // A4 (2. Zwischenraum)
-    { type: 'filled', step: 2 },  // G4 (Schlüssellinie)
-    { type: 'filled', step: 1 },  // F4 (1. Zwischenraum)
-    { type: 'filled', step: 0 },  // E4 (unterste Linie)
-    { type: 'filled', step: -1 }, // D4 (unter dem System)
-    { type: 'filled', step: -2 }, // C4 (1. Hilfslinie unten)
+    { type: "filled", duration: "whole", step: 8 }, // F5 (oberste Linie)
+    { type: "filled", duration: "whole", step: 7 }, // E5 (4. Zwischenraum)
+    { type: "filled", duration: "whole", step: 6 }, // D5 (4. Linie)
+    { type: "filled", duration: "whole", step: 5 }, // C5 (3. Zwischenraum)
+    { type: "filled", duration: "whole", step: 4 }, // B4 / H (mittlere Linie)
+    { type: "filled", duration: "whole", step: 3 }, // A4 (2. Zwischenraum)
+    { type: "filled", duration: "whole", step: 2 }, // G4 (Schlüssellinie)
+    { type: "filled", duration: "whole", step: 1 }, // F4 (1. Zwischenraum)
+    { type: "filled", duration: "whole", step: 0 }, // E4 (unterste Linie)
+    { type: "filled", duration: "whole", step: -1 }, // D4 (unter dem System)
+    { type: "filled", duration: "whole", step: -2 }, // C4 (1. Hilfslinie unten)
   ]}
 />
 
@@ -71,19 +70,18 @@ Der **Bassschlüssel** wird für tiefe Tonlagen verwendet. Seine fünf Linien he
   clef="bass"
   showLeftBar={false}
   showRightBar={true}
-  spacing="equal"
   notes={[
-    { type: 'filled', step: 10 }, // C4 (1. Hilfslinie oben)
-    { type: 'filled', step: 9 },  // B3 / H (über dem System)
-    { type: 'filled', step: 8 },  // A3 (oberste Linie)
-    { type: 'filled', step: 7 },  // G3 (4. Zwischenraum)
-    { type: 'filled', step: 6 },  // F3 (Schlüssellinie)
-    { type: 'filled', step: 5 },  // E3 (3. Zwischenraum)
-    { type: 'filled', step: 4 },  // D3 (mittlere Linie)
-    { type: 'filled', step: 3 },  // C3 (2. Zwischenraum)
-    { type: 'filled', step: 2 },  // B2 / H (2. Linie)
-    { type: 'filled', step: 1 },  // A2 (1. Zwischenraum)
-    { type: 'filled', step: 0 },  // G2 (unterste Linie)
+    { type: "filled", duration: "whole", step: 10 }, // C4 (1. Hilfslinie oben)
+    { type: "filled", duration: "whole", step: 9 }, // B3 / H (über dem System)
+    { type: "filled", duration: "whole", step: 8 }, // A3 (oberste Linie)
+    { type: "filled", duration: "whole", step: 7 }, // G3 (4. Zwischenraum)
+    { type: "filled", duration: "whole", step: 6 }, // F3 (Schlüssellinie)
+    { type: "filled", duration: "whole", step: 5 }, // E3 (3. Zwischenraum)
+    { type: "filled", duration: "whole", step: 4 }, // D3 (mittlere Linie)
+    { type: "filled", duration: "whole", step: 3 }, // C3 (2. Zwischenraum)
+    { type: "filled", duration: "whole", step: 2 }, // B2 / H (2. Linie)
+    { type: "filled", duration: "whole", step: 1 }, // A2 (1. Zwischenraum)
+    { type: "filled", duration: "whole", step: 0 }, // G2 (unterste Linie)
   ]}
 />
 
@@ -105,7 +103,8 @@ Im folgenden Vergleich ist **C4 in beiden Notensystemen derselbe Ton**. Die Note
     />
   </div>
 
-  {/* Bassschlüssel: C4 auf der 1. Hilfslinie oben */}
+{/* Bassschlüssel: C4 auf der 1. Hilfslinie oben */}
+
   <div class="notation-system-row">
     <NotationVisual
       clef="bass"
@@ -129,40 +128,39 @@ Gitarren werden in der Standardnotation üblicherweise **eine Oktave höher noti
 
 Die **Form der Note** zeigt ihren Notenwert: Eine ganze Note hat einen leeren Notenkopf ohne Hals, eine halbe einen leeren Notenkopf mit Hals und eine Viertelnote einen ausgefüllten Notenkopf mit Hals. Fähnchen oder Balken am Hals kennzeichnen kürzere Noten, zum Beispiel Achtelnoten. Mehrere Achtelnoten hintereinander verbindet man meist mit einem gemeinsamen Balken statt jedes Fähnchen einzeln zu zeichnen. So erkennt man ihre rhythmische Zusammengehörigkeit auf einen Blick; die Gruppierung orientiert sich meist an den Zählzeiten.
 
-
 <NotationSystem
   measuresPerRow={3}
   fitToWidth
   measures={[
     {
       timeSignature: { numerator: 4, denominator: 4 },
-      notes: [{ duration: 'whole', step: 2 }],
+      notes: [{ duration: "whole", step: 2 }],
     },
     {
       notes: [
-        { duration: 'half', step: 2 },
-        { duration: 'half', step: 2 },
-      ],
-    },
-        {
-      notes: [
-        { duration: 'quarter', step: 2 },
-        { duration: 'quarter', step: 2 },
-        { duration: 'quarter', step: 2 },
-        { duration: 'quarter', step: 2 },
+        { duration: "half", step: 2 },
+        { duration: "half", step: 2 },
       ],
     },
     {
-      rightBarStyle: 'final',
       notes: [
-        { duration: 'eighth', step: 2 },
-        { duration: 'eighth', step: 2 },
-        { duration: 'eighth', step: 2 },
-        { duration: 'eighth', step: 2 },
-        { duration: 'eighth', step: 2, beamGroup: 'b2' },
-        { duration: 'eighth', step: 2, beamGroup: 'b2' },
-        { duration: 'eighth', step: 2, beamGroup: 'b2' },
-        { duration: 'eighth', step: 2, beamGroup: 'b2' },
+        { duration: "quarter", step: 2 },
+        { duration: "quarter", step: 2 },
+        { duration: "quarter", step: 2 },
+        { duration: "quarter", step: 2 },
+      ],
+    },
+    {
+      rightBarStyle: "final",
+      notes: [
+        { duration: "eighth", step: 2 },
+        { duration: "eighth", step: 2 },
+        { duration: "eighth", step: 2 },
+        { duration: "eighth", step: 2 },
+        { duration: "eighth", step: 2, beamGroup: "b2" },
+        { duration: "eighth", step: 2, beamGroup: "b2" },
+        { duration: "eighth", step: 2, beamGroup: "b2" },
+        { duration: "eighth", step: 2, beamGroup: "b2" },
       ],
     },
   ]}

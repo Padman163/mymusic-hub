@@ -33,7 +33,6 @@ interface Props {
   initialDynamic?: "piano" | "forte";
   noteStart?: number;
   firstNoteX?: number;
-  spacing?: "rhythmic" | "equal";
   embedded?: boolean;
 }
 
@@ -57,7 +56,6 @@ const {
   initialDynamic,
   noteStart = 0,
   firstNoteX,
-  spacing,
   embedded = false,
 } = Astro.props;
 
@@ -68,7 +66,6 @@ const notation = renderNotationSvg({
   timeSignature,
   noteStart,
   firstNoteX,
-  spacing,
   showLeftBar,
   showRightBar,
   rightBarStyle,

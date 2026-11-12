@@ -30,7 +30,6 @@
   * Das Beispiel darf auf keinen Fall horizontal scrollen.
 * **Rhythmische Abstände & Spacing:**
   * Abstände sind proportional zu den angegebenen Noten- und Pausendauern, einschließlich Punktierungen.
-  * Für Zeichenvergleiche gibt es das Attribut `spacing="equal"`.
 * **Tonartvorzeichnung (Key Signature Logik):**
   * Die Tonartvorzeichnung wird über Zeilenumbrüche hinweg beibehalten und am Anfang jeder Zeile wiederholt.
   * Ein neues `accidentals`-Array setzt eine neue Vorzeichnung; ein leeres Array `[]` hebt sie auf.
