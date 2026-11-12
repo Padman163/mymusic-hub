@@ -170,7 +170,58 @@ Eine **Pause** bezeichnet eine Stille mit derselben Dauer wie der entsprechende 
 
 <NotationNoteRestValues />
 
-Auch in der **Tabulatur** kann der Rhythmus mitnotiert werden: Notenhälse mit Fähnchen oder Balken zeigen dann die Notenlängen. Ohne diese Rhythmuszeichen verraten die TAB-Zahlen allein nicht, wie lange ein Ton klingt. Im folgenden Beispiel ist auf der G-Saite immer derselbe Ton gegriffen; nur seine notierte Länge ändert sich.
+########1 Scrollen soll hier als standard aus sein############
+<div class="notation-system-box">
+<div class="notation-system-row">
+  <NotationVisual
+    clef="treble"
+    showLeftBar={false}
+    showRightBar={true}
+    notes={[
+      { type: "rest", duration: "whole" },
+      { type: "rest", duration: "half" },
+      { type: "rest", duration: "quarter" },
+      { type: "rest", duration: "eighth" },
+      { type: "rest", duration: "sixteenth" }
+    ]}
+  />
+</div>
+
+<div class="notation-system-row">
+  <NotationVisual
+    clef="treble"
+    showLeftBar={false}
+    showRightBar={true}
+    notes={[
+      { type: "rest", duration: "whole" },
+      { type: "rest", duration: "half" },
+      { type: "rest", duration: "quarter" },
+      { type: "rest", duration: "eighth" },
+      { type: "rest", duration: "sixteenth" }
+    ]}
+  />
+</div>
+</div>
+
+
+########rest müsste hier eine Pause sein############
+<NotationSystem
+  measuresPerRow={4}
+  fitToWidth
+  measures={[
+    { timeSignature: { numerator: 4, denominator: 4 }, 
+    notes: [{ duration: 'whole', step: 2 }] },
+    { notes: [{ duration: 'whole', step: 3 }] },
+    { notes: [{ duration: 'whole', step: 4 }] },
+    { rest: [{ duration: 'whole'}] },
+  ]}
+/>
+
+Auch in der **Tabulatur** kann der Rhythmus mitnotiert werden: Notenhälse mit
+Fähnchen oder Balken zeigen dann die Notenlängen. Ohne diese Rhythmuszeichen
+verraten die TAB-Zahlen allein nicht, wie lange ein Ton klingt. Im folgenden
+Beispiel ist auf der G-Saite immer derselbe Ton gegriffen; nur seine notierte
+Länge ändert sich.
 
 SheetMusicPlayer musicXmlUrl="/scores/104-3-Tab-Notenwerte.musicxml" />
 
