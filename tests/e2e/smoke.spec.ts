@@ -32,9 +32,6 @@ test('bricht das Notensystem nach drei Takten um und richtet sie aus', async ({ 
     elements.map((element) => element.getBoundingClientRect().top),
   );
   expect(Math.max(...tops) - Math.min(...tops)).toBeLessThan(1);
-  const firstWidth = (await rows.nth(0).locator('.notation-staff').first().boundingBox())!.width;
-  const lastWidth = (await rows.nth(1).locator('.notation-staff').first().boundingBox())!.width;
-  expect(Math.abs(firstWidth - lastWidth)).toBeLessThan(1);
 });
 
 test('unterstützt eine andere Taktzahl und den Bassschlüssel', async ({ page }) => {
@@ -76,6 +73,11 @@ test('passt drei Takte ohne Scrollen an wechselnde Breiten an', async ({ page })
         && element.scrollWidth <= element.clientWidth + 1
         && Math.abs(grid.getBoundingClientRect().width - contentWidth) < 1;
     }, width)).toBe(true);
+    if (heights.length === 1) {
+      await expect.poll(async () => (await staffs.first().boundingBox())!.height).toBeGreaterThan(heights[0]);
+    } else if (heights.length === 2) {
+      await expect.poll(async () => Math.abs((await staffs.first().boundingBox())!.height - heights[0])).toBeLessThan(1);
+    }
 
     const bounds = await staffs.evaluateAll((elements) =>
       elements.map((element) => {
@@ -95,6 +97,26 @@ test('passt drei Takte ohne Scrollen an wechselnde Breiten an', async ({ page })
   }
   expect(heights[1]).toBeGreaterThan(heights[0]);
   expect(Math.abs(heights[2] - heights[0])).toBeLessThan(1);
+});
+
+test('stellt drei Takte auf derselben Fläche mindestens so groß wie zuvor dar', async ({ page }) => {
+  await page.setViewportSize({ width: 1200, height: 900 });
+  await page.goto('/audio/theory/100/104-tabulatur-notensystem/');
+  await page.evaluate(() => document.fonts.ready);
+  const box = page.locator('[data-fit-to-width]');
+  await expect(box).toHaveAttribute('data-fitted');
+  const firstRow = box.locator('.notation-system-row').first();
+  const staffs = firstRow.locator('.notation-staff');
+  await expect(staffs).toHaveCount(3);
+  const bounds = await staffs.evaluateAll((elements) =>
+    elements.map((element) => {
+      const rect = element.getBoundingClientRect();
+      return { width: rect.width, height: rect.height };
+    }),
+  );
+  expect(Math.min(...bounds.map((rect) => rect.height))).toBeGreaterThanOrEqual(71);
+  expect(Math.max(...bounds.map((rect) => rect.width))).toBeLessThan(259);
+  expect(await box.evaluate((element) => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(1);
 });
 
 test('behält ohne JavaScript die scrollbare Darstellung', async ({ browser }) => {

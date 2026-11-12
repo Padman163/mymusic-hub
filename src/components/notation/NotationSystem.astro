@@ -22,7 +22,7 @@ const systems = arrangeNotationSystems(preparedMeasures, measuresPerRow);
 <div class="notation-system-box" data-fit-to-width={fitToWidth ? "" : undefined} style={`--notation-columns: ${measuresPerRow}`}>
   <div class="notation-system-grid">
     {systems.map((system) => (
-      <div class="notation-system-row">
+      <div class="notation-system-row" style={`--notation-row-columns: ${system.length}`}>
         {system.map((measure) => <NotationVisual {...measure} embedded />)}
       </div>
     ))}

@@ -322,8 +322,15 @@
 }
 
 .notation-system-box[data-fit-to-width] .notation-system-grid {
-  width: max-content;
+  grid-template-columns: minmax(min-content, 1fr);
+  width: min-content;
   min-width: 100%;
+}
+
+.notation-system-box[data-fit-to-width] .notation-system-row {
+  display: grid;
+  grid-template-columns: repeat(var(--notation-row-columns), minmax(min-content, 1fr));
+  margin: 0;
 }
 
 .notation-system-box[data-fit-to-width][data-fitted] {
