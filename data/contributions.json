@@ -266,25 +266,30 @@
   {
     "id": "09c3b1bf-31b0-424b-99fe-b5ce2151dfe2",
     "type": "Feature",
-    "title": "Interaktive Notations-Komponente",
+    "title": "Interaktive Notations/Tab/Pattern-Komponente",
     "description": "Eintragen von Noten in 3 Schwierigkeitsstufen (Gitarren-TAB, Violinschlüssel, Bassschlüssel).",
     "area": "Theorie",
     "checklist": [
       {
-        "text": "Komponente <InteractiveScoreTrainer/> anlegen",
+        "text": "Komponente für Notation entwickeln",
         "checked": false
       },
       {
-        "text": "AlphaTab / SVG-Canvas zur Eingabevalidierung einbinden",
+        "text": "Komponente für Tab entwickeln",
         "checked": false
       },
       {
-        "text": "Level-Auswahl (Stufe 1 bis 3) programmieren",
+        "text": "Komponente für Klaviatur entwickeln",
+        "checked": false
+      },
+      {
+        "text": "Komponente für Pattenr anpassen",
         "checked": false
       }
     ],
     "status": "New",
-    "createdAt": "2026-11-06T16:16:38.793Z"
+    "createdAt": "2026-11-06T16:16:38.793Z",
+    "priority": "Mittel"
   },
   {
     "id": "e482025a-dadc-41ca-994c-1d21f2fe8c2b",
