@@ -19,7 +19,7 @@ import {
 export type MeasureWidthMode = "rhythmic" | "equal";
 export type LayoutMode = "auto" | number | number[];
 
-export const DEFAULT_MAX_SYSTEM_WIDTH = 680;
+export const DEFAULT_MAX_SYSTEM_WIDTH = 600;
 
 export interface SystemLayoutOptions {
   measureWidth?: MeasureWidthMode;
@@ -210,10 +210,17 @@ export function estimateMeasureMinWidth(
 
   let minimumWidth = notes.reduce((minimum, note, index) => {
     if (index === 0) return minimum;
+    const rawFraction =
+      positions[index].fraction - positions[index - 1].fraction;
+    const effectiveFraction =
+      rawFraction < 0.25 ? Math.sqrt(rawFraction * 0.25) : rawFraction;
+    const gap = rawFraction < 0.25 ? sp(0.4) : sp(1);
     const distance =
-      eventExtents(notes[index - 1]).right + sp(1) + eventExtents(note).left;
-    const fraction = positions[index].fraction - positions[index - 1].fraction;
-    return Math.max(minimum, noteInset + endInset + distance / fraction);
+      eventExtents(notes[index - 1]).right + gap + eventExtents(note).left;
+    return Math.max(
+      minimum,
+      noteInset + endInset + distance / effectiveFraction,
+    );
   }, noteInset + endInset);
 
   if (lastNote && positions[positions.length - 1].fraction < 1) {
@@ -303,12 +310,14 @@ function resolveAutoSystemCounts<
   measures: readonly T[],
   clef: NotationClef,
   maxSystemWidth: number,
+  measureWidthMode: MeasureWidthMode = "rhythmic",
 ): number[] {
   const counts: number[] = [];
   let activeAccidentals: NotationAccidental[] = [];
   let activeTimeSignature: TimeSignature | undefined;
   let currentCount = 0;
   let currentWidth = 0;
+  let currentMaxMeasureWidth = 0;
 
   for (let i = 0; i < measures.length; i++) {
     const measure = measures[i];
@@ -348,6 +357,7 @@ function resolveAutoSystemCounts<
         accidentals: startAccidentals,
         layoutTimeSignature: effectiveTime,
       });
+      currentMaxMeasureWidth = currentWidth;
       currentCount = 1;
     } else {
       const continuationAccidentals = changedAccidentals
@@ -359,9 +369,19 @@ function resolveAutoSystemCounts<
         accidentals: continuationAccidentals,
         layoutTimeSignature: effectiveTime,
       });
-      if (currentWidth + continuationWidth <= maxSystemWidth) {
+      const nextCount = currentCount + 1;
+      const nextMaxMeasureWidth = Math.max(
+        currentMaxMeasureWidth,
+        continuationWidth,
+      );
+      const projectedRowWidth =
+        measureWidthMode === "equal"
+          ? nextCount * nextMaxMeasureWidth
+          : currentWidth + continuationWidth;
+      if (projectedRowWidth <= maxSystemWidth) {
         currentWidth += continuationWidth;
-        currentCount += 1;
+        currentMaxMeasureWidth = nextMaxMeasureWidth;
+        currentCount = nextCount;
       } else {
         counts.push(currentCount);
         const startAccidentals = changedAccidentals
@@ -373,6 +393,7 @@ function resolveAutoSystemCounts<
           accidentals: startAccidentals,
           layoutTimeSignature: effectiveTime,
         });
+        currentMaxMeasureWidth = currentWidth;
         currentCount = 1;
       }
     }
@@ -443,7 +464,12 @@ export function arrangeNotationSystems<
 
   const counts =
     measuresPerSystem === "auto"
-      ? resolveAutoSystemCounts(measures, clef, effectiveMaxWidth)
+      ? resolveAutoSystemCounts(
+          measures,
+          clef,
+          effectiveMaxWidth,
+          measureWidthMode,
+        )
       : undefined;
 
   const systems: (Omit<T, "clef" | "accidentals"> & {
@@ -514,12 +540,45 @@ export function arrangeNotationSystems<
   }
 
   const alignedSystems = alignFirstNotesInSystems(systems);
+  const baseFirstColumnX = Math.max(
+    0,
+    ...systems.map((system) =>
+      system[0]
+        ? defaultFirstNoteX({
+            ...system[0],
+            clef: system[0].clef || undefined,
+            timeSignature: undefined,
+          })
+        : 0,
+    ),
+  );
+  const baseFollowingColumnX = Math.max(
+    0,
+    ...systems.flatMap((system) =>
+      system.slice(1).map((measure) =>
+        defaultFirstNoteX({
+          ...measure,
+          clef: measure.clef || undefined,
+          timeSignature: undefined,
+        }),
+      ),
+    ),
+  );
 
   const weightedSystems = alignedSystems.map((system) =>
-    system.map((measure) => {
+    system.map((measure, colIndex) => {
+      const ownFirstNoteX = defaultFirstNoteX({
+        ...measure,
+        clef: measure.clef || undefined,
+      });
+      const firstNoteX = Math.max(
+        colIndex === 0 ? baseFirstColumnX : baseFollowingColumnX,
+        ownFirstNoteX,
+      );
       const minWidth = estimateMeasureMinWidth({
         ...measure,
         clef: measure.clef || undefined,
+        firstNoteX,
       });
       const columnWeight =
         measureWidthMode === "equal"
@@ -529,6 +588,7 @@ export function arrangeNotationSystems<
             : minWidth;
       return {
         ...measure,
+        firstNoteX,
         minWidth,
         columnWeight,
       };

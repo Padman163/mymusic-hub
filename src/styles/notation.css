@@ -617,6 +617,10 @@
   min-width: min-content;
 }
 
+.notation-cell .notation-staff {
+  min-width: 100% !important;
+}
+
 .notation-cell .notation-visual.embedded.has-header .notation-header {
   position: absolute;
   top: -14px;
