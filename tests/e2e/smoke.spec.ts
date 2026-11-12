@@ -34,7 +34,7 @@ test('bricht das Notensystem nach drei Takten um und richtet sie aus', async ({ 
   expect(Math.max(...tops) - Math.min(...tops)).toBeLessThan(1);
 });
 
-test('hält die Standardabstände in den Schlüsselbeispielen ein', async ({ page }) => {
+test('verteilt die Schlüsselbeispiele bis zum Taktende rhythmisch', async ({ page }) => {
   await page.goto('/audio/theory/100/104-tabulatur-notensystem/');
   const measures = await page.locator('.notation-staff').evaluateAll((staffs) =>
     staffs.flatMap((staff) => {
@@ -52,8 +52,8 @@ test('hält die Standardabstände in den Schlüsselbeispielen ein', async ({ pag
   expect(measures).toHaveLength(2);
   for (const [index, measure] of measures.entries()) {
     expect(measure.positions[0]).toBeCloseTo(index === 0 ? 63 : 68, 5);
-    expect(measure.width - measure.positions[10]).toBeCloseTo(index === 0 ? 32 : 27, 5);
     const interval = measure.positions[1] - measure.positions[0];
+    expect(measure.width - measure.positions[10]).toBeCloseTo(interval, 5);
     for (let i = 2; i < measure.positions.length; i++) {
       expect(measure.positions[i] - measure.positions[i - 1]).toBeCloseTo(interval, 5);
     }
@@ -77,6 +77,29 @@ test('unterstützt eine andere Taktzahl und den Bassschlüssel', async ({ page }
   });
   expect(await box.evaluate((element) => getComputedStyle(element).overflowX)).toBe('auto');
   expect(await box.evaluate((element) => element.scrollWidth > element.clientWidth)).toBe(true);
+});
+
+test('passt die Übersicht an und behält die Taktart über Zeilen bei', async ({ page }) => {
+  await page.goto('/audio/referenzen-werkzeuge/visualisierungen-erklaert/notensystem/');
+  const box = page.locator('.notation-overview');
+  for (const width of [320, 700, 1280, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect.poll(() => box.evaluate((element) => {
+      const style = getComputedStyle(element);
+      const right = element.getBoundingClientRect().right - parseFloat(style.paddingRight);
+      return [...element.querySelectorAll<SVGElement>('.notation-staff')]
+        .filter((staff) => staff.getClientRects().length > 0)
+        .every((staff) => staff.getBoundingClientRect().right <= right + 1);
+    })).toBe(true);
+    await expect(box).toHaveAttribute('data-fitted');
+    expect(await box.evaluate((element) => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(1);
+  }
+  const measure = page.locator('.overview-layout-narrow .overview-measure').nth(13);
+  const fractions = await measure.locator('.notation-rest, .notation-note').evaluateAll((events) =>
+    events.map((event) => Number(event.getAttribute('x')!.replace('%', ''))),
+  );
+  expect(fractions).toEqual([0, 25, 50]);
+  await expect(measure.locator('.notation-time')).toHaveCount(0);
 });
 
 test('passt drei Takte ohne Scrollen an wechselnde Breiten an', async ({ page }) => {

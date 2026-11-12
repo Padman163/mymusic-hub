@@ -1,3 +1,5 @@
+import { type TimeSignature, validateTimeSignature } from "./time-signature.ts";
+
 export type Duration = "whole" | "half" | "quarter" | "eighth" | "sixteenth";
 export type BeamDuration = "eighth" | "sixteenth";
 export interface RhythmEvent {
@@ -28,22 +30,32 @@ const durationUnits: Record<Duration, number> = {
 
 export function rhythmicPositions(
   events: readonly RhythmEvent[],
-): number[] | undefined {
+  timeSignature?: TimeSignature,
+): { positions: number[]; overfull: boolean } | undefined {
+  if (timeSignature) validateTimeSignature(timeSignature);
   if (events.some((event) => event.duration === undefined)) return undefined;
   const durations = events.map((event) => {
     const units =
       event.duration === undefined ? undefined : durationUnits[event.duration];
     if (units === undefined)
       throw new Error(`Ungültiger Noten- oder Pausenwert: ${event.duration}.`);
-    return Math.sqrt(units) * (event.dotted ? 1.3 : 1);
+    return units * (event.dotted ? 1.5 : 1);
   });
   const total = durations.reduce((sum, duration) => sum + duration, 0);
+  const measureDuration = timeSignature
+    ? (16 * timeSignature.numerator) / timeSignature.denominator
+    : total;
+  const overfull = timeSignature !== undefined && total > measureDuration;
+  const availableDuration = overfull
+    ? total - (durations[durations.length - 1] ?? 0)
+    : measureDuration;
   let elapsed = 0;
-  return durations.map((duration) => {
-    const position = elapsed / total;
+  const positions = durations.map((duration) => {
+    const position = availableDuration ? elapsed / availableDuration : 0;
     elapsed += duration;
     return position;
   });
+  return { positions, overfull };
 }
 
 export function collectBeamGroups(

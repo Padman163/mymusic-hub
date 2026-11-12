@@ -5,15 +5,22 @@ import {
   type NotationClef,
   type NotationRenderOptions,
 } from "./notation-renderer.ts";
+import { type TimeSignature, validateTimeSignature } from "./time-signature.ts";
 
 export function arrangeNotationSystems<
-  T extends { clef?: NotationClef | false; accidentals?: NotationAccidental[] },
+  T extends {
+    clef?: NotationClef | false;
+    accidentals?: NotationAccidental[];
+    timeSignature?: TimeSignature;
+    layoutTimeSignature?: TimeSignature;
+  },
 >(
   measures: readonly T[],
   measuresPerSystem: number | readonly number[],
 ): (Omit<T, "clef" | "accidentals"> & {
   clef: NotationClef | false;
   accidentals?: NotationAccidental[];
+  layoutTimeSignature?: TimeSignature;
   firstNoteX: number;
 })[][] {
   const counts =
@@ -49,8 +56,10 @@ export function arrangeNotationSystems<
   const systems: (Omit<T, "clef" | "accidentals"> & {
     clef: NotationClef | false;
     accidentals?: NotationAccidental[];
+    layoutTimeSignature?: TimeSignature;
   })[][] = [];
   let active: NotationAccidental[] = [];
+  let activeTimeSignature: TimeSignature | undefined;
   let index = 0;
   let systemIndex = 0;
   while (index < measures.length) {
@@ -60,6 +69,11 @@ export function arrangeNotationSystems<
         : counts[systemIndex];
     systems.push(
       measures.slice(index, index + count).map((measure, offset) => {
+        const nextTimeSignature = measure.timeSignature ?? measure.layoutTimeSignature;
+        if (nextTimeSignature) {
+          validateTimeSignature(nextTimeSignature);
+          activeTimeSignature = nextTimeSignature;
+        }
         const next = measure.accidentals;
         if (next?.some((sign) => sign.type === "natural")) {
           throw new Error(
@@ -91,7 +105,12 @@ export function arrangeNotationSystems<
           : offset === 0
             ? active
             : undefined;
-        return { ...measure, clef: offset === 0 ? clef : false, accidentals };
+        return {
+          ...measure,
+          clef: offset === 0 ? clef : false,
+          accidentals,
+          layoutTimeSignature: activeTimeSignature,
+        };
       }),
     );
     index += count;

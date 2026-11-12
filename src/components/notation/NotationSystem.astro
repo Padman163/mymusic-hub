@@ -30,45 +30,6 @@ const systems = arrangeNotationSystems(preparedMeasures, measuresPerRow);
 </div>
 
 <script>
-  if ("ResizeObserver" in window && CSS.supports("zoom", "0.5")) {
-    const observed = new Set<HTMLElement>();
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const box = entry.target;
-        if (!(box instanceof HTMLElement)) continue;
-        const grid = box.querySelector<HTMLElement>(".notation-system-grid");
-        if (!grid) throw new Error("Notensystem-Raster nicht gefunden.");
-
-        if (entry.contentRect.width <= 0) continue;
-        grid.style.zoom = "1";
-        const width = grid.scrollWidth;
-        if (width > 0) {
-          grid.style.zoom = String(Math.min(1, entry.contentRect.width / width));
-          box.dataset.fitted = "";
-        }
-      }
-    });
-
-    function observeSystems() {
-      document.querySelectorAll<HTMLElement>("[data-fit-to-width]").forEach((box) => {
-        if (!observed.has(box)) {
-          observed.add(box);
-          resizeObserver.observe(box);
-        }
-      });
-    }
-
-    observeSystems();
-    document.addEventListener("astro:page-load", observeSystems);
-    document.addEventListener("astro:before-swap", () => {
-      resizeObserver.disconnect();
-      observed.clear();
-    });
-    document.fonts.addEventListener("loadingdone", () => {
-      for (const box of observed) {
-        resizeObserver.unobserve(box);
-        resizeObserver.observe(box);
-      }
-    });
-  }
+  import { observeNotationFit } from "../../lib/notation-fit";
+  observeNotationFit();
 </script>

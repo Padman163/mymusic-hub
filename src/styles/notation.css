@@ -337,6 +337,15 @@
   overflow-x: hidden;
 }
 
+.notation-overview[data-fit-to-width] .notation-systems {
+  width: min-content;
+  min-width: 100%;
+}
+
+.notation-overview[data-fit-to-width][data-fitted] {
+  overflow-x: hidden;
+}
+
 
 .overview-layout-narrow {
   display: none;
@@ -344,7 +353,7 @@
 
 .overview-system {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(min-content, 1fr));
   row-gap: var(--notation-system-gap);
 }
 

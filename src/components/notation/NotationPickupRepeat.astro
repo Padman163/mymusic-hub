@@ -82,6 +82,7 @@ assertNoClefChanges(
           measureNumber={showMeasureNumbers ? measure.number : undefined}
           clef={measure.showClef ? 'treble' : false}
           timeSignature={measure.showTime ? { numerator: 4, denominator: 4 } : undefined}
+          layoutTimeSignature={{ numerator: 4, denominator: 4 }}
           noteStart={measure.showClef && !measure.showTime ? 36 : 0}
           showRightBar={measure.showRightBar}
           rightBarStyle={measure.final ? 'final' : 'single'}

@@ -70,43 +70,42 @@ test('rhythmic positions reflect notes, rests and dotted durations', () => {
     { duration: 'quarter', dotted: true },
     { duration: 'quarter' }
   ];
-  const positions = rhythmicPositions(events);
-  const dottedFactor = 1.3;
-  assert.ok(Math.abs((positions[2] - positions[1]) / positions[1] - Math.SQRT2 * dottedFactor) < 1e-10);
-  assert.ok(Math.abs((1 - positions[2]) / positions[1] - Math.SQRT2) < 1e-10);
-  const dotted = rhythmicPositions([{ duration: 'sixteenth', dotted: true }, { duration: 'sixteenth' }]);
-  assert.ok(Math.abs(dotted[1] / (1 - dotted[1]) - dottedFactor) < 1e-10);
-  assert.deepEqual(rhythmicPositions([]), []);
+  const { positions } = rhythmicPositions(events);
+  assert.ok(Math.abs((positions[2] - positions[1]) / positions[1] - 3) < 1e-10);
+  assert.ok(Math.abs((1 - positions[2]) / positions[1] - 2) < 1e-10);
+  const dotted = rhythmicPositions([{ duration: 'sixteenth', dotted: true }, { duration: 'sixteenth' }]).positions;
+  assert.ok(Math.abs(dotted[1] / (1 - dotted[1]) - 1.5) < 1e-10);
+  assert.deepEqual(rhythmicPositions([]), { positions: [], overfull: false });
   assert.equal(rhythmicPositions([{ duration: 'quarter' }, {}]), undefined);
   assert.throws(() => rhythmicPositions([{ duration: 'invalid' }]), /Ungültiger Noten- oder Pausenwert/);
   const values = ['sixteenth', 'eighth', 'quarter', 'half', 'whole'];
-  const scale = rhythmicPositions(values.map((duration) => ({ duration })));
+  const scale = rhythmicPositions(values.map((duration) => ({ duration }))).positions;
   const gaps = scale.slice(1).map((position, i) => position - scale[i]);
   gaps.push(1 - scale.at(-1));
   for (let i = 1; i < gaps.length; i++) {
-    assert.ok(Math.abs(gaps[i] / gaps[i - 1] - Math.SQRT2) < 1e-10);
+    assert.ok(Math.abs(gaps[i] / gaps[i - 1] - 2) < 1e-10);
   }
 });
 
 test('four quarter notes share the available aligned measure width', () => {
   const notes = Array.from({ length: 4 }, () => ({ duration: 'quarter', step: 2 }));
   const positions = layoutNotationEvents(notes, {
-    noteInset: 40, endInset: 27
+    noteInset: 40, endInset: 0, rhythmicPositions: rhythmicPositions(notes).positions
   });
   for (const width of [200, 400]) {
     const actual = positions.map(({ fraction, offset }) => fraction * width + offset);
-    const interval = (width - 40 - 27) / 3;
+    const interval = (width - 40) / 4;
     for (let i = 0; i < actual.length; i++) {
       assert.ok(Math.abs(actual[i] - (40 + i * interval)) < 1e-10);
     }
-    assert.equal(width - actual[3], 27);
+    assert.equal(width - actual[3], interval);
   }
   const svg = renderNotationSvg({ notes, firstNoteX: 40 });
   const fractions = [...svg.matchAll(/class="notation-note" x="([\d.]+)%"/g)].map((match) => Number(match[1]));
-  fractions.forEach((value, i) => assert.ok(Math.abs(value - i * 100 / 3) < 1e-10));
+  fractions.forEach((value, i) => assert.equal(value, i * 25));
 });
 
-test('default notehead margins apply after prefixes and before the bar', () => {
+test('default notehead margin applies after prefixes with rhythmic end spacing', () => {
   const gap = 1.5 * sp(1.35);
   const half = sp(1.35) / 2;
   for (const [prefix, prefixEnd] of [
@@ -123,8 +122,12 @@ test('default notehead margins apply after prefixes and before the bar', () => {
     for (const width of [minWidth, 800]) {
       const x = heads.map((head) => Number(head[1]) + Number(head[2]) * width / 100);
       assert.ok(Math.abs(x[0] - half - prefixEnd - gap) < 1e-9);
-      assert.ok(Math.abs(width - x.at(-1) - half - gap) < 1e-9);
       const interval = x[1] - x[0];
+      if (prefix.timeSignature) {
+        assert.ok(Math.abs(width - x.at(-1) - half - gap) < 1e-9);
+      } else {
+        assert.ok(Math.abs(width - x.at(-1) - interval) < 1e-9);
+      }
       for (let i = 2; i < x.length; i++) {
         assert.ok(Math.abs(x[i] - x[i - 1] - interval) < 1e-9);
       }
@@ -152,7 +155,7 @@ test('ledger lines, note accidentals and ending marks retain extra clearance', (
   }
   for (const [ending, extra] of [[{}, 0], [{ rightBarStyle: 'final' }, 8], [{ repeatEnd: true }, 16]]) {
     const notes = [{ duration: 'quarter', step: 2 }, { duration: 'whole', step: 10 }];
-    const svg = renderNotationSvg({ notes, ...ending });
+    const svg = renderNotationSvg({ notes, ...ending, timeSignature: { numerator: 4, denominator: 4 } });
     const heads = [...svg.matchAll(/<g transform="translate\(([-.\d]+) 0\)"><text class="notation-note" x="([\d.]+)%"/g)];
     assert.equal(Number(heads.at(-1)[2]), 100);
     assert.equal(-Number(heads.at(-1)[1]), extra + gap + half + sp(0.5));
@@ -171,20 +174,89 @@ test('renderer places timed events proportionally', () => {
   const svg = renderNotationSvg({ notes, firstNoteX: 26, rightBarStyle: 'final' });
   const actual = positions(svg);
   assert.equal(actual.length, 3);
-  const rhythmic = rhythmicPositions(notes);
-  for (const [actualValue, expected] of actual.map((value, index) => [value, rhythmic[index] / rhythmic.at(-1) * 100])) {
+  const rhythmic = rhythmicPositions(notes).positions;
+  for (const [actualValue, expected] of actual.map((value, index) => [value, rhythmic[index] * 100])) {
     assert.ok(Math.abs(actualValue - expected) < 1e-10);
   }
   const grouped = [...svg.matchAll(/<g transform="translate\(([-.\d]+) 0\)"><text class="notation-(?:rest|note)" x="([\d.]+)%"/g)];
   const x = grouped.map((match) => Number(match[1]) + Number(match[2]) * 3);
   const distances = [x[1] - x[0], x[2] - x[1]];
-  assert.ok(Math.abs(distances[1] / distances[0] - Math.SQRT2 * 1.3) < 1e-10);
+  assert.ok(Math.abs(distances[1] / distances[0] - 3) < 1e-10);
   const unaligned = positions(renderNotationSvg({ notes }));
   for (let i = 0; i < unaligned.length; i++) {
     assert.ok(Math.abs(unaligned[i] - actual[i]) < 1e-10);
   }
   const untimed = renderNotationSvg({ notes: [{ type: 'filled', step: 2 }, { type: 'empty', step: 3 }] });
   assert.deepEqual(positions(untimed), [0, 100]);
+});
+
+test('meter determines the duration after the last event and incomplete measures', () => {
+  const fourFour = { numerator: 4, denominator: 4 };
+  const twoFour = { numerator: 2, denominator: 4 };
+  const notes = [
+    { duration: 'quarter', step: 2 },
+    { type: 'rest', duration: 'quarter' },
+    { duration: 'half', step: 3 }
+  ];
+  assert.deepEqual(rhythmicPositions(notes, fourFour), { positions: [0, 0.25, 0.5], overfull: false });
+  assert.deepEqual(rhythmicPositions(notes), { positions: [0, 0.25, 0.5], overfull: false });
+  assert.deepEqual(rhythmicPositions(notes.slice(0, 2), fourFour).positions, [0, 0.25]);
+  assert.deepEqual(rhythmicPositions(notes.slice(0, 2), twoFour).positions, [0, 0.5]);
+  assert.deepEqual(rhythmicPositions([
+    { duration: 'quarter', dotted: true }, { duration: 'eighth' }, { duration: 'half' }
+  ], fourFour).positions, [0, 0.375, 0.5]);
+  const svg = renderNotationSvg({ notes, layoutTimeSignature: fourFour, firstNoteX: 27 });
+  assert.deepEqual([...svg.matchAll(/class="notation-(?:rest|note)" x="([\d.]+)%"/g)].map((m) => Number(m[1])), [0, 25, 50]);
+  assert.doesNotMatch(svg, /class="notation-time"/);
+  const heads = [...svg.matchAll(/<g transform="translate\(([-.\d]+) 0\)"><text class="notation-(?:rest|note)" x="([\d.]+)%"/g)];
+  for (const width of [200, 400]) {
+    const x = heads.map((head) => Number(head[1]) + Number(head[2]) * width / 100);
+    assert.ok(Math.abs((width - x[2]) / (width - x[0]) - 0.5) < 1e-10);
+  }
+});
+
+test('overfull measures use fixed edge margins and proportional internal gaps', () => {
+  const timeSignature = { numerator: 4, denominator: 4 };
+  const notes = Array.from({ length: 5 }, () => ({ duration: 'whole', step: 2 }));
+  assert.deepEqual(rhythmicPositions(notes, timeSignature), {
+    positions: [0, 0.25, 0.5, 0.75, 1], overfull: true
+  });
+  const mixed = [{ duration: 'quarter' }, { duration: 'half', dotted: true }, { duration: 'whole' }];
+  assert.deepEqual(rhythmicPositions(mixed, timeSignature), { positions: [0, 0.25, 1], overfull: true });
+  const svg = renderNotationSvg({ timeSignature, notes });
+  const minWidth = Number(svg.match(/min-width:([\d.]+)px/)[1]);
+  const heads = [...svg.matchAll(/<g transform="translate\(([-.\d]+) 0\)"><text class="notation-note" x="([\d.]+)%"/g)];
+  for (const width of [minWidth, 400]) {
+    const x = heads.map((head) => Number(head[1]) + Number(head[2]) * width / 100);
+    assert.equal(x[0], 60);
+    assert.equal(width - x.at(-1), 27);
+    const spacing = x[1] - x[0];
+    for (let i = 2; i < x.length; i++) {
+      assert.ok(Math.abs(x[i] - x[i - 1] - spacing) < 1e-10);
+    }
+  }
+});
+
+test('system layout carries the active meter across lines and meter changes', () => {
+  const fourFour = { numerator: 4, denominator: 4 };
+  const threeFour = { numerator: 3, denominator: 4 };
+  const notes = [{ duration: 'quarter', step: 2 }, { duration: 'quarter', step: 3 }];
+  const systems = arrangeNotationSystems([
+    { clef: 'treble', timeSignature: fourFour, notes },
+    { notes },
+    { timeSignature: threeFour, notes },
+    { notes }
+  ], 2);
+  assert.deepEqual(systems.flat().map((measure) => measure.layoutTimeSignature), [fourFour, fourFour, threeFour, threeFour]);
+  const measure = systems[0][1];
+  const svg = renderNotationSvg({ ...measure, clef: undefined });
+  assert.deepEqual([...svg.matchAll(/class="notation-note" x="([\d.]+)%"/g)].map((m) => Number(m[1])), [0, 25]);
+  assert.doesNotMatch(svg, /class="notation-time"/);
+  const hidden = arrangeNotationSystems([
+    { clef: 'treble', layoutTimeSignature: threeFour, notes },
+    { notes }
+  ], 1);
+  assert.deepEqual(hidden.flat().map((item) => item.layoutTimeSignature), [threeFour, threeFour]);
 });
 
 test('beam stems follow their rhythmic x positions with dotted notes', () => {
@@ -196,7 +268,7 @@ test('beam stems follow their rhythmic x positions with dotted notes', () => {
   const svg = renderNotationSvg({ notes, firstNoteX: 10 });
   const stems = [...svg.matchAll(/<line x1="[\d.]+%" y1="[\d.]+?" x2="[\d.]+%" y2="([\d.]+)" transform="translate\([^)]+\)" stroke-width="1\.2" \/>/g)];
   assert.equal(stems.length, 3);
-  const factor = 1.3;
+  const factor = 1.5;
   assert.ok(Math.abs(Number(stems[1][1]) - (29 - 10 * factor / (factor + 1))) < 1e-10);
 });
 
@@ -220,9 +292,8 @@ test('notation geometry uses spatium for staff, heads, stems, beams and ledger l
     for (const [i, stem] of stems.entries()) {
       const start = Number(stem[1]);
       const end = Number(stem[2]);
-      const fraction = [0, 1 / 2, 1][i];
-      const lastRight = sp(1.35) / 2 + (steps.at(-1) === -2 || steps.at(-1) === 10 ? sp(0.5) : 0);
-      const centerOffset = 10 * (1 - fraction) - (1.5 * sp(1.35) + lastRight) * fraction;
+      const fraction = [0, 1 / 3, 2 / 3][i];
+      const centerOffset = 10 * (1 - fraction);
       assert.ok(Math.abs(end - start) >= sp(2.5));
       assert.ok(steps[i] < 4 ? end <= 44 : end >= 44);
       assert.ok(Math.abs(Number(stem[3]) - centerOffset - (steps[i] < 4 ? 6.15 : -6.15)) < 1e-10);
@@ -344,7 +415,7 @@ test('a single whole note uses the normal start position while retaining bar cle
         assert.equal(x, aligned ? firstNoteX : defaultFirstNoteX({ ...prefix, notes }));
         for (const requestedWidth of [50, 400]) {
           const width = Math.max(requestedWidth, minWidth);
-          assert.ok(width - 8 - x - (dotted ? 15.75 : 6.75) >= sp(1.5) - 1e-9);
+          assert.ok(width - 8 - x - (dotted ? 15.75 : 6.75) >= sp(1) - 1e-9);
         }
       }
     }
@@ -402,7 +473,7 @@ test('single notes of every type use the default start after the prefix', () => 
     const svg = renderNotationSvg({ clef: 'treble', notes: [note] });
     assert.match(svg, /transform="translate\(63 0\)"><text class="notation-note" x="0%"/);
     const minimumWidth = Number(svg.match(/min-width:([\d.]+)px/)[1]);
-    assert.ok(minimumWidth >= 63 + 27);
+    assert.ok(minimumWidth >= 63 + sp(1.35) / 2 + sp(1));
   }
 });
 
@@ -449,7 +520,7 @@ test('repeat end replaces the ordinary right bar and reserves space for the fina
   assert.equal(offsets.length, 8);
   const withoutRepeat = renderNotationSvg({ notes });
   const normalOffsets = [...withoutRepeat.matchAll(/<g transform="translate\(([-.\d]+) 0\)"><text class="notation-note"/g)];
-  assert.ok(Math.abs(Number(normalOffsets[7][1]) - Number(offsets[7][1]) - 16) < 0.000001);
+  assert.ok(Math.abs(Number(normalOffsets[7][1]) - Number(offsets[7][1]) - 16 * 7 / 8) < 0.000001);
 });
 
 test('system layout repeats the original clef on every rendered line', () => {

@@ -23,6 +23,7 @@ interface Props {
   notes?: NotationEvent[];
   accidentals?: NotationAccidental[];
   timeSignature?: TimeSignature;
+  layoutTimeSignature?: TimeSignature;
   curves?: NotationCurve[];
   measureNumber?: string | number;
   tempo?: string;
@@ -46,6 +47,7 @@ const {
   notes = [],
   accidentals = [],
   timeSignature,
+  layoutTimeSignature,
   curves = [],
   measureNumber,
   tempo,
@@ -64,6 +66,7 @@ const notation = renderNotationSvg({
   notes,
   accidentals,
   timeSignature,
+  layoutTimeSignature,
   noteStart,
   firstNoteX,
   showLeftBar,

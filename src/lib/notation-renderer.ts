@@ -21,6 +21,7 @@ import {
   renderBeam,
   renderDot,
   renderStem,
+  rhythmicPositions,
 } from "./rhythm.ts";
 import { escapeXml, glyphText } from "./svg.ts";
 import { renderTempoMark, validateTempoChanges } from "./tempo.ts";
@@ -97,6 +98,7 @@ export interface NotationRenderOptions {
   notes?: NotationEvent[];
   accidentals?: NotationAccidental[];
   timeSignature?: TimeSignature;
+  layoutTimeSignature?: TimeSignature;
   noteStart?: number;
   firstNoteX?: number;
   showLeftBar?: boolean;
@@ -249,6 +251,7 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     notes = [],
     accidentals = [],
     timeSignature,
+    layoutTimeSignature,
     firstNoteX,
     showLeftBar = false,
     showRightBar = true,
@@ -262,6 +265,7 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
   } = options;
 
   if (timeSignature) validateTimeSignature(timeSignature);
+  if (layoutTimeSignature) validateTimeSignature(layoutTimeSignature);
   if (
     firstNoteX !== undefined &&
     (!Number.isFinite(firstNoteX) || firstNoteX < minimumFirstNoteX(options))
@@ -342,16 +346,20 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     : showRightBar && rightBarStyle === "final"
       ? 8
       : 0;
+  const rhythm = rhythmicPositions(notes, timeSignature ?? layoutTimeSignature);
   const endInset =
     wholeMeasureRest || !lastNote
       ? repeatEndInset
-      : endingMarkInset +
-        defaultNoteHeadGap +
-        eventExtents(lastNote).right -
-        sp(0.2);
+      : rhythm && !rhythm.overfull
+        ? endingMarkInset
+        : endingMarkInset +
+          defaultNoteHeadGap +
+          eventExtents(lastNote).right -
+          sp(0.2);
   const positions = layoutNotationEvents(notes, {
     noteInset,
     endInset,
+    rhythmicPositions: rhythm?.positions,
   });
   const notePosition = (index: number) => positions[index];
   let minimumWidth = notes.reduce((minimum, note, index) => {
@@ -361,13 +369,13 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     const fraction = positions[index].fraction - positions[index - 1].fraction;
     return Math.max(minimum, noteInset + endInset + distance / fraction);
   }, noteInset + endInset);
-  if (wholeMeasureRest) {
+  if (lastNote && positions[positions.length - 1].fraction < 1) {
     const last = positions[positions.length - 1];
     minimumWidth = Math.max(
       minimumWidth,
       (last.offset +
         eventExtents(lastNote).right +
-        sp(1.5) +
+        sp(wholeMeasureRest ? 1.5 : 1) +
         endingMarkInset) /
         (1 - last.fraction),
     );

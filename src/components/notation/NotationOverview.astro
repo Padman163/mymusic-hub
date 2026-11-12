@@ -307,7 +307,7 @@ const layouts = [
 ];
 ---
 
-<div class="notation-overview not-content" data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
+<div class="notation-overview not-content" data-fit-to-width data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
   {layouts.map((layout) => (
     <div class:list={['notation-systems', layout.className]}>
       {layout.systems.map((system) => (
@@ -324,6 +324,7 @@ const layouts = [
                   aTempoAt={measure.aTempoAt}
                   clef={measure.clef}
                   timeSignature={measure.timeSignature}
+                  layoutTimeSignature={measure.layoutTimeSignature}
                   accidentals={measure.accidentals}
                   notes={measure.notes}
                   firstNoteX={measure.firstNoteX}
@@ -336,6 +337,11 @@ const layouts = [
                   initialDynamic={measure.initialDynamic}
                 />
               </div>
+
+              <script>
+                import { observeNotationFit } from "../../lib/notation-fit";
+                observeNotationFit();
+              </script>
             </div>
           ))}
         </div>
