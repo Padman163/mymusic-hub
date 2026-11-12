@@ -66,6 +66,7 @@ const fitToWidth = !scrollable;
       const hasRowHairpin = row.measures.some(
         (measure) =>
           Boolean(measure.hairpin) ||
+          Boolean(measure.hairpins && measure.hairpins.length > 0) ||
           measure.notes.some(
             (note) => note.type !== "rest" && Boolean(note.dynamic),
           ),
@@ -109,6 +110,7 @@ const fitToWidth = !scrollable;
                 repeatStart={measure.repeatStart}
                 repeatEnd={measure.repeatEnd}
                 hairpin={measure.hairpin}
+                hairpins={measure.hairpins}
                 initialDynamic={measure.initialDynamic}
               />
             </div>

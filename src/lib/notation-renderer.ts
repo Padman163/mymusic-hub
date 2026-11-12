@@ -13,6 +13,7 @@ import {
 import { type MusicCurve, renderCurve, validateCurves } from "./curve.ts";
 import {
   dynamicSymbols,
+  type Hairpin,
   type MeasureHairpin,
   type NotationDynamic,
   renderDynamicMark,
@@ -57,7 +58,7 @@ const STAFF_MIDDLE = STAFF_BOTTOM - sp(2);
 const stepY = (step: number) => STAFF_BOTTOM - step * sp(0.5);
 
 export type NotationArticulation = Articulation;
-export type { MeasureHairpin, NotationDynamic } from "./dynamics.ts";
+export type { Hairpin, MeasureHairpin, NotationDynamic } from "./dynamics.ts";
 export type NotationClef = "treble" | "bass";
 export type NotationAccidental = {
   type: "sharp" | "natural" | "flat";
@@ -72,6 +73,8 @@ export type NotationNote =
       articulationPosition?: "above" | "below";
       accidental?: "sharp" | "natural" | "flat";
       dynamic?: NotationDynamic;
+      hairpinStart?: Hairpin;
+      hairpinEnd?: boolean;
       duration?: never;
       beamGroup?: never;
       dotted?: never;
@@ -84,6 +87,8 @@ export type NotationNote =
       articulationPosition?: "above" | "below";
       accidental?: "sharp" | "natural" | "flat";
       dynamic?: NotationDynamic;
+      hairpinStart?: Hairpin;
+      hairpinEnd?: boolean;
       dotted?: boolean;
       type?: never;
       stem?: never;
@@ -100,6 +105,8 @@ export type NotationRest = {
   articulationPosition?: never;
   accidental?: never;
   dynamic?: never;
+  hairpinStart?: never;
+  hairpinEnd?: never;
 };
 export type NotationEvent = NotationNote | NotationRest;
 
@@ -120,6 +127,7 @@ export interface NotationRenderOptions {
   repeatEnd?: boolean;
   curves?: NotationCurve[];
   hairpin?: MeasureHairpin;
+  hairpins?: MeasureHairpin[];
   ritAt?: number;
   aTempoAt?: number;
   label?: string;
@@ -273,6 +281,7 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     repeatEnd = false,
     curves = [],
     hairpin,
+    hairpins,
     ritAt,
     aTempoAt,
     label,
@@ -300,7 +309,9 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
         "articulation" in note ||
         "articulationPosition" in note ||
         "accidental" in note ||
-        "dynamic" in note
+        "dynamic" in note ||
+        "hairpinStart" in note ||
+        "hairpinEnd" in note
       ) {
         throw new Error(
           "Pausen dürfen keine Notenhöhe, Hälse, Balkengruppen, Artikulationen oder Vorzeichen haben.",
@@ -316,10 +327,53 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     }
   });
   validateTempoChanges({ ritAt, aTempoAt }, notes.length);
-  const resolvedHairpin =
-    hairpin !== undefined
-      ? resolveHairpinRange(hairpin, notes.length)
-      : undefined;
+
+  const noteHairpins: MeasureHairpin[] = [];
+  if (hairpins === undefined) {
+    let activeStart: { type: Hairpin; index: number } | undefined;
+    notes.forEach((note, index) => {
+      if (note.type === "rest") return;
+      if (note.hairpinEnd) {
+        if (!activeStart) {
+          throw new Error(
+            '"hairpinEnd: true" benötigt ein vorangehendes "hairpinStart".',
+          );
+        }
+        if (activeStart.index === index) {
+          throw new Error(
+            "Eine Dynamikgabel muss sich über mindestens zwei Noten erstrecken.",
+          );
+        }
+        noteHairpins.push({
+          type: activeStart.type,
+          from: activeStart.index,
+          to: index,
+        });
+        activeStart = undefined;
+      }
+      if (note.hairpinStart) {
+        if (activeStart) {
+          throw new Error(
+            'Vor einem neuen "hairpinStart" muss die vorherige Dynamikgabel mit "hairpinEnd: true" beendet werden.',
+          );
+        }
+        activeStart = { type: note.hairpinStart, index };
+      }
+    });
+    if (activeStart) {
+      throw new Error(
+        'Für "hairpinStart" fehlt ein passendes "hairpinEnd: true".',
+      );
+    }
+  }
+
+  const allHairpins: MeasureHairpin[] = [
+    ...(hairpin !== undefined ? [hairpin] : []),
+    ...(hairpins ?? noteHairpins),
+  ];
+  const resolvedHairpins = allHairpins.map((item) =>
+    resolveHairpinRange(item, notes.length),
+  );
   const groups = collectBeamGroups(notes);
   validateCurves(curves, notes.length);
   curves.forEach(({ from, to, type }) => {
@@ -774,30 +828,47 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
   });
   parts.push(...beams);
 
-  if (resolvedHairpin) {
-    const start = notePosition(resolvedHairpin.from);
-    const end = notePosition(resolvedHairpin.to);
-    const startNote = notes[resolvedHairpin.from];
-    const endNote = notes[resolvedHairpin.to];
+  const hasPrefix = Boolean(
+    clef || timeSignature || accidentals.length || repeatStart,
+  );
+  resolvedHairpins.forEach((segment) => {
+    const start = notePosition(segment.from);
+    const end = notePosition(segment.to);
+    const startNote = notes[segment.from];
+    const endNote = notes[segment.to];
     const startHasDynamic =
       startNote.type !== "rest" && Boolean(startNote.dynamic);
     const endHasDynamic = endNote.type !== "rest" && Boolean(endNote.dynamic);
     const startPad = startHasDynamic ? sp(1.6) : -noteHeadHalfWidth;
     const endPad = endHasDynamic ? sp(1.6) : -noteHeadHalfWidth;
-    const span = end.fraction - start.fraction;
-    const hairpinX = `calc(${start.percent} + ${start.offset + startPad}px)`;
-    const hairpinWidth = `max(0px, calc(${span * 100}% + ${end.offset - start.offset - startPad - endPad}px))`;
+
+    const startPercent = segment.fromBarline ? 0 : start.fraction * 100;
+    const startOffsetPx = segment.fromBarline
+      ? hasPrefix
+        ? noteInset - noteHeadHalfWidth
+        : 0
+      : start.offset + startPad;
+
+    const endPercent = segment.toBarline ? 100 : end.fraction * 100;
+    const endOffsetPx = segment.toBarline
+      ? -endingMarkInset
+      : end.offset - endPad;
+
+    const hairpinX = `calc(${startPercent}% + ${startOffsetPx}px)`;
+    const hairpinWidth = `max(0px, calc(${endPercent - startPercent}% + ${endOffsetPx - startOffsetPx}px))`;
     parts.push(
       renderHairpinSvg(
-        resolvedHairpin.type,
+        segment.type,
         hairpinX,
         hairpinWidth,
         88,
         10,
         "notation-hairpin",
+        segment.startOpen,
+        segment.endOpen,
       ),
     );
-  }
+  });
 
   if (ritAt !== undefined) {
     const position = notePosition(ritAt);

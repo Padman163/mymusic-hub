@@ -822,6 +822,37 @@ test('note dynamics and measure hairpins render independently in SVG', () => {
   });
   assert.match(combined, /class="notation-hairpin decrescendo"/);
   assert.equal((combined.match(/class="notation-dynamic"/g) ?? []).length, 2);
+
+  const multiMeasureRows = layoutNotationSystems({
+    clef: 'treble',
+    timeSignature: { numerator: 4, denominator: 4 },
+    layout: 2,
+    measures: [
+      {
+        notes: [
+          { duration: 'quarter', step: -2, dynamic: 'p', hairpinStart: 'crescendo' },
+          { duration: 'quarter', step: -1 },
+          { duration: 'quarter', step: 0 },
+          { duration: 'quarter', step: 1 }
+        ]
+      },
+      {
+        notes: [
+          { duration: 'quarter', step: 2 },
+          { duration: 'quarter', step: 3, dynamic: 'f', hairpinEnd: true, hairpinStart: 'decrescendo' },
+          { duration: 'quarter', step: 2 },
+          { duration: 'quarter', step: 0, dynamic: 'p', hairpinEnd: true }
+        ]
+      }
+    ]
+  });
+  const m1Hairpins = multiMeasureRows[0].measures[0].hairpins;
+  const m2Hairpins = multiMeasureRows[0].measures[1].hairpins;
+  assert.equal(m1Hairpins.length, 1);
+  assert.equal(m2Hairpins.length, 2);
+  assert.equal(m1Hairpins[0].toBarline, true);
+  assert.equal(m2Hairpins[0].fromBarline, true);
+  assert.equal(m1Hairpins[0].endOpen, m2Hairpins[0].startOpen);
 });
 
 

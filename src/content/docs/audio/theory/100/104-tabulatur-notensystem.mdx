@@ -719,7 +719,6 @@ Ein **Crescendo** (`cresc.`) bedeutet, allmählich lauter zu werden; ein **Decre
 
 Im Beispiel zeigt der erste Takt ein Crescendo von **p** zu **f**, der zweite ein Decrescendo von **f** zu **p**.
 
-<SheetMusicPlayer musicXmlUrl="/scores/104-9-Dynamik-Tempo.musicxml" />
 
 <Notation
   clef="treble"
@@ -727,22 +726,30 @@ Im Beispiel zeigt der erste Takt ein Crescendo von **p** zu **f**, der zweite ei
   layout={2}
   measures={[
     {
-      hairpin: "crescendo",
       notes: [
-        { duration: "quarter", step: -2, dynamic: "p" },
+        {
+          duration: "quarter",
+          step: -2,
+          dynamic: "p",
+          hairpinStart: "crescendo",
+        },
         { duration: "quarter", step: -1 },
         { duration: "quarter", step: 0 },
-        { duration: "quarter", step: 1, dynamic: "f" },
+        { duration: "quarter", step: 1, hairpinEnd: true },
       ],
     },
     {
-      hairpin: "decrescendo",
       rightBarStyle: "final",
       notes: [
-        { duration: "quarter", step: 2, dynamic: "f" },
+        {
+          duration: "quarter",
+          step: 2,
+          dynamic: "f",
+          hairpinStart: "decrescendo",
+        },
         { duration: "quarter", step: 3 },
-        { duration: "quarter", step: 2 },
-        { duration: "quarter", step: 0, dynamic: "p" },
+        { duration: "quarter", step: 2,hairpinEnd: true },
+        { duration: "quarter", step: 0 },
       ],
     },
   ]}

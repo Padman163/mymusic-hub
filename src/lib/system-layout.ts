@@ -2,6 +2,7 @@ import { layoutNotationEvents } from "./notation-layout.ts";
 import {
   assertNoClefChanges,
   defaultFirstNoteX,
+  type Hairpin,
   type MeasureHairpin,
   type NotationAccidental,
   type NotationClef,
@@ -52,6 +53,7 @@ export interface NotationMeasure {
   ritAt?: number;
   aTempoAt?: number;
   hairpin?: MeasureHairpin;
+  hairpins?: MeasureHairpin[];
   initialDynamic?: "piano" | "forte";
   spacing?: MeasureWidthMode | number;
   noteStart?: number;
@@ -82,6 +84,7 @@ export interface NotationBaseProps {
   ritAt?: number;
   aTempoAt?: number;
   hairpin?: MeasureHairpin;
+  hairpins?: MeasureHairpin[];
   initialDynamic?: "piano" | "forte";
 }
 
@@ -99,6 +102,7 @@ export type ArrangedNotationMeasure<T> = Omit<T, "clef" | "accidentals"> & {
   clef: NotationClef | false;
   accidentals?: NotationAccidental[];
   layoutTimeSignature?: TimeSignature;
+  hairpins?: MeasureHairpin[];
   firstNoteX: number;
   minWidth: number;
   columnWeight: number;
@@ -289,6 +293,7 @@ export function normalizeNotationInput(
             ...(props.ritAt !== undefined && { ritAt: props.ritAt }),
             ...(props.aTempoAt !== undefined && { aTempoAt: props.aTempoAt }),
             ...(props.hairpin !== undefined && { hairpin: props.hairpin }),
+            ...(props.hairpins !== undefined && { hairpins: props.hairpins }),
             ...(props.initialDynamic !== undefined && {
               initialDynamic: props.initialDynamic,
             }),
@@ -343,6 +348,7 @@ function resolveAutoSystemCounts<
     rightBarStyle?: "single" | "final";
     repeatStart?: boolean;
     repeatEnd?: boolean;
+    hairpins?: MeasureHairpin[];
   },
 >(
   measures: readonly T[],
@@ -457,6 +463,7 @@ export function arrangeNotationSystems<
     rightBarStyle?: "single" | "final";
     repeatStart?: boolean;
     repeatEnd?: boolean;
+    hairpins?: MeasureHairpin[];
   },
 >(
   measures: readonly T[],
@@ -704,6 +711,140 @@ export function arrangeNotationSystems<
       : [rowWeights[0] * (fullLineMeasureCount / weightedSystems[0].length)];
   const referenceRowWeight = Math.max(...fullRowWeights, 1);
 
+  const measureHairpinsMap = new Map<string, MeasureHairpin[]>();
+  const appendMeasureHairpin = (
+    sIdx: number,
+    cIdx: number,
+    segment: MeasureHairpin,
+  ) => {
+    const key = `${sIdx}:${cIdx}`;
+    const list = measureHairpinsMap.get(key) ?? [];
+    list.push(segment);
+    measureHairpinsMap.set(key, list);
+  };
+
+  let activeHairpinStart:
+    | { type: Hairpin; sysIdx: number; colIndex: number; noteIdx: number }
+    | undefined;
+
+  weightedSystems.forEach((system, sIdx) => {
+    system.forEach((measure, cIdx) => {
+      const notes = measure.notes ?? [];
+      notes.forEach((note, nIdx) => {
+        if (note.type === "rest") return;
+        if (note.hairpinEnd) {
+          if (!activeHairpinStart) {
+            throw new Error(
+              '"hairpinEnd: true" benötigt ein vorangehendes "hairpinStart".',
+            );
+          }
+          if (
+            activeHairpinStart.sysIdx === sIdx &&
+            activeHairpinStart.colIndex === cIdx &&
+            activeHairpinStart.noteIdx === nIdx
+          ) {
+            throw new Error(
+              "Eine Dynamikgabel muss sich über mindestens zwei Noten erstrecken.",
+            );
+          }
+          if (
+            activeHairpinStart.sysIdx === sIdx &&
+            activeHairpinStart.colIndex === cIdx
+          ) {
+            appendMeasureHairpin(sIdx, cIdx, {
+              type: activeHairpinStart.type,
+              from: activeHairpinStart.noteIdx,
+              to: nIdx,
+            });
+          } else {
+            const spanCoords: { s: number; c: number }[] = [];
+            for (let s = activeHairpinStart.sysIdx; s <= sIdx; s++) {
+              const startC =
+                s === activeHairpinStart.sysIdx
+                  ? activeHairpinStart.colIndex
+                  : 0;
+              const endC =
+                s === sIdx ? cIdx : weightedSystems[s].length - 1;
+              for (let c = startC; c <= endC; c++) {
+                spanCoords.push({ s, c });
+              }
+            }
+            const startInfo = activeHairpinStart;
+            const lengths = spanCoords.map(({ s, c }, idx) => {
+              const m = weightedSystems[s][c];
+              const mNotes = m.notes ?? [];
+              const rhythm = rhythmicPositions(
+                mNotes,
+                m.layoutTimeSignature ?? m.timeSignature,
+              );
+              const beatW = Math.max(40, m.minWidth - m.firstNoteX);
+              if (idx === 0) {
+                const fStart =
+                  mNotes.length <= 1
+                    ? 0
+                    : (rhythm?.positions[startInfo.noteIdx] ??
+                      startInfo.noteIdx / (mNotes.length - 1));
+                return Math.max(16, (1 - fStart) * beatW);
+              }
+              if (idx === spanCoords.length - 1) {
+                const fEnd =
+                  mNotes.length <= 1
+                    ? 0
+                    : (rhythm?.positions[nIdx] ??
+                      nIdx / (mNotes.length - 1));
+                return Math.max(16, m.firstNoteX + fEnd * beatW);
+              }
+              return Math.max(16, m.minWidth);
+            });
+            const totalLength = lengths.reduce((a, b) => a + b, 0);
+            let elapsed = 0;
+            spanCoords.forEach(({ s, c }, idx) => {
+              const m = weightedSystems[s][c];
+              const mNotes = m.notes ?? [];
+              const t0 = elapsed / totalLength;
+              elapsed += lengths[idx];
+              const t1 = elapsed / totalLength;
+              const openAt = (t: number) =>
+                startInfo.type === "crescendo" ? t : 1 - t;
+              appendMeasureHairpin(s, c, {
+                type: startInfo.type,
+                from: idx === 0 ? startInfo.noteIdx : 0,
+                to:
+                  idx === spanCoords.length - 1
+                    ? nIdx
+                    : Math.max(0, mNotes.length - 1),
+                fromBarline: idx > 0,
+                toBarline: idx < spanCoords.length - 1,
+                startOpen: openAt(t0),
+                endOpen: openAt(t1),
+              });
+            });
+          }
+          activeHairpinStart = undefined;
+        }
+        if (note.hairpinStart) {
+          if (activeHairpinStart) {
+            throw new Error(
+              'Vor einem neuen "hairpinStart" muss die vorherige Dynamikgabel mit "hairpinEnd: true" beendet werden.',
+            );
+          }
+          activeHairpinStart = {
+            type: note.hairpinStart,
+            sysIdx: sIdx,
+            colIndex: cIdx,
+            noteIdx: nIdx,
+          };
+        }
+      });
+    });
+  });
+
+  if (activeHairpinStart) {
+    throw new Error(
+      'Für "hairpinStart" fehlt ein passendes "hairpinEnd: true".',
+    );
+  }
+
   return weightedSystems.map((system, rowIndex) => {
     const isLastRow = rowIndex === weightedSystems.length - 1;
     const isExplicitArrayLayout = Array.isArray(measuresPerSystem);
@@ -728,10 +869,20 @@ export function arrangeNotationSystems<
       }
     }
 
-    return system.map((measure) => ({
-      ...measure,
-      systemWidthRatio,
-    }));
+    return system.map((measure, colIndex) => {
+      const resolvedNoteHairpins = measureHairpinsMap.get(
+        `${rowIndex}:${colIndex}`,
+      );
+      const combinedHairpins =
+        measure.hairpins || resolvedNoteHairpins
+          ? [...(measure.hairpins ?? []), ...(resolvedNoteHairpins ?? [])]
+          : undefined;
+      return {
+        ...measure,
+        ...(combinedHairpins !== undefined && { hairpins: combinedHairpins }),
+        systemWidthRatio,
+      };
+    });
   });
 }
 

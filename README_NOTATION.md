@@ -160,6 +160,8 @@ Jedes Element im `notes`-Array ist ein `NotationEvent` und gehört zu einer von 
   articulation?: "staccato" | "tenuto" | "accent" | "marcato",
   articulationPosition?: "above" | "below",
   dynamic?: "ppp" | "pp" | "p" | "mp" | "mf" | "f" | "ff" | "fff", // Dynamikzeichen direkt unter der Note
+  hairpinStart?: "crescendo" | "decrescendo", // Startet eine Dynamikgabel an dieser Note (auch taktübergreifend)
+  hairpinEnd?: boolean,          // Beendet die aktive Dynamikgabel an dieser Note
 }
 ```
 
@@ -174,6 +176,8 @@ Ideal für Tonleiter-, Intervall- oder Linien-Erklärungen, bei denen alle Noten
   articulation?: "staccato" | "tenuto" | "accent" | "marcato",
   articulationPosition?: "above" | "below",
   dynamic?: "ppp" | "pp" | "p" | "mp" | "mf" | "f" | "ff" | "fff",
+  hairpinStart?: "crescendo" | "decrescendo",
+  hairpinEnd?: boolean,
 }
 ```
 
