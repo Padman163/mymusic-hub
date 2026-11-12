@@ -754,3 +754,38 @@ test('incomplete last system row is proportionally bounded for justification', (
   assert.equal(singleRow.length, 1);
   assert.equal(singleRow[0].widthRatio, 1);
 });
+
+test('pickup scales pickup and closing measures so their weights sum to one full measure', () => {
+  const fourQuarters = Array.from({ length: 4 }, () => ({ duration: 'quarter', step: 2 }));
+  const measures = [
+    { notes: [{ duration: 'quarter', step: 2 }] },
+    { measureNumber: 1, notes: fourQuarters },
+    { measureNumber: 2, repeatStart: true, repeatEnd: true, notes: fourQuarters },
+    { measureNumber: 3, rightBarStyle: 'final', notes: [{ duration: 'half', step: 5, dotted: true }] }
+  ];
+
+  const equalRows = layoutNotationSystems({
+    clef: 'treble',
+    timeSignature: { numerator: 4, denominator: 4 },
+    pickup: true,
+    layout: [2, 2],
+    measureWidth: 'equal',
+    measures
+  });
+  assert.deepEqual(equalRows[0].columnWeights, [25, 100]);
+  assert.deepEqual(equalRows[1].columnWeights, [100, 75]);
+  assert.equal(equalRows[0].columnWeights[0] + equalRows[1].columnWeights[1], 100);
+
+  const rhythmicRows = layoutNotationSystems({
+    clef: 'treble',
+    timeSignature: { numerator: 4, denominator: 4 },
+    pickup: true,
+    layout: [2, 2],
+    measureWidth: 'rhythmic',
+    measures
+  });
+  const pickupWeight = rhythmicRows[0].columnWeights[0];
+  const closingWeight = rhythmicRows[1].columnWeights[1];
+  assert.ok(Math.abs(closingWeight - pickupWeight * 3) <= 2);
+});
+

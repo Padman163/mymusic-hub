@@ -80,7 +80,7 @@ const notation = renderNotationSvg({
 });
 ---
 
-<div class:list={['notation-visual', 'not-content', { embedded, 'has-header': Boolean(tempo), 'has-measure-number': measureNumber !== undefined, 'has-hairpin': Boolean(hairpin) }]} data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
+<div class:list={['notation-visual', 'not-content', { embedded, 'has-clef': Boolean(clef), 'has-header': Boolean(tempo), 'has-measure-number': measureNumber !== undefined, 'has-hairpin': Boolean(hairpin) }]} data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
   {measureNumber !== undefined && <MeasureNumber value={measureNumber} embedded />}
   {tempo && (
     <div class="notation-header">

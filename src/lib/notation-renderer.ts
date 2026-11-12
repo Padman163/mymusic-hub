@@ -179,7 +179,7 @@ function prefixGeometry(
     : timeSignature
       ? timeEnd
       : clef
-        ? 36
+        ? 36 + sp(1)
         : 0;
   const prefixEnd = Math.max(
     clef ? 36 : 0,
@@ -350,7 +350,7 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     : showRightBar && rightBarStyle === "final"
       ? 8
       : 0;
-  const rhythm = rhythmicPositions(notes, timeSignature ?? layoutTimeSignature);
+  const rhythm = rhythmicPositions(notes, layoutTimeSignature ?? timeSignature);
   const endInset =
     wholeMeasureRest || !lastNote
       ? repeatEndInset

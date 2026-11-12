@@ -28,6 +28,27 @@ const durationUnits: Record<Duration, number> = {
   sixteenth: 1,
 };
 
+export function timeSignatureDurationUnits(timeSignature: TimeSignature): number {
+  validateTimeSignature(timeSignature);
+  return (16 * timeSignature.numerator) / timeSignature.denominator;
+}
+
+export function measureDurationUnits(
+  events: readonly RhythmEvent[],
+): number | undefined {
+  if (events.length === 0 || events.some((event) => event.duration === undefined)) {
+    return undefined;
+  }
+  return events.reduce((sum, event) => {
+    const units =
+      event.duration === undefined ? undefined : durationUnits[event.duration];
+    if (units === undefined) {
+      throw new Error(`Ungültiger Noten- oder Pausenwert: ${event.duration}.`);
+    }
+    return sum + units * (event.dotted ? 1.5 : 1);
+  }, 0);
+}
+
 export function rhythmicPositions(
   events: readonly RhythmEvent[],
   timeSignature?: TimeSignature,

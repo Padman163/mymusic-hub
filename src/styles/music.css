@@ -53,17 +53,25 @@
 
 .notation-measure-number {
   position: absolute;
-  top: calc(var(--notation-panel-padding, 1.5rem) + 13px);
-  left: calc(var(--notation-panel-padding, 1.5rem) + 2px);
+  top: calc(var(--notation-panel-padding, 1.5rem) + 10px);
+  left: calc(var(--notation-panel-padding, 1.5rem) + 4px);
   color: #111827;
   font:
     10px / 1 Georgia,
     serif;
 }
 
+.notation-visual.has-clef > .notation-measure-number {
+  left: calc(var(--notation-panel-padding, 1.5rem) + 36px);
+}
+
 .notation-measure-number.embedded {
-  top: 13px;
-  left: 2px;
+  top: 10px;
+  left: 4px;
+}
+
+.notation-visual.has-clef > .notation-measure-number.embedded {
+  left: 36px;
 }
 
 .final-bar {

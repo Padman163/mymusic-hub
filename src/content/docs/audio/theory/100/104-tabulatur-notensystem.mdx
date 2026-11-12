@@ -583,9 +583,47 @@ Ein **Auftakt** beginnt vor dem ersten vollständigen Takt. Er enthält nur eine
 
 **Wiederholungszeichen** zeigen an, dass ein Abschnitt erneut gespielt wird. Die Zeichen `|:` und `:|` markieren Anfang und Ende der Wiederholung. Gibt es zwei Schlussvarianten, führen die Klammern mit den Zahlen 1 und 2 durch den ersten und den zweiten Durchgang.
 
-Im Beispiel enthält der verkürzte Auftakt einen stillen Viertelschlag und danach eine **Viertelnote**. Dadurch steht die Note nahe am rechten Taktstrich, direkt vor dem ersten vollständigen Takt. Nur Takt 2 wird wiederholt. Takt 3 enthält den Schlusston; seine halbe Note füllt die zwei im Auftakt fehlenden Viertelschläge aus.
+Im Beispiel besteht der verkürzte Auftakt aus einer einzelnen **Viertelnote** (1 Schlag). Dadurch steht die Note nahe am rechten Taktstrich, direkt vor dem ersten vollständigen Takt. Nur Takt 2 wird wiederholt. Takt 3 enthält den Schlusston; seine **punktierte halbe Note** (3 Schläge) ergänzt die Viertelnote des Auftakts, sodass Auftakt und Schlusstakt zusammen genau einen vollständigen 4/4-Takt ergeben.
 
 <SheetMusicPlayer musicXmlUrl="/scores/104-6-Auftakt-Wiederholung.musicxml" />
+
+<Notation
+  clef="treble"
+  timeSignature={{ numerator: 4, denominator: 4 }}
+  pickup
+  layout={[2, 2]}
+  measureWidth="rhythmic"
+  measures={[
+    {
+      notes: [{ duration: "quarter", step: 2 }],
+    },
+    {
+      measureNumber: 1,
+      notes: [
+        { duration: "quarter", step: 3 },
+        { duration: "quarter", step: 4 },
+        { duration: "quarter", step: 5 },
+        { duration: "quarter", step: 2 },
+      ],
+    },
+    {
+      measureNumber: 2,
+      repeatStart: true,
+      repeatEnd: true,
+      notes: [
+        { duration: "quarter", step: 5 },
+        { duration: "quarter", step: 6 },
+        { duration: "quarter", step: 5 },
+        { duration: "quarter", step: 2 },
+      ],
+    },
+    {
+      measureNumber: 3,
+      rightBarStyle: "final",
+      notes: [{ duration: "half", step: 5, dotted: true }],
+    },
+  ]}
+/>
 
 ## 7. Tempoangaben
 

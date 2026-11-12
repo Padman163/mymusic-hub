@@ -9,7 +9,11 @@ import {
   type NotationRenderOptions,
   sp,
 } from "./notation-renderer.ts";
-import { rhythmicPositions } from "./rhythm.ts";
+import {
+  measureDurationUnits,
+  rhythmicPositions,
+  timeSignatureDurationUnits,
+} from "./rhythm.ts";
 import {
   omitUnchangedTimeSignatures,
   type TimeSignature,
@@ -26,6 +30,7 @@ export interface SystemLayoutOptions {
   maxSystemWidth?: number;
   scale?: number;
   stretchLastRow?: boolean;
+  pickup?: boolean;
 }
 
 export interface NotationMeasure {
@@ -59,6 +64,7 @@ export interface NotationBaseProps {
   layout?: LayoutMode;
   measureWidth?: MeasureWidthMode;
   stretchLastRow?: boolean;
+  pickup?: boolean;
   scale?: number;
   scrollable?: boolean;
   title?: string;
@@ -192,7 +198,7 @@ export function estimateMeasureMinWidth(
     return Math.ceil(noteInset + endingMarkInset + sp(2));
   }
 
-  const rhythm = rhythmicPositions(notes, timeSignature ?? layoutTimeSignature);
+  const rhythm = rhythmicPositions(notes, layoutTimeSignature ?? timeSignature);
   const endInset =
     wholeMeasureRest || !lastNote
       ? repeatEndInset
@@ -238,6 +244,17 @@ export function estimateMeasureMinWidth(
   return Math.ceil(minimumWidth);
 }
 
+function unitsToTimeSignature(units: number): TimeSignature | undefined {
+  if (!Number.isInteger(units) || units <= 0) return undefined;
+  let numerator = units;
+  let denominator = 16;
+  while (numerator % 2 === 0 && denominator > 1) {
+    numerator /= 2;
+    denominator /= 2;
+  }
+  return { numerator, denominator };
+}
+
 export function normalizeNotationInput(
   props: NotationProps,
 ): NotationMeasure[] {
@@ -279,7 +296,7 @@ export function normalizeNotationInput(
 
   if (baseMeasures.length === 0) return [];
 
-  return baseMeasures.map((measure, index) => {
+  const normalized = baseMeasures.map((measure, index) => {
     if (index !== 0) return { ...measure };
     const clef = measure.clef !== undefined ? measure.clef : defaultClef;
     const timeSignature = measure.timeSignature ?? props.timeSignature;
@@ -291,6 +308,26 @@ export function normalizeNotationInput(
       ...(accidentals !== undefined && { accidentals }),
     };
   });
+
+  if (props.pickup && normalized.length >= 2) {
+    const first = normalized[0];
+    const last = normalized[normalized.length - 1];
+    const activeTime = first.timeSignature ?? props.timeSignature;
+    if (activeTime) {
+      const fullUnits = timeSignatureDurationUnits(activeTime);
+      const firstUnits = measureDurationUnits(first.notes ?? []);
+      const lastUnits = measureDurationUnits(last.notes ?? []);
+      if (firstUnits !== undefined && lastUnits !== undefined) {
+        if (Math.abs(firstUnits + lastUnits - fullUnits) > 1e-9) {
+          throw new Error(
+            `Auftakt und Schlusstakt müssen zusammen genau einen vollständigen ${activeTime.numerator}/${activeTime.denominator}-Takt ergeben.`,
+          );
+        }
+      }
+    }
+  }
+
+  return normalized;
 }
 
 function resolveAutoSystemCounts<
@@ -496,6 +533,11 @@ export function arrangeNotationSystems<
           validateTimeSignature(nextTimeSignature);
           activeTimeSignature = nextTimeSignature;
         }
+        const effectiveLayoutTimeSignature =
+          measure.layoutTimeSignature ?? activeTimeSignature;
+        if (effectiveLayoutTimeSignature) {
+          validateTimeSignature(effectiveLayoutTimeSignature);
+        }
         const next = measure.accidentals;
         if (next?.some((sign) => sign.type === "natural")) {
           throw new Error(
@@ -531,7 +573,7 @@ export function arrangeNotationSystems<
           ...measure,
           clef: offset === 0 ? clef : false,
           accidentals,
-          layoutTimeSignature: activeTimeSignature,
+          layoutTimeSignature: effectiveLayoutTimeSignature,
         };
       }),
     );
@@ -565,10 +607,35 @@ export function arrangeNotationSystems<
     ),
   );
 
-  const weightedSystems = alignedSystems.map((system) =>
+  const fullMeasureWeights: number[] = [];
+  const tempMeasures = alignedSystems.map((system, sysIdx) =>
     system.map((measure, colIndex) => {
-      const ownFirstNoteX = defaultFirstNoteX({
+      const isFirstGlobal = sysIdx === 0 && colIndex === 0;
+      const isLastGlobal =
+        sysIdx === alignedSystems.length - 1 &&
+        colIndex === system.length - 1;
+      const isPickupOrClosing =
+        Boolean(options.pickup) && (isFirstGlobal || isLastGlobal);
+
+      let fillRatio = 1;
+      let resolvedLayoutTime = measure.layoutTimeSignature;
+      const pieceMeter = measure.layoutTimeSignature ?? activeTimeSignature;
+      if (isPickupOrClosing && pieceMeter) {
+        const fullUnits = timeSignatureDurationUnits(pieceMeter);
+        const units = measureDurationUnits(measure.notes ?? []);
+        if (units !== undefined && fullUnits > 0 && units < fullUnits) {
+          fillRatio = units / fullUnits;
+          resolvedLayoutTime =
+            unitsToTimeSignature(units) ?? resolvedLayoutTime;
+        }
+      }
+
+      const measureWithLayoutTime = {
         ...measure,
+        layoutTimeSignature: resolvedLayoutTime,
+      };
+      const ownFirstNoteX = defaultFirstNoteX({
+        ...measureWithLayoutTime,
         clef: measure.clef || undefined,
       });
       const firstNoteX = Math.max(
@@ -576,20 +643,47 @@ export function arrangeNotationSystems<
         ownFirstNoteX,
       );
       const minWidth = estimateMeasureMinWidth({
-        ...measure,
+        ...measureWithLayoutTime,
         clef: measure.clef || undefined,
         firstNoteX,
       });
-      const columnWeight =
-        measureWidthMode === "equal"
-          ? 1
-          : typeof measure.spacing === "number" && measure.spacing > 0
-            ? measure.spacing
-            : minWidth;
+
+      if (!isPickupOrClosing || fillRatio === 1) {
+        fullMeasureWeights.push(measureWidthMode === "equal" ? 100 : minWidth);
+      }
+
       return {
-        ...measure,
+        ...measureWithLayoutTime,
         firstNoteX,
         minWidth,
+        fillRatio,
+        isPickupOrClosing,
+      };
+    }),
+  );
+
+  const referenceFullWeight =
+    fullMeasureWeights.length > 0
+      ? fullMeasureWeights.reduce((a, b) => a + b, 0) /
+        fullMeasureWeights.length
+      : measureWidthMode === "equal"
+        ? 100
+        : 220;
+
+  const weightedSystems = tempMeasures.map((system) =>
+    system.map(({ fillRatio, isPickupOrClosing, ...measure }) => {
+      const columnWeight =
+        typeof measure.spacing === "number" && measure.spacing > 0
+          ? measure.spacing
+          : isPickupOrClosing && fillRatio < 1
+            ? Math.max(1, Math.round(referenceFullWeight * fillRatio))
+            : measureWidthMode === "equal"
+              ? options.pickup
+                ? 100
+                : 1
+              : measure.minWidth;
+      return {
+        ...measure,
         columnWeight,
       };
     }),
@@ -644,7 +738,7 @@ export function layoutNotationSystems(
   props: NotationProps,
   options: Omit<
     SystemLayoutOptions,
-    "measureWidth" | "scale" | "stretchLastRow"
+    "measureWidth" | "scale" | "stretchLastRow" | "pickup"
   > = {},
 ): NotationSystemRow<NotationMeasure>[] {
   const normalized = normalizeNotationInput(props);
@@ -656,12 +750,14 @@ export function layoutNotationSystems(
     measureWidth,
     scale: props.scale,
     stretchLastRow: props.stretchLastRow,
+    pickup: props.pickup,
   });
 
   return systems.map((measures) => {
     const columnWeights = measures.map((measure) => measure.columnWeight);
+    const allEqual = columnWeights.every((w) => w === columnWeights[0]);
     const gridTemplateColumns =
-      measureWidth === "equal"
+      measureWidth === "equal" && allEqual
         ? `repeat(${measures.length}, minmax(min-content, 1fr))`
         : measures
             .map(
