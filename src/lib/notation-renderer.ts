@@ -134,6 +134,7 @@ const accidentalSymbols = {
 } as const;
 
 const noteHeadHalfWidth = NOTE_WIDTH / 2;
+const defaultNoteHeadGap = NOTE_WIDTH * 1.5;
 const accidentalNoteGap = sp(0.6);
 const dotRadius = 1.5;
 
@@ -222,6 +223,18 @@ export function minimumFirstNoteX(
   return prefixEnd + 10 + (notes[0]?.accidental ? 16 : 0);
 }
 
+export function defaultFirstNoteX(
+  options: Parameters<typeof minimumFirstNoteX>[0],
+): number {
+  const first = options.notes?.[0];
+  const minimum = minimumFirstNoteX(options);
+  if (!first || first.type === "rest") return minimum;
+  return Math.max(
+    minimum,
+    defaultNoteHeadGap + noteHeadHalfWidth + (first.accidental ? 16 : 0),
+  );
+}
+
 export function renderNotationSvg(options: NotationRenderOptions): string {
   const {
     clef,
@@ -306,9 +319,22 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
   const { accidentalStart, timeStart, repeatStartX, prefixEnd } =
     prefixGeometry(clef, accidentals, timeSignature, repeatStart);
   const timeWidth = timeSignature ? timeSignatureWidth(timeSignature) : 0;
+  const firstNote = notes[0];
+  const useDefaultNoteStart =
+    firstNote !== undefined &&
+    firstNote.type !== "rest" &&
+    firstNote.duration !== undefined &&
+    firstNote.duration !== "whole" &&
+    !clef &&
+    !timeSignature &&
+    accidentals.length === 0 &&
+    !repeatStart &&
+    noteStart === 0;
   const noteInset =
     firstNoteX ??
-    (clef || timeSignature || accidentals.length || repeatStart
+    (useDefaultNoteStart
+      ? defaultFirstNoteX(options)
+      : clef || timeSignature || accidentals.length || repeatStart
       ? minimumFirstNoteX(options)
       : Math.max(noteStart, prefixEnd));
   const repeatEndInset = repeatEnd ? 16 : 0;
@@ -319,7 +345,7 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
   const positions = layoutNotationEvents(notes, {
     noteInset,
     repeatEndInset,
-    aligned: firstNoteX !== undefined,
+    aligned: firstNoteX !== undefined || useDefaultNoteStart,
     spacing,
   });
   const notePosition = (index: number) => positions[index];

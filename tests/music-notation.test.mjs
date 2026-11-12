@@ -106,6 +106,25 @@ test('four quarter notes share the available aligned measure width', () => {
   );
 });
 
+test('default first note starts one and a half notehead widths after the bar', () => {
+  const notes = [{ duration: 'quarter', step: 2 }, { duration: 'quarter', step: 3 }];
+  const svg = renderNotationSvg({ notes });
+  const head = svg.match(/<g transform="translate\(([-.\d]+) 0\)"><text class="notation-note" x="([\d.]+)%"/);
+  assert.ok(head);
+  for (const width of [100, 400]) {
+    const center = Number(head[1]) + Number(head[2]) * width / 100;
+    assert.equal(center - sp(1.35) / 2, 1.5 * sp(1.35));
+  }
+  const systems = arrangeNotationSystems([
+    { clef: 'treble', notes },
+    { notes },
+    { notes },
+  ], 3);
+  assert.equal(systems[0][1].firstNoteX - sp(1.35) / 2, 1.5 * sp(1.35));
+  assert.equal(systems[0][2].firstNoteX, systems[0][1].firstNoteX);
+  assert.match(renderNotationSvg({ notes, firstNoteX: 10 }), /translate\(10 0\)"><text class="notation-note" x="0%"/);
+});
+
 test('renderer places timed events proportionally and preserves equal-spacing examples', () => {
   const notes = [
     { type: 'rest', duration: 'eighth' },
@@ -376,7 +395,9 @@ test('repeat end replaces the ordinary right bar and reserves space for the fina
   assert.doesNotMatch(svg, /<line x1="100%" y1="24" x2="100%" y2="64"/);
   const offsets = [...svg.matchAll(/<g transform="translate\(([-.\d]+) 0\)"><text class="notation-note"/g)];
   assert.equal(offsets.length, 8);
-  assert.ok(Math.abs(Number(offsets[7][1]) + 16 * 8 / 9) < 0.000001);
+  const withoutRepeat = renderNotationSvg({ notes });
+  const normalOffsets = [...withoutRepeat.matchAll(/<g transform="translate\(([-.\d]+) 0\)"><text class="notation-note"/g)];
+  assert.ok(Math.abs(Number(normalOffsets[7][1]) - Number(offsets[7][1]) - 16 * 7 / 8) < 0.000001);
 });
 
 test('system layout repeats the original clef on every rendered line', () => {

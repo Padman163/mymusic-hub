@@ -1,6 +1,6 @@
 import {
   assertNoClefChanges,
-  minimumFirstNoteX,
+  defaultFirstNoteX,
   type NotationAccidental,
   type NotationClef,
   type NotationRenderOptions,
@@ -108,7 +108,7 @@ export function alignFirstNotesInSystems<
   const columns: number[] = [];
   for (const system of systems) {
     system.forEach((measure, index) => {
-      const minimum = minimumFirstNoteX({
+      const minimum = defaultFirstNoteX({
         ...measure,
         clef: measure.clef || undefined,
       });

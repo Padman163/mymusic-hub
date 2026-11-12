@@ -138,6 +138,8 @@ Aufeinanderfolgende Achtel- oder Sechzehntelnoten desselben Werts können mit de
 
 Für Noten und Pausen mit `duration` wachsen die Abstände optisch komprimiert mit der Dauer: Eine Verdopplung der Dauer ergibt ungefähr den 1,414-fachen Abstand, eine Punktierung das 1,3-Fache. Der verbleibende Abstand zum Taktende wird nach demselben Verhältnis berechnet. Zwischen aufeinanderfolgenden Ereignissen bleibt mindestens ein Spatium frei; bei schmalen Darstellungen kann horizontal gescrollt werden. Eine einzelne ganze Note steht bei 41 % der Taktbreite. Die Komponente prüft noch nicht, ob die Werte zusammen zur Taktart passen. Unvollständige Notenköpfe ohne `duration` werden weiterhin gleichmäßig verteilt. Für reine Zeichenvergleiche wie das obige Schaubild kann mit `spacing="equal"` eine gleichmäßige Verteilung gewählt werden.
 
+Ohne Zeichen am Taktbeginn steht die linke Kante der ersten Note standardmäßig im Abstand von 1,5 Notenkopfbreiten zum Taktstrich. Ein explizites `firstNoteX`, Vorzeichen und andere Zeichen am Taktbeginn können die Position verändern; die einzelne ganze Note behält ihre Sonderposition.
+
 ## Punktierte Noten
 
 Ein Punkt rechts neben dem Notenkopf verlängert den Notenwert um die Hälfte. Das Schaubild zeigt punktierte halbe, Viertel- und Achtelnoten.
