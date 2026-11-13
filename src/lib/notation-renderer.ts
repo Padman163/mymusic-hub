@@ -58,6 +58,22 @@ const STAFF_TOP = STAFF_BOTTOM - sp(4);
 const STAFF_MIDDLE = STAFF_BOTTOM - sp(2);
 const stepY = (step: number) => STAFF_BOTTOM - step * sp(0.5);
 
+/**
+ * Gemeinsame Halsrichtung einer Balkengruppe (Mittellinie = step 4):
+ * 1. Mehrheit der Noten (step < 4 = Hals aufwärts, step >= 4 = abwärts),
+ * 2. bei Gleichstand die Note mit dem größten Abstand zur Mittellinie
+ *    (liegt sie darunter, zeigen die Hälse nach oben),
+ * 3. bei erneutem Gleichstand zeigen die Hälse nach unten.
+ */
+export function beamGroupStemUp(steps: readonly number[]): boolean {
+  const up = steps.filter((step) => step < 4).length;
+  const down = steps.length - up;
+  if (up !== down) return up > down;
+  const above = Math.max(...steps.map((step) => step - 4));
+  const below = Math.max(...steps.map((step) => 4 - step));
+  return below > above;
+}
+
 export type NotationArticulation = Articulation;
 export type { Hairpin, MeasureHairpin, NotationDynamic } from "./dynamics.ts";
 export type NotationClef = "treble" | "bass";
@@ -486,26 +502,21 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
         (1 - last.fraction),
     );
   }
+  const noteStemUp = new Map<number, boolean>();
+  groups.forEach((group) => {
+    const up = beamGroupStemUp(
+      group.indices.map((index) => pitchedNote(index).step),
+    );
+    group.indices.forEach((index) => noteStemUp.set(index, up));
+  });
+  const stemUpFor = (note: NotationNote, index: number): boolean =>
+    noteStemUp.get(index) ?? note.step < 4;
+
   const beamStemEnds = new Map<number, number>();
   groups.forEach((group) => {
-    const steps = group.indices.map((index) => pitchedNote(index).step);
-    const stemUp = steps[0] < 4;
-    const mixedDirections = steps.some((step) => step < 4 !== stemUp);
+    const stemUp = noteStemUp.get(group.indices[0]) ?? false;
     const firstIndex = group.indices[0];
     const lastIndex = group.indices[group.indices.length - 1];
-    if (mixedDirections) {
-      group.indices.forEach((index) => {
-        const note = pitchedNote(index);
-        const y = stepY(note.step);
-        beamStemEnds.set(
-          index,
-          note.step < 4
-            ? Math.min(y - STEM_LEN, STAFF_MIDDLE)
-            : Math.max(y + STEM_LEN, STAFF_MIDDLE),
-        );
-      });
-      return;
-    }
     const firstY =
       stepY(pitchedNote(firstIndex).step) + (stemUp ? -STEM_LEN : STEM_LEN);
     const lastY =
@@ -536,11 +547,14 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
       );
     });
   });
-  const articulationPosition = (note: NotationNote): "above" | "below" => {
+  const articulationPosition = (
+    note: NotationNote,
+    index: number,
+  ): "above" | "below" => {
     const hasStem = note.duration
       ? note.duration !== "whole"
       : note.stem === true;
-    const stemUp = note.step < 4;
+    const stemUp = stemUpFor(note, index);
     return articulationPlacement(hasStem, stemUp, note.articulationPosition);
   };
 
@@ -559,7 +573,7 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
   if (ritAt !== undefined) description.push(`rit. bei Note ${ritAt + 1}`);
   if (aTempoAt !== undefined)
     description.push(`a tempo bei Note ${aTempoAt + 1}`);
-  notes.forEach((note) => {
+  notes.forEach((note, noteIndex) => {
     if (note.type === "rest") {
       description.push(
         `${note.dotted ? "Punktierte " : ""}${restSymbols[note.duration].label}`,
@@ -572,7 +586,7 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
         ? "gefüllter Notenkopf"
         : "ungefüllter Notenkopf";
     const articulation = note.articulation
-      ? ` mit ${articulationSymbols[note.articulation].label}${articulationPosition(note) === "below" ? " unterhalb" : ""}`
+      ? ` mit ${articulationSymbols[note.articulation].label}${articulationPosition(note, noteIndex) === "below" ? " unterhalb" : ""}`
       : "";
     description.push(`${name} auf Position ${note.step}${articulation}`);
   });
@@ -621,65 +635,7 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
 
   const beams: string[] = [];
   groups.forEach((group) => {
-    const steps = group.indices.map((index) => pitchedNote(index).step);
-    const stemUp = steps[0] < 4;
-    const mixedDirections = steps.some((step) => step < 4 !== stemUp);
-    if (mixedDirections) {
-      group.indices.slice(0, -1).forEach((index, i) => {
-        const nextIndex = group.indices[i + 1];
-        const start = notePosition(index);
-        const end = notePosition(nextIndex);
-        const startUp = pitchedNote(index).step < 4;
-        const endUp = pitchedNote(nextIndex).step < 4;
-        const startOffset =
-          start.offset +
-          (noteHeadHalfWidth - STEM_WIDTH / 2) * (startUp ? 1 : -1);
-        const endOffset =
-          end.offset + (noteHeadHalfWidth - STEM_WIDTH / 2) * (endUp ? 1 : -1);
-        const startY = beamStemEnds.get(index) ?? STAFF_MIDDLE;
-        const endY = beamStemEnds.get(nextIndex) ?? STAFF_MIDDLE;
-        const startX = `calc(${start.percent} + ${startOffset - STEM_WIDTH / 2}px)`;
-        const endX = `calc(${end.percent} + ${endOffset + STEM_WIDTH / 2}px)`;
-        beams.push(renderBeam(startX, startY, endX, endY, BEAM_WIDTH));
-        if (group.duration === "sixteenth") {
-          if (startUp === endUp) {
-            const offset = sp(0.75) * (startUp ? 1 : -1);
-            beams.push(
-              renderBeam(
-                startX,
-                startY + offset,
-                endX,
-                endY + offset,
-                BEAM_WIDTH,
-              ),
-            );
-          } else {
-            const middleX = `calc(${(start.fraction + end.fraction) * 50}% + ${(startOffset + endOffset) / 2}px)`;
-            const middleY = (startY + endY) / 2;
-            const offset = sp(0.75) * (startUp ? 1 : -1);
-            beams.push(
-              renderBeam(
-                startX,
-                startY + offset,
-                middleX,
-                middleY + offset,
-                BEAM_WIDTH,
-              ),
-            );
-            beams.push(
-              renderBeam(
-                middleX,
-                middleY - offset,
-                endX,
-                endY - offset,
-                BEAM_WIDTH,
-              ),
-            );
-          }
-        }
-      });
-      return;
-    }
+    const stemUp = noteStemUp.get(group.indices[0]) ?? false;
     const first = notePosition(group.indices[0]);
     const last = notePosition(group.indices[group.indices.length - 1]);
     const stemOffset = (noteHeadHalfWidth - STEM_WIDTH / 2) * (stemUp ? 1 : -1);
@@ -771,7 +727,7 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
       return;
     }
     const y = stepY(note.step);
-    const stemUp = note.step < 4;
+    const stemUp = stemUpFor(note, index);
     const hasStem = note.duration
       ? note.duration !== "whole"
       : note.stem === true;
@@ -829,7 +785,7 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
       );
     }
     if (note.articulation) {
-      const position = articulationPosition(note);
+      const position = articulationPosition(note, index);
       const noteEdgeY =
         hasStem && (position === "above") === stemUp
           ? stemY

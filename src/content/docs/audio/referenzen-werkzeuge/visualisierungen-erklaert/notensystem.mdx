@@ -424,7 +424,12 @@ Das Gegenstück aus 104 verwendet exakt dasselbe `layout={[3, 1]}` und `measureW
   ]}
 />
 
-- **Sechzehntel-Balkengruppen und wechselnde Halsrichtungen**: Eine `beamGroup` benötigt mindestens zwei zusammenhängende Achtel- oder Sechzehntelnoten (oder die Kombination aus punktierter Achtel- und Sechzehntelnote). Die Halsrichtung richtet sich nach jeder Note (`step < 4` aufwärts, `step >= 4` abwärts); bei gemischten Richtungen wird der Balken entlang der Mittellinie automatisch angepasst.
+- **Sechzehntel-Balkengruppen und gemeinsame Halsrichtung**: Eine `beamGroup` benötigt mindestens zwei zusammenhängende Achtel- oder Sechzehntelnoten (oder die Kombination aus punktierter Achtel- und Sechzehntelnote). Zusammenhängende Achtel und Sechzehntel sollten standardmäßig immer über eine `beamGroup` verbunden werden, statt einzelne Fähnchen zu verwenden. Alle Noten einer Gruppe erhalten dieselbe Halsrichtung, damit der Balken nie zwischen oben und unten „springt“ (`beamGroupStemUp` in `src/lib/notation-renderer.ts`):
+  1. Die **Mehrheit** der Noten entscheidet (`step < 4` zählt als aufwärts, `step >= 4` als abwärts).
+  2. Bei **Gleichstand** entscheidet die Note mit dem größten Abstand zur Mittellinie (`step: 4`): liegt sie darunter, zeigen die Hälse nach oben, sonst nach unten.
+  3. Bei erneutem Gleichstand zeigen die Hälse **nach unten**.
+  
+  Der Balken verläuft linear von der ersten zur letzten Note: steigen die Tonhöhen, steigt der Balken; fallen sie, fällt er; haben erste und letzte Note dieselbe Tonhöhe, liegt der Balken waagerecht. Dazwischenliegende Hälse werden bei Bedarf verlängert, damit sie die Mindestlänge und die Mittellinie erreichen. Die Artikulation folgt der Gruppenrichtung (bei Hals abwärts steht sie standardmäßig oberhalb).
 
 ```mdx
 <Notation
@@ -1908,8 +1913,8 @@ Das abschließende Testbeispiel bündelt fast alle Notationsfunktionen in achtze
       notes: [
         { duration: "eighth", step: 2, beamGroup: "eighths" },
         { duration: "eighth", step: 3, beamGroup: "eighths" },
-        { duration: "sixteenth", step: 4 },
-        { duration: "sixteenth", step: 5 },
+        { duration: "sixteenth", step: 4, beamGroup: "measure-2-sixteenths" },
+        { duration: "sixteenth", step: 5, beamGroup: "measure-2-sixteenths" },
         { duration: "sixteenth", step: 6, beamGroup: "measure-2-sixteenths" },
         { duration: "sixteenth", step: 5, beamGroup: "measure-2-sixteenths" },
         { duration: "quarter", step: 4 },
@@ -1982,14 +1987,14 @@ Das abschließende Testbeispiel bündelt fast alle Notationsfunktionen in achtze
       hairpin: "crescendo",
       notes: [
         { duration: "quarter", step: 2, dotted: true, dynamic: "p" },
-        { duration: "eighth", step: 3 },
+        { duration: "eighth", step: 3, beamGroup: "measure-7-eighths" },
         { duration: "eighth", step: 4, beamGroup: "measure-7-eighths" },
         {
           duration: "eighth",
           step: 5,
           beamGroup: "measure-7-eighths",
           articulation: "accent",
-          articulationPosition: "below",
+          articulationPosition: "above",
         },
         { duration: "quarter", step: 6, dynamic: "f" },
       ],
@@ -2023,7 +2028,7 @@ Das abschließende Testbeispiel bündelt fast alle Notationsfunktionen in achtze
           step: 6,
           beamGroup: "measure-10-eighths",
           articulation: "marcato",
-          articulationPosition: "below",
+          articulationPosition: "above",
           dynamic: "f",
         },
       ],

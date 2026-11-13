@@ -9,7 +9,7 @@ import { collectBeamGroups, flagGlyph, renderDot, rhythmicPositions } from '../s
 import { renderRest, restSymbols } from '../src/lib/rest.ts';
 import { renderTempoMark, validateTempoChanges } from '../src/lib/tempo.ts';
 import { omitUnchangedTimeSignatures, renderTimeSignature, validateTimeSignature } from '../src/lib/time-signature.ts';
-import { defaultFirstNoteX, measureNumberOffset, minimumFirstNoteX, renderNotationSvg, SPATIUM, sp } from '../src/lib/notation-renderer.ts';
+import { beamGroupStemUp, defaultFirstNoteX, measureNumberOffset, minimumFirstNoteX, renderNotationSvg, SPATIUM, sp } from '../src/lib/notation-renderer.ts';
 import { layoutNotationEvents } from '../src/lib/notation-layout.ts';
 import {
   alignFirstNotesInSystems,
@@ -295,22 +295,48 @@ test('notation geometry uses spatium for staff, heads, stems, beams and ledger l
     const beamed = renderNotationSvg({ firstNoteX: 10, notes: steps.map((step) => ({ duration: 'sixteenth', beamGroup: 'a', step })) });
     const stems = [...beamed.matchAll(/<line x1="[\d.]+%" y1="(-?[\d.]+)" x2="[\d.]+%" y2="(-?[\d.]+)" transform="translate\(([-.\d]+) 0\)" stroke-width="1\.2"/g)];
     assert.equal(stems.length, 3);
+    const stemUp = beamGroupStemUp(steps);
     for (const [i, stem] of stems.entries()) {
       const start = Number(stem[1]);
       const end = Number(stem[2]);
       const fraction = [0, 1 / 3, 2 / 3][i];
       const centerOffset = 10 * (1 - fraction);
       assert.ok(Math.abs(end - start) >= sp(2.5));
-      assert.ok(steps[i] < 4 ? end <= 44 : end >= 44);
-      assert.ok(Math.abs(Number(stem[3]) - centerOffset - (steps[i] < 4 ? 6.15 : -6.15)) < 1e-10);
+      assert.equal(end < start, stemUp);
+      assert.ok(Math.abs(Number(stem[3]) - centerOffset - (stemUp ? 6.15 : -6.15)) < 1e-10);
     }
     const beams = beamSegments(beamed);
-    assert.equal(beams.length, 6);
+    assert.equal(beams.length, 2);
     assert.equal(beams[0].y1, Number(stems[0][2]));
-    assert.equal(beams[0].y2, Number(stems[1][2]));
-    assert.equal(beams[3].y1, Number(stems[1][2]));
-    assert.equal(beams[3].y2, Number(stems[2][2]));
+    assert.equal(beams[0].y2, Number(stems[2][2]));
+    assert.equal(beams[1].y1, Number(stems[0][2]) + (stemUp ? 1 : -1) * sp(0.75));
+    assert.equal(beams[1].y2, Number(stems[2][2]) + (stemUp ? 1 : -1) * sp(0.75));
   }
+});
+
+test('beam group direction follows the majority of notes and the beam slope follows the pitch', () => {
+  assert.equal(beamGroupStemUp([3, 5, 6]), false);
+  assert.equal(beamGroupStemUp([0, 7, 2]), true);
+  assert.equal(beamGroupStemUp([2, 4]), true);
+  assert.equal(beamGroupStemUp([6, 4]), false);
+  assert.equal(beamGroupStemUp([2, 6]), false);
+  assert.equal(beamGroupStemUp([1, 6]), true);
+
+  const svg = renderNotationSvg({
+    firstNoteX: 10,
+    notes: [3, 5, 6].map((step) => ({ duration: 'eighth', beamGroup: 'a', step }))
+  });
+  const stems = [...svg.matchAll(/<line x1="[\d.]+%" y1="(-?[\d.]+)" x2="[\d.]+%" y2="(-?[\d.]+)" transform="translate\(([-.\d]+) 0\)" stroke-width="1\.2"/g)];
+  assert.equal(stems.length, 3);
+  for (const stem of stems) {
+    assert.ok(Number(stem[2]) > Number(stem[1]));
+    assert.ok(Number(stem[3]) < 10 + 1);
+  }
+  assert.ok(Number(stems[0][2]) > Number(stems[2][2]));
+  const beams = beamSegments(svg);
+  assert.equal(beams.length, 1);
+  assert.equal(beams[0].y1, Number(stems[0][2]));
+  assert.equal(beams[0].y2, Number(stems[2][2]));
 });
 
 test('beams cover stem edges and are painted after stems', () => {
@@ -321,13 +347,12 @@ test('beams cover stem edges and are painted after stems', () => {
     const svg = renderNotationSvg({ firstNoteX: 10, notes: steps.map((step) => ({ duration, step, beamGroup: 'a' })) });
     const stems = [...svg.matchAll(/<line x1="([\d.]+)%" y1="(-?[\d.]+)" x2="[\d.]+%" y2="(-?[\d.]+)" transform="translate\(([-.\d]+) 0\)" stroke-width="1\.2" \/>/g)];
     const beams = beamSegments(svg);
-    const mixed = steps.some((step) => (step < 4) !== (steps[0] < 4));
-    const primary = mixed ? [beams[0], beams[3]] : [beams[0]];
+    const primary = [beams[0]];
     assert.equal(stems.length, steps.length);
     assert.ok(beams.every((beam) => beam.thickness === sp(0.5) && beam.index > stems.at(-1).index));
-    for (const [i, beam] of primary.entries()) {
-      const start = stems[mixed ? i : 0];
-      const end = stems[mixed ? i + 1 : stems.length - 1];
+    for (const beam of primary) {
+      const start = stems[0];
+      const end = stems[stems.length - 1];
       assert.equal(beam.start, beam.widthStart);
       assert.equal(beam.y1, Number(start[3]));
       assert.equal(beam.y2, Number(end[3]));
