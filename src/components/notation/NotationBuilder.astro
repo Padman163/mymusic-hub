@@ -9,6 +9,7 @@ import {
   DURATION_SVG_DATA,
   type NotationBuilderConfig,
   renderNotationBuilderSvg,
+  stepToPitchName,
 } from "../../lib/notation-builder.ts";
 import {
   measureNumberOffset,
@@ -44,6 +45,10 @@ export interface Props extends NotationBaseProps {
   showDurationPicker?: boolean;
   /** Kompakte Darstellung ("tight" / true = schmal, "wide" = erweiterte Breite). */
   compact?: boolean | "tight" | "wide";
+  /** Maximale Anzahl an Noten / Slots im Takt (Standard: 1). */
+  maxNotes?: number;
+  /** Fester Notenwert (z.B. "quarter" oder true). Blockiert das Ändern des Notenwerts via Num 1 / Toolbar. */
+  lockDuration?: Duration | boolean;
 }
 
 const {
@@ -81,14 +86,31 @@ const {
   showHints = false,
   showDurationPicker = false,
   compact = false,
+  maxNotes = 1,
+  lockDuration,
 } = Astro.props;
 
 const cursorStep = clampStep(initialStep);
-const firstEvent = notes[0];
-const placedNote: NotationNote | null =
-  firstEvent && firstEvent.type !== "rest" ? firstEvent : null;
+const lockedDuration: Duration | undefined =
+  typeof lockDuration === "string"
+    ? lockDuration
+    : lockDuration === true
+      ? "quarter"
+      : undefined;
+
+const placedNotes: (NotationNote | null)[] = Array.from(
+  { length: maxNotes },
+  (_, i) => {
+    const ev = notes[i];
+    return ev && ev.type !== "rest" ? ev : null;
+  },
+);
+if (maxNotes === 1 && notes.length > 0 && notes[0].type !== "rest") {
+  placedNotes[0] = notes[0];
+}
+const placedNote: NotationNote | null = placedNotes[0] ?? null;
 const activeDuration: Duration =
-  initialDuration ?? (placedNote?.duration ?? "quarter");
+  lockedDuration ?? initialDuration ?? (placedNote?.duration ?? "quarter");
 
 const durationList = (allowedDurations ?? DEFAULT_BUILDER_DURATIONS).map(
   (dur) => ({
@@ -125,17 +147,24 @@ const builderConfig: NotationBuilderConfig = {
   label,
   showLabel,
   compact,
+  maxNotes,
+  lockDuration: lockedDuration ?? (lockDuration ? true : undefined),
 };
 
 const initialSvg = renderNotationBuilderSvg({
   config: builderConfig,
   cursorStep,
   placedNote,
+  placedNotes,
+  activeSlot: 0,
 });
 
 const initialState = describeBuilderState({
   cursorStep,
   placedNote,
+  placedNotes,
+  activeSlot: 0,
+  maxNotes,
   clef,
   activeDuration,
 });
@@ -191,6 +220,13 @@ const fitToWidth = !scrollable && !isCompact;
   data-active-duration={activeDuration}
   data-can-create={String(initialState.canCreate)}
   data-can-delete={String(initialState.canDelete)}
+  data-max-notes={String(maxNotes)}
+  data-active-slot="0"
+  data-placed-count={String(placedNotes.filter(Boolean).length)}
+  data-placed-steps={JSON.stringify(placedNotes.map((n) => (n ? n.step : null)))}
+  data-placed-notes={JSON.stringify(
+    placedNotes.map((n) => (n ? stepToPitchName(n.step, clef) : null)),
+  )}
   data-fit-to-width={fitToWidth ? "" : undefined}
   data-scale={scale}
   style={`--notation-scale: ${scale}; --notation-spatium: ${SPATIUM * scale}px`}
@@ -284,9 +320,12 @@ const fitToWidth = !scrollable && !isCompact;
 
     {isCompact && showHints && (
       <div class="notation-builder-side-hints" aria-label="Tastaturbedienung">
+        {maxNotes > 1 && (
+          <span class="notation-builder-hint-item">←/→: Position</span>
+        )}
         <span class="notation-builder-hint-item">↑/↓: Tonhöhe</span>
         <span class="notation-builder-hint-item">Leertaste: Note setzen</span>
-        {showDurationPicker && (
+        {showDurationPicker && !lockDuration && (
           <span class="notation-builder-hint-item">Num 1: Notenwert</span>
         )}
         <span class="notation-builder-hint-item">Entf: Löschen</span>
@@ -312,7 +351,7 @@ const fitToWidth = !scrollable && !isCompact;
       )}
       {!isCompact && showHints && (
         <span class="notation-builder-hints">
-          ↑/↓: Tonhöhe · Leertaste: Note setzen{showDurationPicker ? " · Num 1: Notenwert" : ""} · Entf: Löschen
+          {maxNotes > 1 ? "←/→: Position · " : ""}↑/↓: Tonhöhe · Leertaste: Note setzen{showDurationPicker && !lockDuration ? " · Num 1: Notenwert" : ""} · Entf: Löschen
         </span>
       )}
     </div>

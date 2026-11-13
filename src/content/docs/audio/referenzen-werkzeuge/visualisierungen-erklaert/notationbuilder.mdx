@@ -69,11 +69,12 @@ Die Bedienung erfolgt wahlweise per Maus oder Tastatur:
 
 | Aktion | Tastatur / Maus | Verhalten |
 | :--- | :--- | :--- |
-| **Position wählen** | **Mausklick** ins Notensystem | Setzt den abgerundeten orangefarbenen Auswahlbereich auf die angeklickte vertikale Notenposition (`step`). |
+| **Position wählen** | **Mausklick** ins Notensystem | Setzt den abgerundeten orangefarbenen Auswahlbereich auf die angeklickte vertikale Notenposition (`step`) sowie bei mehreren Noten (`maxNotes > 1`) auf den nächsten Slot. |
+| **Slot wechseln** | **Pfeiltasten** `←` / `→` | Wechselt bei `maxNotes > 1` zwischen den Notenpositionen im Takt (auch auf noch leere Slots). |
 | **Step anpassen** | **Pfeiltasten** `↑` / `↓` | Verschiebt die Auswahl schrittweise um eine Stufe nach oben oder unten (Halbton/Zwischenraum/Linie im Bereich `-2` bis `10`). |
-| **Note setzen** | **`Leertaste`** | Platziert auf dem aktuellen Step eine Note mit dem gewählten Notenwert. |
-| **Notenwert wählen** | **Toolbar-Klick** / **`Num 1`** (oder Ziffer `1`) | Schaltet durch die Notenwerte (Ganze → Halbe → Viertel → Achtel → 16tel) und aktualisiert eine gesetzte Note sofort. |
-| **Note löschen** | **`Entf`** (`Delete` / `Backspace`) | Entfernt die gesetzte Note wieder. |
+| **Note setzen** | **`Leertaste`** | Platziert auf dem aktuellen Step eine Note mit dem gewählten Notenwert und springt bei `maxNotes > 1` automatisch zum nächsten Slot. |
+| **Notenwert wählen** | **Toolbar-Klick** / **`Num 1`** (oder Ziffer `1`) | Schaltet durch die Notenwerte (Ganze → Halbe → Viertel → Achtel → 16tel) und aktualisiert eine gesetzte Note sofort (blockiert, wenn `lockDuration` aktiv ist). |
+| **Note löschen** | **`Entf`** (`Delete` / `Backspace`) | Entfernt die gesetzte Note im aktiven Slot wieder. |
 
 ---
 
@@ -83,6 +84,8 @@ Zusätzlich zu allen von `<Notation />` geerbten Attributen (`clef`, `timeSignat
 
 | Prop | Typ | Standard | Beschreibung |
 | :--- | :--- | :--- | :--- |
+| `maxNotes` | `number` | `1` | Maximale Anzahl an Noten/Slots im Takt (z. B. `4` für vier Viertelnoten). |
+| `lockDuration` | `Duration \| boolean` | `undefined` | Fester Notenwert (z. B. `"quarter"` oder `true`), sperrt Notenwertänderungen via Num 1 und Toolbar. |
 | `initialStep` | `number` | `4` | Startposition des Markierungsbereichs (`4` = Mittellinie, Violinschlüssel: B4). |
 | `initialDuration` | `Duration` | `"quarter"` | Standard-Notenwert für die Notenerstellung (`"whole" \| "half" \| "quarter" \| "eighth" \| "sixteenth"`). |
 | `allowedDurations` | `Duration[]` | Alle 5 Werte | Array erlaubter Notenwerte für die Button-Leiste. |
@@ -91,6 +94,14 @@ Zusätzlich zu allen von `<Notation />` geerbten Attributen (`clef`, `timeSignat
 | `showLabel` | `boolean` | `false` | Blendet eine Noten- und Aktionsbeschriftung direkt am Auswahlbereich ein. |
 | `showStatus` | `boolean` | `false` | Zeigt eine Statusleiste unterhalb des Systems mit Tonname und Aktion an. |
 | `showHints` | `boolean` | `false` | Zeigt Tastatur-Bedienhinweise (im Footer oder bei `compact` als Spalte rechts) an. |
+
+### Beispiel mit 4 Viertelnoten (`maxNotes={4}`)
+
+```mdx
+<NotationBuilder compact="wide" maxNotes={4} lockDuration="quarter" showHints />
+```
+
+<NotationBuilder compact="wide" maxNotes={4} lockDuration="quarter" showHints />
 
 ### Beispiel mit Notenwert-Toolbar (`showDurationPicker`)
 
@@ -114,7 +125,7 @@ Zusätzlich zu allen von `<Notation />` geerbten Attributen (`clef`, `timeSignat
 
 Das Wurzelelement (`[data-notation-builder]`) synchronisiert den aktuellen Zustand fortlaufend über Data-Attribute und CustomEvents für umgebende Komponenten (z. B. `Level100Quiz.astro`):
 
-- **Data-Attribute:** `data-cursor-step`, `data-cursor-note`, `data-placed-step`, `data-placed-note`, `data-placed-duration`, `data-active-duration`, `data-can-create`, `data-can-delete`.
+- **Data-Attribute:** `data-cursor-step`, `data-cursor-note`, `data-placed-step`, `data-placed-note`, `data-placed-duration`, `data-active-duration`, `data-can-create`, `data-can-delete`, `data-max-notes`, `data-active-slot`, `data-placed-count`, `data-placed-steps`, `data-placed-notes`.
 - **`notationbuilder:change`:** Wird bei jeder Positionsänderung, Notenerstellung, Notenwertänderung oder Löschung ausgelöst.
 - **`notationbuilder:reset`:** Setzt den Editor zurück (optional mit neuer Startposition via `detail: { step }` und/oder Start-Notenwert via `detail: { duration }`).
 - **`notationbuilder:set-duration`:** Ändert den aktiven Notenwert programmgesteuert via `detail: { duration }`.

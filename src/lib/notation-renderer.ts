@@ -117,6 +117,7 @@ export type NotationRest = {
   type: "rest";
   duration: NotationDuration;
   dotted?: boolean;
+  hidden?: boolean;
   step?: never;
   stem?: never;
   beamGroup?: never;
@@ -577,9 +578,11 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     description.push(`a tempo bei Note ${aTempoAt + 1}`);
   notes.forEach((note, noteIndex) => {
     if (note.type === "rest") {
-      description.push(
-        `${note.dotted ? "Punktierte " : ""}${restSymbols[note.duration].label}`,
-      );
+      if (!note.hidden) {
+        description.push(
+          `${note.dotted ? "Punktierte " : ""}${restSymbols[note.duration].label}`,
+        );
+      }
       return;
     }
     const name = note.duration
@@ -744,9 +747,11 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
   notes.forEach((note, index) => {
     const position = notePosition(index);
     if (note.type === "rest") {
-      parts.push(
-        `<g transform="translate(${position.offset} 0)">${renderRest(note.duration, position.percent, STAFF_MIDDLE, note.dotted, SPATIUM)}</g>`,
-      );
+      if (!note.hidden) {
+        parts.push(
+          `<g transform="translate(${position.offset} 0)">${renderRest(note.duration, position.percent, STAFF_MIDDLE, note.dotted, SPATIUM)}</g>`,
+        );
+      }
       return;
     }
     const y = stepY(note.step);

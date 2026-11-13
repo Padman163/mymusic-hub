@@ -21,7 +21,7 @@ Standardmäßig entspricht das Aussehen einem reduzierten Einzeltakt ohne linken
   * `.notation-builder-cursor-head`: Abgerundetes orangefarbenes Rechteck (`rx="4"`, `width="17.5"`, `height="14"`) mit dunklerem Rahmen (`#c2410c` / `#9a3412`).
   * `.notation-builder-footer`: Optionale Statusleiste und Tasten-Hinweise.
 * **Quiz-Integration (`src/components/Level100Quiz.astro`):**
-  * Frage 1 in "Teil 4: Notation in fünf Beispielen": Tonhöhen-Eingabe auf den 5 Notenlinien in der `compact="wide"`-Version mit `showHints` und "Antwort einloggen"-Button.
+  * Frage 1 in "Teil 4: Notation in fünf Beispielen": 4 Viertelnoten setzen (`maxNotes={4}`, `lockDuration="quarter"`, `compact="wide"`, `showHints`). Notenwert ist auf Viertel fixiert (Num 1 blockiert), `Leertaste` platziert Note und springt zum nächsten Slot, `←`/`→` wechselt frei zwischen den 4 Positionen. Wenn keine explizite Oktave vorgegeben ist (z. B. "E" statt "E4"), sind alle Oktaven auf dem System (z. B. E4 und E5) gültig.
   * Frage 2 in "Teil 4: Notation in fünf Beispielen": Notenwert-Eingabe mit der visuellen Button-Leiste (`showDurationPicker`, `compact="wide"`, `showHints`) und "Antwort einloggen"-Button.
   * Gesamtpunkte: `21` (`passingPoints = 17`).
   * Beide interaktiven Fragen validieren direkt und fließen in das Gesamtergebnis des Quiz ein.
@@ -36,11 +36,14 @@ Standardmäßig entspricht das Aussehen einem reduzierten Einzeltakt ohne linken
      * Ist bereits eine Note platziert, ändert sich ihr Notenwert (`whole`, `half`, `quarter`, `eighth`, `sixteenth`) sofort.
      * Ist noch keine Note platziert, wird die Note direkt an der aktuellen Cursor-Position mit dem gewählten Notenwert gesetzt.
 2. **Tastatur:**
-   * `ArrowUp` / `ArrowDown`: Verschiebt den Cursor schrittweise (`clampStep` hält ihn im Bereich `-2..10`).
-   * `Leertaste`: Platziert an der aktuellen Cursor-Position eine Note mit dem aktiven Notenwert (`activeDuration`, Standard: `"quarter"`).
-   * `NUM 1` bzw. Taste `1`: Schaltet den Notenwert zyklisch durch (`Ganze` → `Halbe` → `Viertel` → `Achtel` → `16tel`). Ist bereits eine Note platziert, ändert sich ihr Notenwert sofort.
-   * `Entf` (`Delete`) bzw. `Backspace`: Entfernt eine gesetzte Note wieder.
+   * `←` (`ArrowLeft`) / `→` (`ArrowRight`): Wechselt bei `maxNotes > 1` horizontal zwischen den Notenslots (auch wenn der Zielslot noch leer ist).
+   * `↑` (`ArrowUp`) / `↓` (`ArrowDown`): Verschiebt den Cursor schrittweise vertikal (`clampStep` hält ihn im Bereich `-2..10`).
+   * `Leertaste`: Platziert an der aktuellen Cursor-Position eine Note mit dem aktiven Notenwert (`activeDuration`, Standard: `"quarter"`). Bei `maxNotes > 1` springt der Cursor automatisch zum nächsten Slot weiter.
+   * `NUM 1` bzw. Taste `1`: Schaltet den Notenwert zyklisch durch (`Ganze` → `Halbe` → `Viertel` → `Achtel` → `16tel`). Wenn `lockDuration` gesetzt ist, ist diese Taste blockiert.
+   * `Entf` (`Delete`) bzw. `Backspace`: Entfernt eine gesetzte Note im aktiven Slot wieder.
 3. **Props:**
+   * `maxNotes` (Standard: `1`): Anzahl der Noten/Slots im Takt (z. B. `4` für vier Viertelnoten).
+   * `lockDuration` (Standard: `undefined`): Fester Notenwert (z. B. `"quarter"` oder `true`), blockiert Num 1 und fixiert den Notenwert.
    * `initialStep` (Standard: `4` / Mittellinie).
    * `initialDuration` (Standard: `"quarter"`).
    * `allowedDurations` (Standard: alle 5 Notenwerte).

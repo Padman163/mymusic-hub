@@ -1022,7 +1022,7 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
         <fieldset class="quiz-question notation-question notation-builder-question" data-active="true">
           <legend>1. <span class="notation-builder-prompt"></span></legend>
           <div class="notation-builder-task">
-            <NotationBuilder clef="treble" compact="wide" showHints />
+            <NotationBuilder clef="treble" compact="wide" maxNotes={4} lockDuration="quarter" showHints />
           </div>
           <div class="notation-builder-controls">
             <button type="button" class="notation-builder-lock-button">Antwort einloggen</button>
@@ -1559,52 +1559,52 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
       const fretboardNodes = [...fretboard.querySelectorAll<SVGGElement>('.note-node')];
       const previousQuestionIds = new Map<string, Set<string>>();
       const previousPatternIds = new Map<Difficulty, string>();
-      interface StaffLineTarget {
+      interface FourNotesTarget {
         id: string;
-        step: number;
-        note: string;
-        lineDescription: string;
+        steps: number[];
+        notes: string[];
         prompt: string;
       }
-      const staffLineTargets: StaffLineTarget[] = [
+      const fourNotesTargets: FourNotesTarget[] = [
         {
-          id: 'staff-line-1',
-          step: 0,
-          note: 'E',
-          lineDescription: '1. Notenlinie (E4)',
-          prompt: 'Trage die Note E ein.'
+          id: 'four-notes-egbd',
+          steps: [0, 2, 4, 6],
+          notes: ['E', 'G', 'B', 'D'],
+          prompt: 'Trage die Noten E – G – B – D ein.'
         },
         {
-          id: 'staff-line-2',
-          step: 2,
-          note: 'G',
-          lineDescription: '2. Notenlinie (G4)',
-          prompt: 'Trage die Note G ein.'
+          id: 'four-notes-gbdf',
+          steps: [2, 4, 6, 8],
+          notes: ['G', 'B', 'D', 'F'],
+          prompt: 'Trage die Noten G – B – D – F ein.'
         },
         {
-          id: 'staff-line-3',
-          step: 4,
-          note: 'B',
-          lineDescription: '3. Notenlinie (B4)',
-          prompt: 'Trage die Note B ein.'
+          id: 'four-notes-fdbg',
+          steps: [8, 6, 4, 2],
+          notes: ['F', 'D', 'B', 'G'],
+          prompt: 'Trage die Noten F – D – B – G ein.'
         },
         {
-          id: 'staff-line-4',
-          step: 6,
-          note: 'D',
-          lineDescription: '4. Notenlinie (D5)',
-          prompt: 'Trage die Note D ein.'
+          id: 'four-notes-dbge',
+          steps: [6, 4, 2, 0],
+          notes: ['D', 'B', 'G', 'E'],
+          prompt: 'Trage die Noten D – B – G – E ein.'
         },
         {
-          id: 'staff-line-5',
-          step: 8,
-          note: 'F',
-          lineDescription: '5. Notenlinie (F5)',
-          prompt: 'Trage die Note F ein.'
+          id: 'four-notes-ebgd',
+          steps: [0, 4, 2, 6],
+          notes: ['E', 'B', 'G', 'D'],
+          prompt: 'Trage die Noten E – B – G – D ein.'
+        },
+        {
+          id: 'four-notes-gedf',
+          steps: [2, 0, 6, 8],
+          notes: ['G', 'E', 'D', 'F'],
+          prompt: 'Trage die Noten G – E – D – F ein.'
         }
       ];
-      let previousStaffLineId: string | undefined;
-      let activeBuilderTarget: StaffLineTarget = staffLineTargets[2];
+      let previousFourNotesId: string | undefined;
+      let activeBuilderTarget: FourNotesTarget = fourNotesTargets[0];
 
       interface NoteValueTarget {
         id: string;
@@ -2059,16 +2059,15 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
           'aria-label',
           `DrumPattern ${pattern.timeSignature}, Auflösung ${pattern.resolution}`
         );
-        const candidateStaffLines = staffLineTargets.filter((item) => item.id !== previousStaffLineId);
-        const chosenStaffLine = shuffle(candidateStaffLines.length ? candidateStaffLines : staffLineTargets)[0];
-        previousStaffLineId = chosenStaffLine.id;
-        activeBuilderTarget = chosenStaffLine;
+        const candidateFourNotes = fourNotesTargets.filter((item) => item.id !== previousFourNotesId);
+        const chosenFourNotes = shuffle(candidateFourNotes.length ? candidateFourNotes : fourNotesTargets)[0];
+        previousFourNotesId = chosenFourNotes.id;
+        activeBuilderTarget = chosenFourNotes;
         builderPrompt.textContent = activeBuilderTarget.prompt;
         builderTask.removeAttribute('data-correct');
         if (builderQuestion) builderQuestion.removeAttribute('data-correct');
         builderFeedback.textContent = '';
-        const initialResetStep = activeBuilderTarget.step === 4 ? 2 : 4;
-        builderEl.dispatchEvent(new CustomEvent('notationbuilder:reset', { detail: { step: initialResetStep } }));
+        builderEl.dispatchEvent(new CustomEvent('notationbuilder:reset', { detail: { step: 4 } }));
 
         const candidateNoteValues = noteValueTargets.filter((item) => item.id !== previousNoteValueId);
         const chosenNoteValue = shuffle(candidateNoteValues.length ? candidateNoteValues : noteValueTargets)[0];
@@ -2113,28 +2112,71 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
       });
 
       const evaluateBuilderAnswer = (isSubmit = false): boolean => {
-        const placedStepRaw = builderEl.dataset.placedStep;
-        const placedDuration = builderEl.dataset.placedDuration;
-        const placedNote = builderEl.dataset.placedNote;
+        const placedStepsRaw = builderEl.dataset.placedSteps;
+        let placedSteps: (number | null)[] = [];
+        try {
+          if (placedStepsRaw) placedSteps = JSON.parse(placedStepsRaw);
+        } catch {
+          placedSteps = [];
+        }
+        const placedNotesRaw = builderEl.dataset.placedNotes;
+        let placedNotes: (string | null)[] = [];
+        try {
+          if (placedNotesRaw) placedNotes = JSON.parse(placedNotesRaw);
+        } catch {
+          placedNotes = [];
+        }
 
-        if (placedStepRaw === undefined) {
+        const filledCount = placedSteps.filter((s) => s !== null && s !== undefined).length;
+        const targetSteps = activeBuilderTarget.steps;
+        const targetNotesStr = activeBuilderTarget.notes.join(' – ');
+
+        if (filledCount === 0) {
           builderTask.dataset.correct = 'false';
           if (builderQuestion) builderQuestion.dataset.correct = 'false';
           builderFeedback.textContent = isSubmit
-            ? `Keine Note platziert. Gesucht: Note ${activeBuilderTarget.note} auf der ${activeBuilderTarget.lineDescription}.`
-            : `Noch keine Note platziert. Wähle eine Position und drücke die Leertaste, um eine Viertelnote zu erstellen.`;
+            ? `Keine Noten platziert. Gesucht: 4 Viertelnoten (${targetNotesStr}).`
+            : `Noch keine Noten platziert. Wähle mit ↑/↓ die Tonhöhe und setze die Noten mit der Leertaste.`;
+          return false;
+        }
+
+        if (filledCount < targetSteps.length) {
+          builderTask.dataset.correct = 'false';
+          if (builderQuestion) builderQuestion.dataset.correct = 'false';
+          builderFeedback.textContent = `Erst ${filledCount} von ${targetSteps.length} Noten platziert. Gesucht: ${targetNotesStr}. Mit ←/→ kannst du zwischen den Positionen wechseln.`;
           return false;
         }
 
         const isBuilderCorrect =
-          placedDuration === 'quarter' &&
-          Number(placedStepRaw) === activeBuilderTarget.step;
+          placedSteps.length === targetSteps.length &&
+          placedSteps.every((step, index) => {
+            if (step === null || step === undefined) return false;
+            const targetNote = activeBuilderTarget.notes[index];
+            const hasExplicitOctave = /\d/.test(targetNote);
+            if (hasExplicitOctave) {
+              const placedNoteName = placedNotes[index];
+              return (
+                placedNoteName?.toUpperCase() === targetNote.toUpperCase() ||
+                step === targetSteps[index]
+              );
+            }
+            const placedNoteName = placedNotes[index];
+            const placedLetter = placedNoteName
+              ? placedNoteName.replace(/\d+$/, '').toUpperCase()
+              : undefined;
+            const targetLetter = targetNote.replace(/\d+$/, '').toUpperCase();
+            const moduloMatch =
+              ((step % 7) + 7) % 7 === ((targetSteps[index] % 7) + 7) % 7;
+            return placedLetter ? placedLetter === targetLetter : moduloMatch;
+          });
 
         builderTask.dataset.correct = String(isBuilderCorrect);
         if (builderQuestion) builderQuestion.dataset.correct = String(isBuilderCorrect);
+        const placedNotesFormatted = placedNotes.map((n) => n ? n.replace(/\d+$/, '') : '?').join(' – ');
+
         builderFeedback.textContent = isBuilderCorrect
-          ? `Richtig! Note ${activeBuilderTarget.note} auf der ${activeBuilderTarget.lineDescription} platziert.`
-          : `Noch nicht richtig. Platziert: ${placedNote}. Gesucht: Note ${activeBuilderTarget.note} auf der ${activeBuilderTarget.lineDescription}.`;
+          ? `Richtig! Noten ${targetNotesStr} als Viertelnoten platziert.`
+          : `Noch nicht ganz richtig. Platziert: ${placedNotesFormatted}. Gesucht: ${targetNotesStr}.`;
 
         return isBuilderCorrect;
       };
