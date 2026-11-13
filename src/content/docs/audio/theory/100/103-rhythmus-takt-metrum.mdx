@@ -5,8 +5,8 @@ sidebar:
   order: 3
 ---
 
-import DrumPattern from '../../../../../components/DrumPattern.astro';
-import NotationNoteRestValues from '../../../../../components/notation/NotationNoteRestValues.astro';
+import DrumPattern from "../../../../../components/DrumPattern.astro";
+import Notation from "../../../../../components/notation/Notation.astro";
 
 Rhythmus ordnet Töne und Pausen in der Zeit. Ein regelmäßiger **Puls** hilft dir, diese Abstände zu hören und mitzuzählen. Mehrere Pulse werden zu einem **Takt** zusammengefasst; wiederkehrende Betonungen prägen das **Metrum**. Wenn du diese Ebenen auseinanderhältst, kannst du Rhythmen leichter lesen, spielen und gemeinsam mit anderen halten.
 
@@ -22,21 +22,90 @@ Notenwerte beschreiben, wie lange ein Ton im Verhältnis zu anderen Tönen dauer
   showTrackNote={false}
   useTrackColors={true}
   continuous={true}
-  stepLabels={['1', '', '', '', '2', '', '', '', '3', '', '', '', '4', '', '', '']}
+  stepLabels={[
+    "1",
+    "",
+    "",
+    "",
+    "2",
+    "",
+    "",
+    "",
+    "3",
+    "",
+    "",
+    "",
+    "4",
+    "",
+    "",
+    "",
+  ]}
   patternData={[
-    { name: 'Ganze Note', note: '4', color: '#38bdf8', activeSteps: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] },
-    { name: 'Halbe Note', note: '2', color: '#38bdf8', activeSteps: [0, 1, 2, 3, 4, 5, 6, 7] },
-    { name: 'Viertelnote', note: '1', color: '#38bdf8', activeSteps: [0, 1, 2, 3] },
-    { name: 'Achtelnote', note: '½', color: '#38bdf8', activeSteps: [0, 1] },
-    { name: 'Sechzehntelnote', note: '¼', color: '#38bdf8', activeSteps: [0] }
+    {
+      name: "Ganze Note",
+      note: "4",
+      color: "#38bdf8",
+      activeSteps: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+    },
+    {
+      name: "Halbe Note",
+      note: "2",
+      color: "#38bdf8",
+      activeSteps: [0, 1, 2, 3, 4, 5, 6, 7],
+    },
+    {
+      name: "Viertelnote",
+      note: "1",
+      color: "#38bdf8",
+      activeSteps: [0, 1, 2, 3],
+    },
+    { name: "Achtelnote", note: "½", color: "#38bdf8", activeSteps: [0, 1] },
+    { name: "Sechzehntelnote", note: "¼", color: "#38bdf8", activeSteps: [0] },
   ]}
 />
 
 Zu jedem Notenwert gehört eine **Pause gleicher Dauer**. Eine Viertelpause lässt also einen Zählschlag frei, eine Achtelpause eine halbe Zählzeit. Pausen sind ein aktiver Teil des Rhythmus: Zähle sie innerlich weiter, statt den Puls anzuhalten.
 
-Das Schaubild zeigt die Noten und die entsprechenden Pausen von links nach rechts: ganze, halbe, Viertel-, Achtel- und Sechzehntelwerte. Die ganze Pause hängt unter der vierten Linie, die halbe liegt auf der dritten Linie; gezählt wird jeweils von unten. Eine ganze Pause kann auch einen ganzen Takt unabhängig von der Taktart anzeigen.
+Das Schaubild zeigt von oben nach unten ganze, halbe, Viertel-, Achtel- und Sechzehntelwerte – jeweils links als Note und rechts daneben als entsprechende Pause. Die ganze Pause hängt unter der vierten Linie, die halbe liegt auf der dritten Linie; gezählt wird jeweils von unten. Eine ganze Pause kann auch einen ganzen Takt unabhängig von der Taktart anzeigen.
 
-<NotationNoteRestValues />
+<Notation
+  clef="treble"
+  timeSignature={{ numerator: 4, denominator: 4 }}
+  layout={2}
+  measureWidth="equal"
+  measures={[
+    {
+      notes: [{ duration: "whole", step: 2 }],
+    },
+    {
+      notes: [{ type: "rest", duration: "whole" }],
+    },
+    {
+      notes: [{ duration: "half", step: 2 }],
+    },
+    {
+      notes: [{ type: "rest", duration: "half" }],
+    },
+    {
+      notes: [{ duration: "quarter", step: 2 }],
+    },
+    {
+      notes: [{ type: "rest", duration: "quarter" }],
+    },
+    {
+      notes: [{ duration: "eighth", step: 2 }],
+    },
+    {
+      notes: [{ type: "rest", duration: "eighth" }],
+    },
+    {
+      notes: [{ duration: "sixteenth", step: 2 }],
+    },
+    {
+      notes: [{ type: "rest", duration: "sixteenth" }],
+    },
+  ]}
+/>
 
 Ein Punkt hinter einer Note oder Pause verlängert ihren Wert um die Hälfte. Eine **punktierte Viertelnote** dauert deshalb eine Viertel plus eine Achtel, also 1½ Viertelschläge. Zwei gleich lange Noten können außerdem mit einem **Haltebogen** verbunden werden: Ihre Dauern werden addiert, der Ton wird aber nur einmal angeschlagen.
 
@@ -54,12 +123,100 @@ Ein Zählschlag lässt sich in kleinere, gleichmäßige Teile unterteilen. Zwei 
   resolution="1/16 + Achteltriole"
   interactive={false}
   useTrackColors={true}
-  stepLabels={['1', 'e', '&', 'a', '2', 'e', '&', 'a', '3', 'e', '&', 'a', '4', 'e', '&', 'a']}
+  stepLabels={[
+    "1",
+    "e",
+    "&",
+    "a",
+    "2",
+    "e",
+    "&",
+    "a",
+    "3",
+    "e",
+    "&",
+    "a",
+    "4",
+    "e",
+    "&",
+    "a",
+  ]}
   patternData={[
-    { name: 'Grundpuls', note: '4×', color: '#38bdf8', activeSteps: [0, 4, 8, 12], cellLabels: ['1', '', '', '', '2', '', '', '', '3', '', '', '', '4'] },
-    { name: 'Achtel', note: '8×', color: '#38bdf8', activeSteps: [0, 2, 4, 6, 8, 10, 12, 14], cellLabels: ['1', '', '&', '', '2', '', '&', '', '3', '', '&', '', '4', '', '&'] },
-    { name: 'Sechzehntel', note: '16×', color: '#38bdf8', activeSteps: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], cellLabels: ['1', 'e', '&', 'a', '2', 'e', '&', 'a', '3', 'e', '&', 'a', '4', 'e', '&', 'a'] },
-    { name: 'Achteltriole', note: '12×', color: '#facc15', activeSteps: [], eventPositions: [0, 4 / 3, 8 / 3, 4, 16 / 3, 20 / 3, 8, 28 / 3, 32 / 3, 12, 40 / 3, 44 / 3], eventLabels: ['1', '&', 'a', '2', '&', 'a', '3', '&', 'a', '4', '&', 'a'] }
+    {
+      name: "Grundpuls",
+      note: "4×",
+      color: "#38bdf8",
+      activeSteps: [0, 4, 8, 12],
+      cellLabels: ["1", "", "", "", "2", "", "", "", "3", "", "", "", "4"],
+    },
+    {
+      name: "Achtel",
+      note: "8×",
+      color: "#38bdf8",
+      activeSteps: [0, 2, 4, 6, 8, 10, 12, 14],
+      cellLabels: [
+        "1",
+        "",
+        "&",
+        "",
+        "2",
+        "",
+        "&",
+        "",
+        "3",
+        "",
+        "&",
+        "",
+        "4",
+        "",
+        "&",
+      ],
+    },
+    {
+      name: "Sechzehntel",
+      note: "16×",
+      color: "#38bdf8",
+      activeSteps: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+      cellLabels: [
+        "1",
+        "e",
+        "&",
+        "a",
+        "2",
+        "e",
+        "&",
+        "a",
+        "3",
+        "e",
+        "&",
+        "a",
+        "4",
+        "e",
+        "&",
+        "a",
+      ],
+    },
+    {
+      name: "Achteltriole",
+      note: "12×",
+      color: "#facc15",
+      activeSteps: [],
+      eventPositions: [
+        0,
+        4 / 3,
+        8 / 3,
+        4,
+        16 / 3,
+        20 / 3,
+        8,
+        28 / 3,
+        32 / 3,
+        12,
+        40 / 3,
+        44 / 3,
+      ],
+      eventLabels: ["1", "&", "a", "2", "&", "a", "3", "&", "a", "4", "&", "a"],
+    },
   ]}
 />
 
@@ -95,7 +252,7 @@ Ein **Auftakt** beginnt vor dem ersten vollständigen Takt. Er enthält meist nu
 
 **Wiederholungszeichen** zeigen an, dass ein Abschnitt erneut gespielt wird. Ein doppelter Taktstrich mit Punkten markiert Anfang oder Ende der Wiederholung. Gibt es zwei Schlussvarianten, führen die Klammern mit den Zahlen 1 und 2 durch den ersten und den zweiten Durchgang.
 
-Das **Tempo** gibt an, wie schnell der Grundpuls ist. Es wird in **BPM** (*beats per minute*, Schläge pro Minute) angegeben: Bei 60 BPM liegt eine Zählzeit pro Sekunde, bei 120 BPM zwei. Welche Notenlänge als Schlag zählt, hängt von der Tempoangabe und vom Metrum ab.
+Das **Tempo** gibt an, wie schnell der Grundpuls ist. Es wird in **BPM** (_beats per minute_, Schläge pro Minute) angegeben: Bei 60 BPM liegt eine Zählzeit pro Sekunde, bei 120 BPM zwei. Welche Notenlänge als Schlag zählt, hängt von der Tempoangabe und vom Metrum ab.
 
 Ein Metronom gibt den Puls gleichmäßig vor. Beginne beim Üben mit einem Tempo, in dem du den Rhythmus sauber zählen und spielen kannst. Tippe den Puls mit dem Fuß oder sprich die Unterteilungen laut mit. Steigere das Tempo erst, wenn die Abstände stabil bleiben.
 
@@ -110,8 +267,9 @@ Auch eine **Phrasenpause** gehört zum Rhythmus. Sie schafft Platz zwischen musi
 Wie du Legato und Staccato spielst, wird in [102: Mechanik, Haltung & Anschlag](/audio/theory/100/102-mechanik-haltung-anschlag/) erklärt; die zugehörigen Notationszeichen findest du in [104: Notensystem & Tabulatur](/audio/theory/100/104-tabulatur-notensystem/).
 
 :::tip[Rhythmus üben]
+
 - Klatsche oder spiele zuerst nur den Grundpuls und zähle die Takte mit.
 - Sprich danach die Unterteilungen gleichmäßig dazu, auch während Pausen.
 - Übe einen Rhythmus langsam mit Metronom und achte darauf, dass die Schläge nicht schneller oder langsamer werden.
 - Setze Akzente bewusst und beende Töne kontrolliert, statt jede Note gleich lang klingen zu lassen.
-:::
+  :::

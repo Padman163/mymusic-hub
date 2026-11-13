@@ -1,13 +1,15 @@
 ---
 import {
+  type MeasureHairpin,
+  measureNumberOffset,
   type NotationAccidental,
   type NotationCurve,
   type NotationEvent,
   renderNotationSvg,
+  sp,
 } from "../../lib/notation-renderer";
 import "../../styles/notation.css";
 import type { TimeSignature } from "../../lib/time-signature.ts";
-import DynamicsMarks from "../ui/DynamicsMarks.astro";
 import FinalBar from "../ui/FinalBar.astro";
 import MeasureNumber from "../ui/MeasureNumber.astro";
 import TempoLabel from "../ui/TempoLabel.astro";
@@ -22,17 +24,18 @@ interface Props {
   notes?: NotationEvent[];
   accidentals?: NotationAccidental[];
   timeSignature?: TimeSignature;
+  layoutTimeSignature?: TimeSignature;
   curves?: NotationCurve[];
   measureNumber?: string | number;
   tempo?: string;
   tempoDetail?: string;
   ritAt?: number;
   aTempoAt?: number;
-  hairpin?: "crescendo" | "decrescendo";
+  hairpin?: MeasureHairpin;
+  hairpins?: MeasureHairpin[];
   initialDynamic?: "piano" | "forte";
   noteStart?: number;
   firstNoteX?: number;
-  spacing?: "rhythmic" | "equal";
   embedded?: boolean;
 }
 
@@ -46,6 +49,7 @@ const {
   notes = [],
   accidentals = [],
   timeSignature,
+  layoutTimeSignature,
   curves = [],
   measureNumber,
   tempo,
@@ -53,42 +57,65 @@ const {
   ritAt,
   aTempoAt,
   hairpin,
-  initialDynamic,
+  hairpins,
   noteStart = 0,
   firstNoteX,
-  spacing,
   embedded = false,
 } = Astro.props;
+
+const hasDynamicsBelow =
+  Boolean(hairpin) ||
+  Boolean(hairpins && hairpins.length > 0) ||
+  notes.some(
+    (note) =>
+      note.type !== "rest" &&
+      Boolean(
+        note.dynamic ||
+          note.dynamicText ||
+          note.hairpinStart ||
+          note.hairpinEnd,
+      ),
+  );
+
+const measureOffset = measureNumberOffset({
+  clef: clef || undefined,
+  timeSignature,
+  accidentals,
+  repeatStart,
+});
 
 const notation = renderNotationSvg({
   clef: clef || undefined,
   notes,
   accidentals,
   timeSignature,
+  layoutTimeSignature,
   noteStart,
   firstNoteX,
-  spacing,
   showLeftBar,
   showRightBar,
   rightBarStyle,
   repeatStart,
   repeatEnd,
   curves,
+  hairpin,
+  hairpins,
   ritAt,
   aTempoAt,
 });
 ---
 
-<div class:list={['notation-visual', 'not-content', { embedded, 'has-header': Boolean(tempo), 'has-measure-number': measureNumber !== undefined, 'has-hairpin': Boolean(hairpin) }]} data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
-  {measureNumber !== undefined && <MeasureNumber value={measureNumber} embedded />}
+<div class:list={['notation-visual', 'not-content', { embedded, 'has-clef': Boolean(clef), 'has-header': Boolean(tempo), 'has-measure-number': measureNumber !== undefined, 'has-hairpin': hasDynamicsBelow }]} data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
+  {measureNumber !== undefined && <MeasureNumber value={measureNumber} embedded offsetPx={measureOffset} />}
   {tempo && (
     <div class="notation-header">
       <TempoLabel text={tempo} detail={tempoDetail} />
     </div>
   )}
-  <Fragment set:html={notation} />
-  {hairpin && <DynamicsMarks type={hairpin} initialDynamic={initialDynamic} placement="overlay" />}
-  {showRightBar && rightBarStyle === 'final' && !repeatEnd && (
-    <div class="notation-final-bar"><FinalBar height={36} /></div>
-  )}
+  <div class="notation-staff-content">
+    <Fragment set:html={notation} />
+    {showRightBar && rightBarStyle === 'final' && !repeatEnd && (
+      <div class="notation-final-bar"><FinalBar height={sp(4)} /></div>
+    )}
+  </div>
 </div>

@@ -120,7 +120,7 @@ export default defineConfig({
                   slug: "audio/referenzen-werkzeuge/hardware",
                 },
                 {
-                  label: "Visualisierungen erklärt",
+                  label: "Features",
                   collapsed: true,
                   items: [
                     {
@@ -128,7 +128,7 @@ export default defineConfig({
                       slug: "audio/referenzen-werkzeuge/visualisierungen-erklaert",
                     },
                     {
-                      label: "Notensystem",
+                      label: "Notation.astro",
                       slug: "audio/referenzen-werkzeuge/visualisierungen-erklaert/notensystem",
                     },
                   ],

@@ -53,84 +53,33 @@
 
 .notation-measure-number {
   position: absolute;
-  top: calc(var(--notation-panel-padding, 1.5rem) + 13px);
-  left: calc(var(--notation-panel-padding, 1.5rem) + 2px);
+  top: calc(var(--notation-panel-padding, 1.5rem) + 10px);
+  left: calc(
+    var(--notation-panel-padding, 1.5rem) + var(--measure-number-offset, 4px)
+  );
   color: #111827;
   font:
     10px / 1 Georgia,
     serif;
 }
 
+.notation-visual.has-clef > .notation-measure-number {
+  left: calc(
+    var(--notation-panel-padding, 1.5rem) + var(--measure-number-offset, 36px)
+  );
+}
+
 .notation-measure-number.embedded {
-  top: 13px;
-  left: 2px;
+  top: 10px;
+  left: var(--measure-number-offset, 4px);
+}
+
+.notation-visual.has-clef > .notation-measure-number.embedded {
+  left: var(--measure-number-offset, 36px);
 }
 
 .final-bar {
   display: block;
   overflow: visible;
   fill: #111827;
-}
-
-.dynamics-marks {
-  --dynamics-mark-gap: 12px;
-  --dynamics-hairpin-gap: 22px;
-  --dynamics-label-gap: 36px;
-  --dynamics-symbol-inset: 20px;
-  position: absolute;
-  inset: 0;
-  color: #111827;
-}
-
-.dynamic-word,
-.dynamic-mark,
-.hairpin {
-  position: absolute;
-  color: #111827;
-}
-
-.dynamic-word {
-  top: calc(var(--dynamics-staff-bottom, 0px) + var(--dynamics-label-gap));
-  left: calc(20% - 6px);
-  font:
-    italic var(--music-text-size) / 1 Georgia,
-    serif;
-}
-
-.dynamic-mark {
-  top: calc(var(--dynamics-staff-bottom, 0px) + var(--dynamics-mark-gap));
-  font:
-    var(--music-symbol-size) / 1 "NotationBravura",
-    sans-serif;
-}
-
-.dynamic-start {
-  right: calc(80% + var(--dynamics-symbol-inset));
-}
-
-.dynamic-end {
-  left: calc(80% + var(--dynamics-symbol-inset));
-}
-
-.hairpin {
-  top: calc(var(--dynamics-staff-bottom, 0px) + var(--dynamics-hairpin-gap));
-  left: calc(20% - 6px);
-  width: calc(60% + 12px);
-  height: 10px;
-  overflow: visible;
-  stroke: currentColor;
-  stroke-width: 1;
-}
-
-.placement-overlay {
-  top: var(--notation-dynamics-top, 0px);
-  right: 0;
-  bottom: auto;
-  left: 0;
-  height: 48px;
-  --dynamics-staff-bottom: 0px;
-}
-
-.placement-overlay .dynamic-word {
-  left: calc(20% - 6px);
 }

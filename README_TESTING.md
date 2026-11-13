@@ -141,6 +141,7 @@ npx @biomejs/biome check --write .
   npm run audit
   # Fix, falls nötig
   npm audit fix
+  npm audit fix --force
 
   # Verifizieren, dass .env nicht im Git-Index getrackt wird - Leere Ausgabe ist gut!
   git ls-files .env

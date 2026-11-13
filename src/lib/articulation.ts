@@ -17,8 +17,12 @@ export const articulationSymbols: Record<
   marcato: { above: "\uE4AC", below: "\uE4AD", label: "Marcato" },
 };
 
-export function articulationY(noteEdgeY: number, placement: Placement): number {
-  return noteEdgeY + (placement === "above" ? -6 : 6);
+export function articulationY(
+  noteEdgeY: number,
+  placement: Placement,
+  gap: number,
+): number {
+  return noteEdgeY + (placement === "above" ? -gap : gap);
 }
 
 export function articulationPlacement(
@@ -26,7 +30,9 @@ export function articulationPlacement(
   stemUp: boolean,
   requested?: Placement,
 ): Placement {
-  return hasStem && !stemUp ? "above" : (requested ?? "above");
+  if (hasStem && !stemUp) return "above";
+  if (requested) return requested;
+  return hasStem && stemUp ? "below" : "above";
 }
 
 export function renderArticulation(

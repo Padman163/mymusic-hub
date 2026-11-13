@@ -266,25 +266,30 @@
   {
     "id": "09c3b1bf-31b0-424b-99fe-b5ce2151dfe2",
     "type": "Feature",
-    "title": "Interaktive Notations-Komponente",
+    "title": "Interaktive Notations/Tab/Pattern-Komponente",
     "description": "Eintragen von Noten in 3 Schwierigkeitsstufen (Gitarren-TAB, Violinschlüssel, Bassschlüssel).",
     "area": "Theorie",
     "checklist": [
       {
-        "text": "Komponente <InteractiveScoreTrainer/> anlegen",
+        "text": "Komponente für Notation entwickeln",
         "checked": false
       },
       {
-        "text": "AlphaTab / SVG-Canvas zur Eingabevalidierung einbinden",
+        "text": "Komponente für Tab entwickeln",
         "checked": false
       },
       {
-        "text": "Level-Auswahl (Stufe 1 bis 3) programmieren",
+        "text": "Komponente für Klaviatur entwickeln",
+        "checked": false
+      },
+      {
+        "text": "Komponente für Pattenr anpassen",
         "checked": false
       }
     ],
     "status": "New",
-    "createdAt": "2026-11-06T16:16:38.793Z"
+    "createdAt": "2026-11-06T16:16:38.793Z",
+    "priority": "Mittel"
   },
   {
     "id": "e482025a-dadc-41ca-994c-1d21f2fe8c2b",
@@ -333,5 +338,67 @@
     "status": "New",
     "createdAt": "2026-11-06T16:17:39.475Z",
     "priority": "Mittel"
+  },
+  {
+    "id": "ba07ff31-ff44-438d-9e18-b193f2f0a4bf",
+    "type": "Feature",
+    "title": "Beiträge dürfen nicht in main gepostet werden",
+    "description": "Solange Beiträge in einer .json im Programm stehen, müssen sie in eine branch der nicht main ist gespeichert werden, sonst wird jedes mal main gepusht",
+    "area": "Komponente",
+    "priority": "Hoch",
+    "checklist": [
+      {
+        "text": "Komplett anderen Ansatz verfolgen, wie DB",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-12T14:22:10.472Z"
+  },
+  {
+    "id": "8c0f8d22-7cef-4494-a0fc-da71ee2416ad",
+    "type": "Feature",
+    "title": "Notation komplett in Quiz einbinden",
+    "description": "",
+    "area": "Theorie",
+    "priority": "Mittel",
+    "checklist": [
+      {
+        "text": "Theorieteil",
+        "checked": false
+      },
+      {
+        "text": "Quiz",
+        "checked": false
+      },
+      {
+        "text": "Praxisübungen",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-12T14:24:58.752Z"
+  },
+  {
+    "id": "85b11932-b208-4d97-91eb-f6fca160fc28",
+    "type": "Decision",
+    "title": "Was solltest du zu diesem Zeitpunkt beherrschen",
+    "description": "In Verbindung mit Quiz",
+    "area": "Theorie",
+    "priority": "Niedrig",
+    "checklist": [],
+    "status": "New",
+    "createdAt": "2026-11-12T14:25:29.972Z"
+  },
+  {
+    "id": "439450f0-e675-4cf9-ab7c-14030dfc1594",
+    "type": "Bug",
+    "title": "Überarbeitung notation.mdx",
+    "description": "",
+    "area": "Theorie",
+    "priority": "Mittel",
+    "checklist": [],
+    "status": "New",
+    "createdAt": "2026-11-13T00:35:15.710Z"
   }
 ]

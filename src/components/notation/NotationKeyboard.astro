@@ -1,4 +1,5 @@
 ---
+import { sp } from "../../lib/notation-renderer.ts";
 import FinalBar from "../ui/FinalBar.astro";
 import NotationVisual from "./NotationVisual.astro";
 
@@ -19,9 +20,9 @@ const { showBrace = true, rightBarStyle = "final" } = Astro.props;
   <div class="keyboard-staves">
     <NotationVisual embedded clef="treble" showRightBar={rightBarStyle === 'single'} notes={[{ type: 'filled', step: -2 }]} />
     <NotationVisual embedded clef="bass" showRightBar={rightBarStyle === 'single'} notes={[{ type: 'filled', step: 10 }]} />
-    <svg class="keyboard-left-bar" width="1" height="90" aria-hidden="true">
-      <line x1="0.5" y1="0" x2="0.5" y2="90" />
+    <svg class="keyboard-left-bar" width="1" height={sp(4) + 54} aria-hidden="true">
+      <line x1="0.5" y1="0" x2="0.5" y2={sp(4) + 54} />
     </svg>
-    {rightBarStyle === 'final' && <div class="keyboard-final-bar"><FinalBar height={90} /></div>}
+    {rightBarStyle === 'final' && <div class="keyboard-final-bar"><FinalBar height={sp(4) + 54} /></div>}
   </div>
 </div>

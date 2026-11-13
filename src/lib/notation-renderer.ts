@@ -11,6 +11,17 @@ import {
   renderRepeatStart,
 } from "./barline.ts";
 import { type MusicCurve, renderCurve, validateCurves } from "./curve.ts";
+import {
+  dynamicSymbols,
+  type Hairpin,
+  type MeasureHairpin,
+  type NotationDynamic,
+  renderDynamicMark,
+  renderDynamicText,
+  renderHairpinSvg,
+  resolveHairpinRange,
+} from "./dynamics.ts";
+import { layoutNotationEvents } from "./notation-layout.ts";
 import { renderRest, restSymbols } from "./rest.ts";
 import {
   collectBeamGroups,
@@ -32,7 +43,23 @@ import {
 } from "./time-signature.ts";
 
 export type NotationDuration = Duration;
+export const SPATIUM = 10;
+export const sp = (val: number) => val * SPATIUM;
+
+const NOTE_WIDTH = sp(1.35);
+const NOTE_HEIGHT = sp(1.0);
+const STEM_WIDTH = sp(0.12);
+const STEM_LEN = sp(3.5);
+const MIN_STEM_LEN = sp(2.5);
+const BEAM_WIDTH = sp(0.5);
+const LEDGER_OVERHANG = sp(0.5);
+const STAFF_BOTTOM = 64;
+const STAFF_TOP = STAFF_BOTTOM - sp(4);
+const STAFF_MIDDLE = STAFF_BOTTOM - sp(2);
+const stepY = (step: number) => STAFF_BOTTOM - step * sp(0.5);
+
 export type NotationArticulation = Articulation;
+export type { Hairpin, MeasureHairpin, NotationDynamic } from "./dynamics.ts";
 export type NotationClef = "treble" | "bass";
 export type NotationAccidental = {
   type: "sharp" | "natural" | "flat";
@@ -46,6 +73,10 @@ export type NotationNote =
       articulation?: NotationArticulation;
       articulationPosition?: "above" | "below";
       accidental?: "sharp" | "natural" | "flat";
+      dynamic?: NotationDynamic;
+      dynamicText?: string;
+      hairpinStart?: Hairpin;
+      hairpinEnd?: boolean;
       duration?: never;
       beamGroup?: never;
       dotted?: never;
@@ -57,6 +88,10 @@ export type NotationNote =
       articulation?: NotationArticulation;
       articulationPosition?: "above" | "below";
       accidental?: "sharp" | "natural" | "flat";
+      dynamic?: NotationDynamic;
+      dynamicText?: string;
+      hairpinStart?: Hairpin;
+      hairpinEnd?: boolean;
       dotted?: boolean;
       type?: never;
       stem?: never;
@@ -72,6 +107,10 @@ export type NotationRest = {
   articulation?: never;
   articulationPosition?: never;
   accidental?: never;
+  dynamic?: never;
+  dynamicText?: never;
+  hairpinStart?: never;
+  hairpinEnd?: never;
 };
 export type NotationEvent = NotationNote | NotationRest;
 
@@ -82,15 +121,17 @@ export interface NotationRenderOptions {
   notes?: NotationEvent[];
   accidentals?: NotationAccidental[];
   timeSignature?: TimeSignature;
+  layoutTimeSignature?: TimeSignature;
   noteStart?: number;
   firstNoteX?: number;
-  spacing?: "rhythmic" | "equal";
   showLeftBar?: boolean;
   showRightBar?: boolean;
   rightBarStyle?: "single" | "final";
   repeatStart?: boolean;
   repeatEnd?: boolean;
   curves?: NotationCurve[];
+  hairpin?: MeasureHairpin;
+  hairpins?: MeasureHairpin[];
   ritAt?: number;
   aTempoAt?: number;
   label?: string;
@@ -118,8 +159,33 @@ const accidentalSymbols = {
   flat: { glyph: "\uE260", label: "b-Vorzeichen" },
 } as const;
 
-const noteHeadHalfWidth = 6.5;
-const accidentalNoteGap = 4;
+const noteHeadHalfWidth = NOTE_WIDTH / 2;
+const defaultNoteHeadGap = NOTE_WIDTH * 1.5;
+const accidentalNoteGap = sp(0.6);
+const dotRadius = 1.5;
+
+function eventExtents(event: NotationEvent): { left: number; right: number } {
+  if (event.type === "rest") {
+    return {
+      left: sp(0.85),
+      right: (event.dotted ? sp(1) + dotRadius : sp(0.65)) + sp(0.2),
+    };
+  }
+  const ledger = event.step === -2 || event.step === 10 ? LEDGER_OVERHANG : 0;
+  const left =
+    noteHeadHalfWidth +
+    Math.max(ledger, event.accidental ? accidentalNoteGap + sp(1) : 0);
+  const flagged =
+    !event.beamGroup &&
+    (event.duration === "eighth" || event.duration === "sixteenth") &&
+    event.step < 4;
+  const right = Math.max(
+    noteHeadHalfWidth +
+      Math.max(ledger, event.dotted ? sp(0.6) + 2 * dotRadius : 0),
+    flagged ? noteHeadHalfWidth + sp(1.3) : 0,
+  );
+  return { left: left + sp(0.2), right: right + sp(0.2) };
+}
 
 function prefixGeometry(
   clef: NotationClef | undefined,
@@ -138,7 +204,7 @@ function prefixGeometry(
     : timeSignature
       ? timeEnd
       : clef
-        ? 36
+        ? 36 + sp(1)
         : 0;
   const prefixEnd = Math.max(
     clef ? 36 : 0,
@@ -147,6 +213,27 @@ function prefixGeometry(
     repeatStart ? repeatStartX + 12 : 0,
   );
   return { accidentalStart, timeStart, repeatStartX, prefixEnd };
+}
+
+export function measureNumberOffset(
+  options: Pick<
+    NotationRenderOptions,
+    "clef" | "timeSignature" | "accidentals" | "repeatStart"
+  > = {},
+): number {
+  const {
+    clef,
+    timeSignature,
+    accidentals = [],
+    repeatStart = false,
+  } = options;
+  const { prefixEnd } = prefixGeometry(
+    clef,
+    accidentals,
+    timeSignature,
+    repeatStart,
+  );
+  return prefixEnd > 0 ? prefixEnd : 4;
 }
 
 export function minimumFirstNoteX(
@@ -173,7 +260,35 @@ export function minimumFirstNoteX(
     prefixGeometry(clef, accidentals, timeSignature, repeatStart).prefixEnd,
     noteStart,
   );
+  if (clef || timeSignature || accidentals.length || repeatStart) {
+    return (
+      prefixEnd +
+      sp(1.8) +
+      (notes[0] ? eventExtents(notes[0]).left : noteHeadHalfWidth)
+    );
+  }
   return prefixEnd + 10 + (notes[0]?.accidental ? 16 : 0);
+}
+
+export function defaultFirstNoteX(
+  options: Parameters<typeof minimumFirstNoteX>[0],
+): number {
+  const first = options.notes?.[0];
+  const minimum = minimumFirstNoteX(options);
+  if (!first) return minimum;
+  const prefixEnd = Math.max(
+    prefixGeometry(
+      options.clef,
+      options.accidentals ?? [],
+      options.timeSignature,
+      options.repeatStart ?? false,
+    ).prefixEnd,
+    options.noteStart ?? 0,
+  );
+  return Math.max(
+    minimum,
+    prefixEnd + defaultNoteHeadGap + eventExtents(first).left - sp(0.2),
+  );
 }
 
 export function renderNotationSvg(options: NotationRenderOptions): string {
@@ -182,21 +297,23 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     notes = [],
     accidentals = [],
     timeSignature,
-    noteStart = 0,
+    layoutTimeSignature,
     firstNoteX,
-    spacing = "rhythmic",
     showLeftBar = false,
     showRightBar = true,
     rightBarStyle = "single",
     repeatStart = false,
     repeatEnd = false,
     curves = [],
+    hairpin,
+    hairpins,
     ritAt,
     aTempoAt,
     label,
   } = options;
 
   if (timeSignature) validateTimeSignature(timeSignature);
+  if (layoutTimeSignature) validateTimeSignature(layoutTimeSignature);
   if (
     firstNoteX !== undefined &&
     (!Number.isFinite(firstNoteX) || firstNoteX < minimumFirstNoteX(options))
@@ -216,7 +333,11 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
         "beamGroup" in note ||
         "articulation" in note ||
         "articulationPosition" in note ||
-        "accidental" in note
+        "accidental" in note ||
+        "dynamic" in note ||
+        "dynamicText" in note ||
+        "hairpinStart" in note ||
+        "hairpinEnd" in note
       ) {
         throw new Error(
           "Pausen dürfen keine Notenhöhe, Hälse, Balkengruppen, Artikulationen oder Vorzeichen haben.",
@@ -227,8 +348,58 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     if (!Number.isInteger(note.step) || note.step < -2 || note.step > 10) {
       throw new Error(`Ungültige Notenposition: ${note.step}.`);
     }
+    if (note.dynamic !== undefined && !dynamicSymbols[note.dynamic]) {
+      throw new Error(`Ungültiges Dynamikzeichen: ${String(note.dynamic)}.`);
+    }
   });
   validateTempoChanges({ ritAt, aTempoAt }, notes.length);
+
+  const noteHairpins: MeasureHairpin[] = [];
+  if (hairpins === undefined) {
+    let activeStart: { type: Hairpin; index: number } | undefined;
+    notes.forEach((note, index) => {
+      if (note.type === "rest") return;
+      if (note.hairpinEnd) {
+        if (!activeStart) {
+          throw new Error(
+            '"hairpinEnd: true" benötigt ein vorangehendes "hairpinStart".',
+          );
+        }
+        if (activeStart.index === index) {
+          throw new Error(
+            "Eine Dynamikgabel muss sich über mindestens zwei Noten erstrecken.",
+          );
+        }
+        noteHairpins.push({
+          type: activeStart.type,
+          from: activeStart.index,
+          to: index,
+        });
+        activeStart = undefined;
+      }
+      if (note.hairpinStart) {
+        if (activeStart) {
+          throw new Error(
+            'Vor einem neuen "hairpinStart" muss die vorherige Dynamikgabel mit "hairpinEnd: true" beendet werden.',
+          );
+        }
+        activeStart = { type: note.hairpinStart, index };
+      }
+    });
+    if (activeStart) {
+      throw new Error(
+        'Für "hairpinStart" fehlt ein passendes "hairpinEnd: true".',
+      );
+    }
+  }
+
+  const allHairpins: MeasureHairpin[] = [
+    ...(hairpin !== undefined ? [hairpin] : []),
+    ...(hairpins ?? noteHairpins),
+  ];
+  const resolvedHairpins = allHairpins.map((item) =>
+    resolveHairpinRange(item, notes.length),
+  );
   const groups = collectBeamGroups(notes);
   validateCurves(curves, notes.length);
   curves.forEach(({ from, to, type }) => {
@@ -256,71 +427,120 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
 
   const clefGlyph =
     clef === "treble" ? "\uE050" : clef === "bass" ? "\uE062" : undefined;
-  const clefY = clef === "bass" ? 37 : 55;
+  const clefY = clef === "bass" ? STAFF_TOP + sp(1) : STAFF_BOTTOM - sp(1);
   const { accidentalStart, timeStart, repeatStartX, prefixEnd } =
     prefixGeometry(clef, accidentals, timeSignature, repeatStart);
   const timeWidth = timeSignature ? timeSignatureWidth(timeSignature) : 0;
+  const repeatEndInset = repeatEnd ? 16 : 0;
+  const lastNote = notes[notes.length - 1];
+  const wholeMeasureRest =
+    notes.length === 1 &&
+    lastNote.type === "rest" &&
+    lastNote.duration === "whole" &&
+    !lastNote.dotted;
   const noteInset =
     firstNoteX ??
-    Math.max(
-      noteStart,
-      prefixEnd + (timeSignature || accidentals.length ? 10 : 0),
+    (wholeMeasureRest &&
+    !clef &&
+    !timeSignature &&
+    !accidentals.length &&
+    !repeatStart
+      ? Math.max(options.noteStart ?? 0, prefixEnd)
+      : defaultFirstNoteX(options));
+  const endingMarkInset = repeatEnd
+    ? repeatEndInset
+    : showRightBar && rightBarStyle === "final"
+      ? 8
+      : 0;
+  const rhythm = rhythmicPositions(notes, layoutTimeSignature ?? timeSignature);
+  const endInset =
+    wholeMeasureRest || !lastNote
+      ? repeatEndInset
+      : rhythm && !rhythm.overfull
+        ? endingMarkInset
+        : endingMarkInset +
+          defaultNoteHeadGap +
+          eventExtents(lastNote).right -
+          sp(0.2);
+  const positions = layoutNotationEvents(notes, {
+    noteInset,
+    endInset,
+    rhythmicPositions: rhythm?.positions,
+  });
+  const notePosition = (index: number) => positions[index];
+  let minimumWidth = notes.reduce((minimum, note, index) => {
+    if (index === 0) return minimum;
+    const distance =
+      eventExtents(notes[index - 1]).right + sp(1) + eventExtents(note).left;
+    const fraction = positions[index].fraction - positions[index - 1].fraction;
+    return Math.max(minimum, noteInset + endInset + distance / fraction);
+  }, noteInset + endInset);
+  if (lastNote && positions[positions.length - 1].fraction < 1) {
+    const last = positions[positions.length - 1];
+    minimumWidth = Math.max(
+      minimumWidth,
+      (last.offset +
+        eventExtents(lastNote).right +
+        sp(wholeMeasureRest ? 1.5 : 1) +
+        endingMarkInset) /
+        (1 - last.fraction),
     );
-  const repeatEndInset = repeatEnd ? 16 : 0;
-  const rhythmic =
-    spacing === "rhythmic" ? rhythmicPositions(notes) : undefined;
-  const notePosition = (index: number) => {
-    const wholeMeasureRest =
-      notes.length === 1 &&
-      notes[0].type === "rest" &&
-      notes[0].duration === "whole" &&
-      !notes[0].dotted;
-    const centered =
-      wholeMeasureRest || (firstNoteX === undefined && notes.length === 1);
-    const start = firstNoteX === undefined ? 1 / (notes.length + 1) : 0;
-    const fraction = centered
-      ? 0.5
-      : rhythmic
-        ? start + (1 - start) * rhythmic[index]
-        : firstNoteX === undefined
-          ? (index + 1) / (notes.length + 1)
-          : index / notes.length;
-    return {
-      percent: `${fraction * 100}%`,
-      fraction,
-      offset: noteInset * (1 - fraction) - repeatEndInset * fraction,
-    };
-  };
+  }
   const beamStemEnds = new Map<number, number>();
-  const beamStemDirections = new Map<number, boolean>();
   groups.forEach((group) => {
     const steps = group.indices.map((index) => pitchedNote(index).step);
-    const stemUp =
-      steps.reduce((sum, step) => sum + step, 0) / steps.length < 4;
+    const stemUp = steps[0] < 4;
+    const mixedDirections = steps.some((step) => step < 4 !== stemUp);
     const firstIndex = group.indices[0];
     const lastIndex = group.indices[group.indices.length - 1];
+    if (mixedDirections) {
+      group.indices.forEach((index) => {
+        const note = pitchedNote(index);
+        const y = stepY(note.step);
+        beamStemEnds.set(
+          index,
+          note.step < 4
+            ? Math.min(y - STEM_LEN, STAFF_MIDDLE)
+            : Math.max(y + STEM_LEN, STAFF_MIDDLE),
+        );
+      });
+      return;
+    }
     const firstY =
-      64 - pitchedNote(firstIndex).step * 4.5 + (stemUp ? -31.5 : 31.5);
+      stepY(pitchedNote(firstIndex).step) + (stemUp ? -STEM_LEN : STEM_LEN);
     const lastY =
-      64 - pitchedNote(lastIndex).step * 4.5 + (stemUp ? -31.5 : 31.5);
+      stepY(pitchedNote(lastIndex).step) + (stemUp ? -STEM_LEN : STEM_LEN);
     const firstFraction = notePosition(firstIndex).fraction;
     const lastFraction = notePosition(lastIndex).fraction;
-    group.indices.forEach((index) => {
+    const stemEnds = group.indices.map((index) => {
       const progress =
         (notePosition(index).fraction - firstFraction) /
         (lastFraction - firstFraction);
-      beamStemEnds.set(index, firstY + (lastY - firstY) * progress);
-      beamStemDirections.set(index, stemUp);
+      return firstY + (lastY - firstY) * progress;
+    });
+    const adjustment = Math.max(
+      0,
+      ...group.indices.map((index, i) => {
+        const length =
+          (stemEnds[i] - stepY(pitchedNote(index).step)) * (stemUp ? -1 : 1);
+        const middleLength = stemUp
+          ? stepY(pitchedNote(index).step) - STAFF_MIDDLE
+          : STAFF_MIDDLE - stepY(pitchedNote(index).step);
+        return Math.max(MIN_STEM_LEN, middleLength, length) - length;
+      }),
+    );
+    group.indices.forEach((index, i) => {
+      beamStemEnds.set(
+        index,
+        stemEnds[i] + (stemUp ? -adjustment : adjustment),
+      );
     });
   });
-  const articulationPosition = (
-    note: NotationNote,
-    index: number,
-  ): "above" | "below" => {
+  const articulationPosition = (note: NotationNote): "above" | "below" => {
     const hasStem = note.duration
       ? note.duration !== "whole"
       : note.stem === true;
-    const stemUp = beamStemDirections.get(index) ?? note.step < 4;
+    const stemUp = note.step < 4;
     return articulationPlacement(hasStem, stemUp, note.articulationPosition);
   };
 
@@ -339,7 +559,7 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
   if (ritAt !== undefined) description.push(`rit. bei Note ${ritAt + 1}`);
   if (aTempoAt !== undefined)
     description.push(`a tempo bei Note ${aTempoAt + 1}`);
-  notes.forEach((note, index) => {
+  notes.forEach((note) => {
     if (note.type === "rest") {
       description.push(
         `${note.dotted ? "Punktierte " : ""}${restSymbols[note.duration].label}`,
@@ -352,33 +572,39 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
         ? "gefüllter Notenkopf"
         : "ungefüllter Notenkopf";
     const articulation = note.articulation
-      ? ` mit ${articulationSymbols[note.articulation].label}${articulationPosition(note, index) === "below" ? " unterhalb" : ""}`
+      ? ` mit ${articulationSymbols[note.articulation].label}${articulationPosition(note) === "below" ? " unterhalb" : ""}`
       : "";
     description.push(`${name} auf Position ${note.step}${articulation}`);
   });
 
   const parts = [
-    `<svg class="notation-staff" height="92" role="img" aria-label="${escapeXml(label ?? `${notes.length || accidentals.length ? "Notensystem" : "Leeres Notensystem"} mit fünf Linien${description.length ? `; ${description.join("; ")}` : ""}`)}" xmlns="http://www.w3.org/2000/svg">`,
-    ...[28, 37, 46, 55, 64].map(
+    `<svg class="notation-staff" height="92" style="--notation-spatium:${SPATIUM}px;min-width:${Math.ceil(minimumWidth)}px" role="img" aria-label="${escapeXml(label ?? `${notes.length || accidentals.length ? "Notensystem" : "Leeres Notensystem"} mit fünf Linien${description.length ? `; ${description.join("; ")}` : ""}`)}" xmlns="http://www.w3.org/2000/svg">`,
+    ...Array.from({ length: 5 }, (_, i) => STAFF_TOP + i * sp(1)).map(
       (y) => `<line x1="0" y1="${y}" x2="100%" y2="${y}" />`,
     ),
   ];
 
-  if (showLeftBar) parts.push(renderBarLine(0, 28, 64));
+  if (showLeftBar) parts.push(renderBarLine(0, STAFF_TOP, STAFF_BOTTOM));
   if (showRightBar && rightBarStyle === "single" && !repeatEnd)
-    parts.push(renderBarLine("100%", 28, 64));
+    parts.push(renderBarLine("100%", STAFF_TOP, STAFF_BOTTOM));
   if (repeatEnd) {
-    parts.push(renderRepeatEndAtBoundary(28, 64));
+    parts.push(renderRepeatEndAtBoundary(STAFF_TOP, STAFF_BOTTOM));
   }
   if (clefGlyph) parts.push(glyphText(clefGlyph, 6, clefY, "notation-clef"));
   if (repeatStart) {
-    parts.push(renderRepeatStart(repeatStartX, 28, 64));
+    parts.push(renderRepeatStart(repeatStartX, STAFF_TOP, STAFF_BOTTOM));
   }
 
   if (timeSignature) {
     const center = timeStart + timeWidth / 2;
     parts.push(
-      renderTimeSignature(timeSignature, center, 37, 55, "notation-time"),
+      renderTimeSignature(
+        timeSignature,
+        center,
+        STAFF_TOP + sp(1),
+        STAFF_BOTTOM - sp(1),
+        "notation-time",
+      ),
     );
   }
 
@@ -387,37 +613,127 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
       glyphText(
         accidentalSymbols[type].glyph,
         accidentalStart + index * 12,
-        64 - step * 4.5,
+        stepY(step),
         "notation-accidental",
       ),
     );
   });
 
+  const beams: string[] = [];
   groups.forEach((group) => {
     const steps = group.indices.map((index) => pitchedNote(index).step);
-    const stemUp =
-      steps.reduce((sum, step) => sum + step, 0) / steps.length < 4;
+    const stemUp = steps[0] < 4;
+    const mixedDirections = steps.some((step) => step < 4 !== stemUp);
+    if (mixedDirections) {
+      group.indices.slice(0, -1).forEach((index, i) => {
+        const nextIndex = group.indices[i + 1];
+        const start = notePosition(index);
+        const end = notePosition(nextIndex);
+        const startUp = pitchedNote(index).step < 4;
+        const endUp = pitchedNote(nextIndex).step < 4;
+        const startOffset =
+          start.offset +
+          (noteHeadHalfWidth - STEM_WIDTH / 2) * (startUp ? 1 : -1);
+        const endOffset =
+          end.offset + (noteHeadHalfWidth - STEM_WIDTH / 2) * (endUp ? 1 : -1);
+        const startY = beamStemEnds.get(index) ?? STAFF_MIDDLE;
+        const endY = beamStemEnds.get(nextIndex) ?? STAFF_MIDDLE;
+        const startX = `calc(${start.percent} + ${startOffset - STEM_WIDTH / 2}px)`;
+        const endX = `calc(${end.percent} + ${endOffset + STEM_WIDTH / 2}px)`;
+        beams.push(renderBeam(startX, startY, endX, endY, BEAM_WIDTH));
+        if (group.duration === "sixteenth") {
+          if (startUp === endUp) {
+            const offset = sp(0.75) * (startUp ? 1 : -1);
+            beams.push(
+              renderBeam(
+                startX,
+                startY + offset,
+                endX,
+                endY + offset,
+                BEAM_WIDTH,
+              ),
+            );
+          } else {
+            const middleX = `calc(${(start.fraction + end.fraction) * 50}% + ${(startOffset + endOffset) / 2}px)`;
+            const middleY = (startY + endY) / 2;
+            const offset = sp(0.75) * (startUp ? 1 : -1);
+            beams.push(
+              renderBeam(
+                startX,
+                startY + offset,
+                middleX,
+                middleY + offset,
+                BEAM_WIDTH,
+              ),
+            );
+            beams.push(
+              renderBeam(
+                middleX,
+                middleY - offset,
+                endX,
+                endY - offset,
+                BEAM_WIDTH,
+              ),
+            );
+          }
+        }
+      });
+      return;
+    }
     const first = notePosition(group.indices[0]);
     const last = notePosition(group.indices[group.indices.length - 1]);
-    const stemOffset = stemUp ? 4.5 : -4.5;
-    const firstNote = pitchedNote(group.indices[0]);
-    const lastNote = pitchedNote(group.indices[group.indices.length - 1]);
-    const firstBeamY = 64 - firstNote.step * 4.5 + (stemUp ? -31.5 : 31.5);
-    const lastBeamY = 64 - lastNote.step * 4.5 + (stemUp ? -31.5 : 31.5);
-    for (
-      let beam = 0;
-      beam < (group.duration === "sixteenth" ? 2 : 1);
-      beam += 1
-    ) {
-      const beamOffset = beam * (stemUp ? 6 : -6);
-      parts.push(
-        renderBeam(
-          `calc(${first.percent} + ${first.offset + stemOffset}px)`,
-          firstBeamY + beamOffset,
-          `calc(${last.percent} + ${last.offset + stemOffset}px)`,
-          lastBeamY + beamOffset,
-        ),
-      );
+    const stemOffset = (noteHeadHalfWidth - STEM_WIDTH / 2) * (stemUp ? 1 : -1);
+    const firstBeamY = beamStemEnds.get(group.indices[0]) ?? STAFF_MIDDLE;
+    const lastBeamY =
+      beamStemEnds.get(group.indices[group.indices.length - 1]) ?? STAFF_MIDDLE;
+    const allSixteenth = group.indices.every(
+      (idx) => pitchedNote(idx).duration === "sixteenth",
+    );
+    beams.push(
+      renderBeam(
+        `calc(${first.percent} + ${first.offset + stemOffset - STEM_WIDTH / 2}px)`,
+        firstBeamY,
+        `calc(${last.percent} + ${last.offset + stemOffset + STEM_WIDTH / 2}px)`,
+        lastBeamY,
+        BEAM_WIDTH,
+      ),
+    );
+    if (group.duration === "sixteenth") {
+      const beamOffset = sp(0.75) * (stemUp ? 1 : -1);
+      if (allSixteenth) {
+        beams.push(
+          renderBeam(
+            `calc(${first.percent} + ${first.offset + stemOffset - STEM_WIDTH / 2}px)`,
+            firstBeamY + beamOffset,
+            `calc(${last.percent} + ${last.offset + stemOffset + STEM_WIDTH / 2}px)`,
+            lastBeamY + beamOffset,
+            BEAM_WIDTH,
+          ),
+        );
+      } else {
+        const stubWidth = sp(1.2);
+        group.indices.forEach((idx, posIdx) => {
+          if (pitchedNote(idx).duration !== "sixteenth") return;
+          const current = notePosition(idx);
+          const currentBeamY = beamStemEnds.get(idx) ?? STAFF_MIDDLE;
+          const isFirstInGroup = posIdx === 0;
+          const startX = isFirstInGroup
+            ? `calc(${current.percent} + ${current.offset + stemOffset - STEM_WIDTH / 2}px)`
+            : `calc(${current.percent} + ${current.offset + stemOffset + STEM_WIDTH / 2 - stubWidth}px)`;
+          const endX = isFirstInGroup
+            ? `calc(${current.percent} + ${current.offset + stemOffset - STEM_WIDTH / 2 + stubWidth}px)`
+            : `calc(${current.percent} + ${current.offset + stemOffset + STEM_WIDTH / 2}px)`;
+          beams.push(
+            renderBeam(
+              startX,
+              currentBeamY + beamOffset,
+              endX,
+              currentBeamY + beamOffset,
+              BEAM_WIDTH,
+            ),
+          );
+        });
+      }
     }
   });
 
@@ -426,8 +742,8 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     const end = notePosition(to);
     const startNote = pitchedNote(from);
     const endNote = pitchedNote(to);
-    const startY = 64 - startNote.step * 4.5;
-    const endY = 64 - endNote.step * 4.5;
+    const startY = stepY(startNote.step);
+    const endY = stepY(endNote.step);
     const archAbove = placement ? placement === "above" : startNote.step >= 4;
     const span = end.fraction - start.fraction;
     const startX = `calc(${start.percent} + ${start.offset + noteHeadHalfWidth}px)`;
@@ -450,25 +766,31 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     const position = notePosition(index);
     if (note.type === "rest") {
       parts.push(
-        `<g transform="translate(${position.offset} 0)">${renderRest(note.duration, position.percent, 46, note.dotted)}</g>`,
+        `<g transform="translate(${position.offset} 0)">${renderRest(note.duration, position.percent, STAFF_MIDDLE, note.dotted, SPATIUM)}</g>`,
       );
       return;
     }
-    const y = 64 - note.step * 4.5;
-    const stemUp = beamStemDirections.get(index) ?? note.step < 4;
+    const y = stepY(note.step);
+    const stemUp = note.step < 4;
     const hasStem = note.duration
       ? note.duration !== "whole"
       : note.stem === true;
-    const stemY = beamStemEnds.get(index) ?? y + (stemUp ? -31.5 : 31.5);
+    const stemY =
+      beamStemEnds.get(index) ??
+      (stemUp
+        ? Math.min(y - Math.max(MIN_STEM_LEN, STEM_LEN), STAFF_MIDDLE)
+        : Math.max(y + Math.max(MIN_STEM_LEN, STEM_LEN), STAFF_MIDDLE));
     const x = position.percent;
     if (note.step === -2 || note.step === 10) {
       parts.push(
-        `<rect x="${x}" y="${y - 0.5}" width="18" height="1" transform="translate(${position.offset - 9} 0)" fill="currentColor" stroke="none" />`,
+        `<rect x="${x}" y="${y - 0.5}" width="${NOTE_WIDTH + 2 * LEDGER_OVERHANG}" height="1" transform="translate(${position.offset - noteHeadHalfWidth - LEDGER_OVERHANG} 0)" fill="currentColor" stroke="none" />`,
       );
     }
     if (hasStem) {
-      const stemOffset = position.offset + (stemUp ? 4.5 : -4.5);
-      parts.push(renderStem(x, y, stemY, stemOffset));
+      const stemOffset =
+        position.offset +
+        (noteHeadHalfWidth - STEM_WIDTH / 2) * (stemUp ? 1 : -1);
+      parts.push(renderStem(x, y, stemY, stemOffset, STEM_WIDTH));
     }
     const noteGlyph =
       note.duration === "whole"
@@ -477,18 +799,29 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
           ? "\uE0A3"
           : "\uE0A4";
     parts.push(`<g transform="translate(${position.offset} 0)">`);
-    if (
-      hasStem &&
-      (note.duration === "eighth" || note.duration === "sixteenth") &&
-      !note.beamGroup
-    ) {
-      const flag = flagGlyph(note.duration, stemUp);
+    const flagDuration =
+      note.duration === "eighth" || note.duration === "sixteenth"
+        ? note.duration
+        : undefined;
+    const hasFlag = hasStem && flagDuration !== undefined && !note.beamGroup;
+    if (hasFlag && flagDuration) {
+      const flag = flagGlyph(flagDuration, stemUp);
       parts.push(
-        `<g transform="translate(${stemUp ? 4.5 : -4.5} 0)">${glyphText(flag, x, stemY, "notation-note")}</g>`,
+        `<g transform="translate(${(noteHeadHalfWidth - STEM_WIDTH / 2) * (stemUp ? 1 : -1)} 0)">${glyphText(flag, x, stemY, "notation-note")}</g>`,
       );
     }
-    parts.push(glyphText(noteGlyph, x, y, "notation-note", "middle"));
-    if (note.dotted) parts.push(renderDot(x, y - 3, noteHeadHalfWidth + 3));
+    parts.push(
+      glyphText(noteGlyph, x, y, "notation-note", "middle", NOTE_WIDTH),
+    );
+    if (note.dotted) {
+      const dotOffset =
+        hasFlag && stemUp
+          ? noteHeadHalfWidth + sp(1.4) + dotRadius
+          : noteHeadHalfWidth + sp(0.6) + dotRadius;
+      parts.push(
+        renderDot(x, y - (note.step % 2 === 0 ? sp(0.5) : 0), dotOffset),
+      );
+    }
     if (note.accidental) {
       const accidentalOffset = noteHeadHalfWidth + accidentalNoteGap;
       parts.push(
@@ -496,19 +829,79 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
       );
     }
     if (note.articulation) {
-      const position = articulationPosition(note, index);
-      const noteEdgeY = y + (position === "below" ? 4.5 : -4.5);
+      const position = articulationPosition(note);
+      const noteEdgeY =
+        hasStem && (position === "above") === stemUp
+          ? stemY
+          : y + (position === "below" ? NOTE_HEIGHT / 2 : -NOTE_HEIGHT / 2);
       parts.push(
         renderArticulation(
           note.articulation,
           position,
           x,
-          articulationY(noteEdgeY, position),
+          articulationY(noteEdgeY, position, sp(0.75)),
           "notation-articulation",
         ),
       );
     }
+    if (note.dynamic) {
+      parts.push(renderDynamicMark(note.dynamic, x, 96, "notation-dynamic"));
+    }
+    if (note.dynamicText) {
+      parts.push(
+        renderDynamicText(
+          note.dynamicText,
+          x,
+          96,
+          "notation-dynamic",
+          note.dynamic ? sp(1.3) : undefined,
+        ),
+      );
+    }
     parts.push("</g>");
+  });
+  parts.push(...beams);
+
+  const hasPrefix = Boolean(
+    clef || timeSignature || accidentals.length || repeatStart,
+  );
+  resolvedHairpins.forEach((segment) => {
+    const start = notePosition(segment.from);
+    const end = notePosition(segment.to);
+    const startNote = notes[segment.from];
+    const endNote = notes[segment.to];
+    const startHasDynamic =
+      startNote.type !== "rest" && Boolean(startNote.dynamic);
+    const endHasDynamic = endNote.type !== "rest" && Boolean(endNote.dynamic);
+    const startPad = startHasDynamic ? sp(1.6) : -noteHeadHalfWidth;
+    const endPad = endHasDynamic ? sp(1.6) : -noteHeadHalfWidth;
+
+    const startPercent = segment.fromBarline ? 0 : start.fraction * 100;
+    const startOffsetPx = segment.fromBarline
+      ? hasPrefix
+        ? noteInset - noteHeadHalfWidth
+        : 0
+      : start.offset + startPad;
+
+    const endPercent = segment.toBarline ? 100 : end.fraction * 100;
+    const endOffsetPx = segment.toBarline
+      ? -endingMarkInset
+      : end.offset - endPad;
+
+    const hairpinX = `calc(${startPercent}% + ${startOffsetPx}px)`;
+    const hairpinWidth = `max(0px, calc(${endPercent - startPercent}% + ${endOffsetPx - startOffsetPx}px))`;
+    parts.push(
+      renderHairpinSvg(
+        segment.type,
+        hairpinX,
+        hairpinWidth,
+        88,
+        10,
+        "notation-hairpin",
+        segment.startOpen,
+        segment.endOpen,
+      ),
+    );
   });
 
   if (ritAt !== undefined) {

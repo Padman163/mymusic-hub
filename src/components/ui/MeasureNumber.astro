@@ -4,9 +4,13 @@ import "../../styles/music.css";
 interface Props {
   value: string | number;
   embedded?: boolean;
+  offsetPx?: number;
 }
 
-const { value, embedded = false } = Astro.props;
+const { value, embedded = false, offsetPx } = Astro.props;
 ---
 
-<span class:list={['notation-measure-number', { embedded }]}>{value}</span>
+<span
+  class:list={['notation-measure-number', { embedded }]}
+  style={offsetPx !== undefined ? `--measure-number-offset: ${offsetPx}px` : undefined}
+>{value}</span>

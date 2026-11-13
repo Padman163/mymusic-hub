@@ -29,8 +29,9 @@
   * Erste Ereignisse sind systemübergreifend exakt vertikal ausgerichtet; Zeilenabstände sind einheitlich.
   * Das Beispiel darf auf keinen Fall horizontal scrollen.
 * **Rhythmische Abstände & Spacing:**
-  * Abstände sind proportional zu den angegebenen Noten- und Pausendauern, einschließlich Punktierungen.
-  * Für Zeichenvergleiche gibt es das Attribut `spacing="equal"`.
+  * Erste Noten stehen 1,5 Notenkopfbreiten nach dem Anfangspräfix; Zeichen und Hilfslinien können zusätzlichen Abstand erfordern. Eine einzelne Note steht am Anfang, eine ganze Taktpause mittig.
+  * Ereignisse und der Abstand zum Taktende werden linear nach ihren Dauern und der gültigen Taktart verteilt, einschließlich Punktierungen. Ohne bekannte Taktart gilt die Summe der Ereignisdauern als Taktlänge. Ohne Dauer werden Ereignisse gleichmäßig verteilt.
+  * Übervolle Takte mit bekannter Taktart behalten 1,5 Notenkopfbreiten am Anfang und Ende; die Abstände dazwischen sind proportional zu den Dauern. `NotationSystem` überträgt die Taktart auch über Zeilenumbrüche hinweg, `layoutTimeSignature` setzt sie bei Bedarf unsichtbar.
 * **Tonartvorzeichnung (Key Signature Logik):**
   * Die Tonartvorzeichnung wird über Zeilenumbrüche hinweg beibehalten und am Anfang jeder Zeile wiederholt.
   * Ein neues `accidentals`-Array setzt eine neue Vorzeichnung; ein leeres Array `[]` hebt sie auf.
@@ -54,7 +55,7 @@
 ## 3. Dateistruktur & Kernkomponenten
 * `src/lib/notation-renderer.ts`: Gemeinsamer SVG-Renderer und zentrale Geometrieberechnung (Reihenfolge, Platzbedarf von Schlüssel, Taktart, Vorzeichnung und Wiederholung).
 * `src/components/notation/NotationVisual.astro`: Wiederverwendbarer Astro-Wrapper für den Renderer.
-* `src/components/notation/system-layout.ts`: Systemaufteilung, Umbrüche, Wiederholung von Schlüssel und Vorzeichnung, Tonartwechsel und Ausrichtung erster Ereignisse.
+* `src/lib/system-layout.ts`: Systemaufteilung, Umbrüche, Wiederholung von Schlüssel und Vorzeichnung, Tonartwechsel und Ausrichtung erster Ereignisse.
 * `src/components/notation/NotationOverview.astro`: Taktdaten und Anordnung des 18-Takt-Abschlussbeispiels; komponiert vorhandene Bausteine.
 * `src/components/notation/NotationNoteRestValues.astro`: Vergleich von Noten- und Pausenwerten.
 * `src/components/notation/Notation*.astro`: Weitere thematische Schaubilder (Artikulation, Dynamik, Bögen, Tempo, Taktarten, Vorzeichen).

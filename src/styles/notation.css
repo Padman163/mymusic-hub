@@ -11,8 +11,8 @@
   --notation-header-height: 36px;
 }
 
+.notation-component,
 .notation-visual,
-.notation-value-comparison,
 .accidental-examples,
 .articulation-examples,
 .bow-examples,
@@ -31,19 +31,30 @@
 .notation-visual {
   position: relative;
   padding: var(--notation-panel-padding);
+  min-width: min-content;
 }
 
-.notation-value-comparison {
-  display: grid;
-  gap: var(--notation-system-gap);
-  padding: var(--notation-panel-padding);
+.accidental-examples,
+.articulation-examples,
+.bow-examples,
+.dotted-notes,
+.notation-overview,
+.pickup-example,
+.tempo-example,
+.time-signatures,
+.keyboard-notation {
+  overflow-x: auto;
 }
 
-.notation-value-comparison strong {
-  color: #111827;
-  font:
-    bold var(--music-text-size) / 1.2 Georgia,
-    serif;
+.notation-visual:not(.embedded) {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.notation-staff-content {
+  position: relative;
+  min-width: min-content;
+  --notation-dynamics-top: 64px;
 }
 
 .notation-visual.has-hairpin {
@@ -74,16 +85,8 @@
 
 .notation-final-bar {
   position: absolute;
-  top: calc(var(--notation-panel-padding) + 28px);
-  right: var(--notation-panel-padding);
-}
-
-.notation-visual.has-header:not(.embedded) .notation-final-bar {
-  top: calc(
-    var(--notation-panel-padding) +
-    var(--notation-header-height) +
-    28px
-  );
+  top: 24px;
+  right: 0;
 }
 
 .notation-visual.embedded {
@@ -100,15 +103,6 @@
 
 .notation-visual.embedded.has-hairpin.has-header {
   --notation-dynamics-top: calc(var(--notation-header-height) + 64px);
-}
-
-.notation-visual.embedded .notation-final-bar {
-  top: 28px;
-  right: 0;
-}
-
-.notation-visual.embedded.has-header .notation-final-bar {
-  top: calc(var(--notation-header-height) + 28px);
 }
 
 .notation-staff {
@@ -128,12 +122,25 @@
 .notation-time,
 .notation-articulation {
   font-family: "NotationBravura", sans-serif;
-  font-size: 36px;
+  font-size: calc(4 * var(--notation-spatium, 10px));
   fill: #111827;
   stroke: none;
 }
 
-.notation-tempo {
+.notation-dynamic {
+  font-family: "NotationBravura", sans-serif;
+  font-size: calc(3.2 * var(--notation-spatium, 10px));
+  fill: #111827;
+  stroke: none;
+}
+
+.notation-hairpin line {
+  stroke: #111827;
+  stroke-width: 1.2;
+}
+
+.notation-tempo,
+.notation-dynamic-text {
   font:
     italic var(--music-text-size) Georgia,
     serif;
@@ -165,7 +172,16 @@
 .articulation-measure,
 .dotted-note-example,
 .time-signatures-measure {
+  min-width: min-content;
+}
+
+.accidental-measure,
+.articulation-measure,
+.dotted-note-example,
+.time-signatures-measure,
+.tempo-measure {
   min-width: 0;
+  overflow-x: auto;
 }
 
 .accidental-measure:first-child {
@@ -200,7 +216,7 @@
 
 .bow-line {
   position: relative;
-  min-width: 0;
+  min-width: min-content;
 }
 
 .dotted-notes {
@@ -220,7 +236,7 @@
 
 .dynamics-row {
   position: relative;
-  min-width: 0;
+  min-width: min-content;
   height: 108px;
   margin-bottom: calc(-1 * var(--notation-system-gap));
   --dynamics-staff-bottom: 64px;
@@ -259,27 +275,103 @@
   padding-bottom: 32px;
 }
 
+/* Der weiße Umfassungskasten für das gesamte mehrzeilige Notenbeispiel */
+.notation-system-box {
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  padding: 1.5rem 1rem;
+  margin: 1.5rem 0;
+  box-sizing: border-box;
+  overflow-x: auto;
+}
+
+/* Einzelne Notenzeile innerhalb des Kastens */
+.notation-system-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+}
+
+/* Vertikaler Abstand zwischen Zeile 1 und Zeile 2 */
+.notation-system-row + .notation-system-row {
+  margin-top: 1.25rem;
+}
+.notation-system-row > * {
+  flex: 1 1 0;
+  min-width: min-content;
+  margin: 0 !important; /* Verhindert das Hochrutschen von Takt 1 */
+}
+
+/* Stellt sicher, dass auch das innere SVG keine Verschiebung erzeugt */
+.notation-system-row svg {
+  display: block;
+}
+
+.notation-system-grid {
+  display: grid;
+  grid-template-columns: repeat(
+      var(--notation-columns),
+      minmax(max-content, 1fr)
+    );
+  row-gap: var(--notation-system-gap);
+  align-items: start;
+}
+
+.notation-system-grid .notation-system-row {
+  display: contents;
+}
+
+.notation-system-box[data-fit-to-width] .notation-system-grid {
+  grid-template-columns: minmax(min-content, 1fr);
+  width: min-content;
+  min-width: 100%;
+}
+
+.notation-system-box[data-fit-to-width] .notation-system-row {
+  display: grid;
+  grid-template-columns: repeat(
+      var(--notation-row-columns),
+      minmax(min-content, 1fr)
+    );
+  margin: 0;
+}
+
+.notation-system-box[data-fit-to-width][data-fitted] {
+  overflow-x: hidden;
+}
+
+.notation-overview[data-fit-to-width] .notation-systems {
+  width: min-content;
+  min-width: 100%;
+}
+
+.notation-overview[data-fit-to-width][data-fitted] {
+  overflow-x: hidden;
+}
+
 .overview-layout-narrow {
   display: none;
 }
 
 .overview-system {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(min-content, 1fr));
   row-gap: var(--notation-system-gap);
 }
 
 .overview-system.three-measures {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(min-content, 1fr));
 }
 
 .overview-layout-narrow .overview-system {
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: minmax(min-content, 1fr);
 }
 
 .overview-measure {
   position: relative;
-  min-width: 0;
+  min-width: min-content;
 }
 
 .overview-measure .notation-visual.embedded.has-header .notation-header {
@@ -295,10 +387,6 @@
   --notation-dynamics-top: 64px;
 }
 
-.overview-measure .notation-visual.embedded.has-header .notation-final-bar {
-  top: 28px;
-}
-
 .overview-measure
   .notation-visual.embedded.has-header
   > .notation-measure-number.embedded {
@@ -311,11 +399,14 @@
 
 .pickup-row {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(min-content, 1fr));
 }
 
 .pickup-row:first-child {
-  grid-template-columns: minmax(110px, 0.7fr) repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(110px, 0.7fr) repeat(
+      2,
+      minmax(min-content, 1fr)
+    );
 }
 
 .pickup-row + .pickup-row {
@@ -324,13 +415,13 @@
 
 .pickup-measure {
   position: relative;
-  min-width: 0;
+  min-width: min-content;
 }
 
 .repeat-start,
 .repeat-end {
   position: absolute;
-  top: 28px;
+  top: 24px;
   display: block;
   fill: #111827;
   color: #111827;
@@ -356,7 +447,6 @@
 
 .tempo-measure {
   position: relative;
-  min-width: 0;
   padding-top: 40px;
   color: #111827;
 }
@@ -383,8 +473,8 @@
 .keyboard-brace {
   flex: none;
   width: 14px;
-  height: 90px;
-  margin: 28px 4px 0 0;
+  height: 94px;
+  margin: 24px 4px 0 0;
   fill: #111827;
 }
 
@@ -396,12 +486,12 @@
 .keyboard-staves {
   position: relative;
   flex: 1;
-  min-width: 0;
+  min-width: min-content;
 }
 
 .keyboard-left-bar {
   position: absolute;
-  top: 28px;
+  top: 24px;
   left: -0.5px;
   display: block;
   overflow: visible;
@@ -415,18 +505,18 @@
 
 .keyboard-final-bar {
   position: absolute;
-  top: 28px;
+  top: 24px;
   right: 0;
 }
 
 @media (max-width: 520px) {
   .articulation-row,
   .articulation-labels {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(min-content, 1fr));
   }
 
   .dotted-notes {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(min-content, 1fr);
   }
 }
 
@@ -442,6 +532,185 @@
 
 @media (max-width: 420px) {
   .pickup-row:first-child {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(min-content, 1fr));
+  }
+}
+
+.notation-component {
+  position: relative;
+  padding: var(--notation-panel-padding);
+  margin: 1.5rem 0;
+  overflow-x: hidden;
+  --notation-scale: 1;
+}
+
+.notation-component.is-scrollable {
+  overflow-x: auto;
+}
+
+.notation-component[data-fit-to-width] .notation-systems {
+  width: min-content;
+  min-width: 100%;
+  zoom: var(--notation-scale, 1);
+}
+
+.notation-component.is-scrollable .notation-systems {
+  min-width: min-content;
+  zoom: var(--notation-scale, 1);
+}
+
+.notation-component[data-fit-to-width][data-fitted] {
+  overflow-x: hidden;
+}
+
+.notation-piece-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  color: #111827;
+}
+
+.notation-title-group {
+  text-align: center;
+}
+
+.notation-title {
+  font:
+    bold 1.25rem / 1.25 Georgia,
+    serif;
+  color: #111827;
+}
+
+.notation-subtitle {
+  margin-top: 0.2rem;
+  font:
+    italic 0.95rem / 1.3 Georgia,
+    serif;
+  color: #374151;
+}
+
+.notation-piece-tempo {
+  align-self: flex-start;
+}
+
+.notation-component .notation-systems {
+  display: flex;
+  flex-direction: column;
+  gap: var(--notation-system-gap);
+}
+
+.notation-row {
+  display: grid;
+  grid-template-columns: var(
+      --notation-grid-columns,
+      repeat(var(--notation-row-columns, 1), minmax(min-content, 1fr))
+    );
+  width: var(--notation-row-width, 100%);
+  max-width: 100%;
+  min-width: min-content;
+  align-items: start;
+  box-sizing: border-box;
+}
+
+.notation-row.has-row-measure-number {
+  padding-top: 6px;
+}
+
+.notation-row.has-row-tempo {
+  padding-top: 16px;
+}
+
+.notation-row.has-row-hairpin {
+  padding-bottom: 32px;
+}
+
+.notation-cell {
+  position: relative;
+  min-width: min-content;
+}
+
+.notation-cell .notation-staff {
+  min-width: 100% !important;
+}
+
+.notation-cell .notation-visual.embedded.has-header .notation-header {
+  position: absolute;
+  top: -14px;
+  right: 0;
+  left: 18px;
+  height: var(--notation-header-height);
+  z-index: 2;
+}
+
+.notation-cell .notation-visual.embedded.has-hairpin.has-header {
+  --notation-dynamics-top: 64px;
+}
+
+.notation-cell
+  .notation-visual.embedded.has-header
+  > .notation-measure-number.embedded {
+  top: 13px;
+}
+
+@media print {
+  .notation-component,
+  .notation-row,
+  .notation-visual,
+  .notation-system-box,
+  .notation-overview {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    overflow: visible !important;
+  }
+
+  .notation-component {
+    padding-right: 0;
+    padding-left: 0;
+    margin: 1rem 0;
+  }
+
+  .notation-staff,
+  .notation-staff line,
+  .notation-hairpin,
+  .notation-hairpin line,
+  .hairpin,
+  .hairpin line,
+  .repeat-start,
+  .repeat-end {
+    stroke: #000 !important;
+    color: #000 !important;
+  }
+
+  .notation-clef,
+  .notation-note,
+  .notation-rest,
+  .notation-accidental,
+  .notation-time,
+  .notation-articulation,
+  .notation-dynamic,
+  .notation-dynamic-text,
+  .notation-tempo,
+  .notation-curve,
+  .final-bar,
+  .final-bar rect,
+  .repeat-start,
+  .repeat-end {
+    fill: #000 !important;
+    color: #000 !important;
+  }
+
+  .notation-title,
+  .notation-subtitle,
+  .tempo-label,
+  .tempo-detail,
+  .notation-measure-number,
+  .dynamic-word,
+  .dynamic-mark {
+    color: #000 !important;
   }
 }
