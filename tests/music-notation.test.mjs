@@ -539,7 +539,10 @@ test('system layout repeats the original clef on every rendered line', () => {
   assert.deepEqual(systems.map((system) => system.map((measure) => measure.clef)), [['treble', false], ['treble']]);
   assert.equal(systems[0][0].firstNoteX, systems[1][0].firstNoteX);
   assert.deepEqual(arrangeNotationSystems(measures, 1).map((system) => system[0].id), [1, 2, 3]);
-  assert.throws(() => arrangeNotationSystems([{ clef: 'treble' }, { clef: 'bass' }], 1), /Notenschlüsselwechsel/);
+  assert.deepEqual(
+    arrangeNotationSystems([{ clef: 'treble' }, { clef: 'bass' }], 1).map((system) => system.map((m) => m.clef)),
+    [['treble'], ['bass']]
+  );
   assert.throws(() => arrangeNotationSystems(measures, 0), /mindestens einen Takt/);
 });
 

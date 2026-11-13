@@ -1,6 +1,5 @@
 import { layoutNotationEvents } from "./notation-layout.ts";
 import {
-  assertNoClefChanges,
   defaultFirstNoteX,
   type Hairpin,
   type MeasureHairpin,
@@ -492,10 +491,6 @@ export function arrangeNotationSystems<
   }
 
   if (measures.length === 0) return [];
-  assertNoClefChanges(
-    measures.map(({ clef }) => clef),
-    "Notensystem",
-  );
   const clef = measures[0].clef;
   if (!clef)
     throw new Error(
