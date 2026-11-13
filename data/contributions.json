@@ -393,5 +393,16 @@
     "checklist": [],
     "status": "New",
     "createdAt": "2026-11-12T14:25:29.972Z"
+  },
+  {
+    "id": "439450f0-e675-4cf9-ab7c-14030dfc1594",
+    "type": "Bug",
+    "title": "Überarbeitung notation.mdx",
+    "description": "",
+    "area": "Theorie",
+    "priority": "Mittel",
+    "checklist": [],
+    "status": "New",
+    "createdAt": "2026-11-13T00:35:15.710Z"
   }
 ]
