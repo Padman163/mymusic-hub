@@ -2,36 +2,25 @@
 title: Notensystem
 ---
 
-import NotationVisual from '../../../../../components/notation/NotationVisual.astro';
-import NotationSystem from '../../../../../components/notation/NotationSystem.astro';
+import Notation from '../../../../../components/notation/Notation.astro';
 import NotationKeyboard from '../../../../../components/notation/NotationKeyboard.astro';
-import NotationTimeSignatures from '../../../../../components/notation/NotationTimeSignatures.astro';
-import NotationAccidentals from '../../../../../components/notation/NotationAccidentals.astro';
-import NotationPickupRepeat from '../../../../../components/notation/NotationPickupRepeat.astro';
-import NotationTempo from '../../../../../components/notation/NotationTempo.astro';
-import NotationArticulations from '../../../../../components/notation/NotationArticulations.astro';
-import NotationDynamics from '../../../../../components/notation/NotationDynamics.astro';
-import NotationBows from '../../../../../components/notation/NotationBows.astro';
-import NotationOverview from '../../../../../components/notation/NotationOverview.astro';
-import NotationDottedNotes from '../../../../../components/notation/NotationDottedNotes.astro';
-import NotationNoteRestValues from '../../../../../components/notation/NotationNoteRestValues.astro';
 
 ## Grundansicht
 
 Das erste Schaubild zeigt fünf Notenlinien auf weißem Hintergrund, ohne Taktstriche.
 
-<NotationVisual showRightBar={false} />
+<Notation clef="treble" showRightBar={false} notes={[]} />
 
 ## Mehrere Takte mit Zeilenumbruch
 
-Nach dem Import von `NotationSystem` nimmt die Komponente die Takte direkt als `measures` entgegen. `measuresPerRow` bestimmt die maximale Anzahl pro Zeile und ist standardmäßig `3`. Der Violinschlüssel steht automatisch am Anfang jeder Zeile; für den Bassschlüssel wird im ersten Takt `clef: 'bass'` gesetzt. Taktart und Schlussstrich werden bei Bedarf am jeweiligen Takt angegeben.
+Nach dem Import von `Notation` nimmt die Komponente die Takte direkt als `measures` entgegen (oder für einen einzelnen Takt die Kurzform `notes`). Über `layout` wird der Zeilenumbruch gesteuert: `'auto'` (Standard) bricht anhand der Mindestbreite um, eine Zahl wie `layout={3}` legt die maximale Anzahl pro Zeile fest, und ein Array wie `layout={[3, 1]}` definiert die Taktanzahl jeder Zeile explizit. Der Violinschlüssel steht automatisch am Anfang jeder Zeile; für den Bassschlüssel wird global oder im ersten Takt `clef="bass"` gesetzt. Taktart und Schlussstrich werden bei Bedarf am jeweiligen Takt angegeben.
 
 ```mdx
-<NotationSystem
-  measuresPerRow={3}
-  fitToWidth
+<Notation
+  layout={3}
+  timeSignature={{ numerator: 4, denominator: 4 }}
   measures={[
-    { timeSignature: { numerator: 4, denominator: 4 }, notes: [{ duration: 'whole', step: 2 }] },
+    { notes: [{ duration: 'whole', step: 2 }] },
     { notes: [{ duration: 'whole', step: 3 }] },
     { notes: [{ duration: 'whole', step: 4 }] },
     { rightBarStyle: 'final', notes: [{ duration: 'whole', step: 5 }] },
@@ -39,120 +28,227 @@ Nach dem Import von `NotationSystem` nimmt die Komponente die Takte direkt als `
 />
 ```
 
-Hier mit Bassschlüssel und zwei Takten pro Zeile:
+Hier mit Bassschlüssel, zwei Takten pro Zeile und aktiviertem horizontalem Scrollen (`scrollable`):
 
-<NotationSystem
-  measuresPerRow={2}
+<Notation
+  clef="bass"
+  timeSignature={{ numerator: 4, denominator: 4 }}
+  layout={2}
+  scrollable
   measures={[
-    { clef: 'bass', timeSignature: { numerator: 4, denominator: 4 }, notes: [{ duration: 'whole', step: 2 }] },
+    { notes: [{ duration: 'whole', step: 2 }] },
     { notes: [{ duration: 'whole', step: 3 }] },
     { rightBarStyle: 'final', notes: [{ duration: 'whole', step: 4 }] },
   ]}
 />
 
-Standardmäßig lässt sich der Kasten bei Platzmangel horizontal scrollen. Mit `fitToWidth` werden die Takte je Zeile passend verteilt und das System bei Bedarf proportional verkleinert, sodass die vorgegebene Taktzahl in die Breite passt. Eine unvollständige letzte Zeile nutzt den verfügbaren Platz für ihre Takte. Auf sehr schmalen Bildschirmen können die Noten dadurch klein werden. Ohne JavaScript oder bei fehlender Browser-Unterstützung bleibt das System scrollbar. `measuresPerRow` muss eine positive ganze Zahl sein; ein Schlüsselwechsel innerhalb desselben Systems wird nicht unterstützt.
+Standardmäßig (`scrollable={false}`) passt sich das System automatisch der verfügbaren Breite an (`data-fit-to-width`), verteilt die Takte je Zeile passend und verkleinert das System bei Bedarf proportional, sodass die vorgegebene Taktzahl in die Breite passt. Eine unvollständige letzte Zeile nutzt bei `layout="auto"` oder einer festen Zahl ihren proportionalen Anteil am Platz (oder mit `stretchLastRow` die volle Zeilenbreite). Mit `scrollable` lässt sich der Kasten bei Platzmangel horizontal scrollen; auch ohne JavaScript oder bei fehlender Browser-Unterstützung bleibt das System scrollbar. `layout` als Zahl muss eine positive ganze Zahl sein; ein Schlüsselwechsel innerhalb derselben Zeile wird nicht unterstützt.
 
 ## Taktstriche
 
 Das zweite Schaubild zeigt die Standardansicht mit einem Taktstrich rechts.
 
-<NotationVisual />
+<Notation clef="treble" notes={[]} />
 
-Die Taktstriche lassen sich beim Einbinden der Komponente unabhängig voneinander steuern: `showLeftBar` ist standardmäßig `false`, `showRightBar` standardmäßig `true`. Beispielsweise zeigt `<NotationVisual showLeftBar={true} showRightBar={false} />` nur den linken Taktstrich.
+Die Taktstriche lassen sich beim Einbinden der Komponente unabhängig voneinander steuern: `showLeftBar` ist standardmäßig `false`, `showRightBar` standardmäßig `true`. Beispielsweise zeigt `<Notation showLeftBar={true} showRightBar={false} notes={[]} />` nur den linken Taktstrich.
 
 ## Notenschlüssel
 
-Jede eigenständige Notenzeile zeigt standardmäßig einen Violinschlüssel. Für ein einzelnes Beispiel kann `clef="bass"` den Bassschlüssel wählen. Innerhalb eines Stücks, das von einer `.astro`-Komponente aufgebaut wird, bleibt der Schlüssel jedoch unverändert; `assertNoClefChanges` prüft das. Mit `clef={false}` wird der Schlüssel ausgeblendet, zum Beispiel bei weiteren Takten oder Systemen desselben Stücks. Die Schlüssel verwenden die gleiche Notenschrift wie die AlphaTab-Beispiele.
+Jede eigenständige Notenzeile zeigt standardmäßig einen Violinschlüssel. Für ein Beispiel kann `clef="bass"` den Bassschlüssel wählen. Innerhalb einer Notenzeile bleibt der Schlüssel unverändert; bei einem System mit `layout={1}` kann jede Zeile einen eigenen Schlüssel erhalten. Die Schlüssel verwenden die gleiche Notenschrift wie die AlphaTab-Beispiele.
 
 **Violinschlüssel** (`treble`):
 
-<NotationVisual clef="treble" />
+<Notation clef="treble" notes={[]} />
 
 **Bassschlüssel** (`bass`):
 
-<NotationVisual clef="bass" />
+<Notation clef="bass" notes={[]} />
 
 ## Notenköpfe
 
 Gefüllte und ungefüllte Notenköpfe werden hier ohne Hals dargestellt. Sie sind zunächst nur vorgegeben und können noch nicht angeklickt oder eingezeichnet werden.
 
-<NotationVisual notes={[
-  { type: 'filled', duration: '', step: 0 },
-  { type: 'empty', duration: '',  step: 2 },
-  { type: 'filled', duration: '',  step: 5 },
-  { type: 'empty', step: 8 }
-]} />
+<Notation
+  clef="treble"
+  notes={[
+    { type: 'filled', step: 0 },
+    { type: 'empty', step: 2 },
+    { type: 'filled', step: 5 },
+    { type: 'empty', step: 8 },
+  ]}
+/>
 
 Über `notes` werden Typ (`filled` oder `empty`) und Position (`step`) festgelegt. `step={0}` entspricht der untersten Linie, jeder weitere Schritt einem Linien- oder Zwischenraumabstand; `8` entspricht der obersten Linie. Die Notenköpfe werden von links nach rechts gleichmäßig verteilt. Zusätzlich sind die erste Hilfslinie unterhalb (`-2`) und oberhalb (`10`) des Systems verfügbar. Ein ungefüllter Notenkopf allein legt ohne weitere Notationszeichen keinen vollständigen Notenwert fest.
 
 ## Notenhälse
 
-Für jeden Notenkopf kann über `stem: true` ein Hals eingeblendet werden. Ohne diese Angabe bleibt der Notenkopf ohne Hals. Unterhalb der mittleren Linie zeigt der Hals nach oben, ab der mittleren Linie nach unten.
+Für jeden Notenkopf kann über `stem: true` ein Hals eingeblendet werden. Ohne diese Angabe bleibt der Notenkopf ohne Hals. Unterhalb der mittleren Linie (`step < 4`) zeigt der Hals nach oben, ab der mittleren Linie (`step >= 4`) nach unten.
 
-<NotationVisual clef="treble" notes={[
-  { type: 'filled', step: 0, stem: true },
-  { type: 'empty', step: 3, stem: true },
-  { type: 'filled', step: 4, stem: true },
-  { type: 'empty', step: 8, stem: true }
-]} />
+<Notation
+  clef="treble"
+  notes={[
+    { type: 'filled', step: 0, stem: true },
+    { type: 'empty', step: 3, stem: true },
+    { type: 'filled', step: 4, stem: true },
+    { type: 'empty', step: 8, stem: true },
+  ]}
+/>
 
 ## Taktarten
 
 Das Schaubild zeigt 2/2, 2/4, 3/4, 4/4, 6/8 und 7/8 in einer Notenzeile. Taktstriche trennen die Beispiele.
 
-<NotationTimeSignatures timeSignatures={[
-  { numerator: 2, denominator: 2 },
-  { numerator: 2, denominator: 4 },
-  { numerator: 3, denominator: 4 },
-  { numerator: 4, denominator: 4 },
-  { numerator: 6, denominator: 8 },
-  { numerator: 7, denominator: 8 }
-]} />
+<Notation
+  clef="treble"
+  layout={[6]}
+  measureWidth="equal"
+  measures={[
+    { timeSignature: { numerator: 2, denominator: 2 }, notes: [] },
+    { timeSignature: { numerator: 2, denominator: 4 }, notes: [] },
+    { timeSignature: { numerator: 3, denominator: 4 }, notes: [] },
+    { timeSignature: { numerator: 4, denominator: 4 }, notes: [] },
+    { timeSignature: { numerator: 6, denominator: 8 }, notes: [] },
+    { timeSignature: { numerator: 7, denominator: 8 }, rightBarStyle: 'final', notes: [] },
+  ]}
+/>
 
-Bei `NotationVisual` lassen sich mit `timeSignature` Zähler und Nenner festlegen; ohne Angabe wird keine Taktart angezeigt. Der Zähler muss eine positive ganze Zahl sein, der Nenner eine positive Zweierpotenz. Für die gemeinsame Darstellung nimmt `NotationTimeSignatures` eine Liste dieser Taktarten entgegen.
+Bei `Notation` lassen sich mit `timeSignature` Zähler und Nenner global oder pro Takt festlegen; ohne Angabe wird keine Taktart angezeigt. Der Zähler muss eine positive ganze Zahl sein, der Nenner eine positive Zweierpotenz.
 
 ## Vorzeichen
 
-Das Schaubild zeigt im Violinschlüssel fünf Kreuze (F, C, G, D, A), ihre fünf Auflösungszeichen und anschließend fünf b-Vorzeichen (B, E, A, D, G). Im letzten Takt stehen einzelne Noten jeweils einmal mit Kreuz, Auflösungszeichen und b-Vorzeichen.
+Das Schaubild zeigt im Violinschlüssel fünf Kreuze (F, C, G, D, A), ihre fünf automatisch erzeugten Auflösungszeichen beim Wechsel nach C-Dur und anschließend fünf b-Vorzeichen (B, E, A, D, G). Im letzten Takt stehen einzelne Noten jeweils einmal mit Kreuz, Auflösungszeichen und b-Vorzeichen.
 
-<NotationAccidentals />
+<Notation
+  clef="treble"
+  layout={[4]}
+  measures={[
+    {
+      accidentals: [
+        { type: 'sharp', step: 8 },
+        { type: 'sharp', step: 5 },
+        { type: 'sharp', step: 9 },
+        { type: 'sharp', step: 6 },
+        { type: 'sharp', step: 3 },
+      ],
+      notes: [],
+    },
+    {
+      accidentals: [],
+      notes: [],
+    },
+    {
+      accidentals: [
+        { type: 'flat', step: 4 },
+        { type: 'flat', step: 7 },
+        { type: 'flat', step: 3 },
+        { type: 'flat', step: 6 },
+        { type: 'flat', step: 2 },
+      ],
+      notes: [],
+    },
+    {
+      rightBarStyle: 'final',
+      notes: [
+        { duration: 'quarter', step: 7, accidental: 'sharp' },
+        { duration: 'quarter', step: 4, accidental: 'natural' },
+        { duration: 'quarter', step: 2, accidental: 'flat' },
+      ],
+    },
+  ]}
+/>
 
-Über `accidentals` lassen sich die Zeichen `sharp` (Kreuz), `natural` (Auflösungszeichen) und `flat` (b) mit einer Position `step` vorgeben. Sie stehen nach dem Schlüssel und einer optionalen Taktart. Einzelne Noten können über die Eigenschaft `accidental` ebenfalls jeweils ein eigenes Vorzeichen erhalten. Die Komponente stellt die Zeichen dar, berechnet aber noch keine Tonart oder Tonhöhenänderung.
+Über `accidentals` lassen sich für die Tonartvorzeichnung die Zeichen `sharp` (Kreuz) und `flat` (b) mit einer Position `step` vorgeben; bei einem Wechsel oder `accidentals: []` ergänzt das Layout die erforderlichen Auflösungszeichen (`natural`) automatisch. Sie stehen nach dem Schlüssel und einer optionalen Taktart. Einzelne Noten können über die Eigenschaft `accidental` (`'sharp'`, `'natural'` oder `'flat'`) jeweils ein eigenes Versetzungszeichen erhalten.
 
 ## Noten- und Pausenwerte
 
-Das Schaubild zeigt oben die Noten und darunter die zugehörigen Pausen gleicher Dauer: von links nach rechts ganze, halbe, Viertel-, Achtel- und Sechzehntelwerte. Die ganze Pause hängt unter der vierten Notenlinie, die halbe liegt auf der dritten Linie (von unten gezählt). Eine ganze Pause kann außerdem einen vollständigen Takt beliebiger Taktart bezeichnen.
+Das Schaubild zeigt im ersten Takt die Noten und im zweiten Takt darunter die zugehörigen Pausen gleicher Dauer: von links nach rechts ganze, halbe, Viertel-, Achtel- und Sechzehntelwerte. Die ganze Pause hängt unter der vierten Notenlinie, die halbe liegt auf der dritten Linie (von unten gezählt). Eine ganze Pause kann außerdem einen vollständigen Takt beliebiger Taktart bezeichnen.
 
-<NotationNoteRestValues />
+<Notation
+  clef="treble"
+  layout={1}
+  measures={[
+    {
+      notes: [
+        { duration: 'whole', step: 4 },
+        { duration: 'half', step: 4 },
+        { duration: 'quarter', step: 4 },
+        { duration: 'eighth', step: 4 },
+        { duration: 'sixteenth', step: 4 },
+      ],
+    },
+    {
+      rightBarStyle: 'final',
+      notes: [
+        { type: 'rest', duration: 'whole' },
+        { type: 'rest', duration: 'half' },
+        { type: 'rest', duration: 'quarter' },
+        { type: 'rest', duration: 'eighth' },
+        { type: 'rest', duration: 'sixteenth' },
+      ],
+    },
+  ]}
+/>
 
-Mit `duration` zeigt `NotationVisual` ganze (`whole`), halbe (`half`), Viertel- (`quarter`), Achtel- (`eighth`) und Sechzehntelnoten (`sixteenth`) an. Eine Pause wird in derselben `notes`-Liste mit `{ type: 'rest', duration: 'quarter' }` eingetragen und benötigt keine Tonhöhe. Noten und Pausen können gemischt werden; `dotted: true` punktiert auch eine Pause. Notenkopf, Hals und gegebenenfalls Fähnchen ergeben sich aus dem Notenwert; die Halsrichtung wird automatisch bestimmt.
+Mit `duration` zeigt `Notation` ganze (`whole`), halbe (`half`), Viertel- (`quarter`), Achtel- (`eighth`) und Sechzehntelnoten (`sixteenth`) an. Eine Pause wird in derselben `notes`-Liste mit `{ type: 'rest', duration: 'quarter' }` eingetragen und benötigt keine Tonhöhe. Noten und Pausen können gemischt werden; `dotted: true` punktiert auch eine Pause. Notenkopf, Hals und gegebenenfalls Fähnchen ergeben sich aus dem Notenwert; die Halsrichtung wird automatisch bestimmt.
 
-Aufeinanderfolgende Achtel- oder Sechzehntelnoten desselben Werts können mit demselben `beamGroup`-Namen verbunden werden. Eine Gruppe benötigt mindestens zwei Noten. Die Halsrichtung richtet sich nach der Position jeder Note; bei wechselnden Halsrichtungen wird der Balken entsprechend geknickt. Gemischte Notenwerte innerhalb einer Gruppe sind noch nicht vorgesehen.
+Aufeinanderfolgende Achtel- oder Sechzehntelnoten können mit demselben `beamGroup`-Namen verbunden werden. Eine Gruppe benötigt mindestens zwei Noten und unterstützt sowohl Noten desselben Werts als auch die punktierte Kombination aus punktierter Achtel- und Sechzehntelnote. Die Halsrichtung richtet sich nach der Position jeder Note; bei wechselnden Halsrichtungen wird der Balken entsprechend angepasst.
 
-<NotationVisual clef="treble" notes={[
-  { duration: 'eighth', step: 2, beamGroup: 'achtel' },
-  { duration: 'eighth', step: 4, beamGroup: 'achtel' },
-  { duration: 'sixteenth', step: 6, beamGroup: 'sechzehntel' },
-  { duration: 'sixteenth', step: 4, beamGroup: 'sechzehntel' }
-]} />
+<Notation
+  clef="treble"
+  notes={[
+    { duration: 'eighth', step: 2, beamGroup: 'achtel' },
+    { duration: 'eighth', step: 4, beamGroup: 'achtel' },
+    { duration: 'sixteenth', step: 6, beamGroup: 'sechzehntel' },
+    { duration: 'sixteenth', step: 4, beamGroup: 'sechzehntel' },
+  ]}
+/>
 
-Für Noten und Pausen mit `duration` werden die Abstände linear nach ihren Dauern verteilt, einschließlich des Platzes nach dem letzten Ereignis. Eine Punktierung verlängert die Dauer um die Hälfte. Bei bekannter Taktart bleibt in unvollständigen Takten auch der nicht ausgefüllte Teil frei. Ohne bekannte Taktart gilt die Summe der Ereignisdauern als Taktlänge. Zwischen aufeinanderfolgenden Ereignissen bleibt mindestens ein Spatium frei; bei schmalen Darstellungen kann horizontal gescrollt werden. Notenköpfe ohne `duration` werden gleichmäßig verteilt, da keine rhythmischen Werte vorliegen.
+Für Noten und Pausen mit `duration` werden die Abstände linear nach ihren Dauern verteilt, einschließlich des Platzes nach dem letzten Ereignis. Eine Punktierung verlängert die Dauer um die Hälfte. Bei bekannter Taktart bleibt in unvollständigen Takten auch der nicht ausgefüllte Teil frei. Ohne bekannte Taktart gilt die Summe der Ereignisdauern als Taktlänge. Zwischen aufeinanderfolgenden Ereignissen bleibt mindestens ein Spatium frei. Notenköpfe ohne `duration` werden gleichmäßig verteilt, da keine rhythmischen Werte vorliegen.
 
-Die linke Kante der ersten Note steht standardmäßig 1,5 Notenkopfbreiten nach dem Taktbeginn beziehungsweise nach Schlüssel, Taktart, Vorzeichnung und Wiederholungszeichen. Bei einem übervollen Takt mit bekannter Taktart steht auch die rechte Kante der letzten Note 1,5 Notenkopfbreiten vor dem Taktende; die Ereignisse dazwischen bleiben proportional verteilt. Hilfslinien, Vorzeichen, Punktierungen, Fähnchen und Schluss- oder Wiederholungszeichen können zusätzlichen Platz benötigen. Eine einzelne Note steht am Anfang; eine einzelne ganze Taktpause bleibt mittig. Ein explizites `firstNoteX` oder die Ausrichtung im Notensystem kann den Beginn verschieben.
+Die linke Kante der ersten Note steht standardmäßig 1,5 Notenkopfbreiten nach dem Taktbeginn beziehungsweise nach Schlüssel, Taktart, Vorzeichnung und Wiederholungszeichen. Bei einem übervollen Takt mit bekannter Taktart steht auch die rechte Kante der letzten Note 1,5 Notenkopfbreiten vor dem Taktende; die Ereignisse dazwischen bleiben proportional verteilt. Hilfslinien, Vorzeichen, Punktierungen, Fähnchen und Schluss- oder Wiederholungszeichen können zusätzlichen Platz benötigen. Eine einzelne Note steht am Anfang; eine einzelne unpunktierte ganze Taktpause bleibt mittig. Ein explizites `firstNoteX` oder die spaltenweise Ausrichtung im Notensystem kann den Beginn verschieben.
 
-`NotationSystem` übernimmt die zuletzt angegebene Taktart für das Layout der folgenden Takte, ohne sie erneut anzuzeigen. Bei eigenständigen `NotationVisual`-Darstellungen kann `layoutTimeSignature={{ numerator: 4, denominator: 4 }}` eine Taktart für die Abstandsberechnung angeben, ohne ein Taktzeichen darzustellen. `timeSignature` hat Vorrang, wenn beides gesetzt ist.
+`Notation` übernimmt die zuletzt angegebene Taktart für das Layout der folgenden Takte (`layoutTimeSignature`), ohne sie erneut anzuzeigen. Soll eine Taktart nur für die Abstandsberechnung gelten, ohne ein Taktzeichen darzustellen, kann `layoutTimeSignature={{ numerator: 4, denominator: 4 }}` am Takt gesetzt werden. `timeSignature` hat Vorrang, wenn beides gesetzt ist.
 
 ## Punktierte Noten
 
-Ein Punkt rechts neben dem Notenkopf verlängert den Notenwert um die Hälfte. Das Schaubild zeigt punktierte halbe, Viertel- und Achtelnoten.
+Ein Punkt rechts neben dem Notenkopf verlängert den Notenwert um die Hälfte. Das Schaubild zeigt in drei Takten eine punktierte halbe Note (3 Viertelschläge), eine punktierte Viertelnote (3 Achtelschläge) und eine punktierte Achtelnote (3 Sechzehntelschläge), jeweils ergänzt zum 4/4-Takt.
 
-<NotationDottedNotes />
+<Notation
+  clef="treble"
+  timeSignature={{ numerator: 4, denominator: 4 }}
+  layout={3}
+  measureWidth="equal"
+  measures={[
+    {
+      notes: [
+        { duration: 'half', step: 4, dotted: true },
+        { duration: 'quarter', step: 4 },
+      ],
+    },
+    {
+      notes: [
+        { duration: 'quarter', step: 4, dotted: true },
+        { duration: 'eighth', step: 4 },
+        { duration: 'half', step: 4 },
+      ],
+    },
+    {
+      rightBarStyle: 'final',
+      notes: [
+        { duration: 'eighth', step: 4, dotted: true, beamGroup: 'b1' },
+        { duration: 'sixteenth', step: 4, beamGroup: 'b1' },
+        { duration: 'quarter', step: 4 },
+        { duration: 'half', step: 4 },
+      ],
+    },
+  ]}
+/>
 
 ## Schlussstrich
 
-Der Schlussstrich besteht aus einer dünnen und einer dicken Linie. `NotationVisual` stellt ihn mit `rightBarStyle="final"` dar; damit ersetzt er den einfachen rechten Taktstrich. Mit `showRightBar={false}` wird er ausgeblendet.
+Der Schlussstrich besteht aus einer dünnen und einer dicken Linie. `Notation` stellt ihn mit `rightBarStyle="final"` dar; damit ersetzt er den einfachen rechten Taktstrich. Mit `showRightBar={false}` wird er ausgeblendet.
 
-<NotationVisual clef="treble" rightBarStyle="final" />
+<Notation clef="treble" rightBarStyle="final" notes={[]} />
 
 ## Klaviaturnotation
 
@@ -164,66 +260,432 @@ Der Schlussstrich erstreckt sich über beide Systeme. Mit `rightBarStyle="single
 
 Die Visualisierung trägt die Tags `Allgemein` und `Notensystem`. Mehr zur geplanten Verwendung steht unter [EXP und Tags](../../exp-und-tags/).
 
-
 ## Auftakt und Wiederholung
 
-Das Beispiel im 4/4-Takt beginnt mit einem Auftakt von einer Viertelnote. Danach folgen die nummerierten Takte 1 bis 4. Das Anfangswiederholungszeichen steht nach dem Notenschlüssel. Die Wiederholungszeichen schließen Takt 2 und 3 ein: Nach Takt 3 werden diese beiden Takte einmal wiederholt, bevor Takt 4 folgt. Das Endzeichen steht direkt am Taktende: zwei Punkte links, danach ein dünner und ein dicker Strich; es ersetzt dort den einfachen Taktstrich. Der letzte Takt enthält drei Viertelnoten und ergänzt damit den Auftakt zu einem vollständigen 4/4-Takt.
+Das Beispiel im 4/4-Takt beginnt mit einem Auftakt (`pickup`) von einer Viertelnote. Danach folgen die nummerierten Takte 1 bis 4. Die Wiederholungszeichen (`repeatStart` und `repeatEnd`) schließen Takt 2 und 3 ein: Nach Takt 3 werden diese beiden Takte einmal wiederholt, bevor Takt 4 folgt. Das Endzeichen steht direkt am Taktende: zwei Punkte links, danach ein dünner und ein dicker Strich; es ersetzt dort den einfachen Taktstrich. Der letzte Takt enthält drei Viertelnoten und ergänzt damit den Auftakt automatisch zu einem vollständigen 4/4-Takt.
 
-<NotationPickupRepeat showMeasureNumbers={true} />
+<Notation
+  clef="treble"
+  timeSignature={{ numerator: 4, denominator: 4 }}
+  pickup
+  layout={[3, 2]}
+  measures={[
+    {
+      notes: [{ duration: 'quarter', step: 2 }],
+    },
+    {
+      measureNumber: 1,
+      notes: [
+        { duration: 'quarter', step: 3 },
+        { duration: 'quarter', step: 4 },
+        { duration: 'quarter', step: 5 },
+        { duration: 'quarter', step: 2 },
+      ],
+    },
+    {
+      measureNumber: 2,
+      repeatStart: true,
+      notes: [
+        { duration: 'quarter', step: 5 },
+        { duration: 'quarter', step: 6 },
+        { duration: 'quarter', step: 5 },
+        { duration: 'quarter', step: 4 },
+      ],
+    },
+    {
+      measureNumber: 3,
+      repeatEnd: true,
+      notes: [
+        { duration: 'quarter', step: 3 },
+        { duration: 'quarter', step: 2 },
+        { duration: 'quarter', step: 1 },
+        { duration: 'quarter', step: 2 },
+      ],
+    },
+    {
+      measureNumber: 4,
+      rightBarStyle: 'final',
+      notes: [
+        { duration: 'quarter', step: 3 },
+        { duration: 'quarter', step: 2 },
+        { duration: 'quarter', step: 0 },
+      ],
+    },
+  ]}
+/>
 
-Taktnummern sind standardmäßig ausgeblendet und werden in diesem Beispiel mit `showMeasureNumbers={true}` eingeblendet.
+Taktnummern werden pro Takt über `measureNumber` eingeblendet; `pickup` prüft automatisch, dass sich erster und letzter Takt zu einem vollen Takt ergänzen, und gewichtet ihre Spaltenbreiten passend.
 
 ## Tempoangaben
 
-Das Beispiel zeigt zwei 4/4-Takte mit **Allegro** und der Metronomangabe **Viertelnote = 90** (90 Viertelschläge pro Minute). Im zweiten Takt bedeutet **rit.**, allmählich langsamer zu werden; **a tempo** führt zum ursprünglichen Tempo zurück. Beide Angaben werden über `ritAt` und `aTempoAt` direkt an `NotationVisual` an nullbasierten Notenindizes gebunden. `aTempoAt` muss mindestens zwei Indizes nach `ritAt` liegen; dieselbe oder eine frühere Note ist unzulässig.
+Das Beispiel zeigt zwei 4/4-Takte mit **Allegro** (`tempo="Allegro"`) und der Metronomangabe **♩ = 90** (`tempoDetail="♩ = 90"`, 90 Viertelschläge pro Minute). Im zweiten Takt bedeutet **rit.**, allmählich langsamer zu werden; **a tempo** führt zum ursprünglichen Tempo zurück. Beide Angaben werden über `ritAt` und `aTempoAt` an nullbasierten Notenindizes gebunden. `aTempoAt` muss im selben Takt mindestens zwei Indizes Abstand zu `ritAt` haben.
 
 Für Dynamik- und Tempotexte gelten zwei visuelle Größen: `cresc.`, `decresc.`, `rit.`, `a tempo` und Metronomdetails sind klein; die fette Tempoüberschrift ist optisch auf die Dynamikzeichen **p** und **f** abgestimmt. Da die Notenschrift andere Zeichenabmessungen als die Textschrift hat, unterscheiden sich ihre CSS-Schriftgrößen.
 
-<NotationTempo />
+<Notation
+  clef="treble"
+  timeSignature={{ numerator: 4, denominator: 4 }}
+  layout={2}
+  measures={[
+    {
+      tempo: 'Allegro',
+      tempoDetail: '♩ = 90',
+      notes: [
+        { duration: 'quarter', step: 0 },
+        { duration: 'quarter', step: 1 },
+        { duration: 'quarter', step: 2 },
+        { duration: 'quarter', step: 3 },
+      ],
+    },
+    {
+      ritAt: 0,
+      aTempoAt: 2,
+      rightBarStyle: 'final',
+      notes: [
+        { duration: 'quarter', step: 2 },
+        { duration: 'quarter', step: 3 },
+        { duration: 'quarter', step: 4 },
+        { duration: 'quarter', step: 5 },
+      ],
+    },
+  ]}
+/>
 
 ## Artikulation
 
-Artikulationszeichen beschreiben, wie ein Ton gespielt und gestaltet wird. Das Beispiel zeigt **Staccato**, **Tenuto**, **Akzent** und **Marcato** jeweils oberhalb und unterhalb einer Note. Die Platzierung kann je nach Notenbild oberhalb oder unterhalb erfolgen: Staccato verkürzt den Ton, Tenuto hält ihn voll aus, der Akzent hebt ihn hervor und Marcato markiert einen besonders kräftigen Anschlag.
+Artikulationszeichen beschreiben, wie ein Ton gespielt und gestaltet wird. Das Beispiel zeigt **Staccato** (`staccato`), **Tenuto** (`tenuto`), **Akzent** (`accent`) und **Marcato** (`marcato`) im ersten Takt oberhalb (`articulationPosition: 'above'`) und im zweiten Takt unterhalb (`articulationPosition: 'below'`) einer Note. Die Platzierung erfolgt standardmäßig auf der dem Notenhals abgewandten Seite und kann über `articulationPosition` explizit oben oder unten festgelegt werden: Staccato verkürzt den Ton, Tenuto hält ihn voll aus, der Akzent hebt ihn hervor und Marcato markiert einen besonders kräftigen Anschlag.
 
-<NotationArticulations />
+<Notation
+  clef="treble"
+  timeSignature={{ numerator: 4, denominator: 4 }}
+  layout={2}
+  measureWidth="equal"
+  measures={[
+    {
+      notes: [
+        { duration: 'quarter', step: 7, articulation: 'staccato', articulationPosition: 'above' },
+        { duration: 'quarter', step: 7, articulation: 'tenuto', articulationPosition: 'above' },
+        { duration: 'quarter', step: 7, articulation: 'accent', articulationPosition: 'above' },
+        { duration: 'quarter', step: 7, articulation: 'marcato', articulationPosition: 'above' },
+      ],
+    },
+    {
+      rightBarStyle: 'final',
+      notes: [
+        { duration: 'quarter', step: 2, articulation: 'staccato', articulationPosition: 'below' },
+        { duration: 'quarter', step: 2, articulation: 'tenuto', articulationPosition: 'below' },
+        { duration: 'quarter', step: 2, articulation: 'accent', articulationPosition: 'below' },
+        { duration: 'quarter', step: 2, articulation: 'marcato', articulationPosition: 'below' },
+      ],
+    },
+  ]}
+/>
 
 ## Haltebogen und Bindebogen
 
-Ein **Haltebogen** verbindet Noten gleicher Tonhöhe; die Notenwerte werden zu einem gehaltenen Ton zusammengefasst. Ein **Bindebogen** verbindet unterschiedliche Tonhöhen und zeigt an, dass sie gebunden (legato) gespielt werden.
+Ein **Haltebogen** (`type: 'tie'`) verbindet Noten gleicher Tonhöhe; die Notenwerte werden zu einem gehaltenen Ton zusammengefasst. Ein **Bindebogen** (`type: 'slur'`) verbindet unterschiedliche Tonhöhen und zeigt an, dass sie gebunden (legato) gespielt werden.
 
-<NotationBows />
+<Notation
+  clef="treble"
+  layout={1}
+  measures={[
+    {
+      curves: [{ from: 0, to: 1, type: 'tie', placement: 'below' }],
+      notes: [
+        { duration: 'quarter', step: 0 },
+        { duration: 'quarter', step: 0 },
+        { duration: 'quarter', step: 2 },
+        { duration: 'quarter', step: 4 },
+      ],
+    },
+    {
+      rightBarStyle: 'final',
+      curves: [{ from: 2, to: 3, type: 'slur', placement: 'below' }],
+      notes: [
+        { duration: 'quarter', step: 0, articulation: 'accent', articulationPosition: 'below' },
+        { duration: 'quarter', step: 0, articulation: 'accent', articulationPosition: 'below' },
+        { duration: 'quarter', step: 2 },
+        { duration: 'quarter', step: 4 },
+      ],
+    },
+  ]}
+/>
 
 ## Dynamik
 
-Dynamikzeichen geben an, wie laut oder leise gespielt wird. **p** (*piano*) bedeutet leise, **f** (*forte*) laut. Ein Crescendo (*cresc.*) wird durch einen nach rechts weiter werdenden Keil dargestellt und bedeutet, allmählich lauter zu werden. Ein Decrescendo (*decresc.*) verengt sich nach rechts und bedeutet, allmählich leiser zu werden. In einer Notenzeile bindet `NotationVisual` die Zeichen über `hairpin="crescendo"` oder `hairpin="decrescendo"` ein. Mit `initialDynamic="forte"` beziehungsweise `"piano"` lässt sich ein bereits geltender Dynamikzustand angeben, sodass der Anfangswert nicht unnötig wiederholt wird.
+Dynamikzeichen geben an, wie laut oder leise gespielt wird. **p** (*piano*) bedeutet leise, **f** (*forte*) laut. Ein Crescendo (*cresc.*) wird durch einen nach rechts weiter werdenden Keil dargestellt und bedeutet, allmählich lauter zu werden. Ein Decrescendo (*decresc.*) verengt sich nach rechts und bedeutet, allmählich leiser zu werden. In `Notation` lassen sich Dynamikstufen direkt an einzelnen Noten über `dynamic` (sowie `dynamicText`) angeben und Dynamikgabeln entweder pro Takt über `hairpin="crescendo"` beziehungsweise `hairpin="decrescendo"` oder notengenau (auch taktübergreifend) über `hairpinStart` und `hairpinEnd` spannen.
 
-<NotationDynamics />
+<Notation
+  clef="treble"
+  timeSignature={{ numerator: 4, denominator: 4 }}
+  layout={2}
+  measures={[
+    {
+      hairpin: 'crescendo',
+      notes: [
+        { duration: 'quarter', step: 5, dynamic: 'p', dynamicText: 'cresc.' },
+        { duration: 'quarter', step: 4 },
+        { duration: 'quarter', step: 3 },
+        { duration: 'quarter', step: 4, dynamic: 'f' },
+      ],
+    },
+    {
+      hairpin: 'decrescendo',
+      rightBarStyle: 'final',
+      notes: [
+        { duration: 'quarter', step: 5, dynamic: 'f', dynamicText: 'decresc.' },
+        { duration: 'quarter', step: 4 },
+        { duration: 'quarter', step: 3 },
+        { duration: 'quarter', step: 4, dynamic: 'p' },
+      ],
+    },
+  ]}
+/>
 
 ## Abschlussbeispiel: achtzehn Takte
 
 Das abschließende Testbeispiel bündelt Notationszeichen in achtzehn vollständigen, nummerierten Takten im Violinschlüssel. Die Takte 1 bis 8 und 13 bis 15 stehen im 4/4-Takt, die Takte 9 bis 12 und 16 bis 18 im 3/4-Takt. Die Taktart steht nur am Anfang und beim Wechsel. Es enthält eine Tonartvorzeichnung, einzelne Kreuze, Bs und Auflösungszeichen, Hilfslinien, ganze bis Sechzehntelnoten, Punktierung, Fähnchen und Balkengruppen, Artikulationen oberhalb und unterhalb von Noten, Halte- und Bindebögen, Allegro, rit. und a tempo mit mindestens zwei Notenpositionen Abstand, Crescendo und Decrescendo, Wiederholungszeichen sowie den Schlussstrich. In den letzten sechs Takten stehen ganze, halbe, Viertel- und Achtelpausen.
 
-<NotationOverview />
+<Notation
+  clef="treble"
+  timeSignature={{ numerator: 4, denominator: 4 }}
+  accidentals={[
+    { type: 'sharp', step: 8 },
+    { type: 'sharp', step: 5 },
+  ]}
+  layout={[2, 2, 2, 2, 2, 2, 3, 3]}
+  measures={[
+    {
+      measureNumber: 1,
+      tempo: 'Allegro',
+      tempoDetail: '♩ = 90',
+      notes: [
+        { duration: 'half', step: 4, articulation: 'staccato' },
+        { duration: 'quarter', step: 5, articulation: 'tenuto' },
+        { duration: 'eighth', step: 6, beamGroup: 'measure-1-eighths' },
+        { duration: 'eighth', step: 5, beamGroup: 'measure-1-eighths' },
+      ],
+    },
+    {
+      measureNumber: 2,
+      notes: [
+        { duration: 'eighth', step: 2, beamGroup: 'eighths' },
+        { duration: 'eighth', step: 3, beamGroup: 'eighths' },
+        { duration: 'sixteenth', step: 4 },
+        { duration: 'sixteenth', step: 5 },
+        { duration: 'sixteenth', step: 6, beamGroup: 'measure-2-sixteenths' },
+        { duration: 'sixteenth', step: 5, beamGroup: 'measure-2-sixteenths' },
+        { duration: 'quarter', step: 4 },
+        { duration: 'quarter', step: 2 },
+      ],
+    },
+    {
+      measureNumber: 3,
+      curves: [
+        { from: 0, to: 1, type: 'tie', placement: 'below' },
+        { from: 2, to: 3, type: 'slur', placement: 'above' },
+      ],
+      notes: [
+        {
+          duration: 'quarter',
+          step: 2,
+          articulation: 'accent',
+          articulationPosition: 'below',
+        },
+        { duration: 'quarter', step: 2 },
+        { duration: 'quarter', step: 2 },
+        {
+          duration: 'quarter',
+          step: 4,
+          articulation: 'marcato',
+          articulationPosition: 'below',
+        },
+      ],
+    },
+    {
+      measureNumber: 4,
+      notes: [{ duration: 'whole', step: -2 }],
+    },
+    {
+      measureNumber: 5,
+      repeatStart: true,
+      notes: [
+        { duration: 'quarter', step: 2 },
+        { duration: 'quarter', step: 4 },
+        { duration: 'quarter', step: 5 },
+        { duration: 'quarter', step: 7 },
+      ],
+    },
+    {
+      measureNumber: 6,
+      repeatEnd: true,
+      ritAt: 0,
+      aTempoAt: 2,
+      notes: [
+        {
+          duration: 'quarter',
+          step: 2,
+          accidental: 'sharp',
+          articulation: 'staccato',
+          articulationPosition: 'below',
+        },
+        {
+          duration: 'quarter',
+          step: 2,
+          accidental: 'natural',
+          articulation: 'tenuto',
+          articulationPosition: 'below',
+        },
+        { duration: 'quarter', step: 5, accidental: 'flat' },
+        { duration: 'quarter', step: 3 },
+      ],
+    },
+    {
+      measureNumber: 7,
+      hairpin: 'crescendo',
+      notes: [
+        { duration: 'quarter', step: 2, dotted: true, dynamic: 'p' },
+        { duration: 'eighth', step: 3 },
+        { duration: 'eighth', step: 4, beamGroup: 'measure-7-eighths' },
+        {
+          duration: 'eighth',
+          step: 5,
+          beamGroup: 'measure-7-eighths',
+          articulation: 'accent',
+          articulationPosition: 'below',
+        },
+        { duration: 'quarter', step: 6, dynamic: 'f' },
+      ],
+    },
+    {
+      measureNumber: 8,
+      hairpin: 'decrescendo',
+      notes: [
+        { duration: 'half', step: 2 },
+        { duration: 'quarter', step: 3 },
+        { duration: 'quarter', step: 4, dynamic: 'p' },
+      ],
+    },
+    {
+      measureNumber: 9,
+      timeSignature: { numerator: 3, denominator: 4 },
+      notes: [
+        { duration: 'half', step: 10 },
+        { duration: 'quarter', step: 6 },
+      ],
+    },
+    {
+      measureNumber: 10,
+      hairpin: 'crescendo',
+      notes: [
+        { duration: 'quarter', step: 2, dotted: true },
+        { duration: 'eighth', step: 3, beamGroup: 'measure-10-eighths' },
+        { duration: 'eighth', step: 5, beamGroup: 'measure-10-eighths' },
+        {
+          duration: 'eighth',
+          step: 6,
+          beamGroup: 'measure-10-eighths',
+          articulation: 'marcato',
+          articulationPosition: 'below',
+          dynamic: 'f',
+        },
+      ],
+    },
+    {
+      measureNumber: 11,
+      hairpin: 'decrescendo',
+      notes: [
+        { duration: 'quarter', step: 6 },
+        {
+          duration: 'quarter',
+          step: 4,
+          articulation: 'tenuto',
+          articulationPosition: 'below',
+        },
+        { duration: 'quarter', step: 2, dynamic: 'p' },
+      ],
+    },
+    {
+      measureNumber: 12,
+      curves: [{ from: 0, to: 1, type: 'slur', placement: 'above' }],
+      notes: [
+        { duration: 'quarter', step: 2 },
+        { duration: 'quarter', step: 4 },
+        {
+          duration: 'quarter',
+          step: 1,
+          articulation: 'marcato',
+          articulationPosition: 'below',
+        },
+      ],
+    },
+    {
+      measureNumber: 13,
+      timeSignature: { numerator: 4, denominator: 4 },
+      notes: [
+        { duration: 'half', step: 3 },
+        { type: 'rest', duration: 'half' },
+      ],
+    },
+    {
+      measureNumber: 14,
+      notes: [
+        { type: 'rest', duration: 'quarter' },
+        { duration: 'quarter', step: 4 },
+        { duration: 'half', step: 2 },
+      ],
+    },
+    {
+      measureNumber: 15,
+      notes: [{ type: 'rest', duration: 'whole' }],
+    },
+    {
+      measureNumber: 16,
+      timeSignature: { numerator: 3, denominator: 4 },
+      notes: [
+        { duration: 'quarter', step: 2 },
+        { type: 'rest', duration: 'quarter' },
+        { duration: 'quarter', step: 4 },
+      ],
+    },
+    {
+      measureNumber: 17,
+      notes: [
+        { type: 'rest', duration: 'half' },
+        { duration: 'quarter', step: 5 },
+      ],
+    },
+    {
+      measureNumber: 18,
+      rightBarStyle: 'final',
+      notes: [
+        { type: 'rest', duration: 'eighth' },
+        { duration: 'quarter', step: 3, dotted: true },
+        { duration: 'quarter', step: 2 },
+      ],
+    },
+  ]}
+/>
 
-Bei ausreichend Platz stehen die ersten zwölf Takte zu zweit, die letzten sechs zu dritt in einem System. Auf schmalen Bildschirmen steht jeweils ein Takt pro Zeile. Jede Zeile beginnt mit dem Violinschlüssel und der aktuell gültigen Tonartvorzeichnung. Bei Bedarf wird die Übersicht proportional verkleinert; ohne JavaScript oder Browser-Unterstützung bleibt sie scrollbar. Alle Systeme werden pro Takt aus `NotationVisual` aufgebaut. `renderNotationSvg` ordnet Notenschlüssel, Vorzeichen, Noten und Pausen im Notensystem an und nutzt für gemeinsame musikalische Zeichen und Regeln die Bausteine in `src/components/music/`. Taktzahlen kommen aus `MeasureNumber`, Dynamikzeichen und Keile aus `DynamicsMarks`, der Schlussstrich aus `FinalBar`. `NotationOverview` enthält die Taktdaten; `arrangeNotationSystems` ordnet sie auf Zeilen und wiederholt Schlüssel und Vorzeichnung. Ein gesetztes `accidentals`-Array bezeichnet die neue Tonartvorzeichnung; ein leeres Array hebt sie auf, fehlende Angaben behalten die bisherige Vorzeichnung bei. Bei einem Wechsel werden aufgehobene Vorzeichen am Wechsel mit Auflösungszeichen dargestellt. Einzelne `accidental`-Angaben an Noten verändern die Vorzeichnung nicht. Der Schlüssel bleibt durch das ganze Stück unverändert; die Prüfregel wird mit `assertNoClefChanges` abgesichert.
+Mit `layout={[2, 2, 2, 2, 2, 2, 3, 3]}` stehen die ersten zwölf Takte zu zweit, die letzten sechs zu dritt in einem System. Jede Zeile beginnt mit dem Violinschlüssel und der aktuell gültigen Tonartvorzeichnung. Bei Bedarf wird die Übersicht über `observeNotationFit` proportional verkleinert; ohne JavaScript oder Browser-Unterstützung bleibt sie scrollbar. Alle Systeme werden deklarativ durch `Notation` über `layoutNotationSystems` und `NotationVisual` aufgebaut. `renderNotationSvg` ordnet Notenschlüssel, Vorzeichen, Noten, Pausen und Dynamik im Notensystem an und nutzt für gemeinsame musikalische Zeichen und Regeln die Module in `src/lib/`. Taktzahlen kommen aus `MeasureNumber`, Tempoangaben aus `TempoLabel`, der Schlussstrich aus `FinalBar`. Ein gesetztes `accidentals`-Array bezeichnet die neue Tonartvorzeichnung; ein leeres Array hebt sie auf, fehlende Angaben behalten die bisherige Vorzeichnung bei. Bei einem Wechsel werden aufgehobene Vorzeichen automatisch mit Auflösungszeichen dargestellt. Einzelne `accidental`-Angaben an Noten verändern die Vorzeichnung nicht.
 
-Für mehrzeilige Darstellungen bestimmen `arrangeNotationSystems` und `alignFirstNotesInSystems` eine gemeinsame Position für das erste Ereignis: am Systemanfang auch bei unterschiedlich vielen Takten pro Zeile, in den folgenden Takten mit einem einheitlichen Abstand zum Taktstrich. Das gilt für Noten ebenso wie für Pausen; eine einzelne ganze Taktpause bleibt mittig. Dabei wird genug Platz für Schlüssel, Taktart, Vorzeichnung, Wiederholungszeichen und gegebenenfalls das Vorzeichen der ersten Note reserviert. Die gemeinsame Klasse `notation-systems` sorgt für gleich hohe Zeilen und damit gleichmäßige Abstände zwischen den Notensystemen, auch wenn nur einzelne Zeilen Dynamikzeichen enthalten. `NotationVisual` übergibt die Position an den Renderer.
+Für mehrzeilige Darstellungen bestimmen `arrangeNotationSystems` und `alignFirstNotesInSystems` eine gemeinsame Position für das erste Ereignis: am Systemanfang auch bei unterschiedlich vielen Takten pro Zeile, in den folgenden Takten mit einem einheitlichen Abstand zum Taktstrich. Das gilt für Noten ebenso wie für Pausen; eine einzelne ganze Taktpause bleibt mittig. Dabei wird genug Platz für Schlüssel, Taktart, Vorzeichnung, Wiederholungszeichen und gegebenenfalls das Vorzeichen der ersten Note reserviert. Die Zeilen in `.notation-systems` reservieren über `.has-row-measure-number`, `.has-row-tempo` und `.has-row-hairpin` automatisch die nötigen vertikalen Sicherheitszonen.
 
-Die horizontalen Positionen der Ereignisse berechnet `layoutNotationEvents` in `src/lib/notation-layout.ts` unabhängig von der SVG-Ausgabe. Der Renderer verwendet diese Positionen auch für Mindestbreite, Balken, Bögen und Tempoangaben. Die Aufteilung der Takte auf Zeilen und die Grid-Spaltenbreiten bleiben davon getrennt.
+Die horizontalen Positionen der Ereignisse berechnet `layoutNotationEvents` in `src/lib/notation-layout.ts` unabhängig von der SVG-Ausgabe. Der Renderer verwendet diese Positionen auch für Mindestbreite, Balken, Bögen, Dynamikgabeln und Tempoangaben. Die Aufteilung der Takte auf Zeilen und die Grid-Spaltenbreiten steuert `src/lib/system-layout.ts`.
 
 | Zeichen im Test | Baustein | Regel oder Verwendung |
 |---|---|---|
-| Violinschlüssel, Notenköpfe, Hilfslinien und Vorzeichen | `NotationVisual`, `renderNotationSvg` | Am Zeilenbeginn stehen Schlüssel, gegebenenfalls Taktart und gültige Vorzeichnung in dieser Reihenfolge; kein Schlüsselwechsel im Stück. |
-| Taktarten 4/4 und 3/4 | `music/time-signature.ts` | Nur am Stückanfang und beim Wechsel anzeigen. |
-| Ganze bis Sechzehntelnoten, Punkt, Fähnchen und Balken | `music/rhythm.ts` und `renderNotationSvg` | Balkengruppen bestehen aus zusammenhängenden Achteln oder Sechzehnteln gleicher Dauer. |
-| Pausen | `music/rest.ts` und `renderNotationSvg` | Pausen können mit Noten gemischt werden; die ganze Pause in Takt 15 füllt den 4/4-Takt und steht mittig im verfügbaren Taktbereich. |
-| Taktzahlen, Takt- und Schlussstriche | `MeasureNumber`, `music/barline.ts`, `FinalBar` | Takte 1 bis 18 sind nummeriert; Takt 18 endet mit dem Schlussstrich. |
-| Wiederholungszeichen | `music/barline.ts` | Wiederholung umfasst Takt 5 und 6; das Anfangszeichen folgt dem Schlüssel. |
-| Artikulationen | `music/articulation.ts` | Alle Zeichen haben ober- und unterhalb denselben Abstand zum Notenkopf. Bei einem abwärts gerichteten Hals steht das Zeichen oberhalb der Note. |
-| Halte- und Bindebögen | `music/curve.ts` | Der Haltebogen verbindet gleiche, der Bindebogen hier unterschiedliche Tonhöhen. |
-| Allegro, rit. und a tempo | `TempoLabel`, `music/tempo.ts` | `a tempo` liegt mindestens zwei Notenpositionen nach `rit.`. |
-| Piano, Forte und Dynamikkeile | `DynamicsMarks`, `music/dynamics.ts` | Bereits geltende Anfangsdynamik wird nicht erneut am Keil angezeigt. |
+| Violinschlüssel, Notenköpfe, Hilfslinien und Vorzeichen | `Notation`, `NotationVisual`, `renderNotationSvg` | Am Zeilenbeginn stehen Schlüssel, gegebenenfalls Taktart und gültige Vorzeichnung in dieser Reihenfolge. |
+| Taktarten 4/4 und 3/4 | `src/lib/time-signature.ts` | Nur am Stückanfang und beim Wechsel anzeigen (`omitUnchangedTimeSignatures`). |
+| Ganze bis Sechzehntelnoten, Punkt, Fähnchen und Balken | `src/lib/rhythm.ts` und `renderNotationSvg` | Balkengruppen bestehen aus zusammenhängenden Achteln, Sechzehnteln oder punktierten Achtel-Sechzehntel-Figuren. |
+| Pausen | `src/lib/rest.ts` und `renderNotationSvg` | Pausen können mit Noten gemischt werden; die ganze Pause in Takt 15 füllt den 4/4-Takt und steht mittig im verfügbaren Taktbereich. |
+| Taktzahlen, Takt- und Schlussstriche | `MeasureNumber`, `src/lib/barline.ts`, `FinalBar` | Takte 1 bis 18 sind nummeriert; Takt 18 endet mit dem Schlussstrich. |
+| Wiederholungszeichen | `src/lib/barline.ts` | Wiederholung umfasst Takt 5 und 6; das Anfangszeichen folgt dem Schlüssel und der Vorzeichnung. |
+| Artikulationen | `src/lib/articulation.ts` | Alle Zeichen haben ober- und unterhalb denselben Abstand zum Notenkopf. Bei einem abwärts gerichteten Hals steht das Zeichen standardmäßig oberhalb der Note. |
+| Halte- und Bindebögen | `src/lib/curve.ts` | Der Haltebogen verbindet gleiche, der Bindebogen hier unterschiedliche Tonhöhen. |
+| Allegro, rit. und a tempo | `TempoLabel`, `src/lib/tempo.ts` | `a tempo` liegt mindestens zwei Notenpositionen nach `rit.`. |
+| Piano, Forte und Dynamikkeile | `src/lib/dynamics.ts` und `renderNotationSvg` | Dynamikzeichen (`dynamic`) und Keile (`hairpin`, `hairpinStart`/`hairpinEnd`) werden direkt im SVG gerendert. |
 
-Der Bassschlüssel wird wegen der Regel gegen Schlüsselwechsel in diesem Stück nicht gezeigt; er ist separat bei der Klaviaturnotation zu sehen. `TempoHeading` mit Metronomangabe und `RepeatMark` sind alternative Komponenten für die eigenständigen Tempo- und Wiederholungsbeispiele; im Abschlusstest kommen stattdessen `TempoLabel` und die gemeinsame Wiederholungszeichen-Funktion zum Einsatz. Die Klavierklammer gehört zum gesonderten Klaviersystem.
+Der Bassschlüssel ist separat im Abschnitt zu den Notenschlüsseln und bei der Klaviaturnotation zu sehen. Die Klavierklammer gehört zum gesonderten Klaviersystem (`NotationKeyboard`).
 
-Alle Notenbilder verwenden dieselbe Renderinglogik: Astro-Schaubilder binden `NotationVisual` ein, interaktive Quizbilder rufen `renderNotationSvg` aus `src/lib/notation-renderer.ts` auf. Gemeinsame musikalische Bausteine liegen in `src/components/music/`, Notensystem-Schaubilder in `src/components/notation/`. Ihre Styles stehen in `src/styles/music.css` beziehungsweise `src/styles/notation.css`. Eine zukünftige eigene Tabulaturansicht kann die gemeinsamen Bausteine verwenden und ihre Positionen selbst bestimmen. Der bestehende alphaTab-Player ist davon unabhängig. Zeichen und Regeln werden nicht in einzelnen Übersichten oder Quiz-Komponenten nachgebaut.
+Alle Notenbilder verwenden dieselbe Renderinglogik: MDX-Seiten binden `Notation` ein, das intern `NotationVisual` und `renderNotationSvg` aus `src/lib/notation-renderer.ts` aufruft. Gemeinsame musikalische Berechnungen liegen in `src/lib/`, UI-Bausteine in `src/components/ui/` und Notensystem-Komponenten in `src/components/notation/`. Ihre Styles stehen in `src/styles/music.css` beziehungsweise `src/styles/notation.css`. Der bestehende alphaTab-Player ist davon unabhängig.
