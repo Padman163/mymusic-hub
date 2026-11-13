@@ -22,7 +22,8 @@ Standardmäßig entspricht das Aussehen einem reduzierten Einzeltakt ohne linken
   * `.notation-builder-footer`: Optionale Statusleiste und Tasten-Hinweise.
 * **Quiz-Integration (`src/components/Level100Quiz.astro`):**
   * Frage 1 in "Teil 4: Notation in fünf Beispielen": 4 Viertelnoten setzen (`maxNotes={4}`, `lockDuration="quarter"`, `compact="wide"`, `showHints`). Notenwert ist auf Viertel fixiert (Num 1 blockiert), `Leertaste` platziert Note und springt zum nächsten Slot, `←`/`→` wechselt frei zwischen den 4 Positionen. Wenn keine explizite Oktave vorgegeben ist (z. B. "E" statt "E4"), sind alle Oktaven auf dem System (z. B. E4 und E5) gültig.
-  * Frage 2 in "Teil 4: Notation in fünf Beispielen": Notenwert-Eingabe mit der visuellen Button-Leiste (`showDurationPicker`, `compact="wide"`, `showHints`) und "Antwort einloggen"-Button.
+  * Frage 2 in "Teil 4: Notation in fünf Beispielen": Notenwert-Eingabe mit der visuellen Button-Leiste (`showDurationPicker`, `compact="tight"`, `showHints`) und "Antwort einloggen"-Button.
+  * **Neue Aufgabe bei falscher Antwort mit Countdown-Timer (3 Versuche):** Ist eine Eingabe falsch, erscheint auf gleicher Linie neben dem "Antwort einloggen"-Button ein kompakter Zurücksetzen-Pfeil-Button mit einem Versuchs-Timer-Badge (beginnt bei 3 und zählt auf 2, 1 herunter). Ein Klick darauf zieht eine neue Aufgabe aus dem Fragenpool und setzt den Builder zurück. Nach 3 Fehlversuchen gilt die jeweilige Aufgabe endgültig als nicht bestanden (`data-correct="false"`), der Einloggen-Button wird deaktiviert und der Reset-Button ausgeblendet.
   * Gesamtpunkte: `21` (`passingPoints = 17`).
   * Beide interaktiven Fragen validieren direkt und fließen in das Gesamtergebnis des Quiz ein.
 * **Dokumentation:**
@@ -48,7 +49,7 @@ Standardmäßig entspricht das Aussehen einem reduzierten Einzeltakt ohne linken
    * `initialDuration` (Standard: `"quarter"`).
    * `allowedDurations` (Standard: alle 5 Notenwerte).
    * `showDurationPicker` (Standard: `false`): Schaltet die Button-Toolbar zur Notenwert-Auswahl ein.
-   * `compact` (Standard: `false`): Kompakte Breite (`true` / `"tight"` = ultraschmal wie im Quiz, `"wide"` = Standard-Notationslänge von 300px; beide Varianten standardmäßig ohne rechten Taktstrich).
+   * `compact` (Standard: `false`): Kompakte Breite (`true` / `"tight"` = halbe Breite von wide mit 150px, `"wide"` = Standard-Notationslänge von 300px; beide Varianten standardmäßig ohne rechten Taktstrich).
    * `showRightBar` (Standard: `false`): Taktstrich rechts (standardmäßig aus; kann mit `showRightBar={true}` explizit aktiviert werden).
    * `showLabel` (Standard: `false`): Schaltet das Noten-/Aktions-Badge direkt am Cursor ein.
    * `showStatus` (Standard: `false`): Schaltet die Statuszeile unterhalb des Systems ein.

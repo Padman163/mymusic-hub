@@ -606,9 +606,12 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
   let effectiveMinWidth = Math.ceil(minimumWidth);
   let inlineWidthAttr = "";
 
-  if (compactMode === "tight" && notes.length > 0) {
+  if (compactMode === "tight") {
     const lastNoteX = firstNoteX ?? defaultFirstNoteX(options);
-    const compactTightW = Math.ceil(lastNoteX + NOTE_WIDTH / 2 + sp(1.5));
+    const compactTightW = Math.max(
+      150,
+      Math.ceil(lastNoteX + NOTE_WIDTH / 2 + sp(1.5)),
+    );
     effectiveMinWidth = compactTightW;
     inlineWidthAttr = ` width="${compactTightW}"`;
   } else if (compactMode === "wide") {

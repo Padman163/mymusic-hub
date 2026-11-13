@@ -383,8 +383,9 @@ export function renderNotationBuilderSvg(options: {
   let finalWidth = existingMinWidth;
 
   if (isCompactTight) {
-    const compactWidth = Math.ceil(
-      firstNoteX + BUILDER_NOTE_WIDTH / 2 + sp(1.5),
+    const compactWidth = Math.max(
+      150,
+      Math.ceil(firstNoteX + BUILDER_NOTE_WIDTH / 2 + sp(1.5)),
     );
     finalWidth = compactWidth;
     svg = svg
@@ -603,9 +604,11 @@ export function attachNotationBuilder(root: HTMLElement): void {
         if (!dur) return;
         activeDuration = dur;
         if (placedNotes[activeSlot] !== null) {
+          const current = placedNotes[activeSlot]!;
           placedNotes[activeSlot] = {
-            ...placedNotes[activeSlot]!,
+            step: current.step,
             duration: dur,
+            ...(current.accidental ? { accidental: current.accidental } : {}),
           };
         } else {
           placedNotes[activeSlot] = { duration: dur, step: cursorStep };
@@ -743,9 +746,11 @@ export function attachNotationBuilder(root: HTMLElement): void {
           currentIndex >= 0 ? (currentIndex + 1) % durations.length : 0;
         activeDuration = durations[nextIndex];
         if (placedNotes[activeSlot] !== null) {
+          const current = placedNotes[activeSlot]!;
           placedNotes[activeSlot] = {
-            ...placedNotes[activeSlot]!,
+            step: current.step,
             duration: activeDuration,
+            ...(current.accidental ? { accidental: current.accidental } : {}),
           };
         }
         syncDom(true);
@@ -793,9 +798,11 @@ export function attachNotationBuilder(root: HTMLElement): void {
     if (event instanceof CustomEvent && event.detail?.duration) {
       activeDuration = event.detail.duration as Duration;
       if (placedNotes[activeSlot] !== null) {
+        const current = placedNotes[activeSlot]!;
         placedNotes[activeSlot] = {
-          ...placedNotes[activeSlot]!,
+          step: current.step,
           duration: activeDuration,
+          ...(current.accidental ? { accidental: current.accidental } : {}),
         };
       }
       syncDom(true);

@@ -1026,16 +1026,30 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
           </div>
           <div class="notation-builder-controls">
             <button type="button" class="notation-builder-lock-button">Antwort einloggen</button>
+            <button type="button" class="notation-builder-retry-button" title="Neue Aufgabe (noch 3 Versuche)" aria-label="Neue Aufgabe laden (noch 3 Versuche)" hidden>
+              <svg class="notation-builder-retry-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                <polyline points="3 3 3 8 8 8"></polyline>
+              </svg>
+              <span class="notation-builder-retry-timer" aria-hidden="true">3</span>
+            </button>
           </div>
           <p class="notation-builder-feedback" aria-live="polite"></p>
         </fieldset>
         <fieldset class="quiz-question notation-question notation-duration-builder-question" data-active="true">
           <legend>2. <span class="notation-duration-builder-prompt"></span></legend>
           <div class="notation-duration-builder-task">
-            <NotationBuilder clef="treble" compact="wide" showDurationPicker showHints />
+            <NotationBuilder clef="treble" compact="tight" showDurationPicker showHints />
           </div>
           <div class="notation-duration-builder-controls">
             <button type="button" class="notation-duration-builder-lock-button">Antwort einloggen</button>
+            <button type="button" class="notation-duration-builder-retry-button" title="Neue Aufgabe (noch 3 Versuche)" aria-label="Neue Aufgabe laden (noch 3 Versuche)" hidden>
+              <svg class="notation-builder-retry-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                <polyline points="3 3 3 8 8 8"></polyline>
+              </svg>
+              <span class="notation-builder-retry-timer notation-duration-builder-retry-timer" aria-hidden="true">3</span>
+            </button>
           </div>
           <p class="notation-duration-builder-feedback" aria-live="polite"></p>
         </fieldset>
@@ -1301,6 +1315,11 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
 
   .notation-builder-controls,
   .notation-duration-builder-controls {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 0.5rem;
     margin-top: 0.6rem;
   }
 
@@ -1310,7 +1329,9 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.45rem 1rem;
+    height: 2.25rem;
+    padding: 0 1rem;
+    margin: 0;
     border: 1px solid var(--quiz-border);
     border-radius: 0.4rem;
     background: var(--sl-color-bg);
@@ -1318,15 +1339,86 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
     font: inherit;
     font-size: 0.875rem;
     font-weight: 600;
-    line-height: 1.2;
+    line-height: 1;
+    vertical-align: middle;
     cursor: pointer;
-    transition: background 0.15s, border-color 0.15s;
+    transition: background 0.15s, border-color 0.15s, opacity 0.15s;
   }
 
-  .notation-builder-lock-button:hover,
-  .notation-duration-builder-lock-button:hover {
+  .notation-builder-lock-button:disabled,
+  .notation-duration-builder-lock-button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    border-color: var(--quiz-border);
+    background: var(--sl-color-gray-6);
+  }
+
+  .notation-builder-lock-button:not(:disabled):hover,
+  .notation-duration-builder-lock-button:not(:disabled):hover {
     border-color: var(--sl-color-accent);
     background: var(--sl-color-gray-6);
+  }
+
+  .notation-builder-retry-button,
+  .notation-duration-builder-retry-button {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    height: 2.25rem;
+    padding: 0 0.65rem 0 0.55rem;
+    margin: 0;
+    border: 1px solid var(--quiz-border);
+    border-radius: 0.4rem;
+    background: var(--sl-color-bg);
+    color: var(--sl-color-text);
+    line-height: 1;
+    vertical-align: middle;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+
+  .notation-builder-retry-button[hidden],
+  .notation-duration-builder-retry-button[hidden] {
+    display: none !important;
+  }
+
+  .notation-builder-retry-button:hover,
+  .notation-duration-builder-retry-button:hover {
+    border-color: var(--sl-color-accent);
+    background: var(--sl-color-gray-6);
+    color: var(--sl-color-accent);
+  }
+
+  .notation-builder-retry-icon {
+    width: 1.15rem;
+    height: 1.15rem;
+    display: block;
+    flex-shrink: 0;
+    transition: transform 0.25s ease;
+  }
+
+  .notation-builder-retry-button:hover .notation-builder-retry-icon,
+  .notation-duration-builder-retry-button:hover .notation-builder-retry-icon {
+    transform: rotate(-90deg);
+  }
+
+  .notation-builder-retry-timer {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 0.25rem;
+    border-radius: 9999px;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    color: #dc2626;
+    font-size: 0.75rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
   }
 
   .notation-builder-feedback,
@@ -1428,7 +1520,6 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
 </style>
 
 <script>
-  import { stepToPitchName } from '../lib/notation-builder';
   import { renderNotationSvg } from '../lib/notation-renderer';
   import type { Duration } from '../lib/rhythm';
 
@@ -1534,6 +1625,8 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
       const builderPrompt = builderQuestion?.querySelector<HTMLElement>('.notation-builder-prompt');
       const builderFeedback = builderQuestion?.querySelector<HTMLElement>('.notation-builder-feedback');
       const builderLockBtn = builderQuestion?.querySelector<HTMLButtonElement>('.notation-builder-lock-button');
+      const builderRetryBtn = builderQuestion?.querySelector<HTMLButtonElement>('.notation-builder-retry-button');
+      const builderRetryTimer = builderQuestion?.querySelector<HTMLElement>('.notation-builder-retry-timer');
 
       const durationBuilderQuestion = quiz.querySelector<HTMLElement>('.notation-duration-builder-question');
       const durationBuilderTask = durationBuilderQuestion?.querySelector<HTMLElement>('.notation-duration-builder-task');
@@ -1541,6 +1634,12 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
       const durationBuilderPrompt = durationBuilderQuestion?.querySelector<HTMLElement>('.notation-duration-builder-prompt');
       const durationBuilderFeedback = durationBuilderQuestion?.querySelector<HTMLElement>('.notation-duration-builder-feedback');
       const durationBuilderLockBtn = durationBuilderQuestion?.querySelector<HTMLButtonElement>('.notation-duration-builder-lock-button');
+      const durationBuilderRetryBtn = durationBuilderQuestion?.querySelector<HTMLButtonElement>('.notation-duration-builder-retry-button');
+      const durationBuilderRetryTimer = durationBuilderQuestion?.querySelector<HTMLElement>('.notation-duration-builder-retry-timer');
+
+      const MAX_BUILDER_ATTEMPTS = 3;
+      let builderAttempts = 0;
+      let durationBuilderAttempts = 0;
 
       if (!form || !result || !resetButton || !patternQuestion || !patternCandidates.length ||
         !fretboard || !fretboardTray || !fretboardFeedback || !difficultyStatus ||
@@ -1924,9 +2023,11 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
         builderTask.removeAttribute('data-correct');
         if (builderQuestion) builderQuestion.removeAttribute('data-correct');
         builderFeedback.textContent = '';
+        if (builderRetryBtn) builderRetryBtn.hidden = true;
         durationBuilderTask.removeAttribute('data-correct');
         if (durationBuilderQuestion) durationBuilderQuestion.removeAttribute('data-correct');
         durationBuilderFeedback.textContent = '';
+        if (durationBuilderRetryBtn) durationBuilderRetryBtn.hidden = true;
       };
 
       const renderQuiz = (reshuffleNotation = true) => {
@@ -2059,6 +2160,13 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
           'aria-label',
           `DrumPattern ${pattern.timeSignature}, Auflösung ${pattern.resolution}`
         );
+        builderAttempts = 0;
+        durationBuilderAttempts = 0;
+        if (builderLockBtn) builderLockBtn.disabled = false;
+        if (durationBuilderLockBtn) durationBuilderLockBtn.disabled = false;
+        if (builderRetryTimer) builderRetryTimer.textContent = String(MAX_BUILDER_ATTEMPTS);
+        if (durationBuilderRetryTimer) durationBuilderRetryTimer.textContent = String(MAX_BUILDER_ATTEMPTS);
+
         const candidateFourNotes = fourNotesTargets.filter((item) => item.id !== previousFourNotesId);
         const chosenFourNotes = shuffle(candidateFourNotes.length ? candidateFourNotes : fourNotesTargets)[0];
         previousFourNotesId = chosenFourNotes.id;
@@ -2067,6 +2175,7 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
         builderTask.removeAttribute('data-correct');
         if (builderQuestion) builderQuestion.removeAttribute('data-correct');
         builderFeedback.textContent = '';
+        if (builderRetryBtn) builderRetryBtn.hidden = true;
         builderEl.dispatchEvent(new CustomEvent('notationbuilder:reset', { detail: { step: 4 } }));
 
         const candidateNoteValues = noteValueTargets.filter((item) => item.id !== previousNoteValueId);
@@ -2077,6 +2186,7 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
         durationBuilderTask.removeAttribute('data-correct');
         if (durationBuilderQuestion) durationBuilderQuestion.removeAttribute('data-correct');
         durationBuilderFeedback.textContent = '';
+        if (durationBuilderRetryBtn) durationBuilderRetryBtn.hidden = true;
         const initialDurationReset = activeDurationTarget.duration === 'quarter' ? 'half' : 'quarter';
         durationBuilderEl.dispatchEvent(new CustomEvent('notationbuilder:reset', { detail: { step: 4, duration: initialDurationReset } }));
 
@@ -2111,7 +2221,7 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
         clearFeedback();
       });
 
-      const evaluateBuilderAnswer = (isSubmit = false): boolean => {
+      const evaluateBuilderAnswer = (_isSubmit = false): boolean => {
         const placedStepsRaw = builderEl.dataset.placedSteps;
         let placedSteps: (number | null)[] = [];
         try {
@@ -2127,27 +2237,21 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
           placedNotes = [];
         }
 
+        if (builderTask.dataset.correct === 'true') {
+          return true;
+        }
+        if (builderAttempts >= MAX_BUILDER_ATTEMPTS) {
+          builderTask.dataset.correct = 'false';
+          if (builderQuestion) builderQuestion.dataset.correct = 'false';
+          return false;
+        }
+
         const filledCount = placedSteps.filter((s) => s !== null && s !== undefined).length;
         const targetSteps = activeBuilderTarget.steps;
         const targetNotesStr = activeBuilderTarget.notes.join(' – ');
 
-        if (filledCount === 0) {
-          builderTask.dataset.correct = 'false';
-          if (builderQuestion) builderQuestion.dataset.correct = 'false';
-          builderFeedback.textContent = isSubmit
-            ? `Keine Noten platziert. Gesucht: 4 Viertelnoten (${targetNotesStr}).`
-            : `Noch keine Noten platziert. Wähle mit ↑/↓ die Tonhöhe und setze die Noten mit der Leertaste.`;
-          return false;
-        }
-
-        if (filledCount < targetSteps.length) {
-          builderTask.dataset.correct = 'false';
-          if (builderQuestion) builderQuestion.dataset.correct = 'false';
-          builderFeedback.textContent = `Erst ${filledCount} von ${targetSteps.length} Noten platziert. Gesucht: ${targetNotesStr}. Mit ←/→ kannst du zwischen den Positionen wechseln.`;
-          return false;
-        }
-
         const isBuilderCorrect =
+          filledCount === targetSteps.length &&
           placedSteps.length === targetSteps.length &&
           placedSteps.every((step, index) => {
             if (step === null || step === undefined) return false;
@@ -2170,57 +2274,158 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
             return placedLetter ? placedLetter === targetLetter : moduloMatch;
           });
 
-        builderTask.dataset.correct = String(isBuilderCorrect);
-        if (builderQuestion) builderQuestion.dataset.correct = String(isBuilderCorrect);
+        if (isBuilderCorrect) {
+          builderTask.dataset.correct = 'true';
+          if (builderQuestion) builderQuestion.dataset.correct = 'true';
+          if (builderRetryBtn) builderRetryBtn.hidden = true;
+          if (builderLockBtn) builderLockBtn.disabled = true;
+          builderFeedback.textContent = `Richtig! Noten ${targetNotesStr} als Viertelnoten platziert.`;
+          return true;
+        }
+
+        builderAttempts += 1;
+        const remainingAttempts = Math.max(0, MAX_BUILDER_ATTEMPTS - builderAttempts);
+        if (builderRetryTimer) builderRetryTimer.textContent = String(remainingAttempts);
+
+        builderTask.dataset.correct = 'false';
+        if (builderQuestion) builderQuestion.dataset.correct = 'false';
+
         const placedNotesFormatted = placedNotes.map((n) => n ? n.replace(/\d+$/, '') : '?').join(' – ');
 
-        builderFeedback.textContent = isBuilderCorrect
-          ? `Richtig! Noten ${targetNotesStr} als Viertelnoten platziert.`
-          : `Noch nicht ganz richtig. Platziert: ${placedNotesFormatted}. Gesucht: ${targetNotesStr}.`;
+        if (remainingAttempts <= 0) {
+          if (builderRetryBtn) builderRetryBtn.hidden = true;
+          if (builderLockBtn) builderLockBtn.disabled = true;
+          builderFeedback.textContent = `Aufgabe nicht bestanden (${MAX_BUILDER_ATTEMPTS} von ${MAX_BUILDER_ATTEMPTS} Versuche verbraucht). Gesucht: 4 Viertelnoten (${targetNotesStr}).`;
+        } else {
+          if (builderRetryBtn) builderRetryBtn.hidden = false;
+          const attemptsWord = remainingAttempts === 1 ? 'Versuch' : 'Versuche';
+          if (filledCount === 0) {
+            builderFeedback.textContent = `Keine Noten platziert. Gesucht: 4 Viertelnoten (${targetNotesStr}). (Noch ${remainingAttempts} ${attemptsWord})`;
+          } else if (filledCount < targetSteps.length) {
+            builderFeedback.textContent = `Erst ${filledCount} von ${targetSteps.length} Noten platziert. Gesucht: ${targetNotesStr}. (Noch ${remainingAttempts} ${attemptsWord})`;
+          } else {
+            builderFeedback.textContent = `Noch nicht ganz richtig. Platziert: ${placedNotesFormatted}. Gesucht: ${targetNotesStr}. (Noch ${remainingAttempts} ${attemptsWord})`;
+          }
+        }
 
-        return isBuilderCorrect;
+        return false;
       };
 
       builderLockBtn?.addEventListener('click', () => {
         evaluateBuilderAnswer(false);
       });
 
+      builderRetryBtn?.addEventListener('click', () => {
+        if (builderAttempts >= MAX_BUILDER_ATTEMPTS) return;
+        const candidateFourNotes = fourNotesTargets.filter(
+          (item) => item.id !== activeBuilderTarget.id,
+        );
+        const chosenFourNotes = shuffle(
+          candidateFourNotes.length ? candidateFourNotes : fourNotesTargets,
+        )[0];
+        previousFourNotesId = chosenFourNotes.id;
+        activeBuilderTarget = chosenFourNotes;
+        builderPrompt.textContent = activeBuilderTarget.prompt;
+        builderTask.removeAttribute('data-correct');
+        if (builderQuestion) builderQuestion.removeAttribute('data-correct');
+        builderFeedback.textContent = '';
+        if (builderRetryBtn) builderRetryBtn.hidden = true;
+        builderEl.dispatchEvent(
+          new CustomEvent('notationbuilder:reset', { detail: { step: 4 } }),
+        );
+      });
+
       builderEl.addEventListener('notationbuilder:change', () => {
+        if (builderAttempts >= MAX_BUILDER_ATTEMPTS) return;
         builderTask.removeAttribute('data-correct');
         builderQuestion?.removeAttribute('data-correct');
         builderFeedback.textContent = '';
       });
 
-      const evaluateDurationBuilderAnswer = (isSubmit = false): boolean => {
-        const placedStepRaw = durationBuilderEl.dataset.placedStep;
-        const placedDuration = durationBuilderEl.dataset.placedDuration;
-
-        if (placedStepRaw === undefined || !placedDuration) {
+      const evaluateDurationBuilderAnswer = (_isSubmit = false): boolean => {
+        if (durationBuilderTask.dataset.correct === 'true') {
+          return true;
+        }
+        if (durationBuilderAttempts >= MAX_BUILDER_ATTEMPTS) {
           durationBuilderTask.dataset.correct = 'false';
           if (durationBuilderQuestion) durationBuilderQuestion.dataset.correct = 'false';
-          durationBuilderFeedback.textContent = isSubmit
-            ? `Keine Note platziert. Gesucht: ${activeDurationTarget.name}.`
-            : `Noch keine Note platziert. Wähle den Notenwert "${activeDurationTarget.name}" (Toolbar oder Num 1) und platziere die Note mit der Leertaste.`;
           return false;
         }
 
-        const isDurationCorrect = placedDuration === activeDurationTarget.duration;
+        const placedStepRaw = durationBuilderEl.dataset.placedStep;
+        const placedDuration = durationBuilderEl.dataset.placedDuration;
 
-        durationBuilderTask.dataset.correct = String(isDurationCorrect);
-        if (durationBuilderQuestion) durationBuilderQuestion.dataset.correct = String(isDurationCorrect);
-        const placedDurationName = durationNamesGerman[placedDuration] ?? placedDuration;
-        durationBuilderFeedback.textContent = isDurationCorrect
-          ? `Richtig! ${activeDurationTarget.name} platziert.`
-          : `Noch nicht richtig. Platziert: ${placedDurationName}. Gesucht: ${activeDurationTarget.name}.`;
+        const isDurationCorrect =
+          placedStepRaw !== undefined &&
+          Boolean(placedDuration) &&
+          placedDuration === activeDurationTarget.duration;
 
-        return isDurationCorrect;
+        if (isDurationCorrect) {
+          durationBuilderTask.dataset.correct = 'true';
+          if (durationBuilderQuestion) durationBuilderQuestion.dataset.correct = 'true';
+          if (durationBuilderRetryBtn) durationBuilderRetryBtn.hidden = true;
+          if (durationBuilderLockBtn) durationBuilderLockBtn.disabled = true;
+          durationBuilderFeedback.textContent = `Richtig! ${activeDurationTarget.name} platziert.`;
+          return true;
+        }
+
+        durationBuilderAttempts += 1;
+        const remainingAttempts = Math.max(0, MAX_BUILDER_ATTEMPTS - durationBuilderAttempts);
+        if (durationBuilderRetryTimer) durationBuilderRetryTimer.textContent = String(remainingAttempts);
+
+        durationBuilderTask.dataset.correct = 'false';
+        if (durationBuilderQuestion) durationBuilderQuestion.dataset.correct = 'false';
+
+        const placedDurationName = placedDuration ? (durationNamesGerman[placedDuration] ?? placedDuration) : undefined;
+
+        if (remainingAttempts <= 0) {
+          if (durationBuilderRetryBtn) durationBuilderRetryBtn.hidden = true;
+          if (durationBuilderLockBtn) durationBuilderLockBtn.disabled = true;
+          durationBuilderFeedback.textContent = `Aufgabe nicht bestanden (${MAX_BUILDER_ATTEMPTS} von ${MAX_BUILDER_ATTEMPTS} Versuche verbraucht). Gesucht: ${activeDurationTarget.name}.`;
+        } else {
+          if (durationBuilderRetryBtn) durationBuilderRetryBtn.hidden = false;
+          const attemptsWord = remainingAttempts === 1 ? 'Versuch' : 'Versuche';
+          if (!placedDuration) {
+            durationBuilderFeedback.textContent = `Noch keine Note platziert. Wähle den Notenwert "${activeDurationTarget.name}" (Toolbar oder Num 1) und platziere die Note mit der Leertaste. (Noch ${remainingAttempts} ${attemptsWord})`;
+          } else {
+            durationBuilderFeedback.textContent = `Noch nicht richtig. Platziert: ${placedDurationName}. Gesucht: ${activeDurationTarget.name}. (Noch ${remainingAttempts} ${attemptsWord})`;
+          }
+        }
+
+        return false;
       };
 
       durationBuilderLockBtn?.addEventListener('click', () => {
         evaluateDurationBuilderAnswer(false);
       });
 
+      durationBuilderRetryBtn?.addEventListener('click', () => {
+        if (durationBuilderAttempts >= MAX_BUILDER_ATTEMPTS) return;
+        const candidateNoteValues = noteValueTargets.filter(
+          (item) => item.id !== activeDurationTarget.id,
+        );
+        const chosenNoteValue = shuffle(
+          candidateNoteValues.length ? candidateNoteValues : noteValueTargets,
+        )[0];
+        previousNoteValueId = chosenNoteValue.id;
+        activeDurationTarget = chosenNoteValue;
+        durationBuilderPrompt.textContent = activeDurationTarget.prompt;
+        durationBuilderTask.removeAttribute('data-correct');
+        if (durationBuilderQuestion)
+          durationBuilderQuestion.removeAttribute('data-correct');
+        durationBuilderFeedback.textContent = '';
+        if (durationBuilderRetryBtn) durationBuilderRetryBtn.hidden = true;
+        const initialDurationReset =
+          activeDurationTarget.duration === 'quarter' ? 'half' : 'quarter';
+        durationBuilderEl.dispatchEvent(
+          new CustomEvent('notationbuilder:reset', {
+            detail: { step: 4, duration: initialDurationReset },
+          }),
+        );
+      });
+
       durationBuilderEl.addEventListener('notationbuilder:change', () => {
+        if (durationBuilderAttempts >= MAX_BUILDER_ATTEMPTS) return;
         durationBuilderTask.removeAttribute('data-correct');
         durationBuilderQuestion?.removeAttribute('data-correct');
         durationBuilderFeedback.textContent = '';
