@@ -1,4 +1,4 @@
-// @vitest-environment node
+﻿// @vitest-environment node
 const { test } = process.env.VITEST ? await import('vitest') : await import('node:test');
 import assert from 'node:assert/strict';
 import { articulationPlacement, articulationY, renderArticulation } from '../src/lib/articulation.ts';
@@ -969,8 +969,8 @@ test('notation builder maps steps, pitches and SVG overlays accurately', () => {
     placedNote: null,
   });
   assert.match(svg, /class="notation-builder-cursor"/);
-  assert.match(svg, /class="notation-builder-cursor-head"[^>]*rx="6\.75" ry="5"/);
-  assert.equal((svg.match(/class="notation-builder-step-hit"/g) ?? []).length, 13);
+  assert.match(svg, /<rect class="notation-builder-cursor-head"[^>]*width="17\.5" height="14" rx="4"/);
+  assert.doesNotMatch(svg, /notation-builder-step-hit/);
   assert.doesNotMatch(svg, /class="notation-barline"/);
 
   const withNoteSvg = renderNotationBuilderSvg({

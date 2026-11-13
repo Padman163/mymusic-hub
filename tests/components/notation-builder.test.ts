@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+﻿import { afterEach, describe, expect, it } from "vitest";
 import {
   type NotationBuilderConfig,
   renderNotationBuilderSvg,
@@ -10,6 +10,7 @@ function mountBuilder(
     clef: "treble",
     showLeftBar: false,
     showRightBar: false,
+    showLabel: true,
     initialStep: 4,
   },
 ): HTMLElement {
@@ -41,6 +42,17 @@ function mountBuilder(
   return root;
 }
 
+function clickStep(root: HTMLElement, step: number) {
+  const svg = root.querySelector<SVGSVGElement>("svg.notation-staff");
+  if (!svg) throw new Error("SVG fehlt");
+  svg.getBoundingClientRect = () =>
+    ({ top: 0, height: 92, left: 0, width: 400 }) as DOMRect;
+  const y = 64 - step * 5;
+  root
+    .querySelector(".notation-builder-stage")
+    ?.dispatchEvent(new MouseEvent("click", { bubbles: true, clientY: y }));
+}
+
 describe("NotationBuilder-Interaktion", () => {
   afterEach(() => {
     document.body.replaceChildren();
@@ -66,10 +78,7 @@ describe("NotationBuilder-Interaktion", () => {
 
   it("platziert den markierten Bereich per Mausklick auf einen Step", () => {
     const root = mountBuilder();
-    const hitE4 = root.querySelector<SVGElement>('[data-step="0"]');
-    expect(hitE4).not.toBeNull();
-
-    hitE4?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    clickStep(root, 0);
 
     expect(root.dataset.cursorStep).toBe("0");
     expect(root.dataset.cursorNote).toBe("E4");
@@ -106,8 +115,7 @@ describe("NotationBuilder-Interaktion", () => {
 
   it("erstellt mit NUM 1 eine Viertelnote und löscht sie mit ENTF", () => {
     const root = mountBuilder();
-    const hitF4 = root.querySelector<SVGElement>('[data-step="1"]');
-    hitF4?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    clickStep(root, 1);
 
     root.dispatchEvent(
       new KeyboardEvent("keydown", {
@@ -176,3 +184,4 @@ describe("NotationBuilder-Interaktion", () => {
     expect(root.dataset.cursorNote).toBe("G4");
   });
 });
+

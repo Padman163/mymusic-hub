@@ -1,4 +1,4 @@
----
+﻿---
 import DrumPattern from "./DrumPattern.astro";
 import FretboardClickable from "./FretboardClickable.astro";
 import NotationBuilder from "./notation/NotationBuilder.astro";
@@ -1043,7 +1043,7 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
       <h2>Teil 5: Note im Notensystem platzieren</h2>
       <p class="notation-builder-prompt"></p>
       <div class="notation-builder-task">
-        <NotationBuilder clef="treble" showLeftBar={false} showRightBar={false} />
+        <NotationBuilder clef="treble" showLabel showStatus showHints />
       </div>
       <p class="notation-builder-feedback" aria-live="polite"></p>
     </section>

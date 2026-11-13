@@ -1,4 +1,4 @@
-import {
+﻿import {
   defaultFirstNoteX,
   type NotationClef,
   type NotationEvent,
@@ -18,6 +18,7 @@ export const BUILDER_STAFF_BOTTOM = 64;
 export const BUILDER_SVG_HEIGHT = 92;
 export const BUILDER_NOTE_WIDTH = sp(1.35);
 export const BUILDER_NOTE_HEIGHT = sp(1.0);
+const CURSOR_PAD = 2;
 export const BUILDER_LEDGER_OVERHANG = sp(0.5);
 
 export const TREBLE_STEP_PITCHES: Record<number, string> = {
@@ -57,6 +58,8 @@ export interface NotationBuilderConfig
   clef?: NotationClef | false;
   notes?: NotationEvent[];
   initialStep?: number;
+  /** Beschriftung (Note / Aktion) direkt am markierten Bereich. */
+  showLabel?: boolean;
 }
 
 export interface NotationBuilderStateSummary {
@@ -198,7 +201,7 @@ export function renderNotationBuilderSvg(options: {
     notes,
     firstNoteX,
     showLeftBar: config.showLeftBar ?? false,
-    showRightBar: config.showRightBar ?? false,
+    showRightBar: config.showRightBar ?? true,
     rightBarStyle: config.rightBarStyle ?? "single",
   });
 
@@ -209,18 +212,6 @@ export function renderNotationBuilderSvg(options: {
   });
 
   const cursorY = stepToY(cursorStep);
-  const hitStepHeight = sp(0.5);
-  const hitZones = Array.from(
-    { length: MAX_NOTATION_STEP - MIN_NOTATION_STEP + 1 },
-    (_, idx) => MAX_NOTATION_STEP - idx,
-  )
-    .map((step) => {
-      const y = stepToY(step) - hitStepHeight / 2;
-      const pitch = stepToPitchName(step, config.clef ?? "treble");
-      return `<rect class="notation-builder-step-hit" data-step="${step}" data-pitch="${escapeXml(pitch)}" x="0" y="${y}" width="100%" height="${hitStepHeight}" fill="transparent" />`;
-    })
-    .join("");
-
   const needsCursorLedger =
     (cursorStep === MIN_NOTATION_STEP || cursorStep === MAX_NOTATION_STEP) &&
     !state.isOnPlacedNote;
@@ -228,33 +219,38 @@ export function renderNotationBuilderSvg(options: {
     ? `<line class="notation-builder-cursor-ledger" x1="${-(BUILDER_NOTE_WIDTH / 2 + BUILDER_LEDGER_OVERHANG)}" y1="0" x2="${BUILDER_NOTE_WIDTH / 2 + BUILDER_LEDGER_OVERHANG}" y2="0" />`
     : "";
 
+  const showLabel = config.showLabel ?? false;
   const labelWidth = Math.max(120, state.badgeText.length * 6.4 + 16);
   const labelOffsetX = BUILDER_NOTE_WIDTH / 2 + 10;
 
   const overlay = [
     `<g class="notation-builder-overlay">`,
-    hitZones,
     `<g class="notation-builder-cursor" data-cursor-step="${cursorStep}" data-cursor-note="${escapeXml(state.currentNote)}" data-on-note="${state.isOnPlacedNote}" transform="translate(${firstNoteX} ${cursorY})">`,
     ledgerHtml,
-    `<ellipse class="notation-builder-cursor-head" cx="0" cy="0" rx="${BUILDER_NOTE_WIDTH / 2}" ry="${BUILDER_NOTE_HEIGHT / 2}" />`,
-    `<g class="notation-builder-cursor-label" transform="translate(${labelOffsetX} 0)">`,
-    `<rect class="notation-builder-cursor-pill" x="0" y="-10" width="${labelWidth}" height="20" rx="4" />`,
-    `<text class="notation-builder-cursor-text" x="8" y="0" dominant-baseline="central">${escapeXml(state.badgeText)}</text>`,
-    `</g>`,
+    `<rect class="notation-builder-cursor-head" x="${-BUILDER_NOTE_WIDTH / 2 - CURSOR_PAD}" y="${-BUILDER_NOTE_HEIGHT / 2 - CURSOR_PAD}" width="${BUILDER_NOTE_WIDTH + 2 * CURSOR_PAD}" height="${BUILDER_NOTE_HEIGHT + 2 * CURSOR_PAD}" rx="4" ry="4" />`,
+    showLabel
+      ? [
+          `<g class="notation-builder-cursor-label" transform="translate(${labelOffsetX} 0)">`,
+          `<rect class="notation-builder-cursor-pill" x="0" y="-10" width="${labelWidth}" height="20" rx="4" />`,
+          `<text class="notation-builder-cursor-text" x="8" y="0" dominant-baseline="central">${escapeXml(state.badgeText)}</text>`,
+          `</g>`,
+        ].join("")
+      : "",
     `</g>`,
     `</g>`,
   ].join("");
 
-  const minWidthMatch = baseSvg.match(/min-width:([\d.]+)px/);
-  const existingMinWidth = minWidthMatch ? Number(minWidthMatch[1]) : 0;
-  const requiredMinWidth = Math.max(
-    existingMinWidth,
-    Math.ceil(firstNoteX + labelOffsetX + labelWidth + SPATIUM),
-  );
-
-  return baseSvg
-    .replace(/min-width:[\d.]+px/, `min-width:${requiredMinWidth}px`)
-    .replace("</svg>", `${overlay}</svg>`);
+  let svg = baseSvg;
+  if (showLabel) {
+    const minWidthMatch = baseSvg.match(/min-width:([\d.]+)px/);
+    const existingMinWidth = minWidthMatch ? Number(minWidthMatch[1]) : 0;
+    const requiredMinWidth = Math.max(
+      existingMinWidth,
+      Math.ceil(firstNoteX + labelOffsetX + labelWidth + SPATIUM),
+    );
+    svg = svg.replace(/min-width:[\d.]+px/, `min-width:${requiredMinWidth}px`);
+  }
+  return svg.replace("</svg>", `${overlay}</svg>`);
 }
 
 function extractInitialPlacedNote(
@@ -334,12 +330,6 @@ export function attachNotationBuilder(root: HTMLElement): void {
   };
 
   const resolveStepFromEvent = (event: MouseEvent): number | undefined => {
-    if (event.target instanceof Element) {
-      const hit = event.target.closest<SVGElement>("[data-step]");
-      if (hit?.dataset.step !== undefined) {
-        return clampStep(Number(hit.dataset.step));
-      }
-    }
     const svg = stage.querySelector<SVGSVGElement>("svg.notation-staff");
     if (!svg) return undefined;
     const rect = svg.getBoundingClientRect();
