@@ -15,7 +15,7 @@
 ## 2. Architektur & Komponenten-Design (Kapselung & Lego-Prinzip)
 * **Manager- und Hilfskomponenten-Muster:**
   * Komplexe interaktive Systeme werden niemals als Monolith gebaut.
-  * Visuelle Notationslogik ist strikt in kleine, modulare Bausteine aufgeteilt (`src/components/music/`, `src/components/notation/`).
+  * Visuelle Notationslogik ist strikt in modulare Bausteine aufgeteilt (`src/lib/`, `src/components/notation/`, `src/components/ui/`).
 * **Schlanke Lektionsseiten (`src/content/docs/`):**
   * MDX-Dateien enthalten ausschließlich semantischen Text und deklarative Komponentenaufrufe mit Props.
   * Niemals rohen SVG-Code, Canvas-Skripte oder Inline-Logik direkt in `.mdx`-Dateien schreiben.
@@ -59,4 +59,4 @@
 
 ## 4. Token-Sparregeln für GitHub Copilot
 1. **Kein Boilerplate generieren:** Zeige niemals unveränderte Dateien in voller Länge. Gib nur die exakt veränderten TypeScript-Funktionen, Interfaces oder Markdown-Abschnitte aus.
-2. **Existierende Hilfsfunktionen nutzen:** Prüfe vor jeder Neugenerierung vorhandene Helfer in `src/lib/` (`notation-renderer.ts`, `contribution-*.ts`) sowie `src/components/music/` (`rhythm.ts`, `barline.ts`, `curve.ts`, `dynamics.ts`, `tempo.ts`, `time-signature.ts`, `rest.ts`, `svg.ts`).
+2. **Existierende Hilfsfunktionen nutzen:** Prüfe vor jeder Neugenerierung vorhandene Helfer in `src/lib/` (`notation-renderer.ts`, `system-layout.ts`, `notation-layout.ts`, `notation-fit.ts`, `rhythm.ts`, `barline.ts`, `curve.ts`, `dynamics.ts`, `tempo.ts`, `time-signature.ts`, `rest.ts`, `articulation.ts`, `svg.ts`) sowie `src/components/ui/`.

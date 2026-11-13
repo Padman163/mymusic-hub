@@ -36,10 +36,9 @@ Die `<Notation />`-Komponente folgt dem **Lego-Prinzip** des Projekts und kombin
        ├──► arrangeNotationSystems()     (Zeilenumbruch, Vorzeichen-Fortführung, Spalten- & Blocksatz-Mathematik)
        │
        └──► [ NotationVisual.astro (embedded) ]
-                   ├──► renderNotationSvg()  (Bravura-SVG: Linien, Schlüssel, Taktart, Noten, Balken, Bögen)
+                   ├──► renderNotationSvg()  (Bravura-SVG: Linien, Schlüssel, Taktart, Noten, Balken, Bögen, Dynamik)
                    ├──► <MeasureNumber />    (Taktzahlen-Overlay)
                    ├──► <TempoLabel />       (Tempo-Overlay)
-                   ├──► <DynamicsMarks />    (Crescendo-/Decrescendo-Gabeln & p/f)
                    └──► <FinalBar />         (Doppelter Schlussstrich)
 ```
 
@@ -88,7 +87,7 @@ Steuert, wie Takte auf Zeilen umgebrochen, horizontal gewichtet und skaliert wer
 
 | Prop (auf `<Notation />`) | Typ | Standard | Beschreibung |
 | :--- | :--- | :---: | :--- |
-| `layout` | `'auto' \| number \| number[]` | `'auto'` | **Zeilenumbruch-Modus:**<br>• `'auto'`: Bricht Zeilen automatisch anhand der summierten Mindestbreite (`minWidth`) der Takte um (Standardbudget: `680px / scale`).<br>• `number` (z. B. `layout={3}`): Feste maximale Taktzahl pro Zeile. Hat die letzte Zeile weniger Takte, greift der proportionale Blocksatz-Ausgleich.<br>• `number[]` (z. B. `layout={[3, 1]}`): Explizite Taktanzahl für jede Zeile. Die Summe muss der Gesamtzahl der Takte entsprechen; jede so definierte Zeile gilt als vollständig (`100 %` Breite). |
+| `layout` | `'auto' \| number \| number[]` | `'auto'` | **Zeilenumbruch-Modus:**<br>• `'auto'`: Bricht Zeilen automatisch anhand der summierten Mindestbreite (`minWidth`) der Takte um (Standardbudget: `600px / scale`).<br>• `number` (z. B. `layout={3}`): Feste maximale Taktzahl pro Zeile. Hat die letzte Zeile weniger Takte, greift der proportionale Blocksatz-Ausgleich.<br>• `number[]` (z. B. `layout={[3, 1]}`): Explizite Taktanzahl für jede Zeile. Die Summe muss der Gesamtzahl der Takte entsprechen; jede so definierte Zeile gilt als vollständig (`100 %` Breite). |
 | `measureWidth` | `'rhythmic' \| 'equal'` | `'rhythmic'` | **Spaltenbreiten-Modus innerhalb einer Zeile:**<br>• `'rhythmic'`: Takte erhalten Spaltengewichte proportional zu ihrer inhaltlichen/rhythmischen Mindestbreite (dichte Achteltakte bekommen mehr Platz als ein Takt mit einer ganzen Note).<br>• `'equal'`: Alle Takte einer Zeile sind exakt gleich breit (`1fr`), sodass die Taktstriche über mehrere Zeilen hinweg exakt vertikal untereinander stehen. |
 | `stretchLastRow` | `boolean` | `false` | Wenn `true`, wird auch bei `layout="auto"` oder `layout={number}` eine unvollständige letzte Zeile auf volle `100 %` Zeilenbreite gestreckt (statt proportional begrenzt). |
 | `pickup` | `boolean` | `false` | **Auftakt-Modus:** Prüft automatisch, dass sich der erste Takt (Auftakt) und der letzte Takt (Schlusstakt) exakt zu einem vollständigen Takt der aktiven `timeSignature` ergänzen (z. B. $\frac{1}{4} + \frac{3}{4} = \frac{4}{4}$), und berechnet deren `layoutTimeSignature` sowie ihre proportionalen Spaltenbreiten ($\text{Gewicht}_{\text{Auftakt}} + \text{Gewicht}_{\text{Schluss}} = 1{,}0\text{ Volltakt}$) automatisch ohne manuelle `spacing`-Werte. |
@@ -111,7 +110,7 @@ Diese Props können sowohl **global auf `<Notation />`** (werden dann automatisc
 
 | Prop | Typ | Standard | Beschreibung |
 | :--- | :--- | :---: | :--- |
-| `clef` | `'treble' \| 'bass' \| false` | `'treble'` | **Notenschlüssel:**<br>• `'treble'`: Violinschlüssel (G-Schlüssel).<br>• `'bass'`: Bassschlüssel (F-Schlüssel).<br>• `false`: Kein Schlüssel (nur bei Einzelbeispielen ohne Zeilenumbruch möglich).<br>*Hinweis:* Ein Schlüsselwechsel mitten im selben Notensystem ist unzulässig und wirft einen Validierungsfehler. |
+| `clef` | `'treble' \| 'bass' \| false` | `'treble'` | **Notenschlüssel:**<br>• `'treble'`: Violinschlüssel (G-Schlüssel).<br>• `'bass'`: Bassschlüssel (F-Schlüssel).<br>• `false`: Kein Schlüssel (nur bei Einzelbeispielen ohne Zeilenumbruch möglich).<br>*Hinweis:* Pro Takt kann ein anderer Schlüssel übergeben werden (z. B. für Vergleiche mit `layout={1}`); bei Verwendung der Hilfsfunktion `assertNoClefChanges()` wird ein Schlüsselwechsel hingegen mit Validierungsfehler abgewiesen. |
 | `timeSignature` | `{ numerator: number, denominator: number }` | `undefined` | **Sichtbare Taktartangabe:** z. B. `{{ numerator: 4, denominator: 4 }}` oder `{{ numerator: 6, denominator: 8 }}`. Der Zähler muss eine positive ganze Zahl, der Nenner eine Zweierpotenz ($1, 2, 4, 8, 16, \dots$) sein. Wird automatisch an Folgetakte vererbt und nur bei Taktartwechseln erneut gezeichnet. |
 | `layoutTimeSignature` | `{ numerator: number, denominator: number }` | `undefined` | **Unsichtbare Taktart für die Rhythmus-Mathematik:** Positioniert Noten/Pausen im Takt exakt nach diesem Metrum (z. B. für unvollständige Takte oder Auftakte), **ohne** die Taktart-Ziffern im System zu zeichnen. |
 | `accidentals` | `{ type: 'sharp' \| 'flat', step: number }[]` | `[]` | **Tonartvorzeichnung (Key Signature):** Array von Kreuzen (`'sharp'`) oder b-Vorzeichen (`'flat'`) mit ihrer vertikalen `step`-Position.<br>• Wird automatisch am Anfang jeder neuen Zeile wiederholt.<br>• Übergibt ein späterer Takt ein neues `accidentals`-Array, berechnet das Layout automatisch die nötigen Auflösungszeichen (`natural`).<br>• `accidentals: []` in einem späteren Takt löst alle bisherigen Vorzeichen nach C-Dur/a-Moll auf. |
@@ -141,7 +140,7 @@ accidentals={[{ type: "flat", step: 4 }, { type: "flat", step: 7 }]}
 | `subtitle` | `<Notation />` | `string` | Zentrierter, kursiver Untertitel direkt unter `title`. |
 | `tempo` | `<Notation />` oder `NotationMeasure` | `string` | **Tempobezeichnung** (z. B. `"Allegro"`, `"Moderato"`).<br>• Auf `<Notation />`: Erscheint linksbündig im Kopfbereich des Stücks.<br>• Auf einem Takt in `measures[...]`: Erscheint direkt über dem jeweiligen Takt (aktiviert automatisch die obere Safe-Zone der Zeile). |
 | `tempoDetail` | `<Notation />` oder `NotationMeasure` | `string` | **Metronom-/Zusatzangabe** hinter `tempo` (z. B. `"♩ = 90"` → wird als `Allegro · ♩ = 90` gerendert). |
-| `measureNumber` | `<Notation />` oder `NotationMeasure` | `string \| number` | **Taktzahl** links oben über dem Taktanfang (z. B. `1`, `5`, `"12a"`). Aktiviert automatisch die obere vertikale Sicherheitszone der Zeile. |
+| `measureNumber` | `<Notation />` oder `NotationMeasure` | `string \| number` | **Taktzahl** links oben über dem Taktanfang (z. B. `1`, `5`, `"12a"`). Aktiviert automatisch die obere vertikale Sicherheitszone der Zeile und wird per `measureNumberOffset` dynamisch rechts hinter Schlüssel, Taktart, Vorzeichen und Wiederholungszeichen (`prefixEnd`) positioniert. |
 
 ---
 
@@ -200,7 +199,7 @@ Ideal für Tonleiter-, Intervall- oder Linien-Erklärungen, bei denen alle Noten
   1. **direkt aufeinanderfolgen** (lückenlos),
   2. **denselben Notenwert** (`"eighth"` oder `"sixteenth"`) besitzen *oder* eine Kombination aus **punktierter Achtel + Sechzehntel** sein,
   3. **mindestens 2 Noten** umfassen.
-- Die Halsrichtung und Balkensteigung (inkl. gemischter Halsrichtungen über die Mittellinie `step: 4` hinweg) wird automatisch berechnet.
+- Alle Notenhälse einer `beamGroup` zeigen einheitlich in dieselbe Richtung: entschieden über die Mehrheit der Noten unter vs. auf/über der Mittellinie (`step: 4`), bei Gleichstand über die größte Entfernung zur Mittellinie und danach standardmäßig nach unten; die Balkensteigung wird linear zwischen der ersten und letzten Note berechnet.
 
 ---
 
@@ -310,7 +309,7 @@ Für jeden Takt berechnet `system-layout.ts` vorab die kollisionsfreie Mindestbr
 Jede `.notation-row` prüft automatisch, welche Overlays in ihren Takten vorkommen, und reserviert nur bei Bedarf zusätzlichen vertikalen Raum:
 - **`.has-row-measure-number`:** `+6px` oberer Puffer für Taktzahlen (`<MeasureNumber />`).
 - **`.has-row-tempo`:** `+16px` oberer Puffer für Takt-Tempoangaben (`<TempoLabel />`).
-- **`.has-row-hairpin`:** `+32px` unterer Puffer für Dynamikgabeln und `cresc.`/`decresc.`-Beschriftungen (`<DynamicsMarks />`).
+- **`.has-row-hairpin`:** `+32px` unterer Puffer für Dynamikgabeln und `cresc.`/`decresc.`-Beschriftungen (im SVG gerendert über `dynamics.ts`).
 
 ### 6.2 A4-Druckoptimierung (`@media print`)
 Beim Drucken oder PDF-Export im Browser greifen automatisch folgende Regeln:
@@ -444,7 +443,7 @@ Der Renderer prüft beim Build/Dev-Lauf alle musikalischen Invarianten strikt ab
 | :--- | :--- |
 | `step` außerhalb von `-2..10` oder keine ganze Zahl | `Ungültige Notenposition: <step>.` |
 | Zähler $\le 0$ oder Nenner keine Zweierpotenz | `Ungültige Taktart: Der Zähler muss eine positive ganze Zahl und der Nenner eine positive Zweierpotenz sein.` |
-| Schlüsselwechsel zwischen Takten (z. B. `treble` → `bass`) | `Ein Notenschlüsselwechsel von treble zu bass ist im Notationsstück "Notensystem" nicht erlaubt.` |
+| Schlüsselwechsel bei Prüfung mit `assertNoClefChanges()` (z. B. `treble` → `bass`) | `Ein Notenschlüsselwechsel von treble zu bass ist im Notationsstück "Notensystem" nicht erlaubt.` |
 | `natural` direkt in `accidentals` (Tonartvorzeichnung) übergeben | `Eine Tonartvorzeichnung darf nur Kreuze oder b-Vorzeichen enthalten.` *(Auflösungszeichen werden bei Tonartwechseln automatisch generiert.)* |
 | `beamGroup` mit nur 1 Note oder nicht-benachbarten Noten | `Balkengruppe "<id>" benötigt mindestens zwei Noten.` / `... muss zusammenhängende Noten desselben Werts enthalten.` |
 | `beamGroup` auf Viertel-/Halbenoten | `Balkengruppen benötigen einen Namen und dürfen nur Achtel- oder Sechzehntelnoten enthalten.` |

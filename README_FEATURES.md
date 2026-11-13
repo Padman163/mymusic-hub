@@ -25,14 +25,14 @@ Die Plattform verbindet musiktheoretische Didaktik mit interaktiven Web-Technolo
 ## 2. Die Kern-Features im Detail
 
 ### 2.1 Der native SVG-Notationsrenderer
-* **Dateien:** `src/lib/notation-renderer.ts`, `src/components/notation/NotationVisual.astro`, `src/lib/system-layout.ts`, `src/components/notation/NotationOverview.astro`.
-* **Mathematische Module:** `src/components/music/` (`rhythm.ts`, `barline.ts`, `curve.ts`, `dynamics.ts`, `tempo.ts`, `time-signature.ts`, `rest.ts`, `svg.ts`).
+* **Dateien:** `src/components/notation/Notation.astro`, `src/components/notation/NotationVisual.astro`, `src/components/notation/NotationKeyboard.astro`, `src/lib/notation-renderer.ts`, `src/lib/system-layout.ts`, `src/lib/notation-layout.ts`, `src/lib/notation-fit.ts`.
+* **Mathematische Module:** `src/lib/` (`rhythm.ts`, `barline.ts`, `curve.ts`, `dynamics.ts`, `tempo.ts`, `time-signature.ts`, `rest.ts`, `articulation.ts`, `svg.ts`) sowie `src/components/ui/` (`MeasureNumber.astro`, `TempoLabel.astro`, `FinalBar.astro`).
 * **Funktionsweise:**
   * Rendert Notensysteme rein serverseitig als Vektorgrafik (SVG) ohne Einsatz von ressourcenhungrigem Canvas oder DOM.
-  * Verwendet standardisierte SMuFL-Glyphen (Bravura-Font) und berechnet Notenhälse, Balken, Vorzeichen und Bögen über mathematische Koordinaten.
-  * **Feste Layout-Regel am Systembeginn:** Notenschlüssel $\rightarrow$ Taktart $\rightarrow$ Tonartvorzeichen.
-  * **Umbruchs-Logik:** Die responsive 18-Takt-Übersicht bricht je nach Bildschirmbreite automatisch von 3 Takten auf 2 oder 1 Takt pro System um.
-  * **Qualitätssicherung:** 20 isolierte Unit-Tests in `tests/music-notation.test.mjs` sichern Abstände, Taktstriche und Notenwerte ab.
+  * Verwendet standardisierte SMuFL-Glyphen (Bravura-Font) und berechnet Notenhälse, Balkengruppen (`beamGroupStemUp`), Vorzeichen, Dynamik und Bögen über mathematische Koordinaten.
+  * **Feste Layout-Regel am Systembeginn:** Notenschlüssel $\rightarrow$ Taktart $\rightarrow$ Tonartvorzeichen $\rightarrow$ Wiederholungszeichen $\rightarrow$ erste Note (mit dynamischem `measureNumberOffset` für Taktzahlen).
+  * **Umbruchs-Logik:** `<Notation />` unterstützt `layout="auto" | number | number[]` sowie responsive Container-Skalierung (`observeNotationFit`).
+  * **Qualitätssicherung:** 41 isolierte Unit-Tests in `tests/music-notation.test.mjs` (48 Vitest-Tests gesamt) sowie 18 Playwright-E2E-Tests in `tests/e2e/smoke.spec.ts` sichern Abstände, Layoutregeln, Taktstriche und Notenwerte ab.
 
 ### 2.2 Das interaktive Griffbrett (`FretboardClickable.astro`)
 * **Datei:** `src/components/FretboardClickable.astro`

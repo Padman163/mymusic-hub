@@ -1,73 +1,47 @@
-# Entwickler-Handoff: MyMusic-Hub / Notation
+# Handoff: Feature `Notation.astro` (`feat/notation`)
 
-## 1. Ziel & Tech-Stack
-* **Projektziel:** Musiktheorie-Website mit konsistenten, responsiven Notationsschaubildern und Quizdarstellungen. Musikalische Zeichen und ihre Darstellungsregeln sollen zentral und wiederverwendbar sein.
-* **Framework:** Astro `^7.4.5`, Starlight `^0.42.8`, TypeScript, Astro-Komponenten und MDX.
-* **Typografie:** SVG-Notation mit Bravura-Schriftart (SMuFL-Standard).
-* **Abgrenzung:** AlphaTab `^1.9.0` ist im Projekt vorhanden; der gemeinsame Notationsrenderer soll jedoch **ohne AlphaTab und MusicXML** funktionieren.
-* **Umgebung:** Zuletzt lokal verwendet: Node.js 22.23.4 und npm 10.9.9 (beobachtete Versionen, keine Mindestanforderungen).
+Dieser Leitfaden fasst den aktuellen Architektur-, Regel- und Teststand des nativen SVG-Notationssystems für zukünftige Chats zusammen. Für die vollständige Prop- und API-Referenz von `<Notation />` siehe `README_NOTATION.md`.
 
----
+## 1. Tech-Stack
+* **Framework:** Astro `^7.4.8` + `@astrojs/starlight` `^0.42.10`
+* **Abhängigkeiten & Tooling:** TypeScript `^6.0.3`, Biome `2.6.6`, Vitest `^5.1.0`, Playwright `^1.65.0`, `@coderline/alphatab` `^1.9.0`
+* **Font / Glyphen:** Standardisierte SMuFL-Glyphen (Bravura) als reines Server-Side-SVG (kein Canvas/DOM-Renderer für `<Notation />`).
 
-## 2. Aktueller Implementierungsstand & Feste Darstellungsregeln
-* **Gemeinsame Engine:** Schaubilder und interaktive Quiz-Komponenten verwenden denselben Notationsrenderer (`src/lib/notation-renderer.ts`).
-* **Implementierte Musikelemente:**
-  * Notenschlüssel (G- und F-Schlüssel).
-  * Tonart- und Einzelversetzungszeichen.
-  * Taktarten.
-  * Notenwerte und Pausenwerte (Ganze, Halbe, Viertel, Achtel, Sechzehntel).
-  * Punktierte Notenwerte.
-  * Balkengruppen.
-  * Artikulationen (Staccato, Tenuto, Akzent, Marcato).
-  * Halte- und Bindebögen.
-  * Tempoangaben und Metronomzahlen.
-  * Dynamikzeichen und Hairpins (Crescendo / Decrescendo).
-  * Taktzahlen, Taktstriche und Wiederholungszeichen.
-* **Pausen-Logik:** Pausen von ganzen bis Sechzehntelwerten können frei mit Noten gemischt werden. Eine einzelne ganze Taktpause bleibt immer horizontal zentriert im Takt.
-* **Layout des 18-Takt-Abschlussbeispiels (`NotationOverview.astro`):**
-  * Zunächst Zeilen mit zwei Takten, zuletzt Zeilen mit drei Takten; bei wenig Platz responsiver Umbruch auf einen Takt pro Zeile.
-  * Erste Ereignisse sind systemübergreifend exakt vertikal ausgerichtet; Zeilenabstände sind einheitlich.
-  * Das Beispiel darf auf keinen Fall horizontal scrollen.
-* **Rhythmische Abstände & Spacing:**
-  * Erste Noten stehen 1,5 Notenkopfbreiten nach dem Anfangspräfix; Zeichen und Hilfslinien können zusätzlichen Abstand erfordern. Eine einzelne Note steht am Anfang, eine ganze Taktpause mittig.
-  * Ereignisse und der Abstand zum Taktende werden linear nach ihren Dauern und der gültigen Taktart verteilt, einschließlich Punktierungen. Ohne bekannte Taktart gilt die Summe der Ereignisdauern als Taktlänge. Ohne Dauer werden Ereignisse gleichmäßig verteilt.
-  * Übervolle Takte mit bekannter Taktart behalten 1,5 Notenkopfbreiten am Anfang und Ende; die Abstände dazwischen sind proportional zu den Dauern. `NotationSystem` überträgt die Taktart auch über Zeilenumbrüche hinweg, `layoutTimeSignature` setzt sie bei Bedarf unsichtbar.
-* **Tonartvorzeichnung (Key Signature Logik):**
-  * Die Tonartvorzeichnung wird über Zeilenumbrüche hinweg beibehalten und am Anfang jeder Zeile wiederholt.
-  * Ein neues `accidentals`-Array setzt eine neue Vorzeichnung; ein leeres Array `[]` hebt sie auf.
-  * Einzelne Notenvorzeichen verändern diesen Zeilenzustand nicht.
-* **Verbindliche Reihenfolge am Systemanfang (Nutzervorgabe):**
-  * **Notenschlüssel → Taktart → Vorzeichnung**.
-  * Die Taktart steht im Beispiel nur am Anfang sowie bei Taktartwechseln.
-  * *Hinweis:* Diese Reihenfolge weicht bewusst vom traditionellen Notensatz ab, ist aber die ausdrückliche Vorgabe für dieses Projekt.
-* **Erfolgreich geprüfter Zustand:**
-  * 20 Unit-Tests in `tests/music-notation.test.mjs` erfolgreich.
-  * TypeScript-Typecheck (`tsc --noEmit`) und Produktions-Build (`npm run build`) fehlerfrei.
-  * Browserprüfung des 18-Takt-Beispiels bei 320 px, 700 px und 1280 px: korrekte Reihenfolge, Taktarten in Takten 1, 9, 13 und 16, Vorzeichnung an jedem Zeilenbeginn und kein horizontaler Seitenüberlauf.
-* **Bekannte Build-Warnungen (unkritisch):**
-  * Große Chunks.
-  * Leere i18n- und fehlende 404-Einträge.
-  * Fehlende `site`-Konfiguration in `astro.config.mjs` für Sitemap-Generierung.
-* **Git-Zustand:** Der Arbeitsbaum war zum Zeitpunkt der Erstellung sauber.
+## 2. Aktive Architektur & Dateien
+Legacy-Komponenten (`NotationOverview.astro`, `NotationSystem.astro`, `DynamicsMarks.astro`, `RepeatMark.astro`, `TempoHeading.astro` usw.) sowie der frühere Ordner `src/components/music/` wurden entfernt.
 
----
+* **Komponenten (`src/components/notation/`):**
+  * `Notation.astro`: Deklarative Hauptkomponente (polymorph für Einzeltakt-`notes` und Mehrtakt-`measures`, Layout, Skalierung, Dynamik, Bögen, Wiederholungen).
+  * `NotationVisual.astro`: Einzeltakt-Renderer (kapselt SVG-Output + UI-Overlays).
+  * `NotationKeyboard.astro`: Zweisystem-Klaviernotation (Violin- und Bassschlüssel mit Akkoladenklammer).
+  * `system-layout.ts`: Re-Export von `src/lib/system-layout.ts`.
+* **UI-Overlays (`src/components/ui/`):**
+  * `MeasureNumber.astro`, `TempoLabel.astro`, `FinalBar.astro`
+* **Kernlogik (`src/lib/`):**
+  * `notation-renderer.ts`: SMuFL-SVG-Rendering, Noten, Hälse, `beamGroupStemUp`, Balken, Vorzeichen, Artikulation.
+  * `system-layout.ts`: Zeilenumbruch (`arrangeNotationSystems`), Spalten-/Blocksatz-Mathematik, `measureNumberOffset`, `hairpinStart`/`hairpinEnd`.
+  * `notation-layout.ts`: Horizontale Ereignisverteilung (`layoutNotationEvents`).
+  * `notation-fit.ts`: Responsive Container-Skalierung (`observeNotationFit` für `data-fit-to-width`).
+  * **Fachmodule (`src/lib/`):** `rhythm.ts`, `rest.ts`, `articulation.ts`, `curve.ts`, `barline.ts`, `time-signature.ts`, `tempo.ts`, `dynamics.ts`, `svg.ts`
+* **Styles:** `src/styles/music.css`, `src/styles/notation.css`
 
-## 3. Dateistruktur & Kernkomponenten
-* `src/lib/notation-renderer.ts`: Gemeinsamer SVG-Renderer und zentrale Geometrieberechnung (Reihenfolge, Platzbedarf von Schlüssel, Taktart, Vorzeichnung und Wiederholung).
-* `src/components/notation/NotationVisual.astro`: Wiederverwendbarer Astro-Wrapper für den Renderer.
-* `src/lib/system-layout.ts`: Systemaufteilung, Umbrüche, Wiederholung von Schlüssel und Vorzeichnung, Tonartwechsel und Ausrichtung erster Ereignisse.
-* `src/components/notation/NotationOverview.astro`: Taktdaten und Anordnung des 18-Takt-Abschlussbeispiels; komponiert vorhandene Bausteine.
-* `src/components/notation/NotationNoteRestValues.astro`: Vergleich von Noten- und Pausenwerten.
-* `src/components/notation/Notation*.astro`: Weitere thematische Schaubilder (Artikulation, Dynamik, Bögen, Tempo, Taktarten, Vorzeichen).
-* `src/components/music/`: Gemeinsame musikalische Bausteine (`rhythm.ts`, `rest.ts`, `articulation.ts`, `curve.ts`, `barline.ts`, `time-signature.ts`, `tempo.ts`, `dynamics.ts`) sowie UI-Bausteine (`DynamicsMarks.astro`, `TempoHeading.astro`, `TempoLabel.astro`, `MeasureNumber.astro`, `RepeatMark.astro`, `FinalBar.astro`).
-* `src/components/Level100Quiz.astro`: Nutzt `renderNotationSvg` clientseitig für interaktive Fragen.
-* `src/styles/notation.css`, `src/styles/music.css`: Zentrale Stile und Notationstypografie.
-* `src/content/docs/audio/referenzen-werkzeuge/visualisierungen-erklaert/notensystem.mdx`: Dokumentation, Schaubilder, Abschlussbeispiel und Bausteinzuordnung.
-* `tests/music-notation.test.mjs`: Gezielte Testsuite für Renderer, Zeichenregeln und Systemlayout.
+## 3. Verifizierte Layout- & Notationsregeln
+1. **Präfix-Reihenfolge am Takt-/Systemanfang:** Notenschlüssel $\rightarrow$ Taktart $\rightarrow$ Tonartvorzeichen $\rightarrow$ Wiederholungszeichen (`repeatStart`) $\rightarrow$ erste Note.
+2. **Taktzahlen (`measureNumberOffset`):** `<MeasureNumber />` wird automatisch hinter `prefixEnd` (Schlüssel, Taktart, Vorzeichen, Wiederholungszeichen) geschoben, damit keine Überlappungen entstehen.
+3. **Balkengruppen (`beamGroupStemUp`):** Alle Notenhälse einer `beamGroup` zeigen in dieselbe Richtung (Mehrheit unter vs. auf/über Mittellinie `step: 4`; bei Gleichstand größere Maximaldistanz zu `step: 4`, danach standardmäßig abwärts). Die Balkensteigung verläuft linear zwischen erster und letzter Note.
+4. **Zeilenumbruch & Breite:** `layout` unterstützt `'auto'` (`DEFAULT_MAX_SYSTEM_WIDTH = 600` / `scale`), `number` und `number[]`; dazu `measureWidth` (`'rhythmic' | 'equal'`), `stretchLastRow`, `pickup` (Auftakt) sowie `scrollable` vs. `observeNotationFit`.
+5. **Dynamik & Bögen:** Unterstützt taktweises `hairpin` sowie notenbezogene `hairpinStart` / `hairpinEnd` (auch über Takte und Systemumbrüche hinweg), `dynamic`, `dynamicText`, `curves` (`slur` / `tie`) und `ritAt` / `aTempoAt`.
+6. **Notenschlüssel:** `<Notation>` erlaubt taktweise Schlüssel (z. B. für `layout={1}` Violin-/Bassschlüssel-Vergleiche); für strikte Stücke ohne Wechsel steht der optionale Helper `assertNoClefChanges()` in `src/lib/notation-renderer.ts` bereit.
 
----
+## 4. Dokumentation & Qualitätsstand
+* **API-Referenz / Cheat Sheet:** `README_NOTATION.md`
+* **Live-Dokumentation im Wiki (`Features` → `Notation.astro`):** `src/content/docs/audio/referenzen-werkzeuge/visualisierungen-erklaert/notensystem.mdx` (inkl. 18-Takt-Beispiel und Code-Erklärungen)
+* **Checks & Tests (Stand vor Abschluss dieses Branches):**
+  * `npm run validate` (`biome check .`, `astro check`, `tsc --noEmit`)
+  * `npm run test` (48 Vitest-Tests gesamt, davon 41 in `tests/music-notation.test.mjs`)
+  * `npm run test:e2e` (18 Playwright-Tests in `tests/e2e/smoke.spec.ts` auf Desktop Chrome & Mobile Safari)
+  * `npm run build` (37 Seiten)
 
-## 4. Offene Punkte & Nächste Schritte
-* Es liegt derzeit kein neuer Render-Implementierungsauftrag vor; auf die nächste konkrete Nutzeranforderung warten.
-* **Gould-Layout-Klärung:** Falls künftig eine lesbarkeitsorientierte statt streng proportionaler Verteilung gewünscht wird, müssen Anforderungen und Quellen zunächst geklärt werden; keine unbelegte Formel als Gould-Regel darstellen.
-* **Anbindung:** Vorbereitung der Komponenten-Schnittstelle für die geplante interaktive Komponente `<InteractiveScoreTrainer.astro>` in Level 104.
+## 5. Offene Punkte / Mögliche nächste Schritte
+* Das 18-Takt-Gesamtbeispiel in `notensystem.mdx` deckt noch nicht alle Features der Engine ab (z. B. `title`/`subtitle` auf Stück-Ebene, Auftakt `pickup`, taktübergreifendes `hairpinStart`/`hairpinEnd`, `sixteenth`-Pause, Tonartwechsel-Auflösung mit `accidentals: []` sowie Bassschlüssel).
+* Falls zukünftig neue Notation-Props oder Layout-Regeln hinzukommen, immer parallel in `README_NOTATION.md` und `tests/music-notation.test.mjs` nachziehen.
