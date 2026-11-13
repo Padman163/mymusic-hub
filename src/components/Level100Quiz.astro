@@ -1,6 +1,7 @@
 ---
 import DrumPattern from "./DrumPattern.astro";
 import FretboardClickable from "./FretboardClickable.astro";
+import NotationBuilder from "./notation/NotationBuilder.astro";
 import SheetMusicPlayer from "./SheetMusicPlayer.astro";
 import "../styles/notation.css";
 
@@ -935,7 +936,7 @@ const patternLayouts = Array.from(
   ).values(),
 );
 
-const totalPoints = 21;
+const totalPoints = 22;
 const passingPoints = Math.ceil(totalPoints * 0.8);
 ---
 
@@ -1036,6 +1037,15 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
           ))}
         </div>
       </div>
+    </section>
+
+    <section class="quiz-stage">
+      <h2>Teil 5: Note im Notensystem platzieren</h2>
+      <p class="notation-builder-prompt"></p>
+      <div class="notation-builder-task">
+        <NotationBuilder clef="treble" showLeftBar={false} showRightBar={false} />
+      </div>
+      <p class="notation-builder-feedback" aria-live="polite"></p>
     </section>
 
     <div class="quiz-actions">
@@ -1240,7 +1250,7 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
     max-height: 7rem;
   }
 
-  .level-100-quiz :global(.notation-staff) {
+  .level-100-quiz :global(.notation-diagram .notation-staff) {
     display: block;
     overflow: visible;
     color: currentColor;
@@ -1248,16 +1258,30 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
     stroke-width: 1;
   }
 
-  .level-100-quiz :global(.notation-staff text) {
+  .level-100-quiz :global(.notation-diagram .notation-staff text) {
     font-family: 'NotationBravura';
     font-size: 36px;
     fill: currentColor;
     stroke: none;
   }
 
-  .level-100-quiz :global(.notation-curve) {
+  .level-100-quiz :global(.notation-diagram .notation-curve) {
     fill: currentColor;
     stroke: none;
+  }
+
+  .notation-builder-task[data-correct="true"] :global(.notation-builder) {
+    border-color: #16a34a;
+  }
+
+  .notation-builder-task[data-correct="false"] :global(.notation-builder) {
+    border-color: #dc2626;
+  }
+
+  .notation-builder-feedback {
+    min-height: 1.4em;
+    margin: 0.4rem 0 0;
+    font-size: 0.9rem;
   }
 
   .quiz-actions {
@@ -1352,6 +1376,7 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
 </style>
 
 <script>
+  import { stepToPitchName } from '../lib/notation-builder';
   import { renderNotationSvg } from '../lib/notation-renderer';
 
   type QuizQuestion = { id: string; prompt: string; options: string[]; answer: string };
@@ -1450,10 +1475,14 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
       const rhythmList = quiz.querySelector<HTMLElement>('.rhythm-list');
       const notationList = quiz.querySelector<HTMLElement>('.notation-list');
       const musicXmlQuestionBank = quiz.querySelector<HTMLElement>('.musicxml-question-bank');
+      const builderTask = quiz.querySelector<HTMLElement>('.notation-builder-task');
+      const builderEl = quiz.querySelector<HTMLElement>('[data-notation-builder]');
+      const builderPrompt = quiz.querySelector<HTMLElement>('.notation-builder-prompt');
+      const builderFeedback = quiz.querySelector<HTMLElement>('.notation-builder-feedback');
       if (!form || !result || !resetButton || !patternQuestion || !patternCandidates.length ||
         !fretboard || !fretboardTray || !fretboardFeedback || !difficultyStatus ||
         !totalPointsLabel || !passingPointsLabel || !basicsList || !rhythmList || !notationList ||
-        !musicXmlQuestionBank) return;
+        !musicXmlQuestionBank || !builderTask || !builderEl || !builderPrompt || !builderFeedback) return;
 
       const banks = JSON.parse(quiz.dataset.questionBank ?? '{}') as Record<Difficulty, QuestionBank>;
       const unlockKey = 'mymusic-hub-level-100-difficulty-2';
@@ -1466,6 +1495,8 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
       const fretboardNodes = [...fretboard.querySelectorAll<SVGGElement>('.note-node')];
       const previousQuestionIds = new Map<string, Set<string>>();
       const previousPatternIds = new Map<Difficulty, string>();
+      let previousBuilderStep: number | undefined;
+      let activeBuilderTarget: { step: number; note: string } = { step: 4, note: 'B4' };
 
       const advancedNotationQuestion = (item: NotationQuestion): NotationQuestion => {
         const withSameScore = (prompt: string, answer: string, wrong: string[]): NotationQuestion => ({
@@ -1734,6 +1765,8 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
           token.removeAttribute('data-correct');
         });
         fretboardFeedback.textContent = '';
+        builderTask.removeAttribute('data-correct');
+        builderFeedback.textContent = '';
       };
 
       const renderQuiz = (reshuffleNotation = true) => {
@@ -1866,7 +1899,21 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
           'aria-label',
           `DrumPattern ${pattern.timeSignature}, Auflösung ${pattern.resolution}`
         );
-        const total = 21;
+        const builderSteps = difficulty === '1'
+          ? [0, 1, 2, 3, 4, 5, 6, 7, 8]
+          : [-2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+        const candidateBuilderSteps = builderSteps.filter((step) => step !== previousBuilderStep);
+        const chosenBuilderStep = shuffle(candidateBuilderSteps.length ? candidateBuilderSteps : builderSteps)[0];
+        previousBuilderStep = chosenBuilderStep;
+        activeBuilderTarget = {
+          step: chosenBuilderStep,
+          note: stepToPitchName(chosenBuilderStep, 'treble')
+        };
+        builderPrompt.textContent = `Klicke in den Takt oder nutze die Pfeiltasten (↑/↓), um den Bereich auf die Note ${activeBuilderTarget.note} zu verschieben, und erstelle mit Num 1 eine Viertelnote (Entf löscht sie wieder).`;
+        builderTask.removeAttribute('data-correct');
+        builderFeedback.textContent = '';
+        builderEl.dispatchEvent(new CustomEvent('notationbuilder:reset', { detail: { step: 4 } }));
+        const total = 22;
         const passing = Math.ceil(total * 0.8);
         quiz.dataset.totalPoints = String(total);
         quiz.dataset.passingPoints = String(passing);
@@ -1894,6 +1941,10 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
       });
 
       form.addEventListener('change', () => {
+        clearFeedback();
+      });
+
+      builderEl.addEventListener('notationbuilder:change', () => {
         clearFeedback();
       });
 
@@ -1930,6 +1981,21 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
           if (token) token.dataset.correct = String(isCorrect);
         });
         fretboardFeedback.textContent = `Griffbrett: ${correctFretboardNotes} von 5 Tönen richtig platziert.`;
+
+        const placedStepRaw = builderEl.dataset.placedStep;
+        const placedDuration = builderEl.dataset.placedDuration;
+        const placedNote = builderEl.dataset.placedNote;
+        const isBuilderCorrect =
+          placedDuration === 'quarter' &&
+          placedStepRaw !== undefined &&
+          Number(placedStepRaw) === activeBuilderTarget.step;
+        if (isBuilderCorrect) score += 1;
+        builderTask.dataset.correct = String(isBuilderCorrect);
+        builderFeedback.textContent = isBuilderCorrect
+          ? `Richtig. Viertelnote ${activeBuilderTarget.note} korrekt platziert.`
+          : placedNote
+            ? `Noch nicht richtig. Platziert: ${placedNote}. Gesucht: Viertelnote ${activeBuilderTarget.note}.`
+            : `Keine Note platziert. Gesucht: Viertelnote ${activeBuilderTarget.note}.`;
 
         const total = Number(quiz.dataset.totalPoints);
         const passing = Number(quiz.dataset.passingPoints);

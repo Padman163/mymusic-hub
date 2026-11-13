@@ -12,6 +12,15 @@ import { omitUnchangedTimeSignatures, renderTimeSignature, validateTimeSignature
 import { beamGroupStemUp, defaultFirstNoteX, measureNumberOffset, minimumFirstNoteX, renderNotationSvg, SPATIUM, sp } from '../src/lib/notation-renderer.ts';
 import { layoutNotationEvents } from '../src/lib/notation-layout.ts';
 import {
+  describeBuilderState,
+  moveStep,
+  pitchNameToStep,
+  renderNotationBuilderSvg,
+  stepToPitchName,
+  stepToY,
+  yToStep,
+} from '../src/lib/notation-builder.ts';
+import {
   alignFirstNotesInSystems,
   arrangeNotationSystems,
   estimateMeasureMinWidth,
@@ -920,6 +929,57 @@ test('measureNumberOffset places measure numbers after clef, meter, accidentals 
     78,
   );
   assert.equal(measureNumberOffset({ repeatStart: true }), 12);
+});
+
+test('notation builder maps steps, pitches and SVG overlays accurately', () => {
+  assert.equal(stepToPitchName(-2, 'treble'), 'C4');
+  assert.equal(stepToPitchName(4, 'treble'), 'B4');
+  assert.equal(stepToPitchName(10, 'treble'), 'A5');
+  assert.equal(stepToPitchName(10, 'bass'), 'C4');
+  assert.equal(stepToPitchName(0, 'bass'), 'G2');
+  assert.equal(pitchNameToStep('g4', 'treble'), 2);
+  assert.equal(pitchNameToStep('c4', 'bass'), 10);
+
+  assert.equal(yToStep(stepToY(4)), 4);
+  assert.equal(yToStep(stepToY(-2)), -2);
+  assert.equal(yToStep(stepToY(10)), 10);
+  assert.equal(moveStep(10, 1), 10);
+  assert.equal(moveStep(-2, -1), -2);
+  assert.equal(moveStep(4, 1), 5);
+
+  const emptyState = describeBuilderState({ cursorStep: 2, placedNote: null, clef: 'treble' });
+  assert.equal(emptyState.currentNote, 'G4');
+  assert.equal(emptyState.canCreate, true);
+  assert.equal(emptyState.canDelete, false);
+  assert.match(emptyState.badgeText, /G4/);
+  assert.match(emptyState.badgeText, /erstellen/i);
+
+  const placedState = describeBuilderState({
+    cursorStep: 2,
+    placedNote: { duration: 'quarter', step: 2 },
+    clef: 'treble',
+  });
+  assert.equal(placedState.isOnPlacedNote, true);
+  assert.equal(placedState.canDelete, true);
+  assert.match(placedState.badgeText, /Löschen/i);
+
+  const svg = renderNotationBuilderSvg({
+    config: { clef: 'treble', showLeftBar: false, showRightBar: false },
+    cursorStep: 4,
+    placedNote: null,
+  });
+  assert.match(svg, /class="notation-builder-cursor"/);
+  assert.match(svg, /class="notation-builder-cursor-head"[^>]*rx="6\.75" ry="5"/);
+  assert.equal((svg.match(/class="notation-builder-step-hit"/g) ?? []).length, 13);
+  assert.doesNotMatch(svg, /class="notation-barline"/);
+
+  const withNoteSvg = renderNotationBuilderSvg({
+    config: { clef: 'treble', showLeftBar: false, showRightBar: false },
+    cursorStep: 10,
+    placedNote: { duration: 'quarter', step: 10 },
+  });
+  assert.match(withNoteSvg, /class="notation-note"/);
+  assert.match(withNoteSvg, /data-on-note="true"/);
 });
 
 

@@ -131,6 +131,10 @@ export default defineConfig({
                       label: "Notation.astro",
                       slug: "audio/referenzen-werkzeuge/visualisierungen-erklaert/notensystem",
                     },
+                    {
+                      label: "NotationBuilder.astro",
+                      slug: "audio/referenzen-werkzeuge/visualisierungen-erklaert/notationbuilder",
+                    },
                   ],
                 },
                 {

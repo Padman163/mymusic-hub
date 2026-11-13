@@ -1,0 +1,111 @@
+---
+title: NotationBuilder.astro
+description: Technische Referenz und interaktive Beispiele zur Komponente NotationBuilder.astro auf Basis des SVG-Notationssystems.
+---
+
+import NotationBuilder from "../../../../../components/notation/NotationBuilder.astro";
+
+`NotationBuilder.astro` (`src/components/notation/NotationBuilder.astro`) erweitert das native SVG-Notationssystem (`Notation.astro` und `src/lib/notation-renderer.ts`) um einen interaktiven Takt-Editor. Die Komponente teilt dieselben Bravura-Glyphen, `step`-Koordinaten (`-2` bis `10`), Layout-Helfer, Validierungsregeln und CSS-Tokens (`src/styles/notation.css`).
+
+---
+
+## 1. Grunddarstellung: Ein Takt ohne Anfangs- und End-Bar
+
+Standardmäßig rendert `<NotationBuilder />` einen einzelnen Takt im Violinschlüssel ohne linken und rechten Taktstrich (`showLeftBar={false}`, `showRightBar={false}`). Der transparente, notenkopfgroße Auswahlbereich startet auf der Mittellinie (`initialStep={4}`, im Violinschlüssel `B4`) und zeigt fortlaufend die aktuelle Position sowie die verfügbare Aktion an.
+
+```mdx
+import NotationBuilder from "../../../../../components/notation/NotationBuilder.astro";
+
+<NotationBuilder />
+```
+
+<NotationBuilder />
+
+---
+
+## 2. Bedienung (Maus & Tastatur)
+
+| Eingabe | Aktion im `NotationBuilder` |
+| :--- | :--- |
+| **Mausklick im Notensystem** | Platziert den transparenten Markierungsbereich direkt auf dem angeklickten `step` (`-2` bis `10`) und fokussiert den Builder. |
+| **Pfeiltaste Hoch (`↑`) / Runter (`↓`)** | Verschiebt den markierten Bereich schrittweise um jeweils einen `step` (Linie $\leftrightarrow$ Zwischenraum) nach oben oder unten. |
+| **`Num 1` (bzw. `1`)** | Erstellt an der aktuell markierten Position eine **Viertelnote** (`{ duration: "quarter", step }`). |
+| **`Entf` (`Delete` / `Backspace`)** | Löscht die aktuell platzierte Note wieder. |
+
+### Permanente Statusanzeige
+
+Direkt neben dem transparenten Notenkopf-Bereich im SVG sowie in der Statusleiste unterhalb des Takts zeigt der Builder jederzeit:
+
+- auf welcher Note der Cursor aktuell steht (z. B. `E4`, `B4`, `C4`),
+- ob an dieser Stelle eine **Viertelnote erstellt** werden kann (`Num 1`),
+- oder welche vorhandene Note mit **`Entf` gelöscht** wird (farblich rot hervorgehoben, sobald der Cursor auf einer gesetzten Note steht).
+
+---
+
+## 3. Vererbte Notationsregeln, Schlüssel & Props
+
+`NotationBuilder.astro` nutzt intern `renderNotationSvg()` und `defaultFirstNoteX()` aus `src/lib/notation-renderer.ts` sowie `observeNotationFit()` aus `src/lib/notation-fit.ts`. Dadurch greifen alle Regeln des Notationsfeatures automatisch:
+
+- **Schlüssel (`clef`):** Unterstützt `"treble"` (Violinschlüssel), `"bass"` (Bassschlüssel) und `false`. Die Tonhöhen-Anzeige passt sich automatisch an den gewählten Schlüssel an.
+- **Halsrichtung & Hilfslinien:** Ab `step >= 4` zeigen Notenhälse automatisch nach unten, darunter nach oben; auf `step = -2` und `step = 10` erscheinen automatisch Hilfslinien (sowohl für den transparenten Cursor als auch für die platzierte Note).
+- **Taktart, Vorzeichen & Taktstriche:** Props wie `timeSignature`, `accidentals`, `showLeftBar`, `showRightBar`, `rightBarStyle`, `repeatStart`, `repeatEnd`, `title`, `subtitle`, `tempo`, `tempoDetail`, `scale` und `scrollable` verhalten sich identisch zu `<Notation />`.
+
+### Beispiel im Bassschlüssel (`clef="bass"`)
+
+```mdx
+<NotationBuilder clef="bass" />
+```
+
+<NotationBuilder clef="bass" />
+
+### Beispiel mit Taktart, Tonartvorzeichnung und Taktstrichen
+
+```mdx
+<NotationBuilder
+  clef="treble"
+  timeSignature={{ numerator: 4, denominator: 4 }}
+  accidentals={[{ type: "sharp", step: 8 }]}
+  showLeftBar={true}
+  showRightBar={true}
+  rightBarStyle="final"
+/>
+```
+
+<NotationBuilder
+  clef="treble"
+  timeSignature={{ numerator: 4, denominator: 4 }}
+  accidentals={[{ type: "sharp", step: 8 }]}
+  showLeftBar={true}
+  showRightBar={true}
+  rightBarStyle="final"
+/>
+
+---
+
+## 4. `step`-Koordinaten & Tonhöhen-Zuordnung
+
+| `step` | Lage im System | Violinschlüssel (`treble`) | Bassschlüssel (`bass`) | Automatische Halsrichtung |
+| :---: | :--- | :---: | :---: | :---: |
+| `10` | 1. Hilfslinie über dem System | `A5` | `C4` | nach unten (`↓`) |
+| `9` | Raum über der 5. Linie | `G5` | `B3` | nach unten (`↓`) |
+| `8` | 5. Linie (oberste Linie) | `F5` | `A3` | nach unten (`↓`) |
+| `7` | 4. Zwischenraum | `E5` | `G3` | nach unten (`↓`) |
+| `6` | 4. Linie | `D5` | `F3` | nach unten (`↓`) |
+| `5` | 3. Zwischenraum | `C5` | `E3` | nach unten (`↓`) |
+| `4` | 3. Linie (Mittellinie) | `B4` | `D3` | nach unten (`↓`) |
+| `3` | 2. Zwischenraum | `A4` | `C3` | nach oben (`↑`) |
+| `2` | 2. Linie | `G4` | `B2` | nach oben (`↑`) |
+| `1` | 1. Zwischenraum | `F4` | `A2` | nach oben (`↑`) |
+| `0` | 1. Linie (unterste Linie) | `E4` | `G2` | nach oben (`↑`) |
+| `-1` | Raum unter der 1. Linie | `D4` | `F2` | nach oben (`↑`) |
+| `-2` | 1. Hilfslinie unter dem System | `C4` | `E2` | nach oben (`↑`) |
+
+---
+
+## 5. DOM-Events & Quiz-Integration
+
+Für interaktive Lernmodule (wie `Level100Quiz.astro`) stellt das Root-Element `[data-notation-builder]` laufend aktuelle Data-Attribute und CustomEvents bereit:
+
+- **Data-Attribute:** `data-cursor-step`, `data-cursor-note`, `data-placed-step`, `data-placed-note`, `data-placed-duration`, `data-can-create`, `data-can-delete`.
+- **`notationbuilder:change`:** Wird bei jeder Positionsänderung, Notenerstellung oder Löschung mit dem aktuellen Statusobjekt (`detail`) ausgelöst.
+- **`notationbuilder:reset`:** Setzt den Builder (optional mit `detail: { step }`) auf einen leeren Takt zurück.

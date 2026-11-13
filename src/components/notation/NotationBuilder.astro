@@ -1,0 +1,232 @@
+---
+import {
+  clampStep,
+  DEFAULT_NOTATION_STEP,
+  describeBuilderState,
+  type NotationBuilderConfig,
+  renderNotationBuilderSvg,
+} from "../../lib/notation-builder.ts";
+import {
+  measureNumberOffset,
+  type NotationEvent,
+  type NotationNote,
+  SPATIUM,
+  sp,
+} from "../../lib/notation-renderer.ts";
+import type { TimeSignature } from "../../lib/time-signature.ts";
+import "../../styles/notation.css";
+import FinalBar from "../ui/FinalBar.astro";
+import MeasureNumber from "../ui/MeasureNumber.astro";
+import TempoLabel from "../ui/TempoLabel.astro";
+import type { NotationBaseProps } from "./system-layout.ts";
+
+export interface Props extends NotationBaseProps {
+  notes?: NotationEvent[];
+  layoutTimeSignature?: TimeSignature;
+  noteStart?: number;
+  firstNoteX?: number;
+  initialStep?: number;
+  label?: string;
+}
+
+const {
+  clef = "treble",
+  timeSignature,
+  layoutTimeSignature,
+  accidentals = [],
+  scale = 1,
+  scrollable = false,
+  title,
+  subtitle,
+  tempo,
+  tempoDetail,
+  showLeftBar = false,
+  showRightBar = false,
+  rightBarStyle = "single",
+  repeatStart = false,
+  repeatEnd = false,
+  curves = [],
+  measureNumber,
+  ritAt,
+  aTempoAt,
+  hairpin,
+  hairpins,
+  initialDynamic,
+  noteStart = 0,
+  firstNoteX,
+  notes = [],
+  initialStep = DEFAULT_NOTATION_STEP,
+  label,
+} = Astro.props;
+
+const cursorStep = clampStep(initialStep);
+const firstEvent = notes[0];
+const placedNote: NotationNote | null =
+  firstEvent && firstEvent.type !== "rest" ? firstEvent : null;
+
+const builderConfig: NotationBuilderConfig = {
+  clef,
+  timeSignature,
+  layoutTimeSignature,
+  accidentals,
+  showLeftBar,
+  showRightBar,
+  rightBarStyle,
+  repeatStart,
+  repeatEnd,
+  curves,
+  ritAt,
+  aTempoAt,
+  hairpin,
+  hairpins,
+  noteStart,
+  firstNoteX,
+  notes,
+  initialStep: cursorStep,
+  label,
+};
+
+const initialSvg = renderNotationBuilderSvg({
+  config: builderConfig,
+  cursorStep,
+  placedNote,
+});
+
+const initialState = describeBuilderState({
+  cursorStep,
+  placedNote,
+  clef,
+});
+
+const hasPieceHeader = Boolean(title || subtitle || tempo || tempoDetail);
+const hasDynamicsBelow =
+  Boolean(hairpin) ||
+  Boolean(hairpins && hairpins.length > 0) ||
+  Boolean(initialDynamic) ||
+  notes.some(
+    (note) =>
+      note.type !== "rest" &&
+      Boolean(
+        note.dynamic ||
+          note.dynamicText ||
+          note.hairpinStart ||
+          note.hairpinEnd,
+      ),
+  );
+
+const measureOffset = measureNumberOffset({
+  clef: clef || undefined,
+  timeSignature,
+  accidentals,
+  repeatStart,
+});
+
+const fitToWidth = !scrollable;
+---
+
+<div
+  class:list={[
+    "notation-component",
+    "notation-builder",
+    "not-content",
+    { "is-scrollable": scrollable, "has-piece-header": hasPieceHeader },
+  ]}
+  tabindex="0"
+  role="application"
+  aria-label={label ?? "Interaktiver Notations-Builder"}
+  data-notation-builder
+  data-builder-config={JSON.stringify(builderConfig)}
+  data-cursor-step={String(initialState.cursorStep)}
+  data-cursor-note={initialState.currentNote}
+  data-placed-step={initialState.placedStep !== null ? String(initialState.placedStep) : undefined}
+  data-placed-note={initialState.placedNoteName ?? undefined}
+  data-placed-duration={placedNote ? (placedNote.duration ?? "quarter") : undefined}
+  data-can-create={String(initialState.canCreate)}
+  data-can-delete={String(initialState.canDelete)}
+  data-fit-to-width={fitToWidth ? "" : undefined}
+  data-scale={scale}
+  style={`--notation-scale: ${scale}; --notation-spatium: ${SPATIUM * scale}px`}
+  data-tags={JSON.stringify(["Allgemein", "Notensystem", "NotationBuilder"])}
+>
+  {hasPieceHeader && (
+    <header class="notation-piece-header">
+      {(title || subtitle) && (
+        <div class="notation-title-group">
+          {title && <div class="notation-title">{title}</div>}
+          {subtitle && <div class="notation-subtitle">{subtitle}</div>}
+        </div>
+      )}
+      {(tempo || tempoDetail) && (
+        <div class="notation-piece-tempo">
+          <TempoLabel text={tempo ?? ""} detail={tempoDetail} />
+        </div>
+      )}
+    </header>
+  )}
+
+  <div class="notation-systems">
+    <div
+      class:list={[
+        "notation-row",
+        {
+          "has-row-measure-number": measureNumber !== undefined,
+          "has-row-hairpin": hasDynamicsBelow,
+        },
+      ]}
+      style="--notation-row-columns: 1; --notation-grid-columns: minmax(min-content, 1fr); --notation-row-width: 100%"
+    >
+      <div class="notation-cell">
+        <div
+          class:list={[
+            "notation-visual",
+            "embedded",
+            {
+              "has-clef": Boolean(clef),
+              "has-measure-number": measureNumber !== undefined,
+              "has-hairpin": hasDynamicsBelow,
+            },
+          ]}
+        >
+          {measureNumber !== undefined && (
+            <MeasureNumber value={measureNumber} embedded offsetPx={measureOffset} />
+          )}
+          <div class="notation-staff-content">
+            <div class="notation-builder-stage">
+              <Fragment set:html={initialSvg} />
+            </div>
+            {showRightBar && rightBarStyle === "final" && !repeatEnd && (
+              <div class="notation-final-bar"><FinalBar height={sp(4)} /></div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notation-builder-footer">
+    <div class="notation-builder-status" aria-live="polite">
+      <span class="notation-builder-status-note">
+        Aktuelle Note: {initialState.currentNote}
+      </span>
+      <span class="notation-builder-status-action">
+        {initialState.isOnPlacedNote
+          ? `Viertelnote ${initialState.currentNote} löschen (Entf)`
+          : initialState.placedNoteName
+            ? `Viertelnote ${initialState.currentNote} erstellen (Num 1) · ${initialState.placedNoteName} löschen (Entf)`
+            : `Viertelnote ${initialState.currentNote} erstellen (Num 1)`}
+      </span>
+    </div>
+    <span class="notation-builder-hints">
+      Klick: Position · ↑/↓: Step · Num 1: Viertelnote · Entf: Löschen
+    </span>
+  </div>
+</div>
+
+<script>
+  import { setupNotationBuilders } from "../../lib/notation-builder";
+  import { observeNotationFit } from "../../lib/notation-fit";
+
+  setupNotationBuilders();
+  observeNotationFit();
+  document.addEventListener("astro:page-load", setupNotationBuilders);
+</script>
