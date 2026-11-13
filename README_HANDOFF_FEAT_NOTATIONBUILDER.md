@@ -21,9 +21,9 @@ Standardmäßig entspricht das Aussehen einem reduzierten Einzeltakt ohne linken
   * `.notation-builder-cursor-head`: Abgerundetes orangefarbenes Rechteck (`rx="4"`, `width="17.5"`, `height="14"`) mit dunklerem Rahmen (`#c2410c` / `#9a3412`).
   * `.notation-builder-footer`: Optionale Statusleiste und Tasten-Hinweise.
 * **Quiz-Integration (`src/components/Level100Quiz.astro`):**
-  * Eingebunden als "Teil 5: Note im Notensystem platzieren" mit `showLabel`, `showStatus` und `showHints`.
-  * Gesamtpunkte auf `22` erhöht (`passingPoints = 18`).
-  * Automatische Ziehung einer Zielnote pro Runde und Validierung bei Formular-Submit.
+  * Eingebunden als Frage 1 in "Teil 4: Notation in fünf Beispielen" in der `compact="wide"`-Version mit `showLabel`, `showStatus` und `showHints`.
+  * Gesamtpunkte: `21` (`passingPoints = 17`).
+  * Fragt pro Runde zufällig eine der 5 Notenlinien ab (E4, G4, B4, D5, F5) und validiert die gesetzte Note bei Formular-Submit.
 * **Dokumentation:**
   * `src/content/docs/audio/referenzen-werkzeuge/visualisierungen-erklaert/notationbuilder.mdx`.
   * Verlinkt in `astro.config.mjs` (Sidebar unter Features) und in `visualisierungen-erklaert.mdx`.

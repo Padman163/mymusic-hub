@@ -135,7 +135,8 @@ const measureOffset = measureNumberOffset({
   repeatStart,
 });
 
-const fitToWidth = !scrollable;
+const isCompact = Boolean(compact);
+const fitToWidth = !scrollable && !isCompact;
 ---
 
 <div
@@ -182,62 +183,78 @@ const fitToWidth = !scrollable;
     </header>
   )}
 
-  <div class="notation-systems">
-    <div
-      class:list={[
-        "notation-row",
-        {
-          "has-row-measure-number": measureNumber !== undefined,
-          "has-row-hairpin": hasDynamicsBelow,
-        },
-      ]}
-      style="--notation-row-columns: 1; --notation-grid-columns: minmax(min-content, 1fr); --notation-row-width: 100%"
-    >
-      <div class="notation-cell">
-        <div
-          class:list={[
-            "notation-visual",
-            "embedded",
-            {
-              "has-clef": Boolean(clef),
-              "has-measure-number": measureNumber !== undefined,
-              "has-hairpin": hasDynamicsBelow,
-            },
-          ]}
-        >
-          {measureNumber !== undefined && (
-            <MeasureNumber value={measureNumber} embedded offsetPx={measureOffset} />
-          )}
-          <div class="notation-staff-content">
-            <div class="notation-builder-stage">
-              <Fragment set:html={initialSvg} />
-            </div>
-            {showRightBar && rightBarStyle === "final" && !repeatEnd && (
-              <div class="notation-final-bar"><FinalBar height={sp(4)} /></div>
+  <div class="notation-builder-body">
+    <div class="notation-systems">
+      <div
+        class:list={[
+          "notation-row",
+          {
+            "has-row-measure-number": measureNumber !== undefined,
+            "has-row-hairpin": hasDynamicsBelow,
+          },
+        ]}
+        style="--notation-row-columns: 1; --notation-grid-columns: minmax(min-content, 1fr); --notation-row-width: 100%"
+      >
+        <div class="notation-cell">
+          <div
+            class:list={[
+              "notation-visual",
+              "embedded",
+              {
+                "has-clef": Boolean(clef),
+                "has-measure-number": measureNumber !== undefined,
+                "has-hairpin": hasDynamicsBelow,
+              },
+            ]}
+          >
+            {measureNumber !== undefined && (
+              <MeasureNumber value={measureNumber} embedded offsetPx={measureOffset} />
             )}
+            <div class="notation-staff-content">
+              <div class="notation-builder-stage">
+                <Fragment set:html={initialSvg} />
+              </div>
+              {showRightBar && rightBarStyle === "final" && !repeatEnd && (
+                <div class="notation-final-bar"><FinalBar height={sp(4)} /></div>
+              )}
+            </div>
           </div>
         </div>
       </div>
     </div>
+
+    {isCompact && showHints && (
+      <div class="notation-builder-side-hints" aria-label="Tastaturbedienung">
+        <span class="notation-builder-hint-item">↑/↓: Tonhöhe</span>
+        <span class="notation-builder-hint-item">Num 1: Viertelnote</span>
+        <span class="notation-builder-hint-item">Entf: Löschen</span>
+      </div>
+    )}
   </div>
 
-  {(showStatus || showHints) && (<div class="notation-builder-footer">
-    {showStatus && (<div class="notation-builder-status" aria-live="polite">
-      <span class="notation-builder-status-note">
-        Aktuelle Note: {initialState.currentNote}
-      </span>
-      <span class="notation-builder-status-action">
-        {initialState.isOnPlacedNote
-          ? `Viertelnote ${initialState.currentNote} löschen (Entf)`
-          : initialState.placedNoteName
-            ? `Viertelnote ${initialState.currentNote} erstellen (Num 1) · ${initialState.placedNoteName} löschen (Entf)`
-            : `Viertelnote ${initialState.currentNote} erstellen (Num 1)`}
-      </span>
-    </div>)}
-    {showHints && (<span class="notation-builder-hints">
-      Klick: Position · ↑/↓: Step · Num 1: Viertelnote · Entf: Löschen
-    </span>)}
-  </div>)}
+  {(showStatus || (!isCompact && showHints)) && (
+    <div class="notation-builder-footer">
+      {showStatus && (
+        <div class="notation-builder-status" aria-live="polite">
+          <span class="notation-builder-status-note">
+            Aktuelle Note: {initialState.currentNote}
+          </span>
+          <span class="notation-builder-status-action">
+            {initialState.isOnPlacedNote
+              ? `Viertelnote ${initialState.currentNote} löschen (Entf)`
+              : initialState.placedNoteName
+                ? `Viertelnote ${initialState.currentNote} erstellen (Num 1) · ${initialState.placedNoteName} löschen (Entf)`
+                : `Viertelnote ${initialState.currentNote} erstellen (Num 1)`}
+          </span>
+        </div>
+      )}
+      {!isCompact && showHints && (
+        <span class="notation-builder-hints">
+          ↑/↓: Tonhöhe · Num 1: Viertelnote · Entf: Löschen
+        </span>
+      )}
+    </div>
+  )}
 </div>
 
 <script>

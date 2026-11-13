@@ -936,7 +936,7 @@ const patternLayouts = Array.from(
   ).values(),
 );
 
-const totalPoints = 22;
+const totalPoints = 21;
 const passingPoints = Math.ceil(totalPoints * 0.8);
 ---
 
@@ -1016,9 +1016,19 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
     </section>
 
     <section class="quiz-stage">
-      <h2>Teil 4: Notation in fünf zufälligen Beispielen</h2>
-      <p>Pro Runde wird aus fünf Bereichen je ein MusicXML-Beispiel ausgewählt. Lies die Standardnotation oder Tabulatur und beantworte die Frage.</p>
+      <h2>Teil 4: Notation in fünf Beispielen</h2>
+      <p>Lies die Standardnotation oder Tabulatur und beantworte die Fragen bzw. trage die gesuchte Note interaktiv ein.</p>
       <div class="notation-list">
+        <fieldset class="quiz-question notation-question notation-builder-question" data-active="true">
+          <legend>1. <span class="notation-builder-prompt"></span></legend>
+          <div class="notation-builder-task">
+            <NotationBuilder clef="treble" compact="wide" showHints />
+          </div>
+          <div class="notation-builder-controls">
+            <button type="button" class="notation-builder-lock-button">Antwort einloggen</button>
+          </div>
+          <p class="notation-builder-feedback" aria-live="polite"></p>
+        </fieldset>
         <div class="musicxml-question-bank">
           {questionBanks["1"].notation.map((item) => (
             <fieldset class="quiz-question notation-question musicxml-question" data-question-id={item.id} data-answer={item.answer} hidden>
@@ -1037,15 +1047,6 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
           ))}
         </div>
       </div>
-    </section>
-
-    <section class="quiz-stage">
-      <h2>Teil 5: Note im Notensystem platzieren</h2>
-      <p class="notation-builder-prompt"></p>
-      <div class="notation-builder-task">
-        <NotationBuilder clef="treble" compact showLabel showStatus showHints />
-      </div>
-      <p class="notation-builder-feedback" aria-live="polite"></p>
     </section>
 
     <div class="quiz-actions">
@@ -1270,12 +1271,47 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
     stroke: none;
   }
 
+  .notation-builder-question[data-correct="true"] {
+    border-color: #16a34a;
+  }
+
+  .notation-builder-question[data-correct="false"] {
+    border-color: #dc2626;
+  }
+
   .notation-builder-task[data-correct="true"] :global(.notation-builder) {
     border-color: #16a34a;
   }
 
   .notation-builder-task[data-correct="false"] :global(.notation-builder) {
     border-color: #dc2626;
+  }
+
+  .notation-builder-controls {
+    margin-top: 0.6rem;
+  }
+
+  .notation-builder-lock-button {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.45rem 1rem;
+    border: 1px solid var(--quiz-border);
+    border-radius: 0.4rem;
+    background: var(--sl-color-bg);
+    color: var(--sl-color-text);
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.2;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+
+  .notation-builder-lock-button:hover {
+    border-color: var(--sl-color-accent);
+    background: var(--sl-color-gray-6);
   }
 
   .notation-builder-feedback {
@@ -1475,10 +1511,12 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
       const rhythmList = quiz.querySelector<HTMLElement>('.rhythm-list');
       const notationList = quiz.querySelector<HTMLElement>('.notation-list');
       const musicXmlQuestionBank = quiz.querySelector<HTMLElement>('.musicxml-question-bank');
+      const builderQuestion = quiz.querySelector<HTMLElement>('.notation-builder-question');
       const builderTask = quiz.querySelector<HTMLElement>('.notation-builder-task');
       const builderEl = quiz.querySelector<HTMLElement>('[data-notation-builder]');
       const builderPrompt = quiz.querySelector<HTMLElement>('.notation-builder-prompt');
       const builderFeedback = quiz.querySelector<HTMLElement>('.notation-builder-feedback');
+      const builderLockBtn = quiz.querySelector<HTMLButtonElement>('.notation-builder-lock-button');
       if (!form || !result || !resetButton || !patternQuestion || !patternCandidates.length ||
         !fretboard || !fretboardTray || !fretboardFeedback || !difficultyStatus ||
         !totalPointsLabel || !passingPointsLabel || !basicsList || !rhythmList || !notationList ||
@@ -1495,8 +1533,52 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
       const fretboardNodes = [...fretboard.querySelectorAll<SVGGElement>('.note-node')];
       const previousQuestionIds = new Map<string, Set<string>>();
       const previousPatternIds = new Map<Difficulty, string>();
-      let previousBuilderStep: number | undefined;
-      let activeBuilderTarget: { step: number; note: string } = { step: 4, note: 'B4' };
+      interface StaffLineTarget {
+        id: string;
+        step: number;
+        note: string;
+        lineDescription: string;
+        prompt: string;
+      }
+      const staffLineTargets: StaffLineTarget[] = [
+        {
+          id: 'staff-line-1',
+          step: 0,
+          note: 'E',
+          lineDescription: '1. Notenlinie (E4)',
+          prompt: 'Trage die Note E ein.'
+        },
+        {
+          id: 'staff-line-2',
+          step: 2,
+          note: 'G',
+          lineDescription: '2. Notenlinie (G4)',
+          prompt: 'Trage die Note G ein.'
+        },
+        {
+          id: 'staff-line-3',
+          step: 4,
+          note: 'B',
+          lineDescription: '3. Notenlinie (B4)',
+          prompt: 'Trage die Note B ein.'
+        },
+        {
+          id: 'staff-line-4',
+          step: 6,
+          note: 'D',
+          lineDescription: '4. Notenlinie (D5)',
+          prompt: 'Trage die Note D ein.'
+        },
+        {
+          id: 'staff-line-5',
+          step: 8,
+          note: 'F',
+          lineDescription: '5. Notenlinie (F5)',
+          prompt: 'Trage die Note F ein.'
+        }
+      ];
+      let previousStaffLineId: string | undefined;
+      let activeBuilderTarget: StaffLineTarget = staffLineTargets[2];
 
       const advancedNotationQuestion = (item: NotationQuestion): NotationQuestion => {
         const withSameScore = (prompt: string, answer: string, wrong: string[]): NotationQuestion => ({
@@ -1698,7 +1780,7 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
       };
 
       const selectGroupedNotation = (pool: NotationQuestion[]): NotationQuestion[] =>
-        [1, 2, 3, 4, 5].map((group) => {
+        [2, 3, 4, 5].map((group) => {
           const groupPool = pool.filter((item) => item.group === group);
           if (!groupPool.length) throw new Error(`MusicXML-Fragenpool ${group} ist leer.`);
           const key = `${difficulty}:notation-group-${group}`;
@@ -1766,6 +1848,7 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
         });
         fretboardFeedback.textContent = '';
         builderTask.removeAttribute('data-correct');
+        if (builderQuestion) builderQuestion.removeAttribute('data-correct');
         builderFeedback.textContent = '';
       };
 
@@ -1840,7 +1923,7 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
           card.dataset.active = 'true';
           card.dataset.answer = item.answer;
           const legend = card.querySelector('legend');
-          if (legend) legend.textContent = `${index + 1}. ${item.prompt}`;
+          if (legend) legend.textContent = `${index + 2}. ${item.prompt}`;
           const player = card.querySelector<HTMLElement>('[data-sheet-music-player]');
           if (player?.dataset.xml !== item.musicXmlUrl) {
             throw new Error(`MusicXML-Datei für Frage ${item.id} stimmt nicht mit der Einbindung überein.`);
@@ -1852,7 +1935,7 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
             label.className = 'answer-option';
             const input = document.createElement('input');
             input.type = 'radio';
-            input.name = `${difficulty}-notation-${index}`;
+            input.name = `${difficulty}-notation-${index + 1}`;
             input.value = option;
             const text = document.createElement('span');
             text.textContent = option;
@@ -1899,21 +1982,17 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
           'aria-label',
           `DrumPattern ${pattern.timeSignature}, Auflösung ${pattern.resolution}`
         );
-        const builderSteps = difficulty === '1'
-          ? [0, 1, 2, 3, 4, 5, 6, 7, 8]
-          : [-2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-        const candidateBuilderSteps = builderSteps.filter((step) => step !== previousBuilderStep);
-        const chosenBuilderStep = shuffle(candidateBuilderSteps.length ? candidateBuilderSteps : builderSteps)[0];
-        previousBuilderStep = chosenBuilderStep;
-        activeBuilderTarget = {
-          step: chosenBuilderStep,
-          note: stepToPitchName(chosenBuilderStep, 'treble')
-        };
-        builderPrompt.textContent = `Klicke in den Takt oder nutze die Pfeiltasten (↑/↓), um den Bereich auf die Note ${activeBuilderTarget.note} zu verschieben, und erstelle mit Num 1 eine Viertelnote (Entf löscht sie wieder).`;
+        const candidateStaffLines = staffLineTargets.filter((item) => item.id !== previousStaffLineId);
+        const chosenStaffLine = shuffle(candidateStaffLines.length ? candidateStaffLines : staffLineTargets)[0];
+        previousStaffLineId = chosenStaffLine.id;
+        activeBuilderTarget = chosenStaffLine;
+        builderPrompt.textContent = activeBuilderTarget.prompt;
         builderTask.removeAttribute('data-correct');
+        if (builderQuestion) builderQuestion.removeAttribute('data-correct');
         builderFeedback.textContent = '';
-        builderEl.dispatchEvent(new CustomEvent('notationbuilder:reset', { detail: { step: 4 } }));
-        const total = 22;
+        const initialResetStep = activeBuilderTarget.step === 4 ? 2 : 4;
+        builderEl.dispatchEvent(new CustomEvent('notationbuilder:reset', { detail: { step: initialResetStep } }));
+        const total = 21;
         const passing = Math.ceil(total * 0.8);
         quiz.dataset.totalPoints = String(total);
         quiz.dataset.passingPoints = String(passing);
@@ -1944,8 +2023,41 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
         clearFeedback();
       });
 
+      const evaluateBuilderAnswer = (isSubmit = false): boolean => {
+        const placedStepRaw = builderEl.dataset.placedStep;
+        const placedDuration = builderEl.dataset.placedDuration;
+        const placedNote = builderEl.dataset.placedNote;
+
+        if (placedStepRaw === undefined) {
+          builderTask.dataset.correct = 'false';
+          if (builderQuestion) builderQuestion.dataset.correct = 'false';
+          builderFeedback.textContent = isSubmit
+            ? `Keine Note platziert. Gesucht: Note ${activeBuilderTarget.note} auf der ${activeBuilderTarget.lineDescription}.`
+            : `Noch keine Note platziert. Wähle eine Position und drücke Num 1 (oder Taste 1), um eine Viertelnote zu erstellen.`;
+          return false;
+        }
+
+        const isBuilderCorrect =
+          placedDuration === 'quarter' &&
+          Number(placedStepRaw) === activeBuilderTarget.step;
+
+        builderTask.dataset.correct = String(isBuilderCorrect);
+        if (builderQuestion) builderQuestion.dataset.correct = String(isBuilderCorrect);
+        builderFeedback.textContent = isBuilderCorrect
+          ? `Richtig! Note ${activeBuilderTarget.note} auf der ${activeBuilderTarget.lineDescription} platziert.`
+          : `Noch nicht richtig. Platziert: ${placedNote}. Gesucht: Note ${activeBuilderTarget.note} auf der ${activeBuilderTarget.lineDescription}.`;
+
+        return isBuilderCorrect;
+      };
+
+      builderLockBtn?.addEventListener('click', () => {
+        evaluateBuilderAnswer(false);
+      });
+
       builderEl.addEventListener('notationbuilder:change', () => {
-        clearFeedback();
+        builderTask.removeAttribute('data-correct');
+        builderQuestion?.removeAttribute('data-correct');
+        builderFeedback.textContent = '';
       });
 
       form.addEventListener('submit', (event) => {
@@ -1982,20 +2094,8 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
         });
         fretboardFeedback.textContent = `Griffbrett: ${correctFretboardNotes} von 5 Tönen richtig platziert.`;
 
-        const placedStepRaw = builderEl.dataset.placedStep;
-        const placedDuration = builderEl.dataset.placedDuration;
-        const placedNote = builderEl.dataset.placedNote;
-        const isBuilderCorrect =
-          placedDuration === 'quarter' &&
-          placedStepRaw !== undefined &&
-          Number(placedStepRaw) === activeBuilderTarget.step;
+        const isBuilderCorrect = evaluateBuilderAnswer(true);
         if (isBuilderCorrect) score += 1;
-        builderTask.dataset.correct = String(isBuilderCorrect);
-        builderFeedback.textContent = isBuilderCorrect
-          ? `Richtig. Viertelnote ${activeBuilderTarget.note} korrekt platziert.`
-          : placedNote
-            ? `Noch nicht richtig. Platziert: ${placedNote}. Gesucht: Viertelnote ${activeBuilderTarget.note}.`
-            : `Keine Note platziert. Gesucht: Viertelnote ${activeBuilderTarget.note}.`;
 
         const total = Number(quiz.dataset.totalPoints);
         const passing = Number(quiz.dataset.passingPoints);
