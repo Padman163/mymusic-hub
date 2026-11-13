@@ -769,6 +769,27 @@ export function attachNotationBuilder(root: HTMLElement): void {
       }
       return;
     }
+    if (
+      event.key === "Enter" ||
+      event.code === "Enter" ||
+      event.code === "NumpadEnter"
+    ) {
+      event.preventDefault();
+      event.stopPropagation();
+      root.dispatchEvent(
+        new CustomEvent("notationbuilder:submit", {
+          bubbles: true,
+          detail: {
+            steps: placedNotes.map((n) => n?.step ?? null),
+            notes: placedNotes.map((n) =>
+              n ? stepToPitchName(n.step, config.clef ?? "treble") : null,
+            ),
+            durations: placedNotes.map((n) => n?.duration ?? null),
+          },
+        }),
+      );
+      return;
+    }
   });
 
   root.addEventListener("notationbuilder:reset", (event) => {

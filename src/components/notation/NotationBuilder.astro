@@ -329,6 +329,7 @@ const fitToWidth = !scrollable && !isCompact;
           <span class="notation-builder-hint-item">Num 1: Notenwert</span>
         )}
         <span class="notation-builder-hint-item">Entf: Löschen</span>
+        <span class="notation-builder-hint-item">Enter: Einloggen</span>
       </div>
     )}
   </div>
@@ -351,7 +352,7 @@ const fitToWidth = !scrollable && !isCompact;
       )}
       {!isCompact && showHints && (
         <span class="notation-builder-hints">
-          {maxNotes > 1 ? "←/→: Position · " : ""}↑/↓: Tonhöhe · Leertaste: Note setzen{showDurationPicker && !lockDuration ? " · Num 1: Notenwert" : ""} · Entf: Löschen
+          {maxNotes > 1 ? "←/→: Position · " : ""}↑/↓: Tonhöhe · Leertaste: Note setzen{showDurationPicker && !lockDuration ? " · Num 1: Notenwert" : ""} · Entf: Löschen · Enter: Einloggen
         </span>
       )}
     </div>

@@ -42,6 +42,7 @@ Standardmäßig entspricht das Aussehen einem reduzierten Einzeltakt ohne linken
    * `Leertaste`: Platziert an der aktuellen Cursor-Position eine Note mit dem aktiven Notenwert (`activeDuration`, Standard: `"quarter"`). Bei `maxNotes > 1` springt der Cursor automatisch zum nächsten Slot weiter.
    * `NUM 1` bzw. Taste `1`: Schaltet den Notenwert zyklisch durch (`Ganze` → `Halbe` → `Viertel` → `Achtel` → `16tel`). Wenn `lockDuration` gesetzt ist, ist diese Taste blockiert.
    * `Entf` (`Delete`) bzw. `Backspace`: Entfernt eine gesetzte Note im aktiven Slot wieder.
+   * `Enter`: Loggt die Antwort ein (feuert `notationbuilder:submit` bzw. löst den Einloggen-Button aus).
 3. **Props:**
    * `maxNotes` (Standard: `1`): Anzahl der Noten/Slots im Takt (z. B. `4` für vier Viertelnoten).
    * `lockDuration` (Standard: `undefined`): Fester Notenwert (z. B. `"quarter"` oder `true`), blockiert Num 1 und fixiert den Notenwert.

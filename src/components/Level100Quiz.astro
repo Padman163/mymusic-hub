@@ -2315,6 +2315,24 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
         evaluateBuilderAnswer(false);
       });
 
+      builderEl.addEventListener('notationbuilder:submit', () => {
+        if (!builderLockBtn?.disabled) {
+          evaluateBuilderAnswer(false);
+        }
+      });
+
+      builderQuestion?.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          if ((event.target as HTMLElement)?.closest('.notation-builder-retry-button')) {
+            return;
+          }
+          event.preventDefault();
+          if (!builderLockBtn?.disabled) {
+            evaluateBuilderAnswer(false);
+          }
+        }
+      });
+
       builderRetryBtn?.addEventListener('click', () => {
         if (builderAttempts >= MAX_BUILDER_ATTEMPTS) return;
         const candidateFourNotes = fourNotesTargets.filter(
@@ -2397,6 +2415,24 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
 
       durationBuilderLockBtn?.addEventListener('click', () => {
         evaluateDurationBuilderAnswer(false);
+      });
+
+      durationBuilderEl.addEventListener('notationbuilder:submit', () => {
+        if (!durationBuilderLockBtn?.disabled) {
+          evaluateDurationBuilderAnswer(false);
+        }
+      });
+
+      durationBuilderQuestion?.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          if ((event.target as HTMLElement)?.closest('.notation-duration-builder-retry-button')) {
+            return;
+          }
+          event.preventDefault();
+          if (!durationBuilderLockBtn?.disabled) {
+            evaluateDurationBuilderAnswer(false);
+          }
+        }
       });
 
       durationBuilderRetryBtn?.addEventListener('click', () => {
