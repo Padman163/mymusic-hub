@@ -9,7 +9,7 @@ import { collectBeamGroups, flagGlyph, renderDot, rhythmicPositions } from '../s
 import { renderRest, restSymbols } from '../src/lib/rest.ts';
 import { renderTempoMark, validateTempoChanges } from '../src/lib/tempo.ts';
 import { omitUnchangedTimeSignatures, renderTimeSignature, validateTimeSignature } from '../src/lib/time-signature.ts';
-import { defaultFirstNoteX, minimumFirstNoteX, renderNotationSvg, SPATIUM, sp } from '../src/lib/notation-renderer.ts';
+import { defaultFirstNoteX, measureNumberOffset, minimumFirstNoteX, renderNotationSvg, SPATIUM, sp } from '../src/lib/notation-renderer.ts';
 import { layoutNotationEvents } from '../src/lib/notation-layout.ts';
 import {
   alignFirstNotesInSystems,
@@ -878,6 +878,23 @@ test('note dynamics and measure hairpins render independently in SVG', () => {
   });
   assert.equal(clefChangeRows[0].measures[0].clef, 'treble');
   assert.equal(clefChangeRows[1].measures[0].clef, 'bass');
+});
+
+test('measureNumberOffset places measure numbers after clef, meter, accidentals and repeatStart', () => {
+  const sharps = [{ type: 'sharp', step: 8 }, { type: 'sharp', step: 5 }];
+  const fourFour = { numerator: 4, denominator: 4 };
+  assert.equal(measureNumberOffset(), 4);
+  assert.equal(measureNumberOffset({ clef: 'treble' }), 36);
+  assert.equal(measureNumberOffset({ clef: 'treble', accidentals: sharps }), 60);
+  assert.equal(
+    measureNumberOffset({ clef: 'treble', timeSignature: fourFour, accidentals: sharps }),
+    87,
+  );
+  assert.equal(
+    measureNumberOffset({ clef: 'treble', accidentals: sharps, repeatStart: true }),
+    78,
+  );
+  assert.equal(measureNumberOffset({ repeatStart: true }), 12);
 });
 
 

@@ -1,6 +1,7 @@
 ---
 import {
   type MeasureHairpin,
+  measureNumberOffset,
   type NotationAccidental,
   type NotationCurve,
   type NotationEvent,
@@ -76,6 +77,13 @@ const hasDynamicsBelow =
       ),
   );
 
+const measureOffset = measureNumberOffset({
+  clef: clef || undefined,
+  timeSignature,
+  accidentals,
+  repeatStart,
+});
+
 const notation = renderNotationSvg({
   clef: clef || undefined,
   notes,
@@ -98,7 +106,7 @@ const notation = renderNotationSvg({
 ---
 
 <div class:list={['notation-visual', 'not-content', { embedded, 'has-clef': Boolean(clef), 'has-header': Boolean(tempo), 'has-measure-number': measureNumber !== undefined, 'has-hairpin': hasDynamicsBelow }]} data-tags={JSON.stringify(['Allgemein', 'Notensystem'])}>
-  {measureNumber !== undefined && <MeasureNumber value={measureNumber} embedded />}
+  {measureNumber !== undefined && <MeasureNumber value={measureNumber} embedded offsetPx={measureOffset} />}
   {tempo && (
     <div class="notation-header">
       <TempoLabel text={tempo} detail={tempoDetail} />

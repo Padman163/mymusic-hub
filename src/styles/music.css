@@ -54,7 +54,9 @@
 .notation-measure-number {
   position: absolute;
   top: calc(var(--notation-panel-padding, 1.5rem) + 10px);
-  left: calc(var(--notation-panel-padding, 1.5rem) + 4px);
+  left: calc(
+    var(--notation-panel-padding, 1.5rem) + var(--measure-number-offset, 4px)
+  );
   color: #111827;
   font:
     10px / 1 Georgia,
@@ -62,16 +64,18 @@
 }
 
 .notation-visual.has-clef > .notation-measure-number {
-  left: calc(var(--notation-panel-padding, 1.5rem) + 36px);
+  left: calc(
+    var(--notation-panel-padding, 1.5rem) + var(--measure-number-offset, 36px)
+  );
 }
 
 .notation-measure-number.embedded {
   top: 10px;
-  left: 4px;
+  left: var(--measure-number-offset, 4px);
 }
 
 .notation-visual.has-clef > .notation-measure-number.embedded {
-  left: 36px;
+  left: var(--measure-number-offset, 36px);
 }
 
 .final-bar {

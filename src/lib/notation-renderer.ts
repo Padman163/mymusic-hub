@@ -215,6 +215,27 @@ function prefixGeometry(
   return { accidentalStart, timeStart, repeatStartX, prefixEnd };
 }
 
+export function measureNumberOffset(
+  options: Pick<
+    NotationRenderOptions,
+    "clef" | "timeSignature" | "accidentals" | "repeatStart"
+  > = {},
+): number {
+  const {
+    clef,
+    timeSignature,
+    accidentals = [],
+    repeatStart = false,
+  } = options;
+  const { prefixEnd } = prefixGeometry(
+    clef,
+    accidentals,
+    timeSignature,
+    repeatStart,
+  );
+  return prefixEnd > 0 ? prefixEnd : 4;
+}
+
 export function minimumFirstNoteX(
   options: Pick<
     NotationRenderOptions,
