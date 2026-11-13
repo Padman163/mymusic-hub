@@ -21,9 +21,10 @@ Standardmäßig entspricht das Aussehen einem reduzierten Einzeltakt ohne linken
   * `.notation-builder-cursor-head`: Abgerundetes orangefarbenes Rechteck (`rx="4"`, `width="17.5"`, `height="14"`) mit dunklerem Rahmen (`#c2410c` / `#9a3412`).
   * `.notation-builder-footer`: Optionale Statusleiste und Tasten-Hinweise.
 * **Quiz-Integration (`src/components/Level100Quiz.astro`):**
-  * Eingebunden als Frage 1 in "Teil 4: Notation in fünf Beispielen" in der `compact="wide"`-Version mit `showLabel`, `showStatus` und `showHints`.
+  * Frage 1 in "Teil 4: Notation in fünf Beispielen": Tonhöhen-Eingabe auf den 5 Notenlinien in der `compact="wide"`-Version mit `showHints` und "Antwort einloggen"-Button.
+  * Frage 2 in "Teil 4: Notation in fünf Beispielen": Notenwert-Eingabe mit der visuellen Button-Leiste (`showDurationPicker`, `compact="wide"`, `showHints`) und "Antwort einloggen"-Button.
   * Gesamtpunkte: `21` (`passingPoints = 17`).
-  * Fragt pro Runde zufällig eine der 5 Notenlinien ab (E4, G4, B4, D5, F5) und validiert die gesetzte Note bei Formular-Submit.
+  * Beide interaktiven Fragen validieren direkt und fließen in das Gesamtergebnis des Quiz ein.
 * **Dokumentation:**
   * `src/content/docs/audio/referenzen-werkzeuge/visualisierungen-erklaert/notationbuilder.mdx`.
   * Verlinkt in `astro.config.mjs` (Sidebar unter Features) und in `visualisierungen-erklaert.mdx`.
@@ -31,17 +32,24 @@ Standardmäßig entspricht das Aussehen einem reduzierten Einzeltakt ohne linken
 ## 3. Bedienung & Interaktionsregeln
 1. **Maus:**
    * Klick in das Notensystem: Ermittelt die vertikale Position (`yToStep`), setzt den Cursor auf die entsprechende Notenlinie bzw. den Zwischenraum (`-2` bis `10`) und fokussiert das Element.
+   * Klick auf einen Notenwert in der Toolbar (`showDurationPicker`):
+     * Ist bereits eine Note platziert, ändert sich ihr Notenwert (`whole`, `half`, `quarter`, `eighth`, `sixteenth`) sofort.
+     * Ist noch keine Note platziert, wird die Note direkt an der aktuellen Cursor-Position mit dem gewählten Notenwert gesetzt.
 2. **Tastatur:**
    * `ArrowUp` / `ArrowDown`: Verschiebt den Cursor schrittweise (`clampStep` hält ihn im Bereich `-2..10`).
-   * `NUM 1` bzw. Taste `1`: Platziert an der aktuellen Cursor-Position eine Viertelnote (`{ duration: "quarter", step }`).
+   * `Leertaste`: Platziert an der aktuellen Cursor-Position eine Note mit dem aktiven Notenwert (`activeDuration`, Standard: `"quarter"`).
+   * `NUM 1` bzw. Taste `1`: Schaltet den Notenwert zyklisch durch (`Ganze` → `Halbe` → `Viertel` → `Achtel` → `16tel`). Ist bereits eine Note platziert, ändert sich ihr Notenwert sofort.
    * `Entf` (`Delete`) bzw. `Backspace`: Entfernt eine gesetzte Note wieder.
 3. **Props:**
    * `initialStep` (Standard: `4` / Mittellinie).
+   * `initialDuration` (Standard: `"quarter"`).
+   * `allowedDurations` (Standard: alle 5 Notenwerte).
+   * `showDurationPicker` (Standard: `false`): Schaltet die Button-Toolbar zur Notenwert-Auswahl ein.
    * `compact` (Standard: `false`): Kompakte Breite (`true` / `"tight"` = ultraschmal wie im Quiz, `"wide"` = Standard-Notationslänge von 300px; beide Varianten standardmäßig ohne rechten Taktstrich).
    * `showRightBar` (Standard: `false`): Taktstrich rechts (standardmäßig aus; kann mit `showRightBar={true}` explizit aktiviert werden).
    * `showLabel` (Standard: `false`): Schaltet das Noten-/Aktions-Badge direkt am Cursor ein.
    * `showStatus` (Standard: `false`): Schaltet die Statuszeile unterhalb des Systems ein.
-   * `showHints` (Standard: `false`): Schaltet die Tastaturlegende unterhalb des Systems ein.
+   * `showHints` (Standard: `false`): Schaltet die Tastaturlegende (im Footer oder bei `compact` als Spalte rechts) ein.
    * Alle Standard-Props von `<Notation />` (`clef`, `timeSignature`, `accidentals`, `scale`, `showRightBar`, etc.) werden direkt durchgereicht.
 
 ## 4. Tests & Qualitätssicherung

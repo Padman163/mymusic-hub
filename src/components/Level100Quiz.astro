@@ -1029,6 +1029,16 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
           </div>
           <p class="notation-builder-feedback" aria-live="polite"></p>
         </fieldset>
+        <fieldset class="quiz-question notation-question notation-duration-builder-question" data-active="true">
+          <legend>2. <span class="notation-duration-builder-prompt"></span></legend>
+          <div class="notation-duration-builder-task">
+            <NotationBuilder clef="treble" compact="wide" showDurationPicker showHints />
+          </div>
+          <div class="notation-duration-builder-controls">
+            <button type="button" class="notation-duration-builder-lock-button">Antwort einloggen</button>
+          </div>
+          <p class="notation-duration-builder-feedback" aria-live="polite"></p>
+        </fieldset>
         <div class="musicxml-question-bank">
           {questionBanks["1"].notation.map((item) => (
             <fieldset class="quiz-question notation-question musicxml-question" data-question-id={item.id} data-answer={item.answer} hidden>
@@ -1279,19 +1289,23 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
     border-color: #dc2626;
   }
 
-  .notation-builder-task[data-correct="true"] :global(.notation-builder) {
+  .notation-builder-task[data-correct="true"] :global(.notation-builder),
+  .notation-duration-builder-task[data-correct="true"] :global(.notation-builder) {
     border-color: #16a34a;
   }
 
-  .notation-builder-task[data-correct="false"] :global(.notation-builder) {
+  .notation-builder-task[data-correct="false"] :global(.notation-builder),
+  .notation-duration-builder-task[data-correct="false"] :global(.notation-builder) {
     border-color: #dc2626;
   }
 
-  .notation-builder-controls {
+  .notation-builder-controls,
+  .notation-duration-builder-controls {
     margin-top: 0.6rem;
   }
 
-  .notation-builder-lock-button {
+  .notation-builder-lock-button,
+  .notation-duration-builder-lock-button {
     box-sizing: border-box;
     display: inline-flex;
     align-items: center;
@@ -1309,12 +1323,14 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
     transition: background 0.15s, border-color 0.15s;
   }
 
-  .notation-builder-lock-button:hover {
+  .notation-builder-lock-button:hover,
+  .notation-duration-builder-lock-button:hover {
     border-color: var(--sl-color-accent);
     background: var(--sl-color-gray-6);
   }
 
-  .notation-builder-feedback {
+  .notation-builder-feedback,
+  .notation-duration-builder-feedback {
     min-height: 1.4em;
     margin: 0.4rem 0 0;
     font-size: 0.9rem;
@@ -1414,6 +1430,7 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
 <script>
   import { stepToPitchName } from '../lib/notation-builder';
   import { renderNotationSvg } from '../lib/notation-renderer';
+  import type { Duration } from '../lib/rhythm';
 
   type QuizQuestion = { id: string; prompt: string; options: string[]; answer: string };
   type FretboardQuestion = QuizQuestion & { stringIndex: number; fret: number };
@@ -1512,15 +1529,24 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
       const notationList = quiz.querySelector<HTMLElement>('.notation-list');
       const musicXmlQuestionBank = quiz.querySelector<HTMLElement>('.musicxml-question-bank');
       const builderQuestion = quiz.querySelector<HTMLElement>('.notation-builder-question');
-      const builderTask = quiz.querySelector<HTMLElement>('.notation-builder-task');
-      const builderEl = quiz.querySelector<HTMLElement>('[data-notation-builder]');
-      const builderPrompt = quiz.querySelector<HTMLElement>('.notation-builder-prompt');
-      const builderFeedback = quiz.querySelector<HTMLElement>('.notation-builder-feedback');
-      const builderLockBtn = quiz.querySelector<HTMLButtonElement>('.notation-builder-lock-button');
+      const builderTask = builderQuestion?.querySelector<HTMLElement>('.notation-builder-task');
+      const builderEl = builderQuestion?.querySelector<HTMLElement>('[data-notation-builder]');
+      const builderPrompt = builderQuestion?.querySelector<HTMLElement>('.notation-builder-prompt');
+      const builderFeedback = builderQuestion?.querySelector<HTMLElement>('.notation-builder-feedback');
+      const builderLockBtn = builderQuestion?.querySelector<HTMLButtonElement>('.notation-builder-lock-button');
+
+      const durationBuilderQuestion = quiz.querySelector<HTMLElement>('.notation-duration-builder-question');
+      const durationBuilderTask = durationBuilderQuestion?.querySelector<HTMLElement>('.notation-duration-builder-task');
+      const durationBuilderEl = durationBuilderQuestion?.querySelector<HTMLElement>('[data-notation-builder]');
+      const durationBuilderPrompt = durationBuilderQuestion?.querySelector<HTMLElement>('.notation-duration-builder-prompt');
+      const durationBuilderFeedback = durationBuilderQuestion?.querySelector<HTMLElement>('.notation-duration-builder-feedback');
+      const durationBuilderLockBtn = durationBuilderQuestion?.querySelector<HTMLButtonElement>('.notation-duration-builder-lock-button');
+
       if (!form || !result || !resetButton || !patternQuestion || !patternCandidates.length ||
         !fretboard || !fretboardTray || !fretboardFeedback || !difficultyStatus ||
         !totalPointsLabel || !passingPointsLabel || !basicsList || !rhythmList || !notationList ||
-        !musicXmlQuestionBank || !builderTask || !builderEl || !builderPrompt || !builderFeedback) return;
+        !musicXmlQuestionBank || !builderTask || !builderEl || !builderPrompt || !builderFeedback ||
+        !durationBuilderTask || !durationBuilderEl || !durationBuilderPrompt || !durationBuilderFeedback) return;
 
       const banks = JSON.parse(quiz.dataset.questionBank ?? '{}') as Record<Difficulty, QuestionBank>;
       const unlockKey = 'mymusic-hub-level-100-difficulty-2';
@@ -1579,6 +1605,54 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
       ];
       let previousStaffLineId: string | undefined;
       let activeBuilderTarget: StaffLineTarget = staffLineTargets[2];
+
+      interface NoteValueTarget {
+        id: string;
+        duration: Duration;
+        name: string;
+        prompt: string;
+      }
+      const noteValueTargets: NoteValueTarget[] = [
+        {
+          id: 'whole',
+          duration: 'whole',
+          name: 'Ganze Note',
+          prompt: 'Trage eine Ganze Note ein.'
+        },
+        {
+          id: 'half',
+          duration: 'half',
+          name: 'Halbe Note',
+          prompt: 'Trage eine Halbe Note ein.'
+        },
+        {
+          id: 'quarter',
+          duration: 'quarter',
+          name: 'Viertelnote',
+          prompt: 'Trage eine Viertelnote ein.'
+        },
+        {
+          id: 'eighth',
+          duration: 'eighth',
+          name: 'Achtelnote',
+          prompt: 'Trage eine Achtelnote ein.'
+        },
+        {
+          id: 'sixteenth',
+          duration: 'sixteenth',
+          name: 'Sechzehntelnote',
+          prompt: 'Trage eine Sechzehntelnote ein.'
+        }
+      ];
+      let previousNoteValueId: string | undefined;
+      let activeDurationTarget: NoteValueTarget = noteValueTargets[1];
+      const durationNamesGerman: Record<string, string> = {
+        whole: 'Ganze Note',
+        half: 'Halbe Note',
+        quarter: 'Viertelnote',
+        eighth: 'Achtelnote',
+        sixteenth: 'Sechzehntelnote'
+      };
 
       const advancedNotationQuestion = (item: NotationQuestion): NotationQuestion => {
         const withSameScore = (prompt: string, answer: string, wrong: string[]): NotationQuestion => ({
@@ -1780,7 +1854,7 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
       };
 
       const selectGroupedNotation = (pool: NotationQuestion[]): NotationQuestion[] =>
-        [2, 3, 4, 5].map((group) => {
+        [3, 4, 5].map((group) => {
           const groupPool = pool.filter((item) => item.group === group);
           if (!groupPool.length) throw new Error(`MusicXML-Fragenpool ${group} ist leer.`);
           const key = `${difficulty}:notation-group-${group}`;
@@ -1850,6 +1924,9 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
         builderTask.removeAttribute('data-correct');
         if (builderQuestion) builderQuestion.removeAttribute('data-correct');
         builderFeedback.textContent = '';
+        durationBuilderTask.removeAttribute('data-correct');
+        if (durationBuilderQuestion) durationBuilderQuestion.removeAttribute('data-correct');
+        durationBuilderFeedback.textContent = '';
       };
 
       const renderQuiz = (reshuffleNotation = true) => {
@@ -1923,7 +2000,7 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
           card.dataset.active = 'true';
           card.dataset.answer = item.answer;
           const legend = card.querySelector('legend');
-          if (legend) legend.textContent = `${index + 2}. ${item.prompt}`;
+          if (legend) legend.textContent = `${index + 3}. ${item.prompt}`;
           const player = card.querySelector<HTMLElement>('[data-sheet-music-player]');
           if (player?.dataset.xml !== item.musicXmlUrl) {
             throw new Error(`MusicXML-Datei für Frage ${item.id} stimmt nicht mit der Einbindung überein.`);
@@ -1935,7 +2012,7 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
             label.className = 'answer-option';
             const input = document.createElement('input');
             input.type = 'radio';
-            input.name = `${difficulty}-notation-${index + 1}`;
+            input.name = `${difficulty}-notation-${index + 3}`;
             input.value = option;
             const text = document.createElement('span');
             text.textContent = option;
@@ -1992,6 +2069,18 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
         builderFeedback.textContent = '';
         const initialResetStep = activeBuilderTarget.step === 4 ? 2 : 4;
         builderEl.dispatchEvent(new CustomEvent('notationbuilder:reset', { detail: { step: initialResetStep } }));
+
+        const candidateNoteValues = noteValueTargets.filter((item) => item.id !== previousNoteValueId);
+        const chosenNoteValue = shuffle(candidateNoteValues.length ? candidateNoteValues : noteValueTargets)[0];
+        previousNoteValueId = chosenNoteValue.id;
+        activeDurationTarget = chosenNoteValue;
+        durationBuilderPrompt.textContent = activeDurationTarget.prompt;
+        durationBuilderTask.removeAttribute('data-correct');
+        if (durationBuilderQuestion) durationBuilderQuestion.removeAttribute('data-correct');
+        durationBuilderFeedback.textContent = '';
+        const initialDurationReset = activeDurationTarget.duration === 'quarter' ? 'half' : 'quarter';
+        durationBuilderEl.dispatchEvent(new CustomEvent('notationbuilder:reset', { detail: { step: 4, duration: initialDurationReset } }));
+
         const total = 21;
         const passing = Math.ceil(total * 0.8);
         quiz.dataset.totalPoints = String(total);
@@ -2033,7 +2122,7 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
           if (builderQuestion) builderQuestion.dataset.correct = 'false';
           builderFeedback.textContent = isSubmit
             ? `Keine Note platziert. Gesucht: Note ${activeBuilderTarget.note} auf der ${activeBuilderTarget.lineDescription}.`
-            : `Noch keine Note platziert. Wähle eine Position und drücke Num 1 (oder Taste 1), um eine Viertelnote zu erstellen.`;
+            : `Noch keine Note platziert. Wähle eine Position und drücke die Leertaste, um eine Viertelnote zu erstellen.`;
           return false;
         }
 
@@ -2060,11 +2149,46 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
         builderFeedback.textContent = '';
       });
 
+      const evaluateDurationBuilderAnswer = (isSubmit = false): boolean => {
+        const placedStepRaw = durationBuilderEl.dataset.placedStep;
+        const placedDuration = durationBuilderEl.dataset.placedDuration;
+
+        if (placedStepRaw === undefined || !placedDuration) {
+          durationBuilderTask.dataset.correct = 'false';
+          if (durationBuilderQuestion) durationBuilderQuestion.dataset.correct = 'false';
+          durationBuilderFeedback.textContent = isSubmit
+            ? `Keine Note platziert. Gesucht: ${activeDurationTarget.name}.`
+            : `Noch keine Note platziert. Wähle den Notenwert "${activeDurationTarget.name}" (Toolbar oder Num 1) und platziere die Note mit der Leertaste.`;
+          return false;
+        }
+
+        const isDurationCorrect = placedDuration === activeDurationTarget.duration;
+
+        durationBuilderTask.dataset.correct = String(isDurationCorrect);
+        if (durationBuilderQuestion) durationBuilderQuestion.dataset.correct = String(isDurationCorrect);
+        const placedDurationName = durationNamesGerman[placedDuration] ?? placedDuration;
+        durationBuilderFeedback.textContent = isDurationCorrect
+          ? `Richtig! ${activeDurationTarget.name} platziert.`
+          : `Noch nicht richtig. Platziert: ${placedDurationName}. Gesucht: ${activeDurationTarget.name}.`;
+
+        return isDurationCorrect;
+      };
+
+      durationBuilderLockBtn?.addEventListener('click', () => {
+        evaluateDurationBuilderAnswer(false);
+      });
+
+      durationBuilderEl.addEventListener('notationbuilder:change', () => {
+        durationBuilderTask.removeAttribute('data-correct');
+        durationBuilderQuestion?.removeAttribute('data-correct');
+        durationBuilderFeedback.textContent = '';
+      });
+
       form.addEventListener('submit', (event) => {
         event.preventDefault();
         let score = 0;
 
-        quiz.querySelectorAll<HTMLElement>('.quiz-question[data-active="true"]').forEach((question) => {
+        quiz.querySelectorAll<HTMLElement>('.quiz-question[data-active="true"]:not(.notation-builder-question):not(.notation-duration-builder-question)').forEach((question) => {
           const answer = question.dataset.answer;
           const selected = question.querySelector<HTMLInputElement>('input:checked');
           const isCorrect = selected?.value === answer;
@@ -2096,6 +2220,9 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
 
         const isBuilderCorrect = evaluateBuilderAnswer(true);
         if (isBuilderCorrect) score += 1;
+
+        const isDurationCorrect = evaluateDurationBuilderAnswer(true);
+        if (isDurationCorrect) score += 1;
 
         const total = Number(quiz.dataset.totalPoints);
         const passing = Number(quiz.dataset.passingPoints);

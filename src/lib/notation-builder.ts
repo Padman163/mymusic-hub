@@ -8,6 +8,7 @@ import {
   SPATIUM,
   sp,
 } from "./notation-renderer.ts";
+import { type Duration, durationLabels } from "./rhythm.ts";
 import { escapeXml } from "./svg.ts";
 
 export const MIN_NOTATION_STEP = -2;
@@ -20,6 +21,58 @@ export const BUILDER_NOTE_WIDTH = sp(1.35);
 export const BUILDER_NOTE_HEIGHT = sp(1.0);
 const CURSOR_PAD = 2;
 export const BUILDER_LEDGER_OVERHANG = sp(0.5);
+
+export const DEFAULT_BUILDER_DURATIONS: Duration[] = [
+  "whole",
+  "half",
+  "quarter",
+  "eighth",
+  "sixteenth",
+];
+
+export const DURATION_GLYPHS: Record<Duration, string> = {
+  whole: "\uE1D2",
+  half: "\uE1D3",
+  quarter: "\uE1D5",
+  eighth: "\uE1D7",
+  sixteenth: "\uE1D9",
+};
+
+export const DURATION_SHORT_NAMES: Record<Duration, string> = {
+  whole: "Ganze",
+  half: "Halbe",
+  quarter: "Viertel",
+  eighth: "Achtel",
+  sixteenth: "16tel",
+};
+
+export interface DurationSvgDefinition {
+  d: string;
+  viewBox: string;
+}
+
+export const DURATION_SVG_DATA: Record<Duration, DurationSvgDefinition> = {
+  whole: {
+    d: "M0 1c0 74 90 135 235 135c101 0 224 -58 224 -135c0 -76 -57 -138 -235 -138c-162 0 -224 65 -224 138zM117 41c0 -70 69 -153 141 -153c49 0 83 22 83 77c0 66 -60 146 -134 146c-51 0 -90 -14 -90 -70z",
+    viewBox: "0 -875 460 1020",
+  },
+  half: {
+    d: "M112 -145c-63 0 -112 35 -112 96c0 60 54 194 227 194c35 0 64 -10 84 -27v757h30v-827c0 -39 -39 -193 -229 -193zM34 -51c0 -28 26 -49 53 -49c25 0 61 12 113 47c81 53 105 81 105 104c0 26 -24 46 -49 46c-55 0 -222 -91 -222 -148z",
+    viewBox: "0 -875 255 1020",
+  },
+  quarter: {
+    d: "M109 -141c-61 0 -109 35 -109 94c0 97 99 188 222 188c33 0 61 -9 80 -26v760h30v-828c0 -95 -123 -188 -223 -188z",
+    viewBox: "0 -875 250 1020",
+  },
+  eighth: {
+    d: "M0 -44c0 97 99 188 222 188c33 0 61 -9 80 -26v746c1 7 5 9 10 9c19 0 27 -6 30 -22c16 -96 58 -178 109 -257c63 -100 115 -218 115 -343c0 -78 -26 -173 -26 -173c-5 -17 -17 -21 -26 -20l-2 1c-6 4 -16 13 -16 29c0 4 1 9 3 15c17 45 24 92 24 137c0 59 -9 116 -24 150c-31 73 -105 183 -167 221v-561c0 -95 -123 -188 -223 -188c-61 0 -109 35 -109 94z",
+    viewBox: "0 -875 455 1020",
+  },
+  sixteenth: {
+    d: "M109 -138c-61 0 -109 35 -109 94c0 97 99 188 222 188c33 0 61 -9 80 -26v754s11 1 17 1s18 -2 20 -13c17 -106 73 -122 127 -180c72 -78 98 -106 108 -174c2 -12 3 -23 3 -36c0 -61 -22 -121 -25 -127c-1 -3 -1 -5 -1 -7c0 -4 1 -6 1 -9c18 -37 29 -78 29 -120v-22c0 -48 -3 -105 -7 -110c-6 -13 -13 -17 -20 -17c-14 0 -22 13 -22 26c0 3 0 5 1 9c5 30 8 60 8 89c0 52 -9 101 -32 149c-60 122 -122 139 -177 143v-424c0 -95 -123 -188 -223 -188zM342 644c0 -1 0 -2 1 -3c21 -82 67 -106 114 -160c21 -24 38 -44 54 -69c2 -3 4 -4 7 -4c5 0 12 3 13 6c5 8 5 18 7 26c1 7 1 13 1 20c0 32 -9 63 -27 89c-33 49 -87 105 -148 105h-8c-8 0 -14 -6 -14 -10z",
+    viewBox: "0 -875 470 1020",
+  },
+};
 
 export const TREBLE_STEP_PITCHES: Record<number, string> = {
   [-2]: "C4",
@@ -58,6 +111,9 @@ export interface NotationBuilderConfig
   clef?: NotationClef | false;
   notes?: NotationEvent[];
   initialStep?: number;
+  initialDuration?: Duration;
+  allowedDurations?: Duration[];
+  showDurationPicker?: boolean;
   /** Beschriftung (Note / Aktion) direkt am markierten Bereich. */
   showLabel?: boolean;
   /** Kompakter Darstellungsmodus ("tight" / true = ultraschmal wie im Builder, "wide" = lockere Taktbreite). */
@@ -69,6 +125,8 @@ export interface NotationBuilderStateSummary {
   currentNote: string;
   placedStep: number | null;
   placedNoteName: string | null;
+  placedDuration: Duration | null;
+  activeDuration: Duration;
   isOnPlacedNote: boolean;
   canCreate: boolean;
   canDelete: boolean;
@@ -144,6 +202,7 @@ export function describeBuilderState(options: {
   cursorStep: number;
   placedNote: NotationNote | null;
   clef?: NotationClef | false;
+  activeDuration?: Duration;
 }): NotationBuilderStateSummary {
   const cursorStep = clampStep(options.cursorStep);
   const currentNote = stepToPitchName(cursorStep, options.clef);
@@ -156,18 +215,25 @@ export function describeBuilderState(options: {
   const canDelete = placedStep !== null;
   const canCreate = !isOnPlacedNote;
 
+  const activeDuration =
+    options.activeDuration ?? options.placedNote?.duration ?? "quarter";
+  const durationLabel = durationLabels[activeDuration] ?? "Viertelnote";
+  const placedDurationLabel = options.placedNote?.duration
+    ? (durationLabels[options.placedNote.duration] ?? "Note")
+    : durationLabel;
+
   let badgeText: string;
   let statusText: string;
 
   if (isOnPlacedNote) {
     badgeText = `${currentNote} · Löschen (Entf)`;
-    statusText = `Aktuelle Note: ${currentNote} (Step ${cursorStep}) – Viertelnote ${currentNote} löschen (Entf)`;
+    statusText = `Aktuelle Note: ${currentNote} (Step ${cursorStep}) – ${placedDurationLabel} ${currentNote} löschen (Entf)`;
   } else if (placedNoteName !== null) {
-    badgeText = `${currentNote} · Erstellen (Num 1) | ${placedNoteName} löschen (Entf)`;
-    statusText = `Aktuelle Note: ${currentNote} (Step ${cursorStep}) – Viertelnote ${currentNote} erstellen (Num 1) oder Viertelnote ${placedNoteName} löschen (Entf)`;
+    badgeText = `${currentNote} · Erstellen (Leertaste) | ${placedNoteName} löschen (Entf)`;
+    statusText = `Aktuelle Note: ${currentNote} (Step ${cursorStep}) – ${durationLabel} ${currentNote} erstellen (Leertaste) oder ${placedDurationLabel} ${placedNoteName} löschen (Entf)`;
   } else {
-    badgeText = `${currentNote} · Viertelnote erstellen (Num 1)`;
-    statusText = `Aktuelle Note: ${currentNote} (Step ${cursorStep}) – Viertelnote ${currentNote} erstellen (Num 1)`;
+    badgeText = `${currentNote} · ${durationLabel} erstellen (Leertaste)`;
+    statusText = `Aktuelle Note: ${currentNote} (Step ${cursorStep}) – ${durationLabel} ${currentNote} erstellen (Leertaste)`;
   }
 
   return {
@@ -175,6 +241,8 @@ export function describeBuilderState(options: {
     currentNote,
     placedStep,
     placedNoteName,
+    placedDuration: options.placedNote?.duration ?? null,
+    activeDuration,
     isOnPlacedNote,
     canCreate,
     canDelete,
@@ -311,12 +379,15 @@ export function attachNotationBuilder(root: HTMLElement): void {
 
   let cursorStep = clampStep(config.initialStep ?? DEFAULT_NOTATION_STEP);
   let placedNote: NotationNote | null = extractInitialPlacedNote(config.notes);
+  let activeDuration: Duration =
+    config.initialDuration ?? placedNote?.duration ?? "quarter";
 
   const syncDom = (emitChange = false) => {
     const state = describeBuilderState({
       cursorStep,
       placedNote,
       clef: config.clef ?? "treble",
+      activeDuration,
     });
 
     stage.innerHTML = renderNotationBuilderSvg({
@@ -329,25 +400,39 @@ export function attachNotationBuilder(root: HTMLElement): void {
     root.dataset.cursorNote = state.currentNote;
     root.dataset.canCreate = String(state.canCreate);
     root.dataset.canDelete = String(state.canDelete);
+    root.dataset.activeDuration = activeDuration;
     if (placedNote && state.placedStep !== null && state.placedNoteName) {
       root.dataset.placedStep = String(state.placedStep);
       root.dataset.placedNote = state.placedNoteName;
-      root.dataset.placedDuration = placedNote.duration ?? "quarter";
+      root.dataset.placedDuration = placedNote.duration ?? activeDuration;
     } else {
       delete root.dataset.placedStep;
       delete root.dataset.placedNote;
       delete root.dataset.placedDuration;
     }
 
+    const currentDuration = placedNote?.duration ?? activeDuration;
+    root
+      .querySelectorAll<HTMLButtonElement>(".notation-builder-duration-btn")
+      .forEach((btn) => {
+        const isSelected = btn.dataset.duration === currentDuration;
+        btn.classList.toggle("is-active", isSelected);
+        btn.setAttribute("aria-pressed", String(isSelected));
+      });
+
     if (statusNote) {
       statusNote.textContent = `Aktuelle Note: ${state.currentNote}`;
     }
     if (statusAction) {
+      const durationName = durationLabels[activeDuration] ?? "Viertelnote";
+      const placedDurName = placedNote?.duration
+        ? (durationLabels[placedNote.duration] ?? durationName)
+        : durationName;
       statusAction.textContent = state.isOnPlacedNote
-        ? `Viertelnote ${state.currentNote} löschen (Entf)`
+        ? `${placedDurName} ${state.currentNote} löschen (Entf)`
         : state.placedNoteName
-          ? `Viertelnote ${state.currentNote} erstellen (Num 1) · ${state.placedNoteName} löschen (Entf)`
-          : `Viertelnote ${state.currentNote} erstellen (Num 1)`;
+          ? `${durationName} ${state.currentNote} erstellen (Leertaste) · ${placedDurName} ${state.placedNoteName} löschen (Entf)`
+          : `${durationName} ${state.currentNote} erstellen (Leertaste)`;
     }
 
     if (emitChange) {
@@ -359,6 +444,24 @@ export function attachNotationBuilder(root: HTMLElement): void {
       );
     }
   };
+
+  root
+    .querySelectorAll<HTMLButtonElement>(".notation-builder-duration-btn")
+    .forEach((btn) => {
+      btn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        root.focus({ preventScroll: true });
+        const dur = btn.dataset.duration as Duration | undefined;
+        if (!dur) return;
+        activeDuration = dur;
+        if (placedNote !== null) {
+          placedNote = { ...placedNote, duration: dur };
+        } else {
+          placedNote = { duration: dur, step: cursorStep };
+        }
+        syncDom(true);
+      });
+    });
 
   const resolveStepFromEvent = (event: MouseEvent): number | undefined => {
     const svg = stage.querySelector<SVGSVGElement>("svg.notation-staff");
@@ -392,10 +495,26 @@ export function attachNotationBuilder(root: HTMLElement): void {
       syncDom(true);
       return;
     }
+    if (event.code === "Space" || event.key === " ") {
+      event.preventDefault();
+      placedNote = { duration: activeDuration, step: cursorStep };
+      syncDom(true);
+      return;
+    }
     if (event.code === "Numpad1" || event.key === "1") {
       event.preventDefault();
-      placedNote = { duration: "quarter", step: cursorStep };
-      syncDom(true);
+      const durations = config.allowedDurations ?? DEFAULT_BUILDER_DURATIONS;
+      if (durations.length > 0) {
+        const currentDur = placedNote?.duration ?? activeDuration;
+        const currentIndex = durations.indexOf(currentDur);
+        const nextIndex =
+          currentIndex >= 0 ? (currentIndex + 1) % durations.length : 0;
+        activeDuration = durations[nextIndex];
+        if (placedNote !== null) {
+          placedNote = { ...placedNote, duration: activeDuration };
+        }
+        syncDom(true);
+      }
       return;
     }
     if (
@@ -413,12 +532,31 @@ export function attachNotationBuilder(root: HTMLElement): void {
 
   root.addEventListener("notationbuilder:reset", (event) => {
     const detail =
-      event instanceof CustomEvent && typeof event.detail?.step === "number"
-        ? event.detail.step
-        : (config.initialStep ?? DEFAULT_NOTATION_STEP);
-    cursorStep = clampStep(detail);
+      event instanceof CustomEvent ? event.detail : undefined;
+    const stepVal =
+      typeof detail?.step === "number"
+        ? detail.step
+        : typeof detail === "number"
+          ? detail
+          : (config.initialStep ?? DEFAULT_NOTATION_STEP);
+    cursorStep = clampStep(stepVal);
+    if (detail?.duration) {
+      activeDuration = detail.duration;
+    } else if (config.initialDuration) {
+      activeDuration = config.initialDuration;
+    }
     placedNote = null;
     syncDom(false);
+  });
+
+  root.addEventListener("notationbuilder:set-duration", (event) => {
+    if (event instanceof CustomEvent && event.detail?.duration) {
+      activeDuration = event.detail.duration as Duration;
+      if (placedNote !== null) {
+        placedNote = { ...placedNote, duration: activeDuration };
+      }
+      syncDom(true);
+    }
   });
 
   syncDom(false);
