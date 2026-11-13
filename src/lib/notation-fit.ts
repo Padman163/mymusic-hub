@@ -15,9 +15,7 @@ export function observeNotationFit(): void {
       const box = entry.target;
       if (!(box instanceof HTMLElement) || entry.contentRect.width <= 0)
         continue;
-      const grids = box.querySelectorAll<HTMLElement>(
-        ".notation-system-grid, .notation-systems",
-      );
+      const grids = box.querySelectorAll<HTMLElement>(".notation-systems");
       if (!grids.length) throw new Error("Notensystem-Raster nicht gefunden.");
 
       const baseScale = Number(box.dataset.scale || "1") || 1;

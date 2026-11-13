@@ -28,13 +28,8 @@ Der Faktor soll auf die Grund-EXP einer Frage angewendet werden: Bei 10 Grund-EX
 
 | Inhalt | Hinterlegte Tags | Ort der Metadaten |
 | --- | --- | --- |
-| [Notensystem-Visualisierung](../visualisierungen-erklaert/notensystem/) | `Allgemein`, `Notensystem` | `data-tags` am Wurzelelement von `NotationVisual.astro`; ein JSON-Array mit den Tag-Namen. |
-| [Klaviaturnotation](../visualisierungen-erklaert/notensystem/#klaviaturnotation) | `Allgemein`, `Notensystem` | `data-tags` am Wurzelelement von `src/components/notation/NotationKeyboard.astro`; die beiden enthaltenen Notensysteme tragen dieselben Tags. |
-| [Vorzeichen-Schaubild](../visualisierungen-erklaert/notensystem/#vorzeichen) | `Allgemein`, `Notensystem` | `data-tags` am Wurzelelement von `NotationAccidentals.astro`; die enthaltenen Notensysteme tragen dieselben Tags. |
-| [Auftakt und Wiederholung](../visualisierungen-erklaert/notensystem/#auftakt-und-wiederholung) | `Allgemein`, `Notensystem` | `data-tags` am Wurzelelement von `NotationPickupRepeat.astro`; die enthaltenen Notensysteme tragen dieselben Tags. |
-| [Tempoangaben](../visualisierungen-erklaert/notensystem/#tempoangaben) | `Allgemein`, `Notensystem` | `data-tags` am Wurzelelement von `NotationTempo.astro`; die enthaltenen Notensysteme tragen dieselben Tags. |
-| [Artikulation](../visualisierungen-erklaert/notensystem/#artikulation) | `Allgemein`, `Notensystem` | `data-tags` am Wurzelelement von `NotationArticulations.astro`; das enthaltene Notensystem trägt dieselben Tags. |
-| [Dynamik](../visualisierungen-erklaert/notensystem/#dynamik) | `Allgemein`, `Notensystem` | `data-tags` am Wurzelelement von `NotationDynamics.astro`. |
+| [Notation-Visualisierung](../visualisierungen-erklaert/notensystem/) | `Allgemein`, `Notensystem` | `data-tags` am Wurzelelement von `Notation.astro` und `NotationVisual.astro`; ein JSON-Array mit den Tag-Namen. Alle Beispiele (Vorzeichen, Auftakt und Wiederholung, Tempoangaben, Artikulation, Dynamik) werden über `<Notation>` gerendert und tragen dieselben Tags. |
+| [Klaviaturnotation](../visualisierungen-erklaert/notensystem/#zusatzkomponente-klaviaturnotation-notationkeyboard) | `Allgemein`, `Notensystem` | `data-tags` am Wurzelelement von `src/components/notation/NotationKeyboard.astro`; die beiden enthaltenen Notensysteme tragen dieselben Tags. |
 
 Die Tags kennzeichnen bisher nur die Visualisierung. Aufgaben und Fragen erhalten dadurch nicht automatisch Tags oder EXP; ihre Zuordnung muss später gesondert erfolgen.
 

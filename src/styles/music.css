@@ -24,38 +24,12 @@
     serif;
 }
 
-@font-face {
-  font-family: "NotationTempoBravura";
-  src: url("/alphatab/font/Bravura.woff2") format("woff2");
-}
-
-.tempo-heading {
-  position: absolute;
-  top: 0;
-  left: 6px;
-  color: #111827;
-  font:
-    var(--music-text-size) / 1.2 Georgia,
-    serif;
-}
-
-.tempo-heading strong {
-  font-size: var(--music-heading-size);
-  line-height: 1;
-}
-
-.metronome-note {
-  font:
-    var(--music-symbol-size) / 1 "NotationTempoBravura",
-    sans-serif;
-  vertical-align: -0.2em;
-}
-
 .notation-measure-number {
   position: absolute;
   top: calc(var(--notation-panel-padding, 1.5rem) + 10px);
   left: calc(
-    var(--notation-panel-padding, 1.5rem) + var(--measure-number-offset, 4px)
+    var(--notation-panel-padding, 1.5rem) +
+    var(--measure-number-offset, 4px)
   );
   color: #111827;
   font:
@@ -65,7 +39,8 @@
 
 .notation-visual.has-clef > .notation-measure-number {
   left: calc(
-    var(--notation-panel-padding, 1.5rem) + var(--measure-number-offset, 36px)
+    var(--notation-panel-padding, 1.5rem) +
+    var(--measure-number-offset, 36px)
   );
 }
 

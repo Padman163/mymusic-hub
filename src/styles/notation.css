@@ -12,16 +12,7 @@
 }
 
 .notation-component,
-.notation-visual,
-.accidental-examples,
-.articulation-examples,
-.bow-examples,
-.dotted-notes,
-.dynamics-example:not(.embedded),
-.notation-overview,
-.pickup-example,
-.tempo-example,
-.time-signatures {
+.notation-visual {
   border: 1px solid #d1d5db;
   border-radius: 0.5rem;
   background: #fff;
@@ -34,14 +25,6 @@
   min-width: min-content;
 }
 
-.accidental-examples,
-.articulation-examples,
-.bow-examples,
-.dotted-notes,
-.notation-overview,
-.pickup-example,
-.tempo-example,
-.time-signatures,
 .keyboard-notation {
   overflow-x: auto;
 }
@@ -153,269 +136,12 @@
   stroke: none;
 }
 
-.accidental-examples,
-.articulation-examples,
-.dotted-notes,
-.pickup-example,
-.tempo-example,
-.time-signatures {
-  padding: var(--notation-panel-padding);
-}
-
-.accidental-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-  row-gap: var(--notation-system-gap);
-}
-
-.accidental-measure,
-.articulation-measure,
-.dotted-note-example,
-.time-signatures-measure {
-  min-width: min-content;
-}
-
-.accidental-measure,
-.articulation-measure,
-.dotted-note-example,
-.time-signatures-measure,
-.tempo-measure {
-  min-width: 0;
-  overflow-x: auto;
-}
-
-.accidental-measure:first-child {
-  grid-column: span 2;
-}
-
-.articulation-row,
-.articulation-labels {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  row-gap: var(--notation-system-gap);
-}
-
-.articulation-labels,
-.dotted-note-label {
-  color: #111827;
-  font:
-    0.875rem / 1.3 Georgia,
-    serif;
-  text-align: center;
-}
-
-.bow-examples,
-.dynamics-example:not(.embedded) {
-  display: grid;
-  gap: var(--notation-system-gap);
-}
-
-.bow-examples {
-  padding: var(--notation-panel-padding);
-}
-
-.bow-line {
-  position: relative;
-  min-width: min-content;
-}
-
-.dotted-notes {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--notation-system-gap);
-}
-
-.dotted-note-label {
-  display: grid;
-  gap: 0.25rem;
-}
-
-.dynamics-example:not(.embedded) {
-  padding: var(--notation-panel-padding);
-}
-
-.dynamics-row {
-  position: relative;
-  min-width: min-content;
-  height: 108px;
-  margin-bottom: calc(-1 * var(--notation-system-gap));
-  --dynamics-staff-bottom: 64px;
-}
-
-.dynamics-example.embedded {
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-}
-
-.dynamics-example.embedded .dynamics-row {
-  height: 48px;
-  margin-bottom: 0;
-  --dynamics-staff-bottom: 0px;
-}
-
-.notation-overview {
-  padding: calc(var(--notation-panel-padding) + 14px)
-    var(--notation-panel-padding) 2rem;
-  container: notation-overview / inline-size;
-}
-
-.notation-systems {
-  display: grid;
-  grid-auto-rows: 1fr;
-  gap: var(--notation-system-gap);
-}
-
 .notation-systems .notation-visual.embedded.has-hairpin {
   padding-bottom: 0;
 }
 
 .notation-systems:has(> :last-child .notation-visual.has-hairpin) {
   padding-bottom: 32px;
-}
-
-/* Der weiße Umfassungskasten für das gesamte mehrzeilige Notenbeispiel */
-.notation-system-box {
-  background: #ffffff;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  padding: 1.5rem 1rem;
-  margin: 1.5rem 0;
-  box-sizing: border-box;
-  overflow-x: auto;
-}
-
-/* Einzelne Notenzeile innerhalb des Kastens */
-.notation-system-row {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  width: 100%;
-}
-
-/* Vertikaler Abstand zwischen Zeile 1 und Zeile 2 */
-.notation-system-row + .notation-system-row {
-  margin-top: 1.25rem;
-}
-.notation-system-row > * {
-  flex: 1 1 0;
-  min-width: min-content;
-  margin: 0 !important; /* Verhindert das Hochrutschen von Takt 1 */
-}
-
-/* Stellt sicher, dass auch das innere SVG keine Verschiebung erzeugt */
-.notation-system-row svg {
-  display: block;
-}
-
-.notation-system-grid {
-  display: grid;
-  grid-template-columns: repeat(
-      var(--notation-columns),
-      minmax(max-content, 1fr)
-    );
-  row-gap: var(--notation-system-gap);
-  align-items: start;
-}
-
-.notation-system-grid .notation-system-row {
-  display: contents;
-}
-
-.notation-system-box[data-fit-to-width] .notation-system-grid {
-  grid-template-columns: minmax(min-content, 1fr);
-  width: min-content;
-  min-width: 100%;
-}
-
-.notation-system-box[data-fit-to-width] .notation-system-row {
-  display: grid;
-  grid-template-columns: repeat(
-      var(--notation-row-columns),
-      minmax(min-content, 1fr)
-    );
-  margin: 0;
-}
-
-.notation-system-box[data-fit-to-width][data-fitted] {
-  overflow-x: hidden;
-}
-
-.notation-overview[data-fit-to-width] .notation-systems {
-  width: min-content;
-  min-width: 100%;
-}
-
-.notation-overview[data-fit-to-width][data-fitted] {
-  overflow-x: hidden;
-}
-
-.overview-layout-narrow {
-  display: none;
-}
-
-.overview-system {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(min-content, 1fr));
-  row-gap: var(--notation-system-gap);
-}
-
-.overview-system.three-measures {
-  grid-template-columns: repeat(3, minmax(min-content, 1fr));
-}
-
-.overview-layout-narrow .overview-system {
-  grid-template-columns: minmax(min-content, 1fr);
-}
-
-.overview-measure {
-  position: relative;
-  min-width: min-content;
-}
-
-.overview-measure .notation-visual.embedded.has-header .notation-header {
-  position: absolute;
-  top: -14px;
-  right: 0;
-  left: 18px;
-  height: var(--notation-header-height);
-  z-index: 2;
-}
-
-.overview-measure .notation-visual.embedded.has-hairpin.has-header {
-  --notation-dynamics-top: 64px;
-}
-
-.overview-measure
-  .notation-visual.embedded.has-header
-  > .notation-measure-number.embedded {
-  top: 13px;
-}
-
-.measure-staff {
-  position: relative;
-}
-
-.pickup-row {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(min-content, 1fr));
-}
-
-.pickup-row:first-child {
-  grid-template-columns: minmax(110px, 0.7fr) repeat(
-      2,
-      minmax(min-content, 1fr)
-    );
-}
-
-.pickup-row + .pickup-row {
-  margin-top: var(--notation-system-gap);
-}
-
-.pickup-measure {
-  position: relative;
-  min-width: min-content;
 }
 
 .repeat-start,
@@ -434,31 +160,6 @@
 
 .repeat-end {
   right: 0;
-}
-
-.tempo-example {
-  padding: var(--notation-panel-padding);
-}
-
-.tempo-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
-}
-
-.tempo-measure {
-  position: relative;
-  padding-top: 40px;
-  color: #111827;
-}
-
-.time-signatures-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
-  row-gap: var(--notation-system-gap);
-}
-
-.time-signatures-measure:first-child {
-  grid-column: span 2;
 }
 
 .keyboard-notation {
@@ -507,33 +208,6 @@
   position: absolute;
   top: 24px;
   right: 0;
-}
-
-@media (max-width: 520px) {
-  .articulation-row,
-  .articulation-labels {
-    grid-template-columns: repeat(2, minmax(min-content, 1fr));
-  }
-
-  .dotted-notes {
-    grid-template-columns: minmax(min-content, 1fr);
-  }
-}
-
-@container notation-overview (max-width: 540px) {
-  .overview-layout-wide {
-    display: none;
-  }
-
-  .overview-layout-narrow {
-    display: grid;
-  }
-}
-
-@media (max-width: 420px) {
-  .pickup-row:first-child {
-    grid-template-columns: repeat(2, minmax(min-content, 1fr));
-  }
 }
 
 .notation-component {
@@ -656,9 +330,7 @@
 @media print {
   .notation-component,
   .notation-row,
-  .notation-visual,
-  .notation-system-box,
-  .notation-overview {
+  .notation-visual {
     break-inside: avoid;
     page-break-inside: avoid;
     border: 0 !important;
