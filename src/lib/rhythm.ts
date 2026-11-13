@@ -28,7 +28,9 @@ const durationUnits: Record<Duration, number> = {
   sixteenth: 1,
 };
 
-export function timeSignatureDurationUnits(timeSignature: TimeSignature): number {
+export function timeSignatureDurationUnits(
+  timeSignature: TimeSignature,
+): number {
   validateTimeSignature(timeSignature);
   return (16 * timeSignature.numerator) / timeSignature.denominator;
 }
@@ -36,7 +38,10 @@ export function timeSignatureDurationUnits(timeSignature: TimeSignature): number
 export function measureDurationUnits(
   events: readonly RhythmEvent[],
 ): number | undefined {
-  if (events.length === 0 || events.some((event) => event.duration === undefined)) {
+  if (
+    events.length === 0 ||
+    events.some((event) => event.duration === undefined)
+  ) {
     return undefined;
   }
   return events.reduce((sum, event) => {

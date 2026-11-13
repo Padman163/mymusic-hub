@@ -145,9 +145,7 @@ export function resolveHairpinRange(
     to >= eventCount ||
     (!fromBarline && !toBarline && from >= to)
   ) {
-    throw new Error(
-      `Ungültige Dynamikgabel zwischen Noten ${from} und ${to}.`,
-    );
+    throw new Error(`Ungültige Dynamikgabel zwischen Noten ${from} und ${to}.`);
   }
   const startOpen =
     typeof hairpin === "object" && hairpin.startOpen !== undefined

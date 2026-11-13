@@ -23,8 +23,7 @@ const {
 } = props;
 
 const normalizedMeasures = normalizeNotationInput(props);
-const rows =
-  normalizedMeasures.length > 0 ? layoutNotationSystems(props) : [];
+const rows = normalizedMeasures.length > 0 ? layoutNotationSystems(props) : [];
 const hasPieceHeader = Boolean(title || subtitle || tempo || tempoDetail);
 const fitToWidth = !scrollable;
 ---

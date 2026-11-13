@@ -622,8 +622,7 @@ export function arrangeNotationSystems<
     system.map((measure, colIndex) => {
       const isFirstGlobal = sysIdx === 0 && colIndex === 0;
       const isLastGlobal =
-        sysIdx === alignedSystems.length - 1 &&
-        colIndex === system.length - 1;
+        sysIdx === alignedSystems.length - 1 && colIndex === system.length - 1;
       const isPickupOrClosing =
         Boolean(options.pickup) && (isFirstGlobal || isLastGlobal);
 
@@ -663,9 +662,11 @@ export function arrangeNotationSystems<
       }
 
       return {
-        ...measureWithLayoutTime,
-        firstNoteX,
-        minWidth,
+        measure: {
+          ...measureWithLayoutTime,
+          firstNoteX,
+          minWidth,
+        },
         fillRatio,
         isPickupOrClosing,
       };
@@ -681,7 +682,7 @@ export function arrangeNotationSystems<
         : 220;
 
   const weightedSystems = tempMeasures.map((system) =>
-    system.map(({ fillRatio, isPickupOrClosing, ...measure }) => {
+    system.map(({ measure, fillRatio, isPickupOrClosing }) => {
       const columnWeight =
         typeof measure.spacing === "number" && measure.spacing > 0
           ? measure.spacing
@@ -765,8 +766,7 @@ export function arrangeNotationSystems<
                 s === activeHairpinStart.sysIdx
                   ? activeHairpinStart.colIndex
                   : 0;
-              const endC =
-                s === sIdx ? cIdx : weightedSystems[s].length - 1;
+              const endC = s === sIdx ? cIdx : weightedSystems[s].length - 1;
               for (let c = startC; c <= endC; c++) {
                 spanCoords.push({ s, c });
               }
@@ -792,8 +792,7 @@ export function arrangeNotationSystems<
                 const fEnd =
                   mNotes.length <= 1
                     ? 0
-                    : (rhythm?.positions[nIdx] ??
-                      nIdx / (mNotes.length - 1));
+                    : (rhythm?.positions[nIdx] ?? nIdx / (mNotes.length - 1));
                 return Math.max(16, m.firstNoteX + fEnd * beatW);
               }
               return Math.max(16, m.minWidth);

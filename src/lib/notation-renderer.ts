@@ -778,12 +778,13 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
           ? "\uE0A3"
           : "\uE0A4";
     parts.push(`<g transform="translate(${position.offset} 0)">`);
-    const hasFlag =
-      hasStem &&
-      (note.duration === "eighth" || note.duration === "sixteenth") &&
-      !note.beamGroup;
-    if (hasFlag) {
-      const flag = flagGlyph(note.duration, stemUp);
+    const flagDuration =
+      note.duration === "eighth" || note.duration === "sixteenth"
+        ? note.duration
+        : undefined;
+    const hasFlag = hasStem && flagDuration !== undefined && !note.beamGroup;
+    if (hasFlag && flagDuration) {
+      const flag = flagGlyph(flagDuration, stemUp);
       parts.push(
         `<g transform="translate(${(noteHeadHalfWidth - STEM_WIDTH / 2) * (stemUp ? 1 : -1)} 0)">${glyphText(flag, x, stemY, "notation-note")}</g>`,
       );
@@ -797,11 +798,7 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
           ? noteHeadHalfWidth + sp(1.4) + dotRadius
           : noteHeadHalfWidth + sp(0.6) + dotRadius;
       parts.push(
-        renderDot(
-          x,
-          y - (note.step % 2 === 0 ? sp(0.5) : 0),
-          dotOffset,
-        ),
+        renderDot(x, y - (note.step % 2 === 0 ? sp(0.5) : 0), dotOffset),
       );
     }
     if (note.accidental) {
