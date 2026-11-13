@@ -1,4 +1,4 @@
-﻿// @vitest-environment node
+// @vitest-environment node
 const { test } = process.env.VITEST ? await import('vitest') : await import('node:test');
 import assert from 'node:assert/strict';
 import { articulationPlacement, articulationY, renderArticulation } from '../src/lib/articulation.ts';
@@ -981,5 +981,71 @@ test('notation builder maps steps, pitches and SVG overlays accurately', () => {
   assert.match(withNoteSvg, /class="notation-note"/);
   assert.match(withNoteSvg, /data-on-note="true"/);
 });
+
+test('compact mode in notation and builder defaults showRightBar to false and supports tight and wide', () => {
+  // normalizeNotationInput defaults showRightBar to false when compact is set
+  const [compactMeasure] = normalizeNotationInput({
+    clef: 'treble',
+    compact: true,
+    notes: [{ duration: 'quarter', step: 4 }],
+  });
+  assert.equal(compactMeasure.showRightBar, false);
+
+  const [compactWideMeasure] = normalizeNotationInput({
+    clef: 'treble',
+    compact: 'wide',
+    notes: [{ duration: 'quarter', step: 4 }],
+  });
+  assert.equal(compactWideMeasure.showRightBar, false);
+
+  const [compactExplicitBar] = normalizeNotationInput({
+    clef: 'treble',
+    compact: true,
+    showRightBar: true,
+    notes: [{ duration: 'quarter', step: 4 }],
+  });
+  assert.equal(compactExplicitBar.showRightBar, true);
+
+  // renderNotationSvg compact widths
+  const svgTight = renderNotationSvg({
+    clef: 'treble',
+    compact: 'tight',
+    notes: [{ duration: 'quarter', step: 4 }],
+  });
+  assert.match(svgTight, /width="\d+"/);
+
+  const svgWide = renderNotationSvg({
+    clef: 'treble',
+    compact: 'wide',
+    notes: [{ duration: 'quarter', step: 4 }],
+  });
+  assert.match(svgWide, /width="\d+"/);
+  assert.ok(
+    Number(svgWide.match(/width="(\d+)"/)[1]) >
+      Number(svgTight.match(/width="(\d+)"/)[1]),
+  );
+
+  // Builder compact widths
+  const builderTight = renderNotationBuilderSvg({
+    config: { clef: 'treble', compact: 'tight' },
+    cursorStep: 4,
+    placedNote: null,
+  });
+  assert.match(builderTight, /width="\d+"/);
+  assert.doesNotMatch(builderTight, /class="notation-barline"/);
+
+  const builderWide = renderNotationBuilderSvg({
+    config: { clef: 'treble', compact: 'wide' },
+    cursorStep: 4,
+    placedNote: null,
+  });
+  assert.match(builderWide, /width="\d+"/);
+  assert.doesNotMatch(builderWide, /class="notation-barline"/);
+  assert.ok(
+    Number(builderWide.match(/width="(\d+)"/)[1]) >
+      Number(builderTight.match(/width="(\d+)"/)[1]),
+  );
+});
+
 
 

@@ -69,6 +69,7 @@ export interface NotationBaseProps {
   pickup?: boolean;
   scale?: number;
   scrollable?: boolean;
+  compact?: boolean | "tight" | "wide";
   title?: string;
   subtitle?: string;
   tempo?: string;
@@ -264,6 +265,7 @@ export function normalizeNotationInput(
 ): NotationMeasure[] {
   const defaultClef: NotationClef | false =
     props.clef !== undefined ? props.clef : "treble";
+  const defaultRightBar = props.compact ? false : (props.showRightBar ?? true);
   const baseMeasures: readonly NotationMeasure[] =
     props.measures !== undefined
       ? props.measures
@@ -273,9 +275,10 @@ export function normalizeNotationInput(
             ...(props.showLeftBar !== undefined && {
               showLeftBar: props.showLeftBar,
             }),
-            ...(props.showRightBar !== undefined && {
-              showRightBar: props.showRightBar,
-            }),
+            showRightBar:
+              props.showRightBar !== undefined
+                ? props.showRightBar
+                : defaultRightBar,
             ...(props.rightBarStyle !== undefined && {
               rightBarStyle: props.rightBarStyle,
             }),

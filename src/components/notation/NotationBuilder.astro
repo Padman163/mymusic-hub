@@ -1,4 +1,4 @@
-﻿---
+---
 import {
   clampStep,
   DEFAULT_NOTATION_STEP,
@@ -33,6 +33,8 @@ export interface Props extends NotationBaseProps {
   showStatus?: boolean;
   /** Tastaturlegende unter dem Takt (Standard: aus). */
   showHints?: boolean;
+  /** Kompakte Darstellung ("tight" / true = schmal, "wide" = erweiterte Breite). */
+  compact?: boolean | "tight" | "wide";
 }
 
 const {
@@ -47,7 +49,7 @@ const {
   tempo,
   tempoDetail,
   showLeftBar = false,
-  showRightBar = true,
+  showRightBar = false,
   rightBarStyle = "single",
   repeatStart = false,
   repeatEnd = false,
@@ -66,6 +68,7 @@ const {
   showLabel = false,
   showStatus = false,
   showHints = false,
+  compact = false,
 } = Astro.props;
 
 const cursorStep = clampStep(initialStep);
@@ -94,6 +97,7 @@ const builderConfig: NotationBuilderConfig = {
   initialStep: cursorStep,
   label,
   showLabel,
+  compact,
 };
 
 const initialSvg = renderNotationBuilderSvg({
@@ -139,7 +143,11 @@ const fitToWidth = !scrollable;
     "notation-component",
     "notation-builder",
     "not-content",
-    { "is-scrollable": scrollable, "has-piece-header": hasPieceHeader },
+    {
+      "is-scrollable": scrollable,
+      "has-piece-header": hasPieceHeader,
+      "is-compact": compact,
+    },
   ]}
   tabindex="0"
   role="application"

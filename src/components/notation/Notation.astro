@@ -15,6 +15,7 @@ const props = Astro.props as NotationProps;
 const {
   scale = 1,
   scrollable = false,
+  compact = false,
   measureWidth = "rhythmic",
   title,
   subtitle,
@@ -25,7 +26,7 @@ const {
 const normalizedMeasures = normalizeNotationInput(props);
 const rows = normalizedMeasures.length > 0 ? layoutNotationSystems(props) : [];
 const hasPieceHeader = Boolean(title || subtitle || tempo || tempoDetail);
-const fitToWidth = !scrollable;
+const fitToWidth = !scrollable && !compact;
 ---
 
 <div
@@ -33,7 +34,11 @@ const fitToWidth = !scrollable;
     "notation-component",
     "not-content",
     `measure-width-${measureWidth}`,
-    { "is-scrollable": scrollable, "has-piece-header": hasPieceHeader },
+    {
+      "is-scrollable": scrollable,
+      "has-piece-header": hasPieceHeader,
+      "is-compact": compact,
+    },
   ]}
   data-fit-to-width={fitToWidth ? "" : undefined}
   data-scale={scale}
@@ -118,6 +123,7 @@ const fitToWidth = !scrollable;
                 hairpin={measure.hairpin}
                 hairpins={measure.hairpins}
                 initialDynamic={measure.initialDynamic}
+                compact={compact}
               />
             </div>
           ))}

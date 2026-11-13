@@ -1,4 +1,4 @@
-﻿import {
+import {
   defaultFirstNoteX,
   type NotationClef,
   type NotationEvent,
@@ -60,6 +60,8 @@ export interface NotationBuilderConfig
   initialStep?: number;
   /** Beschriftung (Note / Aktion) direkt am markierten Bereich. */
   showLabel?: boolean;
+  /** Kompakter Darstellungsmodus ("tight" / true = ultraschmal wie im Builder, "wide" = lockere Taktbreite). */
+  compact?: boolean | "tight" | "wide";
 }
 
 export interface NotationBuilderStateSummary {
@@ -201,7 +203,7 @@ export function renderNotationBuilderSvg(options: {
     notes,
     firstNoteX,
     showLeftBar: config.showLeftBar ?? false,
-    showRightBar: config.showRightBar ?? true,
+    showRightBar: config.showRightBar ?? false,
     rightBarStyle: config.rightBarStyle ?? "single",
   });
 
@@ -241,7 +243,36 @@ export function renderNotationBuilderSvg(options: {
   ].join("");
 
   let svg = baseSvg;
-  if (showLabel) {
+  const isCompactTight = config.compact === true || config.compact === "tight";
+  const isCompactWide = config.compact === "wide";
+
+  if (isCompactTight) {
+    const compactWidth = Math.ceil(
+      firstNoteX + BUILDER_NOTE_WIDTH / 2 + sp(1.5),
+    );
+    svg = svg
+      .replace(
+        /min-width:[\d.]+px/,
+        `min-width:${compactWidth}px;width:${compactWidth}px`,
+      )
+      .replace(
+        /<svg class="notation-staff"/,
+        `<svg class="notation-staff" width="${compactWidth}"`,
+      );
+  } else if (isCompactWide) {
+    const minWidthMatch = baseSvg.match(/min-width:([\d.]+)px/);
+    const existingMinWidth = minWidthMatch ? Number(minWidthMatch[1]) : 0;
+    const compactWidth = Math.max(300, existingMinWidth);
+    svg = svg
+      .replace(
+        /min-width:[\d.]+px/,
+        `min-width:${compactWidth}px;width:${compactWidth}px`,
+      )
+      .replace(
+        /<svg class="notation-staff"/,
+        `<svg class="notation-staff" width="${compactWidth}"`,
+      );
+  } else if (showLabel) {
     const minWidthMatch = baseSvg.match(/min-width:([\d.]+)px/);
     const existingMinWidth = minWidthMatch ? Number(minWidthMatch[1]) : 0;
     const requiredMinWidth = Math.max(

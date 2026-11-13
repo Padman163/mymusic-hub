@@ -50,6 +50,19 @@ Im ersten Schaubild aus 104 wird ein leeres Notensystem im Violinschlüssel gere
 
 <Notation clef="treble" rightBarStyle="final" notes={[]} />
 
+- **Kompakte Darstellung** (`compact={true}` oder `compact="tight" | "wide"`): beschränkt das System auf seine kompakte Inhaltsbreite (`fit-content`), statt die volle Zeile (`100 %`) auszufüllen. Standardmäßig (`compact={true}` bzw. `"tight"`) ist sie exakt so schmal wie der kompakte Builder (~85px). Mit `compact="wide"` wird die gewohnte Notationslänge (300px) gewählt. In beiden Kompaktmodi wird standardmäßig kein rechter Taktstrich angezeigt (kann bei Bedarf mit `showRightBar={true}` explizit aktiviert werden).
+
+```mdx
+{/* Schmaler Kompakt-Modus (wie im Builder) */}
+<Notation clef="treble" compact notes={[{ duration: "whole", step: 2 }]} />
+
+{/* Weiterer Kompakt-Modus */}
+<Notation clef="treble" compact="wide" notes={[{ duration: "whole", step: 2 }]} />
+```
+
+<Notation clef="treble" compact notes={[{ duration: "whole", step: 2 }]} />
+<Notation clef="treble" compact="wide" notes={[{ duration: "whole", step: 2 }]} />
+
 ---
 
 ## 2. Schlüssel, Tonhöhen (`step`) und Hilfslinien

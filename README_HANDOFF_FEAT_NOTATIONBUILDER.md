@@ -5,12 +5,12 @@ Dieser Leitfaden fasst die Architektur, Verhaltensweisen, Props, Quiz-Einbindung
 ## 1. Übersicht & Ziel
 `NotationBuilder.astro` (`src/components/notation/NotationBuilder.astro`) ist eine interaktive Schicht über dem nativen SVG-Notationssystem. Sie ermöglicht es Nutzern (z. B. im Rahmen von interaktiven Quiz-Aufgaben oder Lernmodulen), Noten interaktiv per Maus oder Tastatur in einem Notensystem zu platzieren und zu löschen.
 
-Standardmäßig entspricht das Aussehen exakt `<Notation />` (kein linker Taktstrich, normaler rechter Taktstrich, fünf Linien, keine störenden Hilfsbeschriftungen).
+Standardmäßig entspricht das Aussehen einem reduzierten Einzeltakt ohne linken und ohne rechten Taktstrich (`showLeftBar={false}`, `showRightBar={false}`). Es kann genau eine Viertelnote per Tastatur oder Mausklick platziert werden. Mit `compact={true}` schrumpft die Komponente auf eine kompakte Breite zusammen (ideal für Quiz- und Übungsfragen).
 
 ## 2. Aktive Architektur & Dateien
 * **Komponente (`src/components/notation/NotationBuilder.astro`):**
   * Kapselt die serverseitig vorgerenderte SVG-Ansicht inklusive des orangefarbenen, abgerundeten Auswahlcursors (`.notation-builder-cursor-head`).
-  * Unterstützt die Skalierung via `observeNotationFit()`.
+  * Unterstützt `compact` für Inline-/Quiz-Darstellung sowie `observeNotationFit()`.
 * **Kernlogik & Controller (`src/lib/notation-builder.ts`):**
   * `stepToPitchName(step, clef)` & `pitchNameToStep(pitch, clef)`: Zuordnung zwischen `step` (`-2` bis `10`) und Tonnamen (`treble` & `bass`).
   * `stepToY(step)` & `yToStep(y)`: Y-Koordinate im Bravura-Notensystem (`SPATIUM = 10`, `STAFF_BOTTOM = 64`).
@@ -37,6 +37,8 @@ Standardmäßig entspricht das Aussehen exakt `<Notation />` (kein linker Taktst
    * `Entf` (`Delete`) bzw. `Backspace`: Entfernt eine gesetzte Note wieder.
 3. **Props:**
    * `initialStep` (Standard: `4` / Mittellinie).
+   * `compact` (Standard: `false`): Kompakte Breite (`true` / `"tight"` = ultraschmal wie im Quiz, `"wide"` = Standard-Notationslänge von 300px; beide Varianten standardmäßig ohne rechten Taktstrich).
+   * `showRightBar` (Standard: `false`): Taktstrich rechts (standardmäßig aus; kann mit `showRightBar={true}` explizit aktiviert werden).
    * `showLabel` (Standard: `false`): Schaltet das Noten-/Aktions-Badge direkt am Cursor ein.
    * `showStatus` (Standard: `false`): Schaltet die Statuszeile unterhalb des Systems ein.
    * `showHints` (Standard: `false`): Schaltet die Tastaturlegende unterhalb des Systems ein.
@@ -49,4 +51,4 @@ Standardmäßig entspricht das Aussehen exakt `<Notation />` (kein linker Taktst
   * Testet Tastatur-Navigation (`↑`/`↓`), Mausklick-Positionierung, Erstellen mit `Num 1`, Löschen mit `Entf`, State-Attribute und `notationbuilder:reset`.
 * **Validierung:**
   * `npm run validate` (`biome check . && astro check && tsc --noEmit`)
-  * `npm run test` (54 Vitest-Tests erfolgreich)
+  * `npm run test` (55 Vitest-Tests erfolgreich)

@@ -13,7 +13,7 @@ import NotationBuilder from "../../../../../components/notation/NotationBuilder.
 
 ## 1. Standard-Darstellung
 
-Standardmäßig erzeugt `<NotationBuilder />` ein leeres 1-Takt-System im Violinschlüssel mit rechtem Taktstrich (`showLeftBar={false}`, `showRightBar={true}`). Optisch und geometrisch verhält sich das System identisch zu `<Notation />`:
+Standardmäßig erzeugt `<NotationBuilder />` ein leeres 1-Takt-System ohne linken und rechten Taktstrich (`showLeftBar={false}`, `showRightBar={false}`). Es kann genau eine Viertelnote per Tastatur oder Mausklick platziert werden:
 
 ```mdx
 import NotationBuilder from "../../../../../components/notation/NotationBuilder.astro";
@@ -22,6 +22,44 @@ import NotationBuilder from "../../../../../components/notation/NotationBuilder.
 ```
 
 <NotationBuilder />
+
+---
+
+## 2. Kompakte Version (z. B. für Quiz / Übungen)
+
+Mit der Prop `compact` (bzw. `compact="tight"` oder `compact="wide"`) beschränkt sich der Builder auf eine kompakte Breite (optimal für Übungen und Quizzes). Standardmäßig ist `compact={true}` genau so schmal wie in `<Notation compact />`. Mit `compact="wide"` wird ein lockererer Abstand verwendet. Notenschlüssel (`clef`), Tonartvorzeichen (`accidentals`) und Taktart (`timeSignature`) können optional übergeben werden:
+
+```mdx
+{/* Schmale Variante (Standard für compact) */}
+<NotationBuilder
+  compact
+  clef="treble"
+  timeSignature={{ numerator: 4, denominator: 4 }}
+  accidentals={[{ type: "sharp", step: 8 }]}
+/>
+
+{/* Weitere Variante */}
+<NotationBuilder
+  compact="wide"
+  clef="treble"
+  timeSignature={{ numerator: 4, denominator: 4 }}
+  accidentals={[{ type: "sharp", step: 8 }]}
+/>
+```
+
+<NotationBuilder
+  compact
+  clef="treble"
+  timeSignature={{ numerator: 4, denominator: 4 }}
+  accidentals={[{ type: "sharp", step: 8 }]}
+/>
+
+<NotationBuilder
+  compact="wide"
+  clef="treble"
+  timeSignature={{ numerator: 4, denominator: 4 }}
+  accidentals={[{ type: "sharp", step: 8 }]}
+/>
 
 ---
 
@@ -45,6 +83,7 @@ Zusätzlich zu allen von `<Notation />` geerbten Attributen (`clef`, `timeSignat
 | Prop | Typ | Standard | Beschreibung |
 | :--- | :--- | :--- | :--- |
 | `initialStep` | `number` | `4` | Startposition des Markierungsbereichs (`4` = Mittellinie, Violinschlüssel: B4). |
+| `compact` | `boolean \| "tight" \| "wide"` | `false` | Kompakte Breite (`"tight"` / `true` = schmal wie im Quiz mit ~85px, `"wide"` = Standard-Notationslänge mit 300px; beide standardmäßig ohne rechten Taktstrich). |
 | `showLabel` | `boolean` | `false` | Blendet eine Noten- und Aktionsbeschriftung direkt am Auswahlbereich ein. |
 | `showStatus` | `boolean` | `false` | Zeigt eine Statusleiste unterhalb des Systems mit Tonname und Aktion an. |
 | `showHints` | `boolean` | `false` | Zeigt Tastatur-Bedienhinweise unterhalb des Systems an. |

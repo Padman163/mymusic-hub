@@ -151,6 +151,7 @@ export interface NotationRenderOptions {
   ritAt?: number;
   aTempoAt?: number;
   label?: string;
+  compact?: boolean | "tight" | "wide";
 }
 
 export function assertNoClefChanges(
@@ -326,6 +327,7 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     ritAt,
     aTempoAt,
     label,
+    compact,
   } = options;
 
   if (timeSignature) validateTimeSignature(timeSignature);
@@ -591,8 +593,29 @@ export function renderNotationSvg(options: NotationRenderOptions): string {
     description.push(`${name} auf Position ${note.step}${articulation}`);
   });
 
+  const compactMode =
+    compact === true || compact === "tight"
+      ? "tight"
+      : compact === "wide"
+        ? "wide"
+        : undefined;
+
+  let effectiveMinWidth = Math.ceil(minimumWidth);
+  let inlineWidthAttr = "";
+
+  if (compactMode === "tight" && notes.length > 0) {
+    const lastNoteX = firstNoteX ?? defaultFirstNoteX(options);
+    const compactTightW = Math.ceil(lastNoteX + NOTE_WIDTH / 2 + sp(1.5));
+    effectiveMinWidth = compactTightW;
+    inlineWidthAttr = ` width="${compactTightW}"`;
+  } else if (compactMode === "wide") {
+    const compactWideW = Math.max(300, effectiveMinWidth);
+    effectiveMinWidth = compactWideW;
+    inlineWidthAttr = ` width="${compactWideW}"`;
+  }
+
   const parts = [
-    `<svg class="notation-staff" height="92" style="--notation-spatium:${SPATIUM}px;min-width:${Math.ceil(minimumWidth)}px" role="img" aria-label="${escapeXml(label ?? `${notes.length || accidentals.length ? "Notensystem" : "Leeres Notensystem"} mit fünf Linien${description.length ? `; ${description.join("; ")}` : ""}`)}" xmlns="http://www.w3.org/2000/svg">`,
+    `<svg class="notation-staff" height="92" style="--notation-spatium:${SPATIUM}px;min-width:${effectiveMinWidth}px"${inlineWidthAttr} role="img" aria-label="${escapeXml(label ?? `${notes.length || accidentals.length ? "Notensystem" : "Leeres Notensystem"} mit fünf Linien${description.length ? `; ${description.join("; ")}` : ""}`)}" xmlns="http://www.w3.org/2000/svg">`,
     ...Array.from({ length: 5 }, (_, i) => STAFF_TOP + i * sp(1)).map(
       (y) => `<line x1="0" y1="${y}" x2="100%" y2="${y}" />`,
     ),

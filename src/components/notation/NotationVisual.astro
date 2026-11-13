@@ -37,6 +37,7 @@ interface Props {
   noteStart?: number;
   firstNoteX?: number;
   embedded?: boolean;
+  compact?: boolean | "tight" | "wide";
 }
 
 const {
@@ -61,6 +62,7 @@ const {
   noteStart = 0,
   firstNoteX,
   embedded = false,
+  compact,
 } = Astro.props;
 
 const hasDynamicsBelow =
@@ -102,6 +104,7 @@ const notation = renderNotationSvg({
   hairpins,
   ritAt,
   aTempoAt,
+  compact,
 });
 ---
 

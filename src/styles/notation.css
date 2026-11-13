@@ -1,4 +1,4 @@
-﻿@import "./music.css";
+@import "./music.css";
 
 @font-face {
   font-family: "KeyboardNotationBravura";
@@ -389,6 +389,32 @@
 
 .notation-builder {
   outline: none;
+}
+
+.notation-component.is-compact,
+.notation-builder.is-compact {
+  display: inline-block;
+  width: auto;
+  max-width: fit-content;
+  margin: 0.5rem 0;
+  padding: 0.75rem 1rem;
+}
+
+.notation-component.is-compact .notation-row,
+.notation-builder.is-compact .notation-row {
+  width: auto;
+  min-width: 0;
+}
+
+.notation-component.is-compact .notation-cell,
+.notation-builder.is-compact .notation-cell {
+  min-width: 0;
+}
+
+.notation-component.is-compact .notation-cell .notation-staff,
+.notation-builder.is-compact .notation-cell .notation-staff {
+  width: auto;
+  min-width: 0 !important;
 }
 
 .notation-builder:focus-visible {
