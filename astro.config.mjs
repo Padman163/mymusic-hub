@@ -50,7 +50,12 @@ export default defineConfig({
                 {
                   label: "Level 100: Elementarlehre",
                   collapsed: false,
-                  items: [{ autogenerate: { directory: "audio/theory/100" } }],
+                  items: [{ autogenerate: { directory: "audio/theory/100-general" } }],
+                },
+                                {
+                  label: "Level 110: Gitarrenlehre",
+                  collapsed: false,
+                  items: [{ autogenerate: { directory: "audio/theory/101-guitar" } }],
                 },
                 {
                   label: "Level 200: Harmonie & Akkorde",
