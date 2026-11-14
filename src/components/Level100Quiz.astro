@@ -1,6 +1,12 @@
 ---
+import type {
+  MeasureHairpin,
+  NotationCurve,
+  NotationEvent,
+} from "../lib/notation-renderer";
 import DrumPattern from "./DrumPattern.astro";
 import FretboardClickable from "./FretboardClickable.astro";
+import Notation from "./notation/Notation.astro";
 import NotationBuilder from "./notation/NotationBuilder.astro";
 import SheetMusicPlayer from "./SheetMusicPlayer.astro";
 import "../styles/notation.css";
@@ -936,7 +942,125 @@ const patternLayouts = Array.from(
   ).values(),
 );
 
-const totalPoints = 21;
+const dynamicsLayouts: Array<{
+  id: string;
+  hairpin?: MeasureHairpin;
+  notes: NotationEvent[];
+}> = [
+  {
+    id: "cresc-text",
+    notes: [
+      { duration: "quarter", step: 0, dynamic: "cresc." },
+      { duration: "quarter", step: 1 },
+      { duration: "quarter", step: 2 },
+      { duration: "quarter", step: 3 },
+    ],
+  },
+  {
+    id: "decresc-text",
+    notes: [
+      { duration: "quarter", step: 3, dynamic: "decresc." },
+      { duration: "quarter", step: 2 },
+      { duration: "quarter", step: 1 },
+      { duration: "quarter", step: 0 },
+    ],
+  },
+  {
+    id: "cresc-hairpin",
+    notes: [
+      { duration: "quarter", step: 0, dynamic: "p", hairpinStart: "crescendo" },
+      { duration: "quarter", step: 1 },
+      { duration: "quarter", step: 2 },
+      { duration: "quarter", step: 3, dynamic: "f", hairpinEnd: true },
+    ],
+  },
+  {
+    id: "decresc-hairpin",
+    notes: [
+      { duration: "quarter", step: 3, dynamic: "f", hairpinStart: "decrescendo" },
+      { duration: "quarter", step: 2 },
+      { duration: "quarter", step: 1 },
+      { duration: "quarter", step: 0, dynamic: "p", hairpinEnd: true },
+    ],
+  },
+  {
+    id: "piano",
+    notes: [
+      { duration: "quarter", step: 2, dynamic: "p" },
+      { duration: "quarter", step: 2 },
+      { duration: "quarter", step: 2 },
+      { duration: "quarter", step: 2 },
+    ],
+  },
+  {
+    id: "forte",
+    notes: [
+      { duration: "quarter", step: 2, dynamic: "f" },
+      { duration: "quarter", step: 2 },
+      { duration: "quarter", step: 2 },
+      { duration: "quarter", step: 2 },
+    ],
+  },
+];
+
+const articulationLayouts: Array<{
+  id: string;
+  curves?: NotationCurve[];
+  notes: NotationEvent[];
+}> = [
+  {
+    id: "staccato",
+    notes: [
+      { duration: "quarter", step: 0, articulation: "staccato" },
+      { duration: "quarter", step: 1, articulation: "staccato" },
+      { duration: "quarter", step: 2, articulation: "staccato" },
+      { duration: "quarter", step: 3, articulation: "staccato" },
+    ],
+  },
+  {
+    id: "tenuto",
+    notes: [
+      { duration: "quarter", step: 0, articulation: "tenuto" },
+      { duration: "quarter", step: 1, articulation: "tenuto" },
+      { duration: "quarter", step: 2, articulation: "tenuto" },
+      { duration: "quarter", step: 3, articulation: "tenuto" },
+    ],
+  },
+  {
+    id: "accent",
+    notes: [
+      { duration: "quarter", step: 0, articulation: "accent" },
+      { duration: "quarter", step: 1 },
+      { duration: "quarter", step: 2, articulation: "accent" },
+      { duration: "quarter", step: 3 },
+    ],
+  },
+  {
+    id: "tie",
+    curves: [{ from: 0, to: 1, type: "tie" }],
+    notes: [
+      { duration: "quarter", step: 2 },
+      { duration: "quarter", step: 2 },
+      { duration: "quarter", step: 3 },
+      { duration: "quarter", step: 4 },
+    ],
+  },
+  {
+    id: "slur",
+    curves: [
+      { from: 0, to: 1, type: "slur" },
+      { from: 2, to: 3, type: "slur" },
+    ],
+    notes: [
+      { duration: "quarter", step: 0 },
+      { duration: "quarter", step: 2 },
+      { duration: "quarter", step: 1 },
+      { duration: "quarter", step: 3 },
+    ],
+  },
+];
+
+const totalPoints = 20;
 const passingPoints = Math.ceil(totalPoints * 0.8);
 ---
 
@@ -1052,6 +1176,52 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
             </button>
           </div>
           <p class="notation-duration-builder-feedback" aria-live="polite"></p>
+        </fieldset>
+        <fieldset class="quiz-question notation-question notation-wip-question">
+          <legend>3.</legend>
+          <div class="orange-callout">work in progress</div>
+        </fieldset>
+        <fieldset class="quiz-question notation-question notation-dynamics-question" data-active="true">
+          <legend>4. <span class="notation-dynamics-prompt"></span></legend>
+          <div class="notation-dynamics-visuals">
+            {dynamicsLayouts.map((layout, index) => (
+              <div
+                class="dynamics-candidate"
+                data-dynamics-id={layout.id}
+                hidden={index !== 0}
+              >
+                <Notation
+                  clef="treble"
+                  compact="wide"
+                  hairpin={layout.hairpin}
+                  notes={layout.notes}
+                />
+              </div>
+            ))}
+          </div>
+          <div class="answer-options notation-dynamics-options"></div>
+          <p class="question-feedback" aria-live="polite"></p>
+        </fieldset>
+        <fieldset class="quiz-question notation-question notation-articulation-question" data-active="true">
+          <legend>5. <span class="notation-articulation-prompt"></span></legend>
+          <div class="notation-articulation-visuals">
+            {articulationLayouts.map((layout, index) => (
+              <div
+                class="articulation-candidate"
+                data-articulation-id={layout.id}
+                hidden={index !== 0}
+              >
+                <Notation
+                  clef="treble"
+                  compact="wide"
+                  curves={layout.curves}
+                  notes={layout.notes}
+                />
+              </div>
+            ))}
+          </div>
+          <div class="answer-options notation-articulation-options"></div>
+          <p class="question-feedback" aria-live="polite"></p>
         </fieldset>
         <div class="musicxml-question-bank">
           {questionBanks["1"].notation.map((item) => (
@@ -1254,8 +1424,15 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
     font-size: 0.9rem;
   }
 
-  .pattern-candidate[hidden] {
+  .pattern-candidate[hidden],
+  .dynamics-candidate[hidden],
+  .articulation-candidate[hidden] {
     display: none !important;
+  }
+
+  .notation-dynamics-visuals,
+  .notation-articulation-visuals {
+    margin: 0.25rem 0 0.75rem;
   }
 
   .level-100-quiz :global(.notation-diagram) {
@@ -1426,6 +1603,10 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
     min-height: 1.4em;
     margin: 0.4rem 0 0;
     font-size: 0.9rem;
+  }
+
+  .notation-wip-question .orange-callout {
+    margin: 0.25rem 0;
   }
 
   .quiz-actions {
@@ -1637,6 +1818,16 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
       const durationBuilderRetryBtn = durationBuilderQuestion?.querySelector<HTMLButtonElement>('.notation-duration-builder-retry-button');
       const durationBuilderRetryTimer = durationBuilderQuestion?.querySelector<HTMLElement>('.notation-duration-builder-retry-timer');
 
+      const dynamicsQuestion = quiz.querySelector<HTMLElement>('.notation-dynamics-question');
+      const dynamicsPrompt = dynamicsQuestion?.querySelector<HTMLElement>('.notation-dynamics-prompt');
+      const dynamicsOptions = dynamicsQuestion?.querySelector<HTMLElement>('.notation-dynamics-options');
+      const dynamicsCandidates = quiz.querySelectorAll<HTMLElement>('.dynamics-candidate');
+
+      const articulationQuestion = quiz.querySelector<HTMLElement>('.notation-articulation-question');
+      const articulationPrompt = articulationQuestion?.querySelector<HTMLElement>('.notation-articulation-prompt');
+      const articulationOptions = articulationQuestion?.querySelector<HTMLElement>('.notation-articulation-options');
+      const articulationCandidates = quiz.querySelectorAll<HTMLElement>('.articulation-candidate');
+
       const MAX_BUILDER_ATTEMPTS = 3;
       let builderAttempts = 0;
       let durationBuilderAttempts = 0;
@@ -1645,7 +1836,148 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
         !fretboard || !fretboardTray || !fretboardFeedback || !difficultyStatus ||
         !totalPointsLabel || !passingPointsLabel || !basicsList || !rhythmList || !notationList ||
         !musicXmlQuestionBank || !builderTask || !builderEl || !builderPrompt || !builderFeedback ||
-        !durationBuilderTask || !durationBuilderEl || !durationBuilderPrompt || !durationBuilderFeedback) return;
+        !durationBuilderTask || !durationBuilderEl || !durationBuilderPrompt || !durationBuilderFeedback ||
+        !dynamicsQuestion || !dynamicsPrompt || !dynamicsOptions || !dynamicsCandidates.length ||
+        !articulationQuestion || !articulationPrompt || !articulationOptions || !articulationCandidates.length) return;
+
+      interface StaticNotationTarget {
+        id: string;
+        prompt: string;
+        answer: string;
+        options: string[];
+        advancedPrompt: string;
+        advancedAnswer: string;
+        advancedOptions: string[];
+      }
+
+      const dynamicsTargets: StaticNotationTarget[] = [
+        {
+          id: 'cresc-text',
+          prompt: 'Was bedeutet das dargestellte Dynamikzeichen in diesem Notenbeispiel?',
+          answer: 'Lauter werden',
+          options: ['Lauter werden', 'Schneller werden', 'Leiser werden'],
+          advancedPrompt: 'Welcher italienische Fachbegriff gehört zu dieser Spielanweisung („cresc.“)?',
+          advancedAnswer: 'Crescendo',
+          advancedOptions: ['Crescendo', 'Decrescendo', 'Ritardando']
+        },
+        {
+          id: 'decresc-text',
+          prompt: 'Was bedeutet das dargestellte Dynamikzeichen in diesem Notenbeispiel?',
+          answer: 'Leiser werden',
+          options: ['Leiser werden', 'Lauter werden', 'Langsamer werden'],
+          advancedPrompt: 'Welcher italienische Fachbegriff gehört zu dieser Spielanweisung („decresc.“)?',
+          advancedAnswer: 'Decrescendo',
+          advancedOptions: ['Decrescendo', 'Crescendo', 'Accelerando']
+        },
+        {
+          id: 'cresc-hairpin',
+          prompt: 'Wie verändert sich die Lautstärke über diesen Takt?',
+          answer: 'Lauter werden (von p zu f)',
+          options: ['Lauter werden (von p zu f)', 'Leiser werden (von f zu p)', 'Schneller werden'],
+          advancedPrompt: 'Welche Bezeichnung beschreibt die geöffnete Dynamikgabel zwischen p und f?',
+          advancedAnswer: 'Crescendo-Gabel',
+          advancedOptions: ['Crescendo-Gabel', 'Decrescendo-Gabel', 'Bindebogen']
+        },
+        {
+          id: 'decresc-hairpin',
+          prompt: 'Wie verändert sich die Lautstärke über diesen Takt?',
+          answer: 'Leiser werden (von f zu p)',
+          options: ['Leiser werden (von f zu p)', 'Lauter werden (von p zu f)', 'Langsamer werden'],
+          advancedPrompt: 'Welche Bezeichnung beschreibt die sich schließende Dynamikgabel zwischen f und p?',
+          advancedAnswer: 'Decrescendo-Gabel',
+          advancedOptions: ['Decrescendo-Gabel', 'Crescendo-Gabel', 'Legatobogen']
+        },
+        {
+          id: 'piano',
+          prompt: 'Welche Lautstärke gibt das Dynamikzeichen p vor?',
+          answer: 'Leise',
+          options: ['Leise', 'Sehr laut', 'Schnell'],
+          advancedPrompt: 'Für welchen italienischen Ausdruck steht die Abkürzung „p“?',
+          advancedAnswer: 'Piano',
+          advancedOptions: ['Piano', 'Forte', 'Pizzicato']
+        },
+        {
+          id: 'forte',
+          prompt: 'Welche Lautstärke gibt das Dynamikzeichen f vor?',
+          answer: 'Laut',
+          options: ['Laut', 'Sehr leise', 'Langsam'],
+          advancedPrompt: 'Für welchen italienischen Ausdruck steht die Abkürzung „f“?',
+          advancedAnswer: 'Forte',
+          advancedOptions: ['Forte', 'Piano', 'Fine']
+        }
+      ];
+      let previousDynamicsId: string | undefined;
+      let activeDynamicsTarget: StaticNotationTarget = dynamicsTargets[0];
+
+      const articulationTargets: StaticNotationTarget[] = [
+        {
+          id: 'staccato',
+          prompt: 'Welche Spielweise fordern die Punkte unter den Noten?',
+          answer: 'Kurz und getrennt spielen',
+          options: [
+            'Kurz und getrennt spielen',
+            'Über die volle Länge getragen halten',
+            'Allmählich lauter werden'
+          ],
+          advancedPrompt: 'Wie heißt das abgebildete Artikulationszeichen (Punkte an den Noten)?',
+          advancedAnswer: 'Staccato',
+          advancedOptions: ['Staccato', 'Tenuto', 'Akzent']
+        },
+        {
+          id: 'tenuto',
+          prompt: 'Welche Spielweise fordern die kurzen waagerechten Striche unter den Noten?',
+          answer: 'Ton über die volle notierte Länge getragen halten',
+          options: [
+            'Ton über die volle notierte Länge getragen halten',
+            'Ton kurz und abgesetzt spielen',
+            'Ton stark betonen'
+          ],
+          advancedPrompt: 'Wie heißt das abgebildete Artikulationszeichen (waagerechte Striche an den Noten)?',
+          advancedAnswer: 'Tenuto',
+          advancedOptions: ['Tenuto', 'Staccato', 'Legato']
+        },
+        {
+          id: 'accent',
+          prompt: 'Welche Spielweise fordert das Zeichen „>“ unter der ersten und dritten Note?',
+          answer: 'Den jeweiligen Ton stärker betonen',
+          options: [
+            'Den jeweiligen Ton stärker betonen',
+            'Über den ganzen Takt leiser werden',
+            'Den Ton nicht anschlagen'
+          ],
+          advancedPrompt: 'Wie wird das abgebildete Zeichen „>“ direkt an einer einzelnen Note genannt?',
+          advancedAnswer: 'Akzent',
+          advancedOptions: ['Akzent', 'Decrescendo-Gabel', 'Haltebogen']
+        },
+        {
+          id: 'tie',
+          prompt: 'Was bewirkt der Bogen zwischen den ersten beiden gleichen Noten?',
+          answer: 'Ersten Ton anschlagen und über beide Notenwerte weiterklingen lassen',
+          options: [
+            'Ersten Ton anschlagen und über beide Notenwerte weiterklingen lassen',
+            'Beide Töne kurz und getrennt anschlagen',
+            'Das Tempo ab der zweiten Note verdoppeln'
+          ],
+          advancedPrompt: 'Wie heißt ein Bogen, der zwei Noten derselben Tonhöhe verbindet?',
+          advancedAnswer: 'Haltebogen',
+          advancedOptions: ['Haltebogen', 'Legatobogen', 'Akzent']
+        },
+        {
+          id: 'slur',
+          prompt: 'Welche Spielweise zeigt der Bogen zwischen verschiedenen Tonhöhen an?',
+          answer: 'Die Töne gebunden und fließend verbinden',
+          options: [
+            'Die Töne gebunden und fließend verbinden',
+            'Jeden Ton kurz mit einer Lücke absetzen',
+            'Den zweiten Ton gar nicht spielen'
+          ],
+          advancedPrompt: 'Wie heißt der Bogen zwischen verschiedenen Tonhöhen, der auf der Gitarre oft mit Hammer-on oder Pull-off gespielt wird?',
+          advancedAnswer: 'Legatobogen',
+          advancedOptions: ['Legatobogen', 'Haltebogen', 'Staccato']
+        }
+      ];
+      let previousArticulationId: string | undefined;
+      let activeArticulationTarget: StaticNotationTarget = articulationTargets[0];
 
       const banks = JSON.parse(quiz.dataset.questionBank ?? '{}') as Record<Difficulty, QuestionBank>;
       const unlockKey = 'mymusic-hub-level-100-difficulty-2';
@@ -1953,7 +2285,7 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
       };
 
       const selectGroupedNotation = (pool: NotationQuestion[]): NotationQuestion[] =>
-        [3, 4, 5].map((group) => {
+        ([] as number[]).map((group) => {
           const groupPool = pool.filter((item) => item.group === group);
           if (!groupPool.length) throw new Error(`MusicXML-Fragenpool ${group} ist leer.`);
           const key = `${difficulty}:notation-group-${group}`;
@@ -2101,7 +2433,7 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
           card.dataset.active = 'true';
           card.dataset.answer = item.answer;
           const legend = card.querySelector('legend');
-          if (legend) legend.textContent = `${index + 3}. ${item.prompt}`;
+          if (legend) legend.textContent = `${index + 5}. ${item.prompt}`;
           const player = card.querySelector<HTMLElement>('[data-sheet-music-player]');
           if (player?.dataset.xml !== item.musicXmlUrl) {
             throw new Error(`MusicXML-Datei für Frage ${item.id} stimmt nicht mit der Einbindung überein.`);
@@ -2113,7 +2445,7 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
             label.className = 'answer-option';
             const input = document.createElement('input');
             input.type = 'radio';
-            input.name = `${difficulty}-notation-${index + 3}`;
+            input.name = `${difficulty}-notation-${index + 5}`;
             input.value = option;
             const text = document.createElement('span');
             text.textContent = option;
@@ -2124,6 +2456,79 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
           const feedback = card.querySelector<HTMLElement>('.question-feedback');
           if (feedback) feedback.textContent = '';
         });
+
+        const renderStaticNotationQuestion = (
+          targets: StaticNotationTarget[],
+          previousId: string | undefined,
+          currentTarget: StaticNotationTarget,
+          candidates: NodeListOf<HTMLElement>,
+          idAttr: 'dynamicsId' | 'articulationId',
+          questionEl: HTMLElement,
+          promptEl: HTMLElement,
+          optionsEl: HTMLElement,
+          inputName: string,
+        ): { target: StaticNotationTarget; nextPreviousId: string } => {
+          let chosen = currentTarget;
+          let nextPrevId = previousId ?? currentTarget.id;
+          if (reshuffleNotation || previousId === undefined) {
+            const candidatePool = targets.filter((item) => item.id !== previousId);
+            chosen = shuffle(candidatePool.length ? candidatePool : targets)[0];
+            nextPrevId = chosen.id;
+          }
+          candidates.forEach((candidate) => {
+            candidate.hidden = candidate.dataset[idAttr] !== chosen.id;
+          });
+          const qPrompt = difficulty === '1' ? chosen.prompt : chosen.advancedPrompt;
+          const qAnswer = difficulty === '1' ? chosen.answer : chosen.advancedAnswer;
+          const qOpts = difficulty === '1' ? chosen.options : chosen.advancedOptions;
+          promptEl.textContent = qPrompt;
+          questionEl.dataset.answer = qAnswer;
+          questionEl.removeAttribute('data-correct');
+          const qFeedback = questionEl.querySelector<HTMLElement>('.question-feedback');
+          if (qFeedback) qFeedback.textContent = '';
+          optionsEl.replaceChildren(...shuffle([...qOpts]).map((option) => {
+            const label = document.createElement('label');
+            label.className = 'answer-option';
+            const input = document.createElement('input');
+            input.type = 'radio';
+            input.name = inputName;
+            input.value = option;
+            const text = document.createElement('span');
+            text.textContent = option;
+            label.append(input, text);
+            return label;
+          }));
+          return { target: chosen, nextPreviousId: nextPrevId };
+        };
+
+        const dynState = renderStaticNotationQuestion(
+          dynamicsTargets,
+          previousDynamicsId,
+          activeDynamicsTarget,
+          dynamicsCandidates,
+          'dynamicsId',
+          dynamicsQuestion,
+          dynamicsPrompt,
+          dynamicsOptions,
+          `${difficulty}-notation-4`,
+        );
+        activeDynamicsTarget = dynState.target;
+        previousDynamicsId = dynState.nextPreviousId;
+
+        const artState = renderStaticNotationQuestion(
+          articulationTargets,
+          previousArticulationId,
+          activeArticulationTarget,
+          articulationCandidates,
+          'articulationId',
+          articulationQuestion,
+          articulationPrompt,
+          articulationOptions,
+          `${difficulty}-notation-5`,
+        );
+        activeArticulationTarget = artState.target;
+        previousArticulationId = artState.nextPreviousId;
+
         document.dispatchEvent(new Event('level100:notation-update'));
         const previousPatternId = previousPatternIds.get(difficulty);
         const patternCandidatesForDifficulty = bank.patterns.filter((pattern) => pattern.id !== previousPatternId);
@@ -2176,6 +2581,7 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
         if (builderQuestion) builderQuestion.removeAttribute('data-correct');
         builderFeedback.textContent = '';
         if (builderRetryBtn) builderRetryBtn.hidden = true;
+        delete builderEl.dataset.locked;
         builderEl.dispatchEvent(new CustomEvent('notationbuilder:reset', { detail: { step: 4 } }));
 
         const candidateNoteValues = noteValueTargets.filter((item) => item.id !== previousNoteValueId);
@@ -2187,10 +2593,11 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
         if (durationBuilderQuestion) durationBuilderQuestion.removeAttribute('data-correct');
         durationBuilderFeedback.textContent = '';
         if (durationBuilderRetryBtn) durationBuilderRetryBtn.hidden = true;
+        delete durationBuilderEl.dataset.locked;
         const initialDurationReset = activeDurationTarget.duration === 'quarter' ? 'half' : 'quarter';
         durationBuilderEl.dispatchEvent(new CustomEvent('notationbuilder:reset', { detail: { step: 4, duration: initialDurationReset } }));
 
-        const total = 21;
+        const total = 20;
         const passing = Math.ceil(total * 0.8);
         quiz.dataset.totalPoints = String(total);
         quiz.dataset.passingPoints = String(passing);
@@ -2279,6 +2686,8 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
           if (builderQuestion) builderQuestion.dataset.correct = 'true';
           if (builderRetryBtn) builderRetryBtn.hidden = true;
           if (builderLockBtn) builderLockBtn.disabled = true;
+          builderEl.dataset.locked = 'true';
+          builderEl.blur();
           builderFeedback.textContent = `Richtig! Noten ${targetNotesStr} als Viertelnoten platziert.`;
           return true;
         }
@@ -2295,6 +2704,8 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
         if (remainingAttempts <= 0) {
           if (builderRetryBtn) builderRetryBtn.hidden = true;
           if (builderLockBtn) builderLockBtn.disabled = true;
+          builderEl.dataset.locked = 'true';
+          builderEl.blur();
           builderFeedback.textContent = `Aufgabe nicht bestanden (${MAX_BUILDER_ATTEMPTS} von ${MAX_BUILDER_ATTEMPTS} Versuche verbraucht). Gesucht: 4 Viertelnoten (${targetNotesStr}).`;
         } else {
           if (builderRetryBtn) builderRetryBtn.hidden = false;
@@ -2354,7 +2765,7 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
       });
 
       builderEl.addEventListener('notationbuilder:change', () => {
-        if (builderAttempts >= MAX_BUILDER_ATTEMPTS) return;
+        if (builderEl.dataset.locked === 'true' || builderAttempts >= MAX_BUILDER_ATTEMPTS) return;
         builderTask.removeAttribute('data-correct');
         builderQuestion?.removeAttribute('data-correct');
         builderFeedback.textContent = '';
@@ -2383,6 +2794,8 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
           if (durationBuilderQuestion) durationBuilderQuestion.dataset.correct = 'true';
           if (durationBuilderRetryBtn) durationBuilderRetryBtn.hidden = true;
           if (durationBuilderLockBtn) durationBuilderLockBtn.disabled = true;
+          durationBuilderEl.dataset.locked = 'true';
+          durationBuilderEl.blur();
           durationBuilderFeedback.textContent = `Richtig! ${activeDurationTarget.name} platziert.`;
           return true;
         }
@@ -2399,6 +2812,8 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
         if (remainingAttempts <= 0) {
           if (durationBuilderRetryBtn) durationBuilderRetryBtn.hidden = true;
           if (durationBuilderLockBtn) durationBuilderLockBtn.disabled = true;
+          durationBuilderEl.dataset.locked = 'true';
+          durationBuilderEl.blur();
           durationBuilderFeedback.textContent = `Aufgabe nicht bestanden (${MAX_BUILDER_ATTEMPTS} von ${MAX_BUILDER_ATTEMPTS} Versuche verbraucht). Gesucht: ${activeDurationTarget.name}.`;
         } else {
           if (durationBuilderRetryBtn) durationBuilderRetryBtn.hidden = false;
@@ -2461,7 +2876,7 @@ const passingPoints = Math.ceil(totalPoints * 0.8);
       });
 
       durationBuilderEl.addEventListener('notationbuilder:change', () => {
-        if (durationBuilderAttempts >= MAX_BUILDER_ATTEMPTS) return;
+        if (durationBuilderEl.dataset.locked === 'true' || durationBuilderAttempts >= MAX_BUILDER_ATTEMPTS) return;
         durationBuilderTask.removeAttribute('data-correct');
         durationBuilderQuestion?.removeAttribute('data-correct');
         durationBuilderFeedback.textContent = '';

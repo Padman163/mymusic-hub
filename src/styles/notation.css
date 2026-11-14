@@ -535,6 +535,20 @@
   pointer-events: none;
 }
 
+.notation-builder[data-locked="true"] .notation-builder-stage {
+  cursor: default;
+}
+
+.notation-builder[data-locked="true"] .notation-builder-cursor {
+  display: none;
+}
+
+.notation-builder[data-locked="true"] .notation-builder-duration-btn {
+  pointer-events: none;
+  opacity: 0.65;
+  cursor: default;
+}
+
 .notation-builder-cursor-head {
   fill: rgba(249, 115, 22, 0.35);
   stroke: #c2410c;

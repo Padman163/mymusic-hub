@@ -598,6 +598,7 @@ export function attachNotationBuilder(root: HTMLElement): void {
     .forEach((btn) => {
       btn.addEventListener("click", (event) => {
         event.stopPropagation();
+        if (root.dataset.locked === "true") return;
         if (lockedDuration || config.lockDuration) return;
         root.focus({ preventScroll: true });
         const dur = btn.dataset.duration as Duration | undefined;
@@ -670,6 +671,7 @@ export function attachNotationBuilder(root: HTMLElement): void {
   };
 
   stage.addEventListener("click", (event) => {
+    if (root.dataset.locked === "true") return;
     root.focus({ preventScroll: true });
     const target = resolveTargetFromEvent(event);
     if (target !== undefined) {
@@ -685,6 +687,7 @@ export function attachNotationBuilder(root: HTMLElement): void {
   });
 
   root.addEventListener("keydown", (event) => {
+    if (root.dataset.locked === "true") return;
     if (event.key === "ArrowLeft") {
       if (maxNotes > 1) {
         event.preventDefault();
@@ -793,6 +796,7 @@ export function attachNotationBuilder(root: HTMLElement): void {
   });
 
   root.addEventListener("notationbuilder:reset", (event) => {
+    delete root.dataset.locked;
     const detail =
       event instanceof CustomEvent ? event.detail : undefined;
     const stepVal =
