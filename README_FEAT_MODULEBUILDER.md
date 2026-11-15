@@ -75,7 +75,49 @@ Warum machen wir das getrennt? Weil so jeder Baustein einzeln geprüft und getes
 
 ---
 
-## Aktueller Stand & Ausblick auf Etappe 2
+## Etappe 2: Die sichtbare Autorenwerkbank im Browser
 
-- **Bereits fertig (Etappe 1):** Datenmodell, XP-Logik, Prüfregeln, Datenspeicher, Server-Schnittstelle und automatisierte Tests sind erstellt und geprüft (alle 8 neuen Tests sowie die TypeScript-Prüfung laufen fehlerfrei; in der Gesamttest-Suite gibt es lediglich 4 bereits zuvor bestehende Fehlschläge in älteren `NotationBuilder`-Tests zur Tastenbeschriftung `Leertaste` vs. `Num 1`).
-- **Noch bewusst offen (Etappe 2):** Es gibt noch **keine** sichtbaren Formulare oder Admin-Seiten im Browser. Diese bauen wir im nächsten Schritt im gewohnten Design des IssueTrackers auf dieses stabile Fundament auf.
+Auf das Fundament aus Etappe 1 haben wir jetzt die bedienbare Oberfläche gebaut. Sie ist im bekannten Design des IssueTrackers gehalten, damit alles in Mein Musik-Hub einheitlich aussieht und funktioniert. Zu finden ist sie in der linken Seitenleiste unter **Projektierung → Modul-Builder** (`src/content/docs/projektierung/modul-builder.mdx`).
+
+Dort gibt es drei übersichtliche Reiter (Tabs):
+
+### 1. Reiter „1. Modul-Builder (Theorie)“ (`src/components/project/ModuleBuilderForm.astro`)
+- **Wozu er dient:** Hier legst du neue Lernmodule an oder bearbeitest bestehende Module.
+- **Was du einstellen kannst:**
+  - **Grunddaten:** Eindeutige ID (z. B. `theory-101`), Reihenfolge (`1, 2, 3 …`), Titel, Kurzbeschreibung, Bereich (`Theorie`, `Instrument`, `Produktion`, `Band`), Level (`100` bis `500`) und optional die D-Stufe (`D1`, `D2`, `D3`).
+  - **Themen-Etiketten als anklickbare Chips:** Zeigen direkt den jeweiligen Punkte-Faktor an (z. B. `Notensystem (1.5x)` oder `Allgemein (1.0x)`).
+  - **Praxisteil-Schalter:** Über ein Häkchen legst du fest, ob das Modul einen Praxisteil hat – bei reinen Theorie-Modulen bleibt der Haken einfach aus.
+  - **Punkte & Bestehensgrenzen:** Basis-XP pro Theorie-Block (Standard: `30`) sowie die nötigen Prozentwerte für das einfache Quiz (`80 %`) und den Fastlane-Test (`85 %`).
+  - **Dynamischer Theorie-Block-Editor:** Du kannst beliebig viele Lernabschnitte hinzufügen, per Pfeiltasten (`↑` / `↓`) neu sortieren oder wieder entfernen. Jeder Block hat einen Titel, ein Textfeld mit Hinweis auf mathematische KaTeX-Formeln (`$...$` / `$$...$$`) sowie die Möglichkeit, eine visuelle Komponente (wie Notensystem, Klaviatur oder Griffbrett) mit passenden Einstellungen anzuhängen.
+
+### 2. Reiter „2. Aufgaben- & Quiz-Builder“ (`src/components/project/ExerciseBuilderForm.astro`)
+- **Wozu er dient:** Hier erstellst du Übungs- und Prüfungsfragen und ordnest sie direkt einem bestehenden Modul zu.
+- **Wie sich das Formular anpasst:**
+  - Du wählst das Ziel-Modul und die gewünschte Lern-Spur: normale **Übung**, **Abschluss-Quiz Einfach** oder schwerer **Fastlane-Test**. Dabei passen sich die vorgeschlagenen Basis-XP automatisch an (`10`, `15` oder `25 XP`).
+  - Je nach gewähltem **Aufgabentyp** zeigt das Formular automatisch nur die passenden Eingabefelder:
+    - **Single Choice / Multi Select:** Eine flexible Liste von Antwortmöglichkeiten, in der du mit Klick markierst, welche Lösung(en) richtig sind.
+    - **Zahleneingabe:** Ein Feld für die exakte Antwort (z. B. `880` oder `880 Hz`).
+    - **Interaktive Notenaufgabe (`NotationBuilder`):** Einstellfelder für Notenschlüssel (Violin-/Bassschlüssel), Notenanzahl (`1` bis `8`), feste oder wählbare Notenwerte, kompakte/breite Darstellung, Tastatur-Hinweise sowie die erwarteten Töne oder Notenwerte.
+  - **Direkte Live-Vorschau:** Bei interaktiven Notenaufgaben siehst du direkt unter den Einstellungen das echte interaktive Notensystem als Vorschau – und kannst sofort prüfen, wie die Aufgabe später für Lernende aussieht.
+  - **Live-XP-Rechner:** Sobald du Basis-XP, Spur oder Themen-Etiketten änderst, rechnet das Formular sofort aus, wie viele Erfahrungspunkte die Aufgabe am Ende bringt (z. B. `10 Basis-XP` × `1,5` für `Notensystem` = **15 XP**).
+
+### 3. Reiter „3. Modul-Katalog & Übersicht“ (`src/components/project/ModuleCatalogList.astro`)
+- **Wozu er dient:** Deine zentrale Übersicht über alle bereits erstellten Module und ihre Aufgaben.
+- **Was sie bietet:**
+  - **Karten- oder Listenansicht:** Per Knopfdruck wechselst du zwischen ausführlichen Karten und einer kompakten Liste. Außerdem kannst du nach Bereich filtern und nach Reihenfolge oder Gesamt-XP sortieren.
+  - **Automatische Modul-Bilanz:** Jede Karte zeigt sofort an, wie viele Theorie-Blöcke, Übungen, einfache Quizfragen, Fastlane-Fragen und Gesamt-XP im Modul stecken.
+  - **Aufklappbare Aufgabenliste:** Unter jedem Modul lassen sich alle zugehörigen Fragen ausklappen und nach Lern-Spur filtern.
+  - **Direktes Bearbeiten & Löschen:** Ein Klick auf den Stift bei einem Modul oder einer Frage lädt den Eintrag direkt in den passenden Builder-Reiter. Beim Löschen eines Moduls erinnert eine Sicherheitsabfrage daran, dass alle dazugehörigen Aufgaben mitgelöscht werden.
+
+### 4. Gemeinsame Logik, Styling & UI-Tests
+- **`src/lib/module-builder-ui.ts` & `src/styles/module-builder.css`:** Enthalten die gemeinsame Steuerungslogik für alle drei Werkzeuge sowie das passende Erscheinungsbild (inklusive dunklem Design-Modus), während die `.astro`-Dateien schlank bleiben.
+- **`astro.config.mjs`:** Bindet den neuen **Modul-Builder** direkt unter *Projektierung → Beiträge* in die Seitenleiste ein.
+- **`netlify/functions/modules.ts`:** Reagiert jetzt sowohl auf `/api/modules` als auch auf `/.netlify/functions/modules`.
+- **`tests/components/module-builder-ui.test.ts`:** 4 automatisierte Oberflächentests prüfen das Hinzufügen/Umsortieren/Entfernen von Theorie-Blöcken, das Einblenden der `NotationBuilder`-Felder samt Live-Vorschau, die Live-XP-Berechnung und die Filterung im Modul-Katalog.
+
+---
+
+## Aktueller Stand & Ausblick auf Etappe 3
+
+- **Fertiggestellt (Etappe 1 + Etappe 2):** Fundament (Datenmodell, XP-Logik, Prüfregeln, Datenspeicher, Server-Schnittstelle) sowie die komplette Autorenwerkbank (Modul-Formular, Aufgaben-/Quiz-Formular mit Live-Notenvorschau, Modul-Katalog, Seitenleisten-Eintrag und 12 neue Tests aus Etappe 1 & 2) sind fertig und fehlerfrei geprüft (`astro check`, `tsc --noEmit`, `biome check`, 8 Backend-/Logiktests und 4 UI-Tests bestanden; in der Gesamttest-Suite bleiben lediglich 4 bereits zuvor bestehende Fehlschläge in älteren `NotationBuilder`-Tests zu `Leertaste` vs. `Num 1`).
+- **Nächster Schritt (Etappe 3):** Nach dem Anlegen von Modul 1 über den neuen Builder folgt die sichtbare Ansicht für Lernende (`ModuleStepper`, XP-Dashboard und lokaler Lernfortschritt im Browser).

@@ -1,10 +1,340 @@
 // @ts-check
-import { defineConfig } from "astro/config";
+import { randomUUID } from "node:crypto";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import path from "node:path";
 import starlight from "@astrojs/starlight";
 import { unified } from "@astrojs/markdown-remark";
-import remarkMath from "remark-math";
+import { defineConfig } from "astro/config";
 // @ts-ignore - rehype-katex liefert keine eigenen TS-Deklarationsdateien mit
 import rehypeKatex from "rehype-katex";
+import remarkMath from "remark-math";
+
+const MAX_LOCAL_REQUEST_BYTES = 500_000;
+const LOCAL_MODULES_PATHS = new Set([
+  "/api/modules",
+  "/.netlify/functions/modules",
+]);
+
+/**
+ * @param {unknown} value
+ * @returns {value is Record<string, unknown>}
+ */
+function isLocalRecord(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/**
+ * @param {import("node:http").ServerResponse} res
+ * @param {number} status
+ * @param {unknown} body
+ */
+function sendLocalJson(res, status, body) {
+  res.statusCode = status;
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  res.setHeader("Cache-Control", "no-store");
+  res.end(JSON.stringify(body));
+}
+
+/**
+ * @param {import("node:http").IncomingMessage} req
+ * @returns {Promise<string>}
+ */
+function readLocalRequestBody(req) {
+  return new Promise((resolve, reject) => {
+    /** @type {Buffer[]} */
+    const chunks = [];
+    let totalBytes = 0;
+    req.on("data", (chunk) => {
+      const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+      totalBytes += buf.byteLength;
+      if (totalBytes > MAX_LOCAL_REQUEST_BYTES) {
+        reject(new RangeError("Die Anfrage ist zu groß."));
+        return;
+      }
+      chunks.push(buf);
+    });
+    req.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
+    req.on("error", reject);
+  });
+}
+
+/**
+ * @param {URL} url
+ * @param {Record<string, unknown> | null} body
+ * @returns {{ entity: "module" | "question"; id: string } | null}
+ */
+function extractLocalDeleteTarget(url, body) {
+  const entityParam =
+    url.searchParams.get("entity") ??
+    (typeof body?.entity === "string" ? body.entity : null);
+  const questionId =
+    url.searchParams.get("questionId") ??
+    (typeof body?.questionId === "string" ? body.questionId : null);
+  const moduleId =
+    url.searchParams.get("moduleId") ??
+    (typeof body?.moduleId === "string" ? body.moduleId : null);
+  const genericId =
+    url.searchParams.get("id") ?? (typeof body?.id === "string" ? body.id : null);
+
+  if (entityParam === "question" || (entityParam !== "module" && questionId)) {
+    const id = (questionId || genericId || "").trim();
+    return id ? { entity: "question", id } : null;
+  }
+
+  const id = (moduleId || genericId || "").trim();
+  return id ? { entity: "module", id } : null;
+}
+
+/**
+ * Lokaler Dev-Endpunkt für `/api/modules` und `/.netlify/functions/modules`,
+ * damit `npm run dev` direkt mit `data/modules.json` ohne Netlify-CLI funktioniert.
+ */
+function localModulesApiPlugin() {
+  let writeQueue = Promise.resolve();
+
+  return {
+    name: "local-modules-api",
+    /** @param {import("vite").ViteDevServer} server */
+    configureServer(server) {
+      server.middlewares.use(async (req, res, next) => {
+        const url = new URL(req.url ?? "/", "http://localhost");
+        if (!LOCAL_MODULES_PATHS.has(url.pathname)) {
+          next();
+          return;
+        }
+
+        const method = (req.method ?? "GET").toUpperCase();
+        if (!["GET", "POST", "PUT", "DELETE"].includes(method)) {
+          sendLocalJson(res, 405, {
+            error: "Diese Methode wird nicht unterstützt.",
+          });
+          return;
+        }
+
+        try {
+          const store =
+            /** @type {typeof import("./src/lib/module-store.ts")} */ (
+              await server.ssrLoadModule("/src/lib/module-store.ts")
+            );
+          const dataFilePath = path.resolve(process.cwd(), "data/modules.json");
+
+          const readDb = async () => {
+            try {
+              const raw = await readFile(dataFilePath, "utf8");
+              const parsed = JSON.parse(raw);
+              if (
+                !isLocalRecord(parsed) ||
+                !Array.isArray(parsed.modules) ||
+                !Array.isArray(parsed.questions)
+              ) {
+                throw new Error("Ungültiges Format in data/modules.json.");
+              }
+              return /** @type {import("./src/lib/module-schema.ts").ModulesDatabase} */ ({
+                modules: parsed.modules,
+                questions: parsed.questions,
+              });
+            } catch (err) {
+              if (
+                isLocalRecord(err) &&
+                err.code === "ENOENT"
+              ) {
+                return store.createEmptyModulesDatabase();
+              }
+              throw err;
+            }
+          };
+
+          /** @param {import("./src/lib/module-schema.ts").ModulesDatabase} nextDb */
+          const writeDb = async (nextDb) => {
+            await mkdir(path.dirname(dataFilePath), { recursive: true });
+            await writeFile(
+              dataFilePath,
+              `${JSON.stringify(nextDb, null, 2)}\n`,
+              "utf8",
+            );
+          };
+
+          if (method === "GET") {
+            sendLocalJson(res, 200, await readDb());
+            return;
+          }
+
+          let bodyText = "";
+          try {
+            bodyText = await readLocalRequestBody(req);
+          } catch (err) {
+            if (err instanceof RangeError) {
+              sendLocalJson(res, 413, { error: err.message });
+              return;
+            }
+            throw err;
+          }
+
+          /** @type {Record<string, unknown> | null} */
+          let parsedBody = null;
+          if (bodyText.trim().length > 0) {
+            /** @type {unknown} */
+            let raw;
+            try {
+              raw = JSON.parse(bodyText);
+            } catch {
+              sendLocalJson(res, 400, {
+                error: "Die Anfrage enthält kein gültiges JSON.",
+              });
+              return;
+            }
+            if (!isLocalRecord(raw)) {
+              sendLocalJson(res, 400, {
+                error: "Die Moduldaten sind ungültig.",
+              });
+              return;
+            }
+            parsedBody = raw;
+          } else if (method !== "DELETE") {
+            sendLocalJson(res, 400, {
+              error: "Die Anfrage enthält kein gültiges JSON.",
+            });
+            return;
+          }
+
+          await new Promise((resolve, reject) => {
+            writeQueue = writeQueue.then(async () => {
+              if (method === "DELETE") {
+                const target = extractLocalDeleteTarget(url, parsedBody);
+                if (!target) {
+                  sendLocalJson(res, 400, {
+                    error: "Ungültige Lösch-Anfrage: ID fehlt.",
+                  });
+                  return;
+                }
+                const db = await readDb();
+                if (target.entity === "question") {
+                  if (!db.questions.some((q) => q.id === target.id)) {
+                    sendLocalJson(res, 404, {
+                      error: "Die Aufgabe wurde nicht gefunden.",
+                    });
+                    return;
+                  }
+                  await writeDb(store.deleteQuestion(db, target.id));
+                  sendLocalJson(res, 200, {
+                    message: "Aufgabe wurde gelöscht.",
+                  });
+                  return;
+                }
+                if (!db.modules.some((m) => m.id === target.id)) {
+                  sendLocalJson(res, 404, {
+                    error: "Das Modul wurde nicht gefunden.",
+                  });
+                  return;
+                }
+                await writeDb(store.deleteModule(db, target.id));
+                sendLocalJson(res, 200, {
+                  message: "Modul und zugehörige Aufgaben wurden gelöscht.",
+                });
+                return;
+              }
+
+              const body = parsedBody ?? {};
+              if (
+                body.entity !== undefined &&
+                body.entity !== "module" &&
+                body.entity !== "question"
+              ) {
+                sendLocalJson(res, 400, { error: "Ungültiger Entity-Typ." });
+                return;
+              }
+
+              const isPost = method === "POST";
+              const isQuestion =
+                body.entity === "question" ||
+                (body.entity === undefined && isLocalRecord(body.question));
+
+              const db = await readDb();
+
+              if (isQuestion) {
+                const rawQuestion = isLocalRecord(body.question)
+                  ? body.question
+                  : body;
+                if (
+                  rawQuestion.id !== undefined &&
+                  (typeof rawQuestion.id !== "string" || !rawQuestion.id.trim())
+                ) {
+                  sendLocalJson(res, 400, {
+                    error: "Aufgaben-ID darf nicht leer sein.",
+                  });
+                  return;
+                }
+
+                const questionPayload =
+                  isPost && rawQuestion.id === undefined
+                    ? { ...rawQuestion, id: randomUUID() }
+                    : rawQuestion;
+
+                const validation = store.validateQuestionInput(
+                  questionPayload,
+                  db.modules,
+                );
+                if (!validation.valid) {
+                  sendLocalJson(res, 400, {
+                    error: validation.errors.join(" "),
+                  });
+                  return;
+                }
+
+                const typedQuestion =
+                  /** @type {import("./src/lib/module-store.ts").UpsertQuestionInput} */ (
+                    questionPayload
+                  );
+                const nextDb = store.upsertQuestion(db, typedQuestion);
+                await writeDb(nextDb);
+                const savedQuestion = nextDb.questions.find(
+                  (item) => item.id === String(questionPayload.id).trim(),
+                );
+                sendLocalJson(res, isPost ? 201 : 200, {
+                  message: isPost
+                    ? "Aufgabe wurde gespeichert."
+                    : "Aufgabe wurde aktualisiert.",
+                  question: savedQuestion,
+                });
+                return;
+              }
+
+              const rawModule = isLocalRecord(body.module) ? body.module : body;
+              const validation = store.validateModuleInput(rawModule);
+              if (!validation.valid) {
+                sendLocalJson(res, 400, {
+                  error: validation.errors.join(" "),
+                });
+                return;
+              }
+
+              const typedModule =
+                /** @type {import("./src/lib/module-store.ts").UpsertModuleInput} */ (
+                  rawModule
+                );
+              const nextDb = store.upsertModule(db, typedModule);
+              await writeDb(nextDb);
+              const savedModule = nextDb.modules.find(
+                (item) => item.id === String(rawModule.id).trim(),
+              );
+              sendLocalJson(res, isPost ? 201 : 200, {
+                message: isPost
+                  ? "Modul wurde gespeichert."
+                  : "Modul wurde aktualisiert.",
+                module: savedModule,
+              });
+            }).then(resolve, reject);
+          });
+        } catch (error) {
+          console.error("Fehler im lokalen Modul-API-Endpunkt:", error);
+          sendLocalJson(res, 500, {
+            error: "Die Moduldaten konnten lokal nicht verarbeitet werden.",
+          });
+        }
+      });
+    },
+  };
+}
 
 // https://astro.build/config
 export default defineConfig({
@@ -19,6 +349,7 @@ export default defineConfig({
     }),
   },
   vite: {
+    plugins: [localModulesApiPlugin()],
     build: {
       chunkSizeWarningLimit: 1500, // Erhöht das Warnlimit von 500 kB auf 1500 kB
     },
@@ -38,7 +369,10 @@ export default defineConfig({
       sidebar: [
         {
           label: "Projektierung",
-          items: [{ label: "Beiträge", slug: "projektierung/beitraege" }],
+          items: [
+            { label: "Beiträge", slug: "projektierung/beitraege" },
+            { label: "Modul-Builder", slug: "projektierung/modul-builder" },
+          ],
         },
         {
           label: "Audio & Musik",

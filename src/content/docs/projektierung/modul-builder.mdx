@@ -1,0 +1,23 @@
+---
+title: Modul-Builder
+description: Autorenwerkbank zum Erstellen und Verwalten von Lernmodulen, Theorie-Blöcken und Aufgaben.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import ModuleBuilderForm from '../../../components/project/ModuleBuilderForm.astro';
+import ExerciseBuilderForm from '../../../components/project/ExerciseBuilderForm.astro';
+import ModuleCatalogList from '../../../components/project/ModuleCatalogList.astro';
+
+Hier erstellst und verwaltest du Lernmodule, Theorie-Blöcke (inklusive KaTeX-Formeln und visueller Bausteine) sowie Übungs-, Quiz- und Fastlane-Aufgaben auf Basis der zentralen Tag- und XP-Konfiguration.
+
+<Tabs>
+  <TabItem label="1. Modul-Builder (Theorie)">
+    <ModuleBuilderForm />
+  </TabItem>
+  <TabItem label="2. Aufgaben- & Quiz-Builder">
+    <ExerciseBuilderForm />
+  </TabItem>
+  <TabItem label="3. Modul-Katalog & Übersicht">
+    <ModuleCatalogList />
+  </TabItem>
+</Tabs>

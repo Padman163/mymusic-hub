@@ -1,0 +1,439 @@
+---
+import { MODULE_SCOPES } from "../../lib/module-schema.ts";
+import "../../styles/contribution-tags.css";
+import "../../styles/module-builder.css";
+
+const scopeLabels: Record<(typeof MODULE_SCOPES)[number], string> = {
+  theory: "Theorie",
+  instrument: "Instrument",
+  production: "Produktion",
+  band: "Band",
+};
+---
+
+<section id="module-catalog-section" aria-label="Gespeicherte Lernmodule">
+  <div class="contribution-toolbar">
+    <button id="module-reload-btn" class="new-contribution" type="button">
+      Katalog aktualisieren
+    </button>
+    <div class="contribution-toolbar-controls">
+      <details class="contribution-menu">
+        <summary title="Module filtern" aria-label="Module filtern">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M4 5h16l-6 7v6l-4 2v-8z"></path>
+          </svg>
+        </summary>
+        <div class="contribution-menu-panel">
+          <label for="filter-module-scope">Bereich</label>
+          <select id="filter-module-scope">
+            <option value="">Alle Bereiche</option>
+            {MODULE_SCOPES.map((scope) => (
+              <option value={scope}>{scopeLabels[scope]}</option>
+            ))}
+          </select>
+        </div>
+      </details>
+
+      <details class="contribution-menu">
+        <summary title="Module sortieren" aria-label="Module sortieren">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M4 7h16M4 12h11M4 17h6"></path>
+          </svg>
+        </summary>
+        <div class="contribution-menu-panel">
+          <label for="sort-modules">Sortierung</label>
+          <select id="sort-modules">
+            <option value="order_asc">Reihenfolge: 1 → N</option>
+            <option value="order_desc">Reihenfolge: N → 1</option>
+            <option value="xp_desc">Gesamt-XP: Höchste zuerst</option>
+          </select>
+        </div>
+      </details>
+
+      <button
+        id="module-view-toggle"
+        class="contribution-view-toggle"
+        type="button"
+        aria-label="Listenansicht anzeigen"
+        title="Listenansicht anzeigen"
+        aria-controls="module-catalog-list"
+      >
+        <svg
+          class="list-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <path d="M4 6h2M10 6h10M4 12h2M10 12h10M4 18h2M10 18h10"></path>
+        </svg>
+        <svg
+          class="cards-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linejoin="round"
+          aria-hidden="true"
+          style="display: none"
+        >
+          <path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <p id="module-list-status" role="status" aria-live="polite" tabindex="-1">
+    Module werden geladen …
+  </p>
+  <ul id="module-catalog-list" class="contribution-list"></ul>
+</section>
+
+<style>
+  .contribution-toolbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .contribution-toolbar-controls {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 0 auto;
+  }
+
+  .contribution-menu {
+    margin: 0;
+  }
+
+  .contribution-menu summary,
+  .contribution-view-toggle {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+    margin: 0;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.4rem;
+    background: var(--sl-color-bg);
+    color: var(--sl-color-text);
+    cursor: pointer;
+  }
+
+  .contribution-menu summary {
+    list-style: none;
+    padding: 0;
+  }
+
+  .contribution-menu summary::before,
+  .contribution-menu summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .contribution-menu summary svg,
+  .contribution-view-toggle svg {
+    width: 1.2rem;
+    height: 1.2rem;
+    margin: 0;
+  }
+
+  .contribution-menu-panel {
+    position: absolute;
+    z-index: 2;
+    right: 0;
+    display: grid;
+    gap: 0.35rem;
+    box-sizing: border-box;
+    width: min(17rem, calc(100vw - 2rem));
+    margin: 0.4rem 0 0;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.4rem;
+    padding: 0.75rem;
+    background: var(--sl-color-bg);
+    box-shadow: 0 0.25rem 0.75rem #0003;
+  }
+
+  .contribution-menu-panel label {
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .contribution-menu-panel select {
+    width: 100%;
+    margin: 0 0 0.35rem;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.4rem;
+    padding: 0.4rem;
+    background: var(--sl-color-bg);
+    color: var(--sl-color-text);
+    font: inherit;
+  }
+
+  .new-contribution {
+    border: 1px solid #1d4ed8;
+    border-radius: 0.4rem;
+    padding: 0.65rem 0.9rem;
+    background: #1d4ed8;
+    color: #fff;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .new-contribution:hover {
+    background: #1e40af;
+  }
+
+  .new-contribution:focus-visible,
+  .contribution-menu summary:focus-visible,
+  .contribution-menu-panel select:focus-visible,
+  .contribution-view-toggle:focus-visible {
+    outline: 2px solid var(--sl-color-accent);
+    outline-offset: 2px;
+  }
+
+  .contribution-list {
+    display: grid;
+    gap: 1rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  .contribution-list :global(> li) {
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.4rem;
+    padding: 1rem 1rem 0.75rem;
+  }
+
+  .contribution-list :global(.contribution-card-header) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .contribution-list :global(h2) {
+    margin: 0.85rem 0 0;
+    border-bottom: 1px solid var(--sl-color-gray-5);
+    padding-bottom: 0.5rem;
+    font-size: 1.25rem;
+    overflow-wrap: anywhere;
+  }
+
+  .contribution-list :global(.contribution-description) {
+    margin: 0.5rem 0 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .contribution-list :global(.contribution-meta) {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    min-width: 0;
+    gap: 0.5rem;
+    color: var(--sl-color-gray-2);
+    font-size: 0.875rem;
+  }
+
+  .contribution-list :global(.contribution-card-footer) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0.85rem 0 0;
+    border-top: 1px solid var(--sl-color-gray-5);
+    padding-top: 0.65rem;
+    color: var(--sl-color-gray-2);
+    font-size: 0.875rem;
+  }
+
+  .contribution-list[data-view="list"] {
+    gap: 0.5rem;
+  }
+
+  .contribution-list[data-view="list"] :global(> li) {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .contribution-list[data-view="list"] :global(.contribution-card-header) {
+    display: contents;
+  }
+
+  .contribution-list[data-view="list"] :global(.contribution-meta) {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .contribution-list[data-view="list"] :global(h2) {
+    grid-column: 2;
+    grid-row: 1;
+    margin: 0;
+    border: 0;
+    padding: 0;
+    font-size: 1rem;
+  }
+
+  .contribution-list[data-view="list"] :global(.contribution-card-actions) {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .contribution-list[data-view="list"] :global(.contribution-description),
+  .contribution-list[data-view="list"] :global(.module-questions-details),
+  .contribution-list[data-view="list"] :global(.contribution-card-footer) {
+    display: none;
+  }
+
+  .contribution-list[data-view="list"] :global(.module-summary-metrics) {
+    grid-column: 1 / -1;
+    margin-top: 0.25rem;
+  }
+
+  .contribution-list :global(.contribution-status),
+  .contribution-list :global(.contribution-area) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    margin: 0;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    padding: 0.1rem 0.6rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  .contribution-list :global(.contribution-status[data-status="New"]),
+  .contribution-list :global(.contribution-area) {
+    border-color: var(--sl-color-gray-4);
+    color: var(--sl-color-text);
+  }
+
+  .contribution-list :global(.contribution-status[data-status="Active"]) {
+    color: #15803d;
+  }
+
+  :global(:root[data-theme="dark"])
+    .contribution-list
+    :global(.contribution-status[data-status="Active"]) {
+    color: #86efac;
+  }
+
+  .contribution-list :global(.contribution-card-actions) {
+    display: flex;
+    flex-shrink: 0;
+    gap: 0.25rem;
+    margin: 0;
+  }
+
+  .contribution-list :global(button) {
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.4rem;
+    padding: 0.4rem 0.65rem;
+    background: var(--sl-color-bg);
+    color: var(--sl-color-text);
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .contribution-list :global(button:disabled) {
+    cursor: wait;
+    opacity: 0.6;
+  }
+
+  .contribution-list :global(.contribution-card-actions button) {
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    margin: 0;
+    padding: 0;
+    border-color: currentColor;
+  }
+
+  .contribution-list :global(.contribution-edit) {
+    color: #2563eb;
+  }
+
+  .contribution-list :global(.contribution-delete) {
+    color: #dc2626;
+  }
+
+  :global(:root[data-theme="dark"]) .contribution-list :global(.contribution-edit) {
+    color: #93c5fd;
+  }
+
+  :global(:root[data-theme="dark"])
+    .contribution-list
+    :global(.contribution-delete) {
+    color: #fca5a5;
+  }
+
+  .contribution-list :global(.contribution-card-actions svg) {
+    width: 1.2rem;
+    height: 1.2rem;
+  }
+
+  .contribution-list :global(button:focus-visible),
+  .contribution-list :global(select:focus-visible) {
+    outline: 2px solid var(--sl-color-accent);
+    outline-offset: 2px;
+  }
+
+  .contribution-list :global(select) {
+    box-sizing: border-box;
+    width: 100%;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.4rem;
+    padding: 0.45rem 0.65rem;
+    background: var(--sl-color-bg);
+    color: var(--sl-color-text);
+    font: inherit;
+  }
+</style>
+
+<script>
+  import { attachModuleCatalogList } from "../../lib/module-builder-ui";
+
+  function initModuleCatalogLists() {
+    const section = document.querySelector<HTMLElement>(
+      "#module-catalog-section",
+    );
+    if (section && section.dataset.moduleCatalogAttached !== "true") {
+      attachModuleCatalogList(section);
+    }
+  }
+
+  initModuleCatalogLists();
+  document.addEventListener("astro:page-load", initModuleCatalogLists);
+</script>

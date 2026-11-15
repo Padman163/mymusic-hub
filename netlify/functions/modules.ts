@@ -20,7 +20,7 @@ class ModuleNotFoundError extends Error {}
 class ModuleConflictError extends Error {}
 
 export const config: Config = {
-	path: '/api/modules',
+	path: ['/api/modules', '/.netlify/functions/modules'],
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
