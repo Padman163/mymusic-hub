@@ -1,0 +1,31 @@
+{
+  "modules": [
+    {
+      "id": "123",
+      "order": 1,
+      "title": "schall",
+      "description": "test",
+      "scope": "theory",
+      "level": 100,
+      "tags": [
+        "Allgemein"
+      ],
+      "hasPractice": false,
+      "theoryBaseXp": 30,
+      "quizEasyMinScore": 0.8,
+      "fastlaneMinScore": 0.85,
+      "theoryBlocks": [
+        {
+          "id": "tb-1-65d27b",
+          "order": 1,
+          "title": "frequenz",
+          "markdownContent": "das ist eine frequenz",
+          "visualComponent": "none"
+        }
+      ],
+      "createdAt": "2026-11-15T23:43:32.583Z",
+      "updatedAt": "2026-11-15T23:43:32.583Z"
+    }
+  ],
+  "questions": []
+}
