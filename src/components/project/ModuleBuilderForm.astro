@@ -2,8 +2,6 @@
 import {
   BASE_XP_DEFAULTS,
   D_STAGES,
-  DEFAULT_FASTLANE_MIN_SCORE,
-  DEFAULT_QUIZ_EASY_MIN_SCORE,
   MODULE_SCOPES,
 } from "../../lib/module-schema.ts";
 import "../../styles/contribution-tags.css";
@@ -92,30 +90,6 @@ const scopeLabels: Record<(typeof MODULE_SCOPES)[number], string> = {
         min="0"
         step="1"
         value={String(BASE_XP_DEFAULTS.theoryBlock)}
-      />
-    </div>
-    <div class="field">
-      <label for="module-quiz-easy-min">Quiz Einfach Bestehen (%)</label>
-      <input
-        id="module-quiz-easy-min"
-        name="quizEasyMinScore"
-        type="number"
-        min="0"
-        max="100"
-        step="1"
-        value={String(Math.round(DEFAULT_QUIZ_EASY_MIN_SCORE * 100))}
-      />
-    </div>
-    <div class="field">
-      <label for="module-fastlane-min">Fastlane Bestehen (%)</label>
-      <input
-        id="module-fastlane-min"
-        name="fastlaneMinScore"
-        type="number"
-        min="0"
-        max="100"
-        step="1"
-        value={String(Math.round(DEFAULT_FASTLANE_MIN_SCORE * 100))}
       />
     </div>
   </div>

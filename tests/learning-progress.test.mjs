@@ -16,7 +16,40 @@ import {
   upsertModule,
   upsertQuestion,
   createEmptyModulesDatabase,
+  updateQuizSettings,
 } from "../src/lib/module-store.ts";
+
+describe("Übergreifende Quiz-Einstellungen", () => {
+  afterEach(() => clearLearningProgress());
+
+  it("setzt Lernfortschritt nur bei einer neueren Änderung zurück und ignoriert ältere Anfangsdaten", () => {
+    const db = buildTestDatabase();
+    let state = createInitialProgress(db.modules);
+    state = completeTheoryStep(state, db.modules[0]);
+    saveLearningProgress(state);
+    const changed = updateQuizSettings(db, { quizEasyMinScore: 0.9, fastlaneMinScore: 0.9 });
+    const reset = loadLearningProgress(db.modules, undefined, changed.quizSettings);
+    expect(reset.totalXp).toBe(0);
+    expect(reset.modules["mod-theory-1"].steps.theory).toBe("unlocked");
+    expect(reset.quizSettings.revision).toBe(1);
+    const earned = completeTheoryStep(reset, db.modules[0]);
+    saveLearningProgress(earned);
+    expect(loadLearningProgress(db.modules, undefined, changed.quizSettings).totalXp).toBe(45);
+    const stale = loadLearningProgress(db.modules);
+    expect(stale.totalXp).toBe(45);
+    expect(stale.quizSettings.quizEasyMinScore).toBe(0.9);
+  });
+
+  it("verwendet globale statt modulspezifischer Grenzen", () => {
+    const db = buildTestDatabase();
+    const changed = updateQuizSettings(db, { quizEasyMinScore: 0.9, fastlaneMinScore: 0.95 });
+    let state = createInitialProgress(db.modules, changed.quizSettings);
+    state = submitQuizAttempt(state, changed, db.modules[0].id, "fastlane", 0.9);
+    expect(state.modules[db.modules[0].id].status).not.toBe("completed");
+    state = submitQuizAttempt(state, changed, db.modules[0].id, "fastlane", 0.95);
+    expect(state.modules[db.modules[0].id].status).toBe("completed");
+  });
+});
 
 function buildTestDatabase() {
   let db = createEmptyModulesDatabase();

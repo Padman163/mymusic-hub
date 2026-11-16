@@ -7,6 +7,7 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 import ModuleBuilderForm from '../../../components/project/ModuleBuilderForm.astro';
 import ExerciseBuilderForm from '../../../components/project/ExerciseBuilderForm.astro';
 import ModuleCatalogList from '../../../components/project/ModuleCatalogList.astro';
+import QuizSettingsForm from '../../../components/project/QuizSettingsForm.astro';
 
 Hier erstellst und verwaltest du Lernmodule, Theorie-Blöcke (inklusive KaTeX-Formeln und visueller Bausteine) sowie Übungs-, Quiz- und Fastlane-Aufgaben auf Basis der zentralen Tag- und XP-Konfiguration.
 
@@ -19,5 +20,8 @@ Hier erstellst und verwaltest du Lernmodule, Theorie-Blöcke (inklusive KaTeX-Fo
   </TabItem>
   <TabItem label="3. Modul-Katalog & Übersicht">
     <ModuleCatalogList />
+  </TabItem>
+  <TabItem label="4. Einstellungen">
+    <QuizSettingsForm />
   </TabItem>
 </Tabs>

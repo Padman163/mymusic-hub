@@ -387,6 +387,36 @@ describe("Modules Serverless API (/api/modules)", () => {
     vi.unstubAllGlobals();
   });
 
+  it("speichert globale Grenzen mit Konfliktschutz und erhält sie bei späteren Moduländerungen", async () => {
+    vi.stubEnv("GITHUB_TOKEN", "test-token");
+    vi.stubEnv("GITHUB_REPOSITORY", "owner/repo");
+    let storedDb = { modules: [], questions: [] };
+    vi.stubGlobal("fetch", vi.fn(async (_url, init) => {
+      if (init?.method === "PUT") {
+        const body = JSON.parse(String(init.body));
+        storedDb = JSON.parse(Buffer.from(body.content, "base64").toString("utf8"));
+        return new Response("{}", { status: 200 });
+      }
+      return new Response(JSON.stringify({
+        sha: "sha-1",
+        content: Buffer.from(JSON.stringify(storedDb)).toString("base64"),
+      }), { status: 200 });
+    }));
+    const request = (body) => modulesHandler(new Request("http://localhost/api/modules", {
+      method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+    }));
+    const settings = { quizEasyMinScore: 0.9, fastlaneMinScore: 0.95, revision: 0 };
+    expect((await request({ entity: "quiz-settings", settings })).status).toBe(200);
+    expect(storedDb.quizSettings).toEqual({ ...settings, revision: 1 });
+    expect((await request({ entity: "quiz-settings", settings })).status).toBe(409);
+    expect((await request({ entity: "module", id: "m", title: "Test" })).status).toBe(200);
+    expect(storedDb.quizSettings.revision).toBe(1);
+    const current = { ...settings, revision: 1 };
+    expect((await request({ entity: "quiz-settings", settings: current })).status).toBe(200);
+    expect(storedDb.quizSettings.revision).toBe(1);
+    expect((await request({ entity: "quiz-settings", settings: { ...current, quizEasyMinScore: 2 } })).status).toBe(400);
+  });
+
   it("weist nicht unterstützte Methoden und fehlende Env-Konfiguration ab", async () => {
     const patchRes = await modulesHandler(
       new Request("http://localhost/api/modules", { method: "PATCH" }),

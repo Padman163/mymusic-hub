@@ -1,5 +1,5 @@
 import type { Config } from '@netlify/functions';
-import type { LearningModule, ModulesDatabase } from '../../src/lib/module-schema';
+import { DEFAULT_QUIZ_SETTINGS, isQuizSettings, type LearningModule, type ModulesDatabase } from '../../src/lib/module-schema';
 import {
 	createEmptyModulesDatabase,
 	deleteModule,
@@ -9,6 +9,7 @@ import {
 	type UpsertQuestionInput,
 	upsertModule,
 	upsertQuestion,
+	updateQuizSettings,
 	validateModuleInput,
 	validateQuestionInput,
 } from '../../src/lib/module-store';
@@ -68,13 +69,15 @@ function parseModulesDatabase(value: unknown): ModulesDatabase {
 	if (
 		!isRecord(value) ||
 		!Array.isArray(value.modules) ||
-		!Array.isArray(value.questions)
+		!Array.isArray(value.questions) ||
+		(value.quizSettings !== undefined && !isQuizSettings(value.quizSettings))
 	) {
 		throw new Error('Die Moduldatei auf GitHub hat ein ungültiges Format.');
 	}
 	return {
 		modules: value.modules as ModulesDatabase['modules'],
 		questions: value.questions as ModulesDatabase['questions'],
+		...(value.quizSettings !== undefined ? { quizSettings: value.quizSettings as ModulesDatabase['quizSettings'] } : {}),
 	};
 }
 
@@ -207,6 +210,20 @@ async function handleWriteRequest(
 	body: Record<string, unknown>,
 ): Promise<Response> {
 	const isPost = request.method === 'POST';
+
+	if (body.entity === 'quiz-settings') {
+		if (request.method !== 'PUT' || !isQuizSettings(body.settings)) {
+			return jsonResponse(400, { error: 'Ungültige Quiz-Einstellungen.' });
+		}
+		const settings = body.settings;
+		const nextDb = await changeModulesDatabase('Update quiz settings', false, (db) => {
+			if ((db.quizSettings ?? DEFAULT_QUIZ_SETTINGS).revision !== settings.revision) {
+				throw new ModuleConflictError('Die Einstellungen wurden zwischenzeitlich geändert. Bitte lade sie neu.');
+			}
+			return updateQuizSettings(db, settings);
+		});
+		return jsonResponse(200, nextDb);
+	}
 
 	if (body.entity === 'module-order') {
 		if (

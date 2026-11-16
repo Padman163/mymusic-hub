@@ -2,6 +2,7 @@ import {
   BASE_XP_DEFAULTS,
   DEFAULT_FASTLANE_MIN_SCORE,
   DEFAULT_QUIZ_EASY_MIN_SCORE,
+  DEFAULT_QUIZ_SETTINGS,
   getDefaultBaseXpForLane,
   isDStage,
   isModuleScope,
@@ -13,6 +14,7 @@ import {
   type ModulesDatabase,
   NOTATION_DURATIONS,
   type NotationBuilderTaskConfig,
+  type QuizSettings,
   type TargetLane,
   type TheoryBlock,
 } from "./module-schema.ts";
@@ -460,7 +462,7 @@ export function upsertModule(
         )
       : [...db.modules, normalizedModule];
 
-  return { modules, questions: [...db.questions] };
+  return { ...db, modules, questions: [...db.questions] };
 }
 
 /** Verschiebt ein Modul relativ zu seinem erwarteten Nachbarn. */
@@ -475,8 +477,12 @@ export function moveModule(
   const neighborIndex = index + (direction === "up" ? -1 : 1);
   if (index < 0 || sorted[neighborIndex]?.id !== neighborId) return null;
 
-  [sorted[index], sorted[neighborIndex]] = [sorted[neighborIndex], sorted[index]];
+  [sorted[index], sorted[neighborIndex]] = [
+    sorted[neighborIndex],
+    sorted[index],
+  ];
   return {
+    ...db,
     modules: sorted.map((mod, position) => ({ ...mod, order: position + 1 })),
     questions: [...db.questions],
   };
@@ -488,6 +494,7 @@ export function deleteModule(
   moduleId: string,
 ): ModulesDatabase {
   return {
+    ...db,
     modules: db.modules.filter((mod) => mod.id !== moduleId),
     questions: db.questions.filter(
       (question) => question.moduleId !== moduleId,
@@ -549,7 +556,7 @@ export function upsertQuestion(
         )
       : [...db.questions, normalizedQuestion];
 
-  return { modules: [...db.modules], questions };
+  return { ...db, modules: [...db.modules], questions };
 }
 
 /** Entfernt eine einzelne Aufgabe anhand ihrer ID. */
@@ -558,8 +565,29 @@ export function deleteQuestion(
   questionId: string,
 ): ModulesDatabase {
   return {
+    ...db,
     modules: [...db.modules],
     questions: db.questions.filter((question) => question.id !== questionId),
+  };
+}
+
+export function updateQuizSettings(
+  db: ModulesDatabase,
+  settings: Pick<QuizSettings, "quizEasyMinScore" | "fastlaneMinScore">,
+): ModulesDatabase {
+  const errors: string[] = [];
+  validateScoreThreshold(settings.quizEasyMinScore, "Quiz-Grenze", errors);
+  validateScoreThreshold(settings.fastlaneMinScore, "Fastlane-Grenze", errors);
+  if (errors.length) throw new Error(errors.join(" "));
+  const current = db.quizSettings ?? DEFAULT_QUIZ_SETTINGS;
+  if (
+    current.quizEasyMinScore === settings.quizEasyMinScore &&
+    current.fastlaneMinScore === settings.fastlaneMinScore
+  )
+    return db;
+  return {
+    ...db,
+    quizSettings: { ...settings, revision: current.revision + 1 },
   };
 }
 

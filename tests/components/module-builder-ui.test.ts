@@ -4,6 +4,7 @@ import {
   attachExerciseBuilderForm,
   attachModuleBuilderForm,
   attachModuleCatalogList,
+  attachQuizSettingsForm,
   MODULES_API_ENDPOINT,
   MODULES_FUNCTION_FALLBACK_ENDPOINT,
   MODULES_HTML_RESPONSE_ERROR,
@@ -32,8 +33,6 @@ function mountModuleForm(): HTMLFormElement {
     <div id="module-tags-field"></div>
     <input id="module-has-practice" name="hasPractice" type="checkbox" />
     <input id="module-theory-base-xp" name="theoryBaseXp" type="number" value="30" />
-    <input id="module-quiz-easy-min" name="quizEasyMinScore" type="number" value="80" />
-    <input id="module-fastlane-min" name="fastlaneMinScore" type="number" value="85" />
     <div id="module-theory-blocks-field"></div>
     <button type="submit">Modul speichern</button>
     <button id="module-edit-cancel" type="button" hidden>Abbrechen</button>
@@ -208,6 +207,38 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     expect(picker.element.textContent).toContain("Bisherige Tags bleiben erhalten");
     picker.clear();
     expect(picker.selectedTags()).toEqual([]);
+  });
+
+  it("lädt und speichert globale Bestehensgrenzen nur nach Bestätigung", async () => {
+    let db: ModulesDatabase = { modules: [], questions: [] };
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method === "PUT") {
+        const body = JSON.parse(String(init.body));
+        db = { ...db, quizSettings: { ...body.settings, revision: 1 } };
+      }
+      return new Response(JSON.stringify(db), { status: 200, headers: { "Content-Type": "application/json" } });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const confirm = vi.fn(() => false);
+    vi.stubGlobal("confirm", confirm);
+    const form = document.createElement("form");
+    form.innerHTML = `
+      <input id="settings-quiz-min" type="number" />
+      <input id="settings-fastlane-min" type="number" />
+      <button type="submit"></button><button type="button" id="settings-reload"></button>
+      <p class="form-status"></p>`;
+    document.body.append(form);
+    attachQuizSettingsForm(form);
+    await vi.waitFor(() => expect(form.querySelector<HTMLInputElement>("#settings-quiz-min")?.value).toBe("80"));
+    const quiz = form.querySelector<HTMLInputElement>("#settings-quiz-min");
+    if (!quiz) throw new Error("Quiz-Einstellung fehlt");
+    quiz.value = "90";
+    form.dispatchEvent(new Event("submit", { cancelable: true }));
+    expect(fetchMock.mock.calls.filter(([, init]) => init?.method === "PUT")).toHaveLength(0);
+    confirm.mockReturnValue(true);
+    form.dispatchEvent(new Event("submit", { cancelable: true }));
+    await vi.waitFor(() => expect(db.quizSettings?.quizEasyMinScore).toBe(0.9));
+    expect(db.quizSettings).toEqual({ quizEasyMinScore: 0.9, fastlaneMinScore: 0.85, revision: 1 });
   });
 
   it("überführt bisherige Notation in den Text und erhält andere alte Visualisierungen", () => {

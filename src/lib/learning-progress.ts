@@ -1,10 +1,13 @@
 import {
+  DEFAULT_QUIZ_SETTINGS,
   getAvailableTags,
+  isQuizSettings,
   type LearningModule,
   MODULE_SCOPES,
   type ModuleQuestion,
   type ModuleScope,
   type ModulesDatabase,
+  type QuizSettings,
 } from "./module-schema.ts";
 import { calculateQuestionXp } from "./xp-tags.ts";
 
@@ -45,6 +48,7 @@ export interface LearningProgressState {
   xpByTag: Record<string, number>;
   modules: Record<string, ModuleProgress>;
   updatedAt: string;
+  quizSettings?: QuizSettings;
 }
 
 export interface DashboardOverview {
@@ -57,6 +61,15 @@ export interface DashboardOverview {
   overallPercent: number;
   xpByScope: Record<ModuleScope, number>;
   xpByTag: Record<string, number>;
+}
+
+export function getEffectiveQuizSettings(
+  state: LearningProgressState,
+  db: ModulesDatabase,
+): QuizSettings {
+  const saved = state.quizSettings ?? DEFAULT_QUIZ_SETTINGS;
+  const current = db.quizSettings ?? DEFAULT_QUIZ_SETTINGS;
+  return current.revision > saved.revision ? current : saved;
 }
 
 const memoryStorageFallback = new Map<string, string>();
@@ -163,6 +176,7 @@ function cloneState(state: LearningProgressState): LearningProgressState {
     xpByTag,
     modules,
     updatedAt: state.updatedAt,
+    ...(state.quizSettings ? { quizSettings: { ...state.quizSettings } } : {}),
   };
 }
 
@@ -235,6 +249,7 @@ function unlockSuccessorModule(
  */
 export function createInitialProgress(
   modules: readonly LearningModule[],
+  quizSettings: QuizSettings = DEFAULT_QUIZ_SETTINGS,
 ): LearningProgressState {
   const sorted = sortModulesByOrder(modules);
   const moduleEntries: Record<string, ModuleProgress> = {};
@@ -250,6 +265,7 @@ export function createInitialProgress(
     xpByTag: createEmptyTagXp(),
     modules: moduleEntries,
     updatedAt: nowIso(),
+    quizSettings: { ...quizSettings },
   };
 }
 
@@ -443,7 +459,8 @@ export function submitQuizAttempt(
       normalizedScore,
     );
 
-    if (normalizedScore >= mod.quizEasyMinScore) {
+    const settings = getEffectiveQuizSettings(next, db);
+    if (normalizedScore >= settings.quizEasyMinScore) {
       const solvedSet = new Set(target.solvedQuestionIds);
       for (const question of db.questions) {
         if (
@@ -479,7 +496,8 @@ export function submitQuizAttempt(
     normalizedScore,
   );
 
-  if (normalizedScore >= mod.fastlaneMinScore) {
+  const settings = getEffectiveQuizSettings(next, db);
+  if (normalizedScore >= settings.fastlaneMinScore) {
     if (target.steps.theory !== "completed") {
       creditXp(
         next,
@@ -647,6 +665,9 @@ function sanitizeStoredProgress(
     xpByTag,
     modules: sanitizedModules,
     updatedAt: typeof raw.updatedAt === "string" ? raw.updatedAt : nowIso(),
+    ...(isQuizSettings(raw.quizSettings)
+      ? { quizSettings: raw.quizSettings }
+      : {}),
   };
 
   return syncProgressWithCurriculum(baseState, modules);
@@ -699,6 +720,7 @@ function removeStorageRaw(storageKey: string): void {
 export function loadLearningProgress(
   modules: readonly LearningModule[] = [],
   storageKey: string = LEARNING_PROGRESS_STORAGE_KEY,
+  quizSettings: QuizSettings = DEFAULT_QUIZ_SETTINGS,
 ): LearningProgressState {
   const raw = readStorageRaw(storageKey);
   if (raw) {
@@ -706,13 +728,25 @@ export function loadLearningProgress(
       const parsed: unknown = JSON.parse(raw);
       const restored = sanitizeStoredProgress(parsed, modules);
       if (restored) {
+        const savedRevision = restored.quizSettings?.revision ?? 0;
+        if (quizSettings.revision > savedRevision) {
+          const reset = createInitialProgress(modules, quizSettings);
+          saveLearningProgress(reset, storageKey);
+          return reset;
+        }
+        if (!restored.quizSettings) {
+          restored.quizSettings = { ...quizSettings };
+          saveLearningProgress(restored, storageKey);
+        }
         return restored;
       }
     } catch {
       // Ungültiges JSON fällt auf frischen Zustand zurück
     }
   }
-  return createInitialProgress(modules);
+  const initial = createInitialProgress(modules, quizSettings);
+  saveLearningProgress(initial, storageKey);
+  return initial;
 }
 
 /** Speichert den Lernfortschritt in `localStorage` bzw. im SSR-In-Memory-Fallback. */

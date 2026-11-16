@@ -50,6 +50,36 @@ export type NotationTaskDuration = (typeof NOTATION_DURATIONS)[number];
 export const DEFAULT_QUIZ_EASY_MIN_SCORE = 0.8;
 export const DEFAULT_FASTLANE_MIN_SCORE = 0.85;
 
+export interface QuizSettings {
+  quizEasyMinScore: number;
+  fastlaneMinScore: number;
+  revision: number;
+}
+
+export const DEFAULT_QUIZ_SETTINGS: QuizSettings = {
+  quizEasyMinScore: DEFAULT_QUIZ_EASY_MIN_SCORE,
+  fastlaneMinScore: DEFAULT_FASTLANE_MIN_SCORE,
+  revision: 0,
+};
+
+export function isQuizSettings(value: unknown): value is QuizSettings {
+  if (typeof value !== "object" || value === null) return false;
+  const settings = value as Record<string, unknown>;
+  return (
+    typeof settings.quizEasyMinScore === "number" &&
+    Number.isFinite(settings.quizEasyMinScore) &&
+    settings.quizEasyMinScore >= 0 &&
+    settings.quizEasyMinScore <= 1 &&
+    typeof settings.fastlaneMinScore === "number" &&
+    Number.isFinite(settings.fastlaneMinScore) &&
+    settings.fastlaneMinScore >= 0 &&
+    settings.fastlaneMinScore <= 1 &&
+    typeof settings.revision === "number" &&
+    Number.isSafeInteger(settings.revision) &&
+    settings.revision >= 0
+  );
+}
+
 export interface TheoryBlock {
   id: string;
   order: number;
@@ -107,6 +137,7 @@ export interface LearningModule {
 export interface ModulesDatabase {
   modules: LearningModule[];
   questions: ModuleQuestion[];
+  quizSettings?: QuizSettings;
 }
 
 export function isModuleScope(value: unknown): value is ModuleScope {

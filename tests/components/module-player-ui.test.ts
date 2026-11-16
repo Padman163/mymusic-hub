@@ -51,7 +51,7 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     db.modules[0].theoryBlocks[1].visualComponent = "Notation";
     db.modules[0].theoryBlocks[1].visualPropsJson = '{"notes":[],"clef":"treble"}';
     attachModuleStepper(root, { initialDb: db, autoFetch: false });
-    expect(root.querySelectorAll("svg.notation-staff")).toHaveLength(1);
+    expect(root.querySelectorAll(".learning-theory-block")[1].querySelectorAll("svg.notation-staff")).toHaveLength(1);
     expect(root.textContent).not.toContain("<Notation");
   });
 
@@ -63,6 +63,17 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     expect(container.querySelector("code")?.textContent).toBe("<Notation notes={[]} />");
     expect(container.querySelector(".learning-notation-error")?.textContent).toContain("Nur feste Werte");
     expect(container.querySelector("svg.notation-staff")).toBeNull();
+  });
+
+  it("zeigt die globale Bestehensgrenze im Fastlane-Quiz an", () => {
+    const root = document.createElement("section");
+    root.dataset.moduleId = "theory-101";
+    root.dataset.mode = "fastlane";
+    document.body.append(root);
+    const db = structuredClone(seedDb);
+    db.quizSettings = { quizEasyMinScore: 0.9, fastlaneMinScore: 0.93, revision: 1 };
+    attachModuleStepper(root, { initialDb: db, autoFetch: false });
+    expect(root.textContent).toContain("Benötigt: 93 %");
   });
 
   it("enthält valide Startmodule und Fragen in data/modules.json", () => {
@@ -253,7 +264,7 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     ).toBe("Gesamtfortschritt 0 %");
     expect(
       mod1Before?.querySelector('[data-roadmap-stat="theory"]')?.textContent,
-    ).toBe("Theorie 0/2");
+    ).toBe(`Theorie 0/${seedDb.modules[0].theoryBlocks.length}`);
     expect(
       mod1Before
         ?.querySelector('[data-roadmap-stat="theory"] [role="progressbar"]')
@@ -356,7 +367,7 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     ).toBe("Gesamtfortschritt 100 %");
     expect(
       mod1After?.querySelector('[data-roadmap-stat="theory"]')?.textContent,
-    ).toBe("Theorie 2/2");
+    ).toBe(`Theorie ${seedDb.modules[0].theoryBlocks.length}/${seedDb.modules[0].theoryBlocks.length}`);
     expect(
       mod1After
         ?.querySelector('[data-roadmap-stat="theory"] [role="progressbar"]')

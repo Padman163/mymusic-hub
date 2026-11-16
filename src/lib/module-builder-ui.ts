@@ -1,11 +1,11 @@
 import { addIcon } from "./contribution-types.ts";
 import {
-  DEFAULT_FASTLANE_MIN_SCORE,
-  DEFAULT_QUIZ_EASY_MIN_SCORE,
+  DEFAULT_QUIZ_SETTINGS,
   getDefaultBaseXpForLane,
   isDStage,
   isModuleScope,
   isQuestionType,
+  isQuizSettings,
   isTargetLane,
   type LearningModule,
   type ModuleQuestion,
@@ -88,13 +88,17 @@ function parseModulesResponse(data: unknown): ModulesDatabase {
   if (
     !isRecord(data) ||
     !Array.isArray(data.modules) ||
-    !Array.isArray(data.questions)
+    !Array.isArray(data.questions) ||
+    (data.quizSettings !== undefined && !isQuizSettings(data.quizSettings))
   ) {
     throw new Error("Die Moduldaten haben ein ungültiges Format.");
   }
   return {
     modules: data.modules as LearningModule[],
     questions: data.questions as ModuleQuestion[],
+    ...(data.quizSettings !== undefined
+      ? { quizSettings: data.quizSettings }
+      : {}),
   };
 }
 
@@ -572,6 +576,128 @@ export interface ModuleBuilderFormController {
   tagPicker: XpTagPickerController;
 }
 
+export function attachQuizSettingsForm(form: HTMLFormElement): void {
+  const message = "Felder der Quiz-Einstellungen fehlen.";
+  const quizInput = requireElement<HTMLInputElement>(
+    form,
+    "#settings-quiz-min",
+    message,
+  );
+  const fastlaneInput = requireElement<HTMLInputElement>(
+    form,
+    "#settings-fastlane-min",
+    message,
+  );
+  const saveButton = requireElement<HTMLButtonElement>(
+    form,
+    'button[type="submit"]',
+    message,
+  );
+  const reloadButton = requireElement<HTMLButtonElement>(
+    form,
+    "#settings-reload",
+    message,
+  );
+  const status = requireElement<HTMLElement>(form, ".form-status", message);
+  let settings = { ...DEFAULT_QUIZ_SETTINGS };
+  let loaded = false;
+
+  async function reload(): Promise<void> {
+    loaded = false;
+    saveButton.disabled = true;
+    reloadButton.disabled = true;
+    status.textContent = "Einstellungen werden geladen …";
+    try {
+      const db = await fetchModulesDatabase();
+      settings = { ...(db.quizSettings ?? DEFAULT_QUIZ_SETTINGS) };
+      quizInput.value = String(settings.quizEasyMinScore * 100);
+      fastlaneInput.value = String(settings.fastlaneMinScore * 100);
+      loaded = true;
+      status.textContent = "Einstellungen geladen.";
+    } catch (error) {
+      status.textContent =
+        error instanceof Error
+          ? error.message
+          : "Einstellungen konnten nicht geladen werden.";
+    } finally {
+      saveButton.disabled = !loaded;
+      reloadButton.disabled = false;
+    }
+  }
+
+  reloadButton.addEventListener("click", () => {
+    void reload();
+  });
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!loaded) return;
+    const quiz = Number(quizInput.value);
+    const fastlane = Number(fastlaneInput.value);
+    if (
+      !quizInput.value.trim() ||
+      !fastlaneInput.value.trim() ||
+      !Number.isFinite(quiz) ||
+      quiz < 0 ||
+      quiz > 100 ||
+      !Number.isFinite(fastlane) ||
+      fastlane < 0 ||
+      fastlane > 100
+    ) {
+      status.textContent =
+        "Bitte gib für beide Grenzen einen Wert zwischen 0 und 100 ein.";
+      return;
+    }
+    const next = {
+      quizEasyMinScore: quiz / 100,
+      fastlaneMinScore: fastlane / 100,
+      revision: settings.revision,
+    };
+    if (
+      next.quizEasyMinScore === settings.quizEasyMinScore &&
+      next.fastlaneMinScore === settings.fastlaneMinScore
+    ) {
+      status.textContent = "Die Einstellungen sind unverändert.";
+      return;
+    }
+    if (
+      !window.confirm(
+        "Die Änderung setzt beim nächsten Laden den gesamten Lernfortschritt einschließlich XP in allen Browsern zurück. Fortfahren?",
+      )
+    )
+      return;
+    saveButton.disabled = true;
+    reloadButton.disabled = true;
+    status.textContent = "Einstellungen werden gespeichert …";
+    try {
+      const result = await sendModulesRequest(
+        "PUT",
+        { entity: "quiz-settings", settings: next },
+        "Einstellungen konnten nicht gespeichert werden.",
+      );
+      const db = parseModulesResponse(result);
+      if (!db.quizSettings)
+        throw new Error(
+          "Die gespeicherten Einstellungen fehlen in der Antwort.",
+        );
+      settings = db.quizSettings;
+      status.textContent =
+        "Einstellungen gespeichert. Lernstände werden beim nächsten Laden zurückgesetzt.";
+      document.dispatchEvent(
+        new CustomEvent("modules:updated", { bubbles: true, detail: db }),
+      );
+    } catch (error) {
+      status.textContent =
+        error instanceof Error
+          ? error.message
+          : "Einstellungen konnten nicht gespeichert werden.";
+    } finally {
+      saveButton.disabled = false;
+      reloadButton.disabled = false;
+    }
+  });
+  void reload();
+}
+
 /** Initialisiert die Logik für das Modul-Builder-Formular. */
 export function attachModuleBuilderForm(
   form: HTMLFormElement,
@@ -622,16 +748,6 @@ export function attachModuleBuilderForm(
     "#module-theory-base-xp",
     msg,
   );
-  const quizEasyMinInput = requireElement<HTMLInputElement>(
-    form,
-    "#module-quiz-easy-min",
-    msg,
-  );
-  const fastlaneMinInput = requireElement<HTMLInputElement>(
-    form,
-    "#module-fastlane-min",
-    msg,
-  );
   const blocksContainer = requireElement<HTMLDivElement>(
     form,
     "#module-theory-blocks-field",
@@ -674,8 +790,6 @@ export function attachModuleBuilderForm(
       dStageSelect,
       hasPracticeInput,
       theoryBaseXpInput,
-      quizEasyMinInput,
-      fastlaneMinInput,
       submitButton,
       cancelButton,
     ];
@@ -693,16 +807,6 @@ export function attachModuleBuilderForm(
     if (theoryBaseXpInput) {
       theoryBaseXpInput.value = String(BASE_XP_DEFAULTS.theoryBlock);
     }
-    if (quizEasyMinInput) {
-      quizEasyMinInput.value = String(
-        Math.round(DEFAULT_QUIZ_EASY_MIN_SCORE * 100),
-      );
-    }
-    if (fastlaneMinInput) {
-      fastlaneMinInput.value = String(
-        Math.round(DEFAULT_FASTLANE_MIN_SCORE * 100),
-      );
-    }
     tagPicker.clear();
     theoryBlockEditor.clear();
     if (submitButton) submitButton.textContent = "Modul speichern";
@@ -719,8 +823,6 @@ export function attachModuleBuilderForm(
     dStageSelect.value = mod.dStage ?? "";
     hasPracticeInput.checked = mod.hasPractice;
     theoryBaseXpInput.value = String(mod.theoryBaseXp);
-    quizEasyMinInput.value = String(Math.round(mod.quizEasyMinScore * 100));
-    fastlaneMinInput.value = String(Math.round(mod.fastlaneMinScore * 100));
     tagPicker.setSelectedTags(mod.tags);
     theoryBlockEditor.setItems(mod.theoryBlocks);
     submitButton.textContent = "Modul-Änderungen speichern";
@@ -752,9 +854,12 @@ export function attachModuleBuilderForm(
 
     const scopeValue = scopeSelect.value;
     const dStageValue = dStageSelect.value;
+    const moduleId =
+      editingModuleId ?? newModuleId ?? `mod-${crypto.randomUUID()}`;
+    if (!editingModuleId) newModuleId = moduleId;
     const payload: UpsertModuleInput & { entity: "module" } = {
       entity: "module",
-      id: editingModuleId ?? (newModuleId ??= `mod-${crypto.randomUUID()}`),
+      id: moduleId,
       title: titleInput.value.trim(),
       description: descriptionInput.value.trim(),
       scope: isModuleScope(scopeValue) ? scopeValue : "theory",
@@ -763,8 +868,6 @@ export function attachModuleBuilderForm(
       tags: tagPicker.selectedTags(),
       hasPractice: hasPracticeInput.checked,
       theoryBaseXp: Number(theoryBaseXpInput.value),
-      quizEasyMinScore: Number(quizEasyMinInput.value) / 100,
-      fastlaneMinScore: Number(fastlaneMinInput.value) / 100,
       theoryBlocks,
     };
 
@@ -1852,10 +1955,14 @@ export function attachModuleCatalogList(
         moveBtn.addEventListener("click", async () => {
           if (!neighbor) return;
           const buttons = Array.from(
-            list.querySelectorAll<HTMLButtonElement>(".module-move-up, .module-move-down"),
+            list.querySelectorAll<HTMLButtonElement>(
+              ".module-move-up, .module-move-down",
+            ),
           );
           const disabledStates = buttons.map((button) => button.disabled);
-          buttons.forEach((button) => { button.disabled = true; });
+          buttons.forEach((button) => {
+            button.disabled = true;
+          });
           scopeFilter.disabled = true;
           sortSelect.disabled = true;
           reloadButton.disabled = true;
@@ -1863,16 +1970,26 @@ export function attachModuleCatalogList(
           try {
             const result = await sendModulesRequest(
               "PUT",
-              { entity: "module-order", id: mod.id, neighborId: neighbor.id, direction },
+              {
+                entity: "module-order",
+                id: mod.id,
+                neighborId: neighbor.id,
+                direction,
+              },
               "Das Modul konnte nicht verschoben werden.",
             );
             renderDatabase(parseModulesResponse(result));
             document.dispatchEvent(
-              new CustomEvent("modules:updated", { bubbles: true, detail: result }),
+              new CustomEvent("modules:updated", {
+                bubbles: true,
+                detail: result,
+              }),
             );
           } catch (error) {
             status.textContent =
-              error instanceof Error ? error.message : "Das Modul konnte nicht verschoben werden.";
+              error instanceof Error
+                ? error.message
+                : "Das Modul konnte nicht verschoben werden.";
             buttons.forEach((button, buttonIndex) => {
               button.disabled = disabledStates[buttonIndex];
             });

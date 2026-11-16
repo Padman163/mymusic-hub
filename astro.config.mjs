@@ -116,6 +116,10 @@ function localModulesApiPlugin() {
             /** @type {typeof import("./src/lib/module-store.ts")} */ (
               await server.ssrLoadModule("/src/lib/module-store.ts")
             );
+          const schema =
+            /** @type {typeof import("./src/lib/module-schema.ts")} */ (
+              await server.ssrLoadModule("/src/lib/module-schema.ts")
+            );
           const dataFilePath = path.resolve(process.cwd(), "data/modules.json");
 
           const readDb = async () => {
@@ -125,13 +129,15 @@ function localModulesApiPlugin() {
               if (
                 !isLocalRecord(parsed) ||
                 !Array.isArray(parsed.modules) ||
-                !Array.isArray(parsed.questions)
+                !Array.isArray(parsed.questions) ||
+                (parsed.quizSettings !== undefined && !schema.isQuizSettings(parsed.quizSettings))
               ) {
                 throw new Error("Ungültiges Format in data/modules.json.");
               }
               return /** @type {import("./src/lib/module-schema.ts").ModulesDatabase} */ ({
                 modules: parsed.modules,
                 questions: parsed.questions,
+                ...(parsed.quizSettings !== undefined ? { quizSettings: parsed.quizSettings } : {}),
               });
             } catch (err) {
               if (
@@ -235,6 +241,21 @@ function localModulesApiPlugin() {
               }
 
               const body = parsedBody ?? {};
+              if (body.entity === "quiz-settings") {
+                if (method !== "PUT" || !schema.isQuizSettings(body.settings)) {
+                  sendLocalJson(res, 400, { error: "Ungültige Quiz-Einstellungen." });
+                  return;
+                }
+                const db = await readDb();
+                if ((db.quizSettings ?? schema.DEFAULT_QUIZ_SETTINGS).revision !== body.settings.revision) {
+                  sendLocalJson(res, 409, { error: "Die Einstellungen wurden zwischenzeitlich geändert. Bitte lade sie neu." });
+                  return;
+                }
+                const nextDb = store.updateQuizSettings(db, body.settings);
+                await writeDb(nextDb);
+                sendLocalJson(res, 200, nextDb);
+                return;
+              }
               if (body.entity === "module-order") {
                 if (
                   method !== "PUT" ||

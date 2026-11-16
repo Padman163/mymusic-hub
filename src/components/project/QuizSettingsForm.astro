@@ -1,0 +1,40 @@
+---
+import "../../styles/module-builder.css";
+---
+
+<form id="quiz-settings-form" class="issue-tracker-form module-builder-form">
+  <p>
+    Diese Grenzen gelten für alle Module. Eine Änderung setzt den gesamten
+    Lernfortschritt einschließlich XP beim nächsten Laden im jeweiligen Browser zurück.
+  </p>
+  <div class="module-field-grid">
+    <div class="field">
+      <label for="settings-quiz-min">Abschluss-Quiz bestehen (%)</label>
+      <input id="settings-quiz-min" type="number" min="0" max="100" step="1" required />
+    </div>
+    <div class="field">
+      <label for="settings-fastlane-min">Fastlane bestehen (%)</label>
+      <input id="settings-fastlane-min" type="number" min="0" max="100" step="1" required />
+    </div>
+  </div>
+  <div class="form-actions">
+    <button class="module-save-btn" type="submit" disabled>Einstellungen speichern</button>
+    <button id="settings-reload" type="button">Neu laden</button>
+  </div>
+  <p class="form-status" role="status" aria-live="polite"></p>
+</form>
+
+<script>
+  import { attachQuizSettingsForm } from "../../lib/module-builder-ui";
+
+  function initQuizSettings() {
+    const form = document.querySelector<HTMLFormElement>("#quiz-settings-form");
+    if (form && form.dataset.quizSettingsAttached !== "true") {
+      form.dataset.quizSettingsAttached = "true";
+      attachQuizSettingsForm(form);
+    }
+  }
+
+  initQuizSettings();
+  document.addEventListener("astro:page-load", initQuizSettings);
+</script>

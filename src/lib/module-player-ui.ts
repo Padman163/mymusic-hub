@@ -5,6 +5,7 @@ import {
   completeTheoryStep,
   createInitialProgress,
   getDashboardOverview,
+  getEffectiveQuizSettings,
   type LaneStep,
   type LearningProgressState,
   loadLearningProgress,
@@ -16,6 +17,7 @@ import {
   syncProgressWithCurriculum,
 } from "./learning-progress.ts";
 import {
+  isQuizSettings,
   type LearningModule,
   MODULE_SCOPES,
   type ModuleQuestion,
@@ -201,11 +203,15 @@ function parseInitialDatabaseFromRoot(
     if (
       isRecord(parsed) &&
       Array.isArray(parsed.modules) &&
-      Array.isArray(parsed.questions)
+      Array.isArray(parsed.questions) &&
+      (parsed.quizSettings === undefined || isQuizSettings(parsed.quizSettings))
     ) {
       return {
         modules: parsed.modules as LearningModule[],
         questions: parsed.questions as ModuleQuestion[],
+        ...(parsed.quizSettings !== undefined
+          ? { quizSettings: parsed.quizSettings }
+          : {}),
       };
     }
   } catch {
@@ -233,11 +239,15 @@ async function tryFetchModulesDbFromUrl(
     if (
       isRecord(parsed) &&
       Array.isArray(parsed.modules) &&
-      Array.isArray(parsed.questions)
+      Array.isArray(parsed.questions) &&
+      (parsed.quizSettings === undefined || isQuizSettings(parsed.quizSettings))
     ) {
       return {
         modules: parsed.modules as LearningModule[],
         questions: parsed.questions as ModuleQuestion[],
+        ...(parsed.quizSettings !== undefined
+          ? { quizSettings: parsed.quizSettings }
+          : {}),
       };
     }
   } catch {
@@ -941,7 +951,11 @@ export function attachProgressDashboard(
     options.showDetails ?? root.dataset.showDetails === "true";
 
   const render = () => {
-    const state = loadLearningProgress(currentDb.modules);
+    const state = loadLearningProgress(
+      currentDb.modules,
+      undefined,
+      currentDb.quizSettings,
+    );
     const overview = getDashboardOverview(state, currentDb);
 
     root.replaceChildren();
@@ -1142,7 +1156,10 @@ export function attachProgressDashboard(
     });
     confirmYes.addEventListener("click", () => {
       clearLearningProgress();
-      const fresh = createInitialProgress(currentDb.modules);
+      const fresh = createInitialProgress(
+        currentDb.modules,
+        currentDb.quizSettings,
+      );
       commitProgressChange(fresh, currentDb, "reset");
     });
 
@@ -1223,7 +1240,11 @@ export function attachModuleRoadmap(
 
   const render = () => {
     const state = syncProgressWithCurriculum(
-      loadLearningProgress(currentDb.modules),
+      loadLearningProgress(
+        currentDb.modules,
+        undefined,
+        currentDb.quizSettings,
+      ),
       currentDb.modules,
     );
     const sortedModules = sortModules(currentDb.modules);
@@ -1516,7 +1537,11 @@ export function attachModuleQuizRunner(
       finishBtn.dataset.action = "complete-empty-exercise";
       finishBtn.textContent = "Aufgabenschritt abschließen";
       finishBtn.addEventListener("click", () => {
-        const current = loadLearningProgress(db.modules);
+        const current = loadLearningProgress(
+          db.modules,
+          undefined,
+          db.quizSettings,
+        );
         const dummyQuestion: ModuleQuestion = {
           id: `__empty_${mod.id}`,
           moduleId: mod.id,
@@ -1542,7 +1567,11 @@ export function attachModuleQuizRunner(
       return;
     }
 
-    const currentProgress = loadLearningProgress(db.modules);
+    const currentProgress = loadLearningProgress(
+      db.modules,
+      undefined,
+      db.quizSettings,
+    );
     const solvedSet = new Set(
       currentProgress.modules[mod.id]?.solvedQuestionIds ?? [],
     );
@@ -1592,7 +1621,11 @@ export function attachModuleQuizRunner(
         const titleEl = document.createElement("strong");
         if (result.correct) {
           feedback.dataset.outcome = "correct";
-          const latest = loadLearningProgress(db.modules);
+          const latest = loadLearningProgress(
+            db.modules,
+            undefined,
+            db.quizSettings,
+          );
           const alreadySolved =
             latest.modules[mod.id]?.solvedQuestionIds.includes(question.id) ??
             false;
@@ -1641,8 +1674,12 @@ export function attachModuleQuizRunner(
     return;
   }
 
+  const settings = getEffectiveQuizSettings(
+    loadLearningProgress(db.modules, undefined, db.quizSettings),
+    db,
+  );
   const threshold =
-    mode === "fastlane" ? mod.fastlaneMinScore : mod.quizEasyMinScore;
+    mode === "fastlane" ? settings.fastlaneMinScore : settings.quizEasyMinScore;
   const thresholdPct = Math.round(threshold * 100);
   let currentIndex = 0;
   let correctCount = 0;
@@ -1650,7 +1687,7 @@ export function attachModuleQuizRunner(
 
   const renderExamStep = () => {
     container.replaceChildren();
-    const state = loadLearningProgress(db.modules);
+    const state = loadLearningProgress(db.modules, undefined, db.quizSettings);
     const openXp = computeRemainingModuleXp(state, db, mod, mode);
 
     const examCard = document.createElement("div");
@@ -1771,7 +1808,11 @@ export function attachModuleQuizRunner(
 
       const ratio = correctCount / questions.length;
       const scorePct = Math.round(ratio * 100);
-      const before = loadLearningProgress(db.modules);
+      const before = loadLearningProgress(
+        db.modules,
+        undefined,
+        db.quizSettings,
+      );
       const after = submitQuizAttempt(before, db, mod.id, mode, ratio);
       const earnedXp = after.totalXp - before.totalXp;
 
@@ -1898,7 +1939,11 @@ export function attachModuleStepper(
   const fullRender = () => {
     const { mod, mode } = resolveModuleAndMode();
     const state = syncProgressWithCurriculum(
-      loadLearningProgress(currentDb.modules),
+      loadLearningProgress(
+        currentDb.modules,
+        undefined,
+        currentDb.quizSettings,
+      ),
       currentDb.modules,
     );
 
@@ -2024,7 +2069,11 @@ export function attachModuleStepper(
     }
 
     completeTheoryBtn.addEventListener("click", () => {
-      const latest = loadLearningProgress(currentDb.modules);
+      const latest = loadLearningProgress(
+        currentDb.modules,
+        undefined,
+        currentDb.quizSettings,
+      );
       const updated = completeTheoryStep(latest, mod);
       commitProgressChange(updated, currentDb);
     });
@@ -2172,7 +2221,11 @@ export function attachModuleStepper(
     } else {
       btn.textContent = "Praxisteil abschließen";
       btn.addEventListener("click", () => {
-        const latest = loadLearningProgress(currentDb.modules);
+        const latest = loadLearningProgress(
+          currentDb.modules,
+          undefined,
+          currentDb.quizSettings,
+        );
         const updated = completePracticeStep(latest, mod);
         commitProgressChange(updated, currentDb);
       });
@@ -2194,7 +2247,11 @@ export function attachModuleStepper(
       return;
     }
 
-    const state = loadLearningProgress(currentDb.modules);
+    const state = loadLearningProgress(
+      currentDb.modules,
+      undefined,
+      currentDb.quizSettings,
+    );
     const modProgress = state.modules[mod.id];
     if (!modProgress || !stepElements.theory) {
       fullRender();

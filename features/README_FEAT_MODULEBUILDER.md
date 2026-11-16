@@ -30,7 +30,7 @@ Warum machen wir das getrennt? Weil so jeder Baustein einzeln geprüft und getes
 ### 2. Der gemeinsame Bauplan für Module & Aufgaben (`src/lib/module-schema.ts`)
 - **Was es ist:** Eine verbindliche Vorlage, wie ein Lernmodul und eine Aufgabe aufgebaut sein müssen, damit alle Teile der Lernplattform dieselbe Sprache sprechen.
 - **Was darin geregelt ist:**
-  - **Lernmodule:** Haben Titel, Beschreibung, Reihenfolge, Bereich (`theory`, `instrument`, `production`, `band`), Level und optional eine Stufe (`D1`, `D2`, `D3`). Reine Theorie-Module können über `hasPractice: false` klar von Modulen mit Praxis-Anteil getrennt werden. Zudem werden Bestehensgrenzen festgelegt (Standard: **80 %** für das einfache Quiz, **85 %** für den Schnelltest).
+  - **Lernmodule:** Haben Titel, Beschreibung, Reihenfolge, Bereich (`theory`, `instrument`, `production`, `band`), Level und optional eine Stufe (`D1`, `D2`, `D3`). Reine Theorie-Module können über `hasPractice: false` klar von Modulen mit Praxis-Anteil getrennt werden. Die Bestehensgrenzen gelten übergreifend (Standard: **80 %** für das einfache Quiz, **85 %** für den Schnelltest).
   - **Theorie-Bausteine:** Jedes Modul kann beliebig viele Textabschnitte mit optionalen visuellen Komponenten enthalten (z. B. Notenbilder, Klaviatur, Tonleiter-Muster oder anklickbares Griffbrett).
   - **Aufgaben (Fragen):** Unterstützt vier Aufgabentypen:
     1. **Single Choice:** Eine richtige Antwort auswählen.
@@ -81,7 +81,7 @@ Warum machen wir das getrennt? Weil so jeder Baustein einzeln geprüft und getes
 
 Auf das Fundament aus Etappe 1 haben wir jetzt die bedienbare Oberfläche gebaut. Sie ist im bekannten Design des IssueTrackers gehalten, damit alles in Mein Musik-Hub einheitlich aussieht und funktioniert. Zu finden ist sie in der linken Seitenleiste unter **Projektierung → Modul-Builder** (`src/content/docs/projektierung/modul-builder.mdx`).
 
-Dort gibt es drei übersichtliche Reiter (Tabs):
+Dort gibt es vier übersichtliche Reiter:
 
 ### 1. Reiter „1. Modul-Builder (Theorie)“ (`src/components/project/ModuleBuilderForm.astro`)
 - **Wozu er dient:** Hier legst du neue Lernmodule an oder bearbeitest bestehende Module.
@@ -89,7 +89,7 @@ Dort gibt es drei übersichtliche Reiter (Tabs):
   - **Grunddaten:** Die eindeutige Modul-ID wird automatisch erstellt und beim Bearbeiten beibehalten. Neue Module werden automatisch hinter dem Modul mit der höchsten Reihenfolge eingefügt; beim Bearbeiten bleibt ihre Position erhalten. Einstellbar sind Titel, Kurzbeschreibung, Bereich (`Theorie`, `Instrument`, `Produktion`, `Band`), Level (`100` bis `500`) und optional die D-Stufe (`D1`, `D2`, `D3`).
   - **Themen-Etiketten als anklickbare Chips:** Zur Auswahl stehen Tags mit einem Punkte-Faktor über 1,0, z. B. `Notensystem (1.5x)`. Ohne ausgewählten Tag gilt Faktor 1,0. Bereits gespeicherte Tags mit Faktor 1,0 oder nicht mehr auswählbare Tags bleiben beim Bearbeiten erhalten.
   - **Praxisteil-Schalter:** Über ein Häkchen legst du fest, ob das Modul einen Praxisteil hat – bei reinen Theorie-Modulen bleibt der Haken einfach aus.
-  - **Punkte & Bestehensgrenzen:** Theorie-Basis-XP (Standard: `30`) sowie einstellbare Prozentwerte für das einfache Quiz (Standard: `80 %`) und den Fastlane-Test (Standard: `85 %`).
+  - **Punkte:** Theorie-Basis-XP (Standard: `30`). Die Bestehensgrenzen stehen in den übergreifenden Einstellungen.
   - **Dynamischer Theorie-Block-Editor:** Du kannst beliebig viele Lernabschnitte hinzufügen, per Pfeiltasten (`↑` / `↓`) neu sortieren oder wieder entfernen. Das Textfeld unterstützt KaTeX-Formeln (`$...$` / `$$...$$`) und Notationen direkt an der gewünschten Stelle:
 
     ```mdx
@@ -122,7 +122,11 @@ Dort gibt es drei übersichtliche Reiter (Tabs):
   - **Direktes Bearbeiten & Löschen:** Ein Klick auf den Stift bei einem Modul oder einer Frage lädt den Eintrag direkt in den passenden Builder-Reiter. Beim Löschen eines Moduls erinnert eine Sicherheitsabfrage daran, dass alle dazugehörigen Aufgaben mitgelöscht werden.
   - **Reihenfolge ändern:** In der Sortierung „Reihenfolge: 1 → N“ ohne Bereichsfilter verschieben die Pfeile ein Modul jeweils um eine Position. Die Reihenfolge wird dauerhaft gespeichert und gilt für den Lernpfad.
 
-### 4. Gemeinsame Logik, Styling & UI-Tests
+### 4. Reiter „Einstellungen“
+
+Hier werden die Bestehensgrenzen für Abschluss-Quiz und Fastlane für alle Module getrennt eingestellt. Eine tatsächliche Änderung nach Bestätigung setzt den gesamten Lernfortschritt einschließlich XP und Bestwerten beim nächsten Laden im jeweiligen Browser zurück; Quizze müssen erneut absolviert werden. Unverändertes Speichern löst keinen Reset aus.
+
+### Gemeinsame Logik, Styling & UI-Tests
 - **`src/lib/module-builder-ui.ts` & `src/styles/module-builder.css`:** Enthalten die gemeinsame Steuerungslogik für alle drei Werkzeuge sowie das passende Erscheinungsbild (inklusive dunklem Design-Modus), während die `.astro`-Dateien schlank bleiben. Beim Laden und Speichern prüft der Browser sicher auf JSON-Antworten (um HTML-Fehlerseiten sauber abzufangen) und nutzt automatisch `/api/modules` bzw. `/.netlify/functions/modules`.
 - **`astro.config.mjs`:** Bindet den **Modul-Builder** unter *Projektierung → Modul-Builder* sowie den **Interaktiven Lernpfad & Dashboard** ganz oben unter *Audio & Musik → Musiktheorie* in die Seitenleiste ein und stellt zusätzlich einen lokalen Entwicklungs-Endpunkt für `npm run dev` bereit, sodass Änderungen lokal direkt in `data/modules.json` gespeichert werden.
 - **`netlify/functions/modules.ts`:** Reagiert sowohl auf `/api/modules` als auch auf `/.netlify/functions/modules`.
@@ -187,7 +191,7 @@ Die derzeitigen Startdaten in `data/modules.json` enthalten zwei Module:
 
 ### Datenmodell und Einbindung
 
-`src/lib/module-schema.ts` definiert `LearningModule`, `TheoryBlock`, `ModuleQuestion`, `NotationBuilderTaskConfig` und `ModulesDatabase`. Module enthalten unter anderem Bereich, Level, Tags, Praxisteil-Flag, XP-Werte, Bestehensgrenzen und Theorie-Blöcke. Aufgaben referenzieren ein Modul und eine Lernspur (`exercise`, `quiz_easy` oder `fastlane`); Notationsaufgaben konfigurieren Notenschlüssel, Taktart, Vorzeichen, Notenwerte und erwartete Tonhöhen beziehungsweise Dauern.
+`src/lib/module-schema.ts` definiert `LearningModule`, `TheoryBlock`, `ModuleQuestion`, `NotationBuilderTaskConfig` und `ModulesDatabase`. Module enthalten unter anderem Bereich, Level, Tags, Praxisteil-Flag, XP-Werte und Theorie-Blöcke. Die Modul-Datenbank enthält die übergreifenden Quiz-Einstellungen. Aufgaben referenzieren ein Modul und eine Lernspur (`exercise`, `quiz_easy` oder `fastlane`); Notationsaufgaben konfigurieren Notenschlüssel, Taktart, Vorzeichen, Notenwerte und erwartete Tonhöhen beziehungsweise Dauern.
 
 Die drei Builder-Formulare unter `src/components/project/` werden in `src/content/docs/projektierung/modul-builder.mdx` eingebunden. Der Lernpfad nutzt `ProgressDashboard`, `ModuleRoadmap`, `ModuleStepper` und `ModuleQuizRunner` unter `src/components/learning/`; die Seiten liegen unter `src/content/docs/audio/theory/`. Die Builder-Formulare werden ohne fachliche Astro-Props eingebunden. Die Lernkomponenten akzeptieren:
 
@@ -202,7 +206,7 @@ Die Netlify Function `netlify/functions/modules.ts` stellt die Modul-API bereit.
 
 ### Manuelle Abnahme-Checkliste
 
-- [ ] Die Modul-Builder-Seite zeigt alle drei Tabs und lädt den Katalog ohne Fehler.
+- [ ] Die Modul-Builder-Seite zeigt alle vier Tabs und lädt den Katalog ohne Fehler.
 - [ ] Ein Modul mit gültiger ID, Bereich, Level, Tags und Theorie-Blöcken lässt sich lokal speichern und erneut laden.
 - [ ] Theorie-Blöcke lassen sich hinzufügen, entfernen und umsortieren; KaTeX-Inhalte werden im Lernpfad dargestellt.
 - [ ] Visuelle Theorie-Bausteine lassen sich konfigurieren und im Lernpfad prüfen.
