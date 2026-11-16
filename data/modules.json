@@ -22,27 +22,23 @@
           "id": "tb-101-1",
           "order": 1,
           "title": "Schallwelle & Kammerton A",
-          "markdownContent": "Klang entsteht durch periodische Luftdruckschwankungen (Frequenz $f$ in $\\text{Hz}$). Der internationale **Kammerton A4** schwingt mit exakt:\n\n$$f = 440\\text{ Hz}$$\n\nEine **Oktave höher** verdoppelt sich die Frequenz auf $880\\text{ Hz}$; eine Oktave tiefer halbiert sie sich auf $220\\text{ Hz}$.",
-          "visualComponent": "none"
+          "markdownContent": "Klang entsteht durch periodische Luftdruckschwankungen (Frequenz $f$ in $\\text{Hz}$). Der internationale **Kammerton A4** schwingt mit exakt:\n\n$$f = 440\\text{ Hz}$$\n\nEine **Oktave höher** verdoppelt sich die Frequenz auf $880\\text{ Hz}$; eine Oktave tiefer halbiert sie sich auf $220\\text{ Hz}$."
         },
         {
           "id": "tb-101-2",
           "order": 2,
           "title": "Fünf Linien & der Violinschlüssel",
-          "markdownContent": "Ein Standard-Notensystem besitzt **fünf Linien** und vier Zwischenräume. Der **Violinschlüssel (G-Schlüssel)** umschlingt die zweite Linie von unten und verankert dort das eingestrichene **G4**.",
-          "visualComponent": "Notation",
-          "visualPropsJson": "{\"clef\":\"treble\",\"notes\":[{\"type\":\"filled\",\"step\":2,\"duration\":\"quarter\"},{\"type\":\"filled\",\"step\":4,\"duration\":\"quarter\"}]}"
+          "markdownContent": "Ein Standard-Notensystem besitzt **fünf Linien** und vier Zwischenräume. Der **Violinschlüssel (G-Schlüssel)** umschlingt die zweite Linie von unten und verankert dort das eingestrichene **G4**.\n\n<Notation clef={\"treble\"} notes={[{\"type\":\"filled\",\"step\":2,\"duration\":\"quarter\"},{\"type\":\"filled\",\"step\":4,\"duration\":\"quarter\"}]} />"
         },
         {
           "id": "tb-3-8a45d0",
           "order": 3,
           "title": "test notation",
-          "markdownContent": "<Notation clef=\"treble\" notes={[]} />",
-          "visualComponent": "Notation"
+          "markdownContent": "<Notation clef=\"treble\" notes={[]} />"
         }
       ],
       "createdAt": "2026-11-16T00:00:00.000Z",
-      "updatedAt": "2026-11-16T14:27:58.226Z"
+      "updatedAt": "2026-11-16T14:45:46.128Z"
     },
     {
       "id": "guitar-102",
