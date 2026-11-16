@@ -17,6 +17,23 @@ for (const path of pages) {
   });
 }
 
+test('richtet die Pfeile im Theorieblock waagerecht aus', async ({ page }) => {
+  await page.goto('/projektierung/modul-builder/');
+  await page.locator('.theory-block-add').click();
+  await page.locator('.theory-block-add').click();
+  const controls = page.locator('.theory-block-row').nth(1).locator('.theory-block-controls');
+  const up = controls.locator('.theory-block-up');
+  const down = controls.locator('.theory-block-down');
+  const upBox = await up.boundingBox();
+  const downBox = await down.boundingBox();
+  expect(upBox).not.toBeNull();
+  expect(downBox).not.toBeNull();
+  if (!upBox || !downBox) throw new Error('Pfeile nicht sichtbar');
+  expect(Math.abs((upBox.y + upBox.height / 2) - (downBox.y + downBox.height / 2))).toBeLessThan(1);
+  expect(await up.evaluate((button) => getComputedStyle(button).marginTop)).toBe('0px');
+  expect(await down.evaluate((button) => getComputedStyle(button).marginTop)).toBe('0px');
+});
+
 /** Erste Notation mit mindestens drei Takten in der ersten Zeile. */
 function threeMeasureNotation(page: import('@playwright/test').Page): Locator {
   return page
