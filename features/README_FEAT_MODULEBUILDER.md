@@ -90,7 +90,17 @@ Dort gibt es drei übersichtliche Reiter (Tabs):
   - **Themen-Etiketten als anklickbare Chips:** Zeigen direkt den jeweiligen Punkte-Faktor an (z. B. `Notensystem (1.5x)` oder `Allgemein (1.0x)`).
   - **Praxisteil-Schalter:** Über ein Häkchen legst du fest, ob das Modul einen Praxisteil hat – bei reinen Theorie-Modulen bleibt der Haken einfach aus.
   - **Punkte & Bestehensgrenzen:** Theorie-Basis-XP (Standard: `30`) sowie einstellbare Prozentwerte für das einfache Quiz (Standard: `80 %`) und den Fastlane-Test (Standard: `85 %`).
-  - **Dynamischer Theorie-Block-Editor:** Du kannst beliebig viele Lernabschnitte hinzufügen, per Pfeiltasten (`↑` / `↓`) neu sortieren oder wieder entfernen. Jeder Block hat einen Titel, ein Textfeld mit Hinweis auf mathematische KaTeX-Formeln (`$...$` / `$$...$$`) sowie die Möglichkeit, eine visuelle Komponente (wie Notensystem, Klaviatur oder Griffbrett) mit passenden Einstellungen anzuhängen.
+  - **Dynamischer Theorie-Block-Editor:** Du kannst beliebig viele Lernabschnitte hinzufügen, per Pfeiltasten (`↑` / `↓`) neu sortieren oder wieder entfernen. Das Textfeld unterstützt KaTeX-Formeln (`$...$` / `$$...$$`) und Notationen direkt an der gewünschten Stelle:
+
+    ```mdx
+    Erklärung vor dem Notensystem.
+
+    <Notation clef="treble" notes={[{ duration: "quarter", step: 2 }]} />
+
+    Erklärung danach.
+    ```
+
+    Es werden ausschließlich feste Werte, Arrays und Objekte unterstützt, keine ausführbaren JavaScript-Ausdrücke oder Imports. Alte getrennte Notations-Props werden beim Bearbeiten in den Text übernommen. Andere bereits gespeicherte Visualisierungen bleiben erhalten; eine Definition weiterer Komponententypen im Text wird nicht unterstützt.
 
 ### 2. Reiter „2. Aufgaben- & Quiz-Builder“ (`src/components/project/ExerciseBuilderForm.astro`)
 - **Wozu er dient:** Hier erstellst du Übungs- und Prüfungsfragen und ordnest sie direkt einem bestehenden Modul zu.

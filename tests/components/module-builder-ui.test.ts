@@ -6,6 +6,7 @@ import {
   MODULES_API_ENDPOINT,
   MODULES_FUNCTION_FALLBACK_ENDPOINT,
   MODULES_HTML_RESPONSE_ERROR,
+  createTheoryBlockEditor,
 } from "../../src/lib/module-builder-ui";
 import type { ModulesDatabase } from "../../src/lib/module-schema";
 
@@ -149,12 +150,10 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     const markdowns = form.querySelectorAll<HTMLTextAreaElement>(
       ".theory-block-markdown",
     );
-    const visuals = form.querySelectorAll<HTMLSelectElement>(
-      ".theory-block-visual",
-    );
     titles[0].value = "Schwingung";
     markdowns[0].value = "Frequenz $f = 440\\text{ Hz}$";
-    visuals[0].value = "Notation";
+    expect(form.querySelector(".theory-block-visual")).toBeNull();
+    expect(form.querySelector(".theory-block-props")).toBeNull();
 
     titles[1].value = "Obertöne";
     markdowns[1].value = "Ganzzahlige Vielfache";
@@ -170,6 +169,42 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     form.querySelector<HTMLButtonElement>(".theory-block-remove")?.click();
     expect(controller.theoryBlockEditor.items()).toHaveLength(1);
     expect(controller.theoryBlockEditor.items()?.[0]?.title).toBe("Schwingung");
+  });
+
+  it("überführt bisherige Notation in den Text und erhält andere alte Visualisierungen", () => {
+    const editor = createTheoryBlockEditor([
+      {
+        id: "n", order: 1, title: "Noten", markdownContent: "Vorher",
+        visualComponent: "Notation",
+        visualPropsJson: '{"clef":"treble","notes":[{"step":2,"duration":"quarter"}]}',
+      },
+      {
+        id: "f", order: 2, title: "Griffbrett", markdownContent: "Text",
+        visualComponent: "FretboardClickable",
+        visualPropsJson: '{"readOnly":true}',
+      },
+    ]);
+    const blocks = editor.items();
+    expect(blocks?.[0].markdownContent).toContain('<Notation clef={"treble"} notes={');
+    expect(blocks?.[0].visualComponent).toBeUndefined();
+    expect(blocks?.[1].visualComponent).toBe("FretboardClickable");
+    expect(blocks?.[1].visualPropsJson).toBe('{"readOnly":true}');
+    editor.element.querySelectorAll<HTMLButtonElement>("button")
+      .forEach((button) => {
+        if (button.textContent === "Bisherige Visualisierung entfernen") button.click();
+      });
+    expect(editor.items()?.[1].visualComponent).toBeUndefined();
+  });
+
+  it("übernimmt identische Notation aus Text und alten Props nur einmal", () => {
+    const editor = createTheoryBlockEditor([{
+      id: "n", order: 1, title: "Noten",
+      markdownContent: 'Text\n\n<Notation clef="treble" notes={[]} />',
+      visualComponent: "Notation",
+      visualPropsJson: '{"notes":[],"clef":"treble"}',
+    }]);
+    expect(editor.items()?.[0].markdownContent.match(/<Notation/g)).toHaveLength(1);
+    expect(editor.items()?.[0].visualComponent).toBeUndefined();
   });
 
   it("blendet bei interactive_notation die NotationBuilder-Felder und die Live-Vorschau ein", () => {

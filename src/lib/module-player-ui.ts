@@ -27,6 +27,10 @@ import {
 } from "./module-schema.ts";
 import { createEmptyModulesDatabase } from "./module-store.ts";
 import {
+  hasEquivalentNotation,
+  parseTheoryNotation,
+} from "./module-theory-notation.ts";
+import {
   attachNotationBuilder,
   DEFAULT_BUILDER_DURATIONS,
   DEFAULT_NOTATION_STEP,
@@ -425,8 +429,7 @@ function renderInlineMarkdown(text: string): DocumentFragment {
   return frag;
 }
 
-/** Wandelt Markdown inkl. Inline/Display-KaTeX XSS-sicher in DOM-Elemente um. */
-export function renderTheoryMarkdown(markdown: string): DocumentFragment {
+function renderMarkdownText(markdown: string): DocumentFragment {
   const frag = document.createDocumentFragment();
   const normalized = markdown.replace(/\r\n/g, "\n").trim();
   if (!normalized) {
@@ -480,17 +483,60 @@ export function renderTheoryMarkdown(markdown: string): DocumentFragment {
   return frag;
 }
 
-function buildNotationVisualElement(visualPropsJson?: string): HTMLElement {
-  let rawProps: Record<string, unknown> = { clef: "treble", notes: [] };
-  if (visualPropsJson && visualPropsJson.trim().length > 0) {
-    try {
-      const parsed: unknown = JSON.parse(visualPropsJson);
-      if (isRecord(parsed)) {
-        rawProps = parsed;
-      }
-    } catch {
-      // Fallback auf leeres Notensystem bei fehlerhaftem JSON
+/** Wandelt Markdown, KaTeX und sichere Notationselemente in DOM-Elemente um. */
+export function renderTheoryMarkdown(markdown: string): DocumentFragment {
+  const frag = document.createDocumentFragment();
+  const tokens = /(`+|\$\$|\$|<Notation(?=[\s/>]))/g;
+  let textStart = 0;
+  for (
+    let match = tokens.exec(markdown);
+    match;
+    match = tokens.exec(markdown)
+  ) {
+    const token = match[0];
+    if (token !== "<Notation") {
+      const end = markdown.indexOf(token, tokens.lastIndex);
+      if (end !== -1) tokens.lastIndex = end + token.length;
+      continue;
     }
+    if (match.index > 0 && markdown[match.index - 1] === "\\") continue;
+    frag.append(renderMarkdownText(markdown.slice(textStart, match.index)));
+    try {
+      const parsed = parseTheoryNotation(markdown, match.index);
+      frag.append(buildNotationVisualElement(parsed.props));
+      tokens.lastIndex = parsed.end;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const warning = document.createElement("p");
+      warning.className = "learning-notation-error";
+      warning.textContent = `Notation konnte nicht dargestellt werden: ${message}`;
+      frag.append(warning);
+      const end = markdown.indexOf("/>", match.index);
+      tokens.lastIndex = end === -1 ? markdown.length : end + 2;
+    }
+    textStart = tokens.lastIndex;
+  }
+  frag.append(renderMarkdownText(markdown.slice(textStart)));
+  return frag;
+}
+
+function buildNotationVisualElement(
+  rawProps: Record<string, unknown>,
+): HTMLElement {
+  if (
+    rawProps.clef !== undefined &&
+    rawProps.clef !== "treble" &&
+    rawProps.clef !== "bass" &&
+    rawProps.clef !== false
+  ) {
+    throw new Error("Der Notenschlüssel muss treble, bass oder false sein.");
+  }
+  if (
+    (rawProps.notes !== undefined && !Array.isArray(rawProps.notes)) ||
+    (rawProps.measures !== undefined && !Array.isArray(rawProps.measures)) ||
+    (rawProps.notes !== undefined && rawProps.measures !== undefined)
+  ) {
+    throw new Error("notes oder measures muss ein Array sein, nicht beides.");
   }
 
   const clef =
@@ -555,6 +601,7 @@ function buildNotationVisualElement(visualPropsJson?: string): HTMLElement {
         accidentals: measure.accidentals,
         timeSignature: measure.timeSignature,
         layoutTimeSignature: measure.layoutTimeSignature,
+        firstNoteX: measure.firstNoteX,
         showLeftBar: measure.showLeftBar ?? false,
         showRightBar: measure.showRightBar ?? !measure.repeatEnd,
         rightBarStyle: measure.rightBarStyle ?? "single",
@@ -595,7 +642,20 @@ function renderTheoryVisualElement(
     block.visualComponent === "Notation" ||
     block.visualComponent === "NotationVisual"
   ) {
-    host.append(buildNotationVisualElement(block.visualPropsJson));
+    try {
+      const rawProps: unknown = block.visualPropsJson?.trim()
+        ? JSON.parse(block.visualPropsJson)
+        : {};
+      if (!isRecord(rawProps))
+        throw new Error("Die Visual-Props müssen ein Objekt sein.");
+      if (hasEquivalentNotation(block.markdownContent, rawProps)) return null;
+      host.append(buildNotationVisualElement(rawProps));
+    } catch (error) {
+      const warning = document.createElement("p");
+      warning.className = "learning-notation-error";
+      warning.textContent = `Notation konnte nicht dargestellt werden: ${error instanceof Error ? error.message : String(error)}`;
+      host.append(warning);
+    }
     return host;
   }
 

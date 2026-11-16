@@ -11,6 +11,7 @@ import {
   attachModuleStepper,
   attachProgressDashboard,
   evaluateQuestionAnswer,
+  renderTheoryMarkdown,
 } from "../../src/lib/module-player-ui";
 
 const seedDb = rawSeedDb as unknown as ModulesDatabase;
@@ -23,6 +24,45 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
   afterEach(() => {
     clearLearningProgress();
     document.body.replaceChildren();
+  });
+
+  it("rendert Notation an ihrer Textposition ohne Quelltext und unterstützt mehrere Elemente", () => {
+    const container = document.createElement("div");
+    container.append(renderTheoryMarkdown(
+      'Vorher\n\n<Notation clef="treble" notes={[{ step: 2, duration: "quarter" }, { step: 4, duration: "quarter" }]} />\n\nDanach\n\n<Notation clef="bass" notes={[]} />',
+    ));
+    expect(container.querySelectorAll("svg.notation-staff")).toHaveLength(2);
+    expect(container.querySelectorAll("svg.notation-staff")[0].querySelectorAll(".notation-note")).toHaveLength(2);
+    expect(Array.from(container.children).map((child) => child.tagName)).toEqual([
+      "P", "DIV", "P", "DIV",
+    ]);
+    expect(container.textContent).not.toContain("<Notation");
+    expect(container.textContent).toContain("Vorher");
+    expect(container.textContent).toContain("Danach");
+  });
+
+  it("zeigt eine alte Visualisierung nicht doppelt, wenn dieselbe Notation bereits im Text steht", () => {
+    const root = document.createElement("section");
+    root.dataset.moduleId = "theory-101";
+    document.body.append(root);
+    const db = structuredClone(seedDb);
+    db.modules[0].theoryBlocks[1].markdownContent =
+      'Text\n\n<Notation clef="treble" notes={[]} />';
+    db.modules[0].theoryBlocks[1].visualComponent = "Notation";
+    db.modules[0].theoryBlocks[1].visualPropsJson = '{"notes":[],"clef":"treble"}';
+    attachModuleStepper(root, { initialDb: db, autoFetch: false });
+    expect(root.querySelectorAll("svg.notation-staff")).toHaveLength(1);
+    expect(root.textContent).not.toContain("<Notation");
+  });
+
+  it("führt keine Ausdrücke aus und lässt Komponenten in Inline-Code unverändert", () => {
+    const container = document.createElement("div");
+    container.append(renderTheoryMarkdown(
+      '`<Notation notes={[]} />`\n\n<Notation notes={window.alert(1)} />',
+    ));
+    expect(container.querySelector("code")?.textContent).toBe("<Notation notes={[]} />");
+    expect(container.querySelector(".learning-notation-error")?.textContent).toContain("Nur feste Werte");
+    expect(container.querySelector("svg.notation-staff")).toBeNull();
   });
 
   it("enthält valide Startmodule und Fragen in data/modules.json", () => {

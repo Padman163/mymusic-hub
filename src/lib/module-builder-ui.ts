@@ -7,7 +7,6 @@ import {
   isModuleScope,
   isQuestionType,
   isTargetLane,
-  isVisualComponent,
   type LearningModule,
   type ModuleQuestion,
   type ModuleScope,
@@ -18,8 +17,6 @@ import {
   type QuestionType,
   type TargetLane,
   type TheoryBlock,
-  VISUAL_COMPONENTS,
-  type VisualComponentType,
 } from "./module-schema.ts";
 import {
   createEmptyModulesDatabase,
@@ -29,6 +26,7 @@ import {
   validateModuleInput,
   validateQuestionInput,
 } from "./module-store.ts";
+import { notationToMarkdown } from "./module-theory-notation.ts";
 import {
   attachNotationBuilder,
   DEFAULT_BUILDER_DURATIONS,
@@ -322,7 +320,7 @@ export interface TheoryBlockEditorController {
   setDisabled(disabled: boolean): void;
 }
 
-/** Erzeugt einen dynamischen Editor für Theorie-Blöcke mit Sortierung und Visual-Props. */
+/** Erzeugt einen dynamischen Editor für sortierbare Theorie-Blöcke. */
 export function createTheoryBlockEditor(
   initialBlocks: readonly TheoryBlock[] = [],
 ): TheoryBlockEditorController {
@@ -334,6 +332,7 @@ export function createTheoryBlockEditor(
 
   const rows = document.createElement("div");
   rows.className = "theory-block-rows";
+  const legacyVisuals = new WeakMap<HTMLDivElement, Partial<TheoryBlock>>();
 
   const addButton = document.createElement("button");
   addButton.type = "button";
@@ -367,8 +366,15 @@ export function createTheoryBlockEditor(
   }
 
   function addBlock(initial: Partial<TheoryBlock> = {}): void {
+    initial = notationToMarkdown(initial);
     const row = document.createElement("div");
     row.className = "theory-block-row";
+    if (initial.visualComponent && initial.visualComponent !== "none") {
+      legacyVisuals.set(row, {
+        visualComponent: initial.visualComponent,
+        visualPropsJson: initial.visualPropsJson,
+      });
+    }
     row.dataset.blockId =
       initial.id?.trim() ||
       `tb-${rows.childElementCount + 1}-${crypto.randomUUID().slice(0, 6)}`;
@@ -429,7 +435,7 @@ export function createTheoryBlockEditor(
     const markdownLabel = document.createElement("label");
     markdownLabel.className = "field";
     const markdownCaption = document.createElement("span");
-    markdownCaption.textContent = "Inhalt (Markdown & KaTeX)";
+    markdownCaption.textContent = "Inhalt (Markdown, KaTeX & Notation)";
     const markdownInput = document.createElement("textarea");
     markdownInput.className = "theory-block-markdown";
     markdownInput.rows = 4;
@@ -439,44 +445,23 @@ export function createTheoryBlockEditor(
     const katexHint = document.createElement("small");
     katexHint.className = "field-hint";
     katexHint.textContent =
-      "KaTeX-Hinweis: Inline-Formeln mit $...$, abgesetzte Formeln mit $$...$$.";
+      'Formeln mit $...$ oder $$...$$; Notation direkt im Text: <Notation clef="treble" notes={[]} />.';
     markdownLabel.append(markdownCaption, markdownInput, katexHint);
-
-    const visualRow = document.createElement("div");
-    visualRow.className = "theory-block-visual-grid";
-
-    const visualLabel = document.createElement("label");
-    visualLabel.className = "field";
-    const visualCaption = document.createElement("span");
-    visualCaption.textContent = "Visual-Komponente";
-    const visualSelect = document.createElement("select");
-    visualSelect.className = "theory-block-visual";
-    for (const componentName of VISUAL_COMPONENTS) {
-      const option = document.createElement("option");
-      option.value = componentName;
-      option.textContent =
-        componentName === "none" ? "Keine (nur Text)" : componentName;
-      visualSelect.append(option);
+    row.append(rowHeader, titleLabel, markdownLabel);
+    if (legacyVisuals.has(row)) {
+      const legacyHint = document.createElement("small");
+      legacyHint.className = "field-hint";
+      legacyHint.textContent = `Bisherige Visualisierung (${initial.visualComponent}) bleibt erhalten.`;
+      const removeVisual = document.createElement("button");
+      removeVisual.type = "button";
+      removeVisual.textContent = "Bisherige Visualisierung entfernen";
+      removeVisual.addEventListener("click", () => {
+        legacyVisuals.delete(row);
+        legacyHint.remove();
+        removeVisual.remove();
+      });
+      row.append(legacyHint, removeVisual);
     }
-    visualSelect.value =
-      initial.visualComponent && isVisualComponent(initial.visualComponent)
-        ? initial.visualComponent
-        : "none";
-    visualLabel.append(visualCaption, visualSelect);
-
-    const propsLabel = document.createElement("label");
-    propsLabel.className = "field";
-    const propsCaption = document.createElement("span");
-    propsCaption.textContent = "Visual-Props (JSON, optional)";
-    const propsInput = document.createElement("input");
-    propsInput.type = "text";
-    propsInput.className = "theory-block-props";
-    propsInput.placeholder = '{"clef":"treble","notes":[]}';
-    propsInput.value = initial.visualPropsJson ?? "";
-    propsLabel.append(propsCaption, propsInput);
-
-    visualRow.append(visualLabel, propsLabel);
-    row.append(rowHeader, titleLabel, markdownLabel, visualRow);
     rows.append(row);
     syncRowOrder();
   }
@@ -503,14 +488,7 @@ export function createTheoryBlockEditor(
       const markdownInput = row.querySelector<HTMLTextAreaElement>(
         ".theory-block-markdown",
       );
-      const visualSelect = row.querySelector<HTMLSelectElement>(
-        ".theory-block-visual",
-      );
-      const propsInput = row.querySelector<HTMLInputElement>(
-        ".theory-block-props",
-      );
-
-      if (!titleInput || !markdownInput || !visualSelect || !propsInput) {
+      if (!titleInput || !markdownInput) {
         throw new Error("Die Felder eines Theorie-Blocks sind unvollständig.");
       }
 
@@ -524,35 +502,12 @@ export function createTheoryBlockEditor(
         return null;
       }
 
-      const visualPropsRaw = propsInput.value.trim();
-      if (visualPropsRaw.length > 0) {
-        try {
-          JSON.parse(visualPropsRaw);
-        } catch {
-          propsInput.setCustomValidity(
-            "Bitte gib gültiges JSON für die Visual-Props ein oder lasse das Feld leer.",
-          );
-          propsInput.reportValidity();
-          propsInput.setCustomValidity("");
-          return null;
-        }
-      }
-
-      const visualComponent: VisualComponentType = isVisualComponent(
-        visualSelect.value,
-      )
-        ? visualSelect.value
-        : "none";
-
       result.push({
         id: row.dataset.blockId?.trim() || `tb-${index + 1}`,
         order: index + 1,
         title,
         markdownContent: markdownInput.value,
-        visualComponent,
-        ...(visualPropsRaw.length > 0
-          ? { visualPropsJson: visualPropsRaw }
-          : {}),
+        ...legacyVisuals.get(row),
       });
     }
 
