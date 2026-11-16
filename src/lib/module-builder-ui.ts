@@ -245,7 +245,7 @@ export function createXpTagPicker(options: {
   defaultTags?: readonly string[];
   onChange?: (selected: string[]) => void;
 }): XpTagPickerController {
-  const defaultTags = options.defaultTags ?? ["Allgemein"];
+  const defaultTags = options.defaultTags ?? [];
   const fieldset = document.createElement("fieldset");
   fieldset.className = "contribution-type-picker xp-tag-picker";
 
@@ -256,8 +256,13 @@ export function createXpTagPicker(options: {
   choices.className = "contribution-type-choices xp-tag-choices";
 
   const checkboxes: HTMLInputElement[] = [];
+  const availableTags = getAvailableTags().filter(
+    (tagName) => TAG_DEFINITIONS[tagName].multiplier > 1,
+  );
+  const available = new Set(availableTags);
+  let retainedTags = defaultTags.filter((tag) => !available.has(tag));
 
-  for (const tagName of getAvailableTags()) {
+  for (const tagName of availableTags) {
     const def = TAG_DEFINITIONS[tagName];
     const label = document.createElement("label");
     const checkbox = document.createElement("input");
@@ -280,17 +285,29 @@ export function createXpTagPicker(options: {
     choices.append(label);
   }
 
-  fieldset.append(legend, choices);
+  const retainedHint = document.createElement("small");
+  retainedHint.className = "field-hint";
+  function updateRetainedHint(): void {
+    retainedHint.hidden = retainedTags.length === 0;
+    retainedHint.textContent = `Bisherige Tags bleiben erhalten: ${retainedTags.join(", ")}.`;
+  }
+  updateRetainedHint();
+  fieldset.append(legend, choices, retainedHint);
 
   function selectedTags(): string[] {
-    return checkboxes.filter((box) => box.checked).map((box) => box.value);
+    return [
+      ...retainedTags,
+      ...checkboxes.filter((box) => box.checked).map((box) => box.value),
+    ];
   }
 
   function setSelectedTags(tags: readonly string[]): void {
     const wanted = new Set(tags);
+    retainedTags = tags.filter((tag) => !available.has(tag));
     for (const box of checkboxes) {
       box.checked = wanted.has(box.value);
     }
+    updateRetainedHint();
     options.onChange?.(selectedTags());
   }
 
@@ -639,7 +656,6 @@ export function attachModuleBuilderForm(
   const tagPicker = createXpTagPicker({
     name: "moduleTags",
     legend: "Tags & XP-Faktor",
-    defaultTags: ["Allgemein"],
   });
   tagsContainer.append(tagPicker.element);
 
@@ -1075,7 +1091,6 @@ export function attachExerciseBuilderForm(
   const tagPicker = createXpTagPicker({
     name: "exerciseTags",
     legend: "Tags & XP-Faktor",
-    defaultTags: ["Allgemein"],
     onChange: () => {
       refreshCalculatedXp();
     },

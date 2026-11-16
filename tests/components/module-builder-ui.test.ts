@@ -8,6 +8,7 @@ import {
   MODULES_FUNCTION_FALLBACK_ENDPOINT,
   MODULES_HTML_RESPONSE_ERROR,
   createTheoryBlockEditor,
+  createXpTagPicker,
 } from "../../src/lib/module-builder-ui";
 import type { ModulesDatabase } from "../../src/lib/module-schema";
 
@@ -194,6 +195,19 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     form.querySelector<HTMLButtonElement>(".theory-block-remove")?.click();
     expect(controller.theoryBlockEditor.items()).toHaveLength(1);
     expect(controller.theoryBlockEditor.items()?.[0]?.title).toBe("Schwingung");
+  });
+
+  it("bietet nur Tags über Faktor 1 an und bewahrt vorhandene andere Tags", () => {
+    const picker = createXpTagPicker({ name: "tags", legend: "Tags" });
+    expect(picker.selectedTags()).toEqual([]);
+    expect(picker.element.querySelector('input[value="Allgemein"]')).toBeNull();
+    expect(picker.element.querySelector('input[value="Violinschlüssel"]')).toBeNull();
+    expect(picker.element.querySelector('input[value="Notensystem"]')).not.toBeNull();
+    picker.setSelectedTags(["Allgemein", "Altes Thema", "Notensystem"]);
+    expect(picker.selectedTags()).toEqual(["Allgemein", "Altes Thema", "Notensystem"]);
+    expect(picker.element.textContent).toContain("Bisherige Tags bleiben erhalten");
+    picker.clear();
+    expect(picker.selectedTags()).toEqual([]);
   });
 
   it("überführt bisherige Notation in den Text und erhält andere alte Visualisierungen", () => {
