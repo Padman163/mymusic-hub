@@ -515,7 +515,7 @@
       },
       {
         "text": "Feature-Tests mit npm test und Projekt-Quality-Gate mit npm run preflight ausführen",
-        "checked": false
+        "checked": true
       }
     ],
     "status": "New",
