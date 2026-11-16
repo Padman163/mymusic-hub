@@ -1,44 +1,8 @@
 {
   "modules": [
     {
-      "id": "guitar-102",
-      "order": 1,
-      "title": "Gitarrenlehre",
-      "description": "Aufbau des Griffbretts, Stimmung der sechs Leersaiten (E–A–D–G–B–e) und Orientierung zwischen Noten und Tabulatur.",
-      "scope": "instrument",
-      "level": 100,
-      "dStage": "D1",
-      "tags": [
-        "Tabulatur",
-        "Gitarre"
-      ],
-      "hasPractice": true,
-      "theoryBaseXp": 30,
-      "quizEasyMinScore": 0.8,
-      "fastlaneMinScore": 0.85,
-      "theoryBlocks": [
-        {
-          "id": "tb-102-1",
-          "order": 1,
-          "title": "Die sechs Leersaiten in Standardstimmung",
-          "markdownContent": "Von der tiefsten (6. Saite) zur höchsten (1. Saite) lauten die Leersaiten der Gitarre **E – A – D – G – B – e**. In einer Tabulatur zeigt die Zahl `0`, dass eine Saite leer ohne Greifhand angeschlagen wird.",
-          "visualComponent": "FretboardClickable",
-          "visualPropsJson": "{\"readOnly\":true,\"showNoteNames\":true}"
-        },
-        {
-          "id": "tb-102-2",
-          "order": 2,
-          "title": "Praxishinweis für das Instrument",
-          "markdownContent": "Schlage alle sechs Leersaiten gleichmäßig im Wechselschlag oder mit dem Daumen an und sprich jeden Saitennamen laut mit.",
-          "visualComponent": "none"
-        }
-      ],
-      "createdAt": "2026-11-16T00:00:00.000Z",
-      "updatedAt": "2026-11-16T07:40:37.982Z"
-    },
-    {
       "id": "theory-101",
-      "order": 2,
+      "order": 1,
       "title": "Elementarlehre",
       "description": "Grundlagen der Schwingungsphysik (Kammerton A = 440 Hz) und sichere Orientierung im Violinschlüssel.",
       "scope": "theory",
@@ -75,6 +39,42 @@
       ],
       "createdAt": "2026-11-16T00:00:00.000Z",
       "updatedAt": "2026-11-16T14:53:56.356Z"
+    },
+    {
+      "id": "guitar-102",
+      "order": 2,
+      "title": "Gitarrenlehre",
+      "description": "Aufbau des Griffbretts, Stimmung der sechs Leersaiten (E–A–D–G–B–e) und Orientierung zwischen Noten und Tabulatur.",
+      "scope": "instrument",
+      "level": 100,
+      "dStage": "D1",
+      "tags": [
+        "Tabulatur",
+        "Gitarre"
+      ],
+      "hasPractice": true,
+      "theoryBaseXp": 30,
+      "quizEasyMinScore": 0.8,
+      "fastlaneMinScore": 0.85,
+      "theoryBlocks": [
+        {
+          "id": "tb-102-1",
+          "order": 1,
+          "title": "Die sechs Leersaiten in Standardstimmung",
+          "markdownContent": "Von der tiefsten (6. Saite) zur höchsten (1. Saite) lauten die Leersaiten der Gitarre **E – A – D – G – B – e**. In einer Tabulatur zeigt die Zahl `0`, dass eine Saite leer ohne Greifhand angeschlagen wird.",
+          "visualComponent": "FretboardClickable",
+          "visualPropsJson": "{\"readOnly\":true,\"showNoteNames\":true}"
+        },
+        {
+          "id": "tb-102-2",
+          "order": 2,
+          "title": "Praxishinweis für das Instrument",
+          "markdownContent": "Schlage alle sechs Leersaiten gleichmäßig im Wechselschlag oder mit dem Daumen an und sprich jeden Saitennamen laut mit.",
+          "visualComponent": "none"
+        }
+      ],
+      "createdAt": "2026-11-16T00:00:00.000Z",
+      "updatedAt": "2026-11-16T07:40:37.982Z"
     }
   ],
   "questions": [
