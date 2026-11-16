@@ -32,6 +32,33 @@
       ],
       "createdAt": "2026-11-15T23:43:32.583Z",
       "updatedAt": "2026-11-16T00:08:43.497Z"
+    },
+    {
+      "id": "theorie102",
+      "order": 2,
+      "title": "test2",
+      "description": "test2222",
+      "scope": "theory",
+      "level": 100,
+      "tags": [
+        "Allgemein",
+        "Notensystem"
+      ],
+      "hasPractice": false,
+      "theoryBaseXp": 10,
+      "quizEasyMinScore": 0.8,
+      "fastlaneMinScore": 0.85,
+      "theoryBlocks": [
+        {
+          "id": "tb-1-d4ffee",
+          "order": 1,
+          "title": "rhythmus",
+          "markdownContent": "## 2 Ist das eine Überschrift\nIm vergleich zu diesem?",
+          "visualComponent": "none"
+        }
+      ],
+      "createdAt": "2026-11-16T00:28:34.495Z",
+      "updatedAt": "2026-11-16T00:28:34.495Z"
     }
   ],
   "questions": [
