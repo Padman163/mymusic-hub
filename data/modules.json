@@ -34,5 +34,25 @@
       "updatedAt": "2026-11-16T00:08:43.497Z"
     }
   ],
-  "questions": []
+  "questions": [
+    {
+      "id": "q-8764eccd",
+      "moduleId": "123",
+      "targetLane": "exercise",
+      "questionType": "single_choice",
+      "prompt": "testfrage",
+      "options": [
+        "123",
+        "312"
+      ],
+      "correctAnswers": [
+        "312"
+      ],
+      "explanation": "das geht so nicht",
+      "baseXp": 10,
+      "tags": [
+        "Allgemein"
+      ]
+    }
+  ]
 }
