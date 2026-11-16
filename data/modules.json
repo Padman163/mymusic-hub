@@ -257,6 +257,30 @@
         "Tabulatur",
         "Gitarre"
       ]
+    },
+    {
+      "id": "q-bf4bfa5f",
+      "moduleId": "theory-101",
+      "targetLane": "exercise",
+      "questionType": "interactive_notation",
+      "prompt": "Zeichne ein B ein",
+      "correctAnswers": [],
+      "notationTask": {
+        "clef": "bass",
+        "maxNotes": 1,
+        "lockDuration": "half",
+        "showDurationPicker": true,
+        "compact": "tight",
+        "showHints": true,
+        "expectedDurations": [
+          "quarter"
+        ]
+      },
+      "explanation": "",
+      "baseXp": 10,
+      "tags": [
+        "Notensystem"
+      ]
     }
   ],
   "quizSettings": {

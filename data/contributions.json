@@ -409,7 +409,7 @@
     "id": "a8b06a98-3ed7-48bb-bb12-f1d6fd84ae19",
     "type": "Feature",
     "title": "Module Builder – Autorenwerkbank & Lernpfad",
-    "description": "Autorenwerkbank zum Erstellen und Verwalten von Lernmodulen, Theorie-Blöcken und Aufgaben mit XP-System und interaktivem Lernpfad. Details: /features/README_FEAT_MODULEBUILDER.md\n\nUncool:\n\nKommentare:",
+    "description": "Autorenwerkbank zum Erstellen und Verwalten von Lernmodulen, Theorie-Blöcken und Aufgaben mit XP-System und interaktivem Lernpfad. Details: /features/README_FEAT_MODULEBUILDER.md\n\nUncool:\nErwartete Tonhöhen (kommagetrennt) --> oktavunabhängiges B. soll einfach B werden dann kann B1-6 einfach angegeben werden\nKommentare:",
     "area": "Komponente",
     "priority": "Hoch",
     "checklist": [
