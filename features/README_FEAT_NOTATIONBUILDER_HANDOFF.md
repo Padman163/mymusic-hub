@@ -1,11 +1,11 @@
 # Handoff: Feature `NotationBuilder.astro` (`feat/notationbuilder`)
 
-Dieser Leitfaden fasst die Architektur, Verhaltensweisen, Props, Quiz-Einbindung und den Teststand des interaktiven Notations-Builders zusammen. Für die allgemeinen Regeln des statischen SVG-Renderers siehe `README_HANDOFF_FEAT_NOTATION.md` sowie `README_NOTATION.md`.
+Dieser Handoff fasst Architektur, Verhalten, Props und Quiz-Einbindung des interaktiven Notations-Builders für zukünftige Übergaben zusammen. Er ist kein Nachweis eines aktuellen Testlaufs oder einer Übernahme nach `main`. Allgemeine Regeln stehen in der [Notationsreferenz](README_FEAT_NOTATION.md); der Abschlussprozess im [Workflow](../README_WORKFLOW.md).
 
 ## 1. Übersicht & Ziel
-`NotationBuilder.astro` (`src/components/notation/NotationBuilder.astro`) ist eine interaktive Schicht über dem nativen SVG-Notationssystem. Sie ermöglicht es Nutzern (z. B. im Rahmen von interaktiven Quiz-Aufgaben oder Lernmodulen), Noten interaktiv per Maus oder Tastatur in einem Notensystem zu platzieren und zu löschen.
+`NotationBuilder.astro` (`src/components/notation/NotationBuilder.astro`) ist eine interaktive Schicht über dem nativen SVG-Notationssystem. Nutzer können etwa in Quiz-Aufgaben oder Lernmodulen den Cursor per Maus oder Tastatur positionieren und Noten setzen oder per Tastatur löschen.
 
-Standardmäßig entspricht das Aussehen einem reduzierten Einzeltakt ohne linken und ohne rechten Taktstrich (`showLeftBar={false}`, `showRightBar={false}`). Es kann genau eine Viertelnote per Tastatur oder Mausklick platziert werden. Mit `compact={true}` schrumpft die Komponente auf eine kompakte Breite zusammen (ideal für Quiz- und Übungsfragen).
+Standardmäßig entspricht das Aussehen einem reduzierten Einzeltakt ohne linken und ohne rechten Taktstrich (`showLeftBar={false}`, `showRightBar={false}`). Es gibt einen Notenslot mit Viertelnote als Standardwert: Ein Klick auf das System positioniert den Cursor, die Leertaste setzt die Note. Mit `compact={true}` schrumpft die Komponente auf eine kompakte Breite zusammen.
 
 ## 2. Aktive Architektur & Dateien
 * **Komponente (`src/components/notation/NotationBuilder.astro`):**
@@ -25,7 +25,7 @@ Standardmäßig entspricht das Aussehen einem reduzierten Einzeltakt ohne linken
   * Frage 2 in "Teil 4: Notation in fünf Beispielen": Notenwert-Eingabe mit der visuellen Button-Leiste (`showDurationPicker`, `compact="tight"`, `showHints`) und "Antwort einloggen"-Button.
   * **Neue Aufgabe bei falscher Antwort mit Countdown-Timer (3 Versuche):** Ist eine Eingabe falsch, erscheint auf gleicher Linie neben dem "Antwort einloggen"-Button ein kompakter Zurücksetzen-Pfeil-Button mit einem Versuchs-Timer-Badge (beginnt bei 3 und zählt auf 2, 1 herunter). Ein Klick darauf zieht eine neue Aufgabe aus dem Fragenpool und setzt den Builder zurück. Nach 3 Fehlversuchen gilt die jeweilige Aufgabe endgültig als nicht bestanden (`data-correct="false"`), der Einloggen-Button wird deaktiviert und der Reset-Button ausgeblendet.
   * **Sperrung nach Abschluss:** Sobald eine Builder-Aufgabe erfolgreich gelöst wurde (oder nach 3 Fehlversuchen endgültig fehlgeschlagen ist), wird der Builder gesperrt (`data-locked="true"`), sodass keine Noten oder Notenwerte mehr verändert werden können, und die orangefarbene Notenmarkierung (`.notation-builder-cursor`) wird ausgeblendet.
-  * Gesamtpunkte: `21` (`passingPoints = 17`).
+  * Gesamtpunkte: `20`; bestanden ab `16` Punkten (80 %).
   * Beide interaktiven Fragen validieren direkt und fließen in das Gesamtergebnis des Quiz ein.
 * **Dokumentation:**
   * `src/content/docs/audio/referenzen-werkzeuge/visualisierungen-erklaert/notationbuilder.mdx`.
@@ -56,13 +56,13 @@ Standardmäßig entspricht das Aussehen einem reduzierten Einzeltakt ohne linken
    * `showLabel` (Standard: `false`): Schaltet das Noten-/Aktions-Badge direkt am Cursor ein.
    * `showStatus` (Standard: `false`): Schaltet die Statuszeile unterhalb des Systems ein.
    * `showHints` (Standard: `false`): Schaltet die Tastaturlegende (im Footer oder bei `compact` als Spalte rechts) ein.
-   * Alle Standard-Props von `<Notation />` (`clef`, `timeSignature`, `accidentals`, `scale`, `showRightBar`, etc.) werden direkt durchgereicht.
+   * Gemeinsame Notations-Props wie `clef`, `timeSignature`, `accidentals`, `scale` und `showRightBar` stehen ebenfalls zur Verfügung. Die vollständige Builder-Prop-Liste steht in `NotationBuilder.astro`.
 
 ## 4. Tests & Qualitätssicherung
 * **Unit-Tests (`tests/music-notation.test.mjs`):**
   * Testet `stepToPitchName`, `pitchNameToStep`, `stepToY`, `yToStep`, `moveStep`, `describeBuilderState` und `renderNotationBuilderSvg`.
 * **Komponententests (`tests/components/notation-builder.test.ts`):**
-  * Testet Tastatur-Navigation (`↑`/`↓`), Mausklick-Positionierung, Erstellen mit `Num 1`, Löschen mit `Entf`, State-Attribute und `notationbuilder:reset`.
+  * Testet Tastatur-Navigation (`↑`/`↓`), Mausklick-Positionierung, Erstellen mit `Leertaste`, Notenwertwechsel mit `Num 1`, Löschen mit `Entf`, State-Attribute und `notationbuilder:reset`.
 * **Validierung:**
   * `npm run validate` (`biome check . && astro check && tsc --noEmit`)
-  * `npm run test` (55 Vitest-Tests erfolgreich)
+  * `npm test` und vor Feature-Abschluss `npm run preflight`; Voraussetzungen und Details: [Testing-Leitfaden](../README_TESTING.md).

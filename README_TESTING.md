@@ -16,7 +16,7 @@ Um maximale Stabilität bei minimaler Testlaufzeit zu gewährleisten, gliedert s
            /-------\
           /         \ Stufe 2: Komponenten & DOM-Tests (Vitest + happy-dom)
          /-----------\
-        /             \ Stufe 1: Unit-Tests für reine Logik & Mathematik (Node / Vitest)
+        /             \ Stufe 1: Unit-Tests für reine Logik & Mathematik (Vitest)
        /---------------\
       /                 \ Stufe 0: Statische Prüfungen & Hygiene (Biome, astro check, tsc)
      ---------------------
@@ -55,6 +55,7 @@ npx @biomejs/biome check --write .
 ### Stufe 1: Unit-Tests (Reine Logik & Mathematik)
 
 - **Werkzeuge:** Vitest.
+- **Konfiguration:** `vitest.config.ts` erfasst `.test`- und `.spec`-Dateien in TypeScript, JavaScript und MJS unter `tests/`, ausgenommen `tests/e2e/`. Standardumgebung ist `happy-dom`; einzelne Dateien können Node wählen.
 - **Testdateien:** `tests/music-notation.test.mjs`, `tests/module-builder.test.mjs`, `tests/learning-progress.test.mjs`.
 - **Gegenstand:** Mathematische Berechnungen der Notationsgeometrie, Takteinteilung, Notenwert-Splitting, Frequenzformeln und Transponierungslogik sowie Tag-/XP-Berechnungen, Modul-/Aufgaben-Validierung und die zustandsfreie XP-/Lernfortschritts-Engine (`learning-progress.ts`).
 * **Befehle:**
@@ -96,6 +97,8 @@ npx @biomejs/biome check --write .
   npm run test:integration
   ```
 
+  Dieser Befehl wählt `tests/integration/`. Die Modultests in `tests/module-builder.test.mjs` laufen über `npm test`.
+
 * **Wann nutzen:**
   * **Nach Änderungen an Netlify Functions:** Wenn Backend-Logik, Middleware oder Serverless-Routen editiert werden.
   * **Bei Schema- oder Payload-Updates:** Wenn sich die Datenstruktur von Frontend-Formularen oder API-Schnittstellen ändert.
@@ -107,7 +110,7 @@ npx @biomejs/biome check --write .
 * **Werkzeuge:** `@playwright/test`.
 * **Testdateien:** `tests/e2e/smoke.spec.ts`.
 * **Gegenstand:** Startet den Astro-Produktionsserver und prüft Navigation, HTTP-Status 200, fehlerfreie Klickpfade und responsive Darstellung in Desktop Chrome und Mobile Safari.
-* **Visuelle Regression:** Vergleicht gerenderte SVG-Notensysteme pixelgenau mit Referenzbildern (`toHaveScreenshot`).
+* **Visuelle Prüfung:** Die aktuellen E2E-Tests prüfen Notationsgeometrie und responsives Layout; sie enthalten derzeit keine Screenshot-Vergleiche.
 * **Befehle:**
   ```bash
   npm run test:e2e
@@ -121,10 +124,20 @@ npx @biomejs/biome check --write .
     * Vor jedem Release und Produktiv-Deployment.
     * Vor dem Mergen eines Pull Requests in den Hauptzweig (`main`).
     * Nach Versions-Upgrades von Astro, Starlight oder Routing-Anpassungen, um sicherzustellen, dass alle Seiten mit HTTP 200 antworten und Kernfunktionen bedienbar sind.
-  * **`npm run test:visual` (Pixelgenaue Regression):**
+  * **`npm run test:visual` (Snapshot-Aktualisierung, falls Snapshot-Tests vorhanden sind):**
     * Nach globalen Styling-Updates (z. B. Tailwind-Konfiguration, Typografie, Farbschemata).
     * Nach Updates der SVG-Renderings (alphaTab, Notengrafiken) oder KaTeX-Formeln, um unerwünschte Layout-Verschiebungen ("Pixel-Drift") sofort zu erkennen.
-    * Zur bewussten Aktualisierung der Snapshot-Referenzen (`--update-snapshots`), wenn sich das Design absichtlich geändert hat.
+    * Aktualisiert Snapshot-Referenzen (`--update-snapshots`), falls solche Tests künftig hinzugefügt werden.
+
+### Dokumentationscheck
+
+`tests/documentation.test.ts` prüft alle `README*.md` im Projekt-Root und in `features/` sowie `.github/copilot-instructions.md` auf vorhandene lokale Linkziele und Abschnitte sowie dokumentierte `npm run`-Skripte. Codebeispiele werden nicht als Links interpretiert. Der Test läuft in `npm test` und damit auch im Preflight:
+
+```bash
+npx vitest run tests/documentation.test.ts
+```
+
+Externe Links, fachliche Aktualität, dynamische Asset-Pfade und Git-Hygiene werden damit nicht automatisch verifiziert. Die wiederholbare manuelle Prüfung steht in der [Cleanup-Anleitung](README_CLEANUP.md).
 
 ---
 
@@ -159,15 +172,16 @@ npx @biomejs/biome check --write .
 ## 3.2 Performance- & Web-Vitals-Audit
 
 * **Werkzeuge:** Google Lighthouse CI (`@lhci/cli`).
-* **Zweck & Zielmarken:** Überprüft das kompilierte Produktions-Bundle gegen die Core Web Vitals und etablierte Best Practices:
+* **Zweck & Zielmarken:** Überprüft den Produktions-Build. Die folgenden Werte sind Release-Ziele, nicht alle automatisch erzwungene Grenzwerte:
   * First Contentful Paint: $\text{FCP} < 1.2\text{ s}$
   * Cumulative Layout Shift: $\text{CLS} < 0.05$
   * Mindestens $90$ Punkte in allen vier Kategorien: *Performance*, *Accessibility*, *Best Practices* und *SEO*.
 * **Befehle:**
   ```bash
   # Produktions-Build erzeugen und automatisierte Lighthouse-Messung starten
-  npm run build && npx lhci autorun
+  npm run build && npm run audit:lhci
   ```
+  `lighthouserc.cjs` erzwingt derzeit Accessibility ≥ 0,9; Performance ≥ 0,8 sowie Best Practices und SEO ≥ 0,9 erzeugen bei Unterschreitung Warnungen. FCP und CLS sind dort nicht separat konfiguriert. Berichte werden temporär öffentlich hochgeladen.
 * **Wann nutzen:**
   * **Nach Import schwerer Bibliotheken:** Wenn Noten-Renderer (`@coderline/alphatab`), Formel-Renderer (`katex`) oder Bildoptimierungs-Pipelines (`sharp`) eingebunden oder aktualisiert werden.
   * **Nach Asset- & Schriftartänderungen:** Sobald Webfonts, globale Stylesheets oder umfangreiche SVG-Grafiken angepasst wurden.
@@ -191,7 +205,7 @@ npx @biomejs/biome check --write .
   npm run test:e2e
 
   # Ganzheitliche Prüfung im Lighthouse-Lauf
-  npx lhci autorun
+  npm run build && npm run audit:lhci
 
   # Analyse der Ergebnisse
   npx serve .lighthouseci
@@ -219,7 +233,7 @@ Führe vor dem Stagen folgende Schritte aus:
 npm run format          # Formatiert Code automatisch
 npm run lint            # Prüft Linter-Regeln
 npm run check           # Validiert Astro-Templates
-npm test                # Führt Unit-Tests aus
+npm test                # Führt die Vitest-Suite aus
 git diff --check        # Verhindert Whitespace-Fehler
 ```
 
@@ -231,7 +245,7 @@ Vor jedem Push auf GitHub muss das einzeilige Pre-Flight Quality Gate fehlerfrei
 npm run preflight
 ```
 
-_Befehlskette im Detail:_ `npm run lint && npm run check && npx tsc --noEmit && npm run audit && npm test && npm run build && git diff --check`.
+_Befehlskette im Detail:_ `npm run validate && npm run audit && npm run test:all && git diff --check`. `validate` führt Biome, Astro-Check und TypeScript aus; `test:all` führt Vitest, Build und Playwright aus.
 Bricht beim kleinsten Fehler mit Exit-Code 1 ab.
 
 ---
@@ -288,4 +302,4 @@ Ein Release gilt erst dann als **vollständig fertiggestellt und freigegeben**, 
 1. Das Pre-Flight-Kommando `npm run preflight` mit **Exit-Code 0** durchläuft.
 2. Ein vollständiger manueller Testlauf auf einem mobilen Touch-Endgerät erfolgreich protokolliert wurde.
 3. Impressum, Datenschutzerklärung und 404-Seite funktionstüchtig live geschaltet sind.
-4. Alle E2E-Browsertests und visuellen Snapshots ohne Abweichung bestehen.
+4. Alle E2E-Browsertests bestehen und relevante visuelle Änderungen geprüft sind; vorhandene Snapshots bestehen ohne unbeabsichtigte Abweichung.

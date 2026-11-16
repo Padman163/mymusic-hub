@@ -1,6 +1,8 @@
 # Features & Architektur des Gitarrenlernpfads
 
-Dieses Dokument bietet eine vollständige Dokumentation aller Module, didaktischen Komponenten und technischen Subsysteme der Gitarrenlernpfad- und Musik-Hub-Plattform.
+Dieses Dokument gibt einen Überblick über die wichtigsten Komponenten und Subsysteme des Musik-Hubs. Details zum [Modul-Builder und Lernpfad](README_FEAT_MODULEBUILDER.md), zur [Notation](README_FEAT_NOTATION.md) und zu [Tests](../README_TESTING.md) stehen in den jeweiligen Leitfäden.
+
+Für Übergaben gibt es separate Handoffs zur [Notation](README_FEAT_NOTATION_HANDOFF.md) und zum [NotationBuilder](README_FEAT_NOTATIONBUILDER_HANDOFF.md). Sie ergänzen die Fachreferenzen, ersetzen sie aber nicht.
 
 ---
 
@@ -33,22 +35,21 @@ Die Plattform verbindet musiktheoretische Didaktik mit interaktiven Web-Technolo
   * Verwendet standardisierte SMuFL-Glyphen (Bravura-Font) und berechnet Notenhälse, Balkengruppen (`beamGroupStemUp`), Vorzeichen, Dynamik und Bögen über mathematische Koordinaten.
   * **Feste Layout-Regel am Systembeginn:** Notenschlüssel $\rightarrow$ Taktart $\rightarrow$ Tonartvorzeichen $\rightarrow$ Wiederholungszeichen $\rightarrow$ erste Note (mit dynamischem `measureNumberOffset` für Taktzahlen).
   * **Umbruchs-Logik:** `<Notation />` unterstützt `layout="auto" | number | number[]` sowie responsive Container-Skalierung (`observeNotationFit`).
-  * **Qualitätssicherung:** 41 isolierte Unit-Tests in `tests/music-notation.test.mjs` (48 Vitest-Tests gesamt) sowie 18 Playwright-E2E-Tests in `tests/e2e/smoke.spec.ts` sichern Abstände, Layoutregeln, Taktstriche und Notenwerte ab.
+  * **Qualitätssicherung:** Vitest-Tests in `tests/music-notation.test.mjs` und Playwright-Tests in `tests/e2e/smoke.spec.ts` sichern Abstände, Layoutregeln, Taktstriche und Notenwerte ab. Aktuelle Befehle stehen im [Testing-Leitfaden](../README_TESTING.md).
 
 ### 2.2 Das interaktive Griffbrett (`FretboardClickable.astro`)
 * **Datei:** `src/components/FretboardClickable.astro`
 * **Funktionsweise:**
-  * Zeichnet ein anpassbares Gitarrengriffbrett (Standard-Stimmung E-A-D-G-B-E) mit frei konfigurierbarer Bundanzahl ($0$ bis $12$ bzw. $24$ Bünde).
-  * Unterstützt das Hervorheben von Tonleitern (z. B. Pentatonik, Dur/Moll-Skalen), Grundtönen (Roots) und Intervall-Farben.
-  * Kann statisch für Lektionen gerendert werden oder Klick-Events auf einzelne Bünde und Saiten verarbeiten, um Notennamen oder Akkorde interaktiv abzufragen.
+  * Zeichnet ein Gitarrengriffbrett in Standardstimmung E-A-D-G-B-E mit Leersaiten und Bünden bis zum 12. Bund.
+  * Unterstützt feste Positionen, Notennamen und interaktive Markierungen; mit `readOnly` kann es statisch dargestellt werden. Für Tonleitermuster gibt es separat `ScalePattern.astro`.
 
 ### 2.3 Die Rhythmus- und Pattern-Sequencer
 * **Dateien:** 
-  * `DrumPattern.astro`: 4/4-Raster mit 16tel-Auflösung zur Darstellung von Kick-, Snare- und Hi-Hat-Grooves.
+  * `DrumPattern.astro`: Konfigurierbares Raster für Schlagzeugspuren; standardmäßig 4/4 mit Achtel-Auflösung.
   * `BassPattern.astro`: Rhythmus- und Tonhöhen-Muster für Bassläufe inklusive Grundton-Bindung.
   * `GuitarPattern.astro`: Visualisierung von Riffs, Anschlagmustern (Strumming: Down-/Upstrokes) und Powerchords.
   * `VocalPattern.astro`: Melodische Verläufe und Silbenrhythmik.
-* **Architektur:** Die Komponenten fungieren als „Fabriken“. Sie erhalten über Props deklarative Daten (z. B. `beats={[1, 3]}`) und generieren daraus standardisierte, responsive HTML-/SVG-Gitter.
+* **Architektur:** Die Komponenten erhalten deklarative Daten über ihre jeweiligen Props und generieren daraus HTML-/SVG-Gitter. `DrumPattern` verwendet beispielsweise `patternData` mit `activeSteps`.
 
 ### 2.4 Die Songwriting-Gesamtpartitur (`ScorePattern.astro`)
 * **Datei:** `src/components/ScorePattern.astro`
@@ -60,22 +61,21 @@ Die Plattform verbindet musiktheoretische Didaktik mit interaktiven Web-Technolo
 * **Dateien:** `ChordDiagramPattern.astro`, `ChordSlider.astro`, `ChordTierList.astro`, `ChordProgression.astro`, `ScalePattern.astro`.
 * **Funktionsweise:**
   * **Akkorddiagramme:** Zeichnet standardisierte Grifftabellen mit Fingersatz, Leersaiten ($O$) und abgedämpften Saiten ($X$).
-  * **ChordSlider:** Ermöglicht das stufenlose Transponieren von Kadenzen entlang des Quintenzirkels.
+  * **ChordSlider:** Visualisiert verschiebbare Powerchord-Griffe auf dem Griffbrett.
   * **ChordTierList:** Didaktisches Bewertungssystem für Akkorde nach Schwierigkeit und klanglicher Funktion.
   * **KaTeX-Integration:** Mathematisch exakte Darstellung von Stufensymbolen ($I - IV - V - vi$) und Alterationen via `remark-math` und `rehype-katex`.
 
 ### 2.6 AlphaTab MusicXML-Playback-Engine (`SheetMusicPlayer.astro`)
 * **Datei:** `src/components/SheetMusicPlayer.astro`
 * **Funktionsweise:**
-  * Bindet die AlphaTab-Engine über Web Worker ein, um echte MusicXML- und GuitarPro-Dateien darzustellen.
-  * Bietet integriertes Audio-Playback mit Noten-Highlighting während des Abspielens.
-  * Isolierte Ausführung verhindert Speicherlecks und Performance-Einbußen im Hauptthread.
+  * Bindet AlphaTab zur Darstellung einer über `musicXmlUrl` angegebenen Partitur ein.
+  * Aktiviert die Audiowiedergabe nur, wenn zusätzlich eine SoundFont über `soundFontUrl` angegeben wird.
 
 ### 2.7 Das Serverless Beitragssystem & IssueTracker
 * **Dateien:** `netlify/functions/contributions.ts`, `netlify/functions/lib/github-contribution-store.ts`, `src/lib/checklist-editor.ts`, `src/content/docs/projektierung/beitraege.mdx`.
 * **Funktionsweise:**
   * **Architektur:** Serverless Endpunkt auf Netlify, der Daten entgegennimmt und via GitHub REST API in `data/contributions.json` ablegt.
-  * **Ziel-Branch:** `GITHUB_BRANCH` steuert den GitHub-Branch für Beiträge und Module gemeinsam; ohne Angabe gilt `main`. Einrichtung und lokale Besonderheiten stehen im [Workspace-Setup](README_WORKSPACE_SETUP.md#schritt-5-netlify-cli-verknüpfen-umgebungsvariablen-für-das-backend-einrichten--fullstack-starten).
+  * **Ziel-Branch:** `GITHUB_BRANCH` steuert den GitHub-Branch für Beiträge und Module gemeinsam; ohne Angabe gilt `main`. Einrichtung und lokale Besonderheiten stehen im [Workspace-Setup](../README_WORKSPACE_SETUP.md#schritt-5-netlify-cli-verknüpfen-umgebungsvariablen-für-das-backend-einrichten--fullstack-starten).
   * **Kategorisierung:** Typen (`Feature`, `Bug`, `Decision`), Bereiche (`Theorie`, `Praxis`, `Komponente`), Prioritäten (`Niedrig`, `Mittel`, `Hoch`) und Status (`New`, `Active`, `Resolved`).
   * **Checklisten:** Bis zu 100 interaktive Checklistenpunkte pro Beitrag mit je maximal 200 Zeichen.
   * **Konfliktresistenz:** Automatische Wiederholungslogik (Retry-Loop) bei gleichzeitigem Schreibzugriff (HTTP 409 Conflict) unter Verwendung von GitHub Blob-SHAs.
@@ -93,26 +93,13 @@ Die Plattform verbindet musiktheoretische Didaktik mit interaktiven Web-Technolo
 * **Dateien:** `src/lib/learning-progress.ts`, `src/lib/module-player-ui.ts`, `src/styles/module-player.css`, `src/components/learning/ProgressDashboard.astro`, `src/components/learning/ModuleRoadmap.astro`, `src/components/learning/ModuleStepper.astro`, `src/components/learning/ModuleQuizRunner.astro`, `src/content/docs/audio/theory/lernpfad.mdx`, `src/content/docs/audio/theory/modul.mdx`.
 * **Funktionsweise:**
   * **Client-State & XP-Engine:** SSR-sichere `localStorage`-Persistenz (`mymusic_learning_progress_v1`) mit automatischem Curriculum-Sync, Duplikat-XP-Schutz (`solvedQuestionIds`), Level-Berechnung (500 XP pro Level) sowie Aufschlüsselung nach `scope` und `tags`.
-  * **Geführter Lektions-Stepper & Fastlane:** Step-by-Step-Freischaltung (`theory` → `exercise` → optional `practice` bei `hasPractice: true` → `quiz_easy` ab 80 %) mit KaTeX-/Markdown-Rendering und eingebetteten Visualisierungen; zusätzlich direkter **Fastlane-Modus** (ab 85 %), der alle offenen Modul-XP ohne Doppelzählung gutschreibt und das Folgemodul entsperrt.
+  * **Geführter Lektions-Stepper & Fastlane:** Step-by-Step-Freischaltung (`theory` → `exercise` → optional `practice` bei `hasPractice: true` → `quiz_easy`) mit KaTeX-/Markdown-Rendering und eingebetteten Visualisierungen. Die Bestehensgrenzen sind pro Modul einstellbar (Standard: 80 % für das Quiz, 85 % für Fastlane). Fastlane schreibt den offenen Theorie-Basiswert und die XP ungelöster Fragen gut und entsperrt das Folgemodul.
   * **Aufgaben-Auswertung:** Live-Synchronisation zwischen Dashboard, Roadmap und Stepper via CustomEvent `learning-progress:updated`; unterstützt u. a. Zahlen/Einheiten-Abgleich (`880` / `880 Hz`) sowie die `NotationBuilder.astro`-Tonhöhenprüfung (`expectedPitches` exakt und oktavunabhängig).
 
 ---
 
 ## 3. Didaktisches Curriculum & Level-Struktur
 
-1. **Level 100 (Grundlagen der Musiktheorie):**
-   * Lektion 101: „Vom Ton zur Gitarre“ (Frequenzen, Halbtöne, Griffbrett-Geometrie).
-   * Lektion 102–104: Taktarten, Notenwerte, Intervalle und Vorzeichen.
-   * Lektion 105: Interaktives Abschlussquiz mit dynamischer Notationsauswertung.
-2. **Level 200–500 (Aufbaulehrgang):**
-   * Level 200: Harmonie, Kadenzen und Pentatonik.
-   * Level 300: Multi-Instrumentierung und Band-Arrangement.
-   * Level 400: Digitale Audioworkstation (DAW) und Recording.
-   * Level 500: Live-Praxis, Gehörbildung und Improvisation.
-3. **Songwriting-Lehrgang (Rock in E-Moll):**
-   * Schritt 0: Kompositionsidee und Skizze.
-   * Schritt 1: Refrain (Hookline und Powerchords).
-   * Schritt 2: Songstruktur und Dynamikplanung.
-   * Schritt 3: Strophen und Pre-Chorus 1 & 2.
-   * Schritt 4: Bridge und Spannungsaufbau.
-   * Schritt 5: Intro, Outro und Finale.
+1. **Level 100:** Schall, Frequenz und Tonsystem (101), Mechanik, Haltung und Anschlag (102), Rhythmus, Takt und Metrum (103), Notensystem und Tabulatur (104) sowie Abschlussquiz (105).
+2. **Level 200–500:** Die Navigation führt die Bereiche Harmonie & Akkorde, Multi-Instrumentierung, DAW & Produktion sowie Band & Performance.
+3. **Songwriting:** Ein eigener Bereich ergänzt den Lernpfad. Die tatsächlichen Inhalte stehen in `src/content/docs/` und der Navigation in `astro.config.mjs`.

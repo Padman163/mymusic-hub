@@ -1246,7 +1246,8 @@ export function attachModuleRoadmap(
       } = computeModuleStats(mod, modQuestions, modProgress);
 
       const overallBox = document.createElement("div");
-      overallBox.className = "learning-module-stat learning-module-overall-stat";
+      overallBox.className =
+        "learning-module-stat learning-module-overall-stat";
       overallBox.dataset.roadmapStat = "module-overall";
       const overallLabel = document.createElement("span");
       overallLabel.className = "learning-module-stat-label";

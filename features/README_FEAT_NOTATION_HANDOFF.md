@@ -1,10 +1,9 @@
 # Handoff: Feature `Notation.astro` (`feat/notation`)
 
-Dieser Leitfaden fasst den aktuellen Architektur-, Regel- und Teststand des nativen SVG-Notationssystems für zukünftige Chats zusammen. Für die vollständige Prop- und API-Referenz von `<Notation />` siehe `README_NOTATION.md`.
+Dieser Handoff fasst Architektur und wichtige Regeln des nativen SVG-Notationssystems für zukünftige Übergaben zusammen. Er ist kein Nachweis eines aktuellen Testlaufs oder einer Übernahme nach `main`. Die führende Prop- und API-Referenz ist [README_FEAT_NOTATION.md](README_FEAT_NOTATION.md); der Abschlussprozess steht im [Workflow](../README_WORKFLOW.md).
 
 ## 1. Tech-Stack
-* **Framework:** Astro `^7.4.8` + `@astrojs/starlight` `^0.42.10`
-* **Abhängigkeiten & Tooling:** TypeScript `^6.0.3`, Biome `2.6.6`, Vitest `^5.1.0`, Playwright `^1.65.0`, `@coderline/alphatab` `^1.9.0`
+* **Framework und Tooling:** Astro, Starlight, TypeScript, Biome, Vitest und Playwright; die aktuellen Versionen stehen in `package.json`.
 * **Font / Glyphen:** Standardisierte SMuFL-Glyphen (Bravura) als reines Server-Side-SVG (kein Canvas/DOM-Renderer für `<Notation />`).
 
 ## 2. Aktive Architektur & Dateien
@@ -34,14 +33,10 @@ Legacy-Komponenten (`NotationOverview.astro`, `NotationSystem.astro`, `DynamicsM
 6. **Notenschlüssel:** `<Notation>` erlaubt taktweise Schlüssel (z. B. für `layout={1}` Violin-/Bassschlüssel-Vergleiche); für strikte Stücke ohne Wechsel steht der optionale Helper `assertNoClefChanges()` in `src/lib/notation-renderer.ts` bereit.
 
 ## 4. Dokumentation & Qualitätsstand
-* **API-Referenz / Cheat Sheet:** `README_NOTATION.md`
+* **API-Referenz / Cheat Sheet:** [README_FEAT_NOTATION.md](README_FEAT_NOTATION.md)
 * **Live-Dokumentation im Wiki (`Features` → `Notation.astro`):** `src/content/docs/audio/referenzen-werkzeuge/visualisierungen-erklaert/notensystem.mdx` (inkl. 18-Takt-Beispiel und Code-Erklärungen)
-* **Checks & Tests (Stand vor Abschluss dieses Branches):**
-  * `npm run validate` (`biome check .`, `astro check`, `tsc --noEmit`)
-  * `npm run test` (48 Vitest-Tests gesamt, davon 41 in `tests/music-notation.test.mjs`)
-  * `npm run test:e2e` (18 Playwright-Tests in `tests/e2e/smoke.spec.ts` auf Desktop Chrome & Mobile Safari)
-  * `npm run build` (37 Seiten)
+* **Qualitätssicherung:** `tests/music-notation.test.mjs` und `tests/e2e/smoke.spec.ts`. Aktuelle Prüfungen und Voraussetzungen: [Testing-Leitfaden](../README_TESTING.md); vor Feature-Abschluss `npm run preflight` ausführen.
 
 ## 5. Offene Punkte / Mögliche nächste Schritte
 * Das 18-Takt-Gesamtbeispiel in `notensystem.mdx` deckt noch nicht alle Features der Engine ab (z. B. `title`/`subtitle` auf Stück-Ebene, Auftakt `pickup`, taktübergreifendes `hairpinStart`/`hairpinEnd`, `sixteenth`-Pause, Tonartwechsel-Auflösung mit `accidentals: []` sowie Bassschlüssel).
-* Falls zukünftig neue Notation-Props oder Layout-Regeln hinzukommen, immer parallel in `README_NOTATION.md` und `tests/music-notation.test.mjs` nachziehen.
+* Falls zukünftig neue Notation-Props oder Layout-Regeln hinzukommen, immer parallel in [README_FEAT_NOTATION.md](README_FEAT_NOTATION.md) und `tests/music-notation.test.mjs` nachziehen.

@@ -1,48 +1,54 @@
 # Mein Musik-Hub
 
-> Modulare Lern- und Dokumentationsplattform für Musiktheorie, Gitarre und Songwriting auf Basis von Astro Starlight, Vektor-Notation und Serverless Functions.
+Modulare Lern- und Dokumentationsplattform für Musiktheorie, Gitarre und Songwriting auf Basis von Astro Starlight, Vektor-Notation und Serverless Functions.
 
 ---
 
 ## Schnellstart
 
-Für den regulären Entwicklungsstart der Benutzeroberfläche:
-
 ```bash
-# Abhängigkeiten installieren
 npm install
-
-# Lokalen Entwicklungsserver starten (UI & Dokumentation auf Port 4321)
 npm run dev
 ```
 
-*Für den Start inklusive Netlify Serverless Functions (Port 8888) und das Erst-Setup siehe [WORKSPACE_SETUP.md](WORKSPACE_SETUP.md).*
+Die Oberfläche läuft unter `http://localhost:4321`. Erst-Setup und Start mit Netlify Functions: [Workspace-Setup](README_WORKSPACE_SETUP.md).
 
 ---
 
-## Dokumentations-Hub & Führende Leitfäden
-
-Alle ausführlichen Anleitungen, Architekturrichtlinien und Prüfpläne sind in spezialisierte Dokumente ausgelagert:
+## Dokumentation
 
 | Dokument | Leitfaden & Zweck |
 | :--- | :--- |
-| **[CHEATSHEET.md](CHEATSHEET.md)** | **Tägliche Workflows:** Terminal-Befehle, Git-Branching, Reset-Befehle, Pre-Flight Gate und 4-Stufen-Entwicklungszyklus. |
-| **[ASTROSTRUCTURE.md](ASTROSTRUCTURE.md)** | **Architektur & Scaffolding:** Ordnerstruktur nach dem Lego-Prinzip, Content Collections, Zod-Schemas und Core-Konfigurationen (`astro.config.mjs`, `tsconfig.json`). |
-| **[TESTING.md](TESTING.md)** | **Qualitätssicherung:** Vollständige Testpyramide (Biome, TypeScript, Vitest, happy-dom, Playwright, LHCI, npm audit) und 5-Phasen-Release-Audit samt Definition of Done. |
-| **[WORKSPACE_SETUP.md](WORKSPACE_SETUP.md)** | **Workspace-Start:** Schrittweise Initialisierung frischer Umgebungen, Netlify CLI-Verknüpfung und Umgebungsvariablen (`.env`). |
-| **[FEATURES.md](FEATURES.md)** | **App-Funktionen:** Detaillierte Beschreibung aller Fachmodule (SVG-Notationsrenderer, Fretboard-Visualizer, Pattern-Sequencer, AlphaTab-Player, IssueTracker, Modul-Builder, XP-Lernpfad). |
-| **[README_FEAT_MODULEBUILDER.md](README_FEAT_MODULEBUILDER.md)** | **Lernpfad & Autorenwerkbank (einfach erklärt):** Übersicht über Modul-/Aufgaben-Builder, XP-/Tag-System und interaktiven Schüler-Lernpfad für Nicht-Programmierer. |
-| **[.INSTRUCTIONS.md](.INSTRUCTIONS.md)** | **KI-Kontext:** Globale Systemregeln und Token-Sparrichtlinien für GitHub Copilot. |
+| [README_CHEATSHEET.md](README_CHEATSHEET.md) | Tägliche Befehle und Entwicklungsworkflows |
+| [README_ASTROSTRUCTURE.md](README_ASTROSTRUCTURE.md) | Architektur und Projektstruktur |
+| [README_TESTING.md](README_TESTING.md) | Teststrategie und Release-Audit |
+| [README_WORKSPACE_SETUP.md](README_WORKSPACE_SETUP.md) | Einrichtung, Netlify und Umgebungsvariablen |
+| [README_FEAT.md](features/README_FEAT.md) | Übersicht über Funktionen und Fachmodule |
+| [README_FEAT_MODULEBUILDER.md](features/README_FEAT_MODULEBUILDER.md) | Lernpfad und Autorenwerkbank |
+| [README_FEAT_NOTATION.md](features/README_FEAT_NOTATION.md) | API und Architektur der Notation |
+| [README_CLEANUP.md](README_CLEANUP.md) | Wiederholbare Repository-Bereinigung in fünf Schritten |
+| [README_WORKFLOW.md](README_WORKFLOW.md) | Persönlicher Entwicklungs- und Archivierungsablauf |
+| [Copilot-Instruktionen](.github/copilot-instructions.md) | Repository-weite Projektregeln für Copilot |
 
 ---
 
 ## Qualitätssicherung (Pre-Flight)
 
-Vor jedem Commit oder Pull Request muss das automatisierte Quality Gate lokal fehlerfrei durchlaufen:
+Vor einem Push oder Pull Request das lokale Quality Gate ausführen:
 
 ```bash
 npm run preflight
 ```
-*(Ausführliche Test- und Audit-Details siehe [TESTING.md](TESTING.md)).*
+Details stehen im [Testing-Leitfaden](README_TESTING.md).
 
 ---
+
+## Release-Checkliste
+
+Die folgenden offenen Prüfpunkte fassen das [Release-Audit](README_TESTING.md#5-der-5-phasen-release-audit-vor-dem-release) zusammen; sie sind keine Aussage über den aktuellen Prüfstatus:
+
+- [ ] Code-Hygiene, Tests und Build prüfen.
+- [ ] Inhalte und Didaktik prüfen.
+- [ ] Mobilgeräte und Browser prüfen.
+- [ ] Performance, SEO und Barrierefreiheit prüfen.
+- [ ] Rechtliches und Serverless-Infrastruktur prüfen.

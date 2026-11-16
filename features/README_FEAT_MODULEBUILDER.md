@@ -1,14 +1,15 @@
 # Der Modul-Builder & Interaktive Lernpfad (Etappen 1–3B) – Einfach erklärt
 
-Dieses Dokument erklärt ohne Programmier-Fachchinesisch, **was** wir in allen Etappen (Etappe 1 bis Etappe 3B) für den **Admin Modul- & Aufgaben-Builder** sowie den **Interaktiven Lernpfad für Lernende** aufgebaut haben und **warum** jeder Baustein wichtig ist.
+Dieses Dokument erklärt den **Admin Modul- & Aufgaben-Builder** und den **Interaktiven Lernpfad für Lernende**. Die Etappen 1 bis 3B beschreiben die bereits umgesetzten Bausteine; Testbefehle und aktuelle Ergebnisse stehen im [Testing-Leitfaden](../README_TESTING.md).
 
 ---
 
 ## Das Grundprinzip: Erst das Fundament, dann die Oberfläche
 
 Man kann sich dieses Feature wie den Bau eines Hauses vorstellen:
-- **Etappe 1 (jetzt erledigt):** Das Fundament, die Stromleitungen, die Wasserrohre und die Hausordnung. Man sieht im Browser noch keine neuen Formulare, aber im Hintergrund ist alles vorbereitet, damit Lerninhalte später sicher erstellt, geprüft, bepunktet und gespeichert werden können.
-- **Etappe 2 (als Nächstes):** Die sichtbaren Räume und Schalter – also die Eingabeformulare und Übersichtsseiten im bekannten Design des IssueTrackers.
+- **Etappe 1:** Das Fundament für die Prüfung, Bepunktung und Speicherung von Lerninhalten.
+- **Etappe 2:** Die Eingabeformulare und Übersichtsseiten im bekannten Design des IssueTrackers.
+- **Etappen 3A und 3B:** Fortschrittsverwaltung und sichtbare Lernoberfläche.
 
 Warum machen wir das getrennt? Weil so jeder Baustein einzeln geprüft und getestet werden kann, ohne dass später Design-Fragen und Datensicherheit miteinander vermischt werden.
 
@@ -19,7 +20,7 @@ Warum machen wir das getrennt? Weil so jeder Baustein einzeln geprüft und getes
 ### 1. Die zentrale Punkte- und Themen-Liste (`src/lib/xp-tags.ts`)
 - **Was es ist:** Eine einzige, zentrale Tabelle für alle Erfahrungspunkte (XP) und Themen-Etiketten (Tags).
 - **Was darin steckt:**
-  - **Standard-Punkte (Basis-XP):** Ein Theorie-Block bringt standardmäßig **30 XP**, eine Übungsaufgabe **10 XP**, eine leichte Quizfrage **15 XP** und eine Schnelltest-Frage („Fastlane“) **25 XP**.
+  - **Standard-Punkte (Basis-XP):** Der Theorie-Basiswert beträgt **30 XP**, eine Übungsaufgabe **10 XP**, eine leichte Quizfrage **15 XP** und eine Schnelltest-Frage („Fastlane“) **25 XP**.
   - **Themen-Etiketten mit Schwierigkeitsfaktor:** Themen wie `Allgemein` (× 1,0), `Violinschlüssel` (× 1,0), `Tabulatur` (× 1,0), `Bassschlüssel` (× 1,1), `Gitarre` (× 1,2), `Rhythmus` (× 1,2) und `Notensystem` (× 1,5).
   - **Automatische Berechnung:** Eine Aufgabe im Notensystem mit 10 Basis-XP zählt durch den Faktor 1,5 automatisch **15 XP**. Hat eine Aufgabe mehrere Themen-Etiketten, zählt standardmäßig der höchste Faktor.
 - **Warum:** Wenn wir später entscheiden, dass das Notensystem oder Gitarren-Aufgaben mehr oder weniger Punkte geben sollen, muss das nur **an einer einzigen Stelle** angepasst werden – und nicht in Dutzenden Aufgaben einzeln.
@@ -52,10 +53,10 @@ Warum machen wir das getrennt? Weil so jeder Baustein einzeln geprüft und getes
 ---
 
 ### 4. Der Aktenschrank und die sichere Speicher-Schnittstelle
-- **Leere Datendatei (`data/modules.json`):** Der zentrale Speicherort für alle künftigen Lernmodule und Aufgaben (zum Start bewusst leer angelegt).
+- **Datendatei (`data/modules.json`):** Der zentrale Speicherort für Lernmodule und Aufgaben; sie enthält bereits Startdaten und kann über den Builder verändert werden.
 - **Schnittstelle zum Speichern und Laden (`netlify/functions/modules.ts`):**
   - Eine kleine Server-Funktion unter `/api/modules`, über die Module und Aufgaben geladen (`GET`), neu angelegt (`POST`), aktualisiert (`PUT`) und gelöscht (`DELETE`) werden können – direkt in der Projekt-Datei auf GitHub, genau nach demselben Sicherheitsmuster wie beim bestehenden IssueTracker.
-  - **GitHub-Branch:** `GITHUB_BRANCH` legt den gemeinsamen Lese- und Schreib-Branch für Module und Beiträge fest (Standard: `main`). Konfiguration und Unterschied zum lokalen Dev-Endpunkt: [Workspace-Setup](README_WORKSPACE_SETUP.md#schritt-5-netlify-cli-verknüpfen-umgebungsvariablen-für-das-backend-einrichten--fullstack-starten).
+  - **GitHub-Branch:** `GITHUB_BRANCH` legt den gemeinsamen Lese- und Schreib-Branch für Module und Beiträge fest (Standard: `main`). Konfiguration und Unterschied zum lokalen Dev-Endpunkt: [Workspace-Setup](../README_WORKSPACE_SETUP.md#schritt-5-netlify-cli-verknüpfen-umgebungsvariablen-für-das-backend-einrichten--fullstack-starten).
   - **Schutz bei gleichzeitigem Bearbeiten:** Wenn zwei Personen fast zeitgleich speichern, bemerkt die Schnittstelle den Konflikt und wiederholt den Speichervorgang automatisch bis zu dreimal sauber, statt Änderungen von anderen versehentlich zu überschreiben.
   - **Größenbegrenzung:** Zu große Anfragen (über 500.000 Bytes) werden sofort abgewiesen.
 - **Schutz vor unnötigen Website-Neubauten (`netlify.toml`):**
@@ -65,7 +66,7 @@ Warum machen wir das getrennt? Weil so jeder Baustein einzeln geprüft und getes
 ---
 
 ### 5. Die automatische Prüfstrecke (`tests/module-builder.test.mjs`)
-- **Was es ist:** 8 automatisierte Tests, die unsere neuen Bausteine per Knopfdruck auf Herz und Nieren prüfen.
+- **Was es ist:** Automatisierte Tests für die Grundlagen und die Speicher-Schnittstelle.
 - **Was getestet wird:**
   - Stimmt die XP-Berechnung (inkl. Faktor 1,5 für `Notensystem`)?
   - Werden reine Theorie-Module (`hasPractice: false`) korrekt akzeptiert und fehlerhafte Module abgewiesen?
@@ -88,7 +89,7 @@ Dort gibt es drei übersichtliche Reiter (Tabs):
   - **Grunddaten:** Eindeutige ID (z. B. `theory-101`), Reihenfolge (`1, 2, 3 …`), Titel, Kurzbeschreibung, Bereich (`Theorie`, `Instrument`, `Produktion`, `Band`), Level (`100` bis `500`) und optional die D-Stufe (`D1`, `D2`, `D3`).
   - **Themen-Etiketten als anklickbare Chips:** Zeigen direkt den jeweiligen Punkte-Faktor an (z. B. `Notensystem (1.5x)` oder `Allgemein (1.0x)`).
   - **Praxisteil-Schalter:** Über ein Häkchen legst du fest, ob das Modul einen Praxisteil hat – bei reinen Theorie-Modulen bleibt der Haken einfach aus.
-  - **Punkte & Bestehensgrenzen:** Basis-XP pro Theorie-Block (Standard: `30`) sowie die nötigen Prozentwerte für das einfache Quiz (`80 %`) und den Fastlane-Test (`85 %`).
+  - **Punkte & Bestehensgrenzen:** Theorie-Basis-XP (Standard: `30`) sowie einstellbare Prozentwerte für das einfache Quiz (Standard: `80 %`) und den Fastlane-Test (Standard: `85 %`).
   - **Dynamischer Theorie-Block-Editor:** Du kannst beliebig viele Lernabschnitte hinzufügen, per Pfeiltasten (`↑` / `↓`) neu sortieren oder wieder entfernen. Jeder Block hat einen Titel, ein Textfeld mit Hinweis auf mathematische KaTeX-Formeln (`$...$` / `$$...$$`) sowie die Möglichkeit, eine visuelle Komponente (wie Notensystem, Klaviatur oder Griffbrett) mit passenden Einstellungen anzuhängen.
 
 ### 2. Reiter „2. Aufgaben- & Quiz-Builder“ (`src/components/project/ExerciseBuilderForm.astro`)
@@ -114,7 +115,7 @@ Dort gibt es drei übersichtliche Reiter (Tabs):
 - **`src/lib/module-builder-ui.ts` & `src/styles/module-builder.css`:** Enthalten die gemeinsame Steuerungslogik für alle drei Werkzeuge sowie das passende Erscheinungsbild (inklusive dunklem Design-Modus), während die `.astro`-Dateien schlank bleiben. Beim Laden und Speichern prüft der Browser sicher auf JSON-Antworten (um HTML-Fehlerseiten sauber abzufangen) und nutzt automatisch `/api/modules` bzw. `/.netlify/functions/modules`.
 - **`astro.config.mjs`:** Bindet den **Modul-Builder** unter *Projektierung → Modul-Builder* sowie den **Interaktiven Lernpfad & Dashboard** ganz oben unter *Audio & Musik → Musiktheorie* in die Seitenleiste ein und stellt zusätzlich einen lokalen Entwicklungs-Endpunkt für `npm run dev` bereit, sodass Änderungen lokal direkt in `data/modules.json` gespeichert werden.
 - **`netlify/functions/modules.ts`:** Reagiert sowohl auf `/api/modules` als auch auf `/.netlify/functions/modules`.
-- **`tests/components/module-builder-ui.test.ts`:** 5 automatisierte Oberflächentests prüfen das Hinzufügen/Umsortieren/Entfernen von Theorie-Blöcken, das Einblenden der `NotationBuilder`-Felder samt Live-Vorschau, die Live-XP-Berechnung, die Filterung im Modul-Katalog sowie die sichere Behandlung von HTML-Fehlerantworten.
+- **`tests/components/module-builder-ui.test.ts`:** Oberflächentests prüfen unter anderem Theorie-Blöcke, NotationBuilder-Vorschau, Live-XP-Berechnung, Katalogfilter und die Behandlung von HTML-Fehlerantworten.
 
 ---
 
@@ -128,9 +129,10 @@ Damit Lernende sehen können, wie weit sie sind und welche Module noch gesperrt 
   - Innerhalb eines Moduls geht es der Reihe nach voran: **1. Theorie** → **2. Aufgaben** → **3. Praxis** *(nur wenn das Modul einen Praxisteil hat)* → **Abschluss-Quiz Einfach**. Erst danach öffnet sich automatisch das nächste Modul.
   - Kommen später über den Modul-Builder neue Module in `data/modules.json` hinzu, werden sie automatisch einsortiert, ohne dass bereits verdiente XP oder erledigte Module verloren gehen.
 - **Keine doppelten Punkte:** Das System merkt sich jede bereits gelöste Aufgabe und jeden erledigten Schritt. Wer eine Aufgabe zur Übung noch einmal löst, lernt zwar weiter, bekommt die XP aber fair nur beim ersten Mal gutgeschrieben.
-- **Der „⚡ Fastlane“-Schnelltest:** Wer ein Thema bereits beherrscht, kann bei jedem Modul (auch bei noch gesperrten Folgemodulen) das schwere Fastlane-Quiz versuchen. Bei mindestens **85 %** richtigen Antworten gilt das gesamte Modul als bestanden, schaltet das nächste Modul frei und vergibt alle bis dahin **noch nicht verdienten** XP des Moduls auf einmal – ohne bereits abgeholte Theorie- oder Übungs-XP doppelt zu zählen. Bei unter **85 %** wird nur der persönliche Bestwert gespeichert, es gibt aber keine Punkte und keine Freischaltung.
+- **Der „⚡ Fastlane“-Schnelltest:** Wer ein Thema bereits beherrscht, kann auch bei gesperrten Folgemodulen das schwere Fastlane-Quiz versuchen. Bei Erreichen der im Modul eingestellten Bestehensgrenze (Standard: **85 %**) gilt das Modul als bestanden und das nächste wird freigeschaltet. Der noch offene Theorie-Basiswert und die XP ungelöster Fragen werden einmalig gutgeschrieben. Unter der Grenze wird der persönliche Bestwert gespeichert, aber es gibt keine Punkte oder Freischaltung.
+- **Theorie-XP:** Beim Abschluss des Theorieschritts vergibt die Fortschritts-Engine den taggewichteten Theorie-Basiswert einmal pro Modul. Die Katalog-Zusammenfassung berechnet ihren Theorieanteil dagegen aus Anzahl der Blöcke × Basiswert; diese Anzeige ist daher nicht zwingend identisch mit der tatsächlichen Gutschrift.
 - **Level-System:** Alle **500 XP** steigt man automatisch ein Level höher (Level 1 ab 0 XP, Level 2 ab 500 XP usw.), inklusive Aufschlüsselung nach Lernbereichen und Themen-Etiketten.
-- **Prüfstrecke (`tests/learning-progress.test.mjs`):** 7 automatisierte Tests prüfen genau diese Regeln (Theorie- vs. Instrument-Pfad, Doppel-XP-Schutz, Fastlane-Erfolg/Misserfolg, Dashboard-Kennzahlen und Speicherung).
+- **Prüfstrecke (`tests/learning-progress.test.mjs`):** Tests prüfen diese Regeln, darunter Doppel-XP-Schutz, Fastlane, Dashboard-Kennzahlen und Speicherung.
 
 ---
 
@@ -139,9 +141,9 @@ Damit Lernende sehen können, wie weit sie sind und welche Module noch gesperrt 
 Jetzt verbinden sich die Bausteine aus Etappe 1 bis 3A zu einem kompletten, direkt im Browser spielbaren Kurs unter **Audio & Musik → Musiktheorie → Interaktiver Lernpfad & Dashboard** (`/audio/theory/lernpfad/`).
 
 ### 1. Start-Lehrplan (`data/modules.json`)
-Damit der Lehrgang sofort ausprobiert werden kann, enthält `data/modules.json` zwei vollständige Startmodule:
-1. **Modul 1 (`theory-101` – reines Theorie-Modul ohne Praxisteil):** *Schall, Frequenz & Notensystem* (Kammerton $440\text{ Hz}$ als KaTeX-Formel, Violinschlüssel-Notenbild sowie 6 Übungs-, Quiz- und Fastlane-Aufgaben inklusive interaktiver Notenaufgabe).
-2. **Modul 2 (`guitar-102` – Instrument-Modul mit Praxisteil):** *Gitarren-Grundlagen & Leersaiten* (mit Griffbrett-Visualisierung, Praxishinweis und passenden Übungs-, Quiz- und Fastlane-Aufgaben).
+Die derzeitigen Startdaten in `data/modules.json` enthalten zwei Module:
+1. **`theory-101` – Elementarlehre:** Theorie ohne Praxisteil, mit Schall, Kammerton und Notensystem sowie Fragen in allen drei Lernspuren.
+2. **`guitar-102` – Gitarrenlehre:** Instrument-Modul mit Griffbrett, Praxishinweis und Fragen in allen drei Lernspuren.
 
 ### 2. Das XP-Dashboard (`src/components/learning/ProgressDashboard.astro`)
 - **Wozu es dient:** Zeigt dem Lernenden auf einen Blick das aktuelle **Level**, die **gesammelten Gesamt-XP**, den Fortschrittsbalken bis zum nächsten Level, die Anzahl **abgeschlossener Module** sowie kompakte Badges für XP nach Lernbereich (`Theorie`, `Instrument` …) und Themen (`Notensystem`, `Gitarre` …).
@@ -158,12 +160,12 @@ Damit der Lehrgang sofort ausprobiert werden kann, enthält `data/modules.json` 
   - **Schritt 1 (Theorie):** Stellt alle Theorie-Blöcke mit mathematischen KaTeX-Formeln und eingebetteten Visualisierungen (`Notation`, `FretboardClickable`, `ScalePattern`, `NotationKeyboard`) dar. Erst der Klick auf **„Theorie abschließen (+XX XP)“** gibt Schritt 2 frei.
   - **Schritt 2 (Aufgaben):** Bleibt bis dahin gesperrt und bietet alle 4 Aufgabentypen direkt interaktiv an: Multiple/Single Choice, Zahleneingabe (versteht z. B. `880` genauso wie `880 Hz`) sowie das interaktive Notensystem (`NotationBuilder.astro`), bei dem Lernende Noten selbst im Takt platzieren. Bei einer falschen Antwort erscheint die didaktische Erklärung des Autors.
   - **Schritt 3 (Praxis, optional):** Erscheint nur bei Modulen mit Praxisteil und schaltet nach Bestätigung das Abschluss-Quiz frei.
-  - **Abschluss-Quiz Einfach & Fastlane-Modus (`?id=...&mode=fastlane`):** Führen Frage für Frage mit Fortschrittsbalken (`Frage X / Y`), XP-Bonus-Vorschau, Bestehensschwelle (`80 %` bzw. `85 %`) und automatischer Freischaltung des Folgemoduls durch die Prüfung.
-- **UI-Tests (`tests/components/module-player-ui.test.ts`):** 3 automatisierte Tests prüfen die Startdaten in `data/modules.json`, das Entsperren des Steppers nach Klick auf „Theorie abschließen“ sowie den kompletten Fastlane-Durchlauf inklusive `NotationBuilder`-Eingabe und Live-Update von Dashboard und Roadmap.
+  - **Abschluss-Quiz Einfach & Fastlane-Modus (`?id=...&mode=fastlane`):** Führen Frage für Frage mit Fortschrittsbalken (`Frage X / Y`), XP-Bonus-Vorschau, konfigurierbarer Bestehensschwelle (Standard: `80 %` bzw. `85 %`) und automatischer Freischaltung des Folgemoduls durch die Prüfung.
+- **UI-Tests (`tests/components/module-player-ui.test.ts`):** Prüfen unter anderem Startdaten, das Entsperren des Steppers und den Fastlane-Durchlauf mit Dashboard und Roadmap.
 
 ---
 
 ## Aktueller Stand
 
-- **Fertiggestellt (Etappen 1, 2, 3A & 3B):** Autorenwerkbank (`Modul-Builder`), JSON-/GitHub-Speicherung (inkl. lokalem Dev-Endpunkt), XP- & Fortschritts-Engine sowie die komplette Schüler-Oberfläche (`/audio/theory/lernpfad/` und `/audio/theory/modul/`) sind vollständig umgesetzt und gebaut (`npm run build`: 42 Seiten ohne Fehler; `npx astro check`: 0 Fehler; `npx tsc --noEmit`: 0 Fehler; `biome check`: 0 Fehler auf allen geänderten/neuen Dateien).
-- **Testergebnisse:** Alle 23 Tests unseres Features (`tests/learning-progress.test.mjs`, `tests/module-builder.test.mjs`, `tests/components/module-builder-ui.test.ts`, `tests/components/module-player-ui.test.ts`) bestehen zu 100 %; in der Gesamttest-Suite `npm test` bleiben lediglich 4 vorbestehende, davon unabhängige Fehlschläge in älteren `NotationBuilder`-Tests (`Leertaste` vs. `Num 1`).
+- **Umgesetzt (Etappen 1, 2, 3A & 3B):** Autorenwerkbank, JSON-/GitHub-Speicherung mit lokalem Dev-Endpunkt, Fortschritts-Engine und Lernoberfläche (`/audio/theory/lernpfad/` und `/audio/theory/modul/`).
+- **Tests:** Feature-Tests liegen in `tests/learning-progress.test.mjs`, `tests/module-builder.test.mjs`, `tests/components/module-builder-ui.test.ts` und `tests/components/module-player-ui.test.ts`. Den aktuellen Stand mit `npm test` prüfen.
