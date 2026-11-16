@@ -55,6 +55,7 @@ Warum machen wir das getrennt? Weil so jeder Baustein einzeln geprüft und getes
 - **Leere Datendatei (`data/modules.json`):** Der zentrale Speicherort für alle künftigen Lernmodule und Aufgaben (zum Start bewusst leer angelegt).
 - **Schnittstelle zum Speichern und Laden (`netlify/functions/modules.ts`):**
   - Eine kleine Server-Funktion unter `/api/modules`, über die Module und Aufgaben geladen (`GET`), neu angelegt (`POST`), aktualisiert (`PUT`) und gelöscht (`DELETE`) werden können – direkt in der Projekt-Datei auf GitHub, genau nach demselben Sicherheitsmuster wie beim bestehenden IssueTracker.
+  - **GitHub-Branch:** `GITHUB_BRANCH` legt den gemeinsamen Lese- und Schreib-Branch für Module und Beiträge fest (Standard: `main`). Konfiguration und Unterschied zum lokalen Dev-Endpunkt: [Workspace-Setup](README_WORKSPACE_SETUP.md#schritt-5-netlify-cli-verknüpfen-umgebungsvariablen-für-das-backend-einrichten--fullstack-starten).
   - **Schutz bei gleichzeitigem Bearbeiten:** Wenn zwei Personen fast zeitgleich speichern, bemerkt die Schnittstelle den Konflikt und wiederholt den Speichervorgang automatisch bis zu dreimal sauber, statt Änderungen von anderen versehentlich zu überschreiben.
   - **Größenbegrenzung:** Zu große Anfragen (über 500.000 Bytes) werden sofort abgewiesen.
 - **Schutz vor unnötigen Website-Neubauten (`netlify.toml`):**

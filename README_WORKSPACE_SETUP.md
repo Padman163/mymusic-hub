@@ -36,12 +36,12 @@ npm install typescript
 
 ### Schritt 3: Basis-Frontend starten & prüfen (Isolierter Modus)
 ```bash
-# Updated /.astro und startet App ohne Serverfunktionen und APIs bleiben inaktiv
+# Aktualisiert /.astro und startet die App ohne Netlify Functions
 npm run dev
 ```
 * **URL:** Öffne `http://localhost:4321` im Browser.
 * **Was geprüft wird:** Lädt das Astro-Frontend? Werden Styles, die Starlight-Sidebar und statische Komponenten gerendert?
-* **Warum dieser Schritt nötig ist:** Serverless Functions und externe APIs bleiben inaktiv. Du stellst sicher, dass die Kern-Anwendung fehlerfrei kompiliert, ohne von Backend-Token oder externen Diensten abhängig zu sein.
+* **Warum dieser Schritt nötig ist:** Netlify Functions bleiben inaktiv. Die lokale Modul-API liest und schreibt `data/modules.json` direkt im Workspace, ohne GitHub-Token oder `GITHUB_BRANCH`.
 
 ### Schritt 4: Statische Hygiene & Code-Validierung prüfen und anpassen
 Stelle sicher, dass im geklonten Branch keine Typen- oder Syntaxkonflikte vorliegen:
@@ -74,18 +74,23 @@ npx netlify-cli login
 
 # Workspace mit deinem Netlify-Projekt verknüpfen
 npx netlify-cli link
+```
 
-# .env im Projekt erstellen lassen und GitHub-Infos eintragen lassen
-npx netlify-cli env:list --plain > .env
-
-# GitHub-API-Zugang für den IssueTracker / Datenspeicher werden in .env erstellt und nicht synchronisiert
-# .env muss bei Verbindungsproblemen geprüft werden
-GITHUB_BRANCH=main
+Trage die GitHub-Konfiguration in die lokale `.env` ein oder passe sie dort an:
+```dotenv
+GITHUB_REPOSITORY=Padman163/mymusic-hub
+GITHUB_TOKEN=<github-token>
+GITHUB_BRANCH=<aktuellen Branch>
 GITHUB_DATA_PATH=data/contributions.json
-GITHUB_REPOSITORY=owner/repository-name
-GITHUB_TOKEN=ghp_deinPersoenlicherFineGrainedTokenHier
+GITHUB_MODULES_PATH=data/modules.json
+```
+* **Branch:** `GITHUB_BRANCH` bestimmt für beide Netlify Functions den GitHub-Branch zum Lesen und Schreiben von Beiträgen **und** Modulen. Er folgt nicht automatisch dem ausgecheckten Git-Branch. Für die Arbeit auf `<aktuellen Branch>` diesen Wert setzen; für einen anderen Ziel-Branch entsprechend ändern. Ohne Wert verwenden beide Functions `main`.
+* **Dateien:** `GITHUB_DATA_PATH` und `GITHUB_MODULES_PATH` sind optional; die oben gezeigten Pfade sind die Standardwerte. Der Ziel-Branch muss die gewünschten Daten enthalten. API-Änderungen werden auf GitHub im konfigurierten Branch gespeichert und nicht automatisch in die lokale Arbeitsdatei übernommen.
+* **Token:** Der GitHub-Token braucht Zugriff auf das Repository und Contents-Lese- und Schreibrechte. `.env` und Token nicht committen oder öffentlich teilen.
+* **Netlify:** Die lokale `.env` konfiguriert nicht automatisch die veröffentlichte Website. Für das jeweilige Netlify-Deploy die entsprechenden Umgebungsvariablen dort separat setzen und danach neu deployen. Ein Branch-Wechsel betrifft beide Datenspeicher, auch auf der veröffentlichten Website.
 
-# Prüfen ob die Variablen mit denen auf Netlify übereinstimmen
+```bash
+# Verknüpfung und den im lokalen Netlify-Kontext wirksamen Branch prüfen
 npx netlify-cli status
 npx netlify-cli dev:exec -- node -p process.env.GITHUB_BRANCH
 
@@ -93,9 +98,8 @@ npx netlify-cli dev:exec -- node -p process.env.GITHUB_BRANCH
 npx netlify-cli dev
 ```
 * **URL:** Öffne `http://localhost:8888`.
-* **Warum dieser Schritt nötig ist:** Dieser Befehl führt das Astro-Frontend und die Serverless Functions synchron zusammen. Erst hier funktioniert der vollständige Lebenszyklus des IssueTrackers (Erstellen, Filtern, Checklisten abhaken).
-
-* Die Netlify Function `netlify/functions/contributions.ts` benötigt Schreibrechte über die GitHub REST API, um Beiträge in `data/contributions.json` zu persistieren. Fehlen diese Schlüssel, antwortet die Schnittstelle mit HTTP 503.
+* **Warum dieser Schritt nötig ist:** Dieser Befehl führt das Astro-Frontend und die Netlify Functions zusammen. So lassen sich IssueTracker und Modul-API mit GitHub-Persistenz verwenden.
+* **Prüfen:** `/api/modules` im Browser öffnen und die Modultitel mit der Datei im konfigurierten GitHub-Branch vergleichen. Fehlen `GITHUB_TOKEN` oder `GITHUB_REPOSITORY`, antworten die Functions mit HTTP 503.
 
 ### Schritt 6: E2E-Testbrowser & Lighthouse CI einrichten (Optional)
 
