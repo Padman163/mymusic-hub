@@ -32,10 +32,17 @@
           "markdownContent": "Ein Standard-Notensystem besitzt **fünf Linien** und vier Zwischenräume. Der **Violinschlüssel (G-Schlüssel)** umschlingt die zweite Linie von unten und verankert dort das eingestrichene **G4**.",
           "visualComponent": "Notation",
           "visualPropsJson": "{\"clef\":\"treble\",\"notes\":[{\"type\":\"filled\",\"step\":2,\"duration\":\"quarter\"},{\"type\":\"filled\",\"step\":4,\"duration\":\"quarter\"}]}"
+        },
+        {
+          "id": "tb-3-8a45d0",
+          "order": 3,
+          "title": "test notation",
+          "markdownContent": "<Notation clef=\"treble\" notes={[]} />",
+          "visualComponent": "Notation"
         }
       ],
       "createdAt": "2026-11-16T00:00:00.000Z",
-      "updatedAt": "2026-11-16T07:40:25.655Z"
+      "updatedAt": "2026-11-16T14:24:44.242Z"
     },
     {
       "id": "guitar-102",
