@@ -404,5 +404,16 @@
     "checklist": [],
     "status": "Resolved",
     "createdAt": "2026-11-13T00:35:15.710Z"
+  },
+  {
+    "id": "a8b06a98-3ed7-48bb-bb12-f1d6fd84ae19",
+    "type": "Feature",
+    "title": "ModulBuilder",
+    "description": "mit branch in .env auf modulebuilder",
+    "area": "Komponente",
+    "priority": "Hoch",
+    "checklist": [],
+    "status": "New",
+    "createdAt": "2026-11-16T08:09:21.276Z"
   }
 ]
