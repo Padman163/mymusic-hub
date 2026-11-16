@@ -28,13 +28,17 @@
           "id": "tb-101-2",
           "order": 2,
           "title": "Fünf Linien & der Violinschlüssel",
-          "markdownContent": "Ein Standard-Notensystem besitzt **fünf Linien** und vier Zwischenräume. Der **Violinschlüssel (G-Schlüssel)** umschlingt die zweite Linie von unten und verankert dort das eingestrichene **G4**.",
-          "visualComponent": "Notation",
-          "visualPropsJson": "{\"clef\":\"treble\",\"notes\":[{\"type\":\"filled\",\"step\":2,\"duration\":\"quarter\"},{\"type\":\"filled\",\"step\":4,\"duration\":\"quarter\"}]}"
+          "markdownContent": "Ein Standard-Notensystem besitzt **fünf Linien** und vier Zwischenräume. Der **Violinschlüssel (G-Schlüssel)** umschlingt die zweite Linie von unten und verankert dort das eingestrichene **G4**.\n\n<Notation clef={\"treble\"} notes={[{\"type\":\"filled\",\"step\":2,\"duration\":\"quarter\"},{\"type\":\"filled\",\"step\":4,\"duration\":\"quarter\"}]} />"
+        },
+        {
+          "id": "tb-3-3b1b7f",
+          "order": 3,
+          "title": "notation beispiel",
+          "markdownContent": "<Notation clef=\"treble\" notes={[]} />"
         }
       ],
       "createdAt": "2026-11-16T00:00:00.000Z",
-      "updatedAt": "2026-11-16T14:45:46.128Z"
+      "updatedAt": "2026-11-16T14:49:58.826Z"
     },
     {
       "id": "guitar-102",
