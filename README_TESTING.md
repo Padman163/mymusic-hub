@@ -131,7 +131,7 @@ npx @biomejs/biome check --write .
 
 ### Dokumentationscheck
 
-`tests/documentation.test.ts` prüft alle `README*.md` im Projekt-Root auf vorhandene lokale Linkziele und Abschnitte sowie dokumentierte `npm run`-Skripte. Codebeispiele werden nicht als Links interpretiert. Der Test läuft in `npm test` und damit auch im Preflight:
+`tests/documentation.test.ts` prüft alle `README*.md` im Projekt-Root und in `features/` sowie `.github/copilot-instructions.md` auf vorhandene lokale Linkziele und Abschnitte sowie dokumentierte `npm run`-Skripte. Codebeispiele werden nicht als Links interpretiert. Der Test läuft in `npm test` und damit auch im Preflight:
 
 ```bash
 npx vitest run tests/documentation.test.ts

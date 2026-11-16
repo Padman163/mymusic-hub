@@ -7,9 +7,16 @@ const root = process.cwd();
 
 describe("README-Dokumentation", () => {
   it("verweist auf vorhandene lokale Ziele und npm-Skripte", async () => {
-    const files = (await readdir(root)).filter((name) =>
-      /^README(?:_.*)?\.md$/.test(name),
-    );
+    const files = (
+      await Promise.all(
+        ["", "features"].map(async (dir) =>
+          (await readdir(path.join(root, dir)))
+            .filter((name) => /^README(?:_.*)?\.md$/.test(name))
+            .map((name) => path.join(dir, name)),
+        ),
+      )
+    ).flat();
+    files.push(".github/copilot-instructions.md");
     const processor = await createMarkdownProcessor({ syntaxHighlight: false });
     const documents = new Map<string, Document>();
     for (const file of files) {
@@ -29,8 +36,10 @@ describe("README-Dokumentation", () => {
         const href = link.getAttribute("href") ?? "";
         if (!href || href === "#" || /^(?:[a-z][a-z\d+.-]*:|\/\/)/i.test(href)) continue;
         const [encodedPath, encodedFragment] = href.split("#", 2);
-        const target = encodedPath ? decodeURIComponent(encodedPath.split("?")[0]) : file;
-        const resolved = path.resolve(root, path.dirname(file), target);
+        const target = decodeURIComponent(encodedPath.split("?")[0]);
+        const resolved = target
+          ? path.resolve(root, path.dirname(file), target)
+          : path.resolve(root, file);
         try {
           await stat(resolved);
         } catch (error) {

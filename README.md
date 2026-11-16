@@ -23,12 +23,12 @@ Die Oberfläche läuft unter `http://localhost:4321`. Erst-Setup und Start mit N
 | [README_ASTROSTRUCTURE.md](README_ASTROSTRUCTURE.md) | Architektur und Projektstruktur |
 | [README_TESTING.md](README_TESTING.md) | Teststrategie und Release-Audit |
 | [README_WORKSPACE_SETUP.md](README_WORKSPACE_SETUP.md) | Einrichtung, Netlify und Umgebungsvariablen |
-| [README_FEATURES.md](README_FEATURES.md) | Funktionen und Fachmodule |
-| [README_FEAT_MODULEBUILDER.md](README_FEAT_MODULEBUILDER.md) | Lernpfad und Autorenwerkbank |
+| [README_FEAT.md](features/README_FEAT.md) | Übersicht über Funktionen und Fachmodule |
+| [README_FEAT_MODULEBUILDER.md](features/README_FEAT_MODULEBUILDER.md) | Lernpfad und Autorenwerkbank |
+| [README_FEAT_NOTATION.md](features/README_FEAT_NOTATION.md) | API und Architektur der Notation |
 | [README_CLEANUP.md](README_CLEANUP.md) | Wiederholbare Repository-Bereinigung in fünf Schritten |
 | [README_WORKFLOW.md](README_WORKFLOW.md) | Persönlicher Entwicklungs- und Archivierungsablauf |
-| [README_NOTATION.md](README_NOTATION.md) | API und Architektur der Notation |
-| [README_PROMPTS.md](README_PROMPTS.md) | Komponenten-Prompts |
+| [Copilot-Instruktionen](.github/copilot-instructions.md) | Repository-weite Projektregeln für Copilot |
 
 ---
 

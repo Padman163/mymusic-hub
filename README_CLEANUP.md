@@ -35,8 +35,8 @@ Arbeitsstand und offene Änderungen prüfen und die Bereinigung möglichst auf e
 
 1. `README.md` mit den führenden Leitfäden in der [Dokumentationsübersicht](README.md#dokumentation) vergleichen. Einmalige Befehle, Umgebungsvariablen und Checklisten vor dem Kürzen in den passenden Leitfaden übernehmen.
 2. Einstieg, Schnellstart, Verweise, Preflight und Release-Checkliste in `README.md` erhalten. Keine ungeprüften Release-Erfolge behaupten.
-3. Encoding von Prompt-Dokumenten prüfen, zum Beispiel `file README_PROMPTS.md`; Inhalte nur nach Prüfung und bei Bedarf nach UTF-8 konvertieren.
-4. Handoffs auf Abschluss und offene Punkte prüfen. Eine Archivierung nach `archive/handoffs/` nur vorschlagen und nach Freigabe durchführen; Links aktualisieren.
+3. [Copilot-Instruktionen](.github/copilot-instructions.md) auf Aktualität, Widersprüche und Überschneidungen mit den führenden Leitfäden prüfen.
+4. Handoffs in `features/` auf Abschluss und offene Punkte prüfen. Eine Archivierung nach `archive/handoffs/` nur vorschlagen und nach Freigabe durchführen; Links aktualisieren.
 5. Den automatischen Dokumentationscheck aus [README_TESTING.md](README_TESTING.md#dokumentationscheck) ausführen.
 
 ## 3. Ungenutzte Dateien und Assets untersuchen

@@ -1,6 +1,6 @@
 # `<Notation />` – Vollständige Feature-Dokumentation & Cheat Sheet
 
-Diese Dokumentation beschreibt die vereinheitlichte, deklarative **`<Notation />`**-Komponente (`src/components/notation/Notation.astro`) auf Basis des hauseigenen Bravura-SVG-Renderers (`src/lib/notation-renderer.ts` und `src/lib/system-layout.ts`).
+Diese Dokumentation beschreibt die vereinheitlichte, deklarative **`<Notation />`**-Komponente (`src/components/notation/Notation.astro`) auf Basis des hauseigenen Bravura-SVG-Renderers (`src/lib/notation-renderer.ts` und `src/lib/system-layout.ts`). Weitere Features stehen in der [Übersicht](README_FEAT.md); ergänzende Übergabeinformationen im [Notation-Handoff](README_FEAT_NOTATION_HANDOFF.md) und im [NotationBuilder-Handoff](README_FEAT_NOTATIONBUILDER_HANDOFF.md).
 
 ---
 
@@ -41,6 +41,8 @@ Die `<Notation />`-Komponente folgt dem **Lego-Prinzip** des Projekts und kombin
                    ├──► <TempoLabel />       (Tempo-Overlay)
                    └──► <FinalBar />         (Doppelter Schlussstrich)
 ```
+
+Der Importpfad ist ein Beispiel für eine tief liegende MDX-Seite und muss an deren Speicherort angepasst werden.
 
 ### Feste Layout-Invarianten
 1. **Präfix-Reihenfolge am Takt-/Zeilenanfang:** Immer strikt **Notenschlüssel → Taktart → Tonartvorzeichnung → Wiederholungsanfang (`repeatStart`) → erste Note**.
@@ -90,16 +92,16 @@ Steuert, wie Takte auf Zeilen umgebrochen, horizontal gewichtet und skaliert wer
 | `layout` | `'auto' \| number \| number[]` | `'auto'` | **Zeilenumbruch-Modus:**<br>• `'auto'`: Bricht Zeilen automatisch anhand der summierten Mindestbreite (`minWidth`) der Takte um (Standardbudget: `600px / scale`).<br>• `number` (z. B. `layout={3}`): Feste maximale Taktzahl pro Zeile. Hat die letzte Zeile weniger Takte, greift der proportionale Blocksatz-Ausgleich.<br>• `number[]` (z. B. `layout={[3, 1]}`): Explizite Taktanzahl für jede Zeile. Die Summe muss der Gesamtzahl der Takte entsprechen; jede so definierte Zeile gilt als vollständig (`100 %` Breite). |
 | `measureWidth` | `'rhythmic' \| 'equal'` | `'rhythmic'` | **Spaltenbreiten-Modus innerhalb einer Zeile:**<br>• `'rhythmic'`: Takte erhalten Spaltengewichte proportional zu ihrer inhaltlichen/rhythmischen Mindestbreite (dichte Achteltakte bekommen mehr Platz als ein Takt mit einer ganzen Note).<br>• `'equal'`: Alle Takte einer Zeile sind exakt gleich breit (`1fr`), sodass die Taktstriche über mehrere Zeilen hinweg exakt vertikal untereinander stehen. |
 | `stretchLastRow` | `boolean` | `false` | Wenn `true`, wird auch bei `layout="auto"` oder `layout={number}` eine unvollständige letzte Zeile auf volle `100 %` Zeilenbreite gestreckt (statt proportional begrenzt). |
-| `pickup` | `boolean` | `false` | **Auftakt-Modus:** Prüft automatisch, dass sich der erste Takt (Auftakt) und der letzte Takt (Schlusstakt) exakt zu einem vollständigen Takt der aktiven `timeSignature` ergänzen (z. B. $\frac{1}{4} + \frac{3}{4} = \frac{4}{4}$), und berechnet deren `layoutTimeSignature` sowie ihre proportionalen Spaltenbreiten ($\text{Gewicht}_{\text{Auftakt}} + \text{Gewicht}_{\text{Schluss}} = 1{,}0\text{ Volltakt}$) automatisch ohne manuelle `spacing`-Werte. |
+| `pickup` | `boolean` | `false` | **Auftakt-Modus:** Bei mindestens zwei Takten, vorhandener Anfangs-Taktart und berechenbaren Notenwerten wird geprüft, dass sich erster und letzter Takt zu einem vollständigen Takt ergänzen. Unvollständige Randtakte erhalten automatisch eine angepasste Layout-Taktart und proportionale Spaltengewichte; positive `spacing`-Werte können diese Gewichte überschreiben. |
 | `scale` | `number` | `1.0` | **Spatium-Skalierungsfaktor:** Skaliert das gesamte Notensystem relativ zum Basis-Linienabstand (`SPATIUM = 10px`). `scale={0.85}` verkleinert für kompakte Übersichten, `scale={1.25}` vergrößert für Detailbeispiele. |
-| `compact` | `boolean` | `false` | **Kompakt-Modus:** Beschränkt das Notensystem auf seine minimale inhaltliche Breite (`fit-content`), statt die volle Zeilenbreite (`100 %`) auszufüllen. Ideal für Quiz-Fragen, Inline-Darstellungen oder kurze Notenbeispiele. |
-| `scrollable` | `boolean` | `false` | • `false` (Standard): Horizontales Scrollen ist **deaktiviert** (`overflow-x: hidden`), das System skaliert bei schmalen Viewports verlustfrei in die Containerbreite (`data-fit-to-width`).<br>• `true`: Aktiviert bei Überbreite einen horizontalen Scrollbalken (`overflow-x: auto`). |
+| `compact` | `boolean \| 'tight' \| 'wide'` | `false` | **Kompakt-Modus:** Beschränkt die Darstellung auf eine kompakte Breite; die automatische Containeranpassung ist dabei deaktiviert. Standardmäßig entfällt im Einzeltakt der rechte Taktstrich, sofern er nicht ausdrücklich gesetzt wird. |
+| `scrollable` | `boolean` | `false` | • `false` (Standard): Ohne `compact` passt `observeNotationFit` das System an die Containerbreite an (`data-fit-to-width`); ohne JavaScript bleibt eine scrollbare Darstellung als Fallback.<br>• `true`: Aktiviert bei Überbreite horizontales Scrollen (`overflow-x: auto`). |
 
 #### Takt-spezifische Breitensteuerung (innerhalb von `measures[...]`)
 
 | Prop (auf `NotationMeasure`) | Typ | Standard | Beschreibung |
 | :--- | :--- | :---: | :--- |
-| `spacing` | `number \| 'rhythmic' \| 'equal'` | `undefined` | Überschreibt im `'rhythmic'`-Modus das berechnete Spaltengewicht (`columnWeight`) eines einzelnen Takts mit einem benutzerdefinierten numerischen Gewicht. |
+| `spacing` | `number \| 'rhythmic' \| 'equal'` | `undefined` | Ein positiver numerischer Wert überschreibt das berechnete Spaltengewicht (`columnWeight`) eines Takts, auch bei `measureWidth="equal"`. Die Zeichenkettenwerte bewirken derzeit keine eigene taktweise Überschreibung. |
 | `noteStart` | `number` | `0` | Zusätzlicher linker Mindestabstand (in Pixeln) vor der ersten Note des Takts. |
 | `firstNoteX` | `number` | automatisch | Erzwingt eine exakte X-Koordinate (in Pixeln) für die erste Note (muss $\ge$ `minimumFirstNoteX` sein). Wird im Mehrtaktbetrieb automatisch spaltenweise synchronisiert. |
 
@@ -107,13 +109,13 @@ Steuert, wie Takte auf Zeilen umgebrochen, horizontal gewichtet und skaliert wer
 
 ### 3.3 Musikalischer Kontext & Vererbung (`clef`, `timeSignature`, `accidentals`)
 
-Diese Props können sowohl **global auf `<Notation />`** (werden dann automatisch auf Takt 1 gesetzt und an Folgetakte vererbt) als auch **pro Takt in `measures[...]`** angegeben werden.
+`clef`, `timeSignature` und `accidentals` können global auf `<Notation />` oder pro Takt in `measures[...]` angegeben werden. Globale Werte werden auf den ersten Takt angewendet und gelten im Layout für Folgetakte weiter. `layoutTimeSignature` ist dagegen nur pro Takt verfügbar.
 
 | Prop | Typ | Standard | Beschreibung |
 | :--- | :--- | :---: | :--- |
-| `clef` | `'treble' \| 'bass' \| false` | `'treble'` | **Notenschlüssel:**<br>• `'treble'`: Violinschlüssel (G-Schlüssel).<br>• `'bass'`: Bassschlüssel (F-Schlüssel).<br>• `false`: Kein Schlüssel (nur bei Einzelbeispielen ohne Zeilenumbruch möglich).<br>*Hinweis:* Pro Takt kann ein anderer Schlüssel übergeben werden (z. B. für Vergleiche mit `layout={1}`); bei Verwendung der Hilfsfunktion `assertNoClefChanges()` wird ein Schlüsselwechsel hingegen mit Validierungsfehler abgewiesen. |
+| `clef` | `'treble' \| 'bass' \| false` | `'treble'` | **Notenschlüssel:** `'treble'` für Violin-, `'bass'` für Bassschlüssel. `<Notation />` benötigt für das Layout eines nichtleeren Stücks einen Anfangsschlüssel; `false` kann bei internen Einzeltakt-Renderern verwendet werden. Pro Takt kann ein anderer Schlüssel übergeben werden; die optionale Hilfsfunktion `assertNoClefChanges()` weist Schlüsselwechsel ab. |
 | `timeSignature` | `{ numerator: number, denominator: number }` | `undefined` | **Sichtbare Taktartangabe:** z. B. `{{ numerator: 4, denominator: 4 }}` oder `{{ numerator: 6, denominator: 8 }}`. Der Zähler muss eine positive ganze Zahl, der Nenner eine Zweierpotenz ($1, 2, 4, 8, 16, \dots$) sein. Wird automatisch an Folgetakte vererbt und nur bei Taktartwechseln erneut gezeichnet. |
-| `layoutTimeSignature` | `{ numerator: number, denominator: number }` | `undefined` | **Unsichtbare Taktart für die Rhythmus-Mathematik:** Positioniert Noten/Pausen im Takt exakt nach diesem Metrum (z. B. für unvollständige Takte oder Auftakte), **ohne** die Taktart-Ziffern im System zu zeichnen. |
+| `layoutTimeSignature` | `{ numerator: number, denominator: number }` | `undefined` | **Nur pro Takt:** Unsichtbare Taktart für die rhythmische Positionierung, ohne Taktart-Ziffern zu zeichnen. |
 | `accidentals` | `{ type: 'sharp' \| 'flat', step: number }[]` | `[]` | **Tonartvorzeichnung (Key Signature):** Array von Kreuzen (`'sharp'`) oder b-Vorzeichen (`'flat'`) mit ihrer vertikalen `step`-Position.<br>• Wird automatisch am Anfang jeder neuen Zeile wiederholt.<br>• Übergibt ein späterer Takt ein neues `accidentals`-Array, berechnet das Layout automatisch die nötigen Auflösungszeichen (`natural`).<br>• `accidentals: []` in einem späteren Takt löst alle bisherigen Vorzeichen nach C-Dur/a-Moll auf. |
 
 **Typische Tonartvorzeichnungen im Violinschlüssel (`clef="treble"`):**
@@ -229,7 +231,7 @@ curves={[
   }
 ]}
 ```
-- **`type: "tie"` (Haltebogen):** Verbindet zwei Noten gleicher Tonhöhe; darf **keine Pause** überspannen.
+- **`type: "tie"` (Haltebogen):** Musikalisch für Noten gleicher Tonhöhe vorgesehen und darf **keine Pause** überspannen. Gleiche Tonhöhe wird vom Renderer nicht validiert.
 - **`type: "slur"` (Bindebogen):** Phrasierungs-/Legatobogen über zwei oder mehr Noten (darf Pausen zwischen Start- und Zielnote überspannen, muss aber an echten Noten beginnen und enden).
 
 ---
@@ -241,7 +243,7 @@ Alle folgenden Props können pro Takt (`measures[...]`) oder im Einzeltakt-Modus
 | Prop | Typ | Standard | Beschreibung |
 | :--- | :--- | :---: | :--- |
 | `showLeftBar` | `boolean` | `false` | Zeichnet einen einfachen Taktstrich ganz links am Taktbeginn (`x = 0`). |
-| `showRightBar` | `boolean` | `true` | Zeichnet den rechten Taktabschlussstrich (`x = 100%`). Wird bei `repeatEnd: true` automatisch durch das Wiederholungszeichen ersetzt. |
+| `showRightBar` | `boolean` | `true` (Einzeltakt mit `compact`: `false`) | Zeichnet den rechten Taktabschlussstrich (`x = 100%`). Ohne explizite Angabe ersetzt `repeatEnd: true` den Strich durch das Wiederholungszeichen. |
 | `rightBarStyle` | `'single' \| 'final'` | `'single'` | • `'single'`: Einfacher Taktstrich.<br>• `'final'`: Doppelter Schlussstrich (dünne Linie + breiter Balken) am Taktende. Reserviert automatisch `8px` End-Clearance. |
 | `repeatStart` | `boolean` | `false` | Zeichnet ein Wiederholungsanfangszeichen (`\|\|:`) direkt nach Schlüssel, Taktart und Vorzeichnung. |
 | `repeatEnd` | `boolean` | `false` | Zeichnet ein Wiederholungsendezeichen (`:\|\|`) am rechten Taktrand und reserviert automatisch `16px` Platz vor den Punkten. |
@@ -415,7 +417,7 @@ Alle Taktstriche liegen exakt untereinander; die unvollständige zweite Zeile is
       notes: [
         { duration: "quarter", step: 5, accidental: "natural" },
         { duration: "quarter", step: 4 },
-        { duration: "half", step: 3, dotted: true },
+        { duration: "half", step: 3 },
       ],
     },
     {
@@ -438,7 +440,7 @@ Alle Taktstriche liegen exakt untereinander; die unvollständige zweite Zeile is
 
 ## 8. Validierungsregeln & Fehlermeldungen
 
-Der Renderer prüft beim Build/Dev-Lauf alle musikalischen Invarianten strikt ab und wirft sprechende deutsche Fehlermeldungen, wenn Daten inkonsistent sind:
+Der Renderer prüft beim Build/Dev-Lauf verschiedene Eingaberegeln und wirft bei inkonsistenten Daten Fehlermeldungen. Er prüft nicht sämtliche musikalischen Regeln, etwa gleiche Tonhöhe bei Haltebögen oder grundsätzlich die vollständige Taktfüllung:
 
 | Bedingung | Fehlermeldung |
 | :--- | :--- |

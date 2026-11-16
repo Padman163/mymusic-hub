@@ -8,7 +8,7 @@ Dieser Leitfaden unterscheidet allgemeine Architekturprinzipien vom aktuellen Au
 - **Zusammenbau:** Astro-Komponenten und MDX-Seiten kombinieren Bausteine über deklarative Props.
 - **Logik:** Fachliche Berechnungen und Datenverarbeitung nach Möglichkeit getrennt von der Darstellung halten. In `src/lib/` liegen neben reiner Fachlogik auch bewusst clientseitige DOM-Controller und Speicherlogik.
 - **Interaktivität:** Astro rendert Komponenten grundsätzlich zu HTML, ohne automatisch Framework-Komponenten zu hydratisieren. Interaktive Funktionen können gezielt über Client-Skripte oder Framework-Islands eingebunden werden. Der Musik-Hub verwendet unter anderem `<script>`-Blöcke; eine pauschale Aussage von 0 KB JavaScript pro Seite wäre daher falsch.
-- **Notation:** Gemeinsame Notationselemente über den Renderer und wiederverwendbare Komponenten darstellen, statt für einzelne Seiten eigene Renderer anzulegen. Einzelheiten stehen in der [Notationsreferenz](README_NOTATION.md).
+- **Notation:** Gemeinsame Notationselemente über den Renderer und wiederverwendbare Komponenten darstellen, statt für einzelne Seiten eigene Renderer anzulegen. Einzelheiten stehen in der [Notationsreferenz](features/README_FEAT_NOTATION.md).
 
 ## 2. Allgemeines Astro-Minimalbeispiel
 
@@ -112,6 +112,7 @@ tests/
 └── e2e/                        # Playwright-Browsertests
 netlify/functions/              # Serverless Functions und GitHub-Store
 data/                           # JSON-Daten
+features/                       # Feature-Übersicht, Fachreferenzen und Handoffs
 astro.config.mjs                # Astro-, Starlight- und Dev-Server-Konfiguration
 biome.json                      # Linter und Formatter
 package.json                    # Abhängigkeiten und Skripte
