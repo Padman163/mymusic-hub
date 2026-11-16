@@ -77,9 +77,9 @@ function mountExerciseForm(): HTMLFormElement {
         <option value="quarter">quarter</option>
       </select>
       <select id="notation-compact" name="compact">
-        <option value="false">false</option>
-        <option value="tight">tight</option>
-        <option value="wide">wide</option>
+        <option value="tight">Kompakt</option>
+        <option value="wide" selected>Standard</option>
+        <option value="false">Breit</option>
       </select>
       <input id="notation-show-duration-picker" name="showDurationPicker" type="checkbox" />
       <input id="notation-show-hints" name="showHints" type="checkbox" checked />
@@ -104,7 +104,6 @@ function mountCatalogSection(): HTMLElement {
   const section = document.createElement("section");
   section.id = "module-catalog-section";
   section.innerHTML = `
-    <button id="module-reload-btn" type="button">Neu laden</button>
     <select id="filter-module-scope">
       <option value="">Alle</option>
       <option value="theory">Theorie</option>
@@ -115,11 +114,11 @@ function mountCatalogSection(): HTMLElement {
       <option value="xp_desc">XP</option>
     </select>
     <button id="module-view-toggle" type="button">
-      <svg class="list-icon"></svg>
-      <svg class="cards-icon" style="display: none"></svg>
+      <svg class="list-icon" style="display: none"></svg>
+      <svg class="cards-icon"></svg>
     </button>
     <p id="module-list-status"></p>
-    <ul id="module-catalog-list" class="contribution-list"></ul>
+    <ul id="module-catalog-list" class="contribution-list" data-view="list"></ul>
   `;
   document.body.append(section);
   return section;
@@ -428,6 +427,9 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
 
     const toggle = section.querySelector<HTMLButtonElement>("#module-view-toggle");
     const list = section.querySelector<HTMLUListElement>("#module-catalog-list");
+    expect(list?.dataset.view).toBe("list");
+    toggle?.click();
+    expect(list?.dataset.view).toBe("cards");
     toggle?.click();
     expect(list?.dataset.view).toBe("list");
 

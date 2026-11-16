@@ -1,3 +1,4 @@
+import { layoutNotationEvents } from "./notation-layout.ts";
 import {
   defaultFirstNoteX,
   type NotationClef,
@@ -8,7 +9,7 @@ import {
   SPATIUM,
   sp,
 } from "./notation-renderer.ts";
-import { type Duration, durationLabels } from "./rhythm.ts";
+import { type Duration, durationLabels, rhythmicPositions } from "./rhythm.ts";
 import { escapeXml } from "./svg.ts";
 
 export const MIN_NOTATION_STEP = -2;
@@ -208,6 +209,100 @@ export function computeBuilderFirstNoteX(
   return Math.max(base, withCurrent);
 }
 
+export interface BuilderSlotPosition {
+  percent: string;
+  fraction: number;
+  offset: number;
+}
+
+function buildBuilderSlotNotes(options: {
+  config: NotationBuilderConfig;
+  placedNotes: readonly (NotationNote | null)[];
+  activeSlot: number;
+  maxNotes: number;
+}): NotationEvent[] {
+  const { config, placedNotes, activeSlot, maxNotes } = options;
+  if (maxNotes <= 1) {
+    const currentPlacedNote = placedNotes[activeSlot] ?? null;
+    return currentPlacedNote ? [currentPlacedNote] : [];
+  }
+  const slotDuration: Duration =
+    typeof config.lockDuration === "string"
+      ? config.lockDuration
+      : (config.initialDuration ?? "quarter");
+  return Array.from({ length: maxNotes }, (_, i) => {
+    const pn = placedNotes[i];
+    return pn ? pn : { type: "rest", duration: slotDuration, hidden: true };
+  });
+}
+
+/** Berechnet dieselben Prozent-/Offset-Positionen je Slot wie `renderNotationSvg`. */
+export function computeBuilderSlotPositions(options: {
+  config: NotationBuilderConfig;
+  placedNotes?: readonly (NotationNote | null)[];
+  maxNotes?: number;
+  activeSlot?: number;
+  notes?: readonly NotationEvent[];
+  firstNoteX?: number;
+}): BuilderSlotPosition[] {
+  const { config } = options;
+  const maxNotes = Math.max(
+    1,
+    options.maxNotes ??
+      config.maxNotes ??
+      (options.placedNotes ? options.placedNotes.length : 1),
+  );
+  const activeSlot = Math.max(
+    0,
+    Math.min(maxNotes - 1, options.activeSlot ?? 0),
+  );
+  const placedNotes =
+    options.placedNotes ?? Array.from({ length: maxNotes }, () => null);
+  const notes =
+    options.notes ??
+    buildBuilderSlotNotes({ config, placedNotes, activeSlot, maxNotes });
+  const firstNoteX =
+    options.firstNoteX ??
+    computeBuilderFirstNoteX({
+      ...config,
+      notes: [...notes],
+    });
+
+  if (maxNotes <= 1) {
+    return [{ percent: "0%", fraction: 0, offset: firstNoteX }];
+  }
+
+  const repeatEndInset = config.repeatEnd ? 16 : 0;
+  const endingMarkInset = config.repeatEnd
+    ? repeatEndInset
+    : config.showRightBar && config.rightBarStyle === "final"
+      ? 8
+      : 0;
+  const rhythm = rhythmicPositions(
+    notes,
+    config.layoutTimeSignature ?? config.timeSignature,
+  );
+  const lastNote = notes[notes.length - 1];
+  const endInset =
+    !lastNote || (rhythm && !rhythm.overfull)
+      ? endingMarkInset
+      : endingMarkInset +
+        BUILDER_NOTE_WIDTH * 1.5 +
+        (lastNote.type === "rest"
+          ? sp(0.65)
+          : BUILDER_NOTE_WIDTH / 2 +
+            (lastNote.step === MIN_NOTATION_STEP ||
+            lastNote.step === MAX_NOTATION_STEP
+              ? BUILDER_LEDGER_OVERHANG
+              : 0));
+
+  return layoutNotationEvents(notes, {
+    noteInset: firstNoteX,
+    endInset,
+    rhythmicPositions: rhythm?.positions,
+  });
+}
+
 export function computeSlotXs(options: {
   maxNotes: number;
   width: number;
@@ -329,24 +424,15 @@ export function renderNotationBuilderSvg(options: {
       ? [options.placedNote]
       : Array.from({ length: maxNotes }, () => null));
 
-  const currentPlacedNote =
-    placedNotes[activeSlot] ?? options.placedNote ?? null;
   const cursorStep = clampStep(options.cursorStep);
   const clef = config.clef === false ? undefined : (config.clef ?? "treble");
 
-  let notes: NotationEvent[];
-  if (maxNotes <= 1) {
-    notes = currentPlacedNote ? [currentPlacedNote] : [];
-  } else {
-    const slotDuration: Duration =
-      typeof config.lockDuration === "string"
-        ? config.lockDuration
-        : (config.initialDuration ?? "quarter");
-    notes = Array.from({ length: maxNotes }, (_, i) => {
-      const pn = placedNotes[i];
-      return pn ? pn : { type: "rest", duration: slotDuration, hidden: true };
-    });
-  }
+  const notes = buildBuilderSlotNotes({
+    config,
+    placedNotes,
+    activeSlot,
+    maxNotes,
+  });
 
   const firstNoteX = computeBuilderFirstNoteX({
     ...config,
@@ -380,14 +466,12 @@ export function renderNotationBuilderSvg(options: {
 
   const minWidthMatch = baseSvg.match(/min-width:([\d.]+)px/);
   const existingMinWidth = minWidthMatch ? Number(minWidthMatch[1]) : 0;
-  let finalWidth = existingMinWidth;
 
   if (isCompactTight) {
     const compactWidth = Math.max(
       150,
       Math.ceil(firstNoteX + BUILDER_NOTE_WIDTH / 2 + sp(1.5)),
     );
-    finalWidth = compactWidth;
     svg = svg
       .replace(
         /min-width:[\d.]+px/,
@@ -399,7 +483,6 @@ export function renderNotationBuilderSvg(options: {
       );
   } else if (isCompactWide) {
     const compactWidth = Math.max(300, existingMinWidth);
-    finalWidth = compactWidth;
     svg = svg
       .replace(
         /min-width:[\d.]+px/,
@@ -414,25 +497,22 @@ export function renderNotationBuilderSvg(options: {
       existingMinWidth,
       Math.ceil(firstNoteX + labelOffsetX + labelWidth + SPATIUM),
     );
-    finalWidth = requiredMinWidth;
     svg = svg.replace(/min-width:[\d.]+px/, `min-width:${requiredMinWidth}px`);
   }
 
-  const repeatEndInset = config.repeatEnd ? 16 : 0;
-  const endingMarkInset = config.repeatEnd
-    ? repeatEndInset
-    : config.showRightBar && config.rightBarStyle === "final"
-      ? 8
-      : 0;
-
-  const slotXs = computeSlotXs({
+  const slotPositions = computeBuilderSlotPositions({
+    config,
+    placedNotes,
     maxNotes,
-    width: finalWidth || 300,
-    noteInset: firstNoteX,
-    endInset: endingMarkInset,
+    activeSlot,
+    notes,
+    firstNoteX,
   });
-
-  const cursorX = slotXs[activeSlot] ?? firstNoteX;
+  const activePosition = slotPositions[activeSlot] ?? {
+    percent: "0%",
+    fraction: 0,
+    offset: firstNoteX,
+  };
   const cursorY = stepToY(cursorStep);
   const needsCursorLedger =
     (cursorStep === MIN_NOTATION_STEP || cursorStep === MAX_NOTATION_STEP) &&
@@ -443,7 +523,8 @@ export function renderNotationBuilderSvg(options: {
 
   const overlay = [
     `<g class="notation-builder-overlay">`,
-    `<g class="notation-builder-cursor" data-cursor-step="${cursorStep}" data-cursor-note="${escapeXml(state.currentNote)}" data-on-note="${state.isOnPlacedNote}" data-active-slot="${activeSlot}" data-max-notes="${maxNotes}" transform="translate(${cursorX} ${cursorY})">`,
+    `<g class="notation-builder-cursor" data-cursor-step="${cursorStep}" data-cursor-note="${escapeXml(state.currentNote)}" data-on-note="${state.isOnPlacedNote}" data-active-slot="${activeSlot}" data-max-notes="${maxNotes}" transform="translate(${activePosition.offset} ${cursorY})">`,
+    `<svg class="notation-builder-cursor-anchor" x="${activePosition.percent}" y="0" width="1" height="1" overflow="visible">`,
     ledgerHtml,
     `<rect class="notation-builder-cursor-head" x="${-BUILDER_NOTE_WIDTH / 2 - CURSOR_PAD}" y="${-BUILDER_NOTE_HEIGHT / 2 - CURSOR_PAD}" width="${BUILDER_NOTE_WIDTH + 2 * CURSOR_PAD}" height="${BUILDER_NOTE_HEIGHT + 2 * CURSOR_PAD}" rx="4" ry="4" />`,
     showLabel
@@ -454,6 +535,7 @@ export function renderNotationBuilderSvg(options: {
           `</g>`,
         ].join("")
       : "",
+    `</svg>`,
     `</g>`,
     `</g>`,
   ].join("");
@@ -634,33 +716,21 @@ export function attachNotationBuilder(root: HTMLElement): void {
       return { step, slot: 0 };
     }
 
-    const firstNoteX = computeBuilderFirstNoteX({ ...config, notes: [] });
-    const repeatEndInset = config.repeatEnd ? 16 : 0;
-    const endingMarkInset = config.repeatEnd
-      ? repeatEndInset
-      : config.showRightBar && config.rightBarStyle === "final"
-        ? 8
-        : 0;
-    const isCompactWide = config.compact === "wide";
-    const minWidthMatch = svg
-      .getAttribute("style")
-      ?.match(/min-width:([\d.]+)px/);
-    const existingMinWidth = minWidthMatch ? Number(minWidthMatch[1]) : 0;
-    const effectiveWidth = isCompactWide
-      ? Math.max(300, existingMinWidth)
-      : rect.width || 300;
-
-    const slotXs = computeSlotXs({
+    const slotPositions = computeBuilderSlotPositions({
+      config,
+      placedNotes,
       maxNotes,
-      width: effectiveWidth,
-      noteInset: firstNoteX,
-      endInset: endingMarkInset,
+      activeSlot,
     });
-
-    const svgX = ((event.clientX - rect.left) / rect.width) * effectiveWidth;
+    const svgX = event.clientX - rect.left;
+    const zoomScale =
+      svg.clientWidth > 0 && Math.abs(rect.width - svg.clientWidth) > 2
+        ? rect.width / svg.clientWidth
+        : 1;
     let closestSlot = 0;
     let minDiff = Infinity;
-    slotXs.forEach((sx, idx) => {
+    slotPositions.forEach((pos, idx) => {
+      const sx = pos.fraction * rect.width + pos.offset * zoomScale;
       const diff = Math.abs(svgX - sx);
       if (diff < minDiff) {
         minDiff = diff;

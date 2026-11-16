@@ -11,11 +11,12 @@ const scopeLabels: Record<(typeof MODULE_SCOPES)[number], string> = {
 };
 ---
 
-<section id="module-catalog-section" aria-label="Gespeicherte Lernmodule">
+<section
+  id="module-catalog-section"
+  class="not-content"
+  aria-label="Gespeicherte Lernmodule"
+>
   <div class="contribution-toolbar">
-    <button id="module-reload-btn" class="new-contribution" type="button">
-      Katalog aktualisieren
-    </button>
     <div class="contribution-toolbar-controls">
       <details class="contribution-menu">
         <summary title="Module filtern" aria-label="Module filtern">
@@ -70,8 +71,8 @@ const scopeLabels: Record<(typeof MODULE_SCOPES)[number], string> = {
         id="module-view-toggle"
         class="contribution-view-toggle"
         type="button"
-        aria-label="Listenansicht anzeigen"
-        title="Listenansicht anzeigen"
+        aria-label="Kartenansicht anzeigen"
+        title="Kartenansicht anzeigen"
         aria-controls="module-catalog-list"
       >
         <svg
@@ -82,6 +83,7 @@ const scopeLabels: Record<(typeof MODULE_SCOPES)[number], string> = {
           stroke-width="2"
           stroke-linecap="round"
           aria-hidden="true"
+          style="display: none"
         >
           <path d="M4 6h2M10 6h10M4 12h2M10 12h10M4 18h2M10 18h10"></path>
         </svg>
@@ -93,7 +95,6 @@ const scopeLabels: Record<(typeof MODULE_SCOPES)[number], string> = {
           stroke-width="2"
           stroke-linejoin="round"
           aria-hidden="true"
-          style="display: none"
         >
           <path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"></path>
         </svg>
@@ -104,7 +105,7 @@ const scopeLabels: Record<(typeof MODULE_SCOPES)[number], string> = {
   <p id="module-list-status" role="status" aria-live="polite" tabindex="-1">
     Module werden geladen …
   </p>
-  <ul id="module-catalog-list" class="contribution-list"></ul>
+  <ul id="module-catalog-list" class="contribution-list" data-view="list"></ul>
 </section>
 
 <style>
@@ -125,6 +126,8 @@ const scopeLabels: Record<(typeof MODULE_SCOPES)[number], string> = {
 
   .contribution-menu {
     margin: 0;
+    border: 0;
+    padding: 0;
   }
 
   .contribution-menu summary,
@@ -191,22 +194,6 @@ const scopeLabels: Record<(typeof MODULE_SCOPES)[number], string> = {
     font: inherit;
   }
 
-  .new-contribution {
-    border: 1px solid #1d4ed8;
-    border-radius: 0.4rem;
-    padding: 0.65rem 0.9rem;
-    background: #1d4ed8;
-    color: #fff;
-    font: inherit;
-    font-weight: 600;
-    cursor: pointer;
-  }
-
-  .new-contribution:hover {
-    background: #1e40af;
-  }
-
-  .new-contribution:focus-visible,
   .contribution-menu summary:focus-visible,
   .contribution-menu-panel select:focus-visible,
   .contribution-view-toggle:focus-visible {
@@ -214,9 +201,14 @@ const scopeLabels: Record<(typeof MODULE_SCOPES)[number], string> = {
     outline-offset: 2px;
   }
 
+  #module-list-status {
+    margin: 1rem 0 0;
+  }
+
   .contribution-list {
     display: grid;
     gap: 1rem;
+    margin: 1rem 0 0;
     padding: 0;
     list-style: none;
   }

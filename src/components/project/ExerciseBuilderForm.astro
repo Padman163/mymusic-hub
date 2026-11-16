@@ -137,9 +137,9 @@ const questionTypeLabels: Record<(typeof QUESTION_TYPES)[number], string> = {
       <div class="field">
         <label for="notation-compact">Darstellung</label>
         <select id="notation-compact" name="compact">
-          <option value="false">Standard</option>
           <option value="tight">Kompakt</option>
-          <option value="wide">Breit</option>
+          <option value="wide" selected>Standard</option>
+          <option value="false">Breit</option>
         </select>
       </div>
     </div>

@@ -95,6 +95,7 @@ npx netlify-cli status
 npx netlify-cli env:list --plain > .env
 # .env anpassen, damit Posts auf aktuellen Branch geladen werden und gezogen
 GITHUB_BRANCH=<aktuellen Branch>
+# Variablen auf Netlify anpassen
 
 
 # Fullstack-Entwicklungsserver starten

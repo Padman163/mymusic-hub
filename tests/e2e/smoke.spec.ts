@@ -25,6 +25,33 @@ test('richtet die Pfeile im Theorieblock waagerecht aus', async ({ page }) => {
     'Aufgaben',
     'Einstellungen',
   ]);
+  await expect(page.locator('#module-reload-btn')).toHaveCount(0);
+  await expect(page.locator('#module-catalog-list')).toHaveAttribute('data-view', 'list');
+
+  const toolbarCheck = await page
+    .locator('.contribution-toolbar-controls')
+    .evaluate((controls) => {
+      const items = [...controls.children] as HTMLElement[];
+      const menus = [...controls.querySelectorAll<HTMLElement>('.contribution-menu')];
+      const rects = items.map((item) => item.getBoundingClientRect());
+      return {
+        count: items.length,
+        tops: rects.map((rect) => rect.top),
+        gap1: rects[1].left - rects[0].right,
+        gap2: rects[2].left - rects[1].right,
+        menuStyles: menus.map((menu) => {
+          const style = getComputedStyle(menu);
+          return { paddingLeft: style.paddingLeft, borderLeftWidth: style.borderLeftWidth };
+        }),
+      };
+    });
+  expect(toolbarCheck.count).toBe(3);
+  expect(Math.max(...toolbarCheck.tops) - Math.min(...toolbarCheck.tops)).toBeLessThan(1);
+  expect(Math.abs(toolbarCheck.gap1 - toolbarCheck.gap2)).toBeLessThan(1);
+  for (const style of toolbarCheck.menuStyles) {
+    expect(style).toEqual({ paddingLeft: '0px', borderLeftWidth: '0px' });
+  }
+
   await page.getByRole('tab', { name: 'Theorie' }).click();
   await page.locator('.theory-block-add').click();
   await page.locator('.theory-block-add').click();
@@ -39,6 +66,59 @@ test('richtet die Pfeile im Theorieblock waagerecht aus', async ({ page }) => {
   expect(Math.abs((upBox.y + upBox.height / 2) - (downBox.y + downBox.height / 2))).toBeLessThan(1);
   expect(await up.evaluate((button) => getComputedStyle(button).marginTop)).toBe('0px');
   expect(await down.evaluate((button) => getComputedStyle(button).marginTop)).toBe('0px');
+
+  await page.getByRole('tab', { name: 'Aufgaben' }).click();
+  await page.selectOption('#exercise-question-type', 'interactive_notation');
+  const compactOptions = await page.locator('#notation-compact option').evaluateAll((opts) =>
+    opts.map((opt) => ({
+      label: opt.textContent?.trim(),
+      value: (opt as HTMLOptionElement).value,
+    })),
+  );
+  expect(compactOptions).toEqual([
+    { label: 'Kompakt', value: 'tight' },
+    { label: 'Standard', value: 'wide' },
+    { label: 'Breit', value: 'false' },
+  ]);
+  await expect(page.locator('#notation-compact')).toHaveValue('wide');
+
+  await page.fill('#notation-max-notes', '4');
+  await page.selectOption('#notation-compact', 'false');
+  const preview = page.locator('#notation-live-preview [data-notation-builder]');
+  await preview.focus();
+  for (let slot = 0; slot < 4; slot += 1) {
+    await page.keyboard.press('Space');
+  }
+  const alignment = await preview.evaluate((el) => {
+    const notes = [...el.querySelectorAll<SVGElement>('.notation-note')];
+    return notes.map((note) => {
+      const nRect = note.getBoundingClientRect();
+      return {
+        cx: nRect.left + nRect.width / 2,
+        cy: nRect.top + nRect.height / 2,
+      };
+    });
+  });
+  expect(alignment).toHaveLength(4);
+  for (let slot = 0; slot < 3; slot += 1) {
+    await page.keyboard.press('ArrowLeft');
+  }
+  for (let slot = 0; slot < 4; slot += 1) {
+    const cursorCenter = await preview
+      .locator('.notation-builder-cursor-head')
+      .evaluate((cursor) => {
+        const cRect = cursor.getBoundingClientRect();
+        return {
+          cx: cRect.left + cRect.width / 2,
+          cy: cRect.top + cRect.height / 2,
+        };
+      });
+    expect(Math.abs(cursorCenter.cx - alignment[slot].cx)).toBeLessThan(1);
+    expect(Math.abs(cursorCenter.cy - alignment[slot].cy)).toBeLessThan(1);
+    if (slot < 3) {
+      await page.keyboard.press('ArrowRight');
+    }
+  }
 });
 
 /** Erste Notation mit mindestens drei Takten in der ersten Zeile. */

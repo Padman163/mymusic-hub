@@ -1317,6 +1317,17 @@ export function attachExerciseBuilderForm(
       showDurationPicker: taskConfig.showDurationPicker ?? false,
       compact: taskConfig.compact ?? false,
     };
+    const signature = JSON.stringify({
+      ...previewConfig,
+      showHints: taskConfig.showHints ?? false,
+    });
+    if (
+      notationPreviewHost.childElementCount > 0 &&
+      notationPreviewHost.dataset.previewSignature === signature
+    ) {
+      return;
+    }
+    notationPreviewHost.dataset.previewSignature = signature;
     const previewEl = buildLivePreviewElement(
       previewConfig,
       taskConfig.showHints ?? false,
@@ -1397,6 +1408,7 @@ export function attachExerciseBuilderForm(
   function resetForm(): void {
     editingQuestionId = null;
     baseXpManuallyEdited = false;
+    delete notationPreviewHost.dataset.previewSignature;
     const prevModule = moduleSelect.value;
     form.reset();
     if (prevModule && availableModules.some((m) => m.id === prevModule)) {
@@ -1418,6 +1430,7 @@ export function attachExerciseBuilderForm(
   function loadQuestion(question: ModuleQuestion): void {
     editingQuestionId = question.id;
     baseXpManuallyEdited = true;
+    delete notationPreviewHost.dataset.previewSignature;
     if (
       question.moduleId &&
       !availableModules.some((mod) => mod.id === question.moduleId)
@@ -1456,9 +1469,11 @@ export function attachExerciseBuilderForm(
       notationLockDurationSelect.value =
         typeof task.lockDuration === "string" ? task.lockDuration : "none";
       notationCompactSelect.value =
-        task.compact === "tight" || task.compact === "wide"
-          ? task.compact
-          : "false";
+        task.compact === true || task.compact === "tight"
+          ? "tight"
+          : task.compact === "wide"
+            ? "wide"
+            : "false";
       notationShowDurationPicker.checked = Boolean(task.showDurationPicker);
       notationShowHints.checked = Boolean(task.showHints);
       notationExpectedPitchesInput.value = (task.expectedPitches ?? []).join(
@@ -1704,11 +1719,6 @@ export function attachModuleCatalogList(
     "#module-view-toggle",
     msg,
   );
-  const reloadButton = requireElement<HTMLButtonElement>(
-    section,
-    "#module-reload-btn",
-    msg,
-  );
   const listIcon = requireElement<SVGElement>(viewToggle, ".list-icon", msg);
   const cardsIcon = requireElement<SVGElement>(viewToggle, ".cards-icon", msg);
 
@@ -1734,8 +1744,7 @@ export function attachModuleCatalogList(
     }
   });
 
-  viewToggle.addEventListener("click", () => {
-    const isListView = list.dataset.view !== "list";
+  function applyViewMode(isListView: boolean): void {
     list.dataset.view = isListView ? "list" : "cards";
     const label = isListView
       ? "Kartenansicht anzeigen"
@@ -1744,6 +1753,12 @@ export function attachModuleCatalogList(
     viewToggle.title = label;
     listIcon.style.display = isListView ? "none" : "";
     cardsIcon.style.display = isListView ? "" : "none";
+  }
+
+  applyViewMode(list.dataset.view !== "cards");
+
+  viewToggle.addEventListener("click", () => {
+    applyViewMode(list.dataset.view !== "list");
   });
 
   async function deleteEntity(
@@ -1965,7 +1980,6 @@ export function attachModuleCatalogList(
           });
           scopeFilter.disabled = true;
           sortSelect.disabled = true;
-          reloadButton.disabled = true;
           status.textContent = `Modul „${mod.title}“ wird verschoben …`;
           try {
             const result = await sendModulesRequest(
@@ -1996,7 +2010,6 @@ export function attachModuleCatalogList(
           } finally {
             scopeFilter.disabled = false;
             sortSelect.disabled = false;
-            reloadButton.disabled = false;
           }
         });
         actions.append(moveBtn);
@@ -2123,9 +2136,6 @@ export function attachModuleCatalogList(
 
   scopeFilter.addEventListener("change", () => renderDatabase(currentDb));
   sortSelect.addEventListener("change", () => renderDatabase(currentDb));
-  reloadButton.addEventListener("click", () => {
-    void reload();
-  });
   document.addEventListener("modules:updated", () => {
     void reload();
   });

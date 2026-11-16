@@ -1045,6 +1045,27 @@ test('compact mode in notation and builder defaults showRightBar to false and su
     Number(builderWide.match(/width="(\d+)"/)[1]) >
       Number(builderTight.match(/width="(\d+)"/)[1]),
   );
+
+  // Full-width (compact: false) multi-note cursor anchors match placed notes
+  const placedFour = [0, 2, 4, 7].map((step) => ({ duration: 'quarter', step }));
+  for (let activeSlot = 0; activeSlot < 4; activeSlot += 1) {
+    const svgFull = renderNotationBuilderSvg({
+      config: { clef: 'treble', compact: false, maxNotes: 4, lockDuration: 'quarter' },
+      cursorStep: placedFour[activeSlot].step,
+      placedNotes: placedFour,
+      activeSlot,
+    });
+    const noteMatches = [
+      ...svgFull.matchAll(/<g transform="translate\(([^ ]+) 0\)"><text class="notation-note" x="([^"]+)"/g),
+    ];
+    assert.equal(noteMatches.length, 4);
+    const cursorTranslate = svgFull.match(/class="notation-builder-cursor"[^>]*transform="translate\(([^ ]+) ([^)]+)\)"/);
+    const cursorAnchor = svgFull.match(/class="notation-builder-cursor-anchor" x="([^"]+)"/);
+    assert.ok(cursorTranslate);
+    assert.ok(cursorAnchor);
+    assert.equal(cursorTranslate[1], noteMatches[activeSlot][1]);
+    assert.equal(cursorAnchor[1], noteMatches[activeSlot][2]);
+  }
 });
 
 
