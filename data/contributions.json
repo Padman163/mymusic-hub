@@ -519,7 +519,7 @@
       },
       {
         "text": "- Modul-ID --> Soll im Hintergrund automatisch erstellt werden ohne eingabe",
-        "checked": false
+        "checked": true
       }
     ],
     "status": "New",
