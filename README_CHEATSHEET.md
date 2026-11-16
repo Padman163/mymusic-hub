@@ -210,3 +210,11 @@ git restore --source=origin/<aktuellsten-branch> --worktree -- .
 git reset --hard origin/<aelteren-branch>
 git clean -fd
 ```
+
+### Bei Konflikt Commit zurück in Worktree holen
+git reset --mixed HEAD~1
+
+### Erst pullen, dann den worktree im stash wieder holen
+git stash push -u
+git pull --rebase
+git stash pop
