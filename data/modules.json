@@ -53,6 +53,29 @@
       "tags": [
         "Allgemein"
       ]
+    },
+    {
+      "id": "q-414c8dad",
+      "moduleId": "123",
+      "targetLane": "exercise",
+      "questionType": "single_choice",
+      "prompt": "rwsas",
+      "options": [
+        "asdsad",
+        "adsdsad"
+      ],
+      "correctAnswers": [
+        "asdsad"
+      ],
+      "explanation": "",
+      "baseXp": 12,
+      "tags": [
+        "Allgemein",
+        "Notensystem",
+        "Bassschlüssel",
+        "Gitarre",
+        "Rhythmus"
+      ]
     }
   ]
 }
