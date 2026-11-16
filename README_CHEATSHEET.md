@@ -1,12 +1,12 @@
 # Tägliche Workflows & Entwickler-Cheatsheet
 
-Dieses Dokument dient als tägliches Handbuch für die fortlaufende Entwicklung, Feature-Erstellung, Fehlersuche und Qualitätssicherung.
+Dieses Dokument bündelt Befehle für den Entwicklungsalltag und die Problembehebung. Den Ablauf beschreibt der [Workflow](README_WORKFLOW.md), die Einrichtung das [Workspace-Setup](README_WORKSPACE_SETUP.md) und die Prüfstrategie der [Testing-Leitfaden](README_TESTING.md).
 
 ---
 
 ## 1. Schnelles Alltags-Cheatsheet (Terminal & Skripte)
 
-Die folgende Tabelle bündelt alle im Entwickleralltag am häufigsten benötigten Befehle. Eine detaillierte Erläuterung der einzelnen Phasen und Workflows folgt direkt im Anschluss.
+Die folgenden Befehle sind als schnelle Referenz gedacht.
 
 ### 1.1 Lokale Entwicklungsserver
 ```bash
@@ -57,107 +57,68 @@ git push -u origin <branch>  # Neuen lokalen Branch erstmals auf GitHub veröffe
 git push                     # Nachfolgende Commits auf den Tracking-Branch übertragen
 git pull origin main         # Lokalen Stand mit dem Remote-Hauptbranch synchronisieren
 git merge main               # Neueste Änderungen aus main in den aktuellen Feature-Branch holen
-git reset HEAD~1             # Letzten Commit verwerfen (Dateiänderungen bleiben im Editor)
-git reset --hard origin/<b.> # Lokalen Branch hart mit dem Remote-Stand überschreiben (Vorsicht!)
-git clean -fd                # Alle ungetrackten Dateien und Verzeichnisse restlos löschen
+git reset HEAD~1             # Letzten Commit zurücknehmen (Dateiänderungen bleiben im Editor)
 ```
 
 ---
 
-## 2. Der 4-Stufen Feature-Entwicklungszyklus
+## 2. Feature entwickeln
 
-Um Regressionsfehler, fehlerhafte Seiten-Builds und instabile Zustände auf `main` zu verhindern, wird ausnahmslos der folgende strukturierte Entwicklungszyklus angewandt:
-
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ STUFE 1: Feature-Branch isolieren                                          │
-│ └── Ausgehend von einem sauberen 'main' isoliert abzweigen.                 │
-├─────────────────────────────────────────────────────────────────────────────┤
-│ STUFE 2: Feature modular entwickeln (Lego-Prinzip)                          │
-│ └── Typdefinition -> Reines TS/Logik -> Tests -> UI-Komponente -> Doku.    │
-├─────────────────────────────────────────────────────────────────────────────┤
-│ STUFE 3: Lokales Quality Gate ausführen                                    │
-│ └── Statische Analyse -> Unit-Tests -> Build-Test -> Git-Diff.              │
-├─────────────────────────────────────────────────────────────────────────────┤
-│ STUFE 4: Cleanup & Archivierung                                            │
-│ └── Bereinigen, erneut prüfen und Feature-Branch archivieren.              │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-### Stufe 1: Feature-Branch vorbereiten
-Arbeite niemals direkt auf dem Branch `main`. Stelle vor Beginn sicher, dass dein lokaler Hauptbranch aktuell ist:
-```bash
-git switch main
-git pull origin main
-git switch -c feat/mein-neues-feature
-```
-
-### Stufe 2: Feature entwickeln (Reihenfolge einhalten)
-1. **Typen definieren (`src/lib/` oder `src/types/`):** Definiere Schnittstellen, Interfaces und Schemata.
-2. **Reine Logik schreiben (`src/lib/`):** Schreibe zustandslose Berechnungen und Algorithmen in reinem TypeScript – frei von UI- oder Astro-Abhängigkeiten.
-3. **Unit-Tests anlegen (`tests/`):** Führe Tests begleitend im Watch-Modus aus:
-   ```bash
-   npm run test:watch
-   ```
-4. **UI-Komponente kapseln (`src/components/`):** Erstelle die `.astro`-Komponente, die als Bindeglied dient, Logik einbindet und visuelles Markup erzeugt.
-5. **Inhalt / Dokumentation anbinden (`src/content/docs/`):** Binde die Komponente deklarativ in Markdown/MDX ein.
-
-### Stufe 3: Qualitätssicherung vor dem Commit
-Führe vor dem Festschreiben von Code die statischen Prüfungen durch:
-```bash
-# 1. Formatierung und Linting
-npm run format
-npm run lint
-
-# 2. Astro- und TypeScript-Prüfung
-npm run check
-npx tsc --noEmit
-
-# 3. Alle Unit- und Komponententests
-npm test
-
-# 4. Probe-Build zur Absicherung der Static Site Generation
-npm run build
-```
-
-### Stufe 4: Cleanup & Archivierung
-Nach den Tests die [Cleanup-Anleitung](README_CLEANUP.md) durchgehen, Änderungen erneut prüfen und den fertigen Branch archivieren. Die Übernahme nach `main` wird später separat entschieden. Der vollständige Ablauf steht im [Workflow](README_WORKFLOW.md).
+Für den Ablauf von Branch-Erstellung über Tests und Cleanup bis zur Archivierung siehe [Workflow](README_WORKFLOW.md). Bei der Implementierung: Typen definieren, Logik in `src/lib/` schreiben, Tests ergänzen, UI-Komponenten kapseln und Inhalte in `src/content/docs/` anbinden. Architekturdetails stehen in [README_ASTROSTRUCTURE.md](README_ASTROSTRUCTURE.md).
 
 ---
 
-### Stufe 5: Branch umbenennen ( wenn Branch lokal ist)
+### Branch umbenennen (lokaler Branch)
 
-# 0. Prüfen wo der Branch liegt
+# 0. Prüfen, wo der Branch liegt
+```bash
 git branch -a
+```
 
-Wenn Branch in der Liste nur in Rot angezeigt wird, ist er nicht lokal
+Die Liste unterscheidet lokale und Remote-Branches; ein Remote-Branch unter `remotes/` ist nicht automatisch lokal vorhanden.
 
 # 1. Branch lokal auschecken
+```bash
 git checkout <branch-name>
+```
 
 # 2. Zurück auf main wechseln (falls gewünscht)
+```bash
 git checkout main
+```
 
 # 3. Nun lokal umbenennen
+```bash
 git branch -m <branch-name> archive/<branch-name>
+```
 
 # 4. Den neuen Branch pushen
+```bash
 git push origin -u archive/<branch-name>
+```
 
-# 5. Den alten Remote-Branch löschen
+# 5. Optional: Nach Prüfung des neuen Branches den alten Remote-Branch löschen
+```bash
 git push origin --delete <branch-name>
+```
 
 
-### Branch umbenennen ( wenn Branch nur auf Github ist)
+### Branch umbenennen (nur auf GitHub)
 
 # 1. Den Remote-Branch unter neuem Namen pushen
+```bash
 git push origin origin/<branch-name>:refs/heads/archive/<branch-name>
+```
 
-# 2. Den alten Remote-Branch löschen
+# 2. Optional: Nach Prüfung des neuen Branches den alten Remote-Branch löschen
+```bash
 git push origin --delete <branch-name>
+```
 
 
 ## 3. Notfall-Workflows & Problembehebung
+
+Vor überschreibenden oder löschenden Befehlen den Arbeitsstand sichern und die Auswirkungen prüfen. `git reset --hard` und `git clean -fd` löschen lokale Änderungen beziehungsweise ungetrackte Dateien.
 
 ### Windows/Git-Lock-Datei blockiert
 Wenn ein Prozess unerwartet abgebrochen wurde und Git blockiert ist:
@@ -168,7 +129,6 @@ Remove-Item .git\index.lock -Force -ErrorAction SilentlyContinue
 ```bash
 # Linux / macOS / Codespaces
 rm -f .git/index.lock
-git checkout -f main
 ```
 
 ### Lokalen Stand komplett verwerfen und mit GitHub synchronisieren
@@ -192,23 +152,29 @@ git commit --amend --no-edit
 
 ## Worktree mit neuen Infos füllen
 
+Die folgenden Restore- und Reset-Befehle können lokale Änderungen überschreiben oder löschen; vorher sichern.
+
 ### Älteren Branch aktivieren
+```bash
 git switch <aelteren-branch>
 git fetch origin
-
-### Arbeitsbaum gezielt mit dem Stand des Zielbranches auffüllen
-git restore --source=origin/<aktuellsten-branch> --worktree -- .
-
-### Rückgängig
-```bash
-git reset --hard origin/<aelteren-branch>
-git clean -fd
 ```
 
-### Bei Konflikt Commit zurück in Worktree holen
-git reset --mixed HEAD~1
+### Arbeitsbaum gezielt mit dem Stand des Zielbranches auffüllen
+```bash
+git restore --source=origin/<aktuellsten-branch> --worktree -- .
+```
 
+### Rückgängig
+Den älteren Branch als Ziel im [Notfall-Workflow](#lokalen-stand-komplett-verwerfen-und-mit-github-synchronisieren) verwenden. Dabei gehen lokale Änderungen und ungetrackte Dateien verloren.
+
+### Bei Konflikt Commit zurück in Worktree holen
+```bash
+git reset --mixed HEAD~1
+```
 ### Erst pullen, dann den worktree im stash wieder holen
+```bash
 git stash push -u
 git pull --rebase
 git stash pop
+```
