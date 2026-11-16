@@ -1,6 +1,6 @@
 # Der Modul-Builder & Interaktive Lernpfad (Etappen 1–3B) – Einfach erklärt
 
-Dieses Dokument erklärt den **Admin Modul- & Aufgaben-Builder** und den **Interaktiven Lernpfad für Lernende**. Die Etappen 1 bis 3B beschreiben die bereits umgesetzten Bausteine; Testbefehle und aktuelle Ergebnisse stehen im [Testing-Leitfaden](../README_TESTING.md).
+Dieses Dokument ist die Feature-Referenz für den **Admin Modul- & Aufgaben-Builder** und den **Interaktiven Lernpfad für Lernende**. Die Etappen 1 bis 3B beschreiben die umgesetzten Bausteine; Testbefehle und aktuelle Ergebnisse stehen im [Testing-Leitfaden](../README_TESTING.md).
 
 ---
 
@@ -169,3 +169,54 @@ Die derzeitigen Startdaten in `data/modules.json` enthalten zwei Module:
 
 - **Umgesetzt (Etappen 1, 2, 3A & 3B):** Autorenwerkbank, JSON-/GitHub-Speicherung mit lokalem Dev-Endpunkt, Fortschritts-Engine und Lernoberfläche (`/audio/theory/lernpfad/` und `/audio/theory/modul/`).
 - **Tests:** Feature-Tests liegen in `tests/learning-progress.test.mjs`, `tests/module-builder.test.mjs`, `tests/components/module-builder-ui.test.ts` und `tests/components/module-player-ui.test.ts`. Den aktuellen Stand mit `npm test` prüfen.
+
+---
+
+## Schnittstellen & Abnahme
+
+### Datenmodell und Einbindung
+
+`src/lib/module-schema.ts` definiert `LearningModule`, `TheoryBlock`, `ModuleQuestion`, `NotationBuilderTaskConfig` und `ModulesDatabase`. Module enthalten unter anderem Bereich, Level, Tags, Praxisteil-Flag, XP-Werte, Bestehensgrenzen und Theorie-Blöcke. Aufgaben referenzieren ein Modul und eine Lernspur (`exercise`, `quiz_easy` oder `fastlane`); Notationsaufgaben konfigurieren Notenschlüssel, Taktart, Vorzeichen, Notenwerte und erwartete Tonhöhen beziehungsweise Dauern.
+
+Die drei Builder-Formulare unter `src/components/project/` werden in `src/content/docs/projektierung/modul-builder.mdx` eingebunden. Der Lernpfad nutzt `ProgressDashboard`, `ModuleRoadmap`, `ModuleStepper` und `ModuleQuizRunner` unter `src/components/learning/`; die Seiten liegen unter `src/content/docs/audio/theory/`. Die Builder-Formulare werden ohne fachliche Astro-Props eingebunden. Die Lernkomponenten akzeptieren:
+
+| Komponente | Props |
+|:---|:---|
+| `ProgressDashboard` | `id?` |
+| `ModuleRoadmap` | `id?`, `lessonBaseUrl?` |
+| `ModuleStepper` | `id?`, `moduleId?`, `mode?: "normal" \| "fastlane"`, `lessonBaseUrl?` |
+| `ModuleQuizRunner` | `id?`, `moduleId?`, `mode?: TargetLane`, `templatesOnly?` |
+
+Die Netlify Function `netlify/functions/modules.ts` stellt die Modul-API bereit. In der Astro-Entwicklung ergänzt ein Vite-Plugin den lokalen Endpunkt, der `data/modules.json` verwendet. XP- und Validierungsregeln liegen in `src/lib/xp-tags.ts`, `src/lib/module-schema.ts` und `src/lib/module-store.ts`; UI-Logik und Styles liegen in `src/lib/module-builder-ui.ts`, `src/lib/module-player-ui.ts`, `src/styles/module-builder.css` und `src/styles/module-player.css`.
+
+### Manuelle Abnahme-Checkliste
+
+- [ ] Die Modul-Builder-Seite zeigt alle drei Tabs und lädt den Katalog ohne Fehler.
+- [ ] Ein Modul mit gültiger ID, Bereich, Level, Tags und Theorie-Blöcken lässt sich lokal speichern und erneut laden.
+- [ ] Theorie-Blöcke lassen sich hinzufügen, entfernen und umsortieren; KaTeX-Inhalte werden im Lernpfad dargestellt.
+- [ ] Visuelle Theorie-Bausteine lassen sich konfigurieren und im Lernpfad prüfen.
+- [ ] Reine Theorie-Module ohne Praxisschritt sowie Module mit Praxisschritt werden korrekt gespeichert und angezeigt.
+- [ ] Ungültige Pflichtfelder und Bestehensgrenzen außerhalb von 0 bis 100 werden abgewiesen.
+- [ ] XP-Basiswerte und Tag-Faktoren werden im Aufgaben-Builder korrekt angezeigt und neu berechnet.
+- [ ] Single-Choice-, Multi-Select- und Zahleneingabe-Aufgaben lassen sich erstellen und bearbeiten.
+- [ ] Notationsaufgaben zeigen die Builder-Vorschau und speichern Konfiguration sowie erwartete Töne oder Dauern.
+- [ ] Aufgaben ohne gültiges Zielmodul oder mit ungültiger Notationskonfiguration werden abgewiesen.
+- [ ] Der Katalog wechselt zwischen Karten- und Listenansicht und filtert nach Bereich sowie Lernspur.
+- [ ] Katalog-Zusammenfassungen zeigen Theorie-Blöcke, Aufgaben je Spur und gewichtete XP passend zu den Daten.
+- [ ] Bearbeiten aus dem Katalog lädt das ausgewählte Modul beziehungsweise die ausgewählte Aufgabe in den passenden Tab.
+- [ ] Beim Löschen eines Moduls bestätigt der Dialog die Aktion; zugehörige Aufgaben werden mitgelöscht.
+- [ ] Die Modul-API lädt und speichert Daten über den konfigurierten GitHub-Branch; der lokale Dev-Endpunkt nutzt `data/modules.json`.
+- [ ] HTML-Fehlerantworten und API-Fehler werden sichtbar behandelt, statt als erfolgreiche JSON-Antworten zu gelten.
+- [ ] Das Dashboard zeigt Level, Gesamt-XP, Fortschritt, abgeschlossene Module sowie XP nach Bereich und Tag.
+- [ ] Fortschritt bleibt nach erneutem Laden im Browser erhalten; serverseitiges Rendering läuft ohne `localStorage`.
+- [ ] Theorie, Übungen, optionaler Praxisschritt und Quiz werden in der vorgesehenen Reihenfolge freigeschaltet.
+- [ ] Wiederholtes Lösen derselben Aufgabe vergibt keine doppelten XP; 500 XP entsprechen einem Level.
+- [ ] Quiz und Fastlane verwenden die Modul-Bestehensgrenze; Nichtbestehen vergibt keine Abschluss-XP und entsperrt kein Folgemodul.
+- [ ] Fastlane ist auch für gesperrte Module erreichbar; Bestehen aktualisiert Fortschritt und Roadmap.
+- [ ] Zahleneingaben mit Einheiten und interaktive Notationsantworten werden gemäß Aufgaben-Konfiguration bewertet.
+- [ ] Dashboard und Roadmap aktualisieren sich nach Fortschrittsänderungen ohne Seitenneuladen.
+- [ ] Der Fortschritt-Reset erfordert Bestätigung und setzt den lokalen Lernstand zurück.
+
+### Automatisierte Qualitätssicherung
+
+Die fachlichen Regeln und die Builder-/Player-Interaktionen sind in den vier oben genannten Feature-Testdateien abgedeckt. Für die fokussierten Tests `npm test`, für das vollständige Projekt-Quality-Gate `npm run preflight` ausführen.

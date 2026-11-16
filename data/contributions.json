@@ -408,11 +408,116 @@
   {
     "id": "a8b06a98-3ed7-48bb-bb12-f1d6fd84ae19",
     "type": "Feature",
-    "title": "ModulBuilder",
-    "description": "mit branch in .env auf modulebuilder",
+    "title": "Module Builder – Autorenwerkbank & Lernpfad",
+    "description": "Autorenwerkbank zum Erstellen und Verwalten von Lernmodulen, Theorie-Blöcken und Aufgaben mit XP-System und interaktivem Lernpfad. Details: /features/README_FEAT_MODULEBUILDER.md",
     "area": "Komponente",
     "priority": "Hoch",
-    "checklist": [],
+    "checklist": [
+      {
+        "text": "Drei Builder-Tabs für Module, Aufgaben und Katalog öffnen und bedienen",
+        "checked": false
+      },
+      {
+        "text": "Modul mit Metadaten, Tags, XP-Werten und Bestehensgrenzen anlegen und erneut laden",
+        "checked": false
+      },
+      {
+        "text": "Theorie-Blöcke hinzufügen, entfernen, umsortieren und mit KaTeX-Inhalten speichern",
+        "checked": false
+      },
+      {
+        "text": "Theorie-Visualisierungen konfigurieren und im Lernpfad kontrollieren",
+        "checked": false
+      },
+      {
+        "text": "Reine Theorie-Module und Module mit optionalem Praxisschritt korrekt abbilden",
+        "checked": false
+      },
+      {
+        "text": "Ungültige Pflichtfelder und Bestehensgrenzen außerhalb von 0 bis 100 abweisen",
+        "checked": false
+      },
+      {
+        "text": "XP-Basiswerte und Tag-Faktoren im Aufgaben-Builder korrekt berechnen",
+        "checked": false
+      },
+      {
+        "text": "Single-Choice-, Multi-Select- und Zahleneingabe-Aufgaben erstellen und bearbeiten",
+        "checked": false
+      },
+      {
+        "text": "Notationsaufgaben mit Vorschau, Notenschlüssel und erwarteten Antworten konfigurieren",
+        "checked": false
+      },
+      {
+        "text": "Ungültige Aufgaben und Aufgaben ohne existierendes Zielmodul abweisen",
+        "checked": false
+      },
+      {
+        "text": "Katalogansicht wechseln, nach Bereich und Lernspur filtern sowie sortieren",
+        "checked": false
+      },
+      {
+        "text": "Katalog-Zusammenfassung für Blöcke, Aufgaben je Spur und gewichtete XP prüfen",
+        "checked": false
+      },
+      {
+        "text": "Bearbeiten aus dem Katalog lädt den ausgewählten Eintrag im passenden Builder",
+        "checked": false
+      },
+      {
+        "text": "Modullöschung bestätigen und sicherstellen, dass nur zugehörige Aufgaben mitgelöscht werden",
+        "checked": false
+      },
+      {
+        "text": "Modul-API und lokalen Dev-Endpunkt mit data/modules.json prüfen",
+        "checked": false
+      },
+      {
+        "text": "API-Fehler und HTML-Fehlerantworten sichtbar behandeln",
+        "checked": false
+      },
+      {
+        "text": "Dashboard zeigt Level, Gesamt-XP, Fortschritt, Module sowie XP nach Bereich und Tag",
+        "checked": false
+      },
+      {
+        "text": "Lernfortschritt bleibt im Browser erhalten und funktioniert beim SSR ohne localStorage",
+        "checked": false
+      },
+      {
+        "text": "Theorie, Übungen, optionaler Praxisschritt und Quiz in korrekter Reihenfolge freischalten",
+        "checked": false
+      },
+      {
+        "text": "Wiederholte Aufgaben vergeben keine doppelten XP; 500 XP ergeben ein Level",
+        "checked": false
+      },
+      {
+        "text": "Quiz-Bestehensgrenze, Nichtbestehen und Freischaltung des Folgemoduls prüfen",
+        "checked": false
+      },
+      {
+        "text": "Fastlane für gesperrte Module testen; Bestehen aktualisiert Fortschritt und Roadmap",
+        "checked": false
+      },
+      {
+        "text": "Zahleneingaben mit Einheiten und Notationsantworten korrekt auswerten",
+        "checked": false
+      },
+      {
+        "text": "Dashboard und Roadmap nach Lernfortschritt ohne Seitenneuladen aktualisieren",
+        "checked": false
+      },
+      {
+        "text": "Fortschritts-Reset erfordert Bestätigung und setzt den lokalen Lernstand zurück",
+        "checked": false
+      },
+      {
+        "text": "Feature-Tests mit npm test und Projekt-Quality-Gate mit npm run preflight ausführen",
+        "checked": false
+      }
+    ],
     "status": "New",
     "createdAt": "2026-11-16T08:09:21.276Z"
   }
