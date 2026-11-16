@@ -409,7 +409,7 @@
     "id": "a8b06a98-3ed7-48bb-bb12-f1d6fd84ae19",
     "type": "Feature",
     "title": "Module Builder – Autorenwerkbank & Lernpfad",
-    "description": "Autorenwerkbank zum Erstellen und Verwalten von Lernmodulen, Theorie-Blöcken und Aufgaben mit XP-System und interaktivem Lernpfad. Details: /features/README_FEAT_MODULEBUILDER.md\n\nUncool:\n\n- Reihenfolge -->  Soll je nachdem wieviel schon vorhanden sind nachfolgende erstellt werden --> ohne manuelle eingabe. das verschieben soll später noch möglich sein wenn das modul abgeschlossen ist\n- keine englischen übersetzungen in Klammern (). das ist die deutsche version und ende\n- Tags sollen nur für >1,0 verwendet werden. diese werden eh noch mal angepasst\n- Was passiert wenn ich den praxisteil anwähle?\n- die definition wann ein quiz bestanden ist, soll in einer übergriefenden einstellung stattfinden und nicht pro Modul\n- Im Block ist bei den auf und ab pfeilen ein margin was dei pfeile nicht horizontal in einer linie sein lässt\n\nKommentare:\n- LaTeX-Mathematik irgendwo erklären",
+    "description": "Autorenwerkbank zum Erstellen und Verwalten von Lernmodulen, Theorie-Blöcken und Aufgaben mit XP-System und interaktivem Lernpfad. Details: /features/README_FEAT_MODULEBUILDER.md\n\nUncool:\n\n\nKommentare:\n- LaTeX-Mathematik irgendwo erklären\n-",
     "area": "Komponente",
     "priority": "Hoch",
     "checklist": [
@@ -520,6 +520,10 @@
       {
         "text": "- Modul-ID --> Soll im Hintergrund automatisch erstellt werden ohne eingabe",
         "checked": true
+      },
+      {
+        "text": "LaTeX-Mathematik irgendwo erklären",
+        "checked": false
       }
     ],
     "status": "New",
