@@ -91,7 +91,11 @@ GITHUB_MODULES_PATH=data/modules.json
 ```bash
 # Verknüpfung und den im lokalen Netlify-Kontext wirksamen Branch prüfen
 npx netlify-cli status
-npx netlify-cli dev:exec -- node -p process.env.GITHUB_BRANCH
+# Erstellung von .env im Projekt
+npx netlify-cli env:list --plain > .env
+# .env anpassen, damit Posts auf aktuellen Branch geladen werden und gezogen
+GITHUB_BRANCH=<aktuellen Branch>
+
 
 # Fullstack-Entwicklungsserver starten
 npx netlify-cli dev
