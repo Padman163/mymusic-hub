@@ -12,16 +12,16 @@ import "../../styles/notation.css";
 import "../../styles/module-builder.css";
 
 const laneLabels: Record<(typeof TARGET_LANES)[number], string> = {
-  exercise: "2. Aufgaben – Normal Lane (exercise)",
-  quiz_easy: "Abschluss-Quiz Einfach (quiz_easy)",
-  fastlane: "Fastlane-Test Schwer (fastlane)",
+  exercise: "2. Aufgaben – Übung",
+  quiz_easy: "Abschluss-Quiz Einfach",
+  fastlane: "Fastlane-Test Schwer",
 };
 
 const questionTypeLabels: Record<(typeof QUESTION_TYPES)[number], string> = {
-  single_choice: "Single Choice (eine richtige Antwort)",
-  multi_select: "Multi Select (mehrere richtige Antworten)",
-  numeric_input: "Zahleneingabe / Wert (numeric_input)",
-  interactive_notation: "Interaktive Notation (NotationBuilder)",
+  single_choice: "Eine richtige Antwort",
+  multi_select: "Mehrere richtige Antworten",
+  numeric_input: "Zahleneingabe / Wert",
+  interactive_notation: "Interaktive Notation",
 };
 ---
 
@@ -35,7 +35,7 @@ const questionTypeLabels: Record<(typeof QUESTION_TYPES)[number], string> = {
     </div>
 
     <div class="field">
-      <label for="exercise-target-lane">Ziel-Lernspur (Lane)</label>
+      <label for="exercise-target-lane">Ziel-Lernspur</label>
       <select id="exercise-target-lane" name="targetLane">
         {TARGET_LANES.map((lane) => (
           <option value={lane}>{laneLabels[lane]}</option>
@@ -98,21 +98,21 @@ const questionTypeLabels: Record<(typeof QUESTION_TYPES)[number], string> = {
   <section
     id="exercise-notation-section"
     class="exercise-dynamic-section"
-    aria-label="NotationBuilder-Konfiguration"
+    aria-label="Einstellungen für die Notationsaufgabe"
     hidden
   >
-    <h3>Interaktive Notationsaufgabe (NotationBuilder)</h3>
+    <h3>Interaktive Notationsaufgabe</h3>
     <div class="module-field-grid">
       <div class="field">
-        <label for="notation-clef">Notenschlüssel (clef)</label>
+        <label for="notation-clef">Notenschlüssel</label>
         <select id="notation-clef" name="clef">
-          <option value="treble">Violinschlüssel (treble)</option>
-          <option value="bass">Bassschlüssel (bass)</option>
+          <option value="treble">Violinschlüssel</option>
+          <option value="bass">Bassschlüssel</option>
         </select>
       </div>
 
       <div class="field">
-        <label for="notation-max-notes">Notenanzahl (maxNotes)</label>
+        <label for="notation-max-notes">Notenanzahl</label>
         <input
           id="notation-max-notes"
           name="maxNotes"
@@ -125,21 +125,21 @@ const questionTypeLabels: Record<(typeof QUESTION_TYPES)[number], string> = {
       </div>
 
       <div class="field">
-        <label for="notation-lock-duration">Notenwert sperren (lockDuration)</label>
+        <label for="notation-lock-duration">Notenwert sperren</label>
         <select id="notation-lock-duration" name="lockDuration">
           <option value="none">Keine Sperre</option>
           {NOTATION_DURATIONS.map((dur) => (
-            <option value={dur}>{durationLabels[dur]} ({dur})</option>
+            <option value={dur}>{durationLabels[dur]}</option>
           ))}
         </select>
       </div>
 
       <div class="field">
-        <label for="notation-compact">Darstellung (compact)</label>
+        <label for="notation-compact">Darstellung</label>
         <select id="notation-compact" name="compact">
-          <option value="false">Standard (false)</option>
-          <option value="tight">Kompakt (tight)</option>
-          <option value="wide">Breit (wide)</option>
+          <option value="false">Standard</option>
+          <option value="tight">Kompakt</option>
+          <option value="wide">Breit</option>
         </select>
       </div>
     </div>
@@ -151,12 +151,12 @@ const questionTypeLabels: Record<(typeof QUESTION_TYPES)[number], string> = {
           name="showDurationPicker"
           type="checkbox"
         />
-        <span>Notenwert-Leiste anzeigen (showDurationPicker)</span>
+        <span>Notenwert-Leiste anzeigen</span>
       </label>
 
       <label class="module-checkbox-label" for="notation-show-hints">
         <input id="notation-show-hints" name="showHints" type="checkbox" checked />
-        <span>Tastatur-Hinweise anzeigen (showHints)</span>
+        <span>Tastatur-Hinweise anzeigen</span>
       </label>
     </div>
 
@@ -185,7 +185,7 @@ const questionTypeLabels: Record<(typeof QUESTION_TYPES)[number], string> = {
     </div>
 
     <div class="notation-live-preview-wrapper">
-      <span>Live-Vorschau (NotationBuilder)</span>
+      <span>Live-Vorschau</span>
       <div id="notation-live-preview" class="notation-live-preview-box"></div>
     </div>
   </section>

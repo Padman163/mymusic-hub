@@ -107,7 +107,7 @@ Dort gibt es drei übersichtliche Reiter (Tabs):
 - **Wie sich das Formular anpasst:**
   - Du wählst das Ziel-Modul und die gewünschte Lern-Spur: normale **Übung**, **Abschluss-Quiz Einfach** oder schwerer **Fastlane-Test**. Dabei passen sich die vorgeschlagenen Basis-XP automatisch an (`10`, `15` oder `25 XP`).
   - Je nach gewähltem **Aufgabentyp** zeigt das Formular automatisch nur die passenden Eingabefelder:
-    - **Single Choice / Multi Select:** Eine flexible Liste von Antwortmöglichkeiten, in der du mit Klick markierst, welche Lösung(en) richtig sind.
+    - **Eine oder mehrere richtige Antworten:** Eine flexible Liste von Antwortmöglichkeiten, in der du mit Klick die richtigen Lösungen markierst.
     - **Zahleneingabe:** Ein Feld für die exakte Antwort (z. B. `880` oder `880 Hz`).
     - **Interaktive Notenaufgabe (`NotationBuilder`):** Einstellfelder für Notenschlüssel (Violin-/Bassschlüssel), Notenanzahl (`1` bis `8`), feste oder wählbare Notenwerte, kompakte/breite Darstellung, Tastatur-Hinweise sowie die erwarteten Töne oder Notenwerte.
   - **Direkte Live-Vorschau:** Bei interaktiven Notenaufgaben siehst du direkt unter den Einstellungen das echte interaktive Notensystem als Vorschau – und kannst sofort prüfen, wie die Aufgabe später für Lernende aussieht.

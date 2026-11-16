@@ -57,14 +57,14 @@ const SCOPE_LABELS: Record<ModuleScope, string> = {
 };
 
 const LANE_LABELS: Record<TargetLane, string> = {
-  exercise: "Übung (Normal Lane)",
+  exercise: "Übung",
   quiz_easy: "Quiz Einfach",
   fastlane: "Fastlane-Test",
 };
 
 const QUESTION_TYPE_LABELS: Record<QuestionType, string> = {
-  single_choice: "Single Choice",
-  multi_select: "Multi Select",
+  single_choice: "Eine richtige Antwort",
+  multi_select: "Mehrere richtige Antworten",
   numeric_input: "Zahleneingabe",
   interactive_notation: "Interaktive Notation",
 };
@@ -1663,11 +1663,11 @@ export function attachModuleCatalogList(
     filterSelect.className = "module-question-lane-filter";
     filterSelect.setAttribute(
       "aria-label",
-      `Aufgaben für ${mod.title} nach Lane filtern`,
+      `Aufgaben für ${mod.title} nach Lernspur filtern`,
     );
     const allOpt = document.createElement("option");
     allOpt.value = "";
-    allOpt.textContent = "Alle Lanes";
+    allOpt.textContent = "Alle Lernspuren";
     filterSelect.append(allOpt);
     for (const lane of ["exercise", "quiz_easy", "fastlane"] as const) {
       const opt = document.createElement("option");
@@ -1689,7 +1689,7 @@ export function attachModuleCatalogList(
       if (filtered.length === 0) {
         const empty = document.createElement("li");
         empty.className = "module-question-empty";
-        empty.textContent = "Keine Aufgaben in dieser Lane.";
+        empty.textContent = "Keine Aufgaben in dieser Lernspur.";
         sublist.append(empty);
         return;
       }

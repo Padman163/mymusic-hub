@@ -11,10 +11,10 @@ import "../../styles/contribution-checklist.css";
 import "../../styles/module-builder.css";
 
 const scopeLabels: Record<(typeof MODULE_SCOPES)[number], string> = {
-  theory: "Theorie (theory)",
-  instrument: "Instrument (instrument)",
-  production: "Produktion (production)",
-  band: "Band (band)",
+  theory: "Theorie",
+  instrument: "Instrument",
+  production: "Produktion",
+  band: "Band",
 };
 ---
 
@@ -44,7 +44,7 @@ const scopeLabels: Record<(typeof MODULE_SCOPES)[number], string> = {
 
   <div class="module-field-grid">
     <div class="field">
-      <label for="module-scope">Bereich (Scope)</label>
+      <label for="module-scope">Bereich</label>
       <select id="module-scope" name="scope">
         {MODULE_SCOPES.map((scope) => (
           <option value={scope}>{scopeLabels[scope]}</option>
