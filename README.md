@@ -26,6 +26,7 @@ Die Oberfläche läuft unter `http://localhost:4321`. Erst-Setup und Start mit N
 | [README_FEATURES.md](README_FEATURES.md) | Funktionen und Fachmodule |
 | [README_FEAT_MODULEBUILDER.md](README_FEAT_MODULEBUILDER.md) | Lernpfad und Autorenwerkbank |
 | [README_CLEANUP.md](README_CLEANUP.md) | Wiederholbare Repository-Bereinigung in fünf Schritten |
+| [README_WORKFLOW.md](README_WORKFLOW.md) | Persönlicher Entwicklungs- und Archivierungsablauf |
 | [README_NOTATION.md](README_NOTATION.md) | API und Architektur der Notation |
 | [README_PROMPTS.md](README_PROMPTS.md) | Komponenten-Prompts |
 

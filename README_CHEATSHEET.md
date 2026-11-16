@@ -48,7 +48,7 @@ Für eine vollständige Repository-Bereinigung siehe [Cleanup-Anleitung](README_
 ```bash
 git switch main              # Zurück zum Hauptbranch wechseln
 git switch <branch-name>   # Zu einem vorhandenen Feature-Branch wechseln
-git switch -c feature/<name> # Neuen isolierten Feature-Branch erstellen und dorthin wechseln
+git switch -c feat/<name>    # Neuen isolierten Feature-Branch erstellen und dorthin wechseln
 git fetch origin             # Remote-Änderungen abfragen ohne lokalen Code zu verändern
 git status                   # Zeigt modifizierte, gelöschte und ungetrackte Dateien an
 git add .                    # Alle Änderungen für den nächsten Commit stagen
@@ -79,8 +79,8 @@ Um Regressionsfehler, fehlerhafte Seiten-Builds und instabile Zustände auf `mai
 │ STUFE 3: Lokales Quality Gate ausführen                                    │
 │ └── Statische Analyse -> Unit-Tests -> Build-Test -> Git-Diff.              │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ STUFE 4: Integration via Pull Request & Deploy Preview                      │
-│ └── Netlify Deploy Preview im Browser prüfen -> Merge nach main.           │
+│ STUFE 4: Cleanup & Archivierung                                            │
+│ └── Bereinigen, erneut prüfen und Feature-Branch archivieren.              │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -89,7 +89,7 @@ Arbeite niemals direkt auf dem Branch `main`. Stelle vor Beginn sicher, dass dei
 ```bash
 git switch main
 git pull origin main
-git switch -c feature/mein-neues-feature
+git switch -c feat/mein-neues-feature
 ```
 
 ### Stufe 2: Feature entwickeln (Reihenfolge einhalten)
@@ -120,15 +120,8 @@ npm test
 npm run build
 ```
 
-### Stufe 4: Veröffentlichen & Mergen
-Wenn alle Tests grün sind, übertrage den Branch auf GitHub und erstelle einen Pull Request:
-```bash
-git add .
-git commit -m "feat(notation): neue akkordtransponierung hinzugefuegt"
-git push -u origin feature/mein-neues-feature
-```
-* **Deploy Preview:** Öffne die von Netlify im PR generierte Vorschau-URL und prüfe die Komponente auf Desktop und Mobilgeräten.
-* **Merge:** Nach erfolgreicher visueller und automatisierter Prüfung mergst du den Pull Request in `main`.
+### Stufe 4: Cleanup & Archivierung
+Nach den Tests die [Cleanup-Anleitung](README_CLEANUP.md) durchgehen, Änderungen erneut prüfen und den fertigen Branch archivieren. Die Übernahme nach `main` wird später separat entschieden. Der vollständige Ablauf steht im [Workflow](README_WORKFLOW.md).
 
 ---
 
