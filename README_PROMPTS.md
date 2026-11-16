@@ -10,57 +10,12 @@ Um das **Lego- und Manager-Prinzip** strikt einzuhalten, werden Komponenten nach
 
 ```text
 src/
-├── components/
-│   │
-│   ├── music/                       # 🎵 Musikalische Elementarlogik & mathematische Helfer
-│   │   ├── rhythm.ts                # Notenwerte, Balkengruppen, Punktierung
-│   │   ├── time-signature.ts        # Taktarten & Breitenberechnung
-│   │   ├── tempo.ts                 # BPM, rit., accelerando
-│   │   ├── curve.ts                 # Halte- und Bindebögen (Bézier)
-│   │   ├── dynamics.ts              # Lautstärken (p, f, cresc.)
-│   │   ├── barline.ts               # Taktstriche & Wiederholungen
-│   │   ├── rest.ts                  # Pausensymbole
-│   │   └── svg.ts                   # SMuFL-Bravura-Glyphen & SVG-Hilfsfunktionen
-│   │
-│   ├── notation/                    # 🎼 Subkomponenten für Partituren & Systeme
-│   │   ├── NotationVisual.astro     # Basis-Wrapper für den SVG-Renderer
-│   │   ├── NotationOverview.astro   # Kompositions-Schaubilder
-│   │   └── Notation*.astro          # Spezifische Notations-Karten (Artikulation, Bögen etc.)
-│   │
-│   ├── ui/                          # 🎛️ Reine UI- & Presentation-Controls (Framework-nah)
-│   │   ├── Button.astro             # Standard-Buttons & Icon-Trigger
-│   │   ├── TagBadge.astro           # Badges für Level (D1/D2), Typen & Status
-│   │   └── TabGroup.astro           # Tabs für alternative Darstellungen
-│   │
-│   └── [Manager-Komponenten]         # 🚀 Zentrale Manager (direkt in src/components/)
-│       ├── FretboardClickable.astro # Griffbrett (delegiert an Saiten-/Bund-Logik)
-│       ├── DrumPattern.astro        # Step-Sequencer für Drums
-│       ├── BassPattern.astro        # Basslinien-Visualisierung
-│       ├── GuitarPattern.astro      # Rhythmusgitarren-Muster
-│       ├── VocalPattern.astro       # Gesangslinien / Phrasen
-│       ├── ScorePattern.astro       # Mehrspur-Partitur-Manager
-│       ├── SheetMusicPlayer.astro   # AlphaTab-MusicXML-Audio-Engine
-│       ├── InteractiveScoreTrainer.astro # Interaktives Noten- & TAB-Quiz
-│       ├── ChordDiagramPattern.astro
-│       ├── ChordSlider.astro
-│       ├── ChordTierList.astro
-│       ├── IssueTrackerForm.astro
-│       └── ContributionList.astro
-│
-├── lib/                             # 🧠 Framework-unabhängige Kernlogik & Stores
-│   ├── notation-renderer.ts         # SVG-Bravura Renderer-Pipeline
-│   ├── system-layout.ts             # Zeilenumbruch & Taktaufteilung
-│   ├── checklist-editor.ts          # DOM-Helfer für Checklisten
-│   └── contribution-*.ts            # Beitrags-Schemas, Store & Validierung
-│
-├── styles/                          # 🎨 Zentrale CSS-Dateien (keine Inline-Farbdefinitionen!)
-│   ├── music.css                    # Typografie für SMuFL/Bravura
-│   ├── notation.css                 # Notenlinien, Notenköpfe, Vektoren
-│   └── sidebar.css                  # Layout-Regeln
-│
-└── tests/                           # 🧪 Automatisierte Unit-Tests (Vitest)
-    ├── music-notation.test.mjs      # Geometrie-, Takt- und Renderer-Tests
-    └── [feature].test.mjs           # Weitere isolierte Modul-Tests
+├── components/notation/   # Notation, NotationVisual, NotationKeyboard, NotationBuilder
+├── components/ui/         # Wiederverwendbare Anzeige-Bausteine
+├── components/            # Weitere Komponenten, learning/ und project/
+├── lib/                   # Renderer, musikalische Logik, Controller und Stores
+└── styles/                # Gemeinsame Styles
+tests/                     # Vitest- und Playwright-Tests
 ```
 
 CSS-Regeln gehören in Dateien unter `src/styles/`, nicht in Komponenten. Dynamische Werte wie die Taktzahl und die berechnete Skalierung können weiterhin zur Laufzeit gesetzt werden.
@@ -88,7 +43,7 @@ CSS-Regeln gehören in Dateien unter `src/styles/`, nicht in Komponenten. Dynami
 Erstelle die Astro-Komponente `src/components/[Name]Pattern.astro`.
 
 Anforderungen:
-- Importiere Typen aus `src/components/music/[modul].ts` falls nötig.
+- Importiere Typen aus `src/lib/[modul].ts` falls nötig.
 - Definiere ein striktes TypeScript-Interface `Props`.
 - Props:
   - `title?: string`
@@ -116,17 +71,17 @@ Vorgaben:
   - `[prop2: typ]`
 - Nutze Klassen aus `src/styles/notation.css`.
 - Keine globale State-Verwaltung, rein zustandslos (Pure Component).
-- Falls Glyphen benötigt werden: Nutze Unicode/SMuFL-Konstanten aus `src/components/music/svg.ts`.
+- Falls Glyphen benötigt werden: Nutze vorhandene SMuFL-Helfer aus `src/lib/svg.ts` und den gemeinsamen Notationsrenderer.
 - Gib nur den Code der Komponente aus.
 ```
 
 ---
 
 ### Prompt 3: Reine Berechnungslogik auslagern (`.ts`)
-> **Zweck:** Schreibt reine TypeScript-Funktionen für `src/components/music/` oder `src/lib/` (ideal testbar).
+> **Zweck:** Schreibt reine TypeScript-Funktionen für `src/lib/` (ideal testbar).
 
 ```markdown
-Erstelle das TypeScript-Modul `src/components/music/[thema].ts`.
+Erstelle das TypeScript-Modul `src/lib/[thema].ts`.
 
 Aufgabe:
 - Funktionen:

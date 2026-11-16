@@ -33,7 +33,7 @@ Die Plattform verbindet musiktheoretische Didaktik mit interaktiven Web-Technolo
   * Verwendet standardisierte SMuFL-Glyphen (Bravura-Font) und berechnet Notenhälse, Balkengruppen (`beamGroupStemUp`), Vorzeichen, Dynamik und Bögen über mathematische Koordinaten.
   * **Feste Layout-Regel am Systembeginn:** Notenschlüssel $\rightarrow$ Taktart $\rightarrow$ Tonartvorzeichen $\rightarrow$ Wiederholungszeichen $\rightarrow$ erste Note (mit dynamischem `measureNumberOffset` für Taktzahlen).
   * **Umbruchs-Logik:** `<Notation />` unterstützt `layout="auto" | number | number[]` sowie responsive Container-Skalierung (`observeNotationFit`).
-  * **Qualitätssicherung:** 41 isolierte Unit-Tests in `tests/music-notation.test.mjs` (48 Vitest-Tests gesamt) sowie 18 Playwright-E2E-Tests in `tests/e2e/smoke.spec.ts` sichern Abstände, Layoutregeln, Taktstriche und Notenwerte ab.
+  * **Qualitätssicherung:** Vitest-Tests in `tests/music-notation.test.mjs` und Playwright-Tests in `tests/e2e/smoke.spec.ts` sichern Abstände, Layoutregeln, Taktstriche und Notenwerte ab. Aktuelle Befehle stehen im [Testing-Leitfaden](README_TESTING.md).
 
 ### 2.2 Das interaktive Griffbrett (`FretboardClickable.astro`)
 * **Datei:** `src/components/FretboardClickable.astro`

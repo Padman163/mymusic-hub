@@ -9,6 +9,7 @@ Dieser Leitfaden beschreibt Schritt für Schritt, wie ein bestehendes Projekt in
 ```bash
 cd <FOLDER>
 git clone <REPO_URL>
+cd <REPO_VERZEICHNIS>
 git switch main
 git fetch origin
 ```
@@ -16,23 +17,21 @@ git fetch origin
 Wenn du das Repository frisch geklont hast, aktiviere die Subsysteme in der folgenden Reihenfolge, um Fehlern gezielt vorzubeugen:
 
 ### Schritt 1: Laufzeitumgebung validieren
-Astro, moderne ES-Module und der native Test-Runner setzen eine aktuelle Node.js-Laufzeitumgebung voraus:
+Astro und Vitest setzen eine aktuelle Node.js-Laufzeitumgebung voraus:
 ```bash
 node -v
 npm -v
 ```
-* **Anforderung:** Node.js $\ge 22.0.0$ und npm $\ge 10.0.0$.
-* **Warum dieser Schritt nötig ist:** Veraltete Node-Versionen unterstützen native ES-Importe, moderne WebCrypto-APIs und den Node-Testrunner nicht, was zu Syntaxfehlern beim Build führt.
+* **Anforderung:** Node.js 24 LTS und npm 10 oder neuer; die genauen Anforderungen stehen in den `engines` der installierten Abhängigkeiten.
+* **Warum dieser Schritt nötig ist:** Veraltete Laufzeitversionen können mit Astro oder Vitest inkompatibel sein.
 
 ### Schritt 2: Abhängigkeiten installieren
 ```bash
 # Installiert /node_modules
 npm install
 
-npm install @astrojs/netlify
-npm install typescript
 ```
-* **Warum dieser Schritt nötig ist:** Ein frisch geklonter Workspace enthält keinen Ordner `node_modules/`. Dieser Befehl liest die `package-lock.json` ein und installiert exakt die benötigten Frameworks (Astro, Starlight, Sharp, KaTeX, Biome, Vitest, Playwright).
+* **Warum dieser Schritt nötig ist:** Ein frisch geklonter Workspace enthält keinen Ordner `node_modules/`. Der Befehl installiert die Abhängigkeiten anhand von `package.json` und `package-lock.json`.
 
 ### Schritt 3: Basis-Frontend starten & prüfen (Isolierter Modus)
 ```bash
@@ -110,40 +109,7 @@ npx playwright install --with-deps webkit
 
 ```
 
-```bash
-
-# 2. Lighthouse CI CLI installieren (falls noch nicht in devDependencies vorhanden)
-npm install -D @lhci/cli@latest
-
-#create lighthouserc.cjs
-module.exports = {
-  ci: {
-    collect: {
-      // Testet direkt den generierten Astro-Build-Ordner ohne separaten Server-Prozess
-      staticDistDir: './dist',
-      numberOfRuns: 1,
-      settings: {
-        // Unverzichtbar in Linux-Container-/Codespace-Umgebungen
-        chromeFlags: '--no-sandbox --headless --disable-gpu',
-      },
-    },
-    assert: {
-      assertions: {
-        'categories:performance': ['warn', { minScore: 0.8 }],
-        'categories:accessibility': ['error', { minScore: 0.9 }],
-        'categories:best-practices': ['warn', { minScore: 0.9 }],
-        'categories:seo': ['warn', { minScore: 0.9 }],
-      },
-    },
-    upload: {
-      target: 'temporary-public-storage',
-    },
-  },
-};
-
-#create CHROME_PATH
-export CHROME_PATH=$(node -p "require('@playwright/test').chromium.executablePath()")
-```
+Lighthouse CI ist bereits in den Entwicklungsabhängigkeiten und in `lighthouserc.cjs` konfiguriert. Nach `npm run build` startet `npm run audit:lhci` den Audit mit Playwright-Chromium. Die aktuelle Konfiguration lädt Berichte in einen temporären **öffentlichen** Speicher hoch; nur mit zur Veröffentlichung geeigneten Daten ausführen.
 
 ### Lighthouse CI: `autorun` im Detail
 

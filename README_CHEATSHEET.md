@@ -26,29 +26,30 @@ npx tsc --noEmit             # Führt strikte TypeScript-Typprüfung im gesamten
 
 ### 1.3 Testpyramide & Verifikation
 ```bash
-npm test                     # Startet alle Unit-Tests via Node-Test-Runner / Vitest
+npm test                     # Führt alle Vitest-Tests einschließlich Dokumentationscheck aus
 npm run test:watch           # Startet Tests im interaktiven Watch-Modus während des Programmierens
 npm run test:unit            # Führt gezielt Notations- und Rechenlogik-Tests aus
 npm run test:component       # Führt isolierte DOM-/Komponententests mit happy-dom aus
 npm run test:integration     # Testet API-Handler und GitHub-Schnittstellen via Mocks
 npm run test:e2e             # Startet automatisierte Playwright-Browsertests
 npm run test:e2e:ui          # Öffnet das grafische Playwright Test-Dashboard
-npm run test:visual          # Aktualisiert visuelle Golden-Master-Screenshots
+npm run test:visual          # Aktualisiert vorhandene Playwright-Snapshots
 ```
 
 ### 1.4 Das zentrale Pre-Flight Quality Gate
 ```bash
 npm run preflight            # Kombinierte Kette vor jedem Push / Pull Request:
-                             # Lint -> Check -> tsc -> Audit -> Test -> Build -> Git-Diff
+                             # validate -> audit -> test:all (Vitest, Build, E2E) -> Git-Diff
 ```
+
+Für eine vollständige Repository-Bereinigung siehe [Cleanup-Anleitung](README_CLEANUP.md).
 
 ### 1.5 Häufigste Git-Kommandos
 ```bash
 git switch main              # Zurück zum Hauptbranch wechseln
 git switch <branch-name>   # Zu einem vorhandenen Feature-Branch wechseln
 git switch -c feature/<name> # Neuen isolierten Feature-Branch erstellen und dorthin wechseln
-git fetch origin             # Remote-Änderungen abfragen ohne lokalen Code zu veränder
-n
+git fetch origin             # Remote-Änderungen abfragen ohne lokalen Code zu verändern
 git status                   # Zeigt modifizierte, gelöschte und ungetrackte Dateien an
 git add .                    # Alle Änderungen für den nächsten Commit stagen
 git commit -m "feat: text"   # Commit mit konventioneller Nachricht erstellen

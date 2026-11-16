@@ -2,13 +2,13 @@
 
 ## 1. Projekt-Identität & Vollständiger Tech-Stack
 * **Plattform:** Statische Dokumentations- und Lernplattform für Musiktheorie, Gitarrenpraxis, Songwriting und Musikproduktion.
-* **Framework:** Astro (`^7.4.5`) mit `@astrojs/starlight` (`^0.42.8`), TypeScript im strikten Modus (`strict: true`) und MDX.
-* **Mathematik & Formeln:** KaTeX (`^0.19.1`) über `remark-math` (`^6.0.0`) und `rehype-katex` (`^7.0.1`).
+* **Framework:** Astro mit `@astrojs/starlight`, TypeScript im strikten Modus (`strict: true`) und MDX; Versionen stehen in `package.json`.
+* **Mathematik & Formeln:** KaTeX über `remark-math` und `rehype-katex`.
 * **Typografie & Noten-Font:** SMuFL-kompatible Bravura-Schriftart unter `public/alphatab/font/`.
 * **Audio-Engine:** `@coderline/alphatab` (`^1.9.0`) mit Web-Worker unter `public/alphatab/alphaTab.worker.mjs`.
 * **Serverless Backend:** Netlify Functions (`@netlify/functions` `^6.1.0`) unter `netlify/functions/contributions.ts` mit Datenhaltung via GitHub REST API in `data/contributions.json`.
 * **Testumgebung:** Vitest (`npm test`); End-to-End-Tests mit Playwright (`npm run test:e2e`).
-* **Laufzeitumgebung:** Node.js 22.x, npm 10.x.
+* **Laufzeitumgebung:** Node.js 24 LTS, npm 10 oder neuer; Details im [Workspace-Setup](README_WORKSPACE_SETUP.md).
 
 ---
 

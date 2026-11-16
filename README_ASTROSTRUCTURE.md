@@ -87,7 +87,8 @@ Je nach Projektziel kann die Applikation modular erweitert werden, ohne die Kern
 * **Zweck:** Verwaltung strukturierter Markdown/MDX-Inhalte mit automatischer Frontmatter-Validierung über Zod.
 * **Datei:** `src/content.config.ts` (Astro 5 Content Layer API)
 ```typescript
-import { defineCollection, z } from 'astro:content';
+import { defineCollection } from 'astro:content';
+import { z } from 'astro/zod';
 import { glob } from 'astro/loaders';
 
 const docs = defineCollection({

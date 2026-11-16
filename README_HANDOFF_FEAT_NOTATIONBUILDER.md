@@ -62,7 +62,7 @@ Standardmäßig entspricht das Aussehen einem reduzierten Einzeltakt ohne linken
 * **Unit-Tests (`tests/music-notation.test.mjs`):**
   * Testet `stepToPitchName`, `pitchNameToStep`, `stepToY`, `yToStep`, `moveStep`, `describeBuilderState` und `renderNotationBuilderSvg`.
 * **Komponententests (`tests/components/notation-builder.test.ts`):**
-  * Testet Tastatur-Navigation (`↑`/`↓`), Mausklick-Positionierung, Erstellen mit `Num 1`, Löschen mit `Entf`, State-Attribute und `notationbuilder:reset`.
+  * Testet Tastatur-Navigation (`↑`/`↓`), Mausklick-Positionierung, Erstellen mit `Leertaste`, Notenwertwechsel mit `Num 1`, Löschen mit `Entf`, State-Attribute und `notationbuilder:reset`.
 * **Validierung:**
   * `npm run validate` (`biome check . && astro check && tsc --noEmit`)
-  * `npm run test` (55 Vitest-Tests erfolgreich)
+  * `npm test` (aktueller Gesamtstand; siehe [Testing-Leitfaden](README_TESTING.md))

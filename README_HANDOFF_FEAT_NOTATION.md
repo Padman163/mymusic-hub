@@ -36,7 +36,7 @@ Legacy-Komponenten (`NotationOverview.astro`, `NotationSystem.astro`, `DynamicsM
 ## 4. Dokumentation & Qualitätsstand
 * **API-Referenz / Cheat Sheet:** `README_NOTATION.md`
 * **Live-Dokumentation im Wiki (`Features` → `Notation.astro`):** `src/content/docs/audio/referenzen-werkzeuge/visualisierungen-erklaert/notensystem.mdx` (inkl. 18-Takt-Beispiel und Code-Erklärungen)
-* **Checks & Tests (Stand vor Abschluss dieses Branches):**
+* **Historischer Stand vor Abschluss dieses Branches; aktuelle Befehle und Ergebnisse siehe [Testing-Leitfaden](README_TESTING.md):**
   * `npm run validate` (`biome check .`, `astro check`, `tsc --noEmit`)
   * `npm run test` (48 Vitest-Tests gesamt, davon 41 in `tests/music-notation.test.mjs`)
   * `npm run test:e2e` (18 Playwright-Tests in `tests/e2e/smoke.spec.ts` auf Desktop Chrome & Mobile Safari)
