@@ -34,11 +34,11 @@
           "id": "tb-3-3b1b7f",
           "order": 3,
           "title": "notation beispiel",
-          "markdownContent": "<Notation clef=\"treble\" notes={[]} />"
+          "markdownContent": "### Zwölf Töne und die Oktave\n\nFür Musik teilen wir den Weg von einem Ton bis zu seinem nächsthöheren Namensvetter in **zwölf Halbtonschritte**. So entstehen die zwölf Tonklassen: **C, C♯/D♭, D, D♯/E♭, E, F, F♯/G♭, G, G♯/A♭, A, A♯/B♭ und B**. Stell sie dir wie zwölf gleichmäßige Stufen vor; nach der zwölften Stufe beginnt dieselbe Folge wieder.\n\n<Notation clef=\"treble\" notes={[]} />"
         }
       ],
       "createdAt": "2026-11-16T00:00:00.000Z",
-      "updatedAt": "2026-11-16T14:49:58.826Z"
+      "updatedAt": "2026-11-16T14:53:56.356Z"
     },
     {
       "id": "guitar-102",
