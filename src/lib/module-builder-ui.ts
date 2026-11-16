@@ -841,7 +841,7 @@ export function attachModuleBuilderForm(
       const candidate = event.detail.module;
       if (isRecord(candidate) && typeof candidate.id === "string") {
         loadModule(candidate as unknown as LearningModule);
-        switchStarlightTab(0);
+        switchStarlightTab(1);
       }
     }
   });
@@ -1526,7 +1526,7 @@ export function attachExerciseBuilderForm(
       const candidate = event.detail.question;
       if (isRecord(candidate) && typeof candidate.id === "string") {
         loadQuestion(candidate as unknown as ModuleQuestion);
-        switchStarlightTab(1);
+        switchStarlightTab(2);
       }
     }
   });

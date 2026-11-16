@@ -19,6 +19,13 @@ for (const path of pages) {
 
 test('richtet die Pfeile im Theorieblock waagerecht aus', async ({ page }) => {
   await page.goto('/projektierung/modul-builder/');
+  await expect(page.getByRole('tab')).toHaveText([
+    'Übersicht',
+    'Theorie',
+    'Aufgaben',
+    'Einstellungen',
+  ]);
+  await page.getByRole('tab', { name: 'Theorie' }).click();
   await page.locator('.theory-block-add').click();
   await page.locator('.theory-block-add').click();
   const controls = page.locator('.theory-block-row').nth(1).locator('.theory-block-controls');

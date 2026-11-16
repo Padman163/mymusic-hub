@@ -12,16 +12,16 @@ import QuizSettingsForm from '../../../components/project/QuizSettingsForm.astro
 Hier erstellst und verwaltest du Lernmodule, Theorie-Blöcke (inklusive KaTeX-Formeln und visueller Bausteine) sowie Übungs-, Quiz- und Fastlane-Aufgaben auf Basis der zentralen Tag- und XP-Konfiguration.
 
 <Tabs>
-  <TabItem label="1. Modul-Builder (Theorie)">
-    <ModuleBuilderForm />
-  </TabItem>
-  <TabItem label="2. Aufgaben- & Quiz-Builder">
-    <ExerciseBuilderForm />
-  </TabItem>
-  <TabItem label="3. Modul-Katalog & Übersicht">
+  <TabItem label="Übersicht">
     <ModuleCatalogList />
   </TabItem>
-  <TabItem label="4. Einstellungen">
+  <TabItem label="Theorie">
+    <ModuleBuilderForm />
+  </TabItem>
+  <TabItem label="Aufgaben">
+    <ExerciseBuilderForm />
+  </TabItem>
+  <TabItem label="Einstellungen">
     <QuizSettingsForm />
   </TabItem>
 </Tabs>

@@ -83,7 +83,16 @@ Auf das Fundament aus Etappe 1 haben wir jetzt die bedienbare Oberfläche gebaut
 
 Dort gibt es vier übersichtliche Reiter:
 
-### 1. Reiter „1. Modul-Builder (Theorie)“ (`src/components/project/ModuleBuilderForm.astro`)
+### 1. Reiter „Übersicht“ (`src/components/project/ModuleCatalogList.astro`)
+- **Wozu er dient:** Deine zentrale Übersicht über alle bereits erstellten Module und ihre Aufgaben.
+- **Was sie bietet:**
+  - **Karten- oder Listenansicht:** Per Knopfdruck wechselst du zwischen ausführlichen Karten und einer kompakten Liste. Außerdem kannst du nach Bereich filtern und nach Reihenfolge oder Gesamt-XP sortieren.
+  - **Automatische Modul-Bilanz:** Jede Karte zeigt sofort an, wie viele Theorie-Blöcke, Übungen, einfache Quizfragen, Fastlane-Fragen und Gesamt-XP im Modul stecken.
+  - **Aufklappbare Aufgabenliste:** Unter jedem Modul lassen sich alle zugehörigen Fragen ausklappen und nach Lern-Spur filtern.
+  - **Direktes Bearbeiten & Löschen:** Ein Klick auf den Stift bei einem Modul oder einer Frage lädt den Eintrag direkt in den passenden Builder-Reiter. Beim Löschen eines Moduls erinnert eine Sicherheitsabfrage daran, dass alle dazugehörigen Aufgaben mitgelöscht werden.
+  - **Reihenfolge ändern:** In der Sortierung „Reihenfolge: 1 → N“ ohne Bereichsfilter verschieben die Pfeile ein Modul jeweils um eine Position. Die Reihenfolge wird dauerhaft gespeichert und gilt für den Lernpfad.
+
+### 2. Reiter „Theorie“ (`src/components/project/ModuleBuilderForm.astro`)
 - **Wozu er dient:** Hier legst du neue Lernmodule an oder bearbeitest bestehende Module.
 - **Was du einstellen kannst:**
   - **Grunddaten:** Die eindeutige Modul-ID wird automatisch erstellt und beim Bearbeiten beibehalten. Neue Module werden automatisch hinter dem Modul mit der höchsten Reihenfolge eingefügt; beim Bearbeiten bleibt ihre Position erhalten. Einstellbar sind Titel, Kurzbeschreibung, Bereich (`Theorie`, `Instrument`, `Produktion`, `Band`), Level (`100` bis `500`) und optional die D-Stufe (`D1`, `D2`, `D3`).
@@ -102,7 +111,7 @@ Dort gibt es vier übersichtliche Reiter:
 
     Es werden ausschließlich feste Werte, Arrays und Objekte unterstützt, keine ausführbaren JavaScript-Ausdrücke oder Imports. Alte getrennte Notations-Props werden beim Bearbeiten in den Text übernommen. Andere bereits gespeicherte Visualisierungen bleiben erhalten; eine Definition weiterer Komponententypen im Text wird nicht unterstützt.
 
-### 2. Reiter „2. Aufgaben- & Quiz-Builder“ (`src/components/project/ExerciseBuilderForm.astro`)
+### 3. Reiter „Aufgaben“ (`src/components/project/ExerciseBuilderForm.astro`)
 - **Wozu er dient:** Hier erstellst du Übungs- und Prüfungsfragen und ordnest sie direkt einem bestehenden Modul zu.
 - **Wie sich das Formular anpasst:**
   - Du wählst das Ziel-Modul und die gewünschte Lern-Spur: normale **Übung**, **Abschluss-Quiz Einfach** oder schwerer **Fastlane-Test**. Dabei passen sich die vorgeschlagenen Basis-XP automatisch an (`10`, `15` oder `25 XP`).
@@ -113,16 +122,7 @@ Dort gibt es vier übersichtliche Reiter:
   - **Direkte Live-Vorschau:** Bei interaktiven Notenaufgaben siehst du direkt unter den Einstellungen das echte interaktive Notensystem als Vorschau – und kannst sofort prüfen, wie die Aufgabe später für Lernende aussieht.
   - **Live-XP-Rechner:** Sobald du Basis-XP, Spur oder Themen-Etiketten änderst, rechnet das Formular sofort aus, wie viele Erfahrungspunkte die Aufgabe am Ende bringt (z. B. `10 Basis-XP` × `1,5` für `Notensystem` = **15 XP**).
 
-### 3. Reiter „3. Modul-Katalog & Übersicht“ (`src/components/project/ModuleCatalogList.astro`)
-- **Wozu er dient:** Deine zentrale Übersicht über alle bereits erstellten Module und ihre Aufgaben.
-- **Was sie bietet:**
-  - **Karten- oder Listenansicht:** Per Knopfdruck wechselst du zwischen ausführlichen Karten und einer kompakten Liste. Außerdem kannst du nach Bereich filtern und nach Reihenfolge oder Gesamt-XP sortieren.
-  - **Automatische Modul-Bilanz:** Jede Karte zeigt sofort an, wie viele Theorie-Blöcke, Übungen, einfache Quizfragen, Fastlane-Fragen und Gesamt-XP im Modul stecken.
-  - **Aufklappbare Aufgabenliste:** Unter jedem Modul lassen sich alle zugehörigen Fragen ausklappen und nach Lern-Spur filtern.
-  - **Direktes Bearbeiten & Löschen:** Ein Klick auf den Stift bei einem Modul oder einer Frage lädt den Eintrag direkt in den passenden Builder-Reiter. Beim Löschen eines Moduls erinnert eine Sicherheitsabfrage daran, dass alle dazugehörigen Aufgaben mitgelöscht werden.
-  - **Reihenfolge ändern:** In der Sortierung „Reihenfolge: 1 → N“ ohne Bereichsfilter verschieben die Pfeile ein Modul jeweils um eine Position. Die Reihenfolge wird dauerhaft gespeichert und gilt für den Lernpfad.
-
-### 4. Reiter „Einstellungen“
+### 4. Reiter „Einstellungen“ (`src/components/project/QuizSettingsForm.astro`)
 
 Hier werden die Bestehensgrenzen für Abschluss-Quiz und Fastlane für alle Module getrennt eingestellt. Eine tatsächliche Änderung nach Bestätigung setzt den gesamten Lernfortschritt einschließlich XP und Bestwerten beim nächsten Laden im jeweiligen Browser zurück; Quizze müssen erneut absolviert werden. Unverändertes Speichern löst keinen Reset aus.
 

@@ -527,4 +527,62 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     expect(catalogStatus?.textContent).toBe("Noch keine Lernmodule gespeichert.");
     expect(fetchWithFallback).toHaveBeenCalledTimes(2);
   });
+
+  it("wechselt beim Bearbeiten aus der Übersicht in den Reiter Theorie (Index 1) bzw. Aufgaben (Index 2)", () => {
+    const db = structuredClone(seedDb) as unknown as ModulesDatabase;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(JSON.stringify(db), { status: 200 })),
+    );
+
+    const tabs = document.createElement("starlight-tabs");
+    const tabLabels = ["Übersicht", "Theorie", "Aufgaben", "Einstellungen"];
+    const tabButtons = tabLabels.map((label, index) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.setAttribute("role", "tab");
+      btn.setAttribute("aria-selected", index === 0 ? "true" : "false");
+      btn.textContent = label;
+      btn.addEventListener("click", () => {
+        for (const other of tabButtons) {
+          other.setAttribute("aria-selected", other === btn ? "true" : "false");
+        }
+      });
+      tabs.append(btn);
+      return btn;
+    });
+    document.body.append(tabs);
+
+    const section = mountCatalogSection();
+    const catalog = attachModuleCatalogList(section);
+    catalog.renderDatabase(db);
+
+    const moduleForm = mountModuleForm();
+    attachModuleBuilderForm(moduleForm);
+
+    const exerciseForm = mountExerciseForm();
+    attachExerciseBuilderForm(exerciseForm);
+
+    section.querySelector<HTMLButtonElement>(".contribution-edit")?.click();
+    expect(tabButtons.map((btn) => btn.getAttribute("aria-selected"))).toEqual([
+      "false",
+      "true",
+      "false",
+      "false",
+    ]);
+    expect(moduleForm.querySelector<HTMLInputElement>("#module-title")?.value).toBe(
+      db.modules[0].title,
+    );
+
+    section.querySelector<HTMLButtonElement>(".module-question-edit")?.click();
+    expect(tabButtons.map((btn) => btn.getAttribute("aria-selected"))).toEqual([
+      "false",
+      "false",
+      "true",
+      "false",
+    ]);
+    expect(
+      exerciseForm.querySelector<HTMLTextAreaElement>("#exercise-prompt")?.value,
+    ).toBe(db.questions[0].prompt);
+  });
 });
