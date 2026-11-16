@@ -150,6 +150,21 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
 
     expect(exerciseStep?.dataset.stepState).toBe("completed");
     expect(quizStep?.dataset.stepState).toBe("unlocked");
+
+    const roadmapCheck = document.createElement("section");
+    document.body.append(roadmapCheck);
+    attachModuleRoadmap(roadmapCheck, { initialDb: seedDb, autoFetch: false });
+    const mod1Card = roadmapCheck.querySelector<HTMLElement>(
+      '[data-module-card="theory-101"]',
+    );
+    const quizLink = mod1Card?.querySelector<HTMLAnchorElement>(
+      ".learning-start-quiz",
+    );
+    expect(quizLink?.tagName).toBe("A");
+    expect(quizLink?.textContent).toBe("Abschluss-Quiz starten");
+    expect(
+      mod1Card?.querySelector('[data-roadmap-stat="quiz"]')?.textContent,
+    ).toBe("Quiz 0/1");
   });
 
   it("aktualisiert Dashboard und Roadmap nach bestandenem Fastlane-Quiz inklusive Freischaltung von Modul 2", () => {
@@ -167,16 +182,59 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     attachModuleRoadmap(roadmapEl, { initialDb: seedDb, autoFetch: false });
     attachModuleStepper(stepperEl, { initialDb: seedDb, autoFetch: false });
 
+    const mod1Before = roadmapEl.querySelector<HTMLElement>(
+      '[data-module-card="theory-101"]',
+    );
     const mod2Before = roadmapEl.querySelector<HTMLElement>(
       '[data-module-card="guitar-102"]',
     );
     expect(mod2Before?.dataset.moduleStatus).toBe("locked");
     expect(
-      mod2Before?.querySelector(".learning-open-lesson")?.tagName,
-    ).toBe("BUTTON");
+      mod1Before?.querySelector<HTMLElement>(".learning-badge-row")?.hidden,
+    ).toBe(true);
     expect(
-      mod2Before?.querySelector(".learning-open-fastlane")?.tagName,
+      mod1Before?.querySelector<HTMLElement>(".learning-open-fastlane")?.hidden,
+    ).toBe(true);
+    expect(
+      mod2Before?.querySelector(".learning-open-lesson")?.tagName,
     ).toBe("A");
+    const mod1QuizBtnBefore = mod1Before?.querySelector<HTMLButtonElement>(
+      ".learning-start-quiz",
+    );
+    expect(mod1QuizBtnBefore?.tagName).toBe("BUTTON");
+    expect(mod1QuizBtnBefore?.disabled).toBe(true);
+    expect(
+      dashboardEl
+        .querySelector('[data-dashboard-module-bar="theory-101"] [role="progressbar"]')
+        ?.getAttribute("aria-valuenow"),
+    ).toBe("0");
+    expect(
+      mod1Before?.querySelector('[data-roadmap-stat="module-overall"]')?.textContent,
+    ).toBe("Gesamtfortschritt 0 %");
+    expect(
+      mod1Before?.querySelector('[data-roadmap-stat="theory"]')?.textContent,
+    ).toBe("Theorie 0/2");
+    expect(
+      mod1Before
+        ?.querySelector('[data-roadmap-stat="theory"] [role="progressbar"]')
+        ?.getAttribute("aria-valuenow"),
+    ).toBe("0");
+    expect(
+      mod1Before?.querySelector('[data-roadmap-stat="exercises"]')?.textContent,
+    ).toBe("Aufgaben 0/2");
+    expect(
+      mod1Before
+        ?.querySelector('[data-roadmap-stat="exercises"] [role="progressbar"]')
+        ?.getAttribute("aria-valuenow"),
+    ).toBe("0");
+    expect(
+      mod1Before?.querySelector('[data-roadmap-stat="quiz"]')?.textContent,
+    ).toBe("Quiz 0/1");
+    expect(
+      mod1Before
+        ?.querySelector('[data-roadmap-stat="quiz"] [role="progressbar"]')
+        ?.getAttribute("aria-valuenow"),
+    ).toBe("0");
 
     // Frage 1 (Fastlane numeric_input): 880
     const flInput = stepperEl.querySelector<HTMLInputElement>(
@@ -210,7 +268,20 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     const summary = stepperEl.querySelector<HTMLElement>("[data-quiz-result]");
     expect(summary?.dataset.quizResult).toBe("passed");
 
-    // Dashboard wurde live aktualisiert
+    // Dashboard wurde live aktualisiert und Detail-Bereiche bleiben standardmäßig ausgeblendet
+    const breakdownGroups = dashboardEl.querySelectorAll<HTMLElement>(
+      ".learning-breakdown-group",
+    );
+    expect(breakdownGroups).toHaveLength(2);
+    expect(Array.from(breakdownGroups).every((el) => el.hidden)).toBe(true);
+    expect(
+      dashboardEl.querySelector<HTMLElement>(".learning-dashboard-module-bars")
+        ?.hidden,
+    ).toBe(true);
+    expect(
+      dashboardEl.querySelector<HTMLElement>(".learning-reset-area")?.hidden,
+    ).toBe(true);
+
     const xpValue = dashboardEl.querySelector<HTMLElement>(
       "[data-dashboard-xp]",
     )?.dataset.dashboardXp;
@@ -221,6 +292,17 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
         ?.dataset.dashboardModules,
     ).toBe("1/2");
 
+    expect(
+      dashboardEl
+        .querySelector('[data-dashboard-module-bar="theory-101"] [role="progressbar"]')
+        ?.getAttribute("aria-valuenow"),
+    ).toBe("100");
+    expect(
+      dashboardEl
+        .querySelector('[data-dashboard-module-bar="guitar-102"] [role="progressbar"]')
+        ?.getAttribute("aria-valuenow"),
+    ).toBe("0");
+
     // Roadmap hat Modul 2 freigeschaltet und Lektion-öffnen-Link aktiviert
     const mod1After = roadmapEl.querySelector<HTMLElement>(
       '[data-module-card="theory-101"]',
@@ -229,14 +311,52 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
       '[data-module-card="guitar-102"]',
     );
     expect(mod1After?.dataset.moduleStatus).toBe("completed");
+    expect(
+      mod1After?.querySelector('[data-roadmap-stat="module-overall"]')?.textContent,
+    ).toBe("Gesamtfortschritt 100 %");
+    expect(
+      mod1After?.querySelector('[data-roadmap-stat="theory"]')?.textContent,
+    ).toBe("Theorie 2/2");
+    expect(
+      mod1After
+        ?.querySelector('[data-roadmap-stat="theory"] [role="progressbar"]')
+        ?.getAttribute("aria-valuenow"),
+    ).toBe("100");
+    expect(
+      mod1After
+        ?.querySelector<HTMLElement>(
+          '[data-roadmap-stat="theory"] .learning-module-stat-bar-fill',
+        )
+        ?.style.width,
+    ).toBe("100%");
+    expect(
+      mod1After?.querySelector('[data-roadmap-stat="exercises"]')?.textContent,
+    ).toBe("Aufgaben 2/2");
+    expect(
+      mod1After
+        ?.querySelector('[data-roadmap-stat="exercises"] [role="progressbar"]')
+        ?.getAttribute("aria-valuenow"),
+    ).toBe("100");
+    expect(
+      mod1After?.querySelector('[data-roadmap-stat="quiz"]')?.textContent,
+    ).toBe("Quiz 1/1");
+    expect(
+      mod1After
+        ?.querySelector('[data-roadmap-stat="quiz"] [role="progressbar"]')
+        ?.getAttribute("aria-valuenow"),
+    ).toBe("100");
+    expect(
+      mod1After?.querySelector(".learning-start-quiz")?.tagName,
+    ).toBe("A");
     expect(mod2After?.dataset.moduleStatus).toBe("unlocked");
     expect(
       mod2After?.querySelector<HTMLAnchorElement>(".learning-open-lesson")
         ?.tagName,
     ).toBe("A");
     expect(
-      mod2After?.querySelector('[data-stage-pill="practice"]')?.textContent,
-    ).toContain("3. Praxis");
+      mod2After?.querySelector<HTMLButtonElement>(".learning-start-quiz")
+        ?.disabled,
+    ).toBe(true);
 
     // Geschützter Reset setzt XP und Modul-2-Sperre zurück
     dashboardEl

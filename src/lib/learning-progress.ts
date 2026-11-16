@@ -292,16 +292,16 @@ export function completeTheoryStep(
   module: LearningModule,
 ): LearningProgressState {
   const existing = state.modules[module.id];
-  if (
-    !existing ||
-    existing.status === "locked" ||
-    existing.steps.theory === "locked"
-  ) {
+  if (!existing) {
     return state;
   }
 
   const next = cloneState(state);
   const target = next.modules[module.id];
+
+  if (target.status === "locked") {
+    target.status = "unlocked";
+  }
 
   if (target.steps.theory !== "completed") {
     const theoryXp = calculateQuestionXp(module.theoryBaseXp, module.tags);

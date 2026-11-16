@@ -79,9 +79,38 @@
   transition: width 0.2s ease;
 }
 
+.learning-dashboard-module-bars {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.learning-dashboard-module-bars[hidden] {
+  display: none;
+}
+
+.learning-dashboard-module-row {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.learning-dashboard-module-row-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
 .learning-breakdown-group {
   display: grid;
   gap: 0.45rem;
+}
+
+.learning-breakdown-group[hidden],
+.learning-reset-area[hidden],
+.learning-reset-confirm[hidden] {
+  display: none;
 }
 
 .learning-breakdown-heading {
@@ -257,10 +286,72 @@
   color: #86efac;
 }
 
+.learning-card-header[hidden],
+.learning-badge-row[hidden],
+.learning-open-fastlane[hidden],
+.learning-stage-pills[hidden] {
+  display: none;
+}
+
 .learning-stage-pills {
   display: flex;
   flex-wrap: wrap;
   gap: 0.45rem;
+}
+
+.learning-module-progress-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.5rem;
+}
+
+.learning-module-stat {
+  display: grid;
+  gap: 0.35rem;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 0.4rem;
+  padding: 0.5rem 0.7rem;
+  background: var(--sl-color-bg-nav);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--sl-color-text);
+}
+
+.learning-module-stat-label {
+  line-height: 1.25;
+}
+
+.learning-module-stat-bar {
+  height: 0.45rem;
+  background: var(--sl-color-gray-5);
+}
+
+.learning-module-stat-bar-fill {
+  background: #2563eb;
+}
+
+:root[data-theme="dark"] .learning-module-stat-bar-fill {
+  background: #3b82f6;
+}
+
+.learning-module-stat[data-quiz-status="completed"] {
+  border-color: #15803d;
+  color: #15803d;
+}
+
+:root[data-theme="dark"]
+  .learning-module-stat[data-quiz-status="completed"] {
+  border-color: #86efac;
+  color: #86efac;
+}
+
+.learning-start-quiz:disabled,
+.learning-start-quiz[aria-disabled="true"] {
+  background: var(--sl-color-gray-6);
+  border-color: var(--sl-color-gray-5);
+  color: var(--sl-color-gray-3);
+  opacity: 0.75;
+  cursor: not-allowed;
 }
 
 .learning-roadmap-actions,

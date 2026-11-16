@@ -8,6 +8,7 @@ import {
   type LaneStep,
   type LearningProgressState,
   loadLearningProgress,
+  type ModuleProgress,
   recordExerciseAnswer,
   type StepProgressState,
   saveLearningProgress,
@@ -73,6 +74,7 @@ export interface PlayerAttachmentOptions {
   initialDb?: ModulesDatabase;
   autoFetch?: boolean;
   lessonBaseUrl?: string;
+  showDetails?: boolean;
 }
 
 export type QuestionUserAnswer =
@@ -87,6 +89,80 @@ export interface QuestionEvaluationResult {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function createBlueProgressBar(
+  ariaLabel: string,
+  percent: number,
+): HTMLDivElement {
+  const clamped = Math.max(0, Math.min(100, Math.round(percent)));
+  const bar = document.createElement("div");
+  bar.className = "learning-progress-bar learning-module-stat-bar";
+  bar.setAttribute("role", "progressbar");
+  bar.setAttribute("aria-valuemin", "0");
+  bar.setAttribute("aria-valuemax", "100");
+  bar.setAttribute("aria-valuenow", String(clamped));
+  bar.setAttribute("aria-label", `${ariaLabel} (${clamped} Prozent)`);
+
+  const fill = document.createElement("div");
+  fill.className = "learning-progress-bar-fill learning-module-stat-bar-fill";
+  fill.style.width = `${clamped}%`;
+  bar.append(fill);
+  return bar;
+}
+
+function computeModuleStats(
+  mod: LearningModule,
+  modQuestions: readonly ModuleQuestion[],
+  modProgress: ModuleProgress | undefined,
+): {
+  completedTheory: number;
+  totalTheory: number;
+  completedExercises: number;
+  totalExercises: number;
+  quizDone: boolean;
+  quizReady: boolean;
+  overallPercent: number;
+} {
+  const totalTheory = mod.theoryBlocks.length;
+  const theoryDone = modProgress?.steps.theory === "completed";
+  const completedTheory = theoryDone ? totalTheory : 0;
+
+  const exerciseQuestions = modQuestions.filter(
+    (q) => q.targetLane === "exercise",
+  );
+  const totalExercises = exerciseQuestions.length;
+  const solvedSet = new Set(modProgress?.solvedQuestionIds ?? []);
+  const solvedExercises = exerciseQuestions.filter((q) =>
+    solvedSet.has(q.id),
+  ).length;
+  const exerciseDone = modProgress?.steps.exercise === "completed";
+  const completedExercises = exerciseDone ? totalExercises : solvedExercises;
+
+  const modStatus = modProgress?.status ?? "locked";
+  const quizDone =
+    modProgress?.steps.quiz_easy === "completed" || modStatus === "completed";
+  const quizReady =
+    modProgress?.steps.quiz_easy === "unlocked" ||
+    modProgress?.steps.quiz_easy === "completed";
+
+  const totalItems = totalTheory + totalExercises + 1;
+  const doneItems = completedTheory + completedExercises + (quizDone ? 1 : 0);
+  const overallPercent = quizDone
+    ? 100
+    : totalItems > 0
+      ? Math.min(100, Math.round((doneItems / totalItems) * 100))
+      : 0;
+
+  return {
+    completedTheory,
+    totalTheory,
+    completedExercises,
+    totalExercises,
+    quizDone,
+    quizReady,
+    overallPercent,
+  };
 }
 
 function getLessonUrl(
@@ -801,6 +877,8 @@ export function attachProgressDashboard(
   root.dataset.progressDashboardAttached = "true";
 
   let currentDb = parseInitialDatabaseFromRoot(root, options.initialDb);
+  const showDetails =
+    options.showDetails ?? root.dataset.showDetails === "true";
 
   const render = () => {
     const state = loadLearningProgress(currentDb.modules);
@@ -849,10 +927,14 @@ export function attachProgressDashboard(
     modValue.className = "learning-metric-value";
     modValue.dataset.dashboardModules = `${overview.completedModules}/${overview.totalModules}`;
     modValue.textContent = `${overview.completedModules} / ${overview.totalModules} (${overview.overallPercent} %)`;
+    const modBar = createBlueProgressBar(
+      "Abgeschlossene Module",
+      overview.overallPercent,
+    );
     const modSub = document.createElement("span");
     modSub.className = "learning-metric-sub";
     modSub.textContent = "Normal-Pfad oder Fastlane";
-    modBox.append(modLabel, modValue, modSub);
+    modBox.append(modLabel, modValue, modBar, modSub);
 
     metrics.append(xpBox, modBox);
 
@@ -870,12 +952,56 @@ export function attachProgressDashboard(
       `Fortschritt in Level ${overview.level}: ${overview.levelProgressPercent} Prozent`,
     );
     const fill = document.createElement("div");
-    fill.className = "learning-progress-bar-fill";
+    fill.className = "learning-progress-bar-fill learning-module-stat-bar-fill";
     fill.style.width = `${overview.levelProgressPercent}%`;
     progressTrack.append(fill);
 
+    const syncedState = syncProgressWithCurriculum(state, currentDb.modules);
+    const moduleBarsGroup = document.createElement("div");
+    moduleBarsGroup.className = "learning-dashboard-module-bars";
+    const sortedModules = sortModules(currentDb.modules);
+    moduleBarsGroup.hidden = !showDetails || sortedModules.length === 0;
+    if (sortedModules.length > 0) {
+      const moduleBarsHeading = document.createElement("h3");
+      moduleBarsHeading.className = "learning-breakdown-heading";
+      moduleBarsHeading.textContent = "Fortschritt je Modul";
+      moduleBarsGroup.append(moduleBarsHeading);
+
+      for (const mod of sortedModules) {
+        const modQuestions = currentDb.questions.filter(
+          (q) => q.moduleId === mod.id,
+        );
+        const stats = computeModuleStats(
+          mod,
+          modQuestions,
+          syncedState.modules[mod.id],
+        );
+        const row = document.createElement("div");
+        row.className = "learning-dashboard-module-row";
+        row.dataset.dashboardModuleBar = mod.id;
+
+        const labelRow = document.createElement("div");
+        labelRow.className = "learning-dashboard-module-row-header";
+        const modTitle = document.createElement("span");
+        modTitle.textContent = `${mod.order}. ${mod.title}`;
+        const modPct = document.createElement("span");
+        modPct.textContent = `${stats.overallPercent} %`;
+        labelRow.append(modTitle, modPct);
+
+        row.append(
+          labelRow,
+          createBlueProgressBar(
+            `${mod.order}. ${mod.title}`,
+            stats.overallPercent,
+          ),
+        );
+        moduleBarsGroup.append(row);
+      }
+    }
+
     const scopeGroup = document.createElement("div");
     scopeGroup.className = "learning-breakdown-group";
+    scopeGroup.hidden = !showDetails;
     const scopeHeading = document.createElement("h3");
     scopeHeading.className = "learning-breakdown-heading";
     scopeHeading.textContent = "XP nach Lernbereich (Scope)";
@@ -894,6 +1020,7 @@ export function attachProgressDashboard(
 
     const tagGroup = document.createElement("div");
     tagGroup.className = "learning-breakdown-group";
+    tagGroup.hidden = !showDetails;
     const tagHeading = document.createElement("h3");
     tagHeading.className = "learning-breakdown-heading";
     tagHeading.textContent = "XP nach Themen-Tags";
@@ -919,6 +1046,7 @@ export function attachProgressDashboard(
 
     const resetArea = document.createElement("div");
     resetArea.className = "learning-reset-area";
+    resetArea.hidden = !showDetails;
 
     const resetBtn = document.createElement("button");
     resetBtn.type = "button";
@@ -963,6 +1091,7 @@ export function attachProgressDashboard(
       header,
       metrics,
       progressTrack,
+      moduleBarsGroup,
       scopeGroup,
       tagGroup,
       resetArea,
@@ -1016,8 +1145,9 @@ export interface ModuleRoadmapController {
 }
 
 /**
- * Rendert die nach `order` sortierten Modul-Karten inklusive Etappen-Pills
- * und Aktionsbuttons („Lektion öffnen“ sowie „⚡ Fastlane (Schweres Quiz)“).
+ * Rendert die nach `order` sortierten Modul-Karten inklusive Fortschritts-Kennzahlen
+ * (Theorieteile, offene Aufgaben, Abschluss-Quiz) sowie den Aktionen
+ * („Lektion öffnen“ und „Abschluss-Quiz starten“).
  */
 export function attachModuleRoadmap(
   root: HTMLElement,
@@ -1067,9 +1197,11 @@ export function attachModuleRoadmap(
 
       const header = document.createElement("div");
       header.className = "learning-card-header";
+      header.hidden = true;
 
       const badgeGroup = document.createElement("div");
       badgeGroup.className = "learning-badge-row";
+      badgeGroup.hidden = true;
 
       const orderBadge = document.createElement("span");
       orderBadge.className = "contribution-tag";
@@ -1103,65 +1235,109 @@ export function attachModuleRoadmap(
       desc.className = "learning-muted";
       desc.textContent = mod.description || "Interaktives Lernmodul";
 
-      const stages = document.createElement("div");
-      stages.className = "learning-stage-pills";
+      const {
+        completedTheory,
+        totalTheory,
+        completedExercises,
+        totalExercises,
+        quizDone,
+        quizReady,
+        overallPercent,
+      } = computeModuleStats(mod, modQuestions, modProgress);
 
-      const stageItems: Array<{ step: LaneStep; label: string }> = [
-        { step: "theory", label: "1. Theorie" },
-        { step: "exercise", label: "2. Aufgaben" },
-        ...(mod.hasPractice
-          ? [{ step: "practice" as const, label: "3. Praxis" }]
-          : []),
-        {
-          step: "quiz_easy",
-          label: mod.hasPractice ? "4. Quiz Einfach" : "3. Quiz Einfach",
-        },
-      ];
+      const overallBox = document.createElement("div");
+      overallBox.className = "learning-module-stat learning-module-overall-stat";
+      overallBox.dataset.roadmapStat = "module-overall";
+      const overallLabel = document.createElement("span");
+      overallLabel.className = "learning-module-stat-label";
+      overallLabel.textContent = `Gesamtfortschritt ${overallPercent} %`;
+      overallBox.append(
+        overallLabel,
+        createBlueProgressBar(`Gesamtfortschritt ${mod.title}`, overallPercent),
+      );
 
-      for (const item of stageItems) {
-        const stepState = modProgress?.steps[item.step] ?? "locked";
-        const pill = document.createElement("span");
-        pill.className = "contribution-tag learning-status-pill";
-        pill.dataset.stagePill = item.step;
-        pill.dataset.state = stepState;
-        pill.textContent = `${STEP_STATUS_ICONS[stepState]} ${item.label}`;
-        stages.append(pill);
-      }
+      const stats = document.createElement("div");
+      stats.className = "learning-module-progress-stats";
+
+      const createRoadmapStatBox = (
+        key: "theory" | "exercises" | "quiz",
+        label: string,
+        done: number,
+        total: number,
+      ): HTMLDivElement => {
+        const percent =
+          total > 0 ? Math.min(100, Math.round((done / total) * 100)) : 0;
+        const box = document.createElement("div");
+        box.className = "learning-module-stat";
+        box.dataset.roadmapStat = key;
+
+        const labelEl = document.createElement("span");
+        labelEl.className = "learning-module-stat-label";
+        labelEl.textContent = label;
+
+        box.append(labelEl, createBlueProgressBar(label, percent));
+        return box;
+      };
+
+      const theoryStat = createRoadmapStatBox(
+        "theory",
+        `Theorie ${completedTheory}/${totalTheory}`,
+        completedTheory,
+        totalTheory,
+      );
+      const exerciseStat = createRoadmapStatBox(
+        "exercises",
+        `Aufgaben ${completedExercises}/${totalExercises}`,
+        completedExercises,
+        totalExercises,
+      );
+      const quizStat = createRoadmapStatBox(
+        "quiz",
+        `Quiz ${quizDone ? 1 : 0}/1`,
+        quizDone ? 1 : 0,
+        1,
+      );
+      quizStat.dataset.quizStatus = quizDone ? "completed" : "open";
+
+      stats.append(theoryStat, exerciseStat, quizStat);
 
       const actions = document.createElement("div");
       actions.className = "learning-roadmap-actions";
 
-      if (modStatus === "locked") {
-        const lockedBtn = document.createElement("button");
-        lockedBtn.type = "button";
-        lockedBtn.className = "learning-btn learning-open-lesson";
-        lockedBtn.disabled = true;
-        lockedBtn.setAttribute("aria-disabled", "true");
-        lockedBtn.textContent = "🔒 Lektion öffnen";
-        actions.append(lockedBtn);
+      const openLink = document.createElement("a");
+      openLink.className =
+        "learning-link-btn learning-link-btn-primary learning-open-lesson";
+      openLink.href = getLessonUrl(lessonBaseUrl, mod.id);
+      openLink.textContent = "Lektion öffnen";
+      actions.append(openLink);
+
+      if (quizReady) {
+        const quizLink = document.createElement("a");
+        quizLink.className = "learning-link-btn learning-start-quiz";
+        quizLink.href = `${getLessonUrl(lessonBaseUrl, mod.id)}#quiz-step`;
+        quizLink.textContent = quizDone
+          ? "Abschluss-Quiz wiederholen"
+          : "Abschluss-Quiz starten";
+        actions.append(quizLink);
       } else {
-        const openLink = document.createElement("a");
-        openLink.className =
-          "learning-link-btn learning-link-btn-primary learning-open-lesson";
-        openLink.href = getLessonUrl(lessonBaseUrl, mod.id);
-        openLink.textContent = "Lektion öffnen";
-        actions.append(openLink);
+        const quizDisabledBtn = document.createElement("button");
+        quizDisabledBtn.type = "button";
+        quizDisabledBtn.className = "learning-btn learning-start-quiz";
+        quizDisabledBtn.disabled = true;
+        quizDisabledBtn.setAttribute("aria-disabled", "true");
+        quizDisabledBtn.textContent = "Abschluss-Quiz starten";
+        actions.append(quizDisabledBtn);
       }
 
       const fastlaneLink = document.createElement("a");
       fastlaneLink.className =
         "learning-link-btn learning-link-btn-fastlane learning-open-fastlane";
       fastlaneLink.href = getLessonUrl(lessonBaseUrl, mod.id, "fastlane");
-      const fastlaneCount = modQuestions.filter(
-        (q) => q.targetLane === "fastlane",
-      ).length;
-      fastlaneLink.textContent =
-        fastlaneCount > 0
-          ? `⚡ Fastlane (Schweres Quiz · ${fastlaneCount})`
-          : "⚡ Fastlane (Schweres Quiz)";
+      fastlaneLink.hidden = true;
+      fastlaneLink.textContent = "⚡ Fastlane (Schweres Quiz)";
       actions.append(fastlaneLink);
 
-      card.append(header, title, desc, stages, actions);
+      card.append(header, title, desc, overallBox, stats, actions);
       list.append(card);
     }
 
@@ -1680,7 +1856,6 @@ export function attachModuleStepper(
     }
 
     const modProgress = state.modules[mod.id];
-    const modStatus = modProgress?.status ?? "locked";
     renderedSnapshotKey = `${mod.id}:${mode}`;
     stepElements = {};
     exerciseHost = null;
@@ -1697,17 +1872,17 @@ export function attachModuleStepper(
     modeActions.className = "learning-stepper-header-actions";
 
     if (mode === "fastlane") {
-      if (modStatus !== "locked") {
-        const normalLink = document.createElement("a");
-        normalLink.className = "learning-link-btn";
-        normalLink.href = getLessonUrl(lessonBaseUrl, mod.id);
-        normalLink.textContent = "Zum regulären Lernpfad";
-        modeActions.append(normalLink);
-      }
+      const normalLink = document.createElement("a");
+      normalLink.className = "learning-link-btn";
+      normalLink.href = getLessonUrl(lessonBaseUrl, mod.id);
+      normalLink.textContent = "Zum regulären Lernpfad";
+      modeActions.append(normalLink);
     } else {
       const fastlaneLink = document.createElement("a");
-      fastlaneLink.className = "learning-link-btn learning-link-btn-fastlane";
+      fastlaneLink.className =
+        "learning-link-btn learning-link-btn-fastlane learning-open-fastlane";
       fastlaneLink.href = getLessonUrl(lessonBaseUrl, mod.id, "fastlane");
+      fastlaneLink.hidden = true;
       fastlaneLink.textContent = "⚡ Direkt zum Fastlane-Test";
       modeActions.append(fastlaneLink);
     }
@@ -1733,24 +1908,9 @@ export function attachModuleStepper(
       return;
     }
 
-    if (modStatus === "locked") {
-      const lockBanner = document.createElement("div");
-      lockBanner.className = "learning-card";
-      const lockText = document.createElement("p");
-      lockText.style.margin = "0";
-      lockText.textContent =
-        "🔒 Dieses Modul ist im regulären Pfad noch gesperrt. Schließe zuerst das vorherige Modul ab oder nutze den Fastlane-Test.";
-      const flLink = document.createElement("a");
-      flLink.className = "learning-link-btn learning-link-btn-fastlane";
-      flLink.href = getLessonUrl(lessonBaseUrl, mod.id, "fastlane");
-      flLink.textContent = "⚡ Fastlane jetzt starten";
-      lockBanner.append(lockText, flLink);
-      contentHost.append(lockBanner);
-      return;
-    }
-
     // Schritt 1: Theorie
-    const theoryStepState = modProgress?.steps.theory ?? "unlocked";
+    const theoryStepState: StepProgressState =
+      modProgress?.steps.theory === "completed" ? "completed" : "unlocked";
     const theorySection = document.createElement("section");
     theorySection.className = "learning-step-section";
     theorySection.dataset.step = "theory";
@@ -1881,6 +2041,7 @@ export function attachModuleStepper(
     // Schritt 4 (bzw. 3): Abschluss-Quiz Einfach
     const quizStepState = modProgress?.steps.quiz_easy ?? "locked";
     const quizSection = document.createElement("section");
+    quizSection.id = "quiz-step";
     quizSection.className = "learning-step-section";
     quizSection.dataset.step = "quiz_easy";
     quizSection.dataset.stepState = quizStepState;
@@ -1974,11 +2135,7 @@ export function attachModuleStepper(
 
     const state = loadLearningProgress(currentDb.modules);
     const modProgress = state.modules[mod.id];
-    if (
-      !modProgress ||
-      modProgress.status === "locked" ||
-      !stepElements.theory
-    ) {
+    if (!modProgress || !stepElements.theory) {
       fullRender();
       return;
     }
