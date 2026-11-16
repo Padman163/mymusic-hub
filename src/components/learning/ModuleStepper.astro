@@ -1,0 +1,73 @@
+---
+import modulesData from "../../../data/modules.json";
+import type { ModulesDatabase } from "../../lib/module-schema.ts";
+import "../../styles/contribution-tags.css";
+import "../../styles/module-player.css";
+import "../../styles/notation.css";
+import FretboardClickable from "../FretboardClickable.astro";
+import NotationKeyboard from "../notation/NotationKeyboard.astro";
+import ScalePattern from "../ScalePattern.astro";
+import ModuleQuizRunner from "./ModuleQuizRunner.astro";
+
+interface Props {
+  id?: string;
+  moduleId?: string;
+  mode?: "normal" | "fastlane";
+  lessonBaseUrl?: string;
+}
+
+const {
+  id = "learning-module-stepper",
+  moduleId = "",
+  mode = "normal",
+  lessonBaseUrl = "/audio/theory/modul/",
+} = Astro.props;
+
+const initialDb = modulesData as unknown as ModulesDatabase;
+---
+
+<section
+  id={id}
+  class="learning-stepper not-content"
+  aria-label="Geführte Lektion"
+  data-learning-stepper
+  data-module-id={moduleId}
+  data-mode={mode}
+  data-lesson-base-url={lessonBaseUrl}
+  data-initial-db={JSON.stringify(initialDb)}
+>
+  <template data-visual-template="NotationKeyboard">
+    <NotationKeyboard />
+  </template>
+  <template data-visual-template="ScalePattern">
+    <ScalePattern />
+  </template>
+  <template data-visual-template="FretboardClickable">
+    <FretboardClickable readOnly showNoteNames />
+  </template>
+
+  <ModuleQuizRunner templatesOnly />
+
+  <div data-stepper-content>
+    <p class="learning-muted">Lektion wird geladen …</p>
+  </div>
+</section>
+
+<script>
+  import { attachModuleStepper } from "../../lib/module-player-ui";
+
+  function initModuleSteppers() {
+    document
+      .querySelectorAll<HTMLElement>("[data-learning-stepper]")
+      .forEach((root) => {
+        if (root.dataset.moduleStepperAttached !== "true") {
+          attachModuleStepper(root, {
+            lessonBaseUrl: root.dataset.lessonBaseUrl || undefined,
+          });
+        }
+      });
+  }
+
+  initModuleSteppers();
+  document.addEventListener("astro:page-load", initModuleSteppers);
+</script>

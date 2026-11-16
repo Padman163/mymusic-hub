@@ -54,9 +54,9 @@ npx @biomejs/biome check --write .
 
 ### Stufe 1: Unit-Tests (Reine Logik & Mathematik)
 
-- **Werkzeuge:** Nativer Node.js Test-Runner oder Vitest.
-- **Testdateien:** `tests/music-notation.test.mjs`, `tests/unit/*.test.ts`.
-- **Gegenstand:** Mathematische Berechnungen der Notationsgeometrie, Takteinteilung, Notenwert-Splitting, Frequenzformeln und Transponierungslogik.
+- **Werkzeuge:** Vitest.
+- **Testdateien:** `tests/music-notation.test.mjs`, `tests/module-builder.test.mjs`, `tests/learning-progress.test.mjs`.
+- **Gegenstand:** Mathematische Berechnungen der Notationsgeometrie, Takteinteilung, Notenwert-Splitting, Frequenzformeln und Transponierungslogik sowie Tag-/XP-Berechnungen, Modul-/Aufgaben-Validierung und die zustandsfreie XP-/Lernfortschritts-Engine (`learning-progress.ts`).
 * **Befehle:**
   ```bash
   npm test
@@ -73,8 +73,8 @@ npx @biomejs/biome check --write .
 ### Stufe 2: Komponenten- & DOM-Verhalten
 
 - **Werkzeuge:** Vitest mit `happy-dom` oder `astro/container`.
-- **Testdateien:** `tests/components/checklist-editor.test.ts`.
-- **Gegenstand:** Prüft isolierte DOM-Interaktionen (z. B. Hinzufügen von Checklisten-Items per Enter-Taste, Maximalgrenzen von 100 Einträgen, Lösch-Operationen und ARIA-Attribute) ohne echten Browser.
+- **Testdateien:** `tests/components/checklist-editor.test.ts`, `tests/components/notation-builder.test.ts`, `tests/components/module-builder-ui.test.ts`, `tests/components/module-player-ui.test.ts`.
+- **Gegenstand:** Prüft isolierte DOM-Interaktionen (z. B. Checklisten-Editor, NotationBuilder-Eingabe, Modul-/Aufgaben-Builder-Formulare inkl. Live-XP/HTML-Fehlerbehandlung sowie Stepper-Freischaltung, Fastlane-Auswertung und Dashboard/Roadmap-Updates) ohne echten Browser.
 - **Befehl:**
   ```bash
   npm run test:component
@@ -89,8 +89,8 @@ npx @biomejs/biome check --write .
 ### Stufe 3: Integration – HTTP- & Serverless-Verhalten
 
 - **Werkzeuge:** Vitest mit Request-/Response-Mocks.
-- **Testdateien:** `tests/integration/contributions.test.ts`.
-- **Gegenstand:** Testet die Serverless Function `netlify/functions/contributions.ts`. Prüft das Abweisen falscher HTTP-Methoden (z. B. `PUT` $\rightarrow$ 405), Validierungsfehler bei ungültigem JSON (400) und das Verhalten bei fehlenden Umgebungsvariablen (503).
+- **Testdateien:** `tests/integration/contributions.test.ts`, `tests/module-builder.test.mjs` (`/api/modules`).
+- **Gegenstand:** Testet die Serverless Functions `netlify/functions/contributions.ts` und `netlify/functions/modules.ts`. Prüft das Abweisen falscher HTTP-Methoden (z. B. `PUT`/`PATCH` $\rightarrow$ 405), Validierungsfehler bei ungültigem JSON (400), Retry-Handling bei HTTP-409-Konflikten und das Verhalten bei fehlenden Umgebungsvariablen (503).
 - **Befehl:**
   ```bash
   npm run test:integration

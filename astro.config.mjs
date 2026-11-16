@@ -382,6 +382,10 @@ export default defineConfig({
               collapsed: false,
               items: [
                 {
+                  label: "Interaktiver Lernpfad & Dashboard",
+                  slug: "audio/theory/lernpfad",
+                },
+                {
                   label: "Level 100: Elementarlehre",
                   collapsed: false,
                   items: [{ autogenerate: { directory: "audio/theory/100-general" } }],

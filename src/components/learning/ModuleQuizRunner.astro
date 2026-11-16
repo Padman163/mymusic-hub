@@ -1,0 +1,120 @@
+---
+import modulesData from "../../../data/modules.json";
+import type {
+  ModuleQuestion,
+  ModulesDatabase,
+  TargetLane,
+} from "../../lib/module-schema.ts";
+import "../../styles/contribution-tags.css";
+import "../../styles/module-player.css";
+import "../../styles/notation.css";
+import NotationBuilder from "../notation/NotationBuilder.astro";
+
+interface Props {
+  id?: string;
+  moduleId?: string;
+  mode?: TargetLane;
+  templatesOnly?: boolean;
+}
+
+const {
+  id = "module-quiz-runner",
+  moduleId = "",
+  mode = "quiz_easy",
+  templatesOnly = false,
+} = Astro.props;
+
+const initialDb = modulesData as unknown as ModulesDatabase;
+const notationQuestions: ModuleQuestion[] = initialDb.questions.filter(
+  (q) =>
+    q.questionType === "interactive_notation" &&
+    q.notationTask !== undefined &&
+    (!moduleId || q.moduleId === moduleId),
+);
+---
+
+<div hidden aria-hidden="true" data-notation-templates>
+  {notationQuestions.map((question) => {
+    const task = question.notationTask!;
+    const lockDurationProp =
+      task.lockDuration === "whole" ||
+      task.lockDuration === "half" ||
+      task.lockDuration === "quarter" ||
+      task.lockDuration === "eighth" ||
+      task.lockDuration === "sixteenth" ||
+      typeof task.lockDuration === "boolean"
+        ? task.lockDuration
+        : undefined;
+    return (
+      <template data-notation-question-id={question.id}>
+        <NotationBuilder
+          clef={task.clef}
+          timeSignature={task.timeSignature}
+          accidentals={task.accidentals}
+          maxNotes={task.maxNotes ?? 1}
+          lockDuration={lockDurationProp}
+          showDurationPicker={task.showDurationPicker ?? false}
+          compact={task.compact ?? false}
+          showHints={task.showHints ?? true}
+          label={question.prompt}
+        />
+      </template>
+    );
+  })}
+</div>
+
+{!templatesOnly && (
+  <div
+    id={id}
+    class="learning-quiz-runner not-content"
+    data-standalone-quiz-runner
+    data-module-id={moduleId}
+    data-mode={mode}
+    data-initial-db={JSON.stringify(initialDb)}
+  >
+    <p class="learning-muted">Aufgaben-Runner wird vorbereitet …</p>
+  </div>
+)}
+
+{!templatesOnly && (
+  <script>
+    import type { TargetLane } from "../../lib/module-schema";
+    import { attachModuleQuizRunner } from "../../lib/module-player-ui";
+    import { createEmptyModulesDatabase } from "../../lib/module-store";
+
+    function initStandaloneQuizRunners() {
+      document
+        .querySelectorAll<HTMLElement>("[data-standalone-quiz-runner]")
+        .forEach((root) => {
+          if (root.dataset.quizRunnerAttached === "true") return;
+          root.dataset.quizRunnerAttached = "true";
+
+          const rawDb = root.dataset.initialDb;
+          const db = rawDb ? JSON.parse(rawDb) : createEmptyModulesDatabase();
+          const modId = root.dataset.moduleId;
+          const mod = db.modules.find(
+            (m: { id: string }) => m.id === modId,
+          );
+          if (!mod) return;
+
+          const rawMode = root.dataset.mode;
+          const mode: TargetLane =
+            rawMode === "exercise" ||
+            rawMode === "quiz_easy" ||
+            rawMode === "fastlane"
+              ? rawMode
+              : "quiz_easy";
+
+          attachModuleQuizRunner(root, {
+            module: mod,
+            db,
+            mode,
+            templateRoot: document,
+          });
+        });
+    }
+
+    initStandaloneQuizRunners();
+    document.addEventListener("astro:page-load", initStandaloneQuizRunners);
+  </script>
+)}

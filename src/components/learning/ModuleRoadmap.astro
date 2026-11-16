@@ -1,0 +1,47 @@
+---
+import modulesData from "../../../data/modules.json";
+import type { ModulesDatabase } from "../../lib/module-schema.ts";
+import "../../styles/contribution-tags.css";
+import "../../styles/module-player.css";
+
+interface Props {
+  id?: string;
+  lessonBaseUrl?: string;
+}
+
+const {
+  id = "learning-module-roadmap",
+  lessonBaseUrl = "/audio/theory/modul/",
+} = Astro.props;
+const initialDb = modulesData as unknown as ModulesDatabase;
+---
+
+<section
+  id={id}
+  class="learning-roadmap not-content"
+  aria-label="Lernpfad-Übersicht aller Module"
+  data-learning-roadmap
+  data-lesson-base-url={lessonBaseUrl}
+  data-initial-db={JSON.stringify(initialDb)}
+>
+  <p class="learning-muted">Lernpfad wird geladen …</p>
+</section>
+
+<script>
+  import { attachModuleRoadmap } from "../../lib/module-player-ui";
+
+  function initModuleRoadmaps() {
+    document
+      .querySelectorAll<HTMLElement>("[data-learning-roadmap]")
+      .forEach((root) => {
+        if (root.dataset.moduleRoadmapAttached !== "true") {
+          attachModuleRoadmap(root, {
+            lessonBaseUrl: root.dataset.lessonBaseUrl || undefined,
+          });
+        }
+      });
+  }
+
+  initModuleRoadmaps();
+  document.addEventListener("astro:page-load", initModuleRoadmaps);
+</script>

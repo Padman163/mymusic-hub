@@ -1,4 +1,208 @@
 {
-  "modules": [],
-  "questions": []
+  "modules": [
+    {
+      "id": "theory-101",
+      "order": 1,
+      "title": "Schall, Frequenz & Notensystem",
+      "description": "Grundlagen der Schwingungsphysik (Kammerton A = 440 Hz) und sichere Orientierung im Violinschlüssel.",
+      "scope": "theory",
+      "level": 100,
+      "dStage": "D1",
+      "tags": ["Allgemein", "Notensystem", "Violinschlüssel"],
+      "hasPractice": false,
+      "theoryBaseXp": 30,
+      "quizEasyMinScore": 0.8,
+      "fastlaneMinScore": 0.85,
+      "theoryBlocks": [
+        {
+          "id": "tb-101-1",
+          "order": 1,
+          "title": "Schallwelle & Kammerton A",
+          "markdownContent": "Klang entsteht durch periodische Luftdruckschwankungen (Frequenz $f$ in $\\text{Hz}$). Der internationale **Kammerton A4** schwingt mit exakt:\n\n$$f = 440\\text{ Hz}$$\n\nEine **Oktave höher** verdoppelt sich die Frequenz auf $880\\text{ Hz}$; eine Oktave tiefer halbiert sie sich auf $220\\text{ Hz}$.",
+          "visualComponent": "none"
+        },
+        {
+          "id": "tb-101-2",
+          "order": 2,
+          "title": "Fünf Linien & der Violinschlüssel",
+          "markdownContent": "Ein Standard-Notensystem besitzt **fünf Linien** und vier Zwischenräume. Der **Violinschlüssel (G-Schlüssel)** umschlingt die zweite Linie von unten und verankert dort das eingestrichene **G4**.",
+          "visualComponent": "Notation",
+          "visualPropsJson": "{\"clef\":\"treble\",\"notes\":[{\"type\":\"filled\",\"step\":2,\"duration\":\"quarter\"},{\"type\":\"filled\",\"step\":4,\"duration\":\"quarter\"}]}"
+        }
+      ],
+      "createdAt": "2026-11-16T00:00:00.000Z",
+      "updatedAt": "2026-11-16T00:00:00.000Z"
+    },
+    {
+      "id": "guitar-102",
+      "order": 2,
+      "title": "Gitarren-Grundlagen & Leersaiten",
+      "description": "Aufbau des Griffbretts, Stimmung der sechs Leersaiten (E–A–D–G–B–e) und Orientierung zwischen Noten und Tabulatur.",
+      "scope": "instrument",
+      "level": 100,
+      "dStage": "D1",
+      "tags": ["Gitarre", "Tabulatur"],
+      "hasPractice": true,
+      "theoryBaseXp": 30,
+      "quizEasyMinScore": 0.8,
+      "fastlaneMinScore": 0.85,
+      "theoryBlocks": [
+        {
+          "id": "tb-102-1",
+          "order": 1,
+          "title": "Die sechs Leersaiten in Standardstimmung",
+          "markdownContent": "Von der tiefsten (6. Saite) zur höchsten (1. Saite) lauten die Leersaiten der Gitarre **E – A – D – G – B – e**. In einer Tabulatur zeigt die Zahl `0`, dass eine Saite leer ohne Greifhand angeschlagen wird.",
+          "visualComponent": "FretboardClickable",
+          "visualPropsJson": "{\"readOnly\":true,\"showNoteNames\":true}"
+        },
+        {
+          "id": "tb-102-2",
+          "order": 2,
+          "title": "Praxishinweis für das Instrument",
+          "markdownContent": "Schlage alle sechs Leersaiten gleichmäßig im Wechselschlag oder mit dem Daumen an und sprich jeden Saitennamen laut mit.",
+          "visualComponent": "none"
+        }
+      ],
+      "createdAt": "2026-11-16T00:00:00.000Z",
+      "updatedAt": "2026-11-16T00:00:00.000Z"
+    }
+  ],
+  "questions": [
+    {
+      "id": "q-101-ex-1",
+      "moduleId": "theory-101",
+      "targetLane": "exercise",
+      "questionType": "numeric_input",
+      "prompt": "Welche Frequenz (in Hz) hat eine Oktave über dem Kammerton A4 (440 Hz)?",
+      "correctAnswers": ["880", "880 Hz"],
+      "explanation": "Eine Oktave entspricht dem Frequenzverhältnis 2:1, also 440 Hz × 2 = 880 Hz.",
+      "baseXp": 10,
+      "tags": ["Allgemein"]
+    },
+    {
+      "id": "q-101-ex-2",
+      "moduleId": "theory-101",
+      "targetLane": "exercise",
+      "questionType": "interactive_notation",
+      "prompt": "Setze eine Viertelnote auf die zweite Linie von unten (G4) im Violinschlüssel.",
+      "correctAnswers": [],
+      "notationTask": {
+        "clef": "treble",
+        "maxNotes": 1,
+        "lockDuration": "quarter",
+        "showDurationPicker": false,
+        "compact": "tight",
+        "showHints": true,
+        "expectedPitches": ["G4"]
+      },
+      "explanation": "Die Schnecke des Violinschlüssels umschließt die 2. Linie von unten und markiert dort den Ton G4.",
+      "baseXp": 10,
+      "tags": ["Notensystem", "Violinschlüssel"]
+    },
+    {
+      "id": "q-101-qe-1",
+      "moduleId": "theory-101",
+      "targetLane": "quiz_easy",
+      "questionType": "single_choice",
+      "prompt": "Wie viele parallele Linien besitzt ein reguläres Notensystem?",
+      "options": ["4", "5", "6"],
+      "correctAnswers": ["5"],
+      "explanation": "Ein Standard-Notensystem besteht immer aus fünf Notenlinien und vier Zwischenräumen.",
+      "baseXp": 15,
+      "tags": ["Notensystem"]
+    },
+    {
+      "id": "q-101-qe-2",
+      "moduleId": "theory-101",
+      "targetLane": "quiz_easy",
+      "questionType": "multi_select",
+      "prompt": "Welche Aussagen zum Kammerton A4 treffen zu?",
+      "options": [
+        "Er schwingt mit 440 Hz.",
+        "Die Oktave darüber liegt bei 880 Hz.",
+        "Eine Oktave halbiert jede Frequenz."
+      ],
+      "correctAnswers": [
+        "Er schwingt mit 440 Hz.",
+        "Die Oktave darüber liegt bei 880 Hz."
+      ],
+      "explanation": "A4 liegt bei 440 Hz; eine Oktave nach oben verdoppelt die Frequenz auf 880 Hz.",
+      "baseXp": 15,
+      "tags": ["Allgemein"]
+    },
+    {
+      "id": "q-101-fl-1",
+      "moduleId": "theory-101",
+      "targetLane": "fastlane",
+      "questionType": "numeric_input",
+      "prompt": "Berechne die Frequenz zwei Oktaven über 220 Hz (Angabe in Hz).",
+      "correctAnswers": ["880", "880 Hz"],
+      "explanation": "220 Hz × 2 = 440 Hz (1. Oktave), × 2 = 880 Hz (2. Oktave).",
+      "baseXp": 25,
+      "tags": ["Allgemein"]
+    },
+    {
+      "id": "q-101-fl-2",
+      "moduleId": "theory-101",
+      "targetLane": "fastlane",
+      "questionType": "interactive_notation",
+      "prompt": "Setze das eingestrichene C (C4) auf die erste Hilfslinie unter dem Violinschlüssel.",
+      "correctAnswers": [],
+      "notationTask": {
+        "clef": "treble",
+        "maxNotes": 1,
+        "lockDuration": "quarter",
+        "showDurationPicker": false,
+        "compact": "tight",
+        "showHints": true,
+        "expectedPitches": ["C4"]
+      },
+      "explanation": "C4 liegt direkt auf der ersten Hilfslinie unterhalb der untersten Linie (E4).",
+      "baseXp": 25,
+      "tags": ["Notensystem", "Violinschlüssel"]
+    },
+    {
+      "id": "q-102-ex-1",
+      "moduleId": "guitar-102",
+      "targetLane": "exercise",
+      "questionType": "single_choice",
+      "prompt": "Wie heißen die sechs Leersaiten der Gitarre von der tiefsten zur höchsten Saite?",
+      "options": [
+        "E – A – D – G – B – e",
+        "E – G – D – A – B – e",
+        "A – D – G – C – E – A"
+      ],
+      "correctAnswers": ["E – A – D – G – B – e"],
+      "explanation": "In Standardstimmung lauten die sechs Leersaiten von der 6. zur 1. Saite E – A – D – G – B – e.",
+      "baseXp": 10,
+      "tags": ["Gitarre"]
+    },
+    {
+      "id": "q-102-qe-1",
+      "moduleId": "guitar-102",
+      "targetLane": "quiz_easy",
+      "questionType": "numeric_input",
+      "prompt": "Wie viele Saiten hat eine Standard-Gitarre?",
+      "correctAnswers": ["6"],
+      "explanation": "Eine Standard-Gitarre verfügt über genau sechs Saiten (entsprechend sechs Linien in der Tabulatur).",
+      "baseXp": 15,
+      "tags": ["Gitarre", "Tabulatur"]
+    },
+    {
+      "id": "q-102-fl-1",
+      "moduleId": "guitar-102",
+      "targetLane": "fastlane",
+      "questionType": "single_choice",
+      "prompt": "Was bedeutet die Zahl 0 auf einer Tabulatur-Linie?",
+      "options": [
+        "Die Saite wird leer angeschlagen",
+        "Die Saite wird abgedämpft",
+        "Im 10. Bund greifen"
+      ],
+      "correctAnswers": ["Die Saite wird leer angeschlagen"],
+      "explanation": "Die Ziffer 0 kennzeichnet in der Tabulatur stets eine ungedrückte Leersaite.",
+      "baseXp": 25,
+      "tags": ["Tabulatur", "Gitarre"]
+    }
+  ]
 }

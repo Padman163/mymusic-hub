@@ -30,7 +30,8 @@ Alle ausführlichen Anleitungen, Architekturrichtlinien und Prüfpläne sind in 
 | **[ASTROSTRUCTURE.md](ASTROSTRUCTURE.md)** | **Architektur & Scaffolding:** Ordnerstruktur nach dem Lego-Prinzip, Content Collections, Zod-Schemas und Core-Konfigurationen (`astro.config.mjs`, `tsconfig.json`). |
 | **[TESTING.md](TESTING.md)** | **Qualitätssicherung:** Vollständige Testpyramide (Biome, TypeScript, Vitest, happy-dom, Playwright, LHCI, npm audit) und 5-Phasen-Release-Audit samt Definition of Done. |
 | **[WORKSPACE_SETUP.md](WORKSPACE_SETUP.md)** | **Workspace-Start:** Schrittweise Initialisierung frischer Umgebungen, Netlify CLI-Verknüpfung und Umgebungsvariablen (`.env`). |
-| **[FEATURES.md](FEATURES.md)** | **App-Funktionen:** Detaillierte Beschreibung aller Fachmodule (SVG-Notationsrenderer, Fretboard-Visualizer, Pattern-Sequencer, AlphaTab-Player, IssueTracker). |
+| **[FEATURES.md](FEATURES.md)** | **App-Funktionen:** Detaillierte Beschreibung aller Fachmodule (SVG-Notationsrenderer, Fretboard-Visualizer, Pattern-Sequencer, AlphaTab-Player, IssueTracker, Modul-Builder, XP-Lernpfad). |
+| **[README_FEAT_MODULEBUILDER.md](README_FEAT_MODULEBUILDER.md)** | **Lernpfad & Autorenwerkbank (einfach erklärt):** Übersicht über Modul-/Aufgaben-Builder, XP-/Tag-System und interaktiven Schüler-Lernpfad für Nicht-Programmierer. |
 | **[.INSTRUCTIONS.md](.INSTRUCTIONS.md)** | **KI-Kontext:** Globale Systemregeln und Token-Sparrichtlinien für GitHub Copilot. |
 
 ---

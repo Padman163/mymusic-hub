@@ -1,6 +1,6 @@
-# Der Modul- & Aufgaben-Builder (Etappe 1) – Einfach erklärt
+# Der Modul-Builder & Interaktive Lernpfad (Etappen 1–3B) – Einfach erklärt
 
-Dieses Dokument erklärt ohne Programmier-Fachchinesisch, **was** wir im ersten Bauabschnitt (Etappe 1) für den neuen **Admin Modul- & Aufgaben-Builder** aufgebaut haben und **warum** jeder dieser Schritte wichtig ist, bevor in Etappe 2 die sichtbaren Formulare entstehen.
+Dieses Dokument erklärt ohne Programmier-Fachchinesisch, **was** wir in allen Etappen (Etappe 1 bis Etappe 3B) für den **Admin Modul- & Aufgaben-Builder** sowie den **Interaktiven Lernpfad für Lernende** aufgebaut haben und **warum** jeder Baustein wichtig ist.
 
 ---
 
@@ -110,14 +110,59 @@ Dort gibt es drei übersichtliche Reiter (Tabs):
   - **Direktes Bearbeiten & Löschen:** Ein Klick auf den Stift bei einem Modul oder einer Frage lädt den Eintrag direkt in den passenden Builder-Reiter. Beim Löschen eines Moduls erinnert eine Sicherheitsabfrage daran, dass alle dazugehörigen Aufgaben mitgelöscht werden.
 
 ### 4. Gemeinsame Logik, Styling & UI-Tests
-- **`src/lib/module-builder-ui.ts` & `src/styles/module-builder.css`:** Enthalten die gemeinsame Steuerungslogik für alle drei Werkzeuge sowie das passende Erscheinungsbild (inklusive dunklem Design-Modus), während die `.astro`-Dateien schlank bleiben.
-- **`astro.config.mjs`:** Bindet den neuen **Modul-Builder** direkt unter *Projektierung → Beiträge* in die Seitenleiste ein.
-- **`netlify/functions/modules.ts`:** Reagiert jetzt sowohl auf `/api/modules` als auch auf `/.netlify/functions/modules`.
-- **`tests/components/module-builder-ui.test.ts`:** 4 automatisierte Oberflächentests prüfen das Hinzufügen/Umsortieren/Entfernen von Theorie-Blöcken, das Einblenden der `NotationBuilder`-Felder samt Live-Vorschau, die Live-XP-Berechnung und die Filterung im Modul-Katalog.
+- **`src/lib/module-builder-ui.ts` & `src/styles/module-builder.css`:** Enthalten die gemeinsame Steuerungslogik für alle drei Werkzeuge sowie das passende Erscheinungsbild (inklusive dunklem Design-Modus), während die `.astro`-Dateien schlank bleiben. Beim Laden und Speichern prüft der Browser sicher auf JSON-Antworten (um HTML-Fehlerseiten sauber abzufangen) und nutzt automatisch `/api/modules` bzw. `/.netlify/functions/modules`.
+- **`astro.config.mjs`:** Bindet den **Modul-Builder** unter *Projektierung → Modul-Builder* sowie den **Interaktiven Lernpfad & Dashboard** ganz oben unter *Audio & Musik → Musiktheorie* in die Seitenleiste ein und stellt zusätzlich einen lokalen Entwicklungs-Endpunkt für `npm run dev` bereit, sodass Änderungen lokal direkt in `data/modules.json` gespeichert werden.
+- **`netlify/functions/modules.ts`:** Reagiert sowohl auf `/api/modules` als auch auf `/.netlify/functions/modules`.
+- **`tests/components/module-builder-ui.test.ts`:** 5 automatisierte Oberflächentests prüfen das Hinzufügen/Umsortieren/Entfernen von Theorie-Blöcken, das Einblenden der `NotationBuilder`-Felder samt Live-Vorschau, die Live-XP-Berechnung, die Filterung im Modul-Katalog sowie die sichere Behandlung von HTML-Fehlerantworten.
 
 ---
 
-## Aktueller Stand & Ausblick auf Etappe 3
+## Etappe 3A: Das Gehirn für Lernfortschritt & Erfahrungspunkte (`src/lib/learning-progress.ts`)
 
-- **Fertiggestellt (Etappe 1 + Etappe 2):** Fundament (Datenmodell, XP-Logik, Prüfregeln, Datenspeicher, Server-Schnittstelle) sowie die komplette Autorenwerkbank (Modul-Formular, Aufgaben-/Quiz-Formular mit Live-Notenvorschau, Modul-Katalog, Seitenleisten-Eintrag und 12 neue Tests aus Etappe 1 & 2) sind fertig und fehlerfrei geprüft (`astro check`, `tsc --noEmit`, `biome check`, 8 Backend-/Logiktests und 4 UI-Tests bestanden; in der Gesamttest-Suite bleiben lediglich 4 bereits zuvor bestehende Fehlschläge in älteren `NotationBuilder`-Tests zu `Leertaste` vs. `Num 1`).
-- **Nächster Schritt (Etappe 3):** Nach dem Anlegen von Modul 1 über den neuen Builder folgt die sichtbare Ansicht für Lernende (`ModuleStepper`, XP-Dashboard und lokaler Lernfortschritt im Browser).
+Damit Lernende sehen können, wie weit sie sind und welche Module noch gesperrt oder schon geschafft sind, braucht es ein verlässliches „Gedächtnis“ im Hintergrund – noch bevor bunte Knöpfe gezeichnet werden.
+
+- **Speicherung im eigenen Browser (`localStorage`):** Der Lernstand wird lokal im Browser des Lernenden gespeichert (unter `mymusic_learning_progress_v1`). Es ist also kein Benutzerkonto oder Login nötig – und für den Seitenbau auf dem Server gibt es einen sicheren Ersatzspeicher, damit beim Erzeugen der Website nichts abstürzt.
+- **Schrittweise Freischaltung:**
+  - Modul 1 startet automatisch **freigeschaltet** mit Schritt 1 (*Theorie*). Alle Folgemodule starten zunächst **gesperrt**.
+  - Innerhalb eines Moduls geht es der Reihe nach voran: **1. Theorie** → **2. Aufgaben** → **3. Praxis** *(nur wenn das Modul einen Praxisteil hat)* → **Abschluss-Quiz Einfach**. Erst danach öffnet sich automatisch das nächste Modul.
+  - Kommen später über den Modul-Builder neue Module in `data/modules.json` hinzu, werden sie automatisch einsortiert, ohne dass bereits verdiente XP oder erledigte Module verloren gehen.
+- **Keine doppelten Punkte:** Das System merkt sich jede bereits gelöste Aufgabe und jeden erledigten Schritt. Wer eine Aufgabe zur Übung noch einmal löst, lernt zwar weiter, bekommt die XP aber fair nur beim ersten Mal gutgeschrieben.
+- **Der „⚡ Fastlane“-Schnelltest:** Wer ein Thema bereits beherrscht, kann bei jedem Modul (auch bei noch gesperrten Folgemodulen) das schwere Fastlane-Quiz versuchen. Bei mindestens **85 %** richtigen Antworten gilt das gesamte Modul als bestanden, schaltet das nächste Modul frei und vergibt alle bis dahin **noch nicht verdienten** XP des Moduls auf einmal – ohne bereits abgeholte Theorie- oder Übungs-XP doppelt zu zählen. Bei unter **85 %** wird nur der persönliche Bestwert gespeichert, es gibt aber keine Punkte und keine Freischaltung.
+- **Level-System:** Alle **500 XP** steigt man automatisch ein Level höher (Level 1 ab 0 XP, Level 2 ab 500 XP usw.), inklusive Aufschlüsselung nach Lernbereichen und Themen-Etiketten.
+- **Prüfstrecke (`tests/learning-progress.test.mjs`):** 7 automatisierte Tests prüfen genau diese Regeln (Theorie- vs. Instrument-Pfad, Doppel-XP-Schutz, Fastlane-Erfolg/Misserfolg, Dashboard-Kennzahlen und Speicherung).
+
+---
+
+## Etappe 3B: Die sichtbare Lern-Oberfläche im Browser
+
+Jetzt verbinden sich die Bausteine aus Etappe 1 bis 3A zu einem kompletten, direkt im Browser spielbaren Kurs unter **Audio & Musik → Musiktheorie → Interaktiver Lernpfad & Dashboard** (`/audio/theory/lernpfad/`).
+
+### 1. Start-Lehrplan (`data/modules.json`)
+Damit der Lehrgang sofort ausprobiert werden kann, enthält `data/modules.json` zwei vollständige Startmodule:
+1. **Modul 1 (`theory-101` – reines Theorie-Modul ohne Praxisteil):** *Schall, Frequenz & Notensystem* (Kammerton $440\text{ Hz}$ als KaTeX-Formel, Violinschlüssel-Notenbild sowie 6 Übungs-, Quiz- und Fastlane-Aufgaben inklusive interaktiver Notenaufgabe).
+2. **Modul 2 (`guitar-102` – Instrument-Modul mit Praxisteil):** *Gitarren-Grundlagen & Leersaiten* (mit Griffbrett-Visualisierung, Praxishinweis und passenden Übungs-, Quiz- und Fastlane-Aufgaben).
+
+### 2. Das XP-Dashboard (`src/components/learning/ProgressDashboard.astro`)
+- **Wozu es dient:** Zeigt dem Lernenden auf einen Blick das aktuelle **Level**, die **gesammelten Gesamt-XP**, den Fortschrittsbalken bis zum nächsten Level, die Anzahl **abgeschlossener Module** sowie kompakte Badges für XP nach Lernbereich (`Theorie`, `Instrument` …) und Themen (`Notensystem`, `Gitarre` …).
+- **Live-Aktualisierung:** Sobald eine Aufgabe gelöst, Theorie abgeschlossen oder ein Quiz bestanden wird, aktualisiert sich das Dashboard sofort ohne Neuladen der Seite.
+- **Geschützter Reset:** Über „Lernfortschritt zurücksetzen“ mit zweistufiger Sicherheitsabfrage lässt sich der eigene Test-Fortschritt jederzeit sauber auf Null stellen.
+
+### 3. Die Modul-Roadmap (`src/components/learning/ModuleRoadmap.astro`)
+- **Wozu sie dient:** Zeigt alle Module in der richtigen Reihenfolge als übersichtliche Karten.
+- **Etappen-Pills:** Jede Karte bildet den exakten Status der Schritte ab (`✓` erledigt, `●` aktiv, `🔒` gesperrt) – inklusive *3. Praxis* nur dann, wenn das Modul auch tatsächlich einen Praxisteil besitzt.
+- **Zwei Wege pro Modul:** **„Lektion öffnen“** (sobald das Modul freigeschaltet ist) oder jederzeit **„⚡ Fastlane (Schweres Quiz)“** (auch für noch gesperrte Folgemodule).
+
+### 4. Der Lektions-Parcours & Aufgaben-Runner (`ModuleStepper.astro` & `ModuleQuizRunner.astro`)
+- **Geführter Schritt-für-Schritt-Aufbau (`/audio/theory/modul/?id=...`):**
+  - **Schritt 1 (Theorie):** Stellt alle Theorie-Blöcke mit mathematischen KaTeX-Formeln und eingebetteten Visualisierungen (`Notation`, `FretboardClickable`, `ScalePattern`, `NotationKeyboard`) dar. Erst der Klick auf **„Theorie abschließen (+XX XP)“** gibt Schritt 2 frei.
+  - **Schritt 2 (Aufgaben):** Bleibt bis dahin gesperrt und bietet alle 4 Aufgabentypen direkt interaktiv an: Multiple/Single Choice, Zahleneingabe (versteht z. B. `880` genauso wie `880 Hz`) sowie das interaktive Notensystem (`NotationBuilder.astro`), bei dem Lernende Noten selbst im Takt platzieren. Bei einer falschen Antwort erscheint die didaktische Erklärung des Autors.
+  - **Schritt 3 (Praxis, optional):** Erscheint nur bei Modulen mit Praxisteil und schaltet nach Bestätigung das Abschluss-Quiz frei.
+  - **Abschluss-Quiz Einfach & Fastlane-Modus (`?id=...&mode=fastlane`):** Führen Frage für Frage mit Fortschrittsbalken (`Frage X / Y`), XP-Bonus-Vorschau, Bestehensschwelle (`80 %` bzw. `85 %`) und automatischer Freischaltung des Folgemoduls durch die Prüfung.
+- **UI-Tests (`tests/components/module-player-ui.test.ts`):** 3 automatisierte Tests prüfen die Startdaten in `data/modules.json`, das Entsperren des Steppers nach Klick auf „Theorie abschließen“ sowie den kompletten Fastlane-Durchlauf inklusive `NotationBuilder`-Eingabe und Live-Update von Dashboard und Roadmap.
+
+---
+
+## Aktueller Stand
+
+- **Fertiggestellt (Etappen 1, 2, 3A & 3B):** Autorenwerkbank (`Modul-Builder`), JSON-/GitHub-Speicherung (inkl. lokalem Dev-Endpunkt), XP- & Fortschritts-Engine sowie die komplette Schüler-Oberfläche (`/audio/theory/lernpfad/` und `/audio/theory/modul/`) sind vollständig umgesetzt und gebaut (`npm run build`: 42 Seiten ohne Fehler; `npx astro check`: 0 Fehler; `npx tsc --noEmit`: 0 Fehler; `biome check`: 0 Fehler auf allen geänderten/neuen Dateien).
+- **Testergebnisse:** Alle 23 Tests unseres Features (`tests/learning-progress.test.mjs`, `tests/module-builder.test.mjs`, `tests/components/module-builder-ui.test.ts`, `tests/components/module-player-ui.test.ts`) bestehen zu 100 %; in der Gesamttest-Suite `npm test` bleiben lediglich 4 vorbestehende, davon unabhängige Fehlschläge in älteren `NotationBuilder`-Tests (`Leertaste` vs. `Num 1`).

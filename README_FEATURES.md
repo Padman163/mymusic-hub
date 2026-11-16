@@ -12,11 +12,12 @@ Die Plattform verbindet musiktheoretische Didaktik mit interaktiven Web-Technolo
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                            GITARRENLERNPFAD-HUB                             │
 ├───────────────────────┬─────────────────────────────┬───────────────────────┤
-│ Musik & Notation      │ Instrumenten-Interaktion    │ Fullstack & Community │
-│ ├─ SVG-Notations-     │ ├─ FretboardClickable       │ ├─ IssueTracker       │
-│ │  renderer (Bravura) │ ├─ Pattern-Sequencer        │ ├─ Serverless Func    │
-│ ├─ AlphaTab Player    │ ├─ ChordSlider & TierList   │ ├─ GitHub REST Store  │
-│ └─ KaTeX Harmonielehre│ └─ ScorePattern (Partitur)  │ └─ Checklisten-Editor │
+│ Musik & Notation      │ Instrumenten-Interaktion    │ Fullstack, Admin & XP  │
+│ ├─ SVG-Notations-     │ ├─ FretboardClickable       │ ├─ Modul-Builder (CMS) │
+│ │  renderer (Bravura) │ ├─ Pattern-Sequencer        │ ├─ XP-Lernpfad-Player  │
+│ ├─ NotationBuilder    │ ├─ ChordSlider & TierList   │ ├─ IssueTracker        │
+│ ├─ AlphaTab Player    │ ├─ ScorePattern (Partitur)  │ ├─ Serverless Func     │
+│ └─ KaTeX Harmonielehre│ └─ ScalePattern (Griffbrett)│ └─ GitHub REST Store   │
 └───────────────────────┴─────────────────────────────┴───────────────────────┘
 ```
 
@@ -77,7 +78,21 @@ Die Plattform verbindet musiktheoretische Didaktik mit interaktiven Web-Technolo
   * **Kategorisierung:** Typen (`Feature`, `Bug`, `Decision`), Bereiche (`Theorie`, `Praxis`, `Komponente`), Prioritäten (`Niedrig`, `Mittel`, `Hoch`) und Status (`New`, `Active`, `Resolved`).
   * **Checklisten:** Bis zu 100 interaktive Checklistenpunkte pro Beitrag mit je maximal 200 Zeichen.
   * **Konfliktresistenz:** Automatische Wiederholungslogik (Retry-Loop) bei gleichzeitigem Schreibzugriff (HTTP 409 Conflict) unter Verwendung von GitHub Blob-SHAs.
-  * **Schutz vor Build-Schleifen:** In `netlify.toml` ist ein Filter hinterlegt, der Commits auf `data/contributions.json` von automatischen Re-Builds ausschließt.
+  * **Schutz vor Build-Schleifen:** In `netlify.toml` ist ein Filter hinterlegt, der Commits auf `data/contributions.json` (inzwischen erweitert auf `data/**`) von automatischen Re-Builds ausschließt.
+
+### 2.8 Admin Modul- & Aufgaben-Builder (Autorenwerkbank)
+* **Dateien:** `src/lib/xp-tags.ts`, `src/lib/module-schema.ts`, `src/lib/module-store.ts`, `src/lib/module-builder-ui.ts`, `src/components/project/ModuleBuilderForm.astro`, `src/components/project/ExerciseBuilderForm.astro`, `src/components/project/ModuleCatalogList.astro`, `src/content/docs/projektierung/modul-builder.mdx`, `netlify/functions/modules.ts`, `astro.config.mjs`, `data/modules.json`.
+* **Funktionsweise:**
+  * **Single Source of Truth für XP & Tags:** Zentrale Konfiguration (`TAG_DEFINITIONS`, `BASE_XP_DEFAULTS`, `calculateQuestionXp`) mit Tag-Multiplikatoren (z. B. `Notensystem` 1,5x, `Gitarre` 1,2x, `Allgemein` 1,0x).
+  * **Drei Autoren-Tabs:** Anlegen/Bearbeiten von Lernmodulen inkl. dynamischem Theorie-Block-Editor (`ModuleBuilderForm`), Erstellen von Aufgaben für `exercise`, `quiz_easy` und `fastlane` (`single_choice`, `multi_select`, `numeric_input`, `interactive_notation` mit eingebetteter `NotationBuilder`-Live-Vorschau) sowie Katalog-Verwaltung mit Listen-/Kartenansicht und kaskadierendem Löschen (`ModuleCatalogList`).
+  * **Persistenz & Dev-Fallback:** Speichert produktiv über `/api/modules` in `data/modules.json` via GitHub Contents API (optimistic locking mit 3 Retries bei HTTP 409) und lokal unter `npm run dev` über ein Vite-Dev-Plugin in `astro.config.mjs` direkt in `data/modules.json`.
+
+### 2.9 Interaktiver Lernpfad, XP-Engine & Modul-Player
+* **Dateien:** `src/lib/learning-progress.ts`, `src/lib/module-player-ui.ts`, `src/styles/module-player.css`, `src/components/learning/ProgressDashboard.astro`, `src/components/learning/ModuleRoadmap.astro`, `src/components/learning/ModuleStepper.astro`, `src/components/learning/ModuleQuizRunner.astro`, `src/content/docs/audio/theory/lernpfad.mdx`, `src/content/docs/audio/theory/modul.mdx`.
+* **Funktionsweise:**
+  * **Client-State & XP-Engine:** SSR-sichere `localStorage`-Persistenz (`mymusic_learning_progress_v1`) mit automatischem Curriculum-Sync, Duplikat-XP-Schutz (`solvedQuestionIds`), Level-Berechnung (500 XP pro Level) sowie Aufschlüsselung nach `scope` und `tags`.
+  * **Geführter Lektions-Stepper & Fastlane:** Step-by-Step-Freischaltung (`theory` → `exercise` → optional `practice` bei `hasPractice: true` → `quiz_easy` ab 80 %) mit KaTeX-/Markdown-Rendering und eingebetteten Visualisierungen; zusätzlich direkter **Fastlane-Modus** (ab 85 %), der alle offenen Modul-XP ohne Doppelzählung gutschreibt und das Folgemodul entsperrt.
+  * **Aufgaben-Auswertung:** Live-Synchronisation zwischen Dashboard, Roadmap und Stepper via CustomEvent `learning-progress:updated`; unterstützt u. a. Zahlen/Einheiten-Abgleich (`880` / `880 Hz`) sowie die `NotationBuilder.astro`-Tonhöhenprüfung (`expectedPitches` exakt und oktavunabhängig).
 
 ---
 
