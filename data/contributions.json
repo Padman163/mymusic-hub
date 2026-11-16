@@ -414,8 +414,8 @@
     "priority": "Hoch",
     "checklist": [
       {
-        "text": "Drei Builder-Tabs für Module, Aufgaben und Katalog öffnen und bedienen",
-        "checked": false
+        "text": "Builder-Tabs für Module und Katalog öffnen und bedienen",
+        "checked": true
       },
       {
         "text": "Modul mit Metadaten, Tags, XP-Werten und Bestehensgrenzen anlegen und erneut laden",
@@ -423,11 +423,11 @@
       },
       {
         "text": "Theorie-Blöcke hinzufügen, entfernen, umsortieren und mit KaTeX-Inhalten speichern",
-        "checked": false
+        "checked": true
       },
       {
         "text": "Theorie-Visualisierungen konfigurieren und im Lernpfad kontrollieren",
-        "checked": false
+        "checked": true
       },
       {
         "text": "Reine Theorie-Module und Module mit optionalem Praxisschritt korrekt abbilden",
@@ -527,6 +527,14 @@
       },
       {
         "text": "Prüfen was die Checkbox für Praxisteil macht",
+        "checked": false
+      },
+      {
+        "text": "XP / Block im Modul immer angeben",
+        "checked": false
+      },
+      {
+        "text": "Builder-Tabs für Aufgaben und öffnen und bedienen",
         "checked": false
       }
     ],
