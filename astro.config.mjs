@@ -235,6 +235,26 @@ function localModulesApiPlugin() {
               }
 
               const body = parsedBody ?? {};
+              if (body.entity === "module-order") {
+                if (
+                  method !== "PUT" ||
+                  typeof body.id !== "string" || !body.id.trim() ||
+                  typeof body.neighborId !== "string" || !body.neighborId.trim() ||
+                  (body.direction !== "up" && body.direction !== "down")
+                ) {
+                  sendLocalJson(res, 400, { error: "Ungültige Modulverschiebung." });
+                  return;
+                }
+                const db = await readDb();
+                const nextDb = store.moveModule(db, body.id.trim(), body.neighborId.trim(), body.direction);
+                if (!nextDb) {
+                  sendLocalJson(res, 409, { error: "Die Modulreihenfolge wurde geändert. Bitte lade die Übersicht neu." });
+                  return;
+                }
+                await writeDb(nextDb);
+                sendLocalJson(res, 200, nextDb);
+                return;
+              }
               if (
                 body.entity !== undefined &&
                 body.entity !== "module" &&

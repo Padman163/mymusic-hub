@@ -565,12 +565,6 @@ export function attachModuleBuilderForm(
   form.dataset.moduleBuilderAttached = "true";
 
   const msg = "Felder des Modul-Builder-Formulars fehlen.";
-  const idInput = requireElement<HTMLInputElement>(form, "#module-id", msg);
-  const orderInput = requireElement<HTMLInputElement>(
-    form,
-    "#module-order",
-    msg,
-  );
   const titleInput = requireElement<HTMLInputElement>(
     form,
     "#module-title",
@@ -653,11 +647,10 @@ export function attachModuleBuilderForm(
   blocksContainer.append(theoryBlockEditor.element);
 
   let editingModuleId: string | null = null;
+  let newModuleId: string | null = null;
 
   function setBusy(busy: boolean): void {
     const controls = [
-      idInput,
-      orderInput,
       titleInput,
       descriptionInput,
       scopeSelect,
@@ -679,8 +672,8 @@ export function attachModuleBuilderForm(
 
   function resetForm(): void {
     editingModuleId = null;
+    newModuleId = null;
     form.reset();
-    if (idInput) idInput.readOnly = false;
     if (theoryBaseXpInput) {
       theoryBaseXpInput.value = String(BASE_XP_DEFAULTS.theoryBlock);
     }
@@ -702,9 +695,7 @@ export function attachModuleBuilderForm(
 
   function loadModule(mod: LearningModule): void {
     editingModuleId = mod.id;
-    idInput.value = mod.id;
-    idInput.readOnly = true;
-    orderInput.value = String(mod.order);
+    newModuleId = null;
     titleInput.value = mod.title;
     descriptionInput.value = mod.description;
     scopeSelect.value = mod.scope;
@@ -747,8 +738,7 @@ export function attachModuleBuilderForm(
     const dStageValue = dStageSelect.value;
     const payload: UpsertModuleInput & { entity: "module" } = {
       entity: "module",
-      id: idInput.value.trim(),
-      order: Number(orderInput.value),
+      id: editingModuleId ?? (newModuleId ??= `mod-${crypto.randomUUID()}`),
       title: titleInput.value.trim(),
       description: descriptionInput.value.trim(),
       scope: isModuleScope(scopeValue) ? scopeValue : "theory",
@@ -1794,8 +1784,9 @@ export function attachModuleCatalogList(
       }
       return a.order - b.order;
     });
+    const canReorder = !selectedScope && sortSelect.value === "order_asc";
 
-    for (const mod of sorted) {
+    for (const [index, mod] of sorted.entries()) {
       const modSummary = getModuleSummary(db, mod.id);
       const modQuestions = db.questions.filter((q) => q.moduleId === mod.id);
 
@@ -1830,6 +1821,54 @@ export function attachModuleCatalogList(
 
       const actions = document.createElement("div");
       actions.className = "contribution-card-actions";
+
+      for (const direction of ["up", "down"] as const) {
+        const neighbor = sorted[index + (direction === "up" ? -1 : 1)];
+        const moveBtn = document.createElement("button");
+        moveBtn.type = "button";
+        moveBtn.className = `module-move-${direction}`;
+        moveBtn.textContent = direction === "up" ? "↑" : "↓";
+        const label = `${mod.title} ${direction === "up" ? "nach oben" : "nach unten"} verschieben`;
+        moveBtn.setAttribute("aria-label", label);
+        moveBtn.title = canReorder
+          ? label
+          : "Zum Verschieben alle Bereiche und Reihenfolge 1 → N auswählen.";
+        moveBtn.disabled = !canReorder || !neighbor;
+        moveBtn.addEventListener("click", async () => {
+          if (!neighbor) return;
+          const buttons = Array.from(
+            list.querySelectorAll<HTMLButtonElement>(".module-move-up, .module-move-down"),
+          );
+          const disabledStates = buttons.map((button) => button.disabled);
+          buttons.forEach((button) => { button.disabled = true; });
+          scopeFilter.disabled = true;
+          sortSelect.disabled = true;
+          reloadButton.disabled = true;
+          status.textContent = `Modul „${mod.title}“ wird verschoben …`;
+          try {
+            const result = await sendModulesRequest(
+              "PUT",
+              { entity: "module-order", id: mod.id, neighborId: neighbor.id, direction },
+              "Das Modul konnte nicht verschoben werden.",
+            );
+            renderDatabase(parseModulesResponse(result));
+            document.dispatchEvent(
+              new CustomEvent("modules:updated", { bubbles: true, detail: result }),
+            );
+          } catch (error) {
+            status.textContent =
+              error instanceof Error ? error.message : "Das Modul konnte nicht verschoben werden.";
+            buttons.forEach((button, buttonIndex) => {
+              button.disabled = disabledStates[buttonIndex];
+            });
+          } finally {
+            scopeFilter.disabled = false;
+            sortSelect.disabled = false;
+            reloadButton.disabled = false;
+          }
+        });
+        actions.append(moveBtn);
+      }
 
       const editBtn = document.createElement("button");
       editBtn.type = "button";

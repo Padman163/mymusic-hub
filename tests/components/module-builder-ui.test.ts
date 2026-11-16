@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import seedDb from "../../data/modules.json";
 import {
   attachExerciseBuilderForm,
   attachModuleBuilderForm,
@@ -14,8 +15,6 @@ function mountModuleForm(): HTMLFormElement {
   const form = document.createElement("form");
   form.id = "module-builder-form";
   form.innerHTML = `
-    <input id="module-id" name="id" type="text" value="theory-101" />
-    <input id="module-order" name="order" type="number" value="1" />
     <input id="module-title" name="title" type="text" value="Schall & Tonsystem" />
     <textarea id="module-description" name="description"></textarea>
     <select id="module-scope" name="scope">
@@ -130,6 +129,32 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
   afterEach(() => {
     document.body.replaceChildren();
     vi.unstubAllGlobals();
+  });
+
+  it("erstellt neue Modul-IDs automatisch und behält bestehende IDs beim Bearbeiten", async () => {
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => new Response("{}", {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+    const form = mountModuleForm();
+    const controller = attachModuleBuilderForm(form);
+
+    form.dispatchEvent(new Event("submit", { cancelable: true }));
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await vi.waitFor(() => expect(form.querySelector(".form-status")?.textContent).toBe("Modul wurde gespeichert."));
+    const first = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
+    expect(first.id).toMatch(/^mod-[0-9a-f-]{36}$/);
+    expect(first.order).toBeUndefined();
+    expect(fetchMock.mock.calls[0][1]?.method).toBe("POST");
+
+    controller.loadModule(seedDb.modules[0] as ModulesDatabase["modules"][number]);
+    form.dispatchEvent(new Event("submit", { cancelable: true }));
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    const edited = JSON.parse(String(fetchMock.mock.calls[1][1]?.body));
+    expect(edited.id).toBe("theory-101");
+    expect(edited.order).toBeUndefined();
+    expect(fetchMock.mock.calls[1][1]?.method).toBe("PUT");
   });
 
   it("fügt Theorie-Blöcke hinzu, sortiert sie um und entfernt sie im Modul-Formular", () => {
@@ -373,6 +398,39 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     expect(section.querySelector(".module-question-prompt")?.textContent).toBe(
       "Setze G4 im Violinschlüssel.",
     );
+  });
+
+  it("verschiebt Module in der Übersicht und sperrt Pfeile bei anderer Sortierung", async () => {
+    const initial = structuredClone(seedDb) as unknown as ModulesDatabase;
+    const reordered = structuredClone(initial);
+    [reordered.modules[0], reordered.modules[1]] = [reordered.modules[1], reordered.modules[0]];
+    reordered.modules.forEach((mod, index) => { mod.order = index + 1; });
+    let current = initial;
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method === "PUT") current = reordered;
+      return new Response(JSON.stringify(current), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const section = mountCatalogSection();
+    const controller = attachModuleCatalogList(section);
+    controller.renderDatabase(initial);
+    expect(section.querySelector<HTMLButtonElement>('[data-module-id="theory-101"] .module-move-up')?.disabled).toBe(true);
+    section.querySelector<HTMLButtonElement>('[data-module-id="theory-101"] .module-move-down')?.click();
+    await vi.waitFor(() => {
+      expect(section.querySelector("#module-catalog-list > li")?.getAttribute("data-module-id")).toBe("guitar-102");
+    });
+    const put = fetchMock.mock.calls.find(([, init]) => init?.method === "PUT");
+    expect(JSON.parse(String(put?.[1]?.body))).toEqual({
+      entity: "module-order", id: "theory-101", neighborId: "guitar-102", direction: "down",
+    });
+    const sort = section.querySelector<HTMLSelectElement>("#sort-modules");
+    if (!sort) throw new Error("Sortierung fehlt");
+    sort.value = "xp_desc";
+    sort.dispatchEvent(new Event("change"));
+    expect(Array.from(section.querySelectorAll<HTMLButtonElement>(".module-move-up, .module-move-down")).every((button) => button.disabled)).toBe(true);
   });
 
   it("fängt HTML-Fehlerseiten (<!DOCTYPE ...) bei Katalog-Reload und Formular-Submit sauber ab und nutzt Fallback-Endpunkte", async () => {

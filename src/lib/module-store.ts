@@ -34,7 +34,7 @@ export interface ModuleSummary {
 }
 
 export type UpsertModuleInput = Partial<LearningModule> &
-  Pick<LearningModule, "id" | "title" | "order">;
+  Pick<LearningModule, "id" | "title">;
 
 export type UpsertQuestionInput = Partial<ModuleQuestion> &
   Pick<ModuleQuestion, "id" | "moduleId" | "questionType" | "prompt">;
@@ -242,9 +242,10 @@ export function validateModuleInput(input: unknown): ValidationResult {
     errors.push("Modultitel ist erforderlich.");
   }
   if (
-    typeof input.order !== "number" ||
-    !Number.isFinite(input.order) ||
-    input.order < 1
+    input.order !== undefined &&
+    (typeof input.order !== "number" ||
+      !Number.isFinite(input.order) ||
+      input.order < 1)
   ) {
     errors.push("Modulreihenfolge (order) muss >= 1 sein.");
   }
@@ -421,7 +422,10 @@ export function upsertModule(
 
   const normalizedModule: LearningModule = {
     id,
-    order: moduleData.order,
+    order:
+      moduleData.order ??
+      existing?.order ??
+      db.modules.reduce((highest, mod) => Math.max(highest, mod.order), 0) + 1,
     title: moduleData.title.trim(),
     description: moduleData.description ?? existing?.description ?? "",
     scope,
@@ -457,6 +461,25 @@ export function upsertModule(
       : [...db.modules, normalizedModule];
 
   return { modules, questions: [...db.questions] };
+}
+
+/** Verschiebt ein Modul relativ zu seinem erwarteten Nachbarn. */
+export function moveModule(
+  db: ModulesDatabase,
+  moduleId: string,
+  neighborId: string,
+  direction: "up" | "down",
+): ModulesDatabase | null {
+  const sorted = [...db.modules].sort((a, b) => a.order - b.order);
+  const index = sorted.findIndex((mod) => mod.id === moduleId);
+  const neighborIndex = index + (direction === "up" ? -1 : 1);
+  if (index < 0 || sorted[neighborIndex]?.id !== neighborId) return null;
+
+  [sorted[index], sorted[neighborIndex]] = [sorted[neighborIndex], sorted[index]];
+  return {
+    modules: sorted.map((mod, position) => ({ ...mod, order: position + 1 })),
+    questions: [...db.questions],
+  };
 }
 
 /** Entfernt ein Modul sowie kaskadierend alle zugehörigen Aufgaben. */

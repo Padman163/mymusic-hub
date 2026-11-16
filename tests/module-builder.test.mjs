@@ -10,6 +10,7 @@ import {
   deleteModule,
   deleteQuestion,
   getModuleSummary,
+  moveModule,
   upsertModule,
   upsertQuestion,
   validateModuleInput,
@@ -57,6 +58,32 @@ describe("xp-tags Konfiguration & Berechnung", () => {
 });
 
 describe("module-store Validierung & Store-Operationen", () => {
+  it("hängt neue Module hinter der höchsten Position an und bewahrt die Position beim Bearbeiten", () => {
+    let db = createEmptyModulesDatabase();
+    db = upsertModule(db, { id: "first", title: "Erstes" });
+    expect(db.modules[0].order).toBe(1);
+    db = upsertModule(db, { id: "gap", title: "Lücke", order: 5 });
+    db = upsertModule(db, { id: "last", title: "Neues" });
+    expect(db.modules.find((mod) => mod.id === "last")?.order).toBe(6);
+    db = upsertModule(db, { id: "first", title: "Bearbeitet" });
+    expect(db.modules.find((mod) => mod.id === "first")?.order).toBe(1);
+    expect(validateModuleInput({ id: "invalid", title: "Fehler", order: 0 }).valid).toBe(false);
+  });
+
+  it("verschiebt Module mit Lücken dauerhaft und erkennt veraltete Nachbarn", () => {
+    let db = createEmptyModulesDatabase();
+    db = upsertModule(db, { id: "a", title: "A", order: 2 });
+    db = upsertModule(db, { id: "b", title: "B", order: 8 });
+    db = upsertModule(db, { id: "c", title: "C", order: 10 });
+    const reordered = moveModule(db, "b", "a", "up");
+    expect(reordered.modules.map(({ id, order }) => [id, order])).toEqual([
+      ["b", 1], ["a", 2], ["c", 3],
+    ]);
+    expect(moveModule(reordered, "b", "a", "up")).toBeNull();
+    expect(moveModule(db, "a", "c", "down")).toBeNull();
+    expect(db.modules.map((mod) => mod.id)).toEqual(["a", "b", "c"]);
+  });
+
   it("validiert ein reines Theorie-Modul mit hasPractice: false und lehnt ungültige Eingaben ab", () => {
     const validTheory = validateModuleInput({
       id: "mod-notenlesen-1",
@@ -398,6 +425,9 @@ describe("Modules Serverless API (/api/modules)", () => {
       if (init.method === "PUT") {
         putAttempts += 1;
         if (putAttempts === 1) {
+          storedDb.modules.push({
+            id: "concurrent", order: 4, title: "Gleichzeitig hinzugefügt",
+          });
           return new Response(JSON.stringify({ message: "Conflict" }), {
             status: 409,
           });
@@ -423,7 +453,6 @@ describe("Modules Serverless API (/api/modules)", () => {
         body: JSON.stringify({
           entity: "module",
           id: "mod-api-1",
-          order: 1,
           title: "API Modul",
           scope: "theory",
           hasPractice: false,
@@ -432,7 +461,8 @@ describe("Modules Serverless API (/api/modules)", () => {
     );
     expect(postModRes.status).toBe(201);
     expect(putAttempts).toBe(2);
-    expect(storedDb.modules).toHaveLength(1);
+    expect(storedDb.modules).toHaveLength(2);
+    expect(storedDb.modules.find((mod) => mod.id === "mod-api-1").order).toBe(5);
 
     const postQRes = await modulesHandler(
       new Request("http://localhost/api/modules", {
@@ -459,8 +489,36 @@ describe("Modules Serverless API (/api/modules)", () => {
     );
     expect(getRes.status).toBe(200);
     const getBody = await getRes.json();
-    expect(getBody.modules).toHaveLength(1);
+    expect(getBody.modules).toHaveLength(2);
     expect(getBody.questions).toHaveLength(1);
+
+    const moveRes = await modulesHandler(
+      new Request("http://localhost/api/modules", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          entity: "module-order",
+          id: "mod-api-1",
+          neighborId: "concurrent",
+          direction: "up",
+        }),
+      }),
+    );
+    expect(moveRes.status).toBe(200);
+    expect(storedDb.modules.map((mod) => mod.id)).toEqual(["mod-api-1", "concurrent"]);
+    const staleMove = await modulesHandler(
+      new Request("http://localhost/api/modules", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          entity: "module-order",
+          id: "mod-api-1",
+          neighborId: "concurrent",
+          direction: "up",
+        }),
+      }),
+    );
+    expect(staleMove.status).toBe(409);
 
     const delRes = await modulesHandler(
       new Request("http://localhost/api/modules", {
@@ -470,6 +528,7 @@ describe("Modules Serverless API (/api/modules)", () => {
       }),
     );
     expect(delRes.status).toBe(200);
-    expect(storedDb).toEqual({ modules: [], questions: [] });
+    expect(storedDb.modules.map((mod) => mod.id)).toEqual(["concurrent"]);
+    expect(storedDb.questions).toEqual([]);
   });
 });

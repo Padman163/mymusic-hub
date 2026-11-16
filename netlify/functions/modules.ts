@@ -4,6 +4,7 @@ import {
 	createEmptyModulesDatabase,
 	deleteModule,
 	deleteQuestion,
+	moveModule,
 	type UpsertModuleInput,
 	type UpsertQuestionInput,
 	upsertModule,
@@ -206,6 +207,26 @@ async function handleWriteRequest(
 	body: Record<string, unknown>,
 ): Promise<Response> {
 	const isPost = request.method === 'POST';
+
+	if (body.entity === 'module-order') {
+		if (
+			request.method !== 'PUT' ||
+			typeof body.id !== 'string' || !body.id.trim() ||
+			typeof body.neighborId !== 'string' || !body.neighborId.trim() ||
+			(body.direction !== 'up' && body.direction !== 'down')
+		) {
+			return jsonResponse(400, { error: 'Ungültige Modulverschiebung.' });
+		}
+		const id = body.id.trim();
+		const neighborId = body.neighborId.trim();
+		const direction = body.direction;
+		const nextDb = await changeModulesDatabase('Reorder learning modules', false, (db) => {
+			const reordered = moveModule(db, id, neighborId, direction);
+			if (!reordered) throw new ModuleConflictError('Die Modulreihenfolge wurde geändert. Bitte lade die Übersicht neu.');
+			return reordered;
+		});
+		return jsonResponse(200, nextDb);
+	}
 
 	if (
 		body.entity !== undefined &&

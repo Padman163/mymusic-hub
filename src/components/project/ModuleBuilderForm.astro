@@ -19,32 +19,6 @@ const scopeLabels: Record<(typeof MODULE_SCOPES)[number], string> = {
 ---
 
 <form id="module-builder-form" class="issue-tracker-form module-builder-form">
-  <div class="module-field-grid">
-    <div class="field">
-      <label for="module-id">Modul-ID</label>
-      <input
-        id="module-id"
-        name="id"
-        type="text"
-        maxlength="100"
-        placeholder="z. B. theory-101"
-        required
-      />
-    </div>
-    <div class="field">
-      <label for="module-order">Reihenfolge</label>
-      <input
-        id="module-order"
-        name="order"
-        type="number"
-        min="1"
-        step="1"
-        value="1"
-        required
-      />
-    </div>
-  </div>
-
   <div class="field">
     <label for="module-title">Modultitel</label>
     <input
