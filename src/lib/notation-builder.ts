@@ -510,7 +510,8 @@ export function attachNotationBuilder(root: HTMLElement): void {
   let activeDuration: Duration =
     lockedDuration ??
     config.initialDuration ??
-    (placedNotes[0]?.duration ?? "quarter");
+    placedNotes[0]?.duration ??
+    "quarter";
 
   const syncDom = (emitChange = false) => {
     const state = describeBuilderState({
@@ -604,8 +605,8 @@ export function attachNotationBuilder(root: HTMLElement): void {
         const dur = btn.dataset.duration as Duration | undefined;
         if (!dur) return;
         activeDuration = dur;
-        if (placedNotes[activeSlot] !== null) {
-          const current = placedNotes[activeSlot]!;
+        const current = placedNotes[activeSlot];
+        if (current) {
           placedNotes[activeSlot] = {
             step: current.step,
             duration: dur,
@@ -647,7 +648,7 @@ export function attachNotationBuilder(root: HTMLElement): void {
     const existingMinWidth = minWidthMatch ? Number(minWidthMatch[1]) : 0;
     const effectiveWidth = isCompactWide
       ? Math.max(300, existingMinWidth)
-      : (rect.width || 300);
+      : rect.width || 300;
 
     const slotXs = computeSlotXs({
       maxNotes,
@@ -678,8 +679,9 @@ export function attachNotationBuilder(root: HTMLElement): void {
       cursorStep = target.step;
       if (maxNotes > 1) {
         activeSlot = target.slot;
-        if (placedNotes[activeSlot]) {
-          cursorStep = placedNotes[activeSlot]!.step;
+        const current = placedNotes[activeSlot];
+        if (current) {
+          cursorStep = current.step;
         }
       }
       syncDom(true);
@@ -693,8 +695,9 @@ export function attachNotationBuilder(root: HTMLElement): void {
         event.preventDefault();
         if (activeSlot > 0) {
           activeSlot -= 1;
-          if (placedNotes[activeSlot]) {
-            cursorStep = placedNotes[activeSlot]!.step;
+          const current = placedNotes[activeSlot];
+          if (current) {
+            cursorStep = current.step;
           }
           syncDom(true);
         }
@@ -706,8 +709,9 @@ export function attachNotationBuilder(root: HTMLElement): void {
         event.preventDefault();
         if (activeSlot < maxNotes - 1) {
           activeSlot += 1;
-          if (placedNotes[activeSlot]) {
-            cursorStep = placedNotes[activeSlot]!.step;
+          const current = placedNotes[activeSlot];
+          if (current) {
+            cursorStep = current.step;
           }
           syncDom(true);
         }
@@ -731,8 +735,9 @@ export function attachNotationBuilder(root: HTMLElement): void {
       placedNotes[activeSlot] = { duration: activeDuration, step: cursorStep };
       if (maxNotes > 1 && activeSlot < maxNotes - 1) {
         activeSlot += 1;
-        if (placedNotes[activeSlot]) {
-          cursorStep = placedNotes[activeSlot]!.step;
+        const current = placedNotes[activeSlot];
+        if (current) {
+          cursorStep = current.step;
         }
       }
       syncDom(true);
@@ -748,8 +753,8 @@ export function attachNotationBuilder(root: HTMLElement): void {
         const nextIndex =
           currentIndex >= 0 ? (currentIndex + 1) % durations.length : 0;
         activeDuration = durations[nextIndex];
-        if (placedNotes[activeSlot] !== null) {
-          const current = placedNotes[activeSlot]!;
+        const current = placedNotes[activeSlot];
+        if (current) {
           placedNotes[activeSlot] = {
             step: current.step,
             duration: activeDuration,
@@ -797,8 +802,7 @@ export function attachNotationBuilder(root: HTMLElement): void {
 
   root.addEventListener("notationbuilder:reset", (event) => {
     delete root.dataset.locked;
-    const detail =
-      event instanceof CustomEvent ? event.detail : undefined;
+    const detail = event instanceof CustomEvent ? event.detail : undefined;
     const stepVal =
       typeof detail?.step === "number"
         ? detail.step
@@ -822,8 +826,8 @@ export function attachNotationBuilder(root: HTMLElement): void {
     if (lockedDuration || config.lockDuration) return;
     if (event instanceof CustomEvent && event.detail?.duration) {
       activeDuration = event.detail.duration as Duration;
-      if (placedNotes[activeSlot] !== null) {
-        const current = placedNotes[activeSlot]!;
+      const current = placedNotes[activeSlot];
+      if (current) {
         placedNotes[activeSlot] = {
           step: current.step,
           duration: activeDuration,

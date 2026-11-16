@@ -69,7 +69,7 @@ describe("NotationBuilder-Interaktion", () => {
       "B4",
     );
     expect(root.querySelector(".notation-builder-status-action")?.textContent).toContain(
-      "Viertelnote B4 erstellen (Num 1)",
+      "Viertelnote B4 erstellen (Leertaste)",
     );
     expect(root.querySelector(".notation-builder-cursor-text")?.textContent).toContain(
       "B4",
@@ -113,14 +113,28 @@ describe("NotationBuilder-Interaktion", () => {
     expect(root.dataset.cursorNote).toBe("C4");
   });
 
-  it("erstellt mit NUM 1 eine Viertelnote und löscht sie mit ENTF", () => {
+  it("wechselt mit NUM 1 den Notenwert, ohne eine Note zu setzen", () => {
+    const root = mountBuilder();
+    root.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "1",
+        code: "Numpad1",
+        bubbles: true,
+      }),
+    );
+
+    expect(root.dataset.activeDuration).toBe("eighth");
+    expect(root.dataset.placedNote).toBeUndefined();
+  });
+
+  it("erstellt mit der Leertaste eine Viertelnote und löscht sie mit ENTF", () => {
     const root = mountBuilder();
     clickStep(root, 1);
 
     root.dispatchEvent(
       new KeyboardEvent("keydown", {
-        key: "1",
-        code: "Numpad1",
+        key: " ",
+        code: "Space",
         bubbles: true,
       }),
     );
@@ -142,7 +156,7 @@ describe("NotationBuilder-Interaktion", () => {
     );
     expect(root.dataset.cursorNote).toBe("G4");
     expect(root.querySelector(".notation-builder-status-action")?.textContent).toContain(
-      "Viertelnote G4 erstellen (Num 1)",
+      "Viertelnote G4 erstellen (Leertaste)",
     );
     expect(root.querySelector(".notation-builder-status-action")?.textContent).toContain(
       "F4 löschen (Entf)",
@@ -161,7 +175,7 @@ describe("NotationBuilder-Interaktion", () => {
     expect(root.dataset.canDelete).toBe("false");
     expect(root.querySelector(".notation-note")).toBeNull();
     expect(root.querySelector(".notation-builder-status-action")?.textContent).toContain(
-      "Viertelnote G4 erstellen (Num 1)",
+      "Viertelnote G4 erstellen (Leertaste)",
     );
   });
 
@@ -169,8 +183,8 @@ describe("NotationBuilder-Interaktion", () => {
     const root = mountBuilder();
     root.dispatchEvent(
       new KeyboardEvent("keydown", {
-        key: "1",
-        code: "Numpad1",
+        key: " ",
+        code: "Space",
         bubbles: true,
       }),
     );

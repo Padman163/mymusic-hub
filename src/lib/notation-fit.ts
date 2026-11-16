@@ -10,27 +10,49 @@ export function observeNotationFit(): void {
   initialized = true;
 
   const observed = new Set<HTMLElement>();
+  const sizes = new Map<HTMLElement, { width: number; height: number }>();
+  const pending = new Map<HTMLElement, { width: number; height: number }>();
+  let frame: number | undefined;
   const resizeObserver = new ResizeObserver((entries) => {
     for (const entry of entries) {
       const box = entry.target;
-      if (!(box instanceof HTMLElement) || entry.contentRect.width <= 0)
+      const { width, height } = entry.contentRect;
+      if (!(box instanceof HTMLElement) || width <= 0) continue;
+      const previous = sizes.get(box);
+      if (
+        previous?.width === width &&
+        previous.height === height &&
+        !pending.has(box)
+      )
         continue;
-      const grids = box.querySelectorAll<HTMLElement>(".notation-systems");
-      if (!grids.length) throw new Error("Notensystem-Raster nicht gefunden.");
+      pending.set(box, { width, height });
+    }
 
-      const baseScale = Number(box.dataset.scale || "1") || 1;
-      for (const grid of grids) grid.style.zoom = "1";
-      for (const grid of grids) {
-        if (!grid.getClientRects().length) continue;
-        const width = grid.scrollWidth;
-        if (width > 0) {
-          grid.style.zoom = String(
-            Math.min(baseScale, entry.contentRect.width / width),
-          );
-          box.dataset.fitted = "";
+    if (pending.size === 0 || frame !== undefined) return;
+    frame = requestAnimationFrame(() => {
+      frame = undefined;
+      for (const [box, size] of pending) {
+        if (!observed.has(box)) continue;
+        sizes.set(box, size);
+        const grids = box.querySelectorAll<HTMLElement>(".notation-systems");
+        if (!grids.length)
+          throw new Error("Notensystem-Raster nicht gefunden.");
+
+        const baseScale = Number(box.dataset.scale || "1") || 1;
+        for (const grid of grids) grid.style.zoom = "1";
+        for (const grid of grids) {
+          if (!grid.getClientRects().length) continue;
+          const gridWidth = grid.scrollWidth;
+          if (gridWidth > 0) {
+            grid.style.zoom = String(
+              Math.min(baseScale, size.width / gridWidth),
+            );
+            box.dataset.fitted = "";
+          }
         }
       }
-    }
+      pending.clear();
+    });
   });
 
   function observeSystems(): void {
@@ -49,9 +71,14 @@ export function observeNotationFit(): void {
   document.addEventListener("astro:before-swap", () => {
     resizeObserver.disconnect();
     observed.clear();
+    sizes.clear();
+    pending.clear();
+    if (frame !== undefined) cancelAnimationFrame(frame);
+    frame = undefined;
   });
   document.fonts.addEventListener("loadingdone", () => {
     for (const box of observed) {
+      sizes.delete(box);
       resizeObserver.unobserve(box);
       resizeObserver.observe(box);
     }

@@ -498,7 +498,8 @@
 }
 
 .notation-builder-duration-btn.is-active .notation-builder-duration-icon,
-.notation-builder-duration-btn[aria-pressed="true"] .notation-builder-duration-icon {
+.notation-builder-duration-btn[aria-pressed="true"]
+  .notation-builder-duration-icon {
   color: #ffffff;
 }
 

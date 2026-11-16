@@ -1,8 +1,8 @@
 import { expect, type Locator, test } from '@playwright/test';
 
-const pages = ['/', '/audio/songwriting/rock-komposition/'];
-const notationPage = '/audio/theory/100/104-tabulatur-notensystem/';
+const notationPage = '/audio/theory/100-general/104-tabulatur-notensystem/';
 const guidePage = '/audio/referenzen-werkzeuge/visualisierungen-erklaert/notensystem/';
+const pages = ['/', '/audio/songwriting/rock-komposition/', notationPage];
 
 for (const path of pages) {
   test(`lädt ${path} ohne Fehler`, async ({ page }) => {

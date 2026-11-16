@@ -339,8 +339,7 @@
   color: #15803d;
 }
 
-:root[data-theme="dark"]
-  .learning-module-stat[data-quiz-status="completed"] {
+:root[data-theme="dark"] .learning-module-stat[data-quiz-status="completed"] {
   border-color: #86efac;
   color: #86efac;
 }

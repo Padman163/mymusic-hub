@@ -7,7 +7,7 @@
 * **Typografie & Noten-Font:** SMuFL-kompatible Bravura-Schriftart unter `public/alphatab/font/`.
 * **Audio-Engine:** `@coderline/alphatab` (`^1.9.0`) mit Web-Worker unter `public/alphatab/alphaTab.worker.mjs`.
 * **Serverless Backend:** Netlify Functions (`@netlify/functions` `^6.1.0`) unter `netlify/functions/contributions.ts` mit Datenhaltung via GitHub REST API in `data/contributions.json`.
-* **Testumgebung:** Nativer Node.js Test-Runner (`node --test tests/*.test.mjs`).
+* **Testumgebung:** Vitest (`npm test`); End-to-End-Tests mit Playwright (`npm run test:e2e`).
 * **Laufzeitumgebung:** Node.js 22.x, npm 10.x.
 
 ---

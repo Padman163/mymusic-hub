@@ -3,10 +3,10 @@ import {
   clampStep,
   DEFAULT_BUILDER_DURATIONS,
   DEFAULT_NOTATION_STEP,
-  describeBuilderState,
   DURATION_GLYPHS,
   DURATION_SHORT_NAMES,
   DURATION_SVG_DATA,
+  describeBuilderState,
   type NotationBuilderConfig,
   renderNotationBuilderSvg,
   stepToPitchName,
@@ -110,7 +110,7 @@ if (maxNotes === 1 && notes.length > 0 && notes[0].type !== "rest") {
 }
 const placedNote: NotationNote | null = placedNotes[0] ?? null;
 const activeDuration: Duration =
-  lockedDuration ?? initialDuration ?? (placedNote?.duration ?? "quarter");
+  lockedDuration ?? initialDuration ?? placedNote?.duration ?? "quarter";
 
 const durationList = (allowedDurations ?? DEFAULT_BUILDER_DURATIONS).map(
   (dur) => ({

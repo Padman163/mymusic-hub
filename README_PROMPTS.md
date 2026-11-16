@@ -58,7 +58,7 @@ src/
 │   ├── notation.css                 # Notenlinien, Notenköpfe, Vektoren
 │   └── sidebar.css                  # Layout-Regeln
 │
-└── tests/                           # 🧪 Automatisierte Unit-Tests (Node.js nativ)
+└── tests/                           # 🧪 Automatisierte Unit-Tests (Vitest)
     ├── music-notation.test.mjs      # Geometrie-, Takt- und Renderer-Tests
     └── [feature].test.mjs           # Weitere isolierte Modul-Tests
 ```
@@ -140,19 +140,19 @@ Aufgabe:
 
 ---
 
-### Prompt 4: Unit-Test für Modul erstellen (`node --test`)
-> **Zweck:** Generiert sofortige Regressionstests für das native Test-System.
+### Prompt 4: Unit-Test für Modul erstellen (Vitest)
+> **Zweck:** Generiert sofortige Regressionstests mit Vitest.
 
 ```markdown
-Erstelle die Testdatei `tests/[thema].test.mjs` für `#file:src/components/music/[thema].ts`.
+Erstelle die Testdatei `tests/[thema].test.ts` für `#file:src/lib/[thema].ts`.
 
 Vorgaben:
-- Verwende ausschließlich den nativen Node.js-Testrunner: `import { test, describe, it } from 'node:test'` und `import assert from 'node:assert/strict'`.
+- Verwende Vitest: `import { describe, it, expect } from 'vitest'`.
 - Teste:
   1. Standardfälle (Happy Path)
   2. Grenzwerte und Edge Cases (0, negative Zahlen, leere Arrays)
   3. Fehlerbehandlung bei ungültigen Eingaben
-- Muss ausführbar sein via: `node --test tests/[thema].test.mjs`.
+- Muss ausführbar sein via: `npx vitest run tests/[thema].test.ts`.
 - Gib nur den Code der Testdatei aus.
 ```
 
