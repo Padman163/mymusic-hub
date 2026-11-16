@@ -21,10 +21,17 @@
           "title": "frequenz",
           "markdownContent": "das ist eine frequenz",
           "visualComponent": "none"
+        },
+        {
+          "id": "tb-2-951426",
+          "order": 2,
+          "title": "höhe",
+          "markdownContent": "## 2 test",
+          "visualComponent": "none"
         }
       ],
       "createdAt": "2026-11-15T23:43:32.583Z",
-      "updatedAt": "2026-11-15T23:43:32.583Z"
+      "updatedAt": "2026-11-16T00:08:43.497Z"
     }
   ],
   "questions": []
