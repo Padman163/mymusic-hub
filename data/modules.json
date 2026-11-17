@@ -10,8 +10,8 @@
       "dStage": "D1",
       "tags": [
         "Allgemein",
-        "Notensystem",
-        "Violinschlüssel"
+        "Violinschlüssel",
+        "Notensystem"
       ],
       "hasPractice": false,
       "theoryBaseXp": 30,
@@ -22,23 +22,27 @@
           "id": "tb-101-1",
           "order": 1,
           "title": "Schallwelle & Kammerton A",
-          "markdownContent": "Klang entsteht durch periodische Luftdruckschwankungen (Frequenz $f$ in $\\text{Hz}$). Der internationale **Kammerton A4** schwingt mit exakt:\n\n$$f = 440\\text{ Hz}$$\n\nEine **Oktave höher** verdoppelt sich die Frequenz auf $880\\text{ Hz}$; eine Oktave tiefer halbiert sie sich auf $220\\text{ Hz}$."
+          "markdownContent": "Klang entsteht durch periodische Luftdruckschwankungen (Frequenz $f$ in $\\text{Hz}$). Der internationale **Kammerton A4** schwingt mit exakt:\n\n$$f = 440\\text{ Hz}$$\n\nEine **Oktave höher** verdoppelt sich die Frequenz auf $880\\text{ Hz}$; eine Oktave tiefer halbiert sie sich auf $220\\text{ Hz}$.",
+          "baseXp": 10,
+          "tags": []
         },
         {
           "id": "tb-101-2",
           "order": 2,
           "title": "Fünf Linien & der Violinschlüssel",
-          "markdownContent": "Ein Standard-Notensystem besitzt **fünf Linien** und vier Zwischenräume. Der **Violinschlüssel (G-Schlüssel)** umschlingt die zweite Linie von unten und verankert dort das eingestrichene **G4**.\n\n<Notation clef={\"treble\"} notes={[{\"type\":\"filled\",\"step\":2,\"duration\":\"quarter\"},{\"type\":\"filled\",\"step\":4,\"duration\":\"quarter\"}]} />"
+          "markdownContent": "Ein Standard-Notensystem besitzt **fünf Linien** und vier Zwischenräume. Der **Violinschlüssel (G-Schlüssel)** umschlingt die zweite Linie von unten und verankert dort das eingestrichene **G4**.\n\n<Notation clef={\"treble\"} notes={[{\"type\":\"filled\",\"step\":2,\"duration\":\"quarter\"},{\"type\":\"filled\",\"step\":4,\"duration\":\"quarter\"}]} />",
+          "tags": []
         },
         {
           "id": "tb-3-3b1b7f",
           "order": 3,
           "title": "notation beispiel",
-          "markdownContent": "### Zwölf Töne und die Oktave\n\nFür Musik teilen wir den Weg von einem Ton bis zu seinem nächsthöheren Namensvetter in **zwölf Halbtonschritte**. So entstehen die zwölf Tonklassen: **C, C♯/D♭, D, D♯/E♭, E, F, F♯/G♭, G, G♯/A♭, A, A♯/B♭ und B**. Stell sie dir wie zwölf gleichmäßige Stufen vor; nach der zwölften Stufe beginnt dieselbe Folge wieder.\n\n<Notation clef=\"treble\" notes={[]} />"
+          "markdownContent": "### Zwölf Töne und die Oktave\n\nFür Musik teilen wir den Weg von einem Ton bis zu seinem nächsthöheren Namensvetter in **zwölf Halbtonschritte**. So entstehen die zwölf Tonklassen: **C, C♯/D♭, D, D♯/E♭, E, F, F♯/G♭, G, G♯/A♭, A, A♯/B♭ und B**. Stell sie dir wie zwölf gleichmäßige Stufen vor; nach der zwölften Stufe beginnt dieselbe Folge wieder.\n\n<Notation clef=\"treble\" notes={[]} />",
+          "tags": []
         }
       ],
       "createdAt": "2026-11-16T00:00:00.000Z",
-      "updatedAt": "2026-11-16T14:53:56.356Z"
+      "updatedAt": "2026-11-17T08:48:56.602Z"
     },
     {
       "id": "guitar-102",
