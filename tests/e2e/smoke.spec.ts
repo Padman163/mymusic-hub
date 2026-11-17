@@ -123,14 +123,20 @@ test('richtet Builder-Karten und Aktionen einheitlich aus', async ({ page }) => 
     const rows = editor.querySelector<HTMLElement>('.theory-block-rows')!;
     const first = rows.firstElementChild!.getBoundingClientRect();
     const last = rows.lastElementChild!.getBoundingClientRect();
+    const groupCard = rows.querySelector<HTMLElement>('.theory-block-group')!;
+    const groupRows = [...groupCard.querySelectorAll<HTMLElement>(
+      '.theory-block-row, .module-exercise-row',
+    )];
     const add = editor.querySelector<HTMLElement>('.theory-block-add')!.getBoundingClientRect();
-    const rowGap = Number.parseFloat(getComputedStyle(rows).rowGap);
+    const rowGap = Number.parseFloat(getComputedStyle(groupCard).rowGap);
     const addButton = editor.querySelector<HTMLElement>('.theory-block-add')!;
     const groupButton = editor.querySelector<HTMLElement>('.theory-block-group-selected')!;
     return {
       betweenSelectAndRows: first.top - group.bottom,
       betweenRowsAndAdd: add.top - last.bottom,
-      betweenGroupedRows: last.top - first.bottom,
+      betweenGroupedRows:
+        groupRows[1]!.getBoundingClientRect().top -
+        groupRows[0]!.getBoundingClientRect().bottom,
       rowGap,
       actionHeights: [
         groupButton.getBoundingClientRect().height,
@@ -140,7 +146,7 @@ test('richtet Builder-Karten und Aktionen einheitlich aus', async ({ page }) => 
         getComputedStyle(groupButton).marginTop,
         getComputedStyle(addButton).marginTop,
       ],
-      rowCards: [...rows.children].map((row) => {
+      rowCards: groupRows.map((row) => {
         const style = getComputedStyle(row);
         return { borderTopWidth: style.borderTopWidth, padding: style.padding };
       }),
@@ -153,6 +159,18 @@ test('richtet Builder-Karten und Aktionen einheitlich aus', async ({ page }) => 
   expect(Number.parseFloat(spacing.actionTopMargins[0])).toBeGreaterThan(0);
   expect(spacing.rowCards[0]).toEqual(spacing.rowCards[1]);
   await page.locator('.theory-group-summary').click();
+  await expect(page.locator('.theory-block-row[data-group-position="last"]')).toBeVisible();
+  const groupedRowsInsideCard = await page.locator('.theory-block-group').evaluate((group) => {
+    const groupRect = group.getBoundingClientRect();
+    const members = [...group.querySelectorAll<HTMLElement>(
+      '.theory-block-row, .module-exercise-row',
+    )];
+    return members.length === 2 && members.every((member) => {
+      const rect = member.getBoundingClientRect();
+      return rect.height > 0 && rect.top >= groupRect.top && rect.bottom <= groupRect.bottom;
+    });
+  });
+  expect(groupedRowsInsideCard).toBe(true);
   const nestedControls = page.locator('.theory-block-row[data-group-position="first"] .theory-block-controls');
   const groupedRow = page.locator('.theory-block-row[data-group-position="last"]');
   const groupedLayout = await groupedRow.evaluate((row) => {
@@ -167,15 +185,15 @@ test('richtet Builder-Karten und Aktionen einheitlich aus', async ({ page }) => 
   expect(new Set(groupButtonHeights).size).toBe(1);
   await expect(page.locator('.theory-group-ungroup')).toHaveText('−');
   const groupActionPlacement = await page.locator('.theory-group-editor-actions').evaluate((element) => {
-    const row = element.closest<HTMLElement>('.theory-block-row')!;
-    const rowStyle = getComputedStyle(row);
+    const group = element.closest<HTMLElement>('.theory-block-group')!;
+    const groupStyle = getComputedStyle(group);
     const actionsStyle = getComputedStyle(element);
-    const rowRect = row.getBoundingClientRect();
+    const groupRect = group.getBoundingClientRect();
     const actionsRect = element.getBoundingClientRect();
     return {
-      topOffset: actionsRect.top - rowRect.top,
-      rightOffset: rowRect.right - actionsRect.right,
-      cardPaddingTop: Number.parseFloat(rowStyle.paddingTop),
+      topOffset: actionsRect.top - groupRect.top,
+      rightOffset: groupRect.right - actionsRect.right,
+      cardPaddingTop: Number.parseFloat(groupStyle.paddingTop),
       topInset: Number.parseFloat(actionsStyle.top),
       rightInset: Number.parseFloat(actionsStyle.right),
     };
@@ -203,7 +221,7 @@ test('richtet Builder-Karten und Aktionen einheitlich aus', async ({ page }) => 
   await expect(page.locator('.theory-block-row[data-group-position="first"]'))
     .toHaveAttribute('data-group-collapsed', 'true');
   const collapsedGroupAlignment = await page
-    .locator('.theory-block-row[data-group-position="first"]')
+    .locator('.theory-block-group')
     .evaluate((row) => {
       const summary = row.querySelector<HTMLElement>('.theory-group-summary')!;
       const actions = row.querySelector<HTMLElement>('.theory-group-editor-actions')!;

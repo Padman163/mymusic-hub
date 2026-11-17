@@ -230,6 +230,13 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     );
     if (!groupTitle) throw new Error("Gruppentitel fehlt");
     expect(groupTitle.value).toBe("A & C");
+    const groupCard = editor.element.querySelector<HTMLDivElement>(
+      ".theory-block-group",
+    );
+    expect(groupCard).not.toBeNull();
+    expect(groupCard?.querySelectorAll(".theory-block-row")).toHaveLength(2);
+    expect(rows[0].parentElement).toBe(groupCard);
+    expect(rows[2].parentElement).toBe(groupCard);
     expect(rows[0].dataset.groupPosition).toBe("first");
     expect(rows[2].dataset.groupPosition).toBe("last");
     expect(rows[1].dataset.groupPosition).toBeUndefined();
@@ -383,6 +390,7 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
 
     const theoryRow = form.querySelector<HTMLDivElement>(".theory-block-row");
     const exerciseRow = form.querySelector<HTMLDivElement>(".module-exercise-row");
+    const groupCard = form.querySelector<HTMLDivElement>(".theory-block-group");
     expect(theoryRow?.dataset.groupPosition).toBe("first");
     expect(exerciseRow?.dataset).toMatchObject({
       groupId,
@@ -390,11 +398,15 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
       groupPosition: "last",
     });
     expect(theoryRow?.nextElementSibling).toBe(exerciseRow);
+    expect(theoryRow?.parentElement).toBe(groupCard);
+    expect(exerciseRow?.parentElement).toBe(groupCard);
+    expect(groupCard?.querySelectorAll(".theory-block-row, .module-exercise-row"))
+      .toHaveLength(2);
     expect(exerciseRow?.querySelector(".theory-group-editor-heading")).toBeNull();
-    expect(theoryRow?.querySelector(".theory-group-summary")?.textContent).toBe(
+    expect(groupCard?.querySelector(".theory-group-summary")?.textContent).toBe(
       `Abschnitt · ${groupTitle}`,
     );
-    expect(theoryRow?.querySelector(".theory-group-editor-actions")?.textContent)
+    expect(groupCard?.querySelector(".theory-group-editor-actions")?.textContent)
       .toContain("−");
     expect(controller.theoryBlockEditor.contentOrder()).toEqual(contentOrder);
   });
@@ -410,8 +422,8 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     const rows = Array.from(
       editor.element.querySelectorAll<HTMLDivElement>(".theory-block-row"),
     );
-    const details = rows[0].querySelector<HTMLDetailsElement>(
-      ".theory-group-details",
+    const details = editor.element.querySelector<HTMLDetailsElement>(
+      ".theory-block-group .theory-group-details",
     );
     if (!details) throw new Error("Abschnittsgruppe fehlt");
     expect(details.open).toBe(false);
@@ -426,7 +438,9 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     )).toBe(true);
     expect(editor.contentOrder().map(({ id }) => id)).toEqual(["a", "b", "c"]);
 
-    rows[0].querySelector<HTMLButtonElement>(".theory-group-down")?.click();
+    editor.element
+      .querySelector<HTMLButtonElement>(".theory-group-down")
+      ?.click();
     expect(editor.contentOrder().map(({ id }) => id)).toEqual(["c", "a", "b"]);
 
     details.open = false;

@@ -251,56 +251,19 @@
   background: var(--sl-color-bg);
 }
 
-.theory-block-row[data-group-position="first"],
-.theory-block-row[data-group-position="single"],
-.module-exercise-row[data-group-position="first"],
-.module-exercise-row[data-group-position="single"] {
+.theory-block-group {
+  position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-}
-
-.theory-block-row[data-group-position="first"],
-.module-exercise-row[data-group-position="first"] {
+  gap: 0.85rem;
   min-width: 0;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 0.4rem;
+  padding: 0.85rem;
+  background: var(--sl-color-bg);
 }
 
-.theory-block-row[data-group-position="first"] .theory-group-editor-heading,
-.theory-block-row[data-group-position="single"] .theory-group-editor-heading,
-.module-exercise-row[data-group-position="first"] .theory-group-editor-heading,
-.module-exercise-row[data-group-position="single"]
-  .theory-group-editor-heading {
-  grid-column: 1 / -1;
-}
-
-.theory-block-row[data-group-position="first"] .theory-block-details,
-.theory-block-row[data-group-position="single"] .theory-block-details,
-.module-exercise-row[data-group-position="first"] .theory-block-details,
-.module-exercise-row[data-group-position="single"] .theory-block-details {
-  grid-column: 1;
-  grid-row: 2;
-  margin: 0.25rem 0 0 1.25rem;
-  border-left: 1px solid var(--sl-color-gray-5);
-  padding-left: 0.75rem;
-}
-
-.theory-block-row[data-group-position="first"] .theory-block-controls,
-.theory-block-row[data-group-position="single"] .theory-block-controls,
-.module-exercise-row[data-group-position="first"] .theory-block-controls,
-.module-exercise-row[data-group-position="single"] .theory-block-controls {
-  position: static;
-  grid-column: 2;
-  grid-row: 2;
-  align-self: start;
-  justify-self: end;
-  z-index: 1;
-  margin-top: 0.25rem;
-  transform: none;
-}
-
-.theory-block-row[data-group-position="middle"],
-.theory-block-row[data-group-position="last"],
-.module-exercise-row[data-group-position="middle"],
-.module-exercise-row[data-group-position="last"] {
+.theory-block-group > .theory-block-row,
+.theory-block-group > .module-exercise-row {
   margin-left: 1.25rem;
 }
 
@@ -326,58 +289,8 @@
   outline-offset: 2px;
 }
 
-.theory-block-row[data-group-collapsed="true"]:not(
-  [data-group-position="first"]
-):not([data-group-position="single"]) {
-  display: none;
-}
-
-.module-exercise-row[data-group-collapsed="true"]:not(
-  [data-group-position="first"]
-):not([data-group-position="single"]) {
-  display: none;
-}
-
-.theory-block-row[data-group-collapsed="true"][data-group-position="first"],
-.theory-block-row[data-group-collapsed="true"][data-group-position="single"],
-.module-exercise-row[data-group-collapsed="true"][data-group-position="first"],
-.module-exercise-row[data-group-collapsed="true"][data-group-position="single"] {
-  grid-template-columns: minmax(0, 1fr) auto;
-}
-
-.theory-block-row[data-group-collapsed="true"][data-group-position="first"]
-  .theory-group-editor-heading,
-.theory-block-row[data-group-collapsed="true"][data-group-position="single"]
-  .theory-group-editor-heading,
-.module-exercise-row[data-group-collapsed="true"][data-group-position="first"]
-  .theory-group-editor-heading,
-.module-exercise-row[data-group-collapsed="true"][data-group-position="single"]
-  .theory-group-editor-heading {
-  grid-column: 1;
-  grid-row: 1;
-  align-items: center;
-  margin-bottom: 0;
-}
-
-.theory-block-row[data-group-collapsed="true"][data-group-position="first"]
-  .theory-block-details,
-.theory-block-row[data-group-collapsed="true"][data-group-position="single"]
-  .theory-block-details,
-.module-exercise-row[data-group-collapsed="true"][data-group-position="first"]
-  .theory-block-details,
-.module-exercise-row[data-group-collapsed="true"][data-group-position="single"]
-  .theory-block-details {
-  display: none;
-}
-
-.theory-block-row[data-group-collapsed="true"][data-group-position="first"]
-  .theory-block-controls,
-.theory-block-row[data-group-collapsed="true"][data-group-position="single"]
-  .theory-block-controls,
-.module-exercise-row[data-group-collapsed="true"][data-group-position="first"]
-  .theory-block-controls,
-.module-exercise-row[data-group-collapsed="true"][data-group-position="single"]
-  .theory-block-controls {
+.theory-block-row[data-group-collapsed="true"],
+.module-exercise-row[data-group-collapsed="true"] {
   display: none;
 }
 
