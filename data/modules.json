@@ -41,22 +41,6 @@
         "Allgemein"
       ],
       "moduleIds": []
-    },
-    {
-      "id": "q-101-fl-1",
-      "targetLane": "schwer",
-      "questionType": "numeric_input",
-      "prompt": "Berechne die Frequenz zwei Oktaven über 220 Hz (Angabe in Hz).",
-      "correctAnswers": [
-        "880",
-        "880 Hz"
-      ],
-      "explanation": "220 Hz × 2 = 440 Hz (1. Oktave), × 2 = 880 Hz (2. Oktave).",
-      "baseXp": 25,
-      "tags": [
-        "Allgemein"
-      ],
-      "moduleIds": []
     }
   ],
   "quizSettings": {
