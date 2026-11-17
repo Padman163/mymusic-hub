@@ -17,7 +17,7 @@ for (const path of pages) {
   });
 }
 
-test('richtet die Pfeile im Theorieblock waagerecht aus', async ({ page }) => {
+test('richtet Builder-Karten und Aktionen einheitlich aus', async ({ page }) => {
   await page.goto('/projektierung/modul-builder/');
   await expect(page.getByRole('tab')).toHaveText([
     'Übersicht',
@@ -56,6 +56,7 @@ test('richtet die Pfeile im Theorieblock waagerecht aus', async ({ page }) => {
   await page.locator('.theory-block-add').click();
   await page.locator('.theory-block-add').click();
   const controls = page.locator('.theory-block-row').nth(1).locator('.theory-block-controls');
+  await page.locator('.theory-block-row').nth(1).locator('.theory-block-details > summary').click();
   const up = controls.locator('.theory-block-up');
   const down = controls.locator('.theory-block-down');
   const upBox = await up.boundingBox();
@@ -64,8 +65,170 @@ test('richtet die Pfeile im Theorieblock waagerecht aus', async ({ page }) => {
   expect(downBox).not.toBeNull();
   if (!upBox || !downBox) throw new Error('Pfeile nicht sichtbar');
   expect(Math.abs((upBox.y + upBox.height / 2) - (downBox.y + downBox.height / 2))).toBeLessThan(1);
-  expect(await up.evaluate((button) => getComputedStyle(button).marginTop)).toBe('0px');
-  expect(await down.evaluate((button) => getComputedStyle(button).marginTop)).toBe('0px');
+  const controlPlacement = await controls.evaluate((element) => {
+    const row = element.parentElement!;
+    const rowStyle = getComputedStyle(row);
+    const controlsStyle = getComputedStyle(element);
+    const rowRect = row.getBoundingClientRect();
+    const controlsRect = element.getBoundingClientRect();
+    return {
+      topOffset: controlsRect.top - rowRect.top,
+      expectedTopOffset:
+        Number.parseFloat(rowStyle.borderTopWidth) +
+        Number.parseFloat(controlsStyle.top),
+      topInset: Number.parseFloat(controlsStyle.top),
+      rightOffset: rowRect.right - controlsRect.right,
+      expectedRightOffset:
+        Number.parseFloat(rowStyle.borderRightWidth) +
+        Number.parseFloat(controlsStyle.right),
+      rightInset: Number.parseFloat(controlsStyle.right),
+    };
+  });
+  expect(Math.abs(controlPlacement.topOffset - controlPlacement.expectedTopOffset)).toBeLessThan(1);
+  expect(Math.abs(controlPlacement.rightOffset - controlPlacement.expectedRightOffset)).toBeLessThan(1);
+  expect(controlPlacement.topInset).toBeLessThanOrEqual(8);
+  expect(controlPlacement.rightInset).toBeLessThanOrEqual(8);
+  await page.locator('.theory-block-row').nth(1).locator('.theory-block-details > summary').click();
+  const collapsedBlockAlignment = await controls.evaluate((element) => {
+    const summary = element.parentElement!.querySelector<HTMLElement>(
+      '.theory-block-details > summary',
+    )!;
+    const summaryRect = summary.getBoundingClientRect();
+    const controlsRect = element.getBoundingClientRect();
+    return Math.abs(
+      summaryRect.top + summaryRect.height / 2 -
+      (controlsRect.top + controlsRect.height / 2),
+    );
+  });
+  expect(collapsedBlockAlignment).toBeLessThan(1);
+  const controlStyles = await page.locator('.theory-block-controls > button').evaluateAll((buttons) =>
+    buttons.map((button) => {
+      const style = getComputedStyle(button);
+      return {
+        height: button.getBoundingClientRect().height,
+        marginTop: style.marginTop,
+        marginBottom: style.marginBottom,
+      };
+    }),
+  );
+  expect(new Set(controlStyles.map((style) => style.height)).size).toBe(1);
+  expect(controlStyles.every((style) => style.marginTop === '0px' && style.marginBottom === '0px')).toBe(true);
+
+  const actionButton = page.locator('.theory-block-group-selected');
+  await page.locator('.theory-block-row').nth(0).locator('.theory-block-select').check();
+  await page.locator('.theory-block-row').nth(1).locator('.theory-block-select').check();
+  await actionButton.click();
+  const spacing = await page.locator('.theory-block-editor').evaluate((editor) => {
+    const group = editor.querySelector<HTMLElement>('.theory-block-group-selected')!.getBoundingClientRect();
+    const rows = editor.querySelector<HTMLElement>('.theory-block-rows')!;
+    const first = rows.firstElementChild!.getBoundingClientRect();
+    const last = rows.lastElementChild!.getBoundingClientRect();
+    const add = editor.querySelector<HTMLElement>('.theory-block-add')!.getBoundingClientRect();
+    const rowGap = Number.parseFloat(getComputedStyle(rows).rowGap);
+    const addButton = editor.querySelector<HTMLElement>('.theory-block-add')!;
+    const groupButton = editor.querySelector<HTMLElement>('.theory-block-group-selected')!;
+    return {
+      betweenSelectAndRows: first.top - group.bottom,
+      betweenRowsAndAdd: add.top - last.bottom,
+      betweenGroupedRows: last.top - first.bottom,
+      rowGap,
+      actionHeights: [
+        groupButton.getBoundingClientRect().height,
+        addButton.getBoundingClientRect().height,
+      ],
+      actionTopMargins: [
+        getComputedStyle(groupButton).marginTop,
+        getComputedStyle(addButton).marginTop,
+      ],
+      rowCards: [...rows.children].map((row) => {
+        const style = getComputedStyle(row);
+        return { borderTopWidth: style.borderTopWidth, padding: style.padding };
+      }),
+    };
+  });
+  expect(Math.abs(spacing.betweenSelectAndRows - spacing.betweenRowsAndAdd)).toBeLessThan(1);
+  expect(Math.abs(spacing.betweenGroupedRows - spacing.rowGap)).toBeLessThan(1);
+  expect(spacing.actionHeights[0]).toBe(spacing.actionHeights[1]);
+  expect(spacing.actionTopMargins[0]).toBe(spacing.actionTopMargins[1]);
+  expect(Number.parseFloat(spacing.actionTopMargins[0])).toBeGreaterThan(0);
+  expect(spacing.rowCards[0]).toEqual(spacing.rowCards[1]);
+  await page.locator('.theory-group-summary').click();
+  const nestedControls = page.locator('.theory-block-row[data-group-position="first"] .theory-block-controls');
+  const groupedRow = page.locator('.theory-block-row[data-group-position="last"]');
+  const groupedLayout = await groupedRow.evaluate((row) => {
+    const style = getComputedStyle(row);
+    return { borderTopWidth: style.borderTopWidth, padding: style.padding };
+  });
+  expect(groupedLayout).toEqual(spacing.rowCards[0]);
+  const groupButtons = page.locator('.theory-group-editor-actions > button');
+  const groupButtonHeights = await groupButtons.evaluateAll((buttons) =>
+    buttons.map((button) => button.getBoundingClientRect().height),
+  );
+  expect(new Set(groupButtonHeights).size).toBe(1);
+  await expect(page.locator('.theory-group-ungroup')).toHaveText('−');
+  const groupActionPlacement = await page.locator('.theory-group-editor-actions').evaluate((element) => {
+    const row = element.closest<HTMLElement>('.theory-block-row')!;
+    const rowStyle = getComputedStyle(row);
+    const actionsStyle = getComputedStyle(element);
+    const rowRect = row.getBoundingClientRect();
+    const actionsRect = element.getBoundingClientRect();
+    return {
+      topOffset: actionsRect.top - rowRect.top,
+      expectedTopOffset:
+        Number.parseFloat(rowStyle.borderTopWidth) +
+        Number.parseFloat(actionsStyle.top),
+      rightOffset: rowRect.right - actionsRect.right,
+      expectedRightOffset:
+        Number.parseFloat(rowStyle.borderRightWidth) +
+        Number.parseFloat(actionsStyle.right),
+      topInset: Number.parseFloat(actionsStyle.top),
+      rightInset: Number.parseFloat(actionsStyle.right),
+    };
+  });
+  expect(Math.abs(groupActionPlacement.topOffset - groupActionPlacement.expectedTopOffset)).toBeLessThan(1);
+  expect(Math.abs(groupActionPlacement.rightOffset - groupActionPlacement.expectedRightOffset)).toBeLessThan(1);
+  expect(groupActionPlacement.topInset).toBe(controlPlacement.topInset);
+  expect(groupActionPlacement.rightInset).toBe(controlPlacement.rightInset);
+  const groupControlBox = await nestedControls.boundingBox();
+  const firstDetailsBox = await page.locator('.theory-block-row[data-group-position="first"] .theory-block-details').boundingBox();
+  const groupedControlsMargin = Number.parseFloat(
+    await nestedControls.evaluate((element) => getComputedStyle(element).marginTop),
+  );
+  expect(groupControlBox).not.toBeNull();
+  expect(firstDetailsBox).not.toBeNull();
+  if (!groupControlBox || !firstDetailsBox) throw new Error('Gruppenaktionen fehlen');
+  expect(groupedControlsMargin).toBe(controlPlacement.topInset);
+  expect(Math.abs(groupControlBox.y - firstDetailsBox.y)).toBeLessThan(1);
+
+  await page.locator('.theory-group-summary').click();
+  await expect(page.locator('.theory-block-row[data-group-position="first"]'))
+    .toHaveAttribute('data-group-collapsed', 'true');
+  const collapsedGroupAlignment = await page
+    .locator('.theory-block-row[data-group-position="first"]')
+    .evaluate((row) => {
+      const summary = row.querySelector<HTMLElement>('.theory-group-summary')!;
+      const actions = row.querySelector<HTMLElement>('.theory-group-editor-actions')!;
+      const summaryRect = summary.getBoundingClientRect();
+      const actionsRect = actions.getBoundingClientRect();
+      return Math.abs(
+        summaryRect.top + summaryRect.height / 2 -
+        (actionsRect.top + actionsRect.height / 2),
+      );
+    });
+  expect(collapsedGroupAlignment).toBeLessThan(1);
+
+  await page.locator('#module-edit-cancel').evaluate((button) => {
+    (button as HTMLButtonElement).hidden = false;
+  });
+  const formActionHeights = await page.locator('.module-builder-form .form-actions > button').evaluateAll((buttons) =>
+    buttons.map((button) => ({
+      height: button.getBoundingClientRect().height,
+      marginTop: getComputedStyle(button).marginTop,
+      marginBottom: getComputedStyle(button).marginBottom,
+    })),
+  );
+  expect(formActionHeights[0].height).toBe(formActionHeights[1].height);
+  expect(formActionHeights.every((style) => style.marginTop === '0px' && style.marginBottom === '0px')).toBe(true);
 
   await page.getByRole('tab', { name: 'Aufgaben' }).click();
   await page.selectOption('#exercise-question-type', 'interactive_notation');

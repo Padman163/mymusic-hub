@@ -499,7 +499,7 @@ export function createTheoryBlockEditor(
       const ungroupButton = document.createElement("button");
       ungroupButton.type = "button";
       ungroupButton.className = "checklist-remove theory-group-ungroup";
-      ungroupButton.textContent = "×";
+      ungroupButton.textContent = "−";
       ungroupButton.title = "Gruppierung lösen";
       ungroupButton.setAttribute("aria-label", "Gruppierung lösen");
       ungroupButton.addEventListener("click", () => {

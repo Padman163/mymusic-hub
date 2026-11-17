@@ -362,6 +362,43 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     expect(saved.contentOrder).toEqual(grouped);
   });
 
+  it("lädt gespeicherte gemischte Gruppen mit der Übung im Abschnitt", () => {
+    const db = seedDb as unknown as ModulesDatabase;
+    const exercise = db.questions.find((q) => q.id === "q-101-ex-1");
+    const block = db.modules[0].theoryBlocks[0];
+    if (!exercise || !block) throw new Error("Testinhalte fehlen");
+    const groupId = "group-mixed";
+    const groupTitle = "Grundlagen";
+    const contentOrder = [
+      { kind: "theory" as const, id: block.id, groupId, groupTitle },
+      { kind: "exercise" as const, id: exercise.id, groupId, groupTitle },
+    ];
+    const form = mountModuleForm();
+    const controller = attachModuleBuilderForm(form);
+    controller.loadModule({
+      ...db.modules[0],
+      theoryBlocks: [{ ...block, groupId, groupTitle }],
+      contentOrder,
+    }, [exercise]);
+
+    const theoryRow = form.querySelector<HTMLDivElement>(".theory-block-row");
+    const exerciseRow = form.querySelector<HTMLDivElement>(".module-exercise-row");
+    expect(theoryRow?.dataset.groupPosition).toBe("first");
+    expect(exerciseRow?.dataset).toMatchObject({
+      groupId,
+      groupTitle,
+      groupPosition: "last",
+    });
+    expect(theoryRow?.nextElementSibling).toBe(exerciseRow);
+    expect(exerciseRow?.querySelector(".theory-group-editor-heading")).toBeNull();
+    expect(theoryRow?.querySelector(".theory-group-summary")?.textContent).toBe(
+      `Abschnitt · ${groupTitle}`,
+    );
+    expect(theoryRow?.querySelector(".theory-group-editor-actions")?.textContent)
+      .toContain("−");
+    expect(controller.theoryBlockEditor.contentOrder()).toEqual(contentOrder);
+  });
+
   it("klappt Abschnittsgruppen wie normale Abschnitte ein und aus", () => {
     const editor = createTheoryBlockEditor([
       { id: "a", order: 1, title: "A", markdownContent: "", groupId: "g", groupTitle: "Abschnitt" },
