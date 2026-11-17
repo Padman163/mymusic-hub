@@ -1,0 +1,124 @@
+---
+import {
+  BASE_XP_DEFAULTS,
+  D_STAGES,
+  MODULE_SCOPES,
+} from "../../lib/module-schema.ts";
+import "../../styles/contribution-tags.css";
+import "../../styles/contribution-checklist.css";
+import "../../styles/module-builder.css";
+
+interface Props {
+  detail?: boolean;
+}
+
+const { detail = false } = Astro.props;
+const scopeLabels: Record<(typeof MODULE_SCOPES)[number], string> = {
+  theory: "Theorie",
+  instrument: "Instrument",
+  production: "Produktion",
+  band: "Band",
+};
+---
+
+<form
+  id="module-builder-form"
+  class="issue-tracker-form module-builder-form"
+  data-module-detail={detail ? "true" : undefined}
+>
+  <details id="module-general-info" class="module-general-info">
+    <summary>Allgemeine Informationen</summary>
+    <div class="module-general-info-fields">
+      <div class="field">
+        <label for="module-title">Modultitel</label>
+        <input
+          id="module-title"
+          name="title"
+          type="text"
+          maxlength="140"
+          placeholder="z. B. Schall, Frequenz & Tonsystem"
+          required
+        />
+      </div>
+
+      <div class="field">
+        <label for="module-description">Kurzbeschreibung</label>
+        <textarea
+          id="module-description"
+          name="description"
+          rows="3"
+          maxlength="2000"
+          placeholder="Worum geht es in diesem Lernmodul?"
+        ></textarea>
+      </div>
+
+      <div class="module-field-grid">
+        <div class="field">
+          <label for="module-scope">Bereich</label>
+          <select id="module-scope" name="scope">
+            {MODULE_SCOPES.map((scope) => (
+              <option value={scope}>{scopeLabels[scope]}</option>
+            ))}
+          </select>
+        </div>
+        <div class="field">
+          <label for="module-level">Level</label>
+          <select id="module-level" name="level">
+            {[100, 200, 300, 400, 500].map((level) => (
+              <option value={String(level)}>Level {level}</option>
+            ))}
+          </select>
+        </div>
+        <div class="field">
+          <label for="module-d-stage">D-Stufe (optional)</label>
+          <select id="module-d-stage" name="dStage">
+            <option value="">Keine</option>
+            {D_STAGES.map((stage) => (
+              <option value={stage}>{stage}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div id="module-tags-field"></div>
+
+      <div class="module-field-grid">
+        <div class="field">
+          <label for="module-theory-base-xp">Basis-XP je Theorie-Block</label>
+          <input
+            id="module-theory-base-xp"
+            name="theoryBaseXp"
+            type="number"
+            min="0"
+            step="1"
+            value={String(BASE_XP_DEFAULTS.theoryBlock)}
+          />
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <div id="module-theory-blocks-field"></div>
+
+  <div class="form-actions">
+    <button type="submit" class="module-save-btn">Modul speichern</button>
+    <button id="module-edit-cancel" type="button" hidden>
+      Bearbeitung abbrechen
+    </button>
+  </div>
+  <p class="form-status" role="status" aria-live="polite"></p>
+</form>
+
+<script>
+  import { attachModuleBuilderForm } from "../../lib/module-builder-ui";
+
+  function initModuleBuilderForms() {
+    const form = document.querySelector<HTMLFormElement>("#module-builder-form");
+    if (form && form.dataset.moduleBuilderAttached !== "true") {
+      attachModuleBuilderForm(form);
+    }
+  }
+
+  initModuleBuilderForms();
+  document.addEventListener("astro:page-load", initModuleBuilderForms);
+</script>

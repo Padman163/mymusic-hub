@@ -1,0 +1,40 @@
+---
+import modulesData from "../../../data/modules.json";
+import type { ModulesDatabase } from "../../lib/module-schema.ts";
+import "../../styles/contribution-tags.css";
+import "../../styles/module-player.css";
+
+interface Props {
+  id?: string;
+}
+
+const { id = "learning-progress-dashboard" } = Astro.props;
+const initialDb = modulesData as unknown as ModulesDatabase;
+---
+
+<section
+  id={id}
+  class="learning-dashboard not-content"
+  aria-label="Lernfortschritt und XP-Dashboard"
+  data-learning-dashboard
+  data-initial-db={JSON.stringify(initialDb)}
+>
+  <p class="learning-muted">Lernfortschritt wird geladen …</p>
+</section>
+
+<script>
+  import { attachProgressDashboard } from "../../lib/module-player-ui";
+
+  function initProgressDashboards() {
+    document
+      .querySelectorAll<HTMLElement>("[data-learning-dashboard]")
+      .forEach((root) => {
+        if (root.dataset.progressDashboardAttached !== "true") {
+          attachProgressDashboard(root);
+        }
+      });
+  }
+
+  initProgressDashboards();
+  document.addEventListener("astro:page-load", initProgressDashboards);
+</script>

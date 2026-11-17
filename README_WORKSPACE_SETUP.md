@@ -9,6 +9,7 @@ Dieser Leitfaden beschreibt Schritt für Schritt, wie ein bestehendes Projekt in
 ```bash
 cd <FOLDER>
 git clone <REPO_URL>
+cd <REPO_VERZEICHNIS>
 git switch main
 git fetch origin
 ```
@@ -16,31 +17,30 @@ git fetch origin
 Wenn du das Repository frisch geklont hast, aktiviere die Subsysteme in der folgenden Reihenfolge, um Fehlern gezielt vorzubeugen:
 
 ### Schritt 1: Laufzeitumgebung validieren
-Astro, moderne ES-Module und der native Test-Runner setzen eine aktuelle Node.js-Laufzeitumgebung voraus:
+Astro und Vitest setzen eine aktuelle Node.js-Laufzeitumgebung voraus:
 ```bash
 node -v
 npm -v
 ```
-* **Anforderung:** Node.js $\ge 22.0.0$ und npm $\ge 10.0.0$.
-* **Warum dieser Schritt nötig ist:** Veraltete Node-Versionen unterstützen native ES-Importe, moderne WebCrypto-APIs und den Node-Testrunner nicht, was zu Syntaxfehlern beim Build führt.
+* **Anforderung:** Node.js 24 LTS und npm 10 oder neuer; die genauen Anforderungen stehen in den `engines` der installierten Abhängigkeiten.
+* **Warum dieser Schritt nötig ist:** Veraltete Laufzeitversionen können mit Astro oder Vitest inkompatibel sein.
 
 ### Schritt 2: Abhängigkeiten installieren
 ```bash
 # Installiert /node_modules
 npm install
 
-npm install @astrojs/netlify
 ```
-* **Warum dieser Schritt nötig ist:** Ein frisch geklonter Workspace enthält keinen Ordner `node_modules/`. Dieser Befehl liest die `package-lock.json` ein und installiert exakt die benötigten Frameworks (Astro, Starlight, Sharp, KaTeX, Biome, Vitest, Playwright).
+* **Warum dieser Schritt nötig ist:** Ein frisch geklonter Workspace enthält keinen Ordner `node_modules/`. Der Befehl installiert die Abhängigkeiten anhand von `package.json` und `package-lock.json`.
 
 ### Schritt 3: Basis-Frontend starten & prüfen (Isolierter Modus)
 ```bash
-# Updated /.astro und startet App ohne Serverfunktionen und APIs bleiben inaktiv
+# Aktualisiert /.astro und startet die App ohne Netlify Functions
 npm run dev
 ```
 * **URL:** Öffne `http://localhost:4321` im Browser.
 * **Was geprüft wird:** Lädt das Astro-Frontend? Werden Styles, die Starlight-Sidebar und statische Komponenten gerendert?
-* **Warum dieser Schritt nötig ist:** Serverless Functions und externe APIs bleiben inaktiv. Du stellst sicher, dass die Kern-Anwendung fehlerfrei kompiliert, ohne von Backend-Token oder externen Diensten abhängig zu sein.
+* **Warum dieser Schritt nötig ist:** Netlify Functions bleiben inaktiv. Die lokale Modul-API liest und schreibt `data/modules.json` direkt im Workspace, ohne GitHub-Token oder `GITHUB_BRANCH`.
 
 ### Schritt 4: Statische Hygiene & Code-Validierung prüfen und anpassen
 Stelle sicher, dass im geklonten Branch keine Typen- oder Syntaxkonflikte vorliegen:
@@ -73,28 +73,37 @@ npx netlify-cli login
 
 # Workspace mit deinem Netlify-Projekt verknüpfen
 npx netlify-cli link
+```
 
-# .env im Projekt erstellen lassen und GitHub-Infos eintragen lassen
-npx netlify-cli env:list --plain > .env
-
-# GitHub-API-Zugang für den IssueTracker / Datenspeicher werden in .env erstellt und nicht synchronisiert
-# .env muss bei Verbindungsproblemen geprüft werden
-GITHUB_BRANCH=main
+Trage die GitHub-Konfiguration in die lokale `.env` ein oder passe sie dort an:
+```dotenv
+GITHUB_REPOSITORY=Padman163/mymusic-hub
+GITHUB_TOKEN=<github-token>
+GITHUB_BRANCH=<aktuellen Branch>
 GITHUB_DATA_PATH=data/contributions.json
-GITHUB_REPOSITORY=owner/repository-name
-GITHUB_TOKEN=ghp_deinPersoenlicherFineGrainedTokenHier
+GITHUB_MODULES_PATH=data/modules.json
+```
+* **Branch:** `GITHUB_BRANCH` bestimmt für beide Netlify Functions den GitHub-Branch zum Lesen und Schreiben von Beiträgen **und** Modulen. Er folgt nicht automatisch dem ausgecheckten Git-Branch. Für die Arbeit auf `<aktuellen Branch>` diesen Wert setzen; für einen anderen Ziel-Branch entsprechend ändern. Ohne Wert verwenden beide Functions `main`.
+* **Dateien:** `GITHUB_DATA_PATH` und `GITHUB_MODULES_PATH` sind optional; die oben gezeigten Pfade sind die Standardwerte. Der Ziel-Branch muss die gewünschten Daten enthalten. API-Änderungen werden auf GitHub im konfigurierten Branch gespeichert und nicht automatisch in die lokale Arbeitsdatei übernommen.
+* **Token:** Der GitHub-Token braucht Zugriff auf das Repository und Contents-Lese- und Schreibrechte. `.env` und Token nicht committen oder öffentlich teilen.
+* **Netlify:** Die lokale `.env` konfiguriert nicht automatisch die veröffentlichte Website. Für das jeweilige Netlify-Deploy die entsprechenden Umgebungsvariablen dort separat setzen und danach neu deployen. Ein Branch-Wechsel betrifft beide Datenspeicher, auch auf der veröffentlichten Website.
 
-# Prüfen ob die Variablen mit denen auf Netlify übereinstimmen
+```bash
+# Verknüpfung und den im lokalen Netlify-Kontext wirksamen Branch prüfen
 npx netlify-cli status
-npx netlify-cli dev:exec -- node -p process.env.GITHUB_BRANCH
+# Erstellung von .env im Projekt
+npx netlify-cli env:list --plain > .env
+# .env anpassen, damit Posts auf aktuellen Branch geladen werden und gezogen
+GITHUB_BRANCH=<aktuellen Branch>
+# Variablen auf Netlify anpassen
+
 
 # Fullstack-Entwicklungsserver starten
 npx netlify-cli dev
 ```
 * **URL:** Öffne `http://localhost:8888`.
-* **Warum dieser Schritt nötig ist:** Dieser Befehl führt das Astro-Frontend und die Serverless Functions synchron zusammen. Erst hier funktioniert der vollständige Lebenszyklus des IssueTrackers (Erstellen, Filtern, Checklisten abhaken).
-
-* Die Netlify Function `netlify/functions/contributions.ts` benötigt Schreibrechte über die GitHub REST API, um Beiträge in `data/contributions.json` zu persistieren. Fehlen diese Schlüssel, antwortet die Schnittstelle mit HTTP 503.
+* **Warum dieser Schritt nötig ist:** Dieser Befehl führt das Astro-Frontend und die Netlify Functions zusammen. So lassen sich IssueTracker und Modul-API mit GitHub-Persistenz verwenden.
+* **Prüfen:** `/api/modules` im Browser öffnen und die Modultitel mit der Datei im konfigurierten GitHub-Branch vergleichen. Fehlen `GITHUB_TOKEN` oder `GITHUB_REPOSITORY`, antworten die Functions mit HTTP 503.
 
 ### Schritt 6: E2E-Testbrowser & Lighthouse CI einrichten (Optional)
 
@@ -105,40 +114,7 @@ npx playwright install --with-deps webkit
 
 ```
 
-```bash
-
-# 2. Lighthouse CI CLI installieren (falls noch nicht in devDependencies vorhanden)
-npm install -D @lhci/cli@latest
-
-#create lighthouserc.cjs
-module.exports = {
-  ci: {
-    collect: {
-      // Testet direkt den generierten Astro-Build-Ordner ohne separaten Server-Prozess
-      staticDistDir: './dist',
-      numberOfRuns: 1,
-      settings: {
-        // Unverzichtbar in Linux-Container-/Codespace-Umgebungen
-        chromeFlags: '--no-sandbox --headless --disable-gpu',
-      },
-    },
-    assert: {
-      assertions: {
-        'categories:performance': ['warn', { minScore: 0.8 }],
-        'categories:accessibility': ['error', { minScore: 0.9 }],
-        'categories:best-practices': ['warn', { minScore: 0.9 }],
-        'categories:seo': ['warn', { minScore: 0.9 }],
-      },
-    },
-    upload: {
-      target: 'temporary-public-storage',
-    },
-  },
-};
-
-#create CHROME_PATH
-export CHROME_PATH=$(node -p "require('@playwright/test').chromium.executablePath()")
-```
+Lighthouse CI ist bereits in den Entwicklungsabhängigkeiten und in `lighthouserc.cjs` konfiguriert. Nach `npm run build` startet `npm run audit:lhci` den Audit mit Playwright-Chromium. Die aktuelle Konfiguration lädt Berichte in einen temporären **öffentlichen** Speicher hoch; nur mit zur Veröffentlichung geeigneten Daten ausführen.
 
 ### Lighthouse CI: `autorun` im Detail
 

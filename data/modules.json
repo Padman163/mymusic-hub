@@ -1,0 +1,9 @@
+{
+  "modules": [],
+  "questions": [],
+  "quizSettings": {
+    "quizEasyMinScore": 0.7,
+    "fastlaneMinScore": 0.85,
+    "revision": 1
+  }
+}

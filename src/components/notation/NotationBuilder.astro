@@ -1,0 +1,370 @@
+---
+import {
+  clampStep,
+  DEFAULT_BUILDER_DURATIONS,
+  DEFAULT_NOTATION_STEP,
+  DURATION_GLYPHS,
+  DURATION_SHORT_NAMES,
+  DURATION_SVG_DATA,
+  describeBuilderState,
+  type NotationBuilderConfig,
+  renderNotationBuilderSvg,
+  stepToPitchName,
+} from "../../lib/notation-builder.ts";
+import {
+  measureNumberOffset,
+  type NotationEvent,
+  type NotationNote,
+  SPATIUM,
+  sp,
+} from "../../lib/notation-renderer.ts";
+import { type Duration, durationLabels } from "../../lib/rhythm.ts";
+import type { TimeSignature } from "../../lib/time-signature.ts";
+import "../../styles/notation.css";
+import FinalBar from "../ui/FinalBar.astro";
+import MeasureNumber from "../ui/MeasureNumber.astro";
+import TempoLabel from "../ui/TempoLabel.astro";
+import type { NotationBaseProps } from "./system-layout.ts";
+
+export interface Props extends NotationBaseProps {
+  notes?: NotationEvent[];
+  layoutTimeSignature?: TimeSignature;
+  noteStart?: number;
+  firstNoteX?: number;
+  initialStep?: number;
+  initialDuration?: Duration;
+  allowedDurations?: Duration[];
+  label?: string;
+  /** Beschriftung am markierten Bereich (Standard: aus). */
+  showLabel?: boolean;
+  /** Statuszeile unter dem Takt (Standard: aus). */
+  showStatus?: boolean;
+  /** Tastaturlegende unter dem Takt (Standard: aus). */
+  showHints?: boolean;
+  /** Button-Leiste zur Auswahl des Notenwerts (Standard: aus). */
+  showDurationPicker?: boolean;
+  /** Kompakte Darstellung ("tight" / true = schmal, "wide" = erweiterte Breite). */
+  compact?: boolean | "tight" | "wide";
+  /** Maximale Anzahl an Noten / Slots im Takt (Standard: 1). */
+  maxNotes?: number;
+  /** Fester Notenwert (z.B. "quarter" oder true). Blockiert das Ändern des Notenwerts via Num 1 / Toolbar. */
+  lockDuration?: Duration | boolean;
+}
+
+const {
+  clef = "treble",
+  timeSignature,
+  layoutTimeSignature,
+  accidentals = [],
+  scale = 1,
+  scrollable = false,
+  title,
+  subtitle,
+  tempo,
+  tempoDetail,
+  showLeftBar = false,
+  showRightBar = false,
+  rightBarStyle = "single",
+  repeatStart = false,
+  repeatEnd = false,
+  curves = [],
+  measureNumber,
+  ritAt,
+  aTempoAt,
+  hairpin,
+  hairpins,
+  initialDynamic,
+  noteStart = 0,
+  firstNoteX,
+  notes = [],
+  initialStep = DEFAULT_NOTATION_STEP,
+  initialDuration,
+  allowedDurations,
+  label,
+  showLabel = false,
+  showStatus = false,
+  showHints = false,
+  showDurationPicker = false,
+  compact = false,
+  maxNotes = 1,
+  lockDuration,
+} = Astro.props;
+
+const cursorStep = clampStep(initialStep);
+const lockedDuration: Duration | undefined =
+  typeof lockDuration === "string"
+    ? lockDuration
+    : lockDuration === true
+      ? "quarter"
+      : undefined;
+
+const placedNotes: (NotationNote | null)[] = Array.from(
+  { length: maxNotes },
+  (_, i) => {
+    const ev = notes[i];
+    return ev && ev.type !== "rest" ? ev : null;
+  },
+);
+if (maxNotes === 1 && notes.length > 0 && notes[0].type !== "rest") {
+  placedNotes[0] = notes[0];
+}
+const placedNote: NotationNote | null = placedNotes[0] ?? null;
+const activeDuration: Duration =
+  lockedDuration ?? initialDuration ?? placedNote?.duration ?? "quarter";
+
+const durationList = (allowedDurations ?? DEFAULT_BUILDER_DURATIONS).map(
+  (dur) => ({
+    id: dur,
+    label: durationLabels[dur],
+    shortName: DURATION_SHORT_NAMES[dur],
+    glyph: DURATION_GLYPHS[dur],
+    svg: DURATION_SVG_DATA[dur],
+  }),
+);
+
+const builderConfig: NotationBuilderConfig = {
+  clef,
+  timeSignature,
+  layoutTimeSignature,
+  accidentals,
+  showLeftBar,
+  showRightBar,
+  rightBarStyle,
+  repeatStart,
+  repeatEnd,
+  curves,
+  ritAt,
+  aTempoAt,
+  hairpin,
+  hairpins,
+  noteStart,
+  firstNoteX,
+  notes,
+  initialStep: cursorStep,
+  initialDuration: activeDuration,
+  allowedDurations,
+  showDurationPicker,
+  label,
+  showLabel,
+  compact,
+  maxNotes,
+  lockDuration: lockedDuration ?? (lockDuration ? true : undefined),
+};
+
+const initialSvg = renderNotationBuilderSvg({
+  config: builderConfig,
+  cursorStep,
+  placedNote,
+  placedNotes,
+  activeSlot: 0,
+});
+
+const initialState = describeBuilderState({
+  cursorStep,
+  placedNote,
+  placedNotes,
+  activeSlot: 0,
+  maxNotes,
+  clef,
+  activeDuration,
+});
+
+const hasPieceHeader = Boolean(title || subtitle || tempo || tempoDetail);
+const hasDynamicsBelow =
+  Boolean(hairpin) ||
+  Boolean(hairpins && hairpins.length > 0) ||
+  Boolean(initialDynamic) ||
+  notes.some(
+    (note) =>
+      note.type !== "rest" &&
+      Boolean(
+        note.dynamic ||
+          note.dynamicText ||
+          note.hairpinStart ||
+          note.hairpinEnd,
+      ),
+  );
+
+const measureOffset = measureNumberOffset({
+  clef: clef || undefined,
+  timeSignature,
+  accidentals,
+  repeatStart,
+});
+
+const isCompact = Boolean(compact);
+const fitToWidth = !scrollable && !isCompact;
+---
+
+<div
+  class:list={[
+    "notation-component",
+    "notation-builder",
+    "not-content",
+    {
+      "is-scrollable": scrollable,
+      "has-piece-header": hasPieceHeader,
+      "is-compact": compact,
+    },
+  ]}
+  tabindex="0"
+  role="application"
+  aria-label={label ?? "Interaktiver Notations-Builder"}
+  data-notation-builder
+  data-builder-config={JSON.stringify(builderConfig)}
+  data-cursor-step={String(initialState.cursorStep)}
+  data-cursor-note={initialState.currentNote}
+  data-placed-step={initialState.placedStep !== null ? String(initialState.placedStep) : undefined}
+  data-placed-note={initialState.placedNoteName ?? undefined}
+  data-placed-duration={placedNote ? (placedNote.duration ?? "quarter") : undefined}
+  data-active-duration={activeDuration}
+  data-can-create={String(initialState.canCreate)}
+  data-can-delete={String(initialState.canDelete)}
+  data-max-notes={String(maxNotes)}
+  data-active-slot="0"
+  data-placed-count={String(placedNotes.filter(Boolean).length)}
+  data-placed-steps={JSON.stringify(placedNotes.map((n) => (n ? n.step : null)))}
+  data-placed-notes={JSON.stringify(
+    placedNotes.map((n) => (n ? stepToPitchName(n.step, clef) : null)),
+  )}
+  data-fit-to-width={fitToWidth ? "" : undefined}
+  data-scale={scale}
+  style={`--notation-scale: ${scale}; --notation-spatium: ${SPATIUM * scale}px`}
+  data-tags={JSON.stringify(["Allgemein", "Notensystem", "NotationBuilder"])}
+>
+  {hasPieceHeader && (
+    <header class="notation-piece-header">
+      {(title || subtitle) && (
+        <div class="notation-title-group">
+          {title && <div class="notation-title">{title}</div>}
+          {subtitle && <div class="notation-subtitle">{subtitle}</div>}
+        </div>
+      )}
+      {(tempo || tempoDetail) && (
+        <div class="notation-piece-tempo">
+          <TempoLabel text={tempo ?? ""} detail={tempoDetail} />
+        </div>
+      )}
+    </header>
+  )}
+
+  {showDurationPicker && (
+    <div class="notation-builder-toolbar" role="toolbar" aria-label="Notenwert auswählen">
+      <span class="notation-builder-toolbar-label">Notenwert:</span>
+      <div class="notation-builder-duration-picker" role="radiogroup" aria-label="Notenwerte">
+        {durationList.map((dur) => (
+          <button
+            type="button"
+            class:list={[
+              "notation-builder-duration-btn",
+              { "is-active": dur.id === (placedNote?.duration ?? activeDuration) },
+            ]}
+            data-duration={dur.id}
+            aria-label={dur.label}
+            aria-pressed={dur.id === (placedNote?.duration ?? activeDuration) ? "true" : "false"}
+            title={dur.label}
+          >
+            <svg
+              class="notation-builder-duration-icon"
+              viewBox={dur.svg.viewBox}
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path d={dur.svg.d} transform="scale(1, -1)" fill="currentColor" />
+            </svg>
+          </button>
+        ))}
+      </div>
+    </div>
+  )}
+
+  <div class="notation-builder-body">
+    <div class="notation-systems">
+      <div
+        class:list={[
+          "notation-row",
+          {
+            "has-row-measure-number": measureNumber !== undefined,
+            "has-row-hairpin": hasDynamicsBelow,
+          },
+        ]}
+        style="--notation-row-columns: 1; --notation-grid-columns: minmax(min-content, 1fr); --notation-row-width: 100%"
+      >
+        <div class="notation-cell">
+          <div
+            class:list={[
+              "notation-visual",
+              "embedded",
+              {
+                "has-clef": Boolean(clef),
+                "has-measure-number": measureNumber !== undefined,
+                "has-hairpin": hasDynamicsBelow,
+              },
+            ]}
+          >
+            {measureNumber !== undefined && (
+              <MeasureNumber value={measureNumber} embedded offsetPx={measureOffset} />
+            )}
+            <div class="notation-staff-content">
+              <div class="notation-builder-stage">
+                <Fragment set:html={initialSvg} />
+              </div>
+              {showRightBar && rightBarStyle === "final" && !repeatEnd && (
+                <div class="notation-final-bar"><FinalBar height={sp(4)} /></div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {isCompact && showHints && (
+      <div class="notation-builder-side-hints" aria-label="Tastaturbedienung">
+        {maxNotes > 1 && (
+          <span class="notation-builder-hint-item">←/→: Position</span>
+        )}
+        <span class="notation-builder-hint-item">↑/↓: Tonhöhe</span>
+        <span class="notation-builder-hint-item">Leertaste: Note setzen</span>
+        {showDurationPicker && !lockDuration && (
+          <span class="notation-builder-hint-item">Num 1: Notenwert</span>
+        )}
+        <span class="notation-builder-hint-item">Entf: Löschen</span>
+        <span class="notation-builder-hint-item">Enter: Einloggen</span>
+      </div>
+    )}
+  </div>
+
+  {(showStatus || (!isCompact && showHints)) && (
+    <div class="notation-builder-footer">
+      {showStatus && (
+        <div class="notation-builder-status" aria-live="polite">
+          <span class="notation-builder-status-note">
+            Aktuelle Note: {initialState.currentNote}
+          </span>
+          <span class="notation-builder-status-action">
+            {initialState.isOnPlacedNote
+              ? `Viertelnote ${initialState.currentNote} löschen (Entf)`
+              : initialState.placedNoteName
+                ? `Viertelnote ${initialState.currentNote} erstellen (Leertaste) · ${initialState.placedNoteName} löschen (Entf)`
+                : `Viertelnote ${initialState.currentNote} erstellen (Leertaste)`}
+          </span>
+        </div>
+      )}
+      {!isCompact && showHints && (
+        <span class="notation-builder-hints">
+          {maxNotes > 1 ? "←/→: Position · " : ""}↑/↓: Tonhöhe · Leertaste: Note setzen{showDurationPicker && !lockDuration ? " · Num 1: Notenwert" : ""} · Entf: Löschen · Enter: Einloggen
+        </span>
+      )}
+    </div>
+  )}
+</div>
+
+<script>
+  import { setupNotationBuilders } from "../../lib/notation-builder";
+  import { observeNotationFit } from "../../lib/notation-fit";
+
+  setupNotationBuilders();
+  observeNotationFit();
+  document.addEventListener("astro:page-load", setupNotationBuilders);
+</script>
+

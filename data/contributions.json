@@ -266,25 +266,30 @@
   {
     "id": "09c3b1bf-31b0-424b-99fe-b5ce2151dfe2",
     "type": "Feature",
-    "title": "Interaktive Notations-Komponente",
+    "title": "Interaktive Notations/Tab/Pattern-Komponente",
     "description": "Eintragen von Noten in 3 Schwierigkeitsstufen (Gitarren-TAB, Violinschlüssel, Bassschlüssel).",
     "area": "Theorie",
     "checklist": [
       {
-        "text": "Komponente <InteractiveScoreTrainer/> anlegen",
+        "text": "Komponente für Notation entwickeln",
         "checked": false
       },
       {
-        "text": "AlphaTab / SVG-Canvas zur Eingabevalidierung einbinden",
+        "text": "Komponente für Tab entwickeln",
         "checked": false
       },
       {
-        "text": "Level-Auswahl (Stufe 1 bis 3) programmieren",
+        "text": "Komponente für Klaviatur entwickeln",
+        "checked": false
+      },
+      {
+        "text": "Komponente für Pattenr anpassen",
         "checked": false
       }
     ],
     "status": "New",
-    "createdAt": "2026-11-06T16:16:38.793Z"
+    "createdAt": "2026-11-06T16:16:38.793Z",
+    "priority": "Mittel"
   },
   {
     "id": "e482025a-dadc-41ca-994c-1d21f2fe8c2b",
@@ -333,5 +338,203 @@
     "status": "New",
     "createdAt": "2026-11-06T16:17:39.475Z",
     "priority": "Mittel"
+  },
+  {
+    "id": "ba07ff31-ff44-438d-9e18-b193f2f0a4bf",
+    "type": "Feature",
+    "title": "Beiträge dürfen nicht in main gepostet werden",
+    "description": "Solange Beiträge in einer .json im Programm stehen, müssen sie in eine branch der nicht main ist gespeichert werden, sonst wird jedes mal main gepusht",
+    "area": "Komponente",
+    "priority": "Hoch",
+    "checklist": [
+      {
+        "text": "Komplett anderen Ansatz verfolgen, wie DB",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-12T14:22:10.472Z"
+  },
+  {
+    "id": "8c0f8d22-7cef-4494-a0fc-da71ee2416ad",
+    "type": "Feature",
+    "title": "Notation komplett in Quiz einbinden",
+    "description": "",
+    "area": "Theorie",
+    "priority": "Mittel",
+    "checklist": [
+      {
+        "text": "Theorieteil",
+        "checked": false
+      },
+      {
+        "text": "Quiz",
+        "checked": false
+      },
+      {
+        "text": "Praxisübungen",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-12T14:24:58.752Z"
+  },
+  {
+    "id": "85b11932-b208-4d97-91eb-f6fca160fc28",
+    "type": "Decision",
+    "title": "Was solltest du zu diesem Zeitpunkt beherrschen",
+    "description": "In Verbindung mit Quiz",
+    "area": "Theorie",
+    "priority": "Niedrig",
+    "checklist": [],
+    "status": "New",
+    "createdAt": "2026-11-12T14:25:29.972Z"
+  },
+  {
+    "id": "439450f0-e675-4cf9-ab7c-14030dfc1594",
+    "type": "Bug",
+    "title": "Überarbeitung notation.mdx",
+    "description": "",
+    "area": "Theorie",
+    "priority": "Mittel",
+    "checklist": [],
+    "status": "Resolved",
+    "createdAt": "2026-11-13T00:35:15.710Z"
+  },
+  {
+    "id": "a8b06a98-3ed7-48bb-bb12-f1d6fd84ae19",
+    "type": "Feature",
+    "title": "Module Builder – Autorenwerkbank & Lernpfad",
+    "description": "Autorenwerkbank zum Erstellen und Verwalten von Lernmodulen, Theorie-Blöcken und Aufgaben mit XP-System und interaktivem Lernpfad. Details: /features/README_FEAT_MODULEBUILDER.md\n\nUncool:\nErwartete Tonhöhen (kommagetrennt) --> oktavunabhängiges B. soll einfach B werden dann kann B1-6 einfach angegeben werden\nKommentare:",
+    "area": "Komponente",
+    "priority": "Hoch",
+    "checklist": [
+      {
+        "text": "Builder-Tabs für Module und Katalog öffnen und bedienen",
+        "checked": true
+      },
+      {
+        "text": "Modul mit Metadaten, Tags, XP-Werten und Bestehensgrenzen anlegen und erneut laden",
+        "checked": true
+      },
+      {
+        "text": "Theorie-Blöcke hinzufügen, entfernen, umsortieren und mit KaTeX-Inhalten speichern",
+        "checked": true
+      },
+      {
+        "text": "Theorie-Visualisierungen konfigurieren und im Lernpfad kontrollieren",
+        "checked": true
+      },
+      {
+        "text": "Reine Theorie-Module und Module mit optionalem Praxisschritt korrekt abbilden",
+        "checked": true
+      },
+      {
+        "text": "Ungültige Pflichtfelder und Bestehensgrenzen außerhalb von 0 bis 100 abweisen",
+        "checked": false
+      },
+      {
+        "text": "XP-Basiswerte und Tag-Faktoren im Aufgaben-Builder korrekt berechnen",
+        "checked": false
+      },
+      {
+        "text": "Single-Choice-, Multi-Select- und Zahleneingabe-Aufgaben erstellen und bearbeiten",
+        "checked": false
+      },
+      {
+        "text": "Notationsaufgaben mit Vorschau, Notenschlüssel und erwarteten Antworten konfigurieren",
+        "checked": false
+      },
+      {
+        "text": "Ungültige Aufgaben und Aufgaben ohne existierendes Zielmodul abweisen",
+        "checked": false
+      },
+      {
+        "text": "Katalogansicht wechseln, nach Bereich und Lernspur filtern sowie sortieren",
+        "checked": true
+      },
+      {
+        "text": "Katalog-Zusammenfassung für Blöcke, Aufgaben je Spur und gewichtete XP prüfen",
+        "checked": true
+      },
+      {
+        "text": "Bearbeiten aus dem Katalog lädt den ausgewählten Eintrag im passenden Builder",
+        "checked": true
+      },
+      {
+        "text": "Modullöschung bestätigen und sicherstellen, dass nur zugehörige Aufgaben mitgelöscht werden",
+        "checked": false
+      },
+      {
+        "text": "Modul-API und lokalen Dev-Endpunkt mit data/modules.json prüfen",
+        "checked": false
+      },
+      {
+        "text": "API-Fehler und HTML-Fehlerantworten sichtbar behandeln",
+        "checked": false
+      },
+      {
+        "text": "Dashboard zeigt Level, Gesamt-XP, Fortschritt, Module sowie XP nach Bereich und Tag",
+        "checked": false
+      },
+      {
+        "text": "Lernfortschritt bleibt im Browser erhalten und funktioniert beim SSR ohne localStorage",
+        "checked": false
+      },
+      {
+        "text": "Theorie, Übungen, optionaler Praxisschritt und Quiz in korrekter Reihenfolge freischalten",
+        "checked": false
+      },
+      {
+        "text": "Wiederholte Aufgaben vergeben keine doppelten XP; 500 XP ergeben ein Level",
+        "checked": false
+      },
+      {
+        "text": "Quiz-Bestehensgrenze, Nichtbestehen und Freischaltung des Folgemoduls prüfen",
+        "checked": false
+      },
+      {
+        "text": "Fastlane für gesperrte Module testen; Bestehen aktualisiert Fortschritt und Roadmap",
+        "checked": false
+      },
+      {
+        "text": "Zahleneingaben mit Einheiten und Notationsantworten korrekt auswerten",
+        "checked": false
+      },
+      {
+        "text": "Dashboard und Roadmap nach Lernfortschritt ohne Seitenneuladen aktualisieren",
+        "checked": false
+      },
+      {
+        "text": "Fortschritts-Reset erfordert Bestätigung und setzt den lokalen Lernstand zurück",
+        "checked": false
+      },
+      {
+        "text": "Feature-Tests mit npm test und Projekt-Quality-Gate mit npm run preflight ausführen",
+        "checked": true
+      },
+      {
+        "text": "- Modul-ID --> Soll im Hintergrund automatisch erstellt werden ohne eingabe",
+        "checked": true
+      },
+      {
+        "text": "LaTeX-Mathematik irgendwo erklären",
+        "checked": false
+      },
+      {
+        "text": "Prüfen was die Checkbox für Praxisteil macht",
+        "checked": false
+      },
+      {
+        "text": "XP / Block im Modul immer angeben",
+        "checked": false
+      },
+      {
+        "text": "Builder-Tabs für Aufgaben und öffnen und bedienen",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-16T08:09:21.276Z"
   }
 ]

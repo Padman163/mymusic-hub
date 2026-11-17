@@ -24,7 +24,7 @@
     "test:all": "npm run test && npm run build && npm run test:e2e",
     "audit": "npm audit --audit-level=high",
     "audit:lhci": "CHROME_PATH=$(node -p \"require('@playwright/test').chromium.executablePath()\") lhci autorun",
-    "preflight": "npm run validate && npm run audit && npm run test:all && git diff --check"
+    "preflight": "npm run validate && npm run audit && npm run test:all && npm run audit:lhci && git diff --check"
   },
   "dependencies": {
     "@astrojs/markdown-remark": "^7.3.6",
@@ -32,6 +32,7 @@
     "@astrojs/starlight": "^0.42.10",
     "@coderline/alphatab": "^1.9.0",
     "@netlify/functions": "^6.1.1",
+    "acorn": "^8.19.0",
     "astro": "^7.4.8",
     "rehype-katex": "^7.0.1",
     "remark-math": "^6.0.0",

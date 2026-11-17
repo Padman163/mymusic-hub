@@ -1,0 +1,7 @@
+html:has(.sl-markdown-content[data-wide-content]) {
+  --sl-content-width: 75rem;
+}
+
+html:has(.sl-markdown-content[data-wide-content]) .module-builder-form {
+  max-width: 100%;
+}

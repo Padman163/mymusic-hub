@@ -1,0 +1,99 @@
+---
+title: "101: Schall, Frequenz & Tonsystem"
+description: "Elementarlehre (D1): Akustische Grundlagen, Kammerton, Oktavräume, 12-Ton-System, Vorzeichen und Enharmonik."
+sidebar:
+  order: 1
+scope: "theory"
+level: 100
+dStage: "D1"
+xpReward: 100
+tags: ["Allgemein", "Notensystem"]
+---
+
+
+import FretboardClickable from '../../../../../components/FretboardClickable.astro';
+import DrumPattern from '../../../../../components/DrumPattern.astro';
+
+## 1. Musiktheorie
+
+Wenn eine Schallquelle angeregt wird, gerät sie in Schwingung und bringt die Luft in Bewegung. Diese regelmäßigen Schwingungen hören wir als Ton. Wie schnell die Schwingung abläuft, bestimmt die **Tonhöhe**. Die Anzahl der Schwingungen pro Sekunde heißt **Frequenz** und wird in Hertz (Hz) angegeben.
+
+<section data-tags='["Allgemein", "Frequenz"]'>
+
+### Langsame und schnelle Schwingungen
+
+Im Schaubild siehst du drei Schwingungen über denselben Zeitraum. Die Wellenhöhe ist ähnlich, aber sie bewegen sich unterschiedlich oft hin und her: Je mehr Schwingungen in dieselbe Zeit passen, desto höher ist die Frequenz und desto höher klingt der Ton. Weniger Schwingungen bedeuten eine tiefere Frequenz und einen tieferen Ton.
+
+<figure>
+  <svg viewBox="0 0 720 250" role="img" aria-labelledby="wave-title wave-description">
+    <title id="wave-title">Langsame und schnelle Schwingungen im Vergleich</title>
+    <desc id="wave-description">Drei gleich hohe Wellen über denselben Zeitraum. Die langsame Welle schwingt einmal, die mittlere zweimal und die schnelle viermal. Je mehr Schwingungen, desto höher der Ton.</desc>
+    <line x1="190" y1="48" x2="650" y2="48" stroke="#64748b" stroke-dasharray="4 5" />
+    <line x1="190" y1="118" x2="650" y2="118" stroke="#64748b" stroke-dasharray="4 5" />
+    <line x1="190" y1="188" x2="650" y2="188" stroke="#64748b" stroke-dasharray="4 5" />
+    <text x="12" y="53" fill="currentColor" font-size="16">Langsam · tiefer Ton</text>
+    <text x="12" y="123" fill="currentColor" font-size="16">Mittel</text>
+    <text x="12" y="193" fill="currentColor" font-size="16">Schnell · hoher Ton</text>
+    <path d="M190 48 Q305 8 420 48 T650 48" fill="none" stroke="#38bdf8" stroke-width="4" />
+    <path d="M190 118 Q247.5 78 305 118 T420 118 T535 118 T650 118" fill="none" stroke="#a78bfa" stroke-width="4" />
+    <path d="M190 188 Q218.75 148 247.5 188 T305 188 T362.5 188 T420 188 T477.5 188 T535 188 T592.5 188 T650 188" fill="none" stroke="#f472b6" stroke-width="4" />
+    <line x1="190" y1="226" x2="650" y2="226" stroke="currentColor" stroke-width="1.5" />
+    <path d="M650 226 l-9 -5 v10 z" fill="currentColor" />
+    <text x="408" y="247" fill="currentColor" font-size="14" text-anchor="middle">gleicher Zeitraum</text>
+  </svg>
+  <figcaption>Schematische Darstellung: Bei gleicher Wellenhöhe schwingt der höhere Ton öfter im selben Zeitraum.</figcaption>
+</figure>
+
+### Zwölf Töne und die Oktave
+
+Für Musik teilen wir den Weg von einem Ton bis zu seinem nächsthöheren Namensvetter in **zwölf Halbtonschritte**. So entstehen die zwölf Tonklassen: **C, C♯/D♭, D, D♯/E♭, E, F, F♯/G♭, G, G♯/A♭, A, A♯/B♭ und B**. Stell sie dir wie zwölf gleichmäßige Stufen vor; nach der zwölften Stufe beginnt dieselbe Folge wieder.
+
+Diese Wiederkehr heißt **Oktave**. Eine Oktave höher bedeutet, dass die Frequenz doppelt so groß ist: Die Schwingung vollzieht sich im selben Zeitraum doppelt so oft. Der Tonname bleibt gleich, nur die Tonlage ist höher. Im Schaubild ist das an E2 und E3 zu sehen.
+
+Die Ziffern in Bezeichnungen wie **E2**, **E3** und **E4** geben an, in welcher Oktave der Ton liegt. In der wissenschaftlichen Notation bezeichnet **E2** ein tiefes E, **E3** das E eine Oktave darüber und **E4** das E eine weitere Oktave höher. In der traditionellen D1-Oktavbezeichnung entspricht das der **großen Oktave** (E2), der **kleinen Oktave** (E3) und der **eingestrichenen Oktave** (e' = E4). Die Schreibweisen benennen also dieselbe Tonhöhe in unterschiedlichen Notationssystemen.
+
+<figure>
+  <svg viewBox="0 0 760 240" role="img" aria-labelledby="octave-title octave-description">
+    <title id="octave-title">Eine Oktave verdoppelt die Frequenz</title>
+    <desc id="octave-description">Im selben Zeitraum schwingt E2 mit 82,4 Hertz einmal, während E3 mit 164,8 Hertz zweimal schwingt. E3 hat damit die doppelte Frequenz und klingt eine Oktave höher.</desc>
+    <line x1="205" y1="70" x2="650" y2="70" stroke="#64748b" stroke-dasharray="4 5" />
+    <line x1="205" y1="145" x2="650" y2="145" stroke="#64748b" stroke-dasharray="4 5" />
+    <text x="12" y="75" fill="currentColor" font-size="16">E2 · 82,4 Hz</text>
+    <text x="12" y="150" fill="currentColor" font-size="16">E3 · 164,8 Hz</text>
+    <path d="M205 70 Q316.25 30 427.5 70 T650 70" fill="none" stroke="#38bdf8" stroke-width="4" />
+    <path d="M205 145 Q260.625 105 316.25 145 T427.5 145 T538.75 145 T650 145" fill="none" stroke="#a78bfa" stroke-width="4" />
+    <line x1="205" y1="195" x2="650" y2="195" stroke="currentColor" stroke-width="1.5" />
+    <path d="M650 195 l-9 -5 v10 z" fill="currentColor" />
+    <text x="427" y="220" fill="currentColor" font-size="14" text-anchor="middle">gleicher Zeitraum</text>
+  </svg>
+  <figcaption>E3 schwingt im gleichen Zeitraum doppelt so oft wie E2: eine Oktave höher und mit doppelter Frequenz.</figcaption>
+</figure>
+
+</section>
+<section data-tags='["Allgemein", "EnharmonischeVerwechslung"]'>
+### Halbton- und Ganztonschritte
+
+Warum liegen **E und F** nur einen Halbton auseinander? Die zwölf Schritte einer Oktave werden mit sieben Stammtönen benannt: **C, D, E, F, G, A, B**. Diese Stammtöne liegen nicht alle gleich weit auseinander. In der üblichen Dur-Tonleiter wechseln sich Ganzton- und Halbtonschritte in einem festen Muster ab: **Ganzton – Ganzton – Halbton – Ganzton – Ganzton – Ganzton – Halbton**. In C-Dur liegen die Halbtonschritte dadurch genau zwischen **E–F** und **B–C**. Es gibt dort keinen weiteren Stammton dazwischen; der nächste Schritt ist bereits der nächste Tonname.
+
+In der fortlaufenden Folge der zwölf Halbtonschritte zeigt sich diese Besonderheit direkt: Bei **E–F** und **B–C** führt der nächste Halbtonschritt unmittelbar zum nächsten Stammton – zwischen den Tönen liegt kein zusätzlicher Zwischenton.
+
+Bei anderen benachbarten Stammtönen passt ein weiterer Ton dazwischen: zum Beispiel **F–F♯–G** oder **C–C♯–D**. Ein ♯ erhöht einen Ton um einen Halbton, ein ♭ senkt ihn. Daher können unterschiedliche Namen dieselbe Tonhöhe bezeichnen, zum Beispiel **C♯ und D♭**.
+
+Ein **Ganztonschritt** umfasst zwei Halbtonschritte. Er ist der Abstand zwischen den meisten benachbarten Stammtönen, zum Beispiel **C–D**, **D–E** oder **F–G**. Ein **Halbtonschritt** ist dagegen der kleinste Schritt im zwölfstufigen Tonsystem, etwa **E–F** oder **F–F♯**.
+
+### Enharmonische Verwechslung
+
+In der gleichstufigen Stimmung können zwei unterschiedlich geschriebene Töne exakt dieselbe Tonhöhe haben. Das nennt man **enharmonische Verwechslung**: **F♯ = G♭** und **C♯ = D♭**. Ein Kreuz (**♯**) erhöht den Stammton um einen Halbton; in der deutschen Namensgebung erhält er meist die Endung **-is** (F wird zu **Fis**). Ein Be (**♭**) erniedrigt ihn um einen Halbton; meist kommt die Endung **-es** hinzu (G wird zu **Ges**). Welche Schreibweise verwendet wird, hängt vom musikalischen Zusammenhang ab, auch wenn beide Bezeichnungen für dieselbe Tonhöhe stehen.
+
+
+</section>
+<section data-tags='["Allgemein", "Tipps"]'>
+:::tip[Die wichtigsten Eckpunkte]
+- Ein Ton entsteht durch Schwingungen; je höher die Frequenz, desto höher der Ton.
+- Zwölf Halbtonschritte ergeben eine Oktave und verdoppeln die Frequenz; **E2, E3 und E4** bezeichnen aufsteigende Oktaven.
+- Ein Ganztonschritt umfasst zwei Halbtonschritte; zwölf Halbtonschritte führen von einem Ton (z. B. **E2**) zu seiner Oktave (**E3**).
+- **E–F** und **B–C** liegen direkt einen Halbton auseinander.
+- Enharmonische Töne wie **F♯/G♭** und **C♯/D♭** bezeichnen im gleichstufigen System dieselbe Tonhöhe.
+:::
+
+</section>

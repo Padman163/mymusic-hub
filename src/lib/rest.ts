@@ -17,6 +17,7 @@ export function renderRest(
   x: string | number,
   staffMiddle: number,
   dotted = false,
+  staffSpacing = 9,
 ): string {
   const symbol = restSymbols[duration];
   if (!symbol) throw new Error(`Ungültiger Pausenwert: ${duration}.`);
@@ -24,9 +25,9 @@ export function renderRest(
     glyphText(
       symbol.glyph,
       x,
-      staffMiddle + symbol.offset,
+      staffMiddle + (symbol.offset * staffSpacing) / 9,
       "notation-rest",
       "middle",
-    ) + (dotted ? renderDot(x, staffMiddle - 4.5, 10) : "")
+    ) + (dotted ? renderDot(x, staffMiddle - staffSpacing / 2, 10) : "")
   );
 }
