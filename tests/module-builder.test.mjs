@@ -70,6 +70,35 @@ describe("xp-tags Konfiguration & Berechnung", () => {
 });
 
 describe("module-store Validierung & Store-Operationen", () => {
+  it("speichert explizite Voraussetzungen und erhält sie bei Teiländerungen", () => {
+    const empty = createEmptyModulesDatabase();
+    const db = upsertModule(empty, { id: "elementarlehre", title: "Elementarlehre" });
+    expect(db.modules[0]).not.toHaveProperty("prerequisiteModuleIds");
+
+    const guitar = { id: "gitarre", title: "Gitarre" };
+    const withPrerequisite = upsertModule(db, {
+      ...guitar,
+      prerequisiteModuleIds: [" elementarlehre "],
+    });
+    expect(upsertModule(withPrerequisite, guitar).modules[1].prerequisiteModuleIds)
+      .toEqual(["elementarlehre"]);
+    expect(upsertModule(withPrerequisite, { ...guitar, prerequisiteModuleIds: [] })
+      .modules[1].prerequisiteModuleIds).toEqual([]);
+  });
+
+  it.each([
+    { prerequisiteModuleIds: "elementarlehre" },
+    { prerequisiteModuleIds: [" "] },
+    { prerequisiteModuleIds: ["a", " a "] },
+    { prerequisiteModuleIds: [" gitarre "] },
+  ])(
+    "weist ungültige Voraussetzungen ab: $prerequisiteModuleIds",
+    ({ prerequisiteModuleIds }) => {
+      expect(validateModuleInput({ id: "gitarre", title: "Gitarre", prerequisiteModuleIds }).valid)
+        .toBe(false);
+    },
+  );
+
   it("speichert die gemischte Blockreihenfolge und bewahrt sie bei Teiländerungen", () => {
     const order = [{ kind: "theory", id: "tb" }, { kind: "exercise", id: "q" }];
     let db = upsertModule(createEmptyModulesDatabase(), {

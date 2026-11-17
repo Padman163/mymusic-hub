@@ -145,6 +145,7 @@ export interface LearningModule {
   level: number;
   dStage?: DStage;
   tags: string[];
+  prerequisiteModuleIds?: string[];
   theoryBaseXp: number;
   quizEasyMinScore: number;
   fastlaneMinScore: number;

@@ -374,6 +374,21 @@ export function validateModuleInput(input: unknown): ValidationResult {
   if (input.tags !== undefined && !isStringArray(input.tags, true)) {
     errors.push("tags muss ein Array aus nicht-leeren Strings sein.");
   }
+  if (input.prerequisiteModuleIds !== undefined) {
+    if (!isStringArray(input.prerequisiteModuleIds, true)) {
+      errors.push(
+        "prerequisiteModuleIds muss ein Array aus nicht-leeren Strings sein.",
+      );
+    } else {
+      const ids = input.prerequisiteModuleIds.map((id) => id.trim());
+      if (new Set(ids).size !== ids.length) {
+        errors.push("Modul-Voraussetzungen dürfen nicht doppelt vorkommen.");
+      }
+      if (typeof input.id === "string" && ids.includes(input.id.trim())) {
+        errors.push("Ein Modul darf nicht seine eigene Voraussetzung sein.");
+      }
+    }
+  }
   if (
     input.theoryBaseXp !== undefined &&
     (typeof input.theoryBaseXp !== "number" ||
@@ -607,6 +622,8 @@ export function upsertModule(
   const now = new Date().toISOString();
   const scope = moduleData.scope ?? existing?.scope ?? "theory";
   const dStage = moduleData.dStage ?? existing?.dStage;
+  const prerequisiteModuleIds =
+    moduleData.prerequisiteModuleIds ?? existing?.prerequisiteModuleIds;
 
   const normalizedModule: LearningModule = {
     id,
@@ -620,6 +637,9 @@ export function upsertModule(
     level: moduleData.level ?? existing?.level ?? 100,
     ...(dStage !== undefined ? { dStage } : {}),
     tags: [...(moduleData.tags ?? existing?.tags ?? [])],
+    ...(prerequisiteModuleIds !== undefined
+      ? { prerequisiteModuleIds: prerequisiteModuleIds.map((id) => id.trim()) }
+      : {}),
     theoryBaseXp:
       moduleData.theoryBaseXp ??
       existing?.theoryBaseXp ??

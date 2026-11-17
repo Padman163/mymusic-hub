@@ -188,6 +188,8 @@ Ein neuer Katalog enthält keine Module oder Fragen. Bis eigene Quiz-Einstellung
 
 `src/lib/module-schema.ts` definiert `LearningModule`, `TheoryBlock`, `PracticeBlock`, `ModuleQuestion`, `NotationBuilderTaskConfig` und `ModulesDatabase`. `contentOrder` speichert die gemeinsame Reihenfolge von Theorie, Lernpfad-Aufgaben und Praxis; `groupId` und `groupTitle` ermöglichen benannte Gruppen. Module enthalten außerdem Bereich, Level, Tags, XP-Werte sowie Theorie- und Praxisblöcke. Die Modul-Datenbank enthält die übergreifenden Quiz-Einstellungen. Aufgaben verwenden `moduleIds` und eine Lernspur (`leicht`, `mittel`, `schwer`): Lernpfad-Aufgaben benötigen genau ein Modul, Quizfragen erlauben null bis mehrere. Notationsaufgaben konfigurieren Notenschlüssel, Taktart, Vorzeichen, Notenwerte und erwartete Tonhöhen beziehungsweise Dauern.
 
+Mit `prerequisiteModuleIds?: string[]` lassen sich Voraussetzungen unabhängig von Themen-Tags speichern, z. B. `["elementarlehre"]` für ein Gitarrenmodul, wenn das Grundlagenmodul diese ID hat. Eine leere Liste entfernt die Voraussetzungen; ein ausgelassenes Feld lässt sie bei Teiländerungen unverändert. Die Freischaltung wertet das Feld noch nicht aus.
+
 Die drei Builder-Formulare unter `src/components/project/` werden in `src/content/docs/projektierung/modul-builder.mdx` eingebunden. `ModuleBuilderForm` akzeptiert zusätzlich `detail?: boolean` für die Modul-Detailseite. Der Lernpfad nutzt `ProgressDashboard`, `ModuleRoadmap`, `ModuleStepper` und `ModuleQuizRunner` unter `src/components/learning/`; die Seiten liegen unter `src/content/docs/audio/theory/`. Die Lernkomponenten akzeptieren:
 
 | Komponente | Props |
