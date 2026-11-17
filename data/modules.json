@@ -226,22 +226,6 @@
       ]
     },
     {
-      "id": "q-102-qe-1",
-      "targetLane": "mittel",
-      "questionType": "numeric_input",
-      "prompt": "Wie viele Saiten hat eine Standard-Gitarre?",
-      "correctAnswers": [
-        "6"
-      ],
-      "explanation": "Eine Standard-Gitarre verfügt über genau sechs Saiten (entsprechend sechs Linien in der Tabulatur).",
-      "baseXp": 15,
-      "tags": [
-        "Gitarre",
-        "Tabulatur"
-      ],
-      "moduleIds": []
-    },
-    {
       "id": "q-102-fl-1",
       "targetLane": "schwer",
       "questionType": "single_choice",
