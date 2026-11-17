@@ -53,15 +53,10 @@ Warum machen wir das getrennt? Weil so jeder Baustein einzeln geprüft und getes
 ---
 
 ### 4. Der Aktenschrank und die sichere Speicher-Schnittstelle
-- **Datendatei (`data/modules.json`):** Der zentrale Speicherort für Lernmodule und Aufgaben; sie kann über den Builder verändert werden. Der aktuelle Repository-Stand enthält einen leeren Modul-/Fragenkatalog und gespeicherte Quiz-Einstellungen. Beispieldaten für Tests stehen separat in `tests/fixtures/modules.ts`.
+- **Datendatei (`data/modules.json`):** Initial-Seed für Netlify Blobs und veränderbarer Speicher beim reinen Astro-Dev-Start. Beispieldaten für Tests stehen separat in `tests/fixtures/modules.ts`.
 - **Schnittstelle zum Speichern und Laden (`netlify/functions/modules.ts`):**
-  - Eine kleine Server-Funktion unter `/api/modules`, über die Module und Aufgaben geladen (`GET`), neu angelegt (`POST`), aktualisiert (`PUT`) und gelöscht (`DELETE`) werden können – direkt in der Projekt-Datei auf GitHub, genau nach demselben Sicherheitsmuster wie beim bestehenden IssueTracker.
-  - **GitHub-Branch:** `GITHUB_BRANCH` legt den gemeinsamen Lese- und Schreib-Branch für Module und Beiträge fest (Standard: `main`). Konfiguration und Unterschied zum lokalen Dev-Endpunkt: [Workspace-Setup](../README_WORKSPACE_SETUP.md#schritt-5-netlify-cli-verknüpfen-umgebungsvariablen-für-das-backend-einrichten--fullstack-starten).
-  - **Schutz bei gleichzeitigem Bearbeiten:** Wenn zwei Personen fast zeitgleich speichern, bemerkt die Schnittstelle den Konflikt und wiederholt den Speichervorgang automatisch bis zu dreimal sauber, statt Änderungen von anderen versehentlich zu überschreiben.
+  - Module und Aufgaben laden (`GET`), anlegen (`POST`), aktualisieren (`PUT`) und löschen (`DELETE`). Einrichtung, Seed und Konfliktschutz stehen in der [Blob-Referenz](README_FEAT_NETLIFYBLOB.md).
   - **Größenbegrenzung:** Zu große Anfragen (über 500.000 Bytes) werden sofort abgewiesen.
-- **Schutz vor unnötigen Website-Neubauten (`netlify.toml`):**
-  - **Was geändert wurde:** Die Bau-Regel wurde von „nur `data/contributions.json` ignorieren“ auf „den gesamten Ordner `data/**` ignorieren“ erweitert.
-  - **Warum:** Wenn Redakteure später neue Module oder Aufgaben in `data/modules.json` speichern, muss Netlify nicht jedes Mal die komplette statische Website neu bauen und veröffentlichen – das spart Bauzeit und Server-Kontingent.
 
 ---
 
@@ -143,7 +138,7 @@ Damit Lernende sehen können, wie weit sie sind und welche Module noch gesperrt 
 - **Schrittweise Freischaltung:**
   - Modul 1 startet automatisch **freigeschaltet** mit dem ersten Abschnitt. Alle Folgemodule starten zunächst **gesperrt**.
   - Innerhalb eines Moduls folgen Theorieblöcke, Lernpfad-Aufgaben, Praxisblöcke und Gruppen der gespeicherten Reihenfolge aus dem Editor. Nicht in der Reihenfolge enthaltene Inhalte werden ergänzt. Danach folgt das Quiz. Erst nach dem Abschluss öffnet sich automatisch das nächste Modul.
-  - Kommen später über den Modul-Builder neue Module in `data/modules.json` hinzu, werden sie automatisch einsortiert, ohne dass bereits verdiente XP oder erledigte Module verloren gehen.
+  - Kommen später über den Modul-Builder neue Module im Katalog hinzu, werden sie automatisch einsortiert, ohne dass bereits verdiente XP oder erledigte Module verloren gehen.
 - **Keine doppelten Punkte:** Das System merkt sich jede bereits gelöste Aufgabe und jeden erledigten Schritt. Wer eine Aufgabe zur Übung noch einmal löst, lernt zwar weiter, bekommt die XP aber fair nur beim ersten Mal gutgeschrieben.
 - **Der „⚡ Fastlane“-Schnelltest:** Wer ein Thema bereits beherrscht, kann auch bei gesperrten Folgemodulen das schwere Fastlane-Quiz versuchen. Bei Erreichen der Bestehensgrenze (Standard: **85 %**) gilt das Modul als bestanden und das nächste wird freigeschaltet. Die XP noch offener Theorieblöcke und ungelöster Fragen werden einmalig gutgeschrieben. Unter der Grenze wird der persönliche Bestwert gespeichert, aber es gibt keine Punkte oder Freischaltung.
 - **Theorie-XP:** Jeder abgeschlossene Theorieblock schreibt seine eigenen, anhand seiner Tags gewichteten XP einmalig gut. Beim Abschluss einer Gruppe werden die noch offenen Blöcke gemeinsam vergütet. Alte Blöcke ohne eigene Werte verwenden den Theorie-Basiswert des Moduls und zunächst keine Tags; bereits abgeschlossene Theorie bleibt abgeschlossen und wird nicht erneut vergütet. Ein Modul ohne Theorieblöcke wird ohne Theorie-XP übersprungen.
@@ -156,8 +151,8 @@ Damit Lernende sehen können, wie weit sie sind und welche Module noch gesperrt 
 
 Jetzt verbinden sich die Bausteine aus Etappe 1 bis 3A zu einem kompletten, direkt im Browser spielbaren Kurs unter **Audio & Musik → Musiktheorie → Interaktiver Lernpfad & Dashboard** (`/audio/theory/lernpfad/`).
 
-### 1. Modulkatalog (`data/modules.json`)
-Die Repository-Datei enthält derzeit keine Module oder Fragen. Die gespeicherten globalen Grenzen betragen 70 % für das Quiz und 85 % für Fastlane (Revision 1); das sind gespeicherte Werte, nicht die Schema-Standardwerte. Der produktive Katalog kann abhängig vom konfigurierten GitHub-Branch abweichen. Testmodule wie `theory-101` und `guitar-102` werden unabhängig davon über `tests/fixtures/modules.ts` erzeugt.
+### 1. Initialer Modulkatalog (`data/modules.json`)
+Der Seed enthält derzeit keine Module oder Fragen. Seine globalen Grenzen betragen 70 % für das Quiz und 85 % für Fastlane (Revision 1); das sind gespeicherte Werte, nicht die Schema-Standardwerte. Der aktuelle Blob-Katalog kann davon abweichen. Testmodule wie `theory-101` und `guitar-102` werden unabhängig davon über `tests/fixtures/modules.ts` erzeugt.
 
 ### 2. Das XP-Dashboard (`src/components/learning/ProgressDashboard.astro`)
 - **Wozu es dient:** Zeigt dem Lernenden auf einen Blick das aktuelle **Level**, die **gesammelten Gesamt-XP**, den Fortschrittsbalken bis zum nächsten Level, die Anzahl **abgeschlossener Module** sowie kompakte Badges für XP nach Lernbereich (`Theorie`, `Instrument` …) und Themen (`Notensystem`, `Gitarre` …).
@@ -182,7 +177,7 @@ Die Repository-Datei enthält derzeit keine Module oder Fragen. Die gespeicherte
 
 ## Aktueller Stand
 
-- **Umgesetzt (Etappen 1, 2, 3A & 3B):** Autorenwerkbank, JSON-/GitHub-Speicherung mit lokalem Dev-Endpunkt, Fortschritts-Engine und Lernoberfläche (`/audio/theory/lernpfad/` und `/audio/theory/modul/`).
+- **Umgesetzt (Etappen 1, 2, 3A & 3B):** Autorenwerkbank, Netlify-Blobs-Persistenz mit Astro-Dev-Fallback, Fortschritts-Engine und Lernoberfläche (`/audio/theory/lernpfad/` und `/audio/theory/modul/`).
 - **Tests:** Feature-Tests liegen in `tests/learning-progress.test.mjs`, `tests/module-builder.test.mjs`, `tests/components/module-builder-ui.test.ts` und `tests/components/module-player-ui.test.ts`. Den aktuellen Stand mit `npm test` prüfen.
 
 ---
@@ -220,7 +215,7 @@ Die Netlify Function `netlify/functions/modules.ts` stellt die Modul-API bereit.
 - [ ] Katalog-Zusammenfassungen zeigen Theorie-Blöcke, Aufgaben je Spur und gewichtete XP passend zu den Daten.
 - [ ] Bearbeiten aus dem Katalog öffnet die Modul-Detailseite beziehungsweise die Quizfrage im passenden Tab.
 - [ ] Beim Löschen eines Moduls bestätigt der Dialog die Aktion; Lernpfad-Aufgaben werden entfernt, Quizfragen verlieren nur die Modulzuordnung.
-- [ ] Die Modul-API lädt und speichert Daten über den konfigurierten GitHub-Branch; der lokale Dev-Endpunkt nutzt `data/modules.json`.
+- [ ] Die Modul-API lädt und speichert in Netlify Blobs; der reine Astro-Dev-Endpunkt nutzt `data/modules.json`.
 - [ ] HTML-Fehlerantworten und API-Fehler werden sichtbar behandelt, statt als erfolgreiche JSON-Antworten zu gelten.
 - [ ] Das Dashboard zeigt Level, Gesamt-XP, Fortschritt, abgeschlossene Module sowie XP nach Bereich und Tag.
 - [ ] Fortschritt bleibt nach erneutem Laden im Browser erhalten; serverseitiges Rendering läuft ohne `localStorage`.

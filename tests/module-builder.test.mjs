@@ -1,6 +1,8 @@
 // @vitest-environment node
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { getStore } from "@netlify/blobs";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import modulesHandler from "../netlify/functions/modules.ts";
+import { mockBlobStore } from "./fixtures/blob-store.ts";
 import {
   DEFAULT_FASTLANE_MIN_SCORE,
   DEFAULT_QUIZ_EASY_MIN_SCORE,
@@ -539,100 +541,56 @@ describe("module-store Validierung & Store-Operationen", () => {
   });
 });
 
+vi.mock("@netlify/blobs", () => ({ getStore: vi.fn() }));
+
 describe("Modules Serverless API (/api/modules)", () => {
-  afterEach(() => {
-    vi.unstubAllEnvs();
-    vi.unstubAllGlobals();
+  let store;
+  const storedDb = () => store.value("modules");
+  beforeEach(() => {
+    store = mockBlobStore();
+    store.put("modules", { modules: [], questions: [] });
+    vi.mocked(getStore).mockReset().mockReturnValue(store);
   });
 
   it("speichert globale Grenzen mit Konfliktschutz und erhält sie bei späteren Moduländerungen", async () => {
-    vi.stubEnv("GITHUB_TOKEN", "test-token");
-    vi.stubEnv("GITHUB_REPOSITORY", "owner/repo");
-    let storedDb = { modules: [], questions: [] };
-    vi.stubGlobal("fetch", vi.fn(async (_url, init) => {
-      if (init?.method === "PUT") {
-        const body = JSON.parse(String(init.body));
-        storedDb = JSON.parse(Buffer.from(body.content, "base64").toString("utf8"));
-        return new Response("{}", { status: 200 });
-      }
-      return new Response(JSON.stringify({
-        sha: "sha-1",
-        content: Buffer.from(JSON.stringify(storedDb)).toString("base64"),
-      }), { status: 200 });
-    }));
     const request = (body) => modulesHandler(new Request("http://localhost/api/modules", {
       method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
     }));
     const settings = { quizEasyMinScore: 0.9, fastlaneMinScore: 0.95, revision: 0 };
     expect((await request({ entity: "quiz-settings", settings })).status).toBe(200);
-    expect(storedDb.quizSettings).toEqual({ ...settings, revision: 1 });
+    expect(storedDb().quizSettings).toEqual({ ...settings, revision: 1 });
     expect((await request({ entity: "quiz-settings", settings })).status).toBe(409);
     expect((await request({ entity: "module", id: "m", title: "Test" })).status).toBe(200);
-    expect(storedDb.quizSettings.revision).toBe(1);
+    expect(storedDb().quizSettings.revision).toBe(1);
     const current = { ...settings, revision: 1 };
     expect((await request({ entity: "quiz-settings", settings: current })).status).toBe(200);
-    expect(storedDb.quizSettings.revision).toBe(1);
+    expect(storedDb().quizSettings.revision).toBe(1);
     expect((await request({ entity: "quiz-settings", settings: { ...current, quizEasyMinScore: 2 } })).status).toBe(400);
   });
 
-  it("weist nicht unterstützte Methoden und fehlende Env-Konfiguration ab", async () => {
+  it("weist nicht unterstützte Methoden und fehlenden Blob-Kontext ab", async () => {
     const patchRes = await modulesHandler(
       new Request("http://localhost/api/modules", { method: "PATCH" }),
     );
     expect(patchRes.status).toBe(405);
 
-    vi.stubEnv("GITHUB_TOKEN", "");
-    vi.stubEnv("GITHUB_REPOSITORY", "");
+    vi.mocked(getStore).mockImplementation(() => {
+      throw Object.assign(new Error("Kein Blob-Kontext"), { name: "MissingBlobsEnvironmentError" });
+    });
     const envRes = await modulesHandler(
       new Request("http://localhost/api/modules", { method: "GET" }),
     );
     expect(envRes.status).toBe(503);
   });
 
-  it("liest per GET, speichert per POST mit 409-Retry und löscht per DELETE", async () => {
-    vi.stubEnv("GITHUB_TOKEN", "test-token");
-    vi.stubEnv("GITHUB_REPOSITORY", "owner/repo");
-    vi.stubEnv("GITHUB_MODULES_PATH", "data/modules.json");
-
-    let storedDb = { modules: [], questions: [] };
-    let putAttempts = 0;
-
-    const fetchMock = vi.fn(async (_url, init) => {
-      if (!init || init.method === undefined || init.method === "GET") {
-        return new Response(
-          JSON.stringify({
-            sha: "sha-1",
-            content: Buffer.from(JSON.stringify(storedDb), "utf8").toString(
-              "base64",
-            ),
-          }),
-          { status: 200 },
-        );
-      }
-
-      if (init.method === "PUT") {
-        putAttempts += 1;
-        if (putAttempts === 1) {
-          storedDb.modules.push({
-            id: "concurrent", order: 4, title: "Gleichzeitig hinzugefügt",
-          });
-          return new Response(JSON.stringify({ message: "Conflict" }), {
-            status: 409,
-          });
-        }
-        const body = JSON.parse(String(init.body));
-        storedDb = JSON.parse(
-          Buffer.from(body.content, "base64").toString("utf8"),
-        );
-        return new Response(JSON.stringify({ content: { sha: "sha-2" } }), {
-          status: 200,
-        });
-      }
-
-      return new Response(null, { status: 500 });
+  it("liest per GET, speichert per POST trotz ETag-Konflikt und löscht per DELETE", async () => {
+    store.setJSON.mockImplementationOnce(async () => {
+      store.put("modules", {
+        ...storedDb(),
+        modules: [{ id: "concurrent", order: 4, title: "Gleichzeitig hinzugefügt" }],
+      });
+      return { modified: false };
     });
-
-    vi.stubGlobal("fetch", fetchMock);
 
     const postModRes = await modulesHandler(
       new Request("http://localhost/api/modules", {
@@ -647,9 +605,9 @@ describe("Modules Serverless API (/api/modules)", () => {
       }),
     );
     expect(postModRes.status).toBe(201);
-    expect(putAttempts).toBe(2);
-    expect(storedDb.modules).toHaveLength(2);
-    expect(storedDb.modules.find((mod) => mod.id === "mod-api-1").order).toBe(5);
+    expect(store.setJSON).toHaveBeenCalledTimes(2);
+    expect(storedDb().modules).toHaveLength(2);
+    expect(storedDb().modules.find((mod) => mod.id === "mod-api-1").order).toBe(5);
 
     const postQRes = await modulesHandler(
       new Request("http://localhost/api/modules", {
@@ -669,7 +627,7 @@ describe("Modules Serverless API (/api/modules)", () => {
       }),
     );
     expect(postQRes.status).toBe(201);
-    expect(storedDb.questions).toHaveLength(1);
+    expect(storedDb().questions).toHaveLength(1);
 
     const getRes = await modulesHandler(
       new Request("http://localhost/api/modules", { method: "GET" }),
@@ -692,7 +650,7 @@ describe("Modules Serverless API (/api/modules)", () => {
       }),
     );
     expect(moveRes.status).toBe(200);
-    expect(storedDb.modules.map((mod) => mod.id)).toEqual(["mod-api-1", "concurrent"]);
+    expect(storedDb().modules.map((mod) => mod.id)).toEqual(["mod-api-1", "concurrent"]);
     const staleMove = await modulesHandler(
       new Request("http://localhost/api/modules", {
         method: "PUT",
@@ -715,7 +673,7 @@ describe("Modules Serverless API (/api/modules)", () => {
       }),
     );
     expect(delRes.status).toBe(200);
-    expect(storedDb.modules.map((mod) => mod.id)).toEqual(["concurrent"]);
-    expect(storedDb.questions).toEqual([]);
+    expect(storedDb().modules.map((mod) => mod.id)).toEqual(["concurrent"]);
+    expect(storedDb().questions).toEqual([]);
   });
 });

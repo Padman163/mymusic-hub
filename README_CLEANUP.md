@@ -30,6 +30,7 @@ Arbeitsstand und offene Änderungen prüfen und die Bereinigung möglichst auf e
 
   Nur für tatsächlich getrackte Ordner ausführen. Die Entfernung wird für den nächsten Commit vorgemerkt und entfernt die Dateien dort aus dem Repository; sie kann andere Checkouts betreffen. `.env` und Zugangsdaten nicht veröffentlichen.
 - Beim Cleanup vom 17.11.2026 wurden die Berichtsdateien in `test-results/` und `.lighthouseci/` nach Freigabe aus dem Index entfernt; lokale Dateien blieben erhalten. Aktuellen Stand vor jedem weiteren Cleanup erneut prüfen.
+- Lokale Blob-Artefakte unter `.netlify/blobs/` bzw. `.netlify/blobs-serve/` nicht einchecken und nur nach Sicherung oder Freigabe entfernen; siehe [lokaler Blob-Speicher](features/README_FEAT_NETLIFYBLOB.md#architektur-und-datenfluss).
 
 ## 2. Dokumentation konsolidieren
 
@@ -51,6 +52,8 @@ Alle Komponenten und Assets einzeln auf Importe und tatsächliche Verwendung pr�
 Eine Tabelle mit Pfad, Fundstellen und Empfehlung **Behalten**, **Prüfen** oder **Löschen** erstellen. Keine Datei oder leeren Ordner ohne Freigabe löschen; nach Löschungen Referenzen und Funktionen erneut prüfen.
 
 ## 4. Abgelöste Features und Wrapper prüfen
+
+- Nach der Blob-Umstellung auf alte Speicherreste prüfen: `GITHUB_TOKEN` und weitere `GITHUB_*`-Zugriffe im Function-Code, `github-contribution-store.ts`, alte `data/**`-Ignore-Regeln in `netlify.toml` und nicht mehr benötigte `GITHUB_*`-Variablen im Netlify Dashboard. Vor dem Löschen Dashboard-Variablen auf andere Verbraucher und Rollback-Abhängigkeiten prüfen.
 
 - Dateien in `src/components/notation/` und ihre direkten und indirekten Aufrufer untersuchen. Gemeinsamen Renderer und wiederverwendbare Komponenten erhalten.
 - Zwischen intern benötigten Bausteinen, interaktiven Features und tatsächlich obsoleten Wrappern unterscheiden. `NotationVisual` ist beispielsweise ein interner Baustein von `Notation`; `NotationKeyboard` ergänzt ein verbundenes Klaviersystem.

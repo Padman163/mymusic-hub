@@ -20,6 +20,8 @@ git switch -c feat/<featurename>
 
 Auf diesem Branch entwickeln und Änderungen regelmäßig committen und pushen. Soll ein neues Feature auf einem noch nicht in `main` übernommenen Feature aufbauen, bewusst von dessen Archiv-Branch abzweigen statt von `main`.
 
+Für die Speicherumstellung mit `git switch feat/netlify-blobs` auf den vorhandenen Feature-Branch wechseln. Die lokale `.env` beim Wechsel anpassen (den `GITHUB_BRANCH` nur für den Altstand setzen, danach die alten Speicher-Variablen entfernen) und den Branch separat im Netlify Dashboard freigeben. Vor dem ersten Blob-Zugriff den Datenstand gemäß [Blob-Referenz](features/README_FEAT_NETLIFYBLOB.md) sichern und abgleichen.
+
 ## 3. Automatisch testen
 
 ```bash
@@ -87,7 +89,7 @@ Lies bei Bedarf `src/components/IssueTrackerForm.astro`, `src/lib/contribution-c
    - **Beschreibung (`description`):** Kompakte Zusammenfassung inkl. Verweis auf `/features/README_FEAT_{{FEATURE_SLUG}}.md` (2–4 Sätze, da in der Übersicht auf 3 Zeilen gekürzt wird).
    - **Checklisten-Punkte (To-Do-Liste):** Alle neuen Teil-Features aus `/features/README_FEAT_{{FEATURE_SLUG}}.md` als einzelne Punkte (**strikt ≤ 200 Zeichen pro Punkt**, maximal **100 Punkte**).
 
-2. **Beitrag direkt einreichen:** Sende das vollständige JSON (`type`, `title`, `description`, `area`, `priority`, `status`, `checklist: [{ "text": "...", "checked": false }]`) per `POST /api/contributions` (alternativ über `/.netlify/functions/contributions`). Wenn für den Workspace kein API-Endpunkt verfügbar ist, ergänze einen bereits vorhandenen passenden Eintrag in `data/contributions.json` oder füge den neuen Beitrag dort hinzu. Den JSON-Body nicht nur zur manuellen Übertragung ausgeben.
+2. **Beitrag direkt einreichen:** Sende das vollständige JSON (`type`, `title`, `description`, `area`, `priority`, `status`, `checklist: [{ "text": "...", "checked": false }]`) per `POST /api/contributions` an die vorgesehene Umgebung. Ist der Endpunkt nicht erreichbar, den Start oder Zugriff klären; `data/contributions.json` ist nur Initial-Seed und aktualisiert keine vorhandenen Blobs.
 
 ---
 
@@ -107,5 +109,7 @@ git push -u origin archive/feat/<featurename>
 ```
 
 Den Archiv-Branch auf GitHub prüfen. Ein bereits gepushter `feat/`-Branch bleibt dort bestehen; eine spätere Löschung ist eine separate Entscheidung.
+
+Die Speicherumstellung nach erfolgreicher Abnahme unter `archive/feat/netlify-blobs` archivieren. Das sichert den Code, nicht den Datenbestand in Netlify Blobs. Vor einer späteren Deploy-Umstellung Branch-Freigabe im Dashboard und Datenbackup getrennt prüfen.
 
 Archivieren übernimmt **keine** Änderungen nach `main`. Eine Übernahme per Pull Request und ein Deployment werden später separat entschieden. Danach mit Schritt 2 das nächste Feature beginnen.

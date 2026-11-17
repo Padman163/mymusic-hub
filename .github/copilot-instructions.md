@@ -13,7 +13,7 @@
 - Den nativen SVG-Renderer unabhängig von AlphaTab und MusicXML halten. `SheetMusicPlayer.astro` nutzt AlphaTab für Partituren; Audiowiedergabe benötigt eine SoundFont.
 - Lektionsseiten in `src/content/docs/` möglichst übersichtlich halten und wiederverwendbare Darstellungen als Komponenten einbinden. Vorhandene lokale `<style>`-Blöcke und dynamische Inline-Werte sind Teil der bestehenden Architektur; gemeinsame Styles liegen unter `src/styles/`.
 - KaTeX verarbeitet mathematische Ausdrücke über `remark-math` und `rehype-katex`. Große Bibliotheken nur dort einbinden, wo sie benötigt werden.
-- Netlify Functions für Beiträge und Module verwenden die GitHub-API. Der lokale Astro-Dev-Server bietet für Module zusätzlich eine lokale Datei-API; Einzelheiten und Umgebungsvariablen stehen im Workspace-Setup.
+- Netlify Functions für Beiträge und Module verwenden Netlify Blobs (`@netlify/blobs`). Nur der reine Astro-Dev-Server nutzt für Module die lokale Datei-API; siehe [Blob-Referenz](../features/README_FEAT_NETLIFYBLOB.md).
 - Änderungen gezielt halten, bestehendes Verhalten erhalten und relevante Dokumentation sowie geeignete Tests aktualisieren. Vor Feature-Abschluss das Quality Gate `npm run preflight` gemäß Workflow ausführen.
 
 ## Intervallfarben

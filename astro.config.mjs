@@ -390,7 +390,7 @@ export default defineConfig({
     }),
   },
   vite: {
-    plugins: [localModulesApiPlugin()],
+    plugins: process.env.NETLIFY_DEV === "true" ? [] : [localModulesApiPlugin()],
     build: {
       chunkSizeWarningLimit: 1500, // Erhöht das Warnlimit von 500 kB auf 1500 kB
     },

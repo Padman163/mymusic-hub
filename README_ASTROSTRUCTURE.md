@@ -102,9 +102,9 @@ Der Auszug zeigt nicht alle Projektfelder; verbindlich ist `src/content.config.t
 
 ### 3.3 Backend und Persistenz
 
-`netlify/functions/contributions.ts` und `netlify/functions/modules.ts` stellen die APIs für Beiträge und Lernmodule bereit. Die Functions speichern über die GitHub-API in JSON-Dateien auf dem konfigurierten Branch; `public/_redirects` leitet `/api/*` auf Netlify Functions weiter.
+`netlify/functions/contributions.ts` und `netlify/functions/modules.ts` stellen die APIs für Beiträge und Lernmodule bereit. `netlify/functions/lib/blob-store.ts` kapselt die JSON-Persistenz über Netlify Blobs. `public/_redirects` leitet `/api/*` auf Netlify Functions weiter.
 
-Im reinen Astro-Entwicklungsserver stellt ein Vite-Plugin in `astro.config.mjs` zusätzlich eine lokale Modul-API bereit, die `data/modules.json` im Workspace liest und schreibt. Das ist nicht die GitHub-Persistenz der Netlify Functions. Konfiguration, Umgebungsvariablen und Fullstack-Start stehen im [Workspace-Setup](README_WORKSPACE_SETUP.md).
+`data/*.json` sind Initial-Seeds, keine produktive Datenbank. Nur im reinen Astro-Entwicklungsserver stellt ein Vite-Plugin in `astro.config.mjs` die lokale Modul-API bereit, die `data/modules.json` im Workspace liest und schreibt. Details zur Persistenz: [Netlify Blobs](features/README_FEAT_NETLIFYBLOB.md); Fullstack-Start: [Workspace-Setup](README_WORKSPACE_SETUP.md).
 
 ## 4. Projektstruktur
 
@@ -137,8 +137,8 @@ tests/
 ├── components/                 # DOM- und Interaktionstests
 ├── integration/                # Integrationstests
 └── e2e/                        # Playwright-Browsertests
-netlify/functions/              # Serverless Functions und GitHub-Store
-data/                           # JSON-Daten
+netlify/functions/              # Serverless Functions und Blob-Adapter unter lib/
+data/                           # JSON-Seeds; modules.json auch für Astro-Dev
 features/                       # Feature-Übersicht, Fachreferenzen und Handoffs
 astro.config.mjs                # Astro-, Starlight- und Dev-Server-Konfiguration
 biome.json                      # Linter und Formatter

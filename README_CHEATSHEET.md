@@ -11,10 +11,12 @@ Die folgenden Befehle sind als schnelle Referenz gedacht.
 ### 1.1 Lokale Entwicklungsserver
 ```bash
 npm run dev                  # Startet Astro isoliert (Frontend/Doku) auf http://localhost:4321
-npx netlify-cli dev          # Startet Fullstack-Umgebung (Astro + Functions) auf http://localhost:8888
+npx netlify-cli dev          # Astro + Functions + lokale Blobs auf http://localhost:8888
 npm run build                # Erzeugt einen produktionsreifen Static-Build im Ordner dist/
 npm run preview              # Startet einen lokalen Webserver zur Vorschau des dist/-Builds
 ```
+
+`git switch feat/netlify-blobs`: `.env` und Dashboard gemäß [Workspace-Setup](README_WORKSPACE_SETUP.md) separat anpassen. Den [Blob-Reset](features/README_FEAT_NETLIFYBLOB.md#architektur-und-datenfluss) nur für lokale Testdaten verwenden.
 
 ### 1.2 Statische Code-Hygiene & Typenprüfung
 ```bash

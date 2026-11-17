@@ -25,6 +25,7 @@ Die Oberfläche läuft unter `http://localhost:4321`. Erst-Setup und Start mit N
 | [README_WORKSPACE_SETUP.md](README_WORKSPACE_SETUP.md) | Einrichtung, Netlify und Umgebungsvariablen |
 | [README_FEAT.md](features/README_FEAT.md) | Übersicht über Funktionen und Fachmodule |
 | [README_FEAT_MODULEBUILDER.md](features/README_FEAT_MODULEBUILDER.md) | Module Builder – Autorenwerkbank & Lernpfad |
+| [README_FEAT_NETLIFYBLOB.md](features/README_FEAT_NETLIFYBLOB.md) | Netlify Blobs – Einrichtung, Datenmigration und Abnahme |
 | [README_FEAT_NOTATION.md](features/README_FEAT_NOTATION.md) | API und Architektur der Notation |
 | [README_CLEANUP.md](README_CLEANUP.md) | Wiederholbare Repository-Bereinigung in fünf Schritten |
 | [README_WORKFLOW.md](README_WORKFLOW.md) | Persönlicher Entwicklungs- und Archivierungsablauf |
@@ -44,6 +45,8 @@ Details stehen im [Testing-Leitfaden](README_TESTING.md).
 ---
 
 ## Release-Checkliste
+
+Die Netlify Functions für Beiträge und Lernmodule speichern über Netlify Blobs. Der produktive Umstieg und die Datenübernahme sind separat anhand der [Blob-Abnahme](features/README_FEAT_NETLIFYBLOB.md#qualitätssicherung-und-manuelle-abnahme) zu prüfen.
 
 Die folgenden offenen Prüfpunkte fassen das [Release-Audit](README_TESTING.md#5-der-5-phasen-release-audit-vor-dem-release) zusammen; sie sind keine Aussage über den aktuellen Prüfstatus:
 

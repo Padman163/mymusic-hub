@@ -96,12 +96,13 @@ npx @biomejs/biome check --write .
 
 ### Stufe 3: Integration – HTTP- & Serverless-Verhalten
 
-- **Werkzeuge:** Vitest mit direkt aufgerufenen Function-Handlern und erzeugten `Request`-/`Response`-Objekten. Umgebungsvariablen werden für die Tests gesetzt; die Modul-API-Tests simulieren GitHub-Antworten über einen `fetch`-Mock.
+- **Werkzeuge:** Vitest mit direkt aufgerufenen Function-Handlern und `Request`-/`Response`-Objekten. Ein Mock für `@netlify/blobs` simuliert JSON-Lesezugriffe und bedingte Schreibzugriffe mit ETags.
 - **Testdateien:** `tests/integration/contributions.test.ts`, `tests/module-builder.test.mjs` (`/api/modules`).
 - **Gegenstand:**
-  * **Beiträge:** Prüft die Ablehnung von `PUT` (405), fehlende GitHub-Konfiguration (503), ungültiges JSON (400) und ungültige Beitragsdaten (400).
-  * **Module:** Prüft die Ablehnung von `PATCH` (405), fehlende GitHub-Konfiguration (503), Lesen, Speichern und Löschen von Modulen und Aufgaben sowie einen erneuten Schreibversuch nach simuliertem GitHub-409-Konflikt. Zusätzlich werden Modulreihenfolge, Ablehnung veralteter Verschiebevorgänge und globale Bestehensgrenzen mit Validierung und Revisionskonflikten geprüft.
-- **Grenzen:** Es läuft weder ein HTTP-Server noch eine Netlify-Laufzeit. Routing, Deployment, echte GitHub-Zugriffe und abgelaufene Tokens werden damit nicht verifiziert. Die Beitragstests decken derzeit keine erfolgreichen GitHub-Lese-/Schreibvorgänge ab; der getestete GitHub-Konflikt-Retry gehört zur Modul-API. Nicht jeder Fehlerpfad oder jede erlaubte/verbotene Methode wird für beide APIs geprüft.
+  * **Beiträge:** Prüft HTTP-Methoden, fehlenden Blob-Kontext (503), ungültige Eingaben, Defaults und Mutationen einschließlich Versionskonflikt und Löschung.
+  * **Module:** Prüft HTTP-Methoden, fehlenden Blob-Kontext, Lesen und Ändern des Katalogs, einen erneuten Schreibversuch nach simuliertem ETag-Konflikt sowie Modulreihenfolge und Quiz-Grenzen mit Revisionsprüfung.
+  * **Blob-Adapter (Unit):** `tests/blob-store.test.ts` prüft den einmaligen Seed, leere Ersatzwerte bei fehlenden Dateien, fehlerhafte Seeds und konkurrierende Zugriffe.
+- **Grenzen:** Routing, Netlify CLI und Cloud-Deploys laufen nicht im Vitest-Mock. Dafür die [manuelle Blob-Abnahme](features/README_FEAT_NETLIFYBLOB.md#qualitätssicherung-und-manuelle-abnahme) ausführen. Dokumentationslinks und Skriptnamen prüft separat `tests/documentation.test.ts`.
 - **Befehle:**
   ```bash
   # Beitragstests unter tests/integration/:
@@ -115,7 +116,7 @@ npx @biomejs/biome check --write .
 * **Wann nutzen:**
   * **Nach Änderungen an Netlify Functions:** Wenn Backend-Logik, Middleware oder Serverless-Routen editiert werden.
   * **Bei Schema- oder Payload-Updates:** Wenn sich die Datenstruktur von Frontend-Formularen oder API-Schnittstellen ändert.
-  * **Bei Validierungs- und Fehlerbehandlungsprüfungen:** Um fehlende Konfiguration, ungültige Eingaben und Konfliktfälle mit gezielten Tests abzusichern, ohne Netlify oder GitHub anzusprechen. Neue Fehlerpfade benötigen eigene Assertions; die vorhandene Suite ist kein vollständiger Sicherheits-Audit.
+  * **Bei Validierungs- und Fehlerbehandlungsprüfungen:** Fehlenden Blob-Kontext, ungültige Eingaben und Konfliktfälle ohne Zugriff auf Netlify absichern. Neue Fehlerpfade benötigen eigene Assertions; die vorhandene Suite ist kein vollständiger Sicherheits-Audit.
 
 
 ### Stufe 4: End-to-End (E2E) & Visuelle Regression
@@ -201,7 +202,7 @@ Externe Links, fachliche Aktualität, dynamische Asset-Pfade und Git-Hygiene wer
   LHCI_UPLOAD__TARGET=filesystem LHCI_UPLOAD__OUTPUT_DIR=./.lighthouseci/reports npm run audit:lhci
   ```
   `lighthouserc.cjs` erzwingt derzeit Accessibility ≥ 0,9; Performance ≥ 0,8 sowie Best Practices und SEO ≥ 0,9 erzeugen bei Unterschreitung nur Warnungen. FCP und CLS sind dort nicht separat als Grenzwerte konfiguriert. Ohne die obigen Umgebungsvariablen laden `audit:lhci` und damit auch `preflight` Berichte gemäß Konfiguration in einen temporären öffentlichen Speicher hoch. Vor einem Upload prüfen, ob URLs, Seiteninhalte und Diagnosedaten veröffentlicht werden dürfen.
-* **Aussagekraft und Berichte:** HTML-Berichte im Browser öffnen, im Codespace gegebenenfalls zuvor herunterladen; JSON-Dateien enthalten die Rohdaten. Lokale Berichte sind generiert und können bei späteren Läufen ersetzt werden. Einzelmessungen schwanken mit Rechnerlast und Messumgebung und sind keine Felddaten echter Nutzer. FCP ist keine Core-Web-Vitals-Kennzahl; für eine vollständige Web-Vitals-Bewertung sind insbesondere LCP, INP und CLS relevant. Der automatisierte Seitenlade-Lauf ersetzt keine INP-Messung realer Interaktionen und prüft keine produktive Netlify-/GitHub-Infrastruktur.
+* **Aussagekraft und Berichte:** HTML-Berichte im Browser öffnen, im Codespace gegebenenfalls zuvor herunterladen; JSON-Dateien enthalten die Rohdaten. Lokale Berichte sind generiert und können bei späteren Läufen ersetzt werden. Einzelmessungen schwanken mit Rechnerlast und Messumgebung und sind keine Felddaten echter Nutzer. FCP ist keine Core-Web-Vitals-Kennzahl; für eine vollständige Web-Vitals-Bewertung sind insbesondere LCP, INP und CLS relevant. Der automatisierte Seitenlade-Lauf ersetzt keine INP-Messung realer Interaktionen und prüft keine produktive Netlify-Infrastruktur.
 * **Wann nutzen:**
   * **Nach Bibliotheks- und Build-Änderungen:** Wenn etwa AlphaTab, KaTeX oder die Bildoptimierung mit `sharp` aktualisiert werden. Betroffene Seiten gezielt in die Messung aufnehmen; serverseitige Bibliotheken erhöhen nicht automatisch das Client-Bundle.
   * **Nach Asset- & Schriftartänderungen:** Sobald Webfonts, globale Stylesheets oder umfangreiche SVG-Grafiken angepasst wurden.

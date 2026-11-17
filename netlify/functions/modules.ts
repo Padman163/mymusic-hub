@@ -1,7 +1,6 @@
 import type { Config } from '@netlify/functions';
-import { DEFAULT_QUIZ_SETTINGS, isQuizSettings, type LearningModule, type ModulesDatabase } from '../../src/lib/module-schema';
+import { DEFAULT_QUIZ_SETTINGS, isQuizSettings, type LearningModule } from '../../src/lib/module-schema';
 import {
-	createEmptyModulesDatabase,
 	deleteModule,
 	deleteQuestion,
 	moveModule,
@@ -13,9 +12,9 @@ import {
 	validateModuleInput,
 	validateQuestionInput,
 } from '../../src/lib/module-store';
+import { BlobStoreConflictError, isBlobStoreUnavailable, readBlobJSON, updateBlobJSON } from './lib/blob-store';
 
 const maxRequestBytes = 500_000;
-const maxConflictRetries = 3;
 
 class ModuleValidationError extends Error {}
 class ModuleNotFoundError extends Error {}
@@ -37,134 +36,6 @@ function jsonResponse(status: number, body: unknown): Response {
 			'Cache-Control': 'no-store',
 		},
 	});
-}
-
-function githubModulesFileConfig() {
-	const token = process.env.GITHUB_TOKEN;
-	const repository = process.env.GITHUB_REPOSITORY;
-
-	if (!token || !repository) {
-		throw new Error('GITHUB_TOKEN und GITHUB_REPOSITORY müssen konfiguriert sein.');
-	}
-
-	const [owner, repo, ...extra] = repository.split('/');
-	if (!owner || !repo || extra.length > 0) {
-		throw new Error('GITHUB_REPOSITORY muss das Format owner/repository haben.');
-	}
-
-	const branch = process.env.GITHUB_BRANCH || 'main';
-	const path = process.env.GITHUB_MODULES_PATH || 'data/modules.json';
-	const encodedPath = path.split('/').map(encodeURIComponent).join('/');
-	const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodedPath}`;
-	const headers = {
-		Accept: 'application/vnd.github+json',
-		Authorization: `Bearer ${token}`,
-		'X-GitHub-Api-Version': '2022-11-28',
-	};
-
-	return { url, headers, branch };
-}
-
-function parseModulesDatabase(value: unknown): ModulesDatabase {
-	if (
-		!isRecord(value) ||
-		!Array.isArray(value.modules) ||
-		!Array.isArray(value.questions) ||
-		(value.quizSettings !== undefined && !isQuizSettings(value.quizSettings))
-	) {
-		throw new Error('Die Moduldatei auf GitHub hat ein ungültiges Format.');
-	}
-	return {
-		modules: value.modules as ModulesDatabase['modules'],
-		questions: value.questions as ModulesDatabase['questions'],
-		...(value.quizSettings !== undefined ? { quizSettings: value.quizSettings as ModulesDatabase['quizSettings'] } : {}),
-	};
-}
-
-async function readModulesFile(
-	fileConfig: ReturnType<typeof githubModulesFileConfig>,
-	allowMissing = false,
-): Promise<{ database: ModulesDatabase; sha: string | undefined }> {
-	const readResponse = await fetch(
-		`${fileConfig.url}?ref=${encodeURIComponent(fileConfig.branch)}`,
-		{ headers: fileConfig.headers },
-	);
-
-	if (readResponse.status === 404) {
-		if (allowMissing) {
-			return { database: createEmptyModulesDatabase(), sha: undefined };
-		}
-		throw new ModuleNotFoundError('Die Moduldatei wurde nicht gefunden.');
-	}
-
-	if (!readResponse.ok) {
-		throw new Error(
-			`GitHub konnte die Moduldatei nicht lesen (HTTP ${readResponse.status}).`,
-		);
-	}
-
-	const file: unknown = await readResponse.json();
-	if (
-		!isRecord(file) ||
-		typeof file.content !== 'string' ||
-		typeof file.sha !== 'string'
-	) {
-		throw new Error('Die Moduldatei auf GitHub hat ein ungültiges Format.');
-	}
-
-	const parsedContent: unknown = JSON.parse(
-		Buffer.from(file.content, 'base64').toString('utf8'),
-	);
-
-	return {
-		database: parseModulesDatabase(parsedContent),
-		sha: file.sha,
-	};
-}
-
-async function changeModulesDatabase(
-	message: string,
-	allowMissing: boolean,
-	change: (db: ModulesDatabase) => ModulesDatabase,
-): Promise<ModulesDatabase> {
-	const fileConfig = githubModulesFileConfig();
-
-	for (let attempt = 0; attempt < maxConflictRetries; attempt += 1) {
-		const { database, sha } = await readModulesFile(fileConfig, allowMissing);
-		const nextDatabase = change(database);
-
-		const writeResponse = await fetch(fileConfig.url, {
-			method: 'PUT',
-			headers: { ...fileConfig.headers, 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				message,
-				content: Buffer.from(
-					JSON.stringify(nextDatabase, null, 2),
-					'utf8',
-				).toString('base64'),
-				branch: fileConfig.branch,
-				...(sha ? { sha } : {}),
-			}),
-		});
-
-		if (writeResponse.ok) {
-			return nextDatabase;
-		}
-		if (writeResponse.status !== 409) {
-			throw new Error(
-				`GitHub konnte die Moduldaten nicht speichern (HTTP ${writeResponse.status}).`,
-			);
-		}
-		if (attempt === maxConflictRetries - 1) {
-			throw new ModuleConflictError(
-				'Die Moduldaten wurden zwischenzeitlich geändert. Bitte lade die Seite neu.',
-			);
-		}
-	}
-
-	throw new ModuleConflictError(
-		'Die Moduldaten wurden zwischenzeitlich geändert. Bitte lade die Seite neu.',
-	);
 }
 
 function isQuestionPayload(body: Record<string, unknown>): boolean {
@@ -216,7 +87,7 @@ async function handleWriteRequest(
 			return jsonResponse(400, { error: 'Ungültige Quiz-Einstellungen.' });
 		}
 		const settings = body.settings;
-		const nextDb = await changeModulesDatabase('Update quiz settings', false, (db) => {
+		const nextDb = await updateBlobJSON('modules', (db) => {
 			if ((db.quizSettings ?? DEFAULT_QUIZ_SETTINGS).revision !== settings.revision) {
 				throw new ModuleConflictError('Die Einstellungen wurden zwischenzeitlich geändert. Bitte lade sie neu.');
 			}
@@ -237,7 +108,7 @@ async function handleWriteRequest(
 		const id = body.id.trim();
 		const neighborId = body.neighborId.trim();
 		const direction = body.direction;
-		const nextDb = await changeModulesDatabase('Reorder learning modules', false, (db) => {
+		const nextDb = await updateBlobJSON('modules', (db) => {
 			const reordered = moveModule(db, id, neighborId, direction);
 			if (!reordered) throw new ModuleConflictError('Die Modulreihenfolge wurde geändert. Bitte lade die Übersicht neu.');
 			return reordered;
@@ -294,9 +165,8 @@ async function handleWriteRequest(
 			return jsonResponse(400, { error: preflight.errors.join(' ') });
 		}
 
-		const nextDb = await changeModulesDatabase(
-			isPost ? 'Add learning question' : 'Update learning question',
-			true,
+		const nextDb = await updateBlobJSON(
+			'modules',
 			(db) => {
 				const validation = validateQuestionInput(questionPayload, db.modules);
 				if (!validation.valid) {
@@ -321,9 +191,8 @@ async function handleWriteRequest(
 		return jsonResponse(400, { error: validation.errors.join(' ') });
 	}
 
-	const nextDb = await changeModulesDatabase(
-		isPost ? 'Add learning module' : 'Update learning module',
-		true,
+	const nextDb = await updateBlobJSON(
+		'modules',
 		(db) => upsertModule(db, rawModule as UpsertModuleInput),
 	);
 
@@ -341,16 +210,14 @@ export default async (request: Request): Promise<Response> => {
 		return jsonResponse(405, { error: 'Diese Methode wird nicht unterstützt.' });
 	}
 
-	if (!process.env.GITHUB_TOKEN || !process.env.GITHUB_REPOSITORY) {
-		return jsonResponse(503, { error: 'Der Modul-Builder ist noch nicht konfiguriert.' });
-	}
-
 	if (request.method === 'GET') {
 		try {
-			const { database } = await readModulesFile(githubModulesFileConfig(), true);
-			return jsonResponse(200, database);
+			return jsonResponse(200, await readBlobJSON('modules'));
 		} catch (error) {
-			console.error('Die Moduldaten konnten nicht von GitHub geladen werden.', error);
+			if (isBlobStoreUnavailable(error)) {
+				return jsonResponse(503, { error: 'Der Modul-Builder ist noch nicht konfiguriert.' });
+			}
+			console.error('Die Moduldaten konnten nicht aus Netlify Blobs geladen werden.', error);
 			return jsonResponse(502, {
 				error: 'Die Moduldaten konnten derzeit nicht geladen werden.',
 			});
@@ -385,11 +252,8 @@ export default async (request: Request): Promise<Response> => {
 				return jsonResponse(400, { error: 'Ungültige Lösch-Anfrage: ID fehlt.' });
 			}
 
-			await changeModulesDatabase(
-				target.entity === 'question'
-					? 'Delete learning question'
-					: 'Delete learning module',
-				false,
+			await updateBlobJSON(
+				'modules',
 				(db) => {
 					if (target.entity === 'question') {
 						if (!db.questions.some((q) => q.id === target.id)) {
@@ -414,6 +278,9 @@ export default async (request: Request): Promise<Response> => {
 
 		return await handleWriteRequest(request, parsedBody ?? {});
 	} catch (error) {
+		if (isBlobStoreUnavailable(error)) {
+			return jsonResponse(503, { error: 'Der Modul-Builder ist noch nicht konfiguriert.' });
+		}
 		if (error instanceof ModuleValidationError) {
 			return jsonResponse(400, { error: error.message });
 		}
@@ -422,6 +289,11 @@ export default async (request: Request): Promise<Response> => {
 		}
 		if (error instanceof ModuleConflictError) {
 			return jsonResponse(409, { error: error.message });
+		}
+		if (error instanceof BlobStoreConflictError) {
+			return jsonResponse(409, {
+				error: 'Die Moduldaten wurden zwischenzeitlich geändert. Bitte lade die Seite neu.',
+			});
 		}
 		console.error('Die Moduldaten konnten nicht aktualisiert werden.', error);
 		return jsonResponse(502, {
