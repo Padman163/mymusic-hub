@@ -1,140 +1,6 @@
 {
-  "modules": [
-    {
-      "id": "theory-101",
-      "order": 1,
-      "title": "Elementarlehre",
-      "description": "Grundlagen der Schwingungsphysik (Kammerton A = 440 Hz) und sichere Orientierung im Violinschlüssel.",
-      "scope": "theory",
-      "level": 100,
-      "dStage": "D1",
-      "tags": [
-        "Allgemein",
-        "Violinschlüssel",
-        "Notensystem"
-      ],
-      "theoryBaseXp": 30,
-      "quizEasyMinScore": 0.8,
-      "fastlaneMinScore": 0.85,
-      "theoryBlocks": [
-        {
-          "id": "tb-101-1",
-          "order": 1,
-          "title": "Schallwelle & Kammerton A",
-          "markdownContent": "Klang entsteht durch periodische Luftdruckschwankungen (Frequenz $f$ in $\\text{Hz}$). Der internationale **Kammerton A4** schwingt mit exakt:\n\n$$f = 440\\text{ Hz}$$\n\nEine **Oktave höher** verdoppelt sich die Frequenz auf $880\\text{ Hz}$; eine Oktave tiefer halbiert sie sich auf $220\\text{ Hz}$.",
-          "groupId": "tg-6cf6941f-0462-49c5-872c-3f853ff20966",
-          "groupTitle": "Schallwelle, Kammerton, Frequenz",
-          "baseXp": 10,
-          "tags": []
-        },
-        {
-          "id": "tb-101-2",
-          "order": 2,
-          "title": "Fünf Linien & der Violinschlüssel",
-          "markdownContent": "Ein Standard-Notensystem besitzt **fünf Linien** und vier Zwischenräume. Der **Violinschlüssel (G-Schlüssel)** umschlingt die zweite Linie von unten und verankert dort das eingestrichene **G4**.\n\n<Notation clef={\"treble\"} notes={[{\"type\":\"filled\",\"step\":2,\"duration\":\"quarter\"},{\"type\":\"filled\",\"step\":4,\"duration\":\"quarter\"}]} />",
-          "groupId": "tg-935ca82c-c38f-49ad-ad5c-94ea02692c74",
-          "groupTitle": "Gruppe 1 - Theorie",
-          "tags": []
-        },
-        {
-          "id": "tb-3-3b1b7f",
-          "order": 3,
-          "title": "notation beispiel",
-          "markdownContent": "### Zwölf Töne und die Oktave\n\nFür Musik teilen wir den Weg von einem Ton bis zu seinem nächsthöheren Namensvetter in **zwölf Halbtonschritte**. So entstehen die zwölf Tonklassen: **C, C♯/D♭, D, D♯/E♭, E, F, F♯/G♭, G, G♯/A♭, A, A♯/B♭ und B**. Stell sie dir wie zwölf gleichmäßige Stufen vor; nach der zwölften Stufe beginnt dieselbe Folge wieder.\n\n<Notation clef=\"treble\" notes={[]} />",
-          "groupId": "tg-935ca82c-c38f-49ad-ad5c-94ea02692c74",
-          "groupTitle": "Gruppe 1 - Theorie",
-          "tags": []
-        }
-      ],
-      "practiceBlocks": [],
-      "contentOrder": [
-        {
-          "kind": "theory",
-          "id": "tb-101-1",
-          "groupId": "tg-6cf6941f-0462-49c5-872c-3f853ff20966",
-          "groupTitle": "Schallwelle, Kammerton, Frequenz"
-        },
-        {
-          "kind": "exercise",
-          "id": "q-101-ex-1",
-          "groupId": "tg-6cf6941f-0462-49c5-872c-3f853ff20966",
-          "groupTitle": "Schallwelle, Kammerton, Frequenz"
-        },
-        {
-          "kind": "exercise",
-          "id": "q-101-ex-2",
-          "groupId": "tg-6cf6941f-0462-49c5-872c-3f853ff20966",
-          "groupTitle": "Schallwelle, Kammerton, Frequenz"
-        },
-        {
-          "kind": "exercise",
-          "id": "q-bf4bfa5f",
-          "groupId": "tg-6cf6941f-0462-49c5-872c-3f853ff20966",
-          "groupTitle": "Schallwelle, Kammerton, Frequenz"
-        },
-        {
-          "kind": "theory",
-          "id": "tb-101-2",
-          "groupId": "tg-935ca82c-c38f-49ad-ad5c-94ea02692c74",
-          "groupTitle": "Gruppe 1 - Theorie"
-        },
-        {
-          "kind": "theory",
-          "id": "tb-3-3b1b7f",
-          "groupId": "tg-935ca82c-c38f-49ad-ad5c-94ea02692c74",
-          "groupTitle": "Gruppe 1 - Theorie"
-        }
-      ],
-      "createdAt": "2026-11-16T00:00:00.000Z",
-      "updatedAt": "2026-11-17T15:09:30.367Z"
-    }
-  ],
+  "modules": [],
   "questions": [
-    {
-      "id": "q-101-ex-1",
-      "targetLane": "leicht",
-      "questionType": "numeric_input",
-      "prompt": "Welche Frequenz (in Hz) hat eine Oktave über dem Kammerton A4 (440 Hz)?",
-      "correctAnswers": [
-        "880",
-        "880 Hz"
-      ],
-      "explanation": "Eine Oktave entspricht dem Frequenzverhältnis 2:1, also 440 Hz × 2 = 880 Hz.",
-      "baseXp": 10,
-      "tags": [
-        "Allgemein"
-      ],
-      "moduleIds": [
-        "theory-101"
-      ]
-    },
-    {
-      "id": "q-101-ex-2",
-      "targetLane": "leicht",
-      "questionType": "interactive_notation",
-      "prompt": "Setze eine Viertelnote auf die zweite Linie von unten (G4) im Violinschlüssel.",
-      "correctAnswers": [],
-      "notationTask": {
-        "clef": "treble",
-        "maxNotes": 1,
-        "lockDuration": "quarter",
-        "showDurationPicker": false,
-        "compact": "tight",
-        "showHints": true,
-        "expectedPitches": [
-          "G4"
-        ]
-      },
-      "explanation": "Die Schnecke des Violinschlüssels umschließt die 2. Linie von unten und markiert dort den Ton G4.",
-      "baseXp": 10,
-      "tags": [
-        "Notensystem",
-        "Violinschlüssel"
-      ],
-      "moduleIds": [
-        "theory-101"
-      ]
-    },
     {
       "id": "q-101-qe-1",
       "targetLane": "mittel",
@@ -153,9 +19,7 @@
       "tags": [
         "Notensystem"
       ],
-      "moduleIds": [
-        "theory-101"
-      ]
+      "moduleIds": []
     },
     {
       "id": "q-101-qe-2",
@@ -176,9 +40,7 @@
       "tags": [
         "Allgemein"
       ],
-      "moduleIds": [
-        "theory-101"
-      ]
+      "moduleIds": []
     },
     {
       "id": "q-101-fl-1",
@@ -194,9 +56,7 @@
       "tags": [
         "Allgemein"
       ],
-      "moduleIds": [
-        "theory-101"
-      ]
+      "moduleIds": []
     },
     {
       "id": "q-101-fl-2",
@@ -221,35 +81,7 @@
         "Notensystem",
         "Violinschlüssel"
       ],
-      "moduleIds": [
-        "theory-101"
-      ]
-    },
-    {
-      "id": "q-bf4bfa5f",
-      "targetLane": "leicht",
-      "questionType": "interactive_notation",
-      "prompt": "Zeichne ein B ein",
-      "correctAnswers": [],
-      "notationTask": {
-        "clef": "bass",
-        "maxNotes": 1,
-        "lockDuration": "half",
-        "showDurationPicker": true,
-        "compact": "tight",
-        "showHints": true,
-        "expectedDurations": [
-          "quarter"
-        ]
-      },
-      "explanation": "",
-      "baseXp": 10,
-      "tags": [
-        "Notensystem"
-      ],
-      "moduleIds": [
-        "theory-101"
-      ]
+      "moduleIds": []
     }
   ],
   "quizSettings": {
