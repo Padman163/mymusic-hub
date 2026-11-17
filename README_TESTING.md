@@ -78,9 +78,11 @@ npx @biomejs/biome check --write .
 
 ### Stufe 2: Komponenten- & DOM-Verhalten
 
-- **Werkzeuge:** Vitest mit `happy-dom` oder `astro/container`.
+- **Werkzeuge:** Vitest mit `happy-dom` gemäß `vitest.config.ts`. Die vorhandenen Tests verwenden keinen Astro-Container.
 - **Testdateien:** `tests/components/checklist-editor.test.ts`, `tests/components/notation-builder.test.ts`, `tests/components/module-builder-ui.test.ts`, `tests/components/module-player-ui.test.ts`.
-- **Gegenstand:** Prüft isolierte DOM-Interaktionen (z. B. Checklisten-Editor, NotationBuilder-Eingabe, Modul-/Aufgaben-Builder-Formulare inkl. Live-XP/HTML-Fehlerbehandlung sowie Stepper-Freischaltung, Fastlane-Auswertung und Dashboard/Roadmap-Updates) ohne echten Browser.
+- **Gegenstand:** Prüft DOM-Controller und ihre Interaktionen mit Logik und Zustand ohne echten Browser: Checklisten-Eingabe, Notations-Builder per Maus und Tastatur, Modul-/Aufgabenformulare mit Gruppierung, Sortierung, Live-XP und API-Fehleranzeige sowie Lernpfad, Lösungsanzeige, Antwort-Wiederherstellung und Dashboard-/Roadmap-Updates.
+- **Testaufbau und Grenzen:** Die Tests erzeugen DOM-Strukturen direkt und rufen die TypeScript-Controller auf; sie rendern nicht die tatsächlichen `.astro`-Komponenten. API-Antworten werden bei Bedarf über `fetch`-Mocks simuliert, Geometriewerte für Mausklicks teilweise vorgegeben. Damit werden weder produktive Serverless-Endpunkte noch echtes CSS-Layout, Browser-Rendering oder vollständige Barrierefreiheit geprüft. Dafür sind ergänzende Browser- und Accessibility-Prüfungen erforderlich.
+- **Abgrenzung:** Einzelne Tests verbinden mehrere Controller mit Lernfortschrittslogik und Speicherung oder prüfen Schemas und Testdaten. Die Suite enthält damit auch Integrationsanteile statt ausschließlich isolierter Komponententests.
 - **Befehl:**
   ```bash
   npm run test:component
@@ -88,8 +90,8 @@ npx @biomejs/biome check --write .
 
 * **Wann nutzen:**
   * **Beim Bau interaktiver UI-Elemente:** Nach Änderungen an Widgets, Formularen, interaktiven Musik-Tools oder Editoren.
-  * **Bei Accessibility- & Event-Anpassungen:** Wenn Keyboard-Navigation (z. B. `Enter`/`Escape`), Fokus-Steuerung oder ARIA-Attribute verändert werden.
-  * **Vor strukturellen UI-Refactorings:** Deutlich schneller als End-to-End-Tests, um sicherzustellen, dass Event-Handler und lokaler Zustand nach DOM-Anpassungen intakt bleiben.
+  * **Bei Accessibility- & Event-Anpassungen:** Geänderte Tastaturaktionen, Fokus-Steuerung oder ARIA-Attribute gezielt mit passenden Assertions absichern. Bestehende Tests prüfen unter anderem `Enter` im Checklisten-Editor sowie Pfeiltasten, Notenwertauswahl, Leertaste und Löschen im Notations-Builder; sie sind kein vollständiger Accessibility-Audit.
+  * **Vor strukturellen UI-Refactorings:** Für schnelles Feedback zu Event-Handlern und Zustandsänderungen. Bei Änderungen am Astro-Markup zusätzlich echte Seiten im Browser prüfen, da manuell erzeugte Test-DOMs von den Komponenten abweichen können.
 
 
 ### Stufe 3: Integration – HTTP- & Serverless-Verhalten
