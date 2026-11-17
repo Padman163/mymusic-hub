@@ -111,6 +111,7 @@ npx @biomejs/biome check --write .
 * **Testdateien:** `tests/e2e/smoke.spec.ts`.
 * **Gegenstand:** Startet den Astro-Produktionsserver und prüft Navigation, HTTP-Status 200, fehlerfreie Klickpfade und responsive Darstellung in Desktop Chrome und Mobile Safari.
 * **Visuelle Prüfung:** Die aktuellen E2E-Tests prüfen Notationsgeometrie und responsives Layout; sie enthalten derzeit keine Screenshot-Vergleiche.
+* **Builder-Smoke-Tests:** Prüfen Gruppieren/Auflösen, sichtbare Aktionsbuttons mit mindestens 44 px Höhe und überlappungsfreie Gruppenkarten statt exakter CSS-Abstände. Der Bearbeitungstest öffnet ein Modul über den Katalog und kehrt über den echten Zurück-Button zur Übersicht zurück; die API liefert dabei feste Testdaten ohne Schreibzugriffe. Die Cursor-Ausrichtung der Notationsvorschau wird separat geprüft.
 * **Befehle:**
   ```bash
   npm run test:e2e
@@ -245,7 +246,7 @@ Vor jedem Push auf GitHub muss das einzeilige Pre-Flight Quality Gate fehlerfrei
 npm run preflight
 ```
 
-_Befehlskette im Detail:_ `npm run validate && npm run audit && npm run test:all && git diff --check`. `validate` führt Biome, Astro-Check und TypeScript aus; `test:all` führt Vitest, Build und Playwright aus.
+_Befehlskette im Detail:_ `npm run validate && npm run audit && npm run test:all && git diff --check`. `validate` führt Biome, Astro-Check und TypeScript aus; `test:all` führt Vitest, Build und Playwright aus. Danach misst `audit:lhci` den Build mit Lighthouse CI und lädt den Bericht in den konfigurierten temporären öffentlichen Speicher hoch. `test:visual` aktualisiert Snapshots und `test:e2e:ui` startet den interaktiven Playwright-Modus; beide sind deshalb keine Preflight-Gates.
 Bricht beim kleinsten Fehler mit Exit-Code 1 ab.
 
 ---
