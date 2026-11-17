@@ -106,6 +106,7 @@ Auf dem fertigen Feature-Branch:
 ```bash
 git branch -m archive/feat/<featurename>
 git push -u origin archive/feat/<featurename>
+git push origin --delete feat/<featurename>
 ```
 
 Den Archiv-Branch auf GitHub prüfen. Ein bereits gepushter `feat/`-Branch bleibt dort bestehen; eine spätere Löschung ist eine separate Entscheidung.

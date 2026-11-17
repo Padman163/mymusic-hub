@@ -12,6 +12,18 @@ export const TAG_DEFINITIONS: Record<string, TagDefinition> = {
     description: "Lesen und Platzieren im Notensystem",
     multiplier: 1.5,
   },
+  Tonsystem: {
+    description: "Töne, Tonhöhen, Oktaven und Tonschritte",
+    multiplier: 1.1,
+  },
+  Vortragslehre: {
+    description: "Tempo, Dynamik, Artikulation und musikalischer Ausdruck",
+    multiplier: 1.1,
+  },
+  Harmonielehre: {
+    description: "Akkorde, harmonische Funktionen und Akkordfolgen",
+    multiplier: 1.2,
+  },
   Violinschlüssel: {
     description: "Notation im Violinschlüssel (G-Schlüssel)",
     multiplier: 1.0,

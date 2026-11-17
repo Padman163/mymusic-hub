@@ -21,7 +21,7 @@ Warum machen wir das getrennt? Weil so jeder Baustein einzeln geprüft und getes
 - **Was es ist:** Eine einzige, zentrale Tabelle für alle Erfahrungspunkte (XP) und Themen-Etiketten (Tags).
 - **Was darin steckt:**
   - **Standard-Punkte (Basis-XP):** Der Theorie-Basiswert beträgt **30 XP**, eine Praxisaufgabe **20 XP**, eine Lernpfad-Aufgabe **10 XP**, eine Quizfrage **15 XP** und eine Schnelltest-Frage („Fastlane“) **25 XP**.
-  - **Themen-Etiketten mit Schwierigkeitsfaktor:** Themen wie `Allgemein` (× 1,0), `Violinschlüssel` (× 1,0), `Tabulatur` (× 1,0), `Bassschlüssel` (× 1,1), `Gitarre` (× 1,2), `Rhythmus` (× 1,2) und `Notensystem` (× 1,5).
+  - **Themen-Etiketten mit Schwierigkeitsfaktor:** Zum Beispiel `Tonsystem` und `Vortragslehre` (je × 1,1), `Harmonielehre` (× 1,2) und `Notensystem` (× 1,5). Die vollständige Konfiguration steht in `src/lib/xp-tags.ts`.
   - **Automatische Berechnung:** Eine Aufgabe im Notensystem mit 10 Basis-XP zählt durch den Faktor 1,5 automatisch **15 XP**. Hat eine Aufgabe mehrere Themen-Etiketten, zählt standardmäßig der höchste Faktor.
 - **Warum:** Wenn wir später entscheiden, dass das Notensystem oder Gitarren-Aufgaben mehr oder weniger Punkte geben sollen, muss das nur **an einer einzigen Stelle** angepasst werden – und nicht in Dutzenden Aufgaben einzeln.
 

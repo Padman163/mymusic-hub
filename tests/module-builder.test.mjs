@@ -58,6 +58,15 @@ describe("xp-tags Konfiguration & Berechnung", () => {
     expect(calculateQuestionXp(15, ["Unbekannt"])).toBe(15);
     expect(calculateQuestionXp(0, ["Notensystem"])).toBe(0);
   });
+
+  it.each([
+    ["Tonsystem", 11],
+    ["Vortragslehre", 11],
+    ["Harmonielehre", 12],
+  ])("liefert für %s bei 10 Basis-XP %i XP", (tag, xp) => {
+    expect(getAvailableTags()).toContain(tag);
+    expect(calculateQuestionXp(10, [tag])).toBe(xp);
+  });
 });
 
 describe("module-store Validierung & Store-Operationen", () => {
