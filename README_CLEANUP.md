@@ -13,7 +13,7 @@ Arbeitsstand und offene Änderungen prüfen und die Bereinigung möglichst auf e
 
 ## 1. Git-Hygiene und Artefakte
 
-- `.gitignore` auf `dist/`, `.astro/`, `node_modules/`, `test-results/`, `playwright-report/`, `.lighthouseci/` und `.env` prüfen.
+- `.gitignore` auf `dist/`, `.astro/`, `node_modules/`, `test-results/`, `playwright-report/`, `.lighthouseci/`, `.env` und `.env.*` prüfen. `.env.example` bleibt als mögliche Vorlage erlaubt und darf keine echten Zugangsdaten enthalten.
 - Prüfen, ob ignorierte Dateien bereits im Index liegen:
 
   ```bash
@@ -29,7 +29,7 @@ Arbeitsstand und offene Änderungen prüfen und die Bereinigung möglichst auf e
   ```
 
   Nur für tatsächlich getrackte Ordner ausführen. Die Entfernung wird für den nächsten Commit vorgemerkt und entfernt die Dateien dort aus dem Repository; sie kann andere Checkouts betreffen. `.env` und Zugangsdaten nicht veröffentlichen.
-- Beim letzten Cleanup blieben Dateien in `test-results/` und `.lighthouseci/` bewusst im Index. Aktuellen Stand erneut prüfen.
+- Beim Cleanup vom 17.11.2026 wurden die Berichtsdateien in `test-results/` und `.lighthouseci/` nach Freigabe aus dem Index entfernt; lokale Dateien blieben erhalten. Aktuellen Stand vor jedem weiteren Cleanup erneut prüfen.
 
 ## 2. Dokumentation konsolidieren
 
@@ -69,4 +69,4 @@ Eine Tabelle mit Pfad, Fundstellen und Empfehlung **Behalten**, **Prüfen** oder
    ```
 
 3. Fehler und Warnungen untersuchen und das Gate nach Korrekturen erneut ausführen. `npm run audit` scheitert erst ab `high`; niedrigere gemeldete Schwachstellen separat bewerten.
-4. Änderungen und verbleibende Risiken zusammenfassen. Lighthouse, manuelle Release-Prüfungen und externe Asset-Verwendungen sind nicht automatisch durch Preflight abgedeckt.
+4. Änderungen und verbleibende Risiken zusammenfassen. Lighthouse läuft gemäß `package.json` im Preflight mit; Messumfang und öffentlicher Standard-Upload sind im Testing-Leitfaden beschrieben. Manuelle Release-Prüfungen und externe Asset-Verwendungen sind nicht automatisch durch Preflight abgedeckt.

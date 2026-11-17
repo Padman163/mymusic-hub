@@ -28,19 +28,21 @@ npx tsc --noEmit             # Führt strikte TypeScript-Typprüfung im gesamten
 ```bash
 npm test                     # Führt alle Vitest-Tests einschließlich Dokumentationscheck aus
 npm run test:watch           # Startet Tests im interaktiven Watch-Modus während des Programmierens
-npm run test:unit            # Führt gezielt Notations- und Rechenlogik-Tests aus
+npm run test:unit            # Führt ausschließlich tests/music-notation.test.mjs aus
 npm run test:component       # Führt isolierte DOM-/Komponententests mit happy-dom aus
-npm run test:integration     # Testet API-Handler und GitHub-Schnittstellen via Mocks
-npm run test:e2e             # Startet automatisierte Playwright-Browsertests
+npm run test:integration     # Führt die Beitragstests unter tests/integration/ aus
+npm run build && npm run test:e2e # Prüft den aktuellen Build mit Playwright
 npm run test:e2e:ui          # Öffnet das grafische Playwright Test-Dashboard
-npm run test:visual          # Aktualisiert vorhandene Playwright-Snapshots
+npm run test:visual          # E2E mit --update-snapshots; derzeit keine Snapshot-Assertions
 ```
 
 ### 1.4 Das zentrale Pre-Flight Quality Gate
 ```bash
 npm run preflight            # Kombinierte Kette vor jedem Push / Pull Request:
-                             # validate -> audit -> test:all (Vitest, Build, E2E) -> Git-Diff
+                             # validate -> audit -> test:all (Vitest, Build, E2E) -> audit:lhci -> Git-Diff
 ```
+
+Lighthouse lädt Berichte standardmäßig temporär öffentlich hoch. Lokale Ablage und Testgrenzen stehen im [Testing-Leitfaden](README_TESTING.md).
 
 Für eine vollständige Repository-Bereinigung siehe [Cleanup-Anleitung](README_CLEANUP.md).
 

@@ -26,7 +26,7 @@ Auf diesem Branch entwickeln und Änderungen regelmäßig committen und pushen. 
 npm run preflight
 ```
 
-Das Gate umfasst Validierung, Audit, Vitest, Build und Playwright. Fehler beheben und erneut ausführen. Details und Voraussetzungen: [Testing](README_TESTING.md).
+Das Gate umfasst Validierung, Audit, Vitest, Build, Playwright und Lighthouse CI. Lighthouse lädt Berichte standardmäßig temporär öffentlich hoch; eine rein lokale Ablage ist über Umgebungsvariablen möglich. Fehler beheben und erneut ausführen. Details und Voraussetzungen: [Testing](README_TESTING.md).
 
 ## 4. Cleanup und Abschlussprüfung
 
@@ -58,11 +58,11 @@ Arbeite nun in zwei aufeinanderfolgenden Stufen:
 ### 3. AUFGABEN FÜR STUFE 1 (Dokumentation & `/features/README_FEAT_{{FEATURE_SLUG}}.md`)
 
 1. **Alle README-/Doku-Dateien analysieren & gezielt ergänzen (Single Source of Truth):**
-   - Prüfe jede vorhandene `.md`-Dokumentationsdatei im Root-Verzeichnis (`README.md`, `FEATURES.md`, `ASTROSTRUCTURE.md`, `CHEATSHEET.md`, `TESTING.md`, `WORKSPACE_SETUP.md`, `.INSTRUCTIONS.md`) sowie falls angegeben **{{HANDOFF_DATEI}}**.
+   - Prüfe die vorhandenen Root-Leitfäden (`README.md`, `README_ASTROSTRUCTURE.md`, `README_CHEATSHEET.md`, `README_TESTING.md`, `README_WORKSPACE_SETUP.md`, `README_CLEANUP.md`, `README_WORKFLOW.md`), `.github/copilot-instructions.md`, die Übersicht `features/README_FEAT.md` sowie falls angegeben **{{HANDOFF_DATEI}}**.
    - Ergänze **{{FEATURE_NAME}}** nur dort, wo es fachlich hingehört (keine Redundanzen):
-     - `FEATURES.md`: Architektur, Funktionsweise, Props/Schnittstellen und beteiligte Dateien ergänzen.
+     - `features/README_FEAT.md`: Funktionsübersicht und Verweis auf die führende Feature-Referenz ergänzen; Architektur, Props und Details dort pflegen.
      - `README.md`: Falls das Feature auf der Roadmap stand, Status auf `[x]` setzen (sonst als abgeschlossenes Feature ergänzen) und auf `/features/README_FEAT_{{FEATURE_SLUG}}.md` verweisen.
-     - `TESTING.md` / `CHEATSHEET.md` / `WORKSPACE_SETUP.md` / `.INSTRUCTIONS.md`: Nur anpassen, falls neue Testsuiten, Skripte, `.env`-Variablen oder globale Architekturregeln hinzugekommen sind.
+     - `README_TESTING.md` / `README_CHEATSHEET.md` / `README_WORKSPACE_SETUP.md` / `.github/copilot-instructions.md`: Nur anpassen, falls neue Testsuiten, Skripte, `.env`-Variablen oder globale Architekturregeln hinzugekommen sind.
 
 2. **Feature-Datei `/features/README_FEAT_{{FEATURE_SLUG}}.md` anlegen oder ergänzen:**
    - Verwende das bestehende Namensschema `README_FEAT_<FEATURE_SLUG>.md`. Falls eine passende Feature-Datei bereits existiert, ergänze sie statt eine zweite Dokumentation anzulegen.

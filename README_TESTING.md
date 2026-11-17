@@ -166,7 +166,7 @@ Externe Links, fachliche Aktualität, dynamische Asset-Pfade und Git-Hygiene wer
 
 * **Werkzeuge:** `npm audit`, Git CLI (`git ls-files`, `git grep`).
 * **Zweck & Gegenstand:** `npm audit` gleicht den Abhängigkeitsbaum mit bekannten Advisories der konfigurierten Registry ab, einschließlich transitiver und Entwicklungsabhängigkeiten. `--audit-level=high` setzt die Fehlerschwelle auf `high`/`critical`, blendet niedrigere Schweregrade aber nicht aus. Ein erfolgreicher Lauf bedeutet daher nicht, dass keine bekannten Schwachstellen vorliegen.
-* **Grenzen und Geheimnisschutz:** Das Paket-Audit prüft weder eigene Anwendungslogik noch Geheimnisse, Git-Historie oder die tatsächliche Ausnutzbarkeit jedes Befunds. Die folgenden Git-Befehle sind ergänzende Suchhilfen, keine vollständigen Secret-Scans. `.gitignore` ignoriert derzeit `.env` und `.env.production`, aber nicht automatisch jede `.env.*`-Variante; bereits getrackte Dateien werden durch Ignore-Regeln nicht entfernt. `PUBLIC_`-Werte können im Client landen und dürfen keine Geheimnisse enthalten.
+* **Grenzen und Geheimnisschutz:** Das Paket-Audit prüft weder eigene Anwendungslogik noch Geheimnisse, Git-Historie oder die tatsächliche Ausnutzbarkeit jedes Befunds. Die folgenden Git-Befehle sind ergänzende Suchhilfen, keine vollständigen Secret-Scans. `.gitignore` ignoriert `.env` und `.env.*` mit Ausnahme von `.env.example`; bereits getrackte Dateien werden durch Ignore-Regeln nicht entfernt. Auch Vorlagen dürfen keine echten Zugangsdaten enthalten. `PUBLIC_`-Werte können im Client landen und dürfen keine Geheimnisse enthalten.
 * **Befehle:**
   ```bash
   # Bekannte Paket-Advisories prüfen; Fehlerstatus ab High/Critical
@@ -266,8 +266,8 @@ Vor jedem Push auf GitHub muss das einzeilige Pre-Flight Quality Gate fehlerfrei
 npm run preflight
 ```
 
-_Befehlskette im Detail:_ `npm run validate && npm run audit && npm run test:all && git diff --check`. `validate` führt Biome, Astro-Check und TypeScript aus; `test:all` führt Vitest, Build und Playwright aus. Danach misst `audit:lhci` den Build mit Lighthouse CI und lädt den Bericht in den konfigurierten temporären öffentlichen Speicher hoch. `test:visual` aktualisiert Snapshots und `test:e2e:ui` startet den interaktiven Playwright-Modus; beide sind deshalb keine Preflight-Gates.
-Bricht beim kleinsten Fehler mit Exit-Code 1 ab.
+_Befehlskette im Detail:_ `npm run validate && npm run audit && npm run test:all && npm run audit:lhci && git diff --check`. `validate` führt Biome, Astro-Check und TypeScript aus; `test:all` führt Vitest, Build und Playwright aus. Danach misst `audit:lhci` den Build mit Lighthouse CI und lädt den Bericht standardmäßig in den konfigurierten temporären öffentlichen Speicher hoch; lokale Ablage lässt sich wie in Abschnitt 3.2 über Umgebungsvariablen wählen. `test:visual` führt die E2E-Suite mit Snapshot-Aktualisierung aus (derzeit ohne Snapshot-Assertions), `test:e2e:ui` startet den interaktiven Playwright-Modus; beide sind keine zusätzlichen Preflight-Gates.
+Die Kette bricht beim ersten fehlgeschlagenen Befehl ab. Warnungen und Audit-Befunde unterhalb der konfigurierten Fehlerschwelle stoppen sie nicht automatisch.
 
 ---
 
