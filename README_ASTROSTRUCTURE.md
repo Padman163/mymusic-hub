@@ -68,6 +68,32 @@ export const collections = {
 
 Der Auszug zeigt nicht alle Projektfelder; verbindlich ist `src/content.config.ts`.
 
+**Seitenlayout im Frontmatter (Starlight 0.42):**
+
+| Option | Wirkung |
+| :--- | :--- |
+| `template: doc` (Standard) | Dokumentationsseite mit Sidebar und Inhaltsverzeichnis. |
+| `template: splash` | Seite ohne Sidebar, breitere Spalte, z. B. für Startseiten; kombinierbar mit `hero`. |
+| `template: wide-content` | Projekteigen: wie `doc`, aber breitere Inhaltsspalte (siehe unten). |
+| `tableOfContents: false` | Blendet das Inhaltsverzeichnis aus. |
+| `tableOfContents: { minHeadingLevel, maxHeadingLevel }` | Steuert die Überschriftenebenen (Standard 2–3). |
+| `sidebar: { order, label, hidden, badge, attrs }` | Position, Beschriftung, Sichtbarkeit und Badge des Sidebar-Eintrags. |
+| `prev` / `next` | Überschreibt oder deaktiviert (`false`) die Seitennavigation. |
+| `hero` | Hero-Bereich, vor allem mit `splash`. |
+| `banner: { content }` | Banner am Seitenanfang. |
+| `editUrl` | Eigene URL oder `false` für den „Seite bearbeiten“-Link. |
+| `lastUpdated` | Datum oder `false` für die „Zuletzt aktualisiert“-Angabe. |
+| `pagefind: false` | Nimmt die Seite aus der Suche aus. |
+| `draft: true` | Seite wird im Produktions-Build nicht veröffentlicht. |
+| `head`, `title`, `description` | Meta-Tags, Seitentitel und Beschreibung. |
+
+**Template `wide-content`:** Mit `template: wide-content` im Frontmatter erhält eine Seite eine breitere Inhaltsspalte (`--sl-content-width: 75rem`); sonst verhält sie sich wie `doc`. Das Inhaltsverzeichnis lässt sich weiterhin separat mit `tableOfContents: false` ausblenden. Beteiligt sind:
+
+- `src/content.config.ts`: erweitert das `template`-Feld um den Wert `wide-content`.
+- `src/components/starlight/MarkdownContent.astro`: überschreibt Starlights `MarkdownContent` und setzt `data-wide-content` als CSS-Hook.
+- `src/styles/wide-content.css`: setzt die Breite; über `customCss` in `astro.config.mjs` eingebunden.
+- `astro.config.mjs`: registriert den Komponenten-Override unter `components`.
+
 ### 3.2 Notation und Medien
 
 `src/components/notation/Notation.astro` und seine internen Bausteine verwenden den gemeinsamen SVG-Renderer in `src/lib/notation-renderer.ts`. `NotationKeyboard.astro` ergänzt eine verbundene Klaviernotation; `NotationBuilder.astro` ergänzt interaktive Eingabe. `SheetMusicPlayer.astro` verwendet unabhängig davon AlphaTab für MusicXML. Bravura liegt lokal unter `public/alphatab/font/`; Partituren liegen unter `public/scores/`.
@@ -95,6 +121,7 @@ src/
 │   ├── learning/               # Lernpfad und Modul-Player
 │   ├── notation/               # Notationskomponenten
 │   ├── project/                # Modul- und Aufgaben-Builder
+│   ├── starlight/              # Überschreibungen von Starlight-Komponenten
 │   └── ui/                     # Gemeinsame UI-Bausteine
 ├── content/
 │   ├── docs/                   # MDX- und Markdown-Inhalte

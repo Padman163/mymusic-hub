@@ -8,6 +8,8 @@ export const collections = {
     loader: docsLoader(),
     schema: docsSchema({
       extend: z.object({
+        template: z.enum(["doc", "splash", "wide-content"]).default("doc"),
+
         // Einordnung im Gesamtkurs
         scope: z
           .enum(["theory", "instrument", "production", "band"])

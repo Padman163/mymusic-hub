@@ -406,7 +406,14 @@ export default defineConfig({
         },
       },
       defaultLocale: "root",
-      customCss: ["/src/styles/sidebar.css", "katex/dist/katex.min.css"],
+      customCss: [
+        "/src/styles/sidebar.css",
+        "/src/styles/wide-content.css",
+        "katex/dist/katex.min.css",
+      ],
+      components: {
+        MarkdownContent: "./src/components/starlight/MarkdownContent.astro",
+      },
       sidebar: [
         {
           label: "Projektierung",
