@@ -1,27 +1,6 @@
 {
   "modules": [],
-  "questions": [
-    {
-      "id": "q-101-qe-1",
-      "targetLane": "mittel",
-      "questionType": "single_choice",
-      "prompt": "Wie viele parallele Linien besitzt ein reguläres Notensystem?",
-      "options": [
-        "4",
-        "5",
-        "6"
-      ],
-      "correctAnswers": [
-        "5"
-      ],
-      "explanation": "Ein Standard-Notensystem besteht immer aus fünf Notenlinien und vier Zwischenräumen.",
-      "baseXp": 15,
-      "tags": [
-        "Notensystem"
-      ],
-      "moduleIds": []
-    }
-  ],
+  "questions": [],
   "quizSettings": {
     "quizEasyMinScore": 0.7,
     "fastlaneMinScore": 0.85,
