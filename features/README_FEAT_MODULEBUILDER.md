@@ -53,7 +53,7 @@ Warum machen wir das getrennt? Weil so jeder Baustein einzeln geprüft und getes
 ---
 
 ### 4. Der Aktenschrank und die sichere Speicher-Schnittstelle
-- **Datendatei (`data/modules.json`):** Initial-Seed für Netlify Blobs und veränderbarer Speicher beim reinen Astro-Dev-Start. Beispieldaten für Tests stehen separat in `tests/fixtures/modules.ts`.
+- **Lokale Datendatei (`data/modules.json`):** Wird nur beim reinen Astro-Dev-Start verwendet und beim ersten Schreiben erzeugt. Netlify Blobs benötigt keinen Modul-Seed aus dem Repository. Beispieldaten für Tests stehen in `tests/fixtures/modules.ts`.
 - **Schnittstelle zum Speichern und Laden (`netlify/functions/modules.ts`):**
   - Module und Aufgaben laden (`GET`), anlegen (`POST`), aktualisieren (`PUT`) und löschen (`DELETE`). Einrichtung, Seed und Konfliktschutz stehen in der [Blob-Referenz](README_FEAT_NETLIFYBLOB.md).
   - **Größenbegrenzung:** Zu große Anfragen (über 500.000 Bytes) werden sofort abgewiesen.
@@ -151,8 +151,8 @@ Damit Lernende sehen können, wie weit sie sind und welche Module noch gesperrt 
 
 Jetzt verbinden sich die Bausteine aus Etappe 1 bis 3A zu einem kompletten, direkt im Browser spielbaren Kurs unter **Audio & Musik → Musiktheorie → Interaktiver Lernpfad & Dashboard** (`/audio/theory/lernpfad/`).
 
-### 1. Initialer Modulkatalog (`data/modules.json`)
-Der Seed enthält derzeit keine Module oder Fragen. Seine globalen Grenzen betragen 70 % für das Quiz und 85 % für Fastlane (Revision 1); das sind gespeicherte Werte, nicht die Schema-Standardwerte. Der aktuelle Blob-Katalog kann davon abweichen. Testmodule wie `theory-101` und `guitar-102` werden unabhängig davon über `tests/fixtures/modules.ts` erzeugt.
+### 1. Initialer Modulkatalog
+Ein neuer Katalog enthält keine Module oder Fragen. Bis eigene Quiz-Einstellungen gespeichert werden, gelten die Schema-Standardwerte: 80 % für das Quiz und 85 % für Fastlane. Bestehende Blob-Kataloge bleiben unverändert.
 
 ### 2. Das XP-Dashboard (`src/components/learning/ProgressDashboard.astro`)
 - **Wozu es dient:** Zeigt dem Lernenden auf einen Blick das aktuelle **Level**, die **gesammelten Gesamt-XP**, den Fortschrittsbalken bis zum nächsten Level, die Anzahl **abgeschlossener Module** sowie kompakte Badges für XP nach Lernbereich (`Theorie`, `Instrument` …) und Themen (`Notensystem`, `Gitarre` …).

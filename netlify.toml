@@ -4,4 +4,4 @@
   functions = "netlify/functions"
 
 [functions]
-  included_files = ["data/contributions.json", "data/modules.json"]
+  included_files = ["data/contributions.json"]

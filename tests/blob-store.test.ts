@@ -15,20 +15,29 @@ describe('Blob-Store und Initial-Seed', () => {
 		vi.mocked(readFile).mockReset();
 	});
 
-	it('übernimmt den Modul-Seed mit Quiz-Einstellungen nur beim ersten Zugriff', async () => {
-		const seed = { modules: [], questions: [], quizSettings: { quizEasyMinScore: 0.7, fastlaneMinScore: 0.85, revision: 1 } };
+	it('übernimmt den Beitrags-Seed nur beim ersten Zugriff', async () => {
+		const seed = [{ id: 'seed' }];
 		vi.mocked(readFile).mockResolvedValue(JSON.stringify(seed));
-		expect(await readBlobJSON('modules')).toEqual(seed);
-		expect(await readBlobJSON('modules')).toEqual(seed);
+		expect(await readBlobJSON('contributions')).toEqual(seed);
+		expect(await readBlobJSON('contributions')).toEqual(seed);
 		expect(getStoreMock).toHaveBeenCalledWith('mymusic-hub-data');
-		expect(readFile).toHaveBeenCalledExactlyOnceWith('data/modules.json', 'utf8');
-		expect(store.setJSON).toHaveBeenCalledExactlyOnceWith('modules', seed, { onlyIfNew: true });
+		expect(readFile).toHaveBeenCalledExactlyOnceWith('data/contributions.json', 'utf8');
+		expect(store.setJSON).toHaveBeenCalledExactlyOnceWith('contributions', seed, { onlyIfNew: true });
 	});
 
-	it('verwendet bei fehlender Seed-Datei leere Standardwerte', async () => {
+	it('verwendet bei fehlender Beitragsdatei ein leeres Array', async () => {
 		vi.mocked(readFile).mockRejectedValue(Object.assign(new Error('Datei fehlt'), { code: 'ENOENT' }));
 		expect(await readBlobJSON('contributions')).toEqual([]);
+	});
+
+	it('initialisiert Module ohne die lokale Astro-Datei und behält gespeicherte Quiz-Einstellungen', async () => {
+		vi.mocked(readFile).mockResolvedValue('{"modules":[],"questions":[],"quizSettings":{"quizEasyMinScore":0.7,"fastlaneMinScore":0.85,"revision":1}}');
 		expect(await readBlobJSON('modules')).toEqual({ modules: [], questions: [] });
+		expect(readFile).not.toHaveBeenCalled();
+
+		const quizSettings = { quizEasyMinScore: 0.9, fastlaneMinScore: 0.95, revision: 1 };
+		await updateBlobJSON('modules', (db) => ({ ...db, quizSettings }));
+		expect(await readBlobJSON('modules')).toEqual({ modules: [], questions: [], quizSettings });
 	});
 
 	it('erhält vorhandene Daten, wenn ein anderer Request beim Seed schneller war', async () => {
@@ -42,8 +51,8 @@ describe('Blob-Store und Initial-Seed', () => {
 	});
 
 	it('überschreibt bei ungültigem Seed keine Daten', async () => {
-		vi.mocked(readFile).mockResolvedValue('{"modules":[]}');
-		await expect(readBlobJSON('modules')).rejects.toThrow('ungültiges Format');
+		vi.mocked(readFile).mockResolvedValue('{"contributions":[]}');
+		await expect(readBlobJSON('contributions')).rejects.toThrow('JSON-Array');
 		expect(store.setJSON).not.toHaveBeenCalled();
 	});
 

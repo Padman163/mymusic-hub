@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import rawSeedDb from "../../data/modules.json";
 import { createModulesTestDatabase } from "../fixtures/modules";
 import {
   clearLearningProgress,
@@ -8,7 +7,6 @@ import {
   loadLearningProgress,
   saveLearningProgress,
 } from "../../src/lib/learning-progress";
-import type { ModulesDatabase } from "../../src/lib/module-schema";
 import {
   validateModuleInput,
   validateQuestionInput,
@@ -496,16 +494,7 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     expect(root.textContent).toContain("Benötigt: 93 %");
   });
 
-  it("enthält ein gültiges Modulschema und valide Lernmodul-Fixtures", () => {
-    const productionDb = rawSeedDb as unknown as ModulesDatabase;
-    expect(Array.isArray(productionDb.modules)).toBe(true);
-    expect(Array.isArray(productionDb.questions)).toBe(true);
-    expect(productionDb.quizSettings).toMatchObject({
-      quizEasyMinScore: expect.any(Number),
-      fastlaneMinScore: expect.any(Number),
-      revision: expect.any(Number),
-    });
-
+  it("enthält valide Lernmodul-Fixtures", () => {
     expect(seedDb.modules.length).toBeGreaterThanOrEqual(2);
     for (const mod of seedDb.modules) {
       expect(validateModuleInput(mod)).toEqual({ valid: true, errors: [] });

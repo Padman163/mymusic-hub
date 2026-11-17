@@ -47,7 +47,9 @@ export function isBlobStoreUnavailable(error: unknown): boolean {
 async function seed<K extends Key>(store: Store, key: K): Promise<void> {
 	let contents: string | undefined;
 	try {
-		contents = await readFile(`data/${key}.json`, 'utf8');
+		if (key === 'contributions') {
+			contents = await readFile('data/contributions.json', 'utf8');
+		}
 	} catch (error) {
 		if (!(error instanceof Error && 'code' in error && error.code === 'ENOENT')) throw error;
 	}

@@ -41,7 +41,7 @@ npm run dev
 ```
 * **URL:** Öffne `http://localhost:4321` im Browser.
 * **Was geprüft wird:** Lädt das Astro-Frontend? Werden Styles, die Starlight-Sidebar und statische Komponenten gerendert?
-* **Warum dieser Schritt nötig ist:** Netlify Functions bleiben inaktiv. Nur die lokale Modul-API liest und schreibt `data/modules.json` direkt im Workspace.
+* **Warum dieser Schritt nötig ist:** Netlify Functions bleiben inaktiv. Die lokale Modul-API startet ohne Katalogdatei leer und erzeugt `data/modules.json` beim ersten Speichern. Die Datei bleibt lokal und wird nicht eingecheckt.
 
 ### Schritt 4: Statische Hygiene & Code-Validierung prüfen und anpassen
 Stelle sicher, dass im geklonten Branch keine Typen- oder Syntaxkonflikte vorliegen:
@@ -90,7 +90,7 @@ npx netlify-cli dev
 ```
 * **URL:** Öffne `http://localhost:8888`.
 * **Lokaler Blob-Speicher:** Die CLI startet Astro, die Functions und einen lokalen Blob-Server. Dessen Daten bleiben unter `.netlify/` erhalten; konkrete Verzeichnisse und Reset-Hinweise stehen in der [Blob-Referenz](features/README_FEAT_NETLIFYBLOB.md#architektur-und-datenfluss).
-* **Prüfen:** `/api/modules` und `/api/contributions` auf Port 8888 aufrufen. Bei leerem lokalen Store entspricht der erste Stand den Seed-Dateien. Änderungen laufen über Blobs, nicht über den Astro-Datei-Fallback.
+* **Prüfen:** `/api/modules` und `/api/contributions` auf Port 8888 aufrufen. Ein neuer lokaler Store startet mit leerem Modulkatalog und den Beiträgen aus dem Seed. Änderungen laufen über Blobs, nicht über den Astro-Datei-Fallback.
 
 ### Schritt 6: E2E-Testbrowser & Lighthouse CI einrichten (Optional)
 
