@@ -57,31 +57,6 @@
         "Allgemein"
       ],
       "moduleIds": []
-    },
-    {
-      "id": "q-101-fl-2",
-      "targetLane": "schwer",
-      "questionType": "interactive_notation",
-      "prompt": "Setze das eingestrichene C (C4) auf die erste Hilfslinie unter dem Violinschlüssel.",
-      "correctAnswers": [],
-      "notationTask": {
-        "clef": "treble",
-        "maxNotes": 1,
-        "lockDuration": "quarter",
-        "showDurationPicker": false,
-        "compact": "tight",
-        "showHints": true,
-        "expectedPitches": [
-          "C4"
-        ]
-      },
-      "explanation": "C4 liegt direkt auf der ersten Hilfslinie unterhalb der untersten Linie (E4).",
-      "baseXp": 25,
-      "tags": [
-        "Notensystem",
-        "Violinschlüssel"
-      ],
-      "moduleIds": []
     }
   ],
   "quizSettings": {
