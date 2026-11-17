@@ -311,6 +311,27 @@ export function validateModuleInput(input: unknown): ValidationResult {
   validateScoreThreshold(input.quizEasyMinScore, "quizEasyMinScore", errors);
   validateScoreThreshold(input.fastlaneMinScore, "fastlaneMinScore", errors);
   validateTheoryBlocks(input.theoryBlocks, errors);
+  if (input.contentOrder !== undefined) {
+    if (!Array.isArray(input.contentOrder)) {
+      errors.push("contentOrder muss ein Array sein.");
+    } else {
+      const seen = new Set<string>();
+      for (const entry of input.contentOrder) {
+        if (
+          !isRecord(entry) ||
+          (entry.kind !== "theory" && entry.kind !== "exercise") ||
+          !isNonEmptyString(entry.id)
+        ) {
+          errors.push("contentOrder enthält einen ungültigen Eintrag.");
+          continue;
+        }
+        const key = `${entry.kind}:${entry.id.trim()}`;
+        if (seen.has(key))
+          errors.push("contentOrder enthält doppelte Einträge.");
+        seen.add(key);
+      }
+    }
+  }
 
   return { valid: errors.length === 0, errors };
 }
@@ -471,6 +492,15 @@ export function upsertModule(
     theoryBlocks: (moduleData.theoryBlocks ?? existing?.theoryBlocks ?? []).map(
       cloneTheoryBlock,
     ),
+    ...((moduleData.contentOrder ?? existing?.contentOrder) !== undefined
+      ? {
+          contentOrder: (
+            moduleData.contentOrder ??
+            existing?.contentOrder ??
+            []
+          ).map((entry) => ({ kind: entry.kind, id: entry.id.trim() })),
+        }
+      : {}),
     createdAt: moduleData.createdAt ?? existing?.createdAt ?? now,
     updatedAt: moduleData.updatedAt ?? now,
   };

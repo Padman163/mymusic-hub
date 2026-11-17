@@ -8,6 +8,11 @@ import "../../styles/contribution-tags.css";
 import "../../styles/contribution-checklist.css";
 import "../../styles/module-builder.css";
 
+interface Props {
+  detail?: boolean;
+}
+
+const { detail = false } = Astro.props;
 const scopeLabels: Record<(typeof MODULE_SCOPES)[number], string> = {
   theory: "Theorie",
   instrument: "Instrument",
@@ -16,9 +21,13 @@ const scopeLabels: Record<(typeof MODULE_SCOPES)[number], string> = {
 };
 ---
 
-<form id="module-builder-form" class="issue-tracker-form module-builder-form">
-  <fieldset class="module-general-info">
-    <legend>Allgemeine Informationen</legend>
+<form
+  id="module-builder-form"
+  class="issue-tracker-form module-builder-form"
+  data-module-detail={detail ? "true" : undefined}
+>
+  <details id="module-general-info" class="module-general-info">
+    <summary>Allgemeine Informationen</summary>
     <div class="module-general-info-fields">
       <div class="field">
         <label for="module-title">Modultitel</label>
@@ -97,7 +106,7 @@ const scopeLabels: Record<(typeof MODULE_SCOPES)[number], string> = {
         </div>
       </div>
     </div>
-  </fieldset>
+  </details>
 
   <div id="module-theory-blocks-field"></div>
 

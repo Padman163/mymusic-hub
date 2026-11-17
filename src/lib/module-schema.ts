@@ -91,6 +91,11 @@ export interface TheoryBlock {
   visualPropsJson?: string;
 }
 
+export interface ModuleContentReference {
+  kind: "theory" | "exercise";
+  id: string;
+}
+
 export interface NotationBuilderTaskConfig {
   clef: "treble" | "bass";
   timeSignature?: { numerator: number; denominator: number };
@@ -132,6 +137,7 @@ export interface LearningModule {
   quizEasyMinScore: number;
   fastlaneMinScore: number;
   theoryBlocks: TheoryBlock[];
+  contentOrder?: ModuleContentReference[];
   createdAt: string;
   updatedAt: string;
 }

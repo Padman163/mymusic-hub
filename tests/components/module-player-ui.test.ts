@@ -13,6 +13,7 @@ import {
   evaluateQuestionAnswer,
   renderTheoryMarkdown,
 } from "../../src/lib/module-player-ui";
+import { calculateTheoryBlockXp } from "../../src/lib/xp-tags";
 
 const seedDb = rawSeedDb as unknown as ModulesDatabase;
 
@@ -157,7 +158,10 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     expect(exerciseStep?.dataset.stepState).toBe("locked");
     expect(
       dashboardEl.querySelector<HTMLElement>("[data-dashboard-xp]")?.dataset.dashboardXp,
-    ).toBe("30");
+    ).toBe(String(calculateTheoryBlockXp(
+      [...db.modules[0].theoryBlocks].sort((a, b) => a.order - b.order)[0],
+      db.modules[0].theoryBaseXp,
+    )));
     blockButtons.forEach((button) => button.click());
 
     expect(theoryStep?.dataset.stepState).toBe("completed");
@@ -169,7 +173,10 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     expect(
       dashboardEl.querySelector<HTMLElement>("[data-dashboard-xp]")?.dataset
         .dashboardXp,
-    ).toBe(String(db.modules[0].theoryBlocks.length * db.modules[0].theoryBaseXp));
+    ).toBe(String(db.modules[0].theoryBlocks.reduce(
+      (total, block) => total + calculateTheoryBlockXp(block, db.modules[0].theoryBaseXp),
+      0,
+    )));
 
     // Falsche Antwort auf Aufgabe 1 zeigt didaktische Erklärung
     const ex1Card = stepperEl.querySelector<HTMLElement>(
@@ -353,7 +360,10 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
       "[data-dashboard-xp]",
     )?.dataset.dashboardXp;
     expect(Number(xpValue)).toBeGreaterThan(0);
-    expect(xpValue).toBe(String(126 + db.modules[0].theoryBlocks.length * db.modules[0].theoryBaseXp));
+    expect(xpValue).toBe(String(126 + db.modules[0].theoryBlocks.reduce(
+      (total, block) => total + calculateTheoryBlockXp(block, db.modules[0].theoryBaseXp),
+      0,
+    )));
     expect(
       dashboardEl.querySelector<HTMLElement>("[data-dashboard-modules]")
         ?.dataset.dashboardModules,

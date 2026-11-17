@@ -58,6 +58,21 @@ describe("xp-tags Konfiguration & Berechnung", () => {
 });
 
 describe("module-store Validierung & Store-Operationen", () => {
+  it("speichert die gemischte Blockreihenfolge und bewahrt sie bei Teiländerungen", () => {
+    const order = [{ kind: "theory", id: "tb" }, { kind: "exercise", id: "q" }];
+    let db = upsertModule(createEmptyModulesDatabase(), {
+      id: "mod", title: "Modul", contentOrder: order,
+    });
+    order[0].id = "changed";
+    expect(db.modules[0].contentOrder).toEqual([
+      { kind: "theory", id: "tb" }, { kind: "exercise", id: "q" },
+    ]);
+    db = upsertModule(db, { id: "mod", title: "Neu" });
+    expect(db.modules[0].contentOrder).toHaveLength(2);
+    expect(validateModuleInput({ id: "mod", title: "Modul", contentOrder: [{ kind: "theory", id: "x" }, { kind: "theory", id: "x" }] }).valid).toBe(false);
+    expect(validateModuleInput({ id: "mod", title: "Modul", contentOrder: [{ kind: "quiz", id: "x" }] }).valid).toBe(false);
+  });
+
   it("speichert und validiert eigene Theorie-Block-XP und berechnet die Summe", () => {
     const blocks = [
       { id: "a", order: 1, title: "A", markdownContent: "", baseXp: 20, tags: ["Notensystem"] },

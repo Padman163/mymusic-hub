@@ -89,16 +89,17 @@ Dort gibt es vier übersichtliche Reiter:
   - **Karten- oder Listenansicht:** Per Knopfdruck wechselst du zwischen ausführlichen Karten und einer kompakten Liste. Außerdem kannst du nach Bereich filtern und nach Reihenfolge oder Gesamt-XP sortieren.
   - **Automatische Modul-Bilanz:** Jede Karte zeigt sofort an, wie viele Theorie-Blöcke, Übungen, einfache Quizfragen, Fastlane-Fragen und Gesamt-XP im Modul stecken.
   - **Aufklappbare Aufgabenliste:** Unter jedem Modul lassen sich alle zugehörigen Fragen ausklappen und nach Lern-Spur filtern.
-  - **Direktes Bearbeiten & Löschen:** Ein Klick auf den Stift bei einem Modul oder einer Frage lädt den Eintrag direkt in den passenden Builder-Reiter. Beim Löschen eines Moduls erinnert eine Sicherheitsabfrage daran, dass alle dazugehörigen Aufgaben mitgelöscht werden.
+  - **Direktes Bearbeiten & Löschen:** Ein Klick auf den Stift eines Moduls öffnet seine eigene Detailseite; Fragen werden weiterhin im Aufgaben-Reiter bearbeitet. Beim Löschen eines Moduls erinnert eine Sicherheitsabfrage daran, dass alle dazugehörigen Aufgaben mitgelöscht werden.
   - **Reihenfolge ändern:** In der Sortierung „Reihenfolge: 1 → N“ ohne Bereichsfilter verschieben die Pfeile ein Modul jeweils um eine Position. Die Reihenfolge wird dauerhaft gespeichert und gilt für den Lernpfad.
 
 ### 2. Reiter „Theorie“ (`src/components/project/ModuleBuilderForm.astro`)
 - **Wozu er dient:** Hier legst du neue Lernmodule an oder bearbeitest bestehende Module.
 - **Was du einstellen kannst:**
-  - **Grunddaten:** Die eindeutige Modul-ID wird automatisch erstellt und beim Bearbeiten beibehalten. Neue Module werden automatisch hinter dem Modul mit der höchsten Reihenfolge eingefügt; beim Bearbeiten bleibt ihre Position erhalten. Einstellbar sind Titel, Kurzbeschreibung, Bereich (`Theorie`, `Instrument`, `Produktion`, `Band`), Level (`100` bis `500`) und optional die D-Stufe (`D1`, `D2`, `D3`).
+  - **Grunddaten:** Die allgemeinen Informationen sind zunächst eingeklappt. Die eindeutige Modul-ID wird automatisch erstellt und beim Bearbeiten beibehalten. Neue Module werden automatisch hinter dem Modul mit der höchsten Reihenfolge eingefügt; beim Bearbeiten bleibt ihre Position erhalten. Einstellbar sind Titel, Kurzbeschreibung, Bereich (`Theorie`, `Instrument`, `Produktion`, `Band`), Level (`100` bis `500`) und optional die D-Stufe (`D1`, `D2`, `D3`).
   - **Themen-Etiketten als anklickbare Chips:** Zur Auswahl stehen Tags mit einem Punkte-Faktor über 1,0, z. B. `Notensystem (1.5x)`. Ohne ausgewählten Tag gilt Faktor 1,0. Bereits gespeicherte Tags mit Faktor 1,0 oder nicht mehr auswählbare Tags bleiben beim Bearbeiten erhalten.
   - **Praxisteil-Schalter:** Über ein Häkchen legst du fest, ob das Modul einen Praxisteil hat – bei reinen Theorie-Modulen bleibt der Haken einfach aus.
   - **Punkte:** Theorie-Basis-XP (Standard: `30`) dienen als Vorgabe für Blöcke ohne eigenen Wert. Die Bestehensgrenzen stehen in den übergreifenden Einstellungen.
+  - **Gemeinsame Blockliste:** Beim Bearbeiten eines Moduls erscheinen die zugehörigen Übungen zwischen den Theorieblöcken und können dort einsortiert werden. Übungen können nach Bestätigung direkt gelöscht werden; ihre Bearbeitung erfolgt weiterhin im Reiter „Aufgaben“. Die gespeicherte Reihenfolge gilt vorerst nur im Editor; der Lernpfad verwendet noch getrennte Schritte. Quizfragen erscheinen nicht in der Blockliste.
   - **Dynamischer Theorie-Block-Editor:** Gespeicherte Lernabschnitte erscheinen als kompakte, aufklappbare Zeilen. Du kannst beliebig viele hinzufügen, per Pfeiltasten (`↑` / `↓`) neu sortieren oder wieder entfernen. Jeder Block kann eigene Basis-XP und Tags erhalten; seine berechneten XP verwenden ausschließlich seine Tags. Ohne eigenen Basiswert gilt die Modulvorgabe. Das Textfeld unterstützt KaTeX-Formeln (`$...$` / `$$...$$`) und Notationen direkt an der gewünschten Stelle:
 
     ```mdx

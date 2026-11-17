@@ -8,6 +8,7 @@ import {
   MODULES_API_ENDPOINT,
   MODULES_FUNCTION_FALLBACK_ENDPOINT,
   MODULES_HTML_RESPONSE_ERROR,
+  MODULE_DETAIL_PATH,
   createTheoryBlockEditor,
   createXpTagPicker,
 } from "../../src/lib/module-builder-ui";
@@ -17,6 +18,7 @@ function mountModuleForm(): HTMLFormElement {
   const form = document.createElement("form");
   form.id = "module-builder-form";
   form.innerHTML = `
+    <details id="module-general-info"><summary>Allgemeine Informationen</summary>
     <input id="module-title" name="title" type="text" value="Schall & Tonsystem" />
     <textarea id="module-description" name="description"></textarea>
     <select id="module-scope" name="scope">
@@ -33,6 +35,7 @@ function mountModuleForm(): HTMLFormElement {
     <div id="module-tags-field"></div>
     <input id="module-has-practice" name="hasPractice" type="checkbox" />
     <input id="module-theory-base-xp" name="theoryBaseXp" type="number" value="30" />
+    </details>
     <div id="module-theory-blocks-field"></div>
     <button type="submit">Modul speichern</button>
     <button id="module-edit-cancel" type="button" hidden>Abbrechen</button>
@@ -167,6 +170,7 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
 
     const rows = form.querySelectorAll<HTMLDivElement>(".theory-block-row");
     expect(rows).toHaveLength(2);
+    expect(Array.from(rows).every((row) => !row.querySelector("details")?.open)).toBe(true);
 
     const titles = form.querySelectorAll<HTMLInputElement>(
       ".theory-block-title",
@@ -193,6 +197,18 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     form.querySelector<HTMLButtonElement>(".theory-block-remove")?.click();
     expect(controller.theoryBlockEditor.items()).toHaveLength(1);
     expect(controller.theoryBlockEditor.items()?.[0]?.title).toBe("Schwingung");
+  });
+
+  it("klappt allgemeine Informationen standardmäßig ein und öffnet sie bei ungültigem Titel", () => {
+    const form = mountModuleForm();
+    const controller = attachModuleBuilderForm(form);
+    const info = form.querySelector<HTMLDetailsElement>("#module-general-info");
+    const title = form.querySelector<HTMLInputElement>("#module-title");
+    expect(info?.open).toBe(false);
+    title?.dispatchEvent(new Event("invalid"));
+    expect(info?.open).toBe(true);
+    controller.resetForm();
+    expect(info?.open).toBe(false);
   });
 
   it("zeigt gespeicherte Theorie-Blöcke kompakt und aktualisiert ihre Titel", () => {
@@ -224,6 +240,18 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     expect(details?.open).toBe(true);
   });
 
+  it("öffnet einen zugeklappten Theorieblock bei ungültigen XP", () => {
+    const editor = createTheoryBlockEditor([
+      { id: "tb-1", order: 1, title: "Test", markdownContent: "" },
+    ]);
+    document.body.append(editor.element);
+    const details = editor.element.querySelector<HTMLDetailsElement>("details");
+    const xp = editor.element.querySelector<HTMLInputElement>(".theory-block-xp");
+    expect(details?.open).toBe(false);
+    xp?.dispatchEvent(new Event("invalid"));
+    expect(details?.open).toBe(true);
+  });
+
   it("berechnet Block-XP aus eigenem Tag und Basiswert und speichert sie", () => {
     const form = mountModuleForm();
     const controller = attachModuleBuilderForm(form);
@@ -244,6 +272,110 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
       baseXp: 20,
       tags: ["Notensystem"],
     });
+  });
+
+  it("sortiert Übungen zwischen Theorieblöcke und lädt die gespeicherte Reihenfolge", async () => {
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => new Response("{}", {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+    const form = mountModuleForm();
+    const controller = attachModuleBuilderForm(form);
+    const db = seedDb as unknown as ModulesDatabase;
+    const exercise = db.questions.find((q) => q.id === "q-101-ex-1");
+    const quiz = db.questions.find((q) => q.targetLane === "quiz_easy");
+    if (!exercise || !quiz) throw new Error("Testfragen fehlen");
+    const mod = { ...db.modules[0], theoryBlocks: db.modules[0].theoryBlocks.slice(0, 2), contentOrder: undefined };
+    controller.loadModule(mod, [exercise, quiz]);
+    const row = form.querySelector<HTMLElement>(".module-exercise-row");
+    expect(row?.querySelector("summary")?.textContent).toContain(exercise.prompt);
+    expect(form.querySelectorAll(".module-exercise-row")).toHaveLength(1);
+    row?.querySelector<HTMLButtonElement>(".theory-block-up")?.click();
+    const expected = [
+      { kind: "theory", id: mod.theoryBlocks[0].id },
+      { kind: "exercise", id: exercise.id },
+      { kind: "theory", id: mod.theoryBlocks[1].id },
+    ];
+    expect(controller.theoryBlockEditor.contentOrder()).toEqual(expected);
+    form.dispatchEvent(new Event("submit", { cancelable: true }));
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const saved = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
+    expect(saved.contentOrder).toEqual(expected);
+    await vi.waitFor(() => expect(form.querySelector(".form-status")?.textContent).toBe("Modul wurde aktualisiert."));
+    controller.loadModule({ ...mod, contentOrder: saved.contentOrder }, [exercise, quiz]);
+    expect(controller.theoryBlockEditor.contentOrder()).toEqual(expected);
+    document.dispatchEvent(new CustomEvent("modules:updated", {
+      detail: { questions: [quiz] },
+    }));
+    expect(form.querySelectorAll(".module-exercise-row")).toHaveLength(0);
+    controller.resetForm();
+    expect(controller.theoryBlockEditor.contentOrder()).toEqual([]);
+  });
+
+  it("löscht Übungen nur nach Bestätigung und zeigt Fehler an", async () => {
+    const db = structuredClone(seedDb) as unknown as ModulesDatabase;
+    const exercise = db.questions.find((q) => q.id === "q-101-ex-1");
+    if (!exercise) throw new Error("Testfrage fehlt");
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method === "DELETE") {
+        return new Response(JSON.stringify({ error: "Fehler beim Löschen" }), {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify(db), { status: 200 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const confirm = vi.fn().mockReturnValue(false);
+    vi.stubGlobal("confirm", confirm);
+    const form = mountModuleForm();
+    const controller = attachModuleBuilderForm(form);
+    controller.loadModule(db.modules[0], [exercise]);
+    form.querySelector<HTMLButtonElement>(".module-exercise-remove")?.click();
+    expect(fetchMock).not.toHaveBeenCalled();
+    confirm.mockReturnValue(true);
+    form.querySelector<HTMLButtonElement>(".module-exercise-remove")?.click();
+    await vi.waitFor(() => expect(form.querySelector(".form-status")?.textContent).toBe("Fehler beim Löschen"));
+    expect(form.querySelector(".module-exercise-row")).not.toBeNull();
+    expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body))).toEqual({ entity: "question", id: exercise.id });
+    const title = form.querySelector<HTMLInputElement>("#module-title");
+    if (!title) throw new Error("Modultitel fehlt");
+    title.value = "Ungespeicherter Titel";
+    db.questions = db.questions.filter((q) => q.id !== exercise.id);
+    fetchMock.mockImplementation(async (_input, init) =>
+      init?.method === "DELETE"
+        ? new Response("{}", { status: 200 })
+        : new Response(JSON.stringify(db), { status: 200 }),
+    );
+    form.querySelector<HTMLButtonElement>(".module-exercise-remove")?.click();
+    await vi.waitFor(() => expect(
+      Array.from(form.querySelectorAll<HTMLElement>(".module-exercise-row"))
+        .some((row) => row.dataset.blockId === exercise.id),
+    ).toBe(false));
+    expect(title.value).toBe("Ungespeicherter Titel");
+  });
+
+  it("lädt die Modul-Detailseite anhand der URL", async () => {
+    const db = structuredClone(seedDb) as unknown as ModulesDatabase;
+    const originalUrl = window.location.href;
+    window.history.replaceState(null, "", `?id=${encodeURIComponent(db.modules[0].id)}`);
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) =>
+      new Response(JSON.stringify(init?.method === "PUT" ? {} : db), { status: 200 }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const form = mountModuleForm();
+    form.dataset.moduleDetail = "true";
+    attachModuleBuilderForm(form);
+    await vi.waitFor(() => expect(form.querySelector<HTMLInputElement>("#module-title")?.value).toBe(db.modules[0].title));
+    expect(form.querySelectorAll(".module-exercise-row").length).toBe(
+      db.questions.filter((q) => q.moduleId === db.modules[0].id && q.targetLane === "exercise").length,
+    );
+    form.dispatchEvent(new Event("submit", { cancelable: true }));
+    await vi.waitFor(() => expect(form.querySelector(".form-status")?.textContent).toBe("Modul wurde aktualisiert."));
+    expect(form.querySelector<HTMLInputElement>("#module-title")?.value).toBe(db.modules[0].title);
+    expect(fetchMock.mock.calls.some(([, init]) => init?.method === "PUT")).toBe(true);
+    window.history.replaceState(null, "", originalUrl);
   });
 
   it("bietet nur Tags über Faktor 1 an und bewahrt vorhandene andere Tags", () => {
@@ -581,7 +713,7 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     expect(fetchWithFallback).toHaveBeenCalledTimes(2);
   });
 
-  it("wechselt beim Bearbeiten aus der Übersicht in den Reiter Theorie (Index 1) bzw. Aufgaben (Index 2)", () => {
+  it("verlinkt Module auf ihre Detailseite und öffnet Fragen im Aufgaben-Reiter", () => {
     const db = structuredClone(seedDb) as unknown as ModulesDatabase;
     vi.stubGlobal(
       "fetch",
@@ -610,21 +742,12 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     const catalog = attachModuleCatalogList(section);
     catalog.renderDatabase(db);
 
-    const moduleForm = mountModuleForm();
-    attachModuleBuilderForm(moduleForm);
-
     const exerciseForm = mountExerciseForm();
     attachExerciseBuilderForm(exerciseForm);
 
-    section.querySelector<HTMLButtonElement>(".contribution-edit")?.click();
-    expect(tabButtons.map((btn) => btn.getAttribute("aria-selected"))).toEqual([
-      "false",
-      "true",
-      "false",
-      "false",
-    ]);
-    expect(moduleForm.querySelector<HTMLInputElement>("#module-title")?.value).toBe(
-      db.modules[0].title,
+    const editLink = section.querySelector<HTMLAnchorElement>(".contribution-edit");
+    expect(editLink?.getAttribute("href")).toBe(
+      `${MODULE_DETAIL_PATH}?id=${encodeURIComponent(db.modules[0].id)}`,
     );
 
     section.querySelector<HTMLButtonElement>(".module-question-edit")?.click();

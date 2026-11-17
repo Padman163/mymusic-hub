@@ -8,6 +8,7 @@ import {
   isQuizSettings,
   isTargetLane,
   type LearningModule,
+  type ModuleContentReference,
   type ModuleQuestion,
   type ModuleScope,
   type ModulesDatabase,
@@ -47,6 +48,7 @@ import {
 
 export const MODULES_API_ENDPOINT = "/api/modules";
 export const MODULES_FUNCTION_FALLBACK_ENDPOINT = "/.netlify/functions/modules";
+export const MODULE_DETAIL_PATH = "/projektierung/modul-builder/modul/";
 export const MODULES_HTML_RESPONSE_ERROR =
   "Die Modul-API ist unter dieser Adresse nicht erreichbar (HTML-Antwort statt JSON). Bitte Dev-Server prüfen.";
 
@@ -340,6 +342,12 @@ export interface TheoryBlockEditorController {
   addBlock(initial?: Partial<TheoryBlock>): void;
   items(): TheoryBlock[] | null;
   setItems(blocks: readonly TheoryBlock[]): void;
+  setExercises(
+    questions: readonly ModuleQuestion[],
+    order?: readonly ModuleContentReference[],
+  ): void;
+  removeExercise(id: string): void;
+  contentOrder(): ModuleContentReference[];
   clear(): void;
   setDisabled(disabled: boolean): void;
   refreshCalculatedXp(): void;
@@ -349,12 +357,17 @@ export interface TheoryBlockEditorController {
 export function createTheoryBlockEditor(
   initialBlocks: readonly TheoryBlock[] = [],
   getDefaultBaseXp: () => number = () => BASE_XP_DEFAULTS.theoryBlock,
+  deleteExercise?: (question: ModuleQuestion) => void,
 ): TheoryBlockEditorController {
   const fieldset = document.createElement("fieldset");
   fieldset.className = "checklist-editor theory-block-editor";
 
   const legend = document.createElement("legend");
-  legend.textContent = "Theorie-Blöcke";
+  legend.textContent = "Modulblöcke";
+  const hint = document.createElement("p");
+  hint.className = "field-hint";
+  hint.textContent =
+    "Übungen werden vorerst im Reiter „Aufgaben“ bearbeitet. Die Reihenfolge gilt noch nicht im Lernpfad.";
 
   const rows = document.createElement("div");
   rows.className = "theory-block-rows";
@@ -368,15 +381,25 @@ export function createTheoryBlockEditor(
 
   function syncRowOrder(): void {
     const rowElements = Array.from(
-      rows.querySelectorAll<HTMLDivElement>(".theory-block-row"),
+      rows.querySelectorAll<HTMLDivElement>(
+        ".theory-block-row, .module-exercise-row",
+      ),
     );
+    let theoryNumber = 0;
+    let exerciseNumber = 0;
     rowElements.forEach((row, index) => {
       const label = row.querySelector<HTMLElement>(".theory-block-order-label");
       if (label) {
-        const title = row.querySelector<HTMLInputElement>(
-          ".theory-block-title",
-        );
-        label.textContent = `Theorie ${index + 1} · ${title?.value.trim() || "Neuer Block"}`;
+        if (row.classList.contains("theory-block-row")) {
+          theoryNumber += 1;
+          const title = row.querySelector<HTMLInputElement>(
+            ".theory-block-title",
+          );
+          label.textContent = `Theorie ${theoryNumber} · ${title?.value.trim() || "Neuer Block"}`;
+        } else {
+          exerciseNumber += 1;
+          label.textContent = `Übung ${exerciseNumber} · ${row.dataset.prompt ?? ""}`;
+        }
       }
       const upButton = row.querySelector<HTMLButtonElement>(".theory-block-up");
       const downButton =
@@ -507,6 +530,9 @@ export function createTheoryBlockEditor(
     xpInput.className = "theory-block-xp";
     xpInput.value = initial.baseXp === undefined ? "" : String(initial.baseXp);
     xpInput.addEventListener("input", refreshCalculatedXp);
+    xpInput.addEventListener("invalid", () => {
+      details.open = true;
+    });
     xpLabel.append(xpCaption, xpInput);
     const picker = createXpTagPicker({
       name: `theory-tags-${row.dataset.blockId}`,
@@ -551,14 +577,10 @@ export function createTheoryBlockEditor(
 
   addButton.addEventListener("click", () => {
     addBlock();
-    const lastDetails = rows.querySelector<HTMLDetailsElement>(
-      ".theory-block-row:last-child .theory-block-details",
+    const lastSummary = rows.querySelector<HTMLElement>(
+      ".theory-block-row:last-child summary",
     );
-    if (lastDetails) lastDetails.open = true;
-    const lastTitle = rows.querySelector<HTMLInputElement>(
-      ".theory-block-row:last-child .theory-block-title",
-    );
-    lastTitle?.focus();
+    lastSummary?.focus();
   });
 
   function items(): TheoryBlock[] | null {
@@ -630,6 +652,99 @@ export function createTheoryBlockEditor(
     syncRowOrder();
   }
 
+  function contentOrder(): ModuleContentReference[] {
+    return Array.from(rows.children, (element) => {
+      if (!(element instanceof HTMLDivElement) || !element.dataset.blockId) {
+        throw new Error("Ein Modulblock hat keine gültige ID.");
+      }
+      return {
+        kind: element.classList.contains("theory-block-row")
+          ? "theory"
+          : "exercise",
+        id: element.dataset.blockId,
+      };
+    });
+  }
+
+  function setExercises(
+    questions: readonly ModuleQuestion[],
+    order: readonly ModuleContentReference[] = contentOrder(),
+  ): void {
+    for (const row of rows.querySelectorAll(".module-exercise-row"))
+      row.remove();
+    for (const question of questions) {
+      const row = document.createElement("div");
+      row.className = "module-exercise-row";
+      row.dataset.blockId = question.id;
+      row.dataset.prompt = question.prompt;
+      const details = document.createElement("details");
+      details.className = "theory-block-details";
+      const summary = document.createElement("summary");
+      const label = document.createElement("span");
+      label.className = "theory-block-order-label";
+      summary.append(label);
+      const meta = document.createElement("p");
+      meta.className = "theory-block-content";
+      meta.textContent = `${QUESTION_TYPE_LABELS[question.questionType]} · ${calculateQuestionXp(question.baseXp, question.tags)} XP`;
+      details.append(summary, meta);
+      const controls = document.createElement("div");
+      controls.className = "theory-block-controls";
+      for (const [direction, name, symbol] of [
+        [-1, "oben", "↑"],
+        [1, "unten", "↓"],
+      ] as const) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className =
+          direction === -1 ? "theory-block-up" : "theory-block-down";
+        button.textContent = symbol;
+        button.setAttribute("aria-label", `Übung nach ${name} verschieben`);
+        button.addEventListener("click", () => moveRow(row, direction));
+        controls.append(button);
+      }
+      if (deleteExercise) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "checklist-remove module-exercise-remove";
+        button.textContent = "×";
+        button.title = "Übung löschen";
+        button.setAttribute("aria-label", "Übung löschen");
+        button.addEventListener("click", () => deleteExercise(question));
+        controls.append(button);
+      }
+      row.append(details, controls);
+      rows.append(row);
+    }
+
+    const available = new Map(
+      Array.from(rows.children, (element) => {
+        const row = element as HTMLDivElement;
+        const kind = row.classList.contains("theory-block-row")
+          ? "theory"
+          : "exercise";
+        return [`${kind}:${row.dataset.blockId}`, row] as const;
+      }),
+    );
+    for (const entry of order) {
+      const row = available.get(`${entry.kind}:${entry.id}`);
+      if (row) {
+        rows.append(row);
+        available.delete(`${entry.kind}:${entry.id}`);
+      }
+    }
+    for (const row of available.values()) rows.append(row);
+    syncRowOrder();
+  }
+
+  function removeExercise(id: string): void {
+    for (const row of rows.querySelectorAll<HTMLDivElement>(
+      ".module-exercise-row",
+    )) {
+      if (row.dataset.blockId === id) row.remove();
+    }
+    syncRowOrder();
+  }
+
   function clear(): void {
     rows.replaceChildren();
     syncRowOrder();
@@ -643,13 +758,16 @@ export function createTheoryBlockEditor(
     setItems(initialBlocks);
   }
 
-  fieldset.append(legend, rows, addButton);
+  fieldset.append(legend, hint, rows, addButton);
 
   return {
     element: fieldset,
     addBlock,
     items,
     setItems,
+    setExercises,
+    removeExercise,
+    contentOrder,
     clear,
     setDisabled,
     refreshCalculatedXp,
@@ -657,7 +775,7 @@ export function createTheoryBlockEditor(
 }
 
 export interface ModuleBuilderFormController {
-  loadModule(mod: LearningModule): void;
+  loadModule(mod: LearningModule, questions?: readonly ModuleQuestion[]): void;
   resetForm(): void;
   theoryBlockEditor: TheoryBlockEditorController;
   tagPicker: XpTagPickerController;
@@ -800,6 +918,18 @@ export function attachModuleBuilderForm(
     "#module-title",
     msg,
   );
+  const generalInfo = requireElement<HTMLDetailsElement>(
+    form,
+    "#module-general-info",
+    msg,
+  );
+  generalInfo.addEventListener(
+    "invalid",
+    () => {
+      generalInfo.open = true;
+    },
+    true,
+  );
   const descriptionInput = requireElement<HTMLTextAreaElement>(
     form,
     "#module-description",
@@ -862,8 +992,10 @@ export function attachModuleBuilderForm(
   });
   tagsContainer.append(tagPicker.element);
 
-  const theoryBlockEditor = createTheoryBlockEditor([], () =>
-    Number(theoryBaseXpInput.value),
+  const theoryBlockEditor = createTheoryBlockEditor(
+    [],
+    () => Number(theoryBaseXpInput.value),
+    (question) => void deleteExercise(question),
   );
   theoryBaseXpInput.addEventListener(
     "input",
@@ -871,8 +1003,24 @@ export function attachModuleBuilderForm(
   );
   blocksContainer.append(theoryBlockEditor.element);
 
+  function setModuleExercises(
+    moduleId: string,
+    questions: readonly ModuleQuestion[],
+    order?: readonly ModuleContentReference[],
+  ): void {
+    theoryBlockEditor.setExercises(
+      questions.filter(
+        (question) =>
+          question.moduleId === moduleId && question.targetLane === "exercise",
+      ),
+      order,
+    );
+  }
+
   let editingModuleId: string | null = null;
   let newModuleId: string | null = null;
+  let exerciseRefreshVersion = 0;
+  const isDetailPage = form.dataset.moduleDetail === "true";
 
   function setBusy(busy: boolean): void {
     const controls = [
@@ -895,6 +1043,7 @@ export function attachModuleBuilderForm(
 
   function resetForm(): void {
     editingModuleId = null;
+    exerciseRefreshVersion += 1;
     newModuleId = null;
     form.reset();
     if (theoryBaseXpInput) {
@@ -902,12 +1051,44 @@ export function attachModuleBuilderForm(
     }
     tagPicker.clear();
     theoryBlockEditor.clear();
+    generalInfo.open = false;
     if (submitButton) submitButton.textContent = "Modul speichern";
     if (cancelButton) cancelButton.hidden = true;
   }
 
-  function loadModule(mod: LearningModule): void {
+  async function deleteExercise(question: ModuleQuestion): Promise<void> {
+    if (!window.confirm(`Übung „${question.prompt}“ endgültig löschen?`))
+      return;
+    setBusy(true);
+    status.textContent = "Übung wird gelöscht …";
+    try {
+      await sendModulesRequest(
+        "DELETE",
+        { entity: "question", id: question.id },
+        "Die Übung konnte nicht gelöscht werden.",
+      );
+      theoryBlockEditor.removeExercise(question.id);
+      status.textContent = "Übung wurde gelöscht.";
+      document.dispatchEvent(
+        new CustomEvent("modules:updated", { bubbles: true }),
+      );
+    } catch (error) {
+      status.textContent =
+        error instanceof Error
+          ? error.message
+          : "Die Übung konnte nicht gelöscht werden.";
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function loadModule(
+    mod: LearningModule,
+    questions: readonly ModuleQuestion[] = [],
+  ): void {
     editingModuleId = mod.id;
+    generalInfo.open = false;
+    exerciseRefreshVersion += 1;
     newModuleId = null;
     titleInput.value = mod.title;
     descriptionInput.value = mod.description;
@@ -918,24 +1099,55 @@ export function attachModuleBuilderForm(
     theoryBaseXpInput.value = String(mod.theoryBaseXp);
     tagPicker.setSelectedTags(mod.tags);
     theoryBlockEditor.setItems(mod.theoryBlocks);
+    setModuleExercises(mod.id, questions, mod.contentOrder);
     submitButton.textContent = "Modul-Änderungen speichern";
     cancelButton.hidden = false;
+    if (isDetailPage) cancelButton.textContent = "Zurück zur Übersicht";
     status.textContent = `Bearbeitungsmodus: „${mod.title}“ geladen.`;
-    titleInput.focus();
+    if (!isDetailPage)
+      generalInfo.querySelector<HTMLElement>("summary")?.focus();
   }
 
   cancelButton.addEventListener("click", () => {
+    if (isDetailPage) {
+      window.location.assign("/projektierung/modul-builder/");
+      return;
+    }
     resetForm();
     status.textContent = "Bearbeitung abgebrochen.";
   });
 
-  document.addEventListener("module:edit", (event) => {
-    if (event instanceof CustomEvent && isRecord(event.detail)) {
-      const candidate = event.detail.module;
-      if (isRecord(candidate) && typeof candidate.id === "string") {
-        loadModule(candidate as unknown as LearningModule);
-        switchStarlightTab(1);
-      }
+  document.addEventListener("modules:updated", (event) => {
+    const moduleId = editingModuleId;
+    if (!moduleId) return;
+    const version = ++exerciseRefreshVersion;
+    if (
+      event instanceof CustomEvent &&
+      isRecord(event.detail) &&
+      Array.isArray(event.detail.questions)
+    ) {
+      setModuleExercises(moduleId, event.detail.questions as ModuleQuestion[]);
+    } else {
+      void fetchModulesDatabase()
+        .then((db) => {
+          if (
+            editingModuleId === moduleId &&
+            exerciseRefreshVersion === version
+          ) {
+            setModuleExercises(moduleId, db.questions);
+          }
+        })
+        .catch((error: unknown) => {
+          if (
+            editingModuleId === moduleId &&
+            exerciseRefreshVersion === version
+          ) {
+            status.textContent =
+              error instanceof Error
+                ? `Übungen konnten nicht aktualisiert werden: ${error.message}`
+                : "Übungen konnten nicht aktualisiert werden.";
+          }
+        });
     }
   });
 
@@ -962,6 +1174,7 @@ export function attachModuleBuilderForm(
       hasPractice: hasPracticeInput.checked,
       theoryBaseXp: Number(theoryBaseXpInput.value),
       theoryBlocks,
+      contentOrder: theoryBlockEditor.contentOrder(),
     };
 
     const validation = validateModuleInput(payload);
@@ -981,7 +1194,7 @@ export function attachModuleBuilderForm(
         "Das Modul konnte nicht gespeichert werden.",
       );
 
-      resetForm();
+      if (!isDetailPage) resetForm();
       status.textContent = isUpdate
         ? "Modul wurde aktualisiert."
         : "Modul wurde gespeichert.";
@@ -997,6 +1210,29 @@ export function attachModuleBuilderForm(
       setBusy(false);
     }
   });
+
+  if (isDetailPage) {
+    const id = new URLSearchParams(window.location.search).get("id")?.trim();
+    setBusy(true);
+    if (!id) {
+      status.textContent = "Keine Modul-ID angegeben.";
+    } else {
+      status.textContent = "Modul wird geladen …";
+      void fetchModulesDatabase()
+        .then((db) => {
+          const mod = db.modules.find((item) => item.id === id);
+          if (!mod) throw new Error("Das Modul wurde nicht gefunden.");
+          loadModule(mod, db.questions);
+          setBusy(false);
+        })
+        .catch((error: unknown) => {
+          status.textContent =
+            error instanceof Error
+              ? error.message
+              : "Das Modul konnte nicht geladen werden.";
+        });
+    }
+  }
 
   return {
     loadModule,
@@ -2108,8 +2344,8 @@ export function attachModuleCatalogList(
         actions.append(moveBtn);
       }
 
-      const editBtn = document.createElement("button");
-      editBtn.type = "button";
+      const editBtn = document.createElement("a");
+      editBtn.href = `${MODULE_DETAIL_PATH}?id=${encodeURIComponent(mod.id)}`;
       editBtn.className = "contribution-edit";
       editBtn.title = "Modul bearbeiten";
       editBtn.setAttribute("aria-label", `${mod.title} bearbeiten`);
@@ -2117,15 +2353,6 @@ export function attachModuleCatalogList(
         "M12 20h9",
         "M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z",
       ]);
-      editBtn.addEventListener("click", () => {
-        document.dispatchEvent(
-          new CustomEvent("module:edit", {
-            bubbles: true,
-            detail: { module: mod },
-          }),
-        );
-      });
-
       const deleteBtn = document.createElement("button");
       deleteBtn.type = "button";
       deleteBtn.className = "contribution-delete";
