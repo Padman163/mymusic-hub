@@ -44,6 +44,25 @@ npm run preflight            # Kombinierte Kette vor jedem Push / Pull Request:
 
 Für eine vollständige Repository-Bereinigung siehe [Cleanup-Anleitung](README_CLEANUP.md).
 
+### MDX-Frontmatter: Seitenleisten
+
+Die Einstellungen stehen zwischen den `---` am Anfang einer MDX-Seite:
+
+```yaml
+---
+title: Meine Seite
+template: doc
+tableOfContents: false
+---
+```
+
+- `template: doc` ist der Standard: Die linke Navigation bleibt sichtbar; das Inhaltsverzeichnis wird bei passenden Überschriften angezeigt.
+- `tableOfContents: false` blendet das Inhaltsverzeichnis für diese Seite aus, nicht aber die linke Navigation. Auf Mobilgeräten ist die Navigation über das Menü erreichbar.
+- `template: splash` verwendet ein breiteres Layout ohne linke Navigation und ohne Inhaltsverzeichnis.
+- `sidebar: false` ist dafür keine gültige Einstellung. `sidebar: { hidden: true }` entfernt stattdessen den Seiteneintrag aus automatisch erzeugten Navigationsgruppen.
+
+Beispiel mit linker Navigation, aber ohne Inhaltsverzeichnis: [Lernpfad und Dashboard](src/content/docs/audio/theory/lernpfad.mdx).
+
 ### 1.5 Häufigste Git-Kommandos
 ```bash
 git switch main              # Zurück zum Hauptbranch wechseln

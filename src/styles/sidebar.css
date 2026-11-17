@@ -3,18 +3,6 @@
   font-weight: 700;
 }
 
-body:has(#learning-progress-dashboard) .right-sidebar-container,
-body:has(#lesson-progress-dashboard) .right-sidebar-container {
-  display: none;
-}
-
-body:has(#learning-progress-dashboard) .main-frame .main-pane,
-body:has(#lesson-progress-dashboard) .main-frame .main-pane {
-  width: 100%;
-  --sl-content-width: 100%;
-  --sl-content-margin-inline: 0;
-}
-
 .sidebar-content
   > .top-level
   > li
