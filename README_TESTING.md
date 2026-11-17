@@ -96,20 +96,26 @@ npx @biomejs/biome check --write .
 
 ### Stufe 3: Integration – HTTP- & Serverless-Verhalten
 
-- **Werkzeuge:** Vitest mit Request-/Response-Mocks.
+- **Werkzeuge:** Vitest mit direkt aufgerufenen Function-Handlern und erzeugten `Request`-/`Response`-Objekten. Umgebungsvariablen werden für die Tests gesetzt; die Modul-API-Tests simulieren GitHub-Antworten über einen `fetch`-Mock.
 - **Testdateien:** `tests/integration/contributions.test.ts`, `tests/module-builder.test.mjs` (`/api/modules`).
-- **Gegenstand:** Testet die Serverless Functions `netlify/functions/contributions.ts` und `netlify/functions/modules.ts`. Prüft das Abweisen falscher HTTP-Methoden (z. B. `PUT`/`PATCH` $\rightarrow$ 405), Validierungsfehler bei ungültigem JSON (400), Retry-Handling bei HTTP-409-Konflikten und das Verhalten bei fehlenden Umgebungsvariablen (503).
-- **Befehl:**
+- **Gegenstand:**
+  * **Beiträge:** Prüft die Ablehnung von `PUT` (405), fehlende GitHub-Konfiguration (503), ungültiges JSON (400) und ungültige Beitragsdaten (400).
+  * **Module:** Prüft die Ablehnung von `PATCH` (405), fehlende GitHub-Konfiguration (503), Lesen, Speichern und Löschen von Modulen und Aufgaben sowie einen erneuten Schreibversuch nach simuliertem GitHub-409-Konflikt. Zusätzlich werden Modulreihenfolge, Ablehnung veralteter Verschiebevorgänge und globale Bestehensgrenzen mit Validierung und Revisionskonflikten geprüft.
+- **Grenzen:** Es läuft weder ein HTTP-Server noch eine Netlify-Laufzeit. Routing, Deployment, echte GitHub-Zugriffe und abgelaufene Tokens werden damit nicht verifiziert. Die Beitragstests decken derzeit keine erfolgreichen GitHub-Lese-/Schreibvorgänge ab; der getestete GitHub-Konflikt-Retry gehört zur Modul-API. Nicht jeder Fehlerpfad oder jede erlaubte/verbotene Methode wird für beide APIs geprüft.
+- **Befehle:**
   ```bash
+  # Beitragstests unter tests/integration/:
   npm run test:integration
+  # zusätzlich gezielt die Serverless-API-Tests für Module:
+  npx vitest run tests/module-builder.test.mjs -t "Modules Serverless API"
   ```
 
-  Dieser Befehl wählt `tests/integration/`. Die Modultests in `tests/module-builder.test.mjs` laufen über `npm test`.
+  `test:integration` wählt ausschließlich `tests/integration/` und erfasst die Modul-API-Tests nicht. Über `npm test` laufen beide Testgruppen zusammen mit den übrigen Vitest-Tests.
 
 * **Wann nutzen:**
   * **Nach Änderungen an Netlify Functions:** Wenn Backend-Logik, Middleware oder Serverless-Routen editiert werden.
   * **Bei Schema- oder Payload-Updates:** Wenn sich die Datenstruktur von Frontend-Formularen oder API-Schnittstellen ändert.
-  * **Bei Sicherheits- und Fehlerbehandlungsprüfungen:** Um Ausfälle wie abgelaufene Tokens, fehlende Environment-Variablen oder unzulässige HTTP-Verben abzufangen, ohne eine Netlify-Infrastruktur starten zu müssen.
+  * **Bei Validierungs- und Fehlerbehandlungsprüfungen:** Um fehlende Konfiguration, ungültige Eingaben und Konfliktfälle mit gezielten Tests abzusichern, ohne Netlify oder GitHub anzusprechen. Neue Fehlerpfade benötigen eigene Assertions; die vorhandene Suite ist kein vollständiger Sicherheits-Audit.
 
 
 ### Stufe 4: End-to-End (E2E) & Visuelle Regression
