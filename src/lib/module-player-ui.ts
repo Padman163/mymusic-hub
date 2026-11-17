@@ -40,10 +40,12 @@ import {
   DURATION_SVG_DATA,
   describeBuilderState,
   type NotationBuilderConfig,
+  pitchNameToStep,
   renderNotationBuilderSvg,
 } from "./notation-builder.ts";
 import {
   type NotationEvent,
+  type NotationNote,
   renderNotationSvg,
   SPATIUM,
 } from "./notation-renderer.ts";
@@ -700,7 +702,9 @@ function buildNotationTaskElement(
   task: NotationBuilderTaskConfig,
   questionId: string,
   templateRoot?: ParentNode,
+  showSolution = false,
 ): HTMLElement {
+  const solutionNotes = showSolution ? getNotationSolutionNotes(task) : [];
   const presetTemplate =
     templateRoot?.querySelector<HTMLTemplateElement>(
       `template[data-notation-question-id="${questionId}"]`,
@@ -715,6 +719,13 @@ function buildNotationTaskElement(
       "[data-notation-builder]",
     );
     if (presetRoot) {
+      if (solutionNotes.length > 0) {
+        const config = JSON.parse(
+          presetRoot.dataset.builderConfig ?? "{}",
+        ) as NotationBuilderConfig;
+        config.notes = solutionNotes;
+        presetRoot.dataset.builderConfig = JSON.stringify(config);
+      }
       attachNotationBuilder(presetRoot);
       return presetRoot;
     }
@@ -728,13 +739,17 @@ function buildNotationTaskElement(
     ...(task.lockDuration !== undefined
       ? { lockDuration: task.lockDuration }
       : {}),
+    ...(solutionNotes.length > 0 ? { notes: solutionNotes } : {}),
     showDurationPicker: task.showDurationPicker ?? false,
     compact: task.compact ?? false,
   };
 
   const maxNotes = Math.max(1, config.maxNotes ?? 1);
   const cursorStep = DEFAULT_NOTATION_STEP;
-  const placedNotes = Array.from({ length: maxNotes }, () => null);
+  const placedNotes = Array.from(
+    { length: maxNotes },
+    (_, index) => solutionNotes[index] ?? null,
+  );
   const activeDuration: Duration =
     typeof config.lockDuration === "string"
       ? config.lockDuration
@@ -819,6 +834,32 @@ function buildNotationTaskElement(
   return root;
 }
 
+function getNotationSolutionNotes(
+  task: NotationBuilderTaskConfig,
+): NotationNote[] {
+  const pitches = task.expectedPitches ?? [];
+  const steps = pitches.map((pitch) => pitchNameToStep(pitch, task.clef));
+  if (steps.length === 0 || !steps.every((step) => step !== undefined)) {
+    return [];
+  }
+
+  const durations: Duration[] = [
+    "whole",
+    "half",
+    "quarter",
+    "eighth",
+    "sixteenth",
+  ];
+  const validSteps = steps.filter((step): step is number => step !== undefined);
+  return validSteps.map((step, index) => {
+    const expectedDuration = task.expectedDurations?.[index];
+    const duration =
+      durations.find((item) => item === expectedDuration) ??
+      (typeof task.lockDuration === "string" ? task.lockDuration : "quarter");
+    return { step, duration };
+  });
+}
+
 function readUserAnswerFromQuestionUi(
   question: ModuleQuestion,
   questionRoot: HTMLElement,
@@ -878,6 +919,7 @@ function renderQuestionInputBlock(
   question: ModuleQuestion,
   inputPrefix: string,
   templateRoot?: ParentNode,
+  showSolution = false,
 ): HTMLElement {
   const container = document.createElement("div");
   container.className = "learning-question-inputs";
@@ -897,6 +939,11 @@ function renderQuestionInputBlock(
       input.name = `${inputPrefix}-${question.id}`;
       input.className = "learning-choice-input";
       input.value = option;
+      input.checked =
+        showSolution &&
+        question.correctAnswers.some(
+          (answer) => normalizeText(answer) === normalizeText(option),
+        );
       const text = document.createElement("span");
       text.textContent = option;
       label.append(input, text);
@@ -912,6 +959,7 @@ function renderQuestionInputBlock(
     input.className = "learning-numeric-input";
     input.placeholder = "Antwort eingeben (z. B. 880 oder 880 Hz)";
     input.setAttribute("aria-label", question.prompt);
+    if (showSolution) input.value = question.correctAnswers[0] ?? "";
     container.append(input);
     return container;
   }
@@ -925,6 +973,7 @@ function renderQuestionInputBlock(
         question.notationTask,
         question.id,
         templateRoot,
+        showSolution,
       ),
     );
     return container;
@@ -1633,10 +1682,12 @@ export function attachModuleQuizRunner(
         : `+${questionXp} XP`;
       qHeader.append(qTitle, qXp);
 
+      const alreadyCompleted = solvedSet.has(question.id);
       const inputsEl = renderQuestionInputBlock(
         question,
         `ex-${mod.id}`,
         templateRoot,
+        alreadyCompleted,
       );
 
       const checkBtn = document.createElement("button");
@@ -1647,10 +1698,29 @@ export function attachModuleQuizRunner(
 
       const feedback = document.createElement("div");
       feedback.className = "learning-feedback";
-      feedback.hidden = true;
+      feedback.hidden = !alreadyCompleted;
       feedback.setAttribute("aria-live", "polite");
+      if (alreadyCompleted) {
+        inputsEl.inert = true;
+        inputsEl
+          .querySelectorAll<
+            | HTMLInputElement
+            | HTMLButtonElement
+            | HTMLSelectElement
+            | HTMLTextAreaElement
+          >("input, button, select, textarea")
+          .forEach((input) => {
+            input.disabled = true;
+          });
+        checkBtn.disabled = true;
+        checkBtn.textContent = "Bereits abgeschlossen";
+        const solution = formatExerciseSolution(question);
+        feedback.textContent = solution
+          ? `Diese Aufgabe wurde bereits abgeschlossen. Lösung: ${solution}.`
+          : "Diese Aufgabe wurde bereits abgeschlossen und muss nicht erneut beantwortet werden.";
+      }
       let attempts = 0;
-      let completed = false;
+      let completed = alreadyCompleted;
 
       checkBtn.addEventListener("click", () => {
         if (completed) return;
