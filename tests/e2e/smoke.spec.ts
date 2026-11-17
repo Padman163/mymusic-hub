@@ -101,6 +101,12 @@ test('richtet Builder-Karten und Aktionen einheitlich aus', async ({ page }) => 
     );
   });
   expect(collapsedBlockAlignment).toBeLessThan(1);
+  const collapsedBlockBottomPadding = Number.parseFloat(
+    await page.locator('.theory-block-row').nth(1)
+      .locator('.theory-block-details > summary')
+      .evaluate((summary) => getComputedStyle(summary).paddingBottom),
+  );
+  expect(collapsedBlockBottomPadding).toBeGreaterThan(0);
   const controlStyles = await page.locator('.theory-block-controls > button').evaluateAll((buttons) =>
     buttons.map((button) => {
       const style = getComputedStyle(button);
@@ -218,6 +224,11 @@ test('richtet Builder-Karten und Aktionen einheitlich aus', async ({ page }) => 
       );
     });
   expect(collapsedGroupAlignment).toBeLessThan(1);
+  const collapsedGroupBottomPadding = Number.parseFloat(
+    await page.locator('.theory-group-details > .theory-group-summary')
+      .evaluate((summary) => getComputedStyle(summary).paddingBottom),
+  );
+  expect(collapsedGroupBottomPadding).toBeGreaterThan(0);
 
   await page.locator('#module-edit-cancel').evaluate((button) => {
     (button as HTMLButtonElement).hidden = false;
