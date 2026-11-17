@@ -4,8 +4,8 @@ import {
   getDefaultBaseXpForLane,
   isDStage,
   isModuleScope,
-  isQuestionType,
   isQuestionInModule,
+  isQuestionType,
   isQuizSettings,
   isTargetLane,
   type LearningModule,
@@ -16,11 +16,11 @@ import {
   NOTATION_DURATIONS,
   type NotationBuilderTaskConfig,
   type NotationTaskDuration,
-  type QuestionType,
+  normalizeLegacyDatabase,
   type PracticeBlock,
+  type QuestionType,
   type TargetLane,
   type TheoryBlock,
-  normalizeLegacyDatabase,
 } from "./module-schema.ts";
 import {
   createEmptyModulesDatabase,

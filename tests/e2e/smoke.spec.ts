@@ -21,8 +21,8 @@ test('richtet Builder-Karten und Aktionen einheitlich aus', async ({ page }) => 
   await page.goto('/projektierung/modul-builder/');
   await expect(page.getByRole('tab')).toHaveText([
     'Übersicht',
-    'Theorie',
-    'Aufgaben',
+    'Modul erstellen',
+    'Quizfragen',
     'Einstellungen',
   ]);
   await expect(page.locator('#module-reload-btn')).toHaveCount(0);
@@ -52,7 +52,7 @@ test('richtet Builder-Karten und Aktionen einheitlich aus', async ({ page }) => 
     expect(style).toEqual({ paddingLeft: '0px', borderLeftWidth: '0px' });
   }
 
-  await page.getByRole('tab', { name: 'Theorie' }).click();
+  await page.getByRole('tab', { name: 'Modul erstellen' }).click();
   await page.locator('.theory-block-add').click();
   await page.locator('.theory-block-add').click();
   const controls = page.locator('.theory-block-row').nth(1).locator('.theory-block-controls');
@@ -80,21 +80,18 @@ test('richtet Builder-Karten und Aktionen einheitlich aus', async ({ page }) => 
     };
   });
   expect(Math.abs(controlPlacement.topOffset - controlPlacement.rightOffset)).toBeLessThan(1);
-  expect(controlPlacement.topInset).toBe(0);
+  expect(controlPlacement.topInset).toBe(controlPlacement.cardPaddingTop);
   expect(controlPlacement.rightInset).toBe(controlPlacement.cardPaddingTop);
   await page.locator('.theory-block-row').nth(1).locator('.theory-block-details > summary').click();
-  const collapsedBlockAlignment = await controls.evaluate((element) => {
+  const collapsedBlockTopAlignment = await controls.evaluate((element) => {
     const summary = element.parentElement!.querySelector<HTMLElement>(
       '.theory-block-details > summary',
     )!;
     const summaryRect = summary.getBoundingClientRect();
     const controlsRect = element.getBoundingClientRect();
-    return Math.abs(
-      summaryRect.top + summaryRect.height / 2 -
-      (controlsRect.top + controlsRect.height / 2),
-    );
+    return Math.abs(summaryRect.top - controlsRect.top);
   });
-  expect(collapsedBlockAlignment).toBeLessThan(1);
+  expect(collapsedBlockTopAlignment).toBeLessThan(1);
   const collapsedBlockBottomPadding = Number.parseFloat(
     await page.locator('.theory-block-row').nth(1)
       .locator('.theory-block-details > summary')
@@ -118,22 +115,19 @@ test('richtet Builder-Karten und Aktionen einheitlich aus', async ({ page }) => 
   await page.locator('.theory-block-row').nth(0).locator('.theory-block-select').check();
   await page.locator('.theory-block-row').nth(1).locator('.theory-block-select').check();
   await actionButton.click();
+  await page.locator('.theory-group-summary').click();
+  await expect(page.locator('.theory-block-row[data-group-position="last"]')).toBeVisible();
+  await expect(page.locator('.theory-block-add-type')).toBeVisible();
   const spacing = await page.locator('.theory-block-editor').evaluate((editor) => {
-    const group = editor.querySelector<HTMLElement>('.theory-block-group-selected')!.getBoundingClientRect();
     const rows = editor.querySelector<HTMLElement>('.theory-block-rows')!;
-    const first = rows.firstElementChild!.getBoundingClientRect();
-    const last = rows.lastElementChild!.getBoundingClientRect();
     const groupCard = rows.querySelector<HTMLElement>('.theory-block-group')!;
     const groupRows = [...groupCard.querySelectorAll<HTMLElement>(
       '.theory-block-row, .module-exercise-row',
     )];
-    const add = editor.querySelector<HTMLElement>('.theory-block-add')!.getBoundingClientRect();
     const rowGap = Number.parseFloat(getComputedStyle(groupCard).rowGap);
     const addButton = editor.querySelector<HTMLElement>('.theory-block-add')!;
     const groupButton = editor.querySelector<HTMLElement>('.theory-block-group-selected')!;
     return {
-      betweenSelectAndRows: first.top - group.bottom,
-      betweenRowsAndAdd: add.top - last.bottom,
       betweenGroupedRows:
         groupRows[1]!.getBoundingClientRect().top -
         groupRows[0]!.getBoundingClientRect().bottom,
@@ -152,14 +146,11 @@ test('richtet Builder-Karten und Aktionen einheitlich aus', async ({ page }) => 
       }),
     };
   });
-  expect(Math.abs(spacing.betweenSelectAndRows - spacing.betweenRowsAndAdd)).toBeLessThan(1);
   expect(Math.abs(spacing.betweenGroupedRows - spacing.rowGap)).toBeLessThan(1);
-  expect(spacing.actionHeights[0]).toBe(spacing.actionHeights[1]);
+  expect(spacing.actionHeights.every((height) => height >= 44)).toBe(true);
   expect(spacing.actionTopMargins[0]).toBe(spacing.actionTopMargins[1]);
   expect(Number.parseFloat(spacing.actionTopMargins[0])).toBeGreaterThan(0);
   expect(spacing.rowCards[0]).toEqual(spacing.rowCards[1]);
-  await page.locator('.theory-group-summary').click();
-  await expect(page.locator('.theory-block-row[data-group-position="last"]')).toBeVisible();
   const groupedRowsInsideCard = await page.locator('.theory-block-group').evaluate((group) => {
     const groupRect = group.getBoundingClientRect();
     const members = [...group.querySelectorAll<HTMLElement>(

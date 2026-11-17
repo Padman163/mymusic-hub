@@ -27,10 +27,10 @@ import {
   type ModuleScope,
   type ModulesDatabase,
   type NotationBuilderTaskConfig,
+  normalizeLegacyDatabase,
   type PracticeBlock,
   type TargetLane,
   type TheoryBlock,
-  normalizeLegacyDatabase,
 } from "./module-schema.ts";
 import { createEmptyModulesDatabase } from "./module-store.ts";
 import {

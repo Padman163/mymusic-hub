@@ -197,12 +197,13 @@
 
 .theory-group-editor-actions {
   position: absolute;
-  top: 0;
+  top: 0.85rem;
   right: 0.85rem;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 0.35rem;
+  margin: 0;
 }
 
 .theory-group-editor-actions button {
@@ -264,7 +265,7 @@
 
 .theory-block-group > .theory-block-row,
 .theory-block-group > .module-exercise-row {
-  margin-left: 1.25rem;
+  margin: 0 0 0 1.25rem;
 }
 
 .theory-group-details {
@@ -358,11 +359,12 @@
 
 .theory-block-controls {
   position: absolute;
-  top: 0;
+  top: 0.85rem;
   right: 0.85rem;
   display: flex;
   align-items: center;
   gap: 0.35rem;
+  margin: 0;
 }
 
 :root .checklist-editor .theory-block-controls > button,
