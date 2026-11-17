@@ -194,6 +194,35 @@ describe("Lernfortschritts- & XP-Engine (learning-progress)", () => {
     vi.unstubAllGlobals();
   });
 
+  it("vergibt Übungs-XP vor Theorieabschluss, schaltet das Quiz aber erst nach allen Inhalten frei", () => {
+    const db = buildTestDatabase();
+    const mod = db.modules[0];
+    const q1 = db.questions.find((question) => question.id === "q-1");
+    const q2 = db.questions.find((question) => question.id === "q-2");
+    let state = createInitialProgress(db.modules);
+    state = recordExerciseAnswer(state, mod, q1, true, db.questions);
+    state = recordExerciseAnswer(state, mod, q2, true, db.questions);
+    expect(state.totalXp).toBe(25);
+    expect(state.modules[mod.id].steps.exercise).toBe("unlocked");
+    expect(state.modules[mod.id].steps.quiz_easy).toBe("locked");
+    state = completeTheoryBlock(state, mod, "tb-1", db.questions);
+    expect(state.totalXp).toBe(70);
+    expect(state.modules[mod.id].steps.exercise).toBe("completed");
+    expect(state.modules[mod.id].steps.quiz_easy).toBe("unlocked");
+    expect(recordExerciseAnswer(state, mod, q1, true, db.questions).totalXp).toBe(70);
+  });
+
+  it("schaltet ohne Übungen nach der Theorie direkt den Praxisteil frei", () => {
+    const db = buildTestDatabase();
+    const mod = { ...db.modules[0], hasPractice: true };
+    const state = completeTheoryBlock(
+      createInitialProgress([mod]), mod, "tb-1", [],
+    );
+    expect(state.modules[mod.id].steps.exercise).toBe("completed");
+    expect(state.modules[mod.id].steps.practice).toBe("unlocked");
+    expect(state.modules[mod.id].steps.quiz_easy).toBe("locked");
+  });
+
   it("vergibt Block-XP einzeln, speichert den Fortschritt und vergütet Fastlane nur offene Blöcke", () => {
     const db = buildTestDatabase();
     const mod = db.modules[0];

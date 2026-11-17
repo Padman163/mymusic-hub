@@ -7,7 +7,6 @@ import {
   createInitialProgress,
   getDashboardOverview,
   getEffectiveQuizSettings,
-  type LaneStep,
   type LearningProgressState,
   loadLearningProgress,
   type ModuleProgress,
@@ -1475,6 +1474,7 @@ export interface QuizRunnerMountConfig {
   module: LearningModule;
   db: ModulesDatabase;
   mode: TargetLane;
+  exerciseId?: string;
   templateRoot?: ParentNode;
   lessonBaseUrl?: string;
 }
@@ -1527,7 +1527,10 @@ export function attachModuleQuizRunner(
   const { module: mod, db, mode, templateRoot } = config;
   const lessonBaseUrl = config.lessonBaseUrl ?? "/audio/theory/modul/";
   const questions = db.questions.filter(
-    (q) => q.moduleId === mod.id && q.targetLane === mode,
+    (q) =>
+      q.moduleId === mod.id &&
+      q.targetLane === mode &&
+      (mode !== "exercise" || !config.exerciseId || q.id === config.exerciseId),
   );
 
   container.replaceChildren();
@@ -1535,6 +1538,9 @@ export function attachModuleQuizRunner(
   container.dataset.quizMode = mode;
 
   if (mode === "exercise") {
+    if (config.exerciseId && questions.length === 0) {
+      throw new Error("Die Übung für diesen Abschnitt wurde nicht gefunden.");
+    }
     if (questions.length === 0) {
       const box = document.createElement("div");
       box.className = "learning-card";
@@ -1597,7 +1603,9 @@ export function attachModuleQuizRunner(
       const qHeader = document.createElement("div");
       qHeader.className = "learning-card-header";
       const qTitle = document.createElement("strong");
-      qTitle.textContent = `Aufgabe ${index + 1} / ${questions.length}: ${question.prompt}`;
+      qTitle.textContent = config.exerciseId
+        ? question.prompt
+        : `Aufgabe ${index + 1} / ${questions.length}: ${question.prompt}`;
       const qXp = document.createElement("span");
       qXp.className = "contribution-tag learning-xp-badge has-xp";
       const questionXp = calculateQuestionXp(question.baseXp, question.tags);
@@ -1907,6 +1915,84 @@ export interface ModuleStepperController {
   setDatabase(db: ModulesDatabase): void;
 }
 
+type LessonSection =
+  | { kind: "theory"; blocks: TheoryBlock[] }
+  | { kind: "exercise"; question: ModuleQuestion }
+  | { kind: "practice" }
+  | { kind: "quiz_easy" };
+
+function buildLessonSections(
+  mod: LearningModule,
+  questions: readonly ModuleQuestion[],
+): LessonSection[] {
+  const blocks = [...mod.theoryBlocks].sort((a, b) => a.order - b.order);
+  const exercises = questions.filter(
+    (question) =>
+      question.moduleId === mod.id && question.targetLane === "exercise",
+  );
+  const blocksById = new Map(blocks.map((block) => [block.id, block]));
+  const exercisesById = new Map(
+    exercises.map((question) => [question.id, question]),
+  );
+  const seenBlocks = new Set<string>();
+  const seenExercises = new Set<string>();
+  const sections: LessonSection[] = [];
+
+  function addTheory(block: TheoryBlock): void {
+    if (seenBlocks.has(block.id)) return;
+    const members = block.groupId
+      ? blocks.filter((item) => item.groupId === block.groupId)
+      : [block];
+    for (const member of members) seenBlocks.add(member.id);
+    sections.push({ kind: "theory", blocks: members });
+  }
+
+  function addExercise(question: ModuleQuestion): void {
+    if (seenExercises.has(question.id)) return;
+    seenExercises.add(question.id);
+    sections.push({ kind: "exercise", question });
+  }
+
+  for (const entry of mod.contentOrder ?? []) {
+    if (entry.kind === "theory") {
+      const block = blocksById.get(entry.id);
+      if (block) addTheory(block);
+    } else {
+      const question = exercisesById.get(entry.id);
+      if (question) addExercise(question);
+    }
+  }
+  for (const block of blocks) addTheory(block);
+  for (const question of exercises) addExercise(question);
+  if (mod.hasPractice) sections.push({ kind: "practice" });
+  sections.push({ kind: "quiz_easy" });
+  return sections;
+}
+
+function isLessonSectionComplete(
+  section: LessonSection,
+  progress: ModuleProgress,
+): boolean {
+  switch (section.kind) {
+    case "theory":
+      return (
+        progress.steps.theory === "completed" ||
+        section.blocks.every((block) =>
+          progress.completedTheoryBlockIds.includes(block.id),
+        )
+      );
+    case "exercise":
+      return (
+        progress.steps.exercise === "completed" ||
+        progress.solvedQuestionIds.includes(section.question.id)
+      );
+    case "practice":
+      return progress.steps.practice === "completed";
+    case "quiz_easy":
+      return progress.steps.quiz_easy === "completed";
+  }
+}
+
 /**
  * Initialisiert den Schritt-für-Schritt-Lektionsparcours (`ModuleStepper`)
  * inklusive Fastlane-Ansicht, Markdown/KaTeX-Theorieblöcken und Step-Freischaltung.
@@ -1941,14 +2027,12 @@ export function attachModuleStepper(
     return { mod, mode: requestedMode };
   };
 
-  let renderedSnapshotKey = "";
-  let stepElements: Partial<Record<LaneStep, HTMLElement>> = {};
-  let exerciseHost: HTMLElement | null = null;
-  let quizHost: HTMLElement | null = null;
+  let updateCurrentSection = () => {};
 
   const fullRender = () => {
+    updateCurrentSection = () => {};
     const { mod, mode } = resolveModuleAndMode();
-    const state = syncProgressWithCurriculum(
+    let state = syncProgressWithCurriculum(
       loadLearningProgress(
         currentDb.modules,
         undefined,
@@ -1971,11 +2055,14 @@ export function attachModuleStepper(
       return;
     }
 
+    if (mode === "normal") {
+      const reconciled = completeTheoryStep(state, mod, currentDb.questions);
+      if (reconciled !== state) {
+        state = reconciled;
+        commitProgressChange(state, currentDb);
+      }
+    }
     const modProgress = state.modules[mod.id];
-    renderedSnapshotKey = `${mod.id}:${mode}`;
-    stepElements = {};
-    exerciseHost = null;
-    quizHost = null;
 
     const headerCard = document.createElement("div");
     headerCard.className = "learning-card";
@@ -2024,225 +2111,255 @@ export function attachModuleStepper(
       return;
     }
 
-    // Schritt 1: Theorie
-    const theoryStepState: StepProgressState =
-      modProgress?.steps.theory === "completed" ? "completed" : "unlocked";
-    const theorySection = document.createElement("section");
-    theorySection.className = "learning-step-section";
-    theorySection.dataset.step = "theory";
-    theorySection.dataset.stepState = theoryStepState;
-    stepElements.theory = theorySection;
-
-    const theoryHeader = document.createElement("div");
-    theoryHeader.className = "learning-step-header";
-    const theoryHeading = document.createElement("h3");
-    theoryHeading.textContent = "Schritt 1: Theorie";
-    const theoryBadge = document.createElement("span");
-    theoryBadge.className = "contribution-tag learning-status-pill";
-    theoryBadge.dataset.stepBadge = "theory";
-    theoryBadge.dataset.state = theoryStepState;
-    theoryBadge.textContent = `${STEP_STATUS_ICONS[theoryStepState]} ${STATUS_LABELS[theoryStepState]}`;
-    theoryHeader.append(theoryHeading, theoryBadge);
-
-    const blocksWrap = document.createElement("div");
-    blocksWrap.className = "learning-theory-blocks";
-    const sortedBlocks = [...mod.theoryBlocks].sort(
-      (a, b) => a.order - b.order,
-    );
-    let activeGroupId: string | undefined;
-    let activeGroupBlocks: HTMLElement | null = null;
-    for (const block of sortedBlocks) {
-      if (block.groupId !== activeGroupId) {
-        activeGroupId = block.groupId;
-        activeGroupBlocks = null;
-        if (block.groupId) {
-          const group = document.createElement("section");
-          group.className = "learning-theory-group";
-          const groupHeading = document.createElement("h4");
-          groupHeading.textContent = block.groupTitle ?? "";
-          const groupContent = document.createElement("div");
-          groupContent.className = "learning-theory-group-blocks";
-          group.append(groupHeading, groupContent);
-          blocksWrap.append(group);
-          activeGroupBlocks = groupContent;
-        }
-      }
-      const blockEl = document.createElement("article");
-      blockEl.className = "learning-theory-block";
-      const bTitle = document.createElement(block.groupId ? "h5" : "h4");
-      bTitle.textContent = `${block.order}. ${block.title}`;
-      const bMd = document.createElement("div");
-      bMd.className = "learning-theory-markdown";
-      bMd.append(renderTheoryMarkdown(block.markdownContent));
-      blockEl.append(bTitle, bMd);
-
-      const visualEl = renderTheoryVisualElement(block, root);
-      if (visualEl) {
-        blockEl.append(visualEl);
-      }
-      const blockXp = calculateTheoryBlockXp(block, mod.theoryBaseXp);
-      const completed =
-        theoryStepState === "completed" ||
-        modProgress?.completedTheoryBlockIds.includes(block.id);
-      const completeBlockBtn = document.createElement("button");
-      completeBlockBtn.type = "button";
-      completeBlockBtn.className = "learning-btn learning-btn-primary";
-      completeBlockBtn.dataset.action = "complete-theory-block";
-      completeBlockBtn.dataset.blockId = block.id;
-      completeBlockBtn.disabled = !!completed;
-      completeBlockBtn.textContent = completed
-        ? `✓ Block abgeschlossen (+${blockXp} XP)`
-        : `Block abschließen (+${blockXp} XP)`;
-      completeBlockBtn.addEventListener("click", () => {
+    if (!modProgress || modProgress.status === "locked") {
+      const locked = document.createElement("p");
+      locked.className = "learning-step-lock-notice";
+      locked.textContent =
+        "🔒 Dieses Modul ist noch gesperrt. Schließe zuerst das vorherige Modul ab.";
+      contentHost.append(locked);
+      updateCurrentSection = () => {
         const latest = loadLearningProgress(
           currentDb.modules,
           undefined,
           currentDb.quizSettings,
-        );
-        commitProgressChange(
-          completeTheoryBlock(latest, mod, block.id),
-          currentDb,
-        );
-      });
-      blockEl.append(completeBlockBtn);
-      (activeGroupBlocks ?? blocksWrap).append(blockEl);
+        ).modules[mod.id];
+        if (latest && latest.status !== "locked") fullRender();
+      };
+      return;
     }
 
-    const completeTheoryBtn = document.createElement("button");
-    completeTheoryBtn.type = "button";
-    completeTheoryBtn.className = "learning-btn learning-btn-primary";
-    completeTheoryBtn.dataset.action = "complete-theory";
-    completeTheoryBtn.hidden = sortedBlocks.length > 0;
-    if (theoryStepState === "completed") {
-      completeTheoryBtn.disabled = true;
-      completeTheoryBtn.textContent = "✓ Theorie abgeschlossen";
-    } else {
-      completeTheoryBtn.textContent = "Theorie abschließen";
+    renderSequence(contentHost, mod, modProgress);
+  };
+
+  function renderSequence(
+    host: HTMLElement,
+    mod: LearningModule,
+    initialProgress: ModuleProgress,
+  ): void {
+    const sections = buildLessonSections(mod, currentDb.questions);
+    const firstIncomplete = sections.findIndex(
+      (section) => !isLessonSectionComplete(section, initialProgress),
+    );
+    let index = firstIncomplete === -1 ? sections.length - 1 : firstIncomplete;
+    if (
+      typeof window !== "undefined" &&
+      window.location.hash === "#quiz-step" &&
+      initialProgress.steps.quiz_easy !== "locked"
+    ) {
+      index = sections.length - 1;
     }
 
-    completeTheoryBtn.addEventListener("click", () => {
-      const latest = loadLearningProgress(
+    const sequenceHost = document.createElement("div");
+    sequenceHost.className = "learning-lesson-sequence";
+    host.append(sequenceHost);
+
+    const renderCurrent = (focusHeading = false) => {
+      const section = sections[index];
+      const progress = loadLearningProgress(
         currentDb.modules,
         undefined,
         currentDb.quizSettings,
+      ).modules[mod.id];
+      if (!progress) {
+        fullRender();
+        return;
+      }
+
+      sequenceHost.replaceChildren();
+      const counter = document.createElement("p");
+      counter.className = "learning-lesson-counter";
+      counter.textContent = `Abschnitt ${index + 1} / ${sections.length}`;
+      let progressBar = createBlueProgressBar(
+        "Abschnittsfortschritt",
+        (sections.filter((item) => isLessonSectionComplete(item, progress))
+          .length /
+          sections.length) *
+          100,
       );
-      const updated = completeTheoryStep(latest, mod);
-      commitProgressChange(updated, currentDb);
-    });
+      const card = document.createElement("section");
+      card.className = "learning-step-section";
+      card.dataset.step = section.kind;
+      card.dataset.lessonSection = String(index + 1);
+      if (section.kind === "quiz_easy") card.id = "quiz-step";
 
-    theorySection.append(theoryHeader, blocksWrap, completeTheoryBtn);
-    contentHost.append(theorySection);
+      const heading = document.createElement("h3");
+      heading.className = "learning-lesson-heading";
+      heading.tabIndex = -1;
+      heading.textContent =
+        section.kind === "theory"
+          ? "Theorie"
+          : section.kind === "exercise"
+            ? "Übung"
+            : section.kind === "practice"
+              ? "Praxis am Instrument"
+              : "Abschluss-Quiz Einfach";
+      card.append(heading);
 
-    // Schritt 2: Aufgaben
-    const exerciseStepState = modProgress?.steps.exercise ?? "locked";
-    const exerciseSection = document.createElement("section");
-    exerciseSection.className = "learning-step-section";
-    exerciseSection.dataset.step = "exercise";
-    exerciseSection.dataset.stepState = exerciseStepState;
-    stepElements.exercise = exerciseSection;
+      let completeButton: HTMLButtonElement | null = null;
+      let practiceBody: HTMLDivElement | null = null;
+      if (section.kind === "theory") {
+        const grouped = Boolean(section.blocks[0].groupId);
+        const wrap = document.createElement(grouped ? "section" : "div");
+        wrap.className = grouped
+          ? "learning-theory-group"
+          : "learning-theory-blocks";
+        const blocksHost = document.createElement("div");
+        blocksHost.className = grouped
+          ? "learning-theory-group-blocks"
+          : "learning-theory-blocks";
+        if (grouped) {
+          const groupHeading = document.createElement("h4");
+          groupHeading.textContent = section.blocks[0].groupTitle ?? "";
+          wrap.append(groupHeading);
+        }
+        for (const block of section.blocks) {
+          const blockEl = document.createElement("article");
+          blockEl.className = "learning-theory-block";
+          const blockTitle = document.createElement(grouped ? "h5" : "h4");
+          blockTitle.textContent = `${block.order}. ${block.title}`;
+          const markdown = document.createElement("div");
+          markdown.className = "learning-theory-markdown";
+          markdown.append(renderTheoryMarkdown(block.markdownContent));
+          blockEl.append(blockTitle, markdown);
+          const visual = renderTheoryVisualElement(block, root);
+          if (visual) blockEl.append(visual);
+          blocksHost.append(blockEl);
+        }
+        wrap.append(blocksHost);
+        card.append(wrap);
 
-    const exerciseHeader = document.createElement("div");
-    exerciseHeader.className = "learning-step-header";
-    const exerciseHeading = document.createElement("h3");
-    exerciseHeading.textContent = "Schritt 2: Interaktive Aufgaben";
-    const exerciseBadge = document.createElement("span");
-    exerciseBadge.className = "contribution-tag learning-status-pill";
-    exerciseBadge.dataset.stepBadge = "exercise";
-    exerciseBadge.dataset.state = exerciseStepState;
-    exerciseBadge.textContent = `${STEP_STATUS_ICONS[exerciseStepState]} ${STATUS_LABELS[exerciseStepState]}`;
-    exerciseHeader.append(exerciseHeading, exerciseBadge);
-    exerciseSection.append(exerciseHeader);
+        completeButton = document.createElement("button");
+        completeButton.type = "button";
+        completeButton.className = "learning-btn learning-btn-primary";
+        completeButton.dataset.action = "complete-theory-block";
+        completeButton.addEventListener("click", () => {
+          let latest = loadLearningProgress(
+            currentDb.modules,
+            undefined,
+            currentDb.quizSettings,
+          );
+          for (const block of section.blocks) {
+            latest = completeTheoryBlock(
+              latest,
+              mod,
+              block.id,
+              currentDb.questions,
+            );
+          }
+          commitProgressChange(latest, currentDb);
+        });
+        card.append(completeButton);
+      } else if (section.kind === "exercise") {
+        const exercise = document.createElement("div");
+        attachModuleQuizRunner(exercise, {
+          module: mod,
+          db: currentDb,
+          mode: "exercise",
+          exerciseId: section.question.id,
+          templateRoot: root,
+          lessonBaseUrl,
+        });
+        card.append(exercise);
+      } else if (section.kind === "practice") {
+        practiceBody = document.createElement("div");
+        renderPracticeBody(practiceBody, progress.steps.practice, mod);
+        card.append(practiceBody);
+      } else if (progress.steps.quiz_easy === "locked") {
+        const locked = document.createElement("p");
+        locked.className = "learning-step-lock-notice";
+        locked.textContent =
+          "🔒 Schließe zuerst alle Theorieblöcke, Übungen und gegebenenfalls den Praxisteil ab.";
+        card.append(locked);
+      } else {
+        const quiz = document.createElement("div");
+        attachModuleQuizRunner(quiz, {
+          module: mod,
+          db: currentDb,
+          mode: "quiz_easy",
+          templateRoot: root,
+          lessonBaseUrl,
+        });
+        card.append(quiz);
+      }
 
-    exerciseHost = document.createElement("div");
-    if (exerciseStepState === "locked") {
-      const lockMsg = document.createElement("p");
-      lockMsg.className = "learning-step-lock-notice";
-      lockMsg.textContent =
-        "🔒 Dieser Schritt ist noch gesperrt – schließe zuerst Schritt 1 (Theorie) ab.";
-      exerciseHost.append(lockMsg);
-    } else {
-      attachModuleQuizRunner(exerciseHost, {
-        module: mod,
-        db: currentDb,
-        mode: "exercise",
-        templateRoot: root,
-        lessonBaseUrl,
+      const navigation = document.createElement("nav");
+      navigation.className = "learning-lesson-navigation";
+      navigation.setAttribute("aria-label", "Abschnittsnavigation");
+      const previous = document.createElement("button");
+      previous.type = "button";
+      previous.className = "learning-btn";
+      previous.dataset.action = "previous-lesson-section";
+      previous.textContent = "← Zurück";
+      previous.disabled = index === 0;
+      previous.addEventListener("click", () => {
+        index -= 1;
+        renderCurrent(true);
       });
-    }
-    exerciseSection.append(exerciseHost);
-    contentHost.append(exerciseSection);
-
-    // Schritt 3 (optional): Praxis
-    if (mod.hasPractice) {
-      const practiceStepState = modProgress?.steps.practice ?? "locked";
-      const practiceSection = document.createElement("section");
-      practiceSection.className = "learning-step-section";
-      practiceSection.dataset.step = "practice";
-      practiceSection.dataset.stepState = practiceStepState;
-      stepElements.practice = practiceSection;
-
-      const practiceHeader = document.createElement("div");
-      practiceHeader.className = "learning-step-header";
-      const practiceHeading = document.createElement("h3");
-      practiceHeading.textContent = "Schritt 3: Praxis am Instrument";
-      const practiceBadge = document.createElement("span");
-      practiceBadge.className = "contribution-tag learning-status-pill";
-      practiceBadge.dataset.stepBadge = "practice";
-      practiceBadge.dataset.state = practiceStepState;
-      practiceBadge.textContent = `${STEP_STATUS_ICONS[practiceStepState]} ${STATUS_LABELS[practiceStepState]}`;
-      practiceHeader.append(practiceHeading, practiceBadge);
-      practiceSection.append(practiceHeader);
-
-      const practiceBody = document.createElement("div");
-      practiceBody.dataset.practiceBody = "";
-      renderPracticeBody(practiceBody, practiceStepState, mod);
-      practiceSection.append(practiceBody);
-      contentHost.append(practiceSection);
-    }
-
-    // Schritt 4 (bzw. 3): Abschluss-Quiz Einfach
-    const quizStepState = modProgress?.steps.quiz_easy ?? "locked";
-    const quizSection = document.createElement("section");
-    quizSection.id = "quiz-step";
-    quizSection.className = "learning-step-section";
-    quizSection.dataset.step = "quiz_easy";
-    quizSection.dataset.stepState = quizStepState;
-    stepElements.quiz_easy = quizSection;
-
-    const quizHeader = document.createElement("div");
-    quizHeader.className = "learning-step-header";
-    const quizHeading = document.createElement("h3");
-    quizHeading.textContent = mod.hasPractice
-      ? "Schritt 4: Abschluss-Quiz Einfach"
-      : "Schritt 3: Abschluss-Quiz Einfach";
-    const quizBadge = document.createElement("span");
-    quizBadge.className = "contribution-tag learning-status-pill";
-    quizBadge.dataset.stepBadge = "quiz_easy";
-    quizBadge.dataset.state = quizStepState;
-    quizBadge.textContent = `${STEP_STATUS_ICONS[quizStepState]} ${STATUS_LABELS[quizStepState]}`;
-    quizHeader.append(quizHeading, quizBadge);
-    quizSection.append(quizHeader);
-
-    quizHost = document.createElement("div");
-    if (quizStepState === "locked") {
-      const lockMsg = document.createElement("p");
-      lockMsg.className = "learning-step-lock-notice";
-      lockMsg.textContent = mod.hasPractice
-        ? "🔒 Das Abschluss-Quiz ist gesperrt – schließe zuerst die Aufgaben und den Praxisteil ab."
-        : "🔒 Das Abschluss-Quiz ist gesperrt – löse zuerst alle Aufgaben in Schritt 2.";
-      quizHost.append(lockMsg);
-    } else {
-      attachModuleQuizRunner(quizHost, {
-        module: mod,
-        db: currentDb,
-        mode: "quiz_easy",
-        templateRoot: root,
-        lessonBaseUrl,
+      const next = document.createElement("button");
+      next.type = "button";
+      next.className = "learning-btn learning-btn-primary";
+      next.dataset.action = "next-lesson-section";
+      next.textContent = "Weiter →";
+      next.hidden = index === sections.length - 1;
+      next.addEventListener("click", () => {
+        index += 1;
+        renderCurrent(true);
       });
-    }
-    quizSection.append(quizHost);
-    contentHost.append(quizSection);
-  };
+      navigation.append(previous, next);
+      sequenceHost.append(counter, progressBar, card, navigation);
+
+      let practiceState = progress.steps.practice;
+      updateCurrentSection = () => {
+        const latest = loadLearningProgress(
+          currentDb.modules,
+          undefined,
+          currentDb.quizSettings,
+        ).modules[mod.id];
+        if (!latest) return;
+        const completed = isLessonSectionComplete(section, latest);
+        next.disabled = !completed;
+        card.dataset.stepState = completed ? "completed" : "unlocked";
+        if (completeButton && section.kind === "theory") {
+          const remainingXp =
+            latest.steps.theory === "completed"
+              ? 0
+              : section.blocks
+                  .filter(
+                    (block) =>
+                      !latest.completedTheoryBlockIds.includes(block.id),
+                  )
+                  .reduce(
+                    (sum, block) =>
+                      sum + calculateTheoryBlockXp(block, mod.theoryBaseXp),
+                    0,
+                  );
+          completeButton.disabled = completed;
+          completeButton.textContent = completed
+            ? "✓ Abschnitt gelesen"
+            : `Abschnitt gelesen (+${remainingXp} XP)`;
+        }
+        if (practiceBody && practiceState !== latest.steps.practice) {
+          practiceState = latest.steps.practice;
+          renderPracticeBody(practiceBody, practiceState, mod);
+        }
+        const percent =
+          (sections.filter((item) => isLessonSectionComplete(item, latest))
+            .length /
+            sections.length) *
+          100;
+        const updatedBar = createBlueProgressBar(
+          "Abschnittsfortschritt",
+          percent,
+        );
+        progressBar.replaceWith(updatedBar);
+        progressBar = updatedBar;
+      };
+      updateCurrentSection();
+      if (focusHeading) heading.focus();
+    };
+
+    renderCurrent();
+  }
 
   function renderPracticeBody(
     bodyEl: HTMLElement,
@@ -2254,7 +2371,7 @@ export function attachModuleStepper(
       const msg = document.createElement("p");
       msg.className = "learning-step-lock-notice";
       msg.textContent =
-        "🔒 Dieser Schritt ist gesperrt – löse zuerst alle Aufgaben in Schritt 2.";
+        "🔒 Dieser Schritt ist gesperrt – schließe zuerst alle Theorieblöcke und Übungen ab.";
       bodyEl.append(msg);
       return;
     }
@@ -2285,117 +2402,6 @@ export function attachModuleStepper(
     bodyEl.append(hint, btn);
   }
 
-  const syncStepsInPlace = (reason?: string) => {
-    const { mod, mode } = resolveModuleAndMode();
-    if (
-      !mod ||
-      renderedSnapshotKey !== `${mod.id}:${mode}` ||
-      reason === "reset"
-    ) {
-      fullRender();
-      return;
-    }
-    if (mode !== "normal") {
-      return;
-    }
-
-    const state = loadLearningProgress(
-      currentDb.modules,
-      undefined,
-      currentDb.quizSettings,
-    );
-    const modProgress = state.modules[mod.id];
-    if (!modProgress || !stepElements.theory) {
-      fullRender();
-      return;
-    }
-
-    const updateBadge = (step: LaneStep, nextStepState: StepProgressState) => {
-      const section = stepElements[step];
-      if (!section) return "";
-      const prev = section.dataset.stepState ?? "locked";
-      section.dataset.stepState = nextStepState;
-      const badge = section.querySelector<HTMLElement>(
-        `[data-step-badge="${step}"]`,
-      );
-      if (badge) {
-        badge.dataset.state = nextStepState;
-        badge.textContent = `${STEP_STATUS_ICONS[nextStepState]} ${STATUS_LABELS[nextStepState]}`;
-      }
-      return prev;
-    };
-
-    const prevTheory = updateBadge("theory", modProgress.steps.theory);
-    for (const btn of stepElements.theory.querySelectorAll<HTMLButtonElement>(
-      '[data-action="complete-theory-block"]',
-    )) {
-      const block = mod.theoryBlocks.find(
-        (item) => item.id === btn.dataset.blockId,
-      );
-      if (!block) continue;
-      const completed =
-        modProgress.steps.theory === "completed" ||
-        modProgress.completedTheoryBlockIds.includes(block.id);
-      const xp = calculateTheoryBlockXp(block, mod.theoryBaseXp);
-      btn.disabled = completed;
-      btn.textContent = completed
-        ? `✓ Block abgeschlossen (+${xp} XP)`
-        : `Block abschließen (+${xp} XP)`;
-    }
-    if (
-      prevTheory !== modProgress.steps.theory &&
-      modProgress.steps.theory === "completed"
-    ) {
-      const btn = stepElements.theory?.querySelector<HTMLButtonElement>(
-        '[data-action="complete-theory"]',
-      );
-      if (btn) {
-        btn.disabled = true;
-        btn.textContent = "✓ Theorie abgeschlossen";
-      }
-    }
-
-    const prevEx = updateBadge("exercise", modProgress.steps.exercise);
-    if (
-      prevEx === "locked" &&
-      modProgress.steps.exercise !== "locked" &&
-      exerciseHost
-    ) {
-      attachModuleQuizRunner(exerciseHost, {
-        module: mod,
-        db: currentDb,
-        mode: "exercise",
-        templateRoot: root,
-        lessonBaseUrl,
-      });
-    }
-
-    if (mod.hasPractice) {
-      const prevPractice = updateBadge("practice", modProgress.steps.practice);
-      const practiceBody = stepElements.practice?.querySelector<HTMLElement>(
-        "[data-practice-body]",
-      );
-      if (practiceBody && prevPractice !== modProgress.steps.practice) {
-        renderPracticeBody(practiceBody, modProgress.steps.practice, mod);
-      }
-    }
-
-    const prevQuiz = updateBadge("quiz_easy", modProgress.steps.quiz_easy);
-    if (
-      prevQuiz === "locked" &&
-      modProgress.steps.quiz_easy !== "locked" &&
-      quizHost
-    ) {
-      attachModuleQuizRunner(quizHost, {
-        module: mod,
-        db: currentDb,
-        mode: "quiz_easy",
-        templateRoot: root,
-        lessonBaseUrl,
-      });
-    }
-  };
-
   fullRender();
 
   const onProgressUpdated = (event: Event) => {
@@ -2415,7 +2421,8 @@ export function attachModuleStepper(
         currentDb = event.detail.db as unknown as ModulesDatabase;
       }
     }
-    syncStepsInPlace(reason);
+    if (reason === "reset") fullRender();
+    else updateCurrentSection();
   };
   document.addEventListener("learning-progress:updated", onProgressUpdated);
 

@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it } from "vitest";
 import rawSeedDb from "../../data/modules.json";
-import { clearLearningProgress } from "../../src/lib/learning-progress";
+import {
+  clearLearningProgress,
+  completeTheoryBlock,
+  createInitialProgress,
+  saveLearningProgress,
+} from "../../src/lib/learning-progress";
 import type { ModulesDatabase } from "../../src/lib/module-schema";
 import {
   validateModuleInput,
@@ -47,12 +52,12 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     root.dataset.moduleId = "theory-101";
     document.body.append(root);
     const db = structuredClone(seedDb);
-    db.modules[0].theoryBlocks[1].markdownContent =
+    db.modules[0].theoryBlocks[0].markdownContent =
       'Text\n\n<Notation clef="treble" notes={[]} />';
-    db.modules[0].theoryBlocks[1].visualComponent = "Notation";
-    db.modules[0].theoryBlocks[1].visualPropsJson = '{"notes":[],"clef":"treble"}';
+    db.modules[0].theoryBlocks[0].visualComponent = "Notation";
+    db.modules[0].theoryBlocks[0].visualPropsJson = '{"notes":[],"clef":"treble"}';
     attachModuleStepper(root, { initialDb: db, autoFetch: false });
-    expect(root.querySelectorAll(".learning-theory-block")[1].querySelectorAll("svg.notation-staff")).toHaveLength(1);
+    expect(root.querySelector(".learning-theory-block")?.querySelectorAll("svg.notation-staff")).toHaveLength(1);
     expect(root.textContent).not.toContain("<Notation");
   });
 
@@ -71,6 +76,29 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     const group = root.querySelector(".learning-theory-group");
     expect(group?.querySelector("h4")?.textContent).toBe("Grundlagen");
     expect(group?.querySelectorAll(".learning-theory-block")).toHaveLength(2);
+  });
+
+  it("vergütet beim Abschluss einer teilweise erledigten Gruppe nur offene Blöcke", () => {
+    const root = document.createElement("section");
+    root.dataset.moduleId = "theory-101";
+    document.body.append(root);
+    const db = structuredClone(seedDb);
+    const mod = db.modules[0];
+    for (const block of mod.theoryBlocks.slice(0, 2)) {
+      block.groupId = "group-basics";
+      block.groupTitle = "Grundlagen";
+    }
+    const state = completeTheoryBlock(createInitialProgress(db.modules), mod, mod.theoryBlocks[0].id);
+    saveLearningProgress(state);
+    const dashboard = document.createElement("section");
+    document.body.append(dashboard);
+    attachProgressDashboard(dashboard, { initialDb: db, autoFetch: false });
+    attachModuleStepper(root, { initialDb: db, autoFetch: false });
+    root.querySelector<HTMLButtonElement>('[data-action="complete-theory-block"]')?.click();
+    const expected = mod.theoryBlocks.slice(0, 2).reduce(
+      (sum, block) => sum + calculateTheoryBlockXp(block, mod.theoryBaseXp), 0,
+    );
+    expect(dashboard.querySelector<HTMLElement>("[data-dashboard-xp]")?.dataset.dashboardXp).toBe(String(expected));
   });
 
   it("führt keine Ausdrücke aus und lässt Komponenten in Inline-Code unverändert", () => {
@@ -124,78 +152,37 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     }
   });
 
-  it("sperrt nachfolgende Stepper-Schritte initial und entsperrt Schritt 2 nach Theorie-Abschluss live inklusive Dashboard-Update", () => {
+  it("führt in gemischter Reihenfolge durch Übungen und Gruppen und setzt nach dem Neuladen fort", () => {
     const db = structuredClone(seedDb);
     db.questions = db.questions.filter((q) =>
       q.moduleId !== "theory-101" || q.targetLane !== "exercise" ||
       ["q-101-ex-1", "q-101-ex-2"].includes(q.id),
     );
+    const mod = db.modules[0];
+    for (const block of mod.theoryBlocks.slice(0, 2)) {
+      block.groupId = "g";
+      block.groupTitle = "Grundlagen";
+    }
+    delete mod.theoryBlocks[2].groupId;
+    delete mod.theoryBlocks[2].groupTitle;
+    mod.contentOrder = [
+      { kind: "exercise", id: "q-101-ex-1" },
+      { kind: "theory", id: mod.theoryBlocks[0].id },
+      { kind: "theory", id: mod.theoryBlocks[1].id },
+      { kind: "exercise", id: "q-101-ex-2" },
+      { kind: "theory", id: mod.theoryBlocks[2].id },
+    ];
     const dashboardEl = document.createElement("section");
-    const stepperEl = document.createElement("section");
+    let stepperEl = document.createElement("section");
     stepperEl.dataset.moduleId = "theory-101";
-    stepperEl.dataset.mode = "normal";
     document.body.append(dashboardEl, stepperEl);
-
-    attachProgressDashboard(dashboardEl, {
-      initialDb: db,
-      autoFetch: false,
-    });
+    attachProgressDashboard(dashboardEl, { initialDb: db, autoFetch: false });
     attachModuleStepper(stepperEl, { initialDb: db, autoFetch: false });
 
-    const theoryStep = stepperEl.querySelector<HTMLElement>(
-      '[data-step="theory"]',
-    );
-    const exerciseStep = stepperEl.querySelector<HTMLElement>(
-      '[data-step="exercise"]',
-    );
-    const quizStep = stepperEl.querySelector<HTMLElement>(
-      '[data-step="quiz_easy"]',
-    );
-
-    expect(theoryStep?.dataset.stepState).toBe("unlocked");
-    expect(exerciseStep?.dataset.stepState).toBe("locked");
-    expect(quizStep?.dataset.stepState).toBe("locked");
-    expect(
-      stepperEl.querySelectorAll('[data-action="check-exercise"]'),
-    ).toHaveLength(0);
-    expect(stepperEl.querySelector(".katex")).not.toBeNull();
-    expect(stepperEl.querySelector("svg.notation-staff")).not.toBeNull();
-    expect(
-      dashboardEl.querySelector<HTMLElement>("[data-dashboard-xp]")?.dataset
-        .dashboardXp,
-    ).toBe("0");
-
-    // Schritt 1 abschließen -> Theorie wird completed, Aufgaben werden unlocked
-    const blockButtons = stepperEl.querySelectorAll<HTMLButtonElement>(
-      '[data-action="complete-theory-block"]',
-    );
-    expect(blockButtons.length).toBe(db.modules[0].theoryBlocks.length);
-    blockButtons[0].click();
-    expect(blockButtons[0].disabled).toBe(true);
-    expect(exerciseStep?.dataset.stepState).toBe("locked");
-    expect(
-      dashboardEl.querySelector<HTMLElement>("[data-dashboard-xp]")?.dataset.dashboardXp,
-    ).toBe(String(calculateTheoryBlockXp(
-      [...db.modules[0].theoryBlocks].sort((a, b) => a.order - b.order)[0],
-      db.modules[0].theoryBaseXp,
-    )));
-    blockButtons.forEach((button) => button.click());
-
-    expect(theoryStep?.dataset.stepState).toBe("completed");
-    expect(exerciseStep?.dataset.stepState).toBe("unlocked");
-    expect(quizStep?.dataset.stepState).toBe("locked");
-    expect(
-      stepperEl.querySelectorAll('[data-action="check-exercise"]'),
-    ).toHaveLength(2);
-    expect(
-      dashboardEl.querySelector<HTMLElement>("[data-dashboard-xp]")?.dataset
-        .dashboardXp,
-    ).toBe(String(db.modules[0].theoryBlocks.reduce(
-      (total, block) => total + calculateTheoryBlockXp(block, db.modules[0].theoryBaseXp),
-      0,
-    )));
-
-    // Falsche Antwort auf Aufgabe 1 zeigt didaktische Erklärung
+    expect(stepperEl.querySelector(".learning-lesson-counter")?.textContent).toBe("Abschnitt 1 / 5");
+    expect(stepperEl.querySelectorAll(".learning-quiz-card")).toHaveLength(1);
+    expect(stepperEl.querySelector(".learning-theory-block")).toBeNull();
+    expect(stepperEl.querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]')?.disabled).toBe(true);
     const ex1Card = stepperEl.querySelector<HTMLElement>(
       '[data-question-card="q-101-ex-1"]',
     );
@@ -212,12 +199,36 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     const feedback = ex1Card?.querySelector<HTMLElement>(".learning-feedback");
     expect(feedback?.dataset.outcome).toBe("wrong");
     expect(feedback?.textContent).toContain("Frequenzverhältnis 2:1");
+    expect(stepperEl.querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]')?.disabled).toBe(true);
 
-    // Korrekte Antwort auf Aufgabe 1 + G4 im NotationBuilder für Aufgabe 2 -> Quiz Einfach wird frei
     ex1Input.value = "880 Hz";
     ex1Btn.click();
     expect(feedback?.dataset.outcome).toBe("correct");
+    expect(stepperEl.querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]')?.disabled).toBe(false);
+    expect(stepperEl.querySelector('[data-question-card="q-101-ex-1"]')).not.toBeNull();
+    expect(dashboardEl.querySelector<HTMLElement>("[data-dashboard-xp]")?.dataset.dashboardXp).toBe("10");
 
+    stepperEl.remove();
+    stepperEl = document.createElement("section");
+    stepperEl.dataset.moduleId = "theory-101";
+    document.body.append(stepperEl);
+    attachModuleStepper(stepperEl, { initialDb: db, autoFetch: false });
+    expect(stepperEl.querySelector(".learning-lesson-counter")?.textContent).toBe("Abschnitt 2 / 5");
+    expect(stepperEl.querySelector(".learning-theory-group h4")?.textContent).toBe("Grundlagen");
+    expect(stepperEl.querySelectorAll(".learning-theory-group .learning-theory-block")).toHaveLength(2);
+    expect(stepperEl.querySelector(".katex")).not.toBeNull();
+    expect(stepperEl.querySelector("svg.notation-staff")).not.toBeNull();
+    stepperEl.querySelector<HTMLButtonElement>('[data-action="complete-theory-block"]')?.click();
+    const groupXp = mod.theoryBlocks.slice(0, 2).reduce(
+      (sum, block) => sum + calculateTheoryBlockXp(block, mod.theoryBaseXp), 0,
+    );
+    expect(dashboardEl.querySelector<HTMLElement>("[data-dashboard-xp]")?.dataset.dashboardXp).toBe(String(10 + groupXp));
+    stepperEl.querySelector<HTMLButtonElement>('[data-action="previous-lesson-section"]')?.click();
+    expect(stepperEl.querySelector('[data-question-card="q-101-ex-1"]')).not.toBeNull();
+    stepperEl.querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]')?.click();
+    expect(stepperEl.querySelector<HTMLButtonElement>('[data-action="complete-theory-block"]')?.disabled).toBe(true);
+    expect(dashboardEl.querySelector<HTMLElement>("[data-dashboard-xp]")?.dataset.dashboardXp).toBe(String(10 + groupXp));
+    stepperEl.querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]')?.click();
     const ex2Card = stepperEl.querySelector<HTMLElement>(
       '[data-question-card="q-101-ex-2"]',
     );
@@ -233,9 +244,13 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     keyPress(builder, "ArrowDown"); // A4 -> G4
     keyPress(builder, " "); // G4 setzen
     ex2Btn.click();
-
-    expect(exerciseStep?.dataset.stepState).toBe("completed");
-    expect(quizStep?.dataset.stepState).toBe("unlocked");
+    expect(stepperEl.querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]')?.disabled).toBe(false);
+    stepperEl.querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]')?.click();
+    expect(stepperEl.querySelector('[data-step="theory"]')).not.toBeNull();
+    expect(stepperEl.querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]')?.disabled).toBe(true);
+    stepperEl.querySelector<HTMLButtonElement>('[data-action="complete-theory-block"]')?.click();
+    stepperEl.querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]')?.click();
+    expect(stepperEl.querySelector('[data-step="quiz_easy"]')).not.toBeNull();
 
     const roadmapCheck = document.createElement("section");
     document.body.append(roadmapCheck);
@@ -251,6 +266,50 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     expect(
       mod1Card?.querySelector('[data-roadmap-stat="quiz"]')?.textContent,
     ).toBe("Quiz 0/1");
+  });
+
+  it("fügt fehlende Inhalte aus einer veralteten Reihenfolge an und behandelt Gruppen als Einheit", () => {
+    const db = structuredClone(seedDb);
+    const mod = db.modules[0];
+    db.questions = db.questions.filter(
+      (q) => q.moduleId !== mod.id || q.targetLane !== "exercise" || q.id === "q-101-ex-1",
+    );
+    mod.contentOrder = [
+      { kind: "theory", id: mod.theoryBlocks[1].id },
+      { kind: "exercise", id: "removed-question" },
+      { kind: "exercise", id: "q-101-ex-1" },
+    ];
+    const root = document.createElement("section");
+    root.dataset.moduleId = mod.id;
+    document.body.append(root);
+    attachModuleStepper(root, { initialDb: db, autoFetch: false });
+    expect(root.querySelector(".learning-lesson-counter")?.textContent).toBe("Abschnitt 1 / 4");
+    expect(root.querySelectorAll(".learning-theory-group .learning-theory-block")).toHaveLength(2);
+    root.querySelector<HTMLButtonElement>('[data-action="complete-theory-block"]')?.click();
+    root.querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]')?.click();
+    expect(root.querySelector('[data-question-card="q-101-ex-1"]')).not.toBeNull();
+  });
+
+  it("überspringt leere Theorie und Übungen und lässt den Praxisteil vor dem Quiz abschließen", () => {
+    const db = structuredClone(seedDb);
+    const mod = db.modules[0];
+    mod.hasPractice = true;
+    mod.theoryBlocks = [];
+    mod.contentOrder = [];
+    db.questions = db.questions.filter(
+      (q) => q.moduleId !== mod.id || q.targetLane !== "exercise",
+    );
+    const root = document.createElement("section");
+    root.dataset.moduleId = mod.id;
+    document.body.append(root);
+    attachModuleStepper(root, { initialDb: db, autoFetch: false });
+    expect(root.querySelector(".learning-lesson-counter")?.textContent).toBe("Abschnitt 1 / 2");
+    expect(root.querySelector('[data-step="practice"]')).not.toBeNull();
+    expect(root.querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]')?.disabled).toBe(true);
+    root.querySelector<HTMLButtonElement>('[data-action="complete-practice"]')?.click();
+    expect(root.querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]')?.disabled).toBe(false);
+    root.querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]')?.click();
+    expect(root.querySelector('[data-step="quiz_easy"] .learning-quiz-card')).not.toBeNull();
   });
 
   it("aktualisiert Dashboard und Roadmap nach bestandenem Fastlane-Quiz inklusive Freischaltung von Modul 2", () => {

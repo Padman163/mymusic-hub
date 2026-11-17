@@ -308,6 +308,7 @@ export function syncProgressWithCurriculum(
 export function completeTheoryStep(
   state: LearningProgressState,
   module: LearningModule,
+  moduleQuestions?: readonly ModuleQuestion[],
 ): LearningProgressState {
   const existing = state.modules[module.id];
   if (
@@ -333,6 +334,28 @@ export function completeTheoryStep(
     target.steps.exercise = "unlocked";
   }
 
+  if (
+    moduleQuestions &&
+    target.steps.exercise !== "completed" &&
+    moduleQuestions
+      .filter(
+        (question) =>
+          question.moduleId === module.id && question.targetLane === "exercise",
+      )
+      .every((question) => target.solvedQuestionIds.includes(question.id))
+  ) {
+    unlockNextStepAfterExercise(target, module);
+  }
+
+  if (
+    target.steps.theory === existing.steps.theory &&
+    target.steps.exercise === existing.steps.exercise &&
+    target.steps.practice === existing.steps.practice &&
+    target.steps.quiz_easy === existing.steps.quiz_easy
+  ) {
+    return state;
+  }
+
   next.updatedAt = nowIso();
   return next;
 }
@@ -341,6 +364,7 @@ export function completeTheoryBlock(
   state: LearningProgressState,
   module: LearningModule,
   blockId: string,
+  moduleQuestions?: readonly ModuleQuestion[],
 ): LearningProgressState {
   const existing = state.modules[module.id];
   const block = module.theoryBlocks.find((item) => item.id === blockId);
@@ -365,7 +389,7 @@ export function completeTheoryBlock(
   return module.theoryBlocks.every((item) =>
     next.modules[module.id].completedTheoryBlockIds.includes(item.id),
   )
-    ? completeTheoryStep(next, module)
+    ? completeTheoryStep(next, module, moduleQuestions)
     : next;
 }
 
@@ -390,7 +414,7 @@ export function recordExerciseAnswer(
   if (
     !existing ||
     existing.status === "locked" ||
-    existing.steps.exercise === "locked"
+    (existing.steps.exercise === "locked" && moduleQuestions === undefined)
   ) {
     return state;
   }
@@ -398,6 +422,9 @@ export function recordExerciseAnswer(
   const next = cloneState(state);
   const target = next.modules[module.id];
   const solvedSet = new Set(target.solvedQuestionIds);
+  if (target.steps.exercise === "locked") {
+    target.steps.exercise = "unlocked";
+  }
 
   if (!solvedSet.has(question.id)) {
     solvedSet.add(question.id);
@@ -414,10 +441,10 @@ export function recordExerciseAnswer(
       const allExercisesSolved =
         exerciseQuestions.length === 0 ||
         exerciseQuestions.every((item) => solvedSet.has(item.id));
-      if (allExercisesSolved) {
+      if (allExercisesSolved && target.steps.theory === "completed") {
         unlockNextStepAfterExercise(target, module);
       }
-    } else {
+    } else if (target.steps.theory === "completed") {
       unlockNextStepAfterExercise(target, module);
     }
   }

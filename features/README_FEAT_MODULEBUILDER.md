@@ -99,7 +99,7 @@ Dort gibt es vier übersichtliche Reiter:
   - **Themen-Etiketten als anklickbare Chips:** Zur Auswahl stehen Tags mit einem Punkte-Faktor über 1,0, z. B. `Notensystem (1.5x)`. Ohne ausgewählten Tag gilt Faktor 1,0. Bereits gespeicherte Tags mit Faktor 1,0 oder nicht mehr auswählbare Tags bleiben beim Bearbeiten erhalten.
   - **Praxisteil-Schalter:** Über ein Häkchen legst du fest, ob das Modul einen Praxisteil hat – bei reinen Theorie-Modulen bleibt der Haken einfach aus.
   - **Punkte:** Theorie-Basis-XP (Standard: `30`) dienen als Vorgabe für Blöcke ohne eigenen Wert. Die Bestehensgrenzen stehen in den übergreifenden Einstellungen.
-  - **Gemeinsame Blockliste:** Beim Bearbeiten eines Moduls erscheinen die zugehörigen Übungen zwischen den Theorieblöcken und können dort einsortiert werden. Übungen können nach Bestätigung direkt gelöscht werden; ihre Bearbeitung erfolgt weiterhin im Reiter „Aufgaben“. Die gespeicherte Reihenfolge gilt vorerst nur im Editor; der Lernpfad verwendet noch getrennte Schritte. Quizfragen erscheinen nicht in der Blockliste.
+  - **Gemeinsame Blockliste:** Beim Bearbeiten eines Moduls erscheinen die zugehörigen Übungen zwischen den Theorieblöcken und können dort einsortiert werden. Diese Reihenfolge gilt auch im Lernpfad. Übungen können nach Bestätigung direkt gelöscht werden; ihre Bearbeitung erfolgt weiterhin im Reiter „Aufgaben“. Quizfragen erscheinen nicht in der Blockliste.
   - **Dynamischer Theorie-Block-Editor:** Gespeicherte Lernabschnitte erscheinen als kompakte, aufklappbare Zeilen. Du kannst beliebig viele hinzufügen, per Pfeiltasten (`↑` / `↓`) neu sortieren oder wieder entfernen. Wähle mehrere Theorieblöcke aus und fasse sie zu einem benannten Abschnitt zusammen; Gruppen erscheinen auch im Lernmodul und lassen sich als Einheit verschieben oder auflösen. Als Abschnittstitel werden zunächst die Blocktitel kombiniert (z. B. „Titel 1, Titel 2 & Titel 3“); du kannst ihn anschließend ändern. Jeder Block kann eigene Basis-XP und Tags erhalten; seine berechneten XP verwenden ausschließlich seine Tags. Ohne eigenen Basiswert gilt die Modulvorgabe. Das Textfeld unterstützt KaTeX-Formeln (`$...$` / `$$...$$`) und Notationen direkt an der gewünschten Stelle:
 
     ```mdx
@@ -141,12 +141,12 @@ Damit Lernende sehen können, wie weit sie sind und welche Module noch gesperrt 
 
 - **Speicherung im eigenen Browser (`localStorage`):** Der Lernstand wird lokal im Browser des Lernenden gespeichert (unter `mymusic_learning_progress_v1`). Es ist also kein Benutzerkonto oder Login nötig – und für den Seitenbau auf dem Server gibt es einen sicheren Ersatzspeicher, damit beim Erzeugen der Website nichts abstürzt.
 - **Schrittweise Freischaltung:**
-  - Modul 1 startet automatisch **freigeschaltet** mit Schritt 1 (*Theorie*). Alle Folgemodule starten zunächst **gesperrt**.
-  - Innerhalb eines Moduls geht es der Reihe nach voran: **1. Theorie** → **2. Aufgaben** → **3. Praxis** *(nur wenn das Modul einen Praxisteil hat)* → **Abschluss-Quiz Einfach**. Erst danach öffnet sich automatisch das nächste Modul.
+  - Modul 1 startet automatisch **freigeschaltet** mit dem ersten Abschnitt. Alle Folgemodule starten zunächst **gesperrt**.
+  - Innerhalb eines Moduls folgen Theorieblöcke, Gruppen und Übungen der Reihenfolge aus dem Editor. Danach folgen **Praxis** *(nur wenn das Modul einen Praxisteil hat)* und **Abschluss-Quiz Einfach**. Erst danach öffnet sich automatisch das nächste Modul.
   - Kommen später über den Modul-Builder neue Module in `data/modules.json` hinzu, werden sie automatisch einsortiert, ohne dass bereits verdiente XP oder erledigte Module verloren gehen.
 - **Keine doppelten Punkte:** Das System merkt sich jede bereits gelöste Aufgabe und jeden erledigten Schritt. Wer eine Aufgabe zur Übung noch einmal löst, lernt zwar weiter, bekommt die XP aber fair nur beim ersten Mal gutgeschrieben.
 - **Der „⚡ Fastlane“-Schnelltest:** Wer ein Thema bereits beherrscht, kann auch bei gesperrten Folgemodulen das schwere Fastlane-Quiz versuchen. Bei Erreichen der Bestehensgrenze (Standard: **85 %**) gilt das Modul als bestanden und das nächste wird freigeschaltet. Die XP noch offener Theorieblöcke und ungelöster Fragen werden einmalig gutgeschrieben. Unter der Grenze wird der persönliche Bestwert gespeichert, aber es gibt keine Punkte oder Freischaltung.
-- **Theorie-XP:** Jeder abgeschlossene Theorieblock schreibt seine eigenen, anhand seiner Tags gewichteten XP einmalig gut. Erst nach allen Blöcken wird der Aufgabenschritt freigeschaltet. Alte Blöcke ohne eigene Werte verwenden den Theorie-Basiswert des Moduls und zunächst keine Tags; bereits abgeschlossene Theorie bleibt abgeschlossen und wird nicht erneut vergütet. Ein Modul ohne Theorieblöcke kann ohne Theorie-XP abgeschlossen werden.
+- **Theorie-XP:** Jeder abgeschlossene Theorieblock schreibt seine eigenen, anhand seiner Tags gewichteten XP einmalig gut. Beim Abschluss einer Gruppe werden die noch offenen Blöcke gemeinsam vergütet. Alte Blöcke ohne eigene Werte verwenden den Theorie-Basiswert des Moduls und zunächst keine Tags; bereits abgeschlossene Theorie bleibt abgeschlossen und wird nicht erneut vergütet. Ein Modul ohne Theorieblöcke wird ohne Theorie-XP übersprungen.
 - **Level-System:** Alle **500 XP** steigt man automatisch ein Level höher (Level 1 ab 0 XP, Level 2 ab 500 XP usw.), inklusive Aufschlüsselung nach Lernbereichen und Themen-Etiketten.
 - **Prüfstrecke (`tests/learning-progress.test.mjs`):** Tests prüfen diese Regeln, darunter Doppel-XP-Schutz, Fastlane, Dashboard-Kennzahlen und Speicherung.
 
@@ -173,9 +173,9 @@ Die derzeitigen Startdaten in `data/modules.json` enthalten zwei Module:
 
 ### 4. Der Lektions-Parcours & Aufgaben-Runner (`ModuleStepper.astro` & `ModuleQuizRunner.astro`)
 - **Geführter Schritt-für-Schritt-Aufbau (`/audio/theory/modul/?id=...`):**
-  - **Schritt 1 (Theorie):** Stellt alle Theorie-Blöcke mit mathematischen KaTeX-Formeln und eingebetteten Visualisierungen (`Notation`, `FretboardClickable`, `ScalePattern`, `NotationKeyboard`) dar. Erst der Klick auf **„Theorie abschließen (+XX XP)“** gibt Schritt 2 frei.
-  - **Schritt 2 (Aufgaben):** Bleibt bis dahin gesperrt und bietet alle 4 Aufgabentypen direkt interaktiv an: Multiple/Single Choice, Zahleneingabe (versteht z. B. `880` genauso wie `880 Hz`) sowie das interaktive Notensystem (`NotationBuilder.astro`), bei dem Lernende Noten selbst im Takt platzieren. Bei einer falschen Antwort erscheint die didaktische Erklärung des Autors.
-  - **Schritt 3 (Praxis, optional):** Erscheint nur bei Modulen mit Praxisteil und schaltet nach Bestätigung das Abschluss-Quiz frei.
+  - **Ein Abschnitt nach dem anderen:** Ein einzelner Theorieblock, eine Gruppe oder eine Übung wird entsprechend der im Editor gespeicherten Reihenfolge angezeigt. Mit **„Abschnitt gelesen“** beziehungsweise einer richtigen Antwort wird **„Weiter“** freigeschaltet; **„Zurück“** zeigt bereits bearbeitete Abschnitte erneut. Beim erneuten Öffnen beginnt die Lektion beim ersten offenen Abschnitt. Bei älteren oder unvollständigen Reihenfolgen werden fehlende Blöcke und Übungen ergänzt.
+  - **Theorie und Übungen:** Theorie unterstützt KaTeX und eingebettete Visualisierungen (`Notation`, `FretboardClickable`, `ScalePattern`, `NotationKeyboard`). Übungen bieten Multiple/Single Choice, Zahleneingabe (z. B. `880` oder `880 Hz`) und das interaktive Notensystem (`NotationBuilder.astro`). Bei einer falschen Antwort erscheint die didaktische Erklärung; die Aufgabe kann erneut beantwortet werden.
+  - **Praxis (optional):** Folgt nach allen Theorieblöcken und Übungen und schaltet nach Bestätigung das Abschluss-Quiz frei. Leere Theorie- oder Übungsteile werden übersprungen.
   - **Abschluss-Quiz Einfach & Fastlane-Modus (`?id=...&mode=fastlane`):** Führen Frage für Frage mit Fortschrittsbalken (`Frage X / Y`), XP-Bonus-Vorschau, konfigurierbarer Bestehensschwelle (Standard: `80 %` bzw. `85 %`) und automatischer Freischaltung des Folgemoduls durch die Prüfung.
 - **UI-Tests (`tests/components/module-player-ui.test.ts`):** Prüfen unter anderem Startdaten, das Entsperren des Steppers und den Fastlane-Durchlauf mit Dashboard und Roadmap.
 
@@ -225,7 +225,7 @@ Die Netlify Function `netlify/functions/modules.ts` stellt die Modul-API bereit.
 - [ ] HTML-Fehlerantworten und API-Fehler werden sichtbar behandelt, statt als erfolgreiche JSON-Antworten zu gelten.
 - [ ] Das Dashboard zeigt Level, Gesamt-XP, Fortschritt, abgeschlossene Module sowie XP nach Bereich und Tag.
 - [ ] Fortschritt bleibt nach erneutem Laden im Browser erhalten; serverseitiges Rendering läuft ohne `localStorage`.
-- [ ] Theorie, Übungen, optionaler Praxisschritt und Quiz werden in der vorgesehenen Reihenfolge freigeschaltet.
+- [ ] Theorieblöcke, Gruppen und Übungen erscheinen einzeln in der gespeicherten Reihenfolge; danach folgen optionaler Praxisteil und Quiz.
 - [ ] Wiederholtes Lösen derselben Aufgabe vergibt keine doppelten XP; 500 XP entsprechen einem Level.
 - [ ] Quiz und Fastlane verwenden die Modul-Bestehensgrenze; Nichtbestehen vergibt keine Abschluss-XP und entsperrt kein Folgemodul.
 - [ ] Fastlane ist auch für gesperrte Module erreichbar; Bestehen aktualisiert Fortschritt und Roadmap.
