@@ -274,6 +274,27 @@ async function fetchLiveModulesDatabase(): Promise<ModulesDatabase | null> {
   );
 }
 
+function showCatalogStatus(root: HTMLElement, message: string): void {
+  const status = document.createElement("p");
+  status.className = "learning-muted";
+  status.setAttribute("role", "status");
+  status.textContent = message;
+  (root.querySelector("[data-stepper-content]") ?? root).replaceChildren(
+    status,
+  );
+}
+
+const catalogLoadError = "Der Modulkatalog konnte nicht geladen werden.";
+
+function canRenderInitialCatalog(
+  root: HTMLElement,
+  options: PlayerAttachmentOptions,
+): boolean {
+  return Boolean(
+    options.autoFetch === false || options.initialDb || root.dataset.initialDb,
+  );
+}
+
 function commitProgressChange(
   nextState: LearningProgressState,
   db: ModulesDatabase,
@@ -759,7 +780,7 @@ function buildNotationTaskElement(
       ? config.lockDuration
       : (config.initialDuration ?? "quarter");
   const isCompact = Boolean(config.compact);
-  const showHints = Boolean(task.showHints);
+  const showHints = task.showHints ?? true;
 
   const root = document.createElement("div");
   root.className = "notation-component notation-builder not-content";
@@ -1251,7 +1272,8 @@ export function attachProgressDashboard(
     root.append(card);
   };
 
-  render();
+  const renderInitialCatalog = canRenderInitialCatalog(root, options);
+  if (renderInitialCatalog) render();
 
   const onProgressUpdated = (event: Event) => {
     if (!root.isConnected) {
@@ -1278,6 +1300,8 @@ export function attachProgressDashboard(
       if (liveDb) {
         currentDb = liveDb;
         render();
+      } else if (!renderInitialCatalog) {
+        showCatalogStatus(root, catalogLoadError);
       }
     });
   }
@@ -1499,7 +1523,8 @@ export function attachModuleRoadmap(
     root.append(list);
   };
 
-  render();
+  const renderInitialCatalog = canRenderInitialCatalog(root, options);
+  if (renderInitialCatalog) render();
 
   const onProgressUpdated = (event: Event) => {
     if (!root.isConnected) {
@@ -1526,6 +1551,8 @@ export function attachModuleRoadmap(
       if (liveDb) {
         currentDb = liveDb;
         render();
+      } else if (!renderInitialCatalog) {
+        showCatalogStatus(root, catalogLoadError);
       }
     });
   }
@@ -1597,6 +1624,29 @@ function computeRemainingModuleXp(
  * Bindet den interaktiven Aufgaben- & Prüfungs-Runner (`leicht`, `mittel`, `schwer`)
  * an ein Container-Element.
  */
+export async function attachStandaloneModuleQuizRunner(
+  root: HTMLElement,
+): Promise<void> {
+  if (root.dataset.quizRunnerAttached === "true") return;
+  root.dataset.quizRunnerAttached = "true";
+
+  const db = await fetchLiveModulesDatabase();
+  if (!db) {
+    showCatalogStatus(root, catalogLoadError);
+    return;
+  }
+  const mod = db.modules.find((item) => item.id === root.dataset.moduleId);
+  if (!mod) {
+    showCatalogStatus(root, "Das Lernmodul wurde nicht gefunden.");
+    return;
+  }
+
+  const rawMode = root.dataset.mode;
+  const mode =
+    rawMode === "leicht" || rawMode === "schwer" ? rawMode : "mittel";
+  attachModuleQuizRunner(root, { module: mod, db, mode });
+}
+
 export function attachModuleQuizRunner(
   container: HTMLElement,
   config: QuizRunnerMountConfig,
@@ -2764,7 +2814,8 @@ export function attachModuleStepper(
     renderCurrent();
   }
 
-  fullRender();
+  const renderInitialCatalog = canRenderInitialCatalog(root, options);
+  if (renderInitialCatalog) fullRender();
 
   const onProgressUpdated = (event: Event) => {
     if (!root.isConnected) {
@@ -2793,6 +2844,8 @@ export function attachModuleStepper(
       if (liveDb) {
         currentDb = liveDb;
         fullRender();
+      } else if (!renderInitialCatalog) {
+        showCatalogStatus(root, catalogLoadError);
       }
     });
   }

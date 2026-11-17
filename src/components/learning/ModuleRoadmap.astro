@@ -1,6 +1,4 @@
 ---
-import modulesData from "../../../data/modules.json";
-import type { ModulesDatabase } from "../../lib/module-schema.ts";
 import "../../styles/contribution-tags.css";
 import "../../styles/module-player.css";
 
@@ -13,7 +11,6 @@ const {
   id = "learning-module-roadmap",
   lessonBaseUrl = "/audio/theory/modul/",
 } = Astro.props;
-const initialDb = modulesData as unknown as ModulesDatabase;
 ---
 
 <section
@@ -22,7 +19,6 @@ const initialDb = modulesData as unknown as ModulesDatabase;
   aria-label="Lernpfad-Übersicht aller Module"
   data-learning-roadmap
   data-lesson-base-url={lessonBaseUrl}
-  data-initial-db={JSON.stringify(initialDb)}
 >
   <p class="learning-muted">Lernpfad wird geladen …</p>
 </section>

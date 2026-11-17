@@ -84,6 +84,24 @@ test('öffnet ein Modul zur Bearbeitung und kehrt zur Übersicht zurück', async
   await expect(page.getByRole('link', { name: 'Schall & Frequenz bearbeiten', exact: true })).toBeVisible();
 });
 
+test('lädt den Lernpfad samt Notationsaufgabe ohne eingebettete Moduldaten', async ({ page }) => {
+  const database = createModulesTestDatabase();
+  database.questions = database.questions.filter((question) => question.id === 'q-101-fast-2');
+  await page.route('**/api/modules', (route) => route.fulfill({ json: database }));
+
+  await page.goto('/audio/theory/lernpfad/');
+  const roadmap = page.locator('[data-learning-roadmap]');
+  await expect(roadmap.getByText('1. Schall & Frequenz', { exact: true })).toBeVisible();
+
+  await page.goto('/audio/theory/modul/?id=theory-101&mode=fastlane');
+  const stepper = page.locator('[data-learning-stepper]');
+  await expect(stepper.getByText('Setze C4 im Violinschlüssel.', { exact: true })).toBeVisible();
+  const builder = stepper.locator('[data-notation-builder]');
+  await expect(builder.locator('svg').first()).toBeVisible();
+  await builder.press('Space');
+  await expect(builder).toHaveAttribute('data-placed-count', '1');
+});
+
 test('richtet den Cursor der Notationsvorschau an den Noten aus', async ({ page }) => {
   await page.goto('/projektierung/modul-builder/');
   await page.getByRole('tab', { name: 'Quizfragen' }).click();

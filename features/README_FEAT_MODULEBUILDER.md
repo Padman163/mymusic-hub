@@ -157,7 +157,7 @@ Ein neuer Katalog enthält keine Module oder Fragen. Bis eigene Quiz-Einstellung
 ### 2. Das XP-Dashboard (`src/components/learning/ProgressDashboard.astro`)
 - **Wozu es dient:** Zeigt dem Lernenden auf einen Blick das aktuelle **Level**, die **gesammelten Gesamt-XP**, den Fortschrittsbalken bis zum nächsten Level, die Anzahl **abgeschlossener Module** sowie kompakte Badges für XP nach Lernbereich (`Theorie`, `Instrument` …) und Themen (`Notensystem`, `Gitarre` …).
 - **Live-Aktualisierung:** Sobald eine Aufgabe gelöst, Theorie abgeschlossen oder ein Quiz bestanden wird, aktualisiert sich das Dashboard sofort ohne Neuladen der Seite.
-- **Modulkatalog:** Dashboard, Roadmap und Modulansicht übernehmen beim Laden den aktuellen API-Katalog, auch wenn dieser leer ist. Die eingebetteten Startdaten dienen als Fallback, falls die API nicht erreichbar ist.
+- **Modulkatalog:** Dashboard, Roadmap, Modulansicht und Aufgaben-Runner laden den aktuellen Katalog zur Laufzeit über `/api/modules`. Es wird keine Katalogdatei in den Build eingebettet. Ein leerer Katalog ist gültig; ein Ladefehler wird separat angezeigt. Notationsaufgaben werden aus der API-Konfiguration mit dem gemeinsamen Notations-Builder gerendert.
 - **Geschützter Reset:** Über „Lernfortschritt zurücksetzen“ mit zweistufiger Sicherheitsabfrage lässt sich der eigene Test-Fortschritt jederzeit sauber auf Null stellen.
 
 ### 3. Die Modul-Roadmap (`src/components/learning/ModuleRoadmap.astro`)
