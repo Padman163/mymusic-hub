@@ -419,7 +419,7 @@
       },
       {
         "text": "Modul mit Metadaten, Tags, XP-Werten und Bestehensgrenzen anlegen und erneut laden",
-        "checked": false
+        "checked": true
       },
       {
         "text": "Theorie-Blöcke hinzufügen, entfernen, umsortieren und mit KaTeX-Inhalten speichern",
@@ -431,7 +431,7 @@
       },
       {
         "text": "Reine Theorie-Module und Module mit optionalem Praxisschritt korrekt abbilden",
-        "checked": false
+        "checked": true
       },
       {
         "text": "Ungültige Pflichtfelder und Bestehensgrenzen außerhalb von 0 bis 100 abweisen",
@@ -455,15 +455,15 @@
       },
       {
         "text": "Katalogansicht wechseln, nach Bereich und Lernspur filtern sowie sortieren",
-        "checked": false
+        "checked": true
       },
       {
         "text": "Katalog-Zusammenfassung für Blöcke, Aufgaben je Spur und gewichtete XP prüfen",
-        "checked": false
+        "checked": true
       },
       {
         "text": "Bearbeiten aus dem Katalog lädt den ausgewählten Eintrag im passenden Builder",
-        "checked": false
+        "checked": true
       },
       {
         "text": "Modullöschung bestätigen und sicherstellen, dass nur zugehörige Aufgaben mitgelöscht werden",
