@@ -198,7 +198,7 @@
 .theory-group-editor-actions {
   position: absolute;
   top: 0;
-  right: 0.25rem;
+  right: 0.85rem;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -310,7 +310,7 @@
 
 .theory-group-summary {
   min-height: 2rem;
-  padding-right: 7.5rem;
+  padding-right: 8rem;
   overflow-wrap: anywhere;
   cursor: pointer;
   font-weight: 700;
@@ -383,7 +383,7 @@
 
 .theory-block-details summary {
   min-height: 2rem;
-  padding-right: 8rem;
+  padding-right: 9rem;
   overflow-wrap: anywhere;
   cursor: pointer;
 }
@@ -446,7 +446,7 @@
 .theory-block-controls {
   position: absolute;
   top: 0;
-  right: 0.25rem;
+  right: 0.85rem;
   display: flex;
   align-items: center;
   gap: 0.35rem;

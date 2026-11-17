@@ -71,23 +71,17 @@ test('richtet Builder-Karten und Aktionen einheitlich aus', async ({ page }) => 
     const controlsStyle = getComputedStyle(element);
     const rowRect = row.getBoundingClientRect();
     const controlsRect = element.getBoundingClientRect();
-    const summaryRect = row.querySelector<HTMLElement>(
-      '.theory-block-details > summary',
-    )!.getBoundingClientRect();
     return {
-      topOffset: controlsRect.top - summaryRect.top,
-      topInset: Number.parseFloat(controlsStyle.top),
+      topOffset: controlsRect.top - rowRect.top,
       rightOffset: rowRect.right - controlsRect.right,
-      expectedRightOffset:
-        Number.parseFloat(rowStyle.borderRightWidth) +
-        Number.parseFloat(controlsStyle.right),
+      cardPaddingTop: Number.parseFloat(rowStyle.paddingTop),
+      topInset: Number.parseFloat(controlsStyle.top),
       rightInset: Number.parseFloat(controlsStyle.right),
     };
   });
-  expect(Math.abs(controlPlacement.topOffset)).toBeLessThan(1);
-  expect(Math.abs(controlPlacement.rightOffset - controlPlacement.expectedRightOffset)).toBeLessThan(1);
-  expect(controlPlacement.topInset).toBeLessThanOrEqual(8);
-  expect(controlPlacement.rightInset).toBeLessThanOrEqual(8);
+  expect(Math.abs(controlPlacement.topOffset - controlPlacement.rightOffset)).toBeLessThan(1);
+  expect(controlPlacement.topInset).toBe(0);
+  expect(controlPlacement.rightInset).toBe(controlPlacement.cardPaddingTop);
   await page.locator('.theory-block-row').nth(1).locator('.theory-block-details > summary').click();
   const collapsedBlockAlignment = await controls.evaluate((element) => {
     const summary = element.parentElement!.querySelector<HTMLElement>(
@@ -178,19 +172,16 @@ test('richtet Builder-Karten und Aktionen einheitlich aus', async ({ page }) => 
     const actionsStyle = getComputedStyle(element);
     const rowRect = row.getBoundingClientRect();
     const actionsRect = element.getBoundingClientRect();
-    const summaryRect = row.querySelector<HTMLElement>('.theory-group-summary')!.getBoundingClientRect();
     return {
-      topOffset: actionsRect.top - summaryRect.top,
+      topOffset: actionsRect.top - rowRect.top,
       rightOffset: rowRect.right - actionsRect.right,
-      expectedRightOffset:
-        Number.parseFloat(rowStyle.borderRightWidth) +
-        Number.parseFloat(actionsStyle.right),
+      cardPaddingTop: Number.parseFloat(rowStyle.paddingTop),
       topInset: Number.parseFloat(actionsStyle.top),
       rightInset: Number.parseFloat(actionsStyle.right),
     };
   });
-  expect(Math.abs(groupActionPlacement.topOffset)).toBeLessThan(1);
-  expect(Math.abs(groupActionPlacement.rightOffset - groupActionPlacement.expectedRightOffset)).toBeLessThan(1);
+  expect(Math.abs(groupActionPlacement.topOffset - groupActionPlacement.rightOffset)).toBeLessThan(1);
+  expect(groupActionPlacement.rightInset).toBe(groupActionPlacement.cardPaddingTop);
   expect(groupActionPlacement.topInset).toBe(controlPlacement.topInset);
   expect(groupActionPlacement.rightInset).toBe(controlPlacement.rightInset);
   const groupControlBox = await nestedControls.boundingBox();
