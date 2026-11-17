@@ -30,12 +30,13 @@ Um maximale Stabilität bei minimaler Testlaufzeit zu gewährleisten, gliedert s
 ### Stufe 0: Statische Prüfungen & Fundament
 
 - **Werkzeuge:** Biome, `@astrojs/check`, TypeScript (`tsc`).
-- **Zweck:** Erkennt Syntaxfehler, veraltete Imports, Typos im Frontmatter und Typverletzungen in Sekundenbruchteilen ohne Code auszuführen.
+- **Zweck:** Prüft Formatierung, Lint-Regeln und Typen sowie beispielsweise unauflösbare Imports und Schemafehler in Inhaltsdaten. Die Prüfungen ersetzen keine Laufzeittests und erkennen weder beliebige Tippfehler noch fachlich falsche Inhalte. Insbesondere Astro- und TypeScript-Prüfungen benötigen mehr als Sekundenbruchteile.
+- **Umfang:** Biome prüft gemäß `biome.json` unterstützte Dateien unter `src/` und berücksichtigt Git-Ignore-Regeln; einzelne Regeln sind für Astro-Dateien deaktiviert. Astro und TypeScript prüfen anhand der Projektkonfiguration. Ein erfolgreicher Lauf garantiert daher nicht, dass jede Datei vollständig geprüft wurde.
 - **Befehle:**
 
 ```bash
 npm run validate
-# oder separat als execute:
+# oder einzeln:
 npx @biomejs/biome check .
 npx astro check
 npx tsc --noEmit
@@ -44,11 +45,11 @@ npx tsc --noEmit
   * **Vor jedem Commit:** Als Standard-Prüfung vor dem Einchecken (ideal als Git Pre-Commit Hook), damit fehlerhafter Code gar nicht erst im Repository landet.
   * **Nach Refactorings & Umbenennungen:** Sobald Dateien verschoben, Markdown/MDX-Frontmatter-Felder angepasst oder TypeScript-Interfaces modifiziert wurden.
   * **Nach Dependency-Updates:** Um inkompatible Typdefinitionen oder veraltete Imports unmittelbar aufzudecken.
-  * **Als erstes CI-Gate:** Der schnellste Filter in GitHub Actions, der fehlerhafte Builds nach wenigen Sekunden abbricht, bevor zeit- und ressourcenintensive Jobs starten.
+  * **Als erstes CI-Gate (Empfehlung):** Vor Build und Laufzeittests ausführen, um statisch erkennbare Fehler früh abzufangen. Ein GitHub-Actions-Workflow ist derzeit nicht im Repository hinterlegt.
 
 ```bash
 npm run fix
-# oder separat als execute:
+# oder einzeln:
 npx @biomejs/biome check --write .
 ```
 
@@ -57,18 +58,22 @@ npx @biomejs/biome check --write .
 - **Werkzeuge:** Vitest.
 - **Konfiguration:** `vitest.config.ts` erfasst `.test`- und `.spec`-Dateien in TypeScript, JavaScript und MJS unter `tests/`, ausgenommen `tests/e2e/`. Standardumgebung ist `happy-dom`; einzelne Dateien können Node wählen.
 - **Testdateien:** `tests/music-notation.test.mjs`, `tests/module-builder.test.mjs`, `tests/learning-progress.test.mjs`.
-- **Gegenstand:** Mathematische Berechnungen der Notationsgeometrie, Takteinteilung, Notenwert-Splitting, Frequenzformeln und Transponierungslogik sowie Tag-/XP-Berechnungen, Modul-/Aufgaben-Validierung und die zustandsfreie XP-/Lernfortschritts-Engine (`learning-progress.ts`).
+- **Gegenstand:** Notationsgeometrie, rhythmische Positionierung, Systemumbrüche, SVG-Ausgabe und Notations-Builder-Zuordnungen sowie Tag-/XP-Berechnungen, Modul-/Aufgaben-Validierung und Store-Operationen. Die Lernfortschrittstests prüfen Zustandsübergänge, Freischaltungen, XP-Vergabe und Speicherung/Wiederherstellung. Eine Testabdeckung für Frequenzformeln oder allgemeine Transponierungslogik wird damit nicht zugesichert.
+- **Abgrenzung:** `tests/module-builder.test.mjs` enthält zusätzlich Serverless-API-Tests (Stufe 3); `tests/learning-progress.test.mjs` prüft neben Logik auch Browser-Persistenz. Die Dateigrenzen entsprechen somit nicht strikt den Stufen der Testpyramide.
 * **Befehle:**
   ```bash
+  # alle Vitest-Tests, inklusive Komponenten, Integration und Dokumentation:
   npm test
-  # gezielt für Notationsmathematik:
+  # ausschließlich tests/music-notation.test.mjs:
   npm run test:unit
-  # während des Schreibens:
+  # alle drei oben genannten Testdateien, inklusive ihrer gemischten Testarten:
+  npx vitest run tests/music-notation.test.mjs tests/module-builder.test.mjs tests/learning-progress.test.mjs
+  # alle Vitest-Tests im Watch-Modus:
   npm run test:watch
   ```
 * **Wann nutzen:**
-  * **Während der aktiven Feature-Entwicklung (TDD / Watch-Modus):** Beim Implementieren mathematischer Algorithmen (z. B. Tab-Positionen, Tonleiter-Berechnungen, Frequenz-Transformationen) für sofortiges Feedback nach jedem Speichern.
-  * **Bei Performance-Optimierungen:** Wenn Rechenoperationen refaktoriert werden und sichergestellt werden muss, dass Randfälle (Taktüberläufe, Pausenwerte) mathematisch exakt bleiben.
+  * **Während der aktiven Feature-Entwicklung (TDD / Watch-Modus):** Beim Implementieren von Notationslayout, XP-Berechnungen oder Freischaltregeln für schnelles Feedback nach jedem Speichern.
+  * **Bei Performance-Optimierungen:** Wenn Rechenoperationen refaktoriert werden und sichergestellt werden muss, dass etwa Notenabstände, Pausenpositionen und XP-Ergebnisse korrekt bleiben. Die Tests messen dabei nicht automatisch die Laufzeit.
   * **Beim Debuggen:** Wenn ein Notationsfehler gemeldet wird; den Fall zunächst als fehlschlagenden Unit-Test isolieren (`red`), dann den Bug beheben (`green`).
 
 ### Stufe 2: Komponenten- & DOM-Verhalten

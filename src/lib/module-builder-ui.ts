@@ -370,7 +370,6 @@ export interface TheoryBlockEditorController {
   hasDraftExercises(): boolean;
   isDraftExercise(id: string): boolean;
   draftExercises(): ModuleQuestion[];
-  setCreateExerciseHandler(handler: () => void): void;
   contentOrder(): ModuleContentReference[];
   clear(): void;
   setDisabled(disabled: boolean): void;
@@ -1041,11 +1040,12 @@ export function createTheoryBlockEditor(
         ".theory-block-markdown",
       );
       const xp = row.querySelector<HTMLInputElement>(".theory-block-xp");
+      const details = row.querySelector<HTMLDetailsElement>("details");
       const picker = blockTags.get(row);
-      if (!title || !markdown || !xp || !picker)
+      if (!title || !markdown || !xp || !details || !picker)
         throw new Error("Die Felder einer Praxisaufgabe sind unvollständig.");
       if (!title.value.trim()) {
-        row.querySelector<HTMLDetailsElement>("details")!.open = true;
+        details.open = true;
         title.setCustomValidity(
           "Bitte gib einen Titel für die Praxisaufgabe ein.",
         );
@@ -1057,7 +1057,7 @@ export function createTheoryBlockEditor(
         ? Number(xp.value)
         : BASE_XP_DEFAULTS.practice;
       if (!Number.isFinite(baseXp) || baseXp < 0) {
-        row.querySelector<HTMLDetailsElement>("details")!.open = true;
+        details.open = true;
         xp.setCustomValidity("Bitte gib gültige Basis-XP ab 0 ein.");
         xp.reportValidity();
         xp.setCustomValidity("");
