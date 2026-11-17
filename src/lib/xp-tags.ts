@@ -36,9 +36,10 @@ export const TAG_DEFINITIONS: Record<string, TagDefinition> = {
 
 export const BASE_XP_DEFAULTS = {
   theoryBlock: 30,
-  exercise: 10,
-  quizEasy: 15,
-  fastlane: 25,
+  practice: 20,
+  leicht: 10,
+  mittel: 15,
+  schwer: 25,
 } as const;
 
 export type MultiTagStrategy = "highest" | "average";

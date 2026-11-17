@@ -11,10 +11,11 @@ import "../../styles/contribution-checklist.css";
 import "../../styles/notation.css";
 import "../../styles/module-builder.css";
 
+const poolLanes = ["mittel", "schwer"] as const;
 const laneLabels: Record<(typeof TARGET_LANES)[number], string> = {
-  exercise: "2. Aufgaben – Übung",
-  quiz_easy: "Abschluss-Quiz Einfach",
-  fastlane: "Fastlane-Test Schwer",
+  leicht: "Leicht",
+  mittel: "Mittel (Quiz)",
+  schwer: "Schwer (Fastlane)",
 };
 
 const questionTypeLabels: Record<(typeof QUESTION_TYPES)[number], string> = {
@@ -28,16 +29,17 @@ const questionTypeLabels: Record<(typeof QUESTION_TYPES)[number], string> = {
 <form id="exercise-builder-form" class="issue-tracker-form module-builder-form">
   <div class="module-field-grid">
     <div class="field">
-      <label for="exercise-module-id">Zugehöriges Modul</label>
-      <select id="exercise-module-id" name="moduleId" required>
-        <option value="">Module werden geladen …</option>
-      </select>
+      <fieldset id="exercise-module-ids" class="exercise-module-list">
+        <legend>Zugehörige Module (optional)</legend>
+        <p class="field-hint">Ohne Auswahl bleibt die Quizfrage im wiederverwendbaren Pool.</p>
+        <div class="exercise-module-options">Module werden geladen …</div>
+      </fieldset>
     </div>
 
     <div class="field">
       <label for="exercise-target-lane">Ziel-Lernspur</label>
       <select id="exercise-target-lane" name="targetLane">
-        {TARGET_LANES.map((lane) => (
+        {poolLanes.map((lane) => (
           <option value={lane}>{laneLabels[lane]}</option>
         ))}
       </select>
@@ -210,7 +212,7 @@ const questionTypeLabels: Record<(typeof QUESTION_TYPES)[number], string> = {
         type="number"
         min="0"
         step="1"
-        value={String(BASE_XP_DEFAULTS.exercise)}
+        value={String(BASE_XP_DEFAULTS.mittel)}
       />
     </div>
   </div>
@@ -221,11 +223,11 @@ const questionTypeLabels: Record<(typeof QUESTION_TYPES)[number], string> = {
     <div>
       <strong>Berechnete Aufgaben-XP:</strong>
       <div id="exercise-calculated-xp-detail" class="field-hint">
-        Basis {BASE_XP_DEFAULTS.exercise} XP · Faktor 1x
+        Basis {BASE_XP_DEFAULTS.mittel} XP · Faktor 1x
       </div>
     </div>
     <span id="exercise-calculated-xp" class="exercise-xp-value">
-      {BASE_XP_DEFAULTS.exercise} XP
+      {BASE_XP_DEFAULTS.mittel} XP
     </span>
   </div>
 

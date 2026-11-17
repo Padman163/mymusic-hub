@@ -20,7 +20,7 @@ interface Props {
 const {
   id = "module-quiz-runner",
   moduleId = "",
-  mode = "quiz_easy",
+  mode = "mittel",
   templatesOnly = false,
 } = Astro.props;
 
@@ -29,7 +29,7 @@ const notationQuestions: ModuleQuestion[] = initialDb.questions.filter(
   (q) =>
     q.questionType === "interactive_notation" &&
     q.notationTask !== undefined &&
-    (!moduleId || q.moduleId === moduleId),
+    (!moduleId || q.moduleIds.includes(moduleId)),
 );
 ---
 
@@ -99,11 +99,11 @@ const notationQuestions: ModuleQuestion[] = initialDb.questions.filter(
 
           const rawMode = root.dataset.mode;
           const mode: TargetLane =
-            rawMode === "exercise" ||
-            rawMode === "quiz_easy" ||
-            rawMode === "fastlane"
+            rawMode === "leicht" ||
+            rawMode === "mittel" ||
+            rawMode === "schwer"
               ? rawMode
-              : "quiz_easy";
+              : "mittel";
 
           attachModuleQuizRunner(root, {
             module: mod,

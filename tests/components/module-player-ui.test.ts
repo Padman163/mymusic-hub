@@ -85,7 +85,7 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     attachModuleQuizRunner(firstRunner, {
       module: mod,
       db,
-      mode: "exercise",
+      mode: "leicht",
       exerciseId: "q-101-ex-1",
     });
 
@@ -105,7 +105,7 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     attachModuleQuizRunner(restoredRunner, {
       module: mod,
       db,
-      mode: "exercise",
+      mode: "leicht",
       exerciseId: "q-101-ex-1",
     });
     const restoredInput = restoredRunner.querySelector<HTMLInputElement>(
@@ -126,7 +126,7 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     attachModuleQuizRunner(resetRunner, {
       module: mod,
       db,
-      mode: "exercise",
+      mode: "leicht",
       exerciseId: "q-101-ex-1",
     });
     expect(
@@ -158,7 +158,7 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
 
     const firstRunner = document.createElement("div");
     document.body.append(firstRunner);
-    attachModuleQuizRunner(firstRunner, { module: mod, db, mode: "exercise" });
+    attachModuleQuizRunner(firstRunner, { module: mod, db, mode: "leicht" });
     const initialCards =
       firstRunner.querySelectorAll<HTMLElement>("[data-question-card]");
     const initialChoices = initialCards[0].querySelectorAll<HTMLInputElement>(
@@ -182,7 +182,7 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
 
     const root = document.createElement("div");
     document.body.append(root);
-    attachModuleQuizRunner(root, { module: mod, db, mode: "exercise" });
+    attachModuleQuizRunner(root, { module: mod, db, mode: "leicht" });
 
     const cards = root.querySelectorAll<HTMLElement>("[data-question-card]");
     const choiceInputs = cards[0].querySelectorAll<HTMLInputElement>(
@@ -224,7 +224,7 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     notation.explanation = "";
     const root = document.createElement("div");
     document.body.append(root);
-    attachModuleQuizRunner(root, { module: mod, db, mode: "exercise" });
+    attachModuleQuizRunner(root, { module: mod, db, mode: "leicht" });
     const cards = root.querySelectorAll<HTMLElement>("[data-question-card]");
     const option = cards[0].querySelector<HTMLInputElement>('input[value="C"]');
     const choiceCheck = cards[0].querySelector<HTMLButtonElement>('[data-action="check-exercise"]');
@@ -247,7 +247,7 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     const mod = db.modules[0];
     const root = document.createElement("div");
     document.body.append(root);
-    attachModuleQuizRunner(root, { module: mod, db, mode: "exercise", exerciseId: "q-101-ex-1" });
+    attachModuleQuizRunner(root, { module: mod, db, mode: "leicht", exerciseId: "q-101-ex-1" });
     const input = root.querySelector<HTMLInputElement>(".learning-numeric-input");
     const check = root.querySelector<HTMLButtonElement>('[data-action="check-exercise"]');
     if (!input || !check) throw new Error("Übung fehlt");
@@ -463,7 +463,7 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
   it("führt in gemischter Reihenfolge durch Übungen und Gruppen und setzt nach dem Neuladen fort", () => {
     const db = structuredClone(seedDb);
     db.questions = db.questions.filter((q) =>
-      q.moduleId !== "theory-101" || q.targetLane !== "exercise" ||
+      q.moduleIds[0] !== "theory-101" || q.targetLane !== "leicht" ||
       ["q-101-ex-1", "q-101-ex-2"].includes(q.id),
     );
     const mod = db.modules[0];
@@ -576,7 +576,7 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     expect(stepperEl.querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]')?.disabled).toBe(true);
     stepperEl.querySelector<HTMLButtonElement>('[data-action="complete-theory-block"]')?.click();
     stepperEl.querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]')?.click();
-    expect(stepperEl.querySelector('[data-step="quiz_easy"]')).not.toBeNull();
+    expect(stepperEl.querySelector('[data-step="quiz"]')).not.toBeNull();
 
     const roadmapCheck = document.createElement("section");
     document.body.append(roadmapCheck);
@@ -588,7 +588,7 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
       ".learning-start-quiz",
     );
     expect(quizLink?.tagName).toBe("A");
-    expect(quizLink?.textContent).toBe("Abschluss-Quiz starten");
+    expect(quizLink?.textContent).toBe("Quiz starten");
     expect(
       mod1Card?.querySelector('[data-roadmap-stat="quiz"]')?.textContent,
     ).toBe("Quiz 0/1");
@@ -598,7 +598,7 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     const db = structuredClone(seedDb);
     const mod = db.modules[0];
     db.questions = db.questions.filter(
-      (q) => q.moduleId !== mod.id || q.targetLane !== "exercise" || q.id === "q-101-ex-1",
+      (q) => q.moduleIds[0] !== mod.id || q.targetLane !== "leicht" || q.id === "q-101-ex-1",
     );
     mod.contentOrder = [
       { kind: "theory", id: mod.theoryBlocks[1].id },
@@ -619,11 +619,13 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
   it("überspringt leere Theorie und Übungen und lässt den Praxisteil vor dem Quiz abschließen", () => {
     const db = structuredClone(seedDb);
     const mod = db.modules[0];
-    mod.hasPractice = true;
+    mod.practiceBlocks = [
+      { id: "pb-1", title: "Am Instrument üben", markdownContent: "Spiele den Ton A." },
+    ];
     mod.theoryBlocks = [];
     mod.contentOrder = [];
     db.questions = db.questions.filter(
-      (q) => q.moduleId !== mod.id || q.targetLane !== "exercise",
+      (q) => q.moduleIds[0] !== mod.id || q.targetLane !== "leicht",
     );
     const root = document.createElement("section");
     root.dataset.moduleId = mod.id;
@@ -635,13 +637,13 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     root.querySelector<HTMLButtonElement>('[data-action="complete-practice"]')?.click();
     expect(root.querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]')?.disabled).toBe(false);
     root.querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]')?.click();
-    expect(root.querySelector('[data-step="quiz_easy"] .learning-quiz-card')).not.toBeNull();
+    expect(root.querySelector('[data-step="quiz"] .learning-quiz-card')).not.toBeNull();
   });
 
   it("aktualisiert Dashboard und Roadmap nach bestandenem Fastlane-Quiz inklusive Freischaltung von Modul 2", () => {
     const db = structuredClone(seedDb);
     db.questions = db.questions.filter((q) =>
-      q.moduleId !== "theory-101" || q.targetLane !== "exercise" ||
+      q.moduleIds[0] !== "theory-101" || q.targetLane !== "leicht" ||
       ["q-101-ex-1", "q-101-ex-2"].includes(q.id),
     );
     const dashboardEl = document.createElement("section");

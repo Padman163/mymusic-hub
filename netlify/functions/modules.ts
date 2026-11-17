@@ -171,7 +171,7 @@ function isQuestionPayload(body: Record<string, unknown>): boolean {
 	if (body.entity === 'question') return true;
 	if (body.entity === 'module') return false;
 	return (
-		isRecord(body.question) || 'moduleId' in body || 'questionType' in body
+		isRecord(body.question) || 'moduleIds' in body || 'questionType' in body
 	);
 }
 
@@ -275,17 +275,23 @@ async function handleWriteRequest(
 		}
 
 		if (
-			typeof questionPayload.moduleId === 'string' &&
-			questionPayload.moduleId.trim().length > 0
+			!Array.isArray(questionPayload.moduleIds) ||
+			!questionPayload.moduleIds.every(
+				(id) => typeof id === 'string' && id.trim().length > 0,
+			)
 		) {
-			const preflight = validateQuestionInput(questionPayload, [
-				{ id: questionPayload.moduleId.trim() } as LearningModule,
-			]);
-			if (!preflight.valid) {
-				return jsonResponse(400, { error: preflight.errors.join(' ') });
-			}
-		} else {
-			return jsonResponse(400, { error: 'moduleId ist erforderlich.' });
+			return jsonResponse(400, {
+				error: 'moduleIds muss ein Array aus nicht-leeren Strings sein.',
+			});
+		}
+		const preflight = validateQuestionInput(
+			questionPayload,
+			(questionPayload.moduleIds as string[]).map(
+				(id) => ({ id: id.trim() }) as LearningModule,
+			),
+		);
+		if (!preflight.valid) {
+			return jsonResponse(400, { error: preflight.errors.join(' ') });
 		}
 
 		const nextDb = await changeModulesDatabase(

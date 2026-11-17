@@ -27,9 +27,10 @@ describe("xp-tags Konfiguration & Berechnung", () => {
   it("liefert zentrale Basis-EXP und Tag-Liste", () => {
     expect(BASE_XP_DEFAULTS).toEqual({
       theoryBlock: 30,
-      exercise: 10,
-      quizEasy: 15,
-      fastlane: 25,
+      practice: 20,
+      leicht: 10,
+      mittel: 15,
+      schwer: 25,
     });
     expect(getAvailableTags()).toEqual(
       expect.arrayContaining([
@@ -180,7 +181,6 @@ describe("module-store Validierung & Store-Operationen", () => {
       level: 100,
       dStage: "D1",
       tags: ["Allgemein", "Notensystem"],
-      hasPractice: false,
       theoryBaseXp: 30,
       quizEasyMinScore: DEFAULT_QUIZ_EASY_MIN_SCORE,
       fastlaneMinScore: DEFAULT_FASTLANE_MIN_SCORE,
@@ -219,14 +219,13 @@ describe("module-store Validierung & Store-Operationen", () => {
     expect(invalid.errors.length).toBeGreaterThanOrEqual(5);
   });
 
-  it("löscht ein Modul kaskadierend mitsamt seinen Fragen, behält fremde Module aber bei", () => {
+  it("löscht ein Modul samt Lernpfad-Aufgaben, Quizfragen bleiben ohne Zuordnung im Pool", () => {
     let db = createEmptyModulesDatabase();
     db = upsertModule(db, {
       id: "mod-1",
       order: 1,
       title: "Notenwerte",
       scope: "theory",
-      hasPractice: false,
     });
     db = upsertModule(db, {
       id: "mod-2",
@@ -237,8 +236,8 @@ describe("module-store Validierung & Store-Operationen", () => {
 
     db = upsertQuestion(db, {
       id: "q-1",
-      moduleId: "mod-1",
-      targetLane: "exercise",
+      moduleIds: ["mod-1"],
+      targetLane: "leicht",
       questionType: "single_choice",
       prompt: "Wie viele Schläge hat eine Ganze Note im 4/4-Takt?",
       options: ["1", "2", "4"],
@@ -246,19 +245,31 @@ describe("module-store Validierung & Store-Operationen", () => {
     });
     db = upsertQuestion(db, {
       id: "q-2",
-      moduleId: "mod-2",
-      targetLane: "quiz_easy",
+      moduleIds: ["mod-2"],
+      targetLane: "mittel",
       questionType: "numeric_input",
       prompt: "Wie viele Töne hat ein Dreiklang?",
       correctAnswers: ["3"],
     });
 
-    expect(db.modules.find((m) => m.id === "mod-1")?.hasPractice).toBe(false);
-    expect(db.modules.find((m) => m.id === "mod-2")?.hasPractice).toBe(true);
+    db = upsertQuestion(db, {
+      id: "q-3",
+      moduleIds: ["mod-1", "mod-2"],
+      targetLane: "schwer",
+      questionType: "numeric_input",
+      prompt: "Wie viele Halbtöne hat eine Oktave?",
+      correctAnswers: ["12"],
+    });
 
     const afterDelete = deleteModule(db, "mod-1");
     expect(afterDelete.modules.map((m) => m.id)).toEqual(["mod-2"]);
-    expect(afterDelete.questions.map((q) => q.id)).toEqual(["q-2"]);
+    expect(afterDelete.questions.map((q) => q.id)).toEqual(["q-2", "q-3"]);
+    expect(afterDelete.questions.find((q) => q.id === "q-3")?.moduleIds).toEqual([
+      "mod-2",
+    ]);
+    expect(
+      deleteModule(afterDelete, "mod-2").questions.map((q) => q.moduleIds),
+    ).toEqual([[], []]);
   });
 
   it("validiert Standardfragen und interaktive NotationBuilder-Aufgaben", () => {
@@ -268,13 +279,12 @@ describe("module-store Validierung & Store-Operationen", () => {
       order: 1,
       title: "Violinschlüssel",
       scope: "theory",
-      hasPractice: false,
     });
 
     expect(
       validateQuestionInput(
         {
-          moduleId: "unbekannt",
+          moduleIds: ["unbekannt"],
           questionType: "single_choice",
           prompt: "Test?",
           correctAnswers: ["Ja"],
@@ -286,7 +296,7 @@ describe("module-store Validierung & Store-Operationen", () => {
     expect(
       validateQuestionInput(
         {
-          moduleId: "mod-notation",
+          moduleIds: ["mod-notation"],
           questionType: "single_choice",
           prompt: "Welche Linie markiert der Violinschlüssel?",
           options: ["1. Linie", "2. Linie"],
@@ -299,7 +309,7 @@ describe("module-store Validierung & Store-Operationen", () => {
     expect(
       validateQuestionInput(
         {
-          moduleId: "mod-notation",
+          moduleIds: ["mod-notation"],
           questionType: "numeric_input",
           prompt: "Wie viele Zwischenräume hat das Notensystem?",
           correctAnswers: ["4"],
@@ -311,7 +321,7 @@ describe("module-store Validierung & Store-Operationen", () => {
     expect(
       validateQuestionInput(
         {
-          moduleId: "mod-notation",
+          moduleIds: ["mod-notation"],
           questionType: "numeric_input",
           prompt: "Ohne Lösung",
           correctAnswers: [],
@@ -322,8 +332,8 @@ describe("module-store Validierung & Store-Operationen", () => {
 
     const validNotationTask = validateQuestionInput(
       {
-        moduleId: "mod-notation",
-        targetLane: "fastlane",
+        moduleIds: ["mod-notation"],
+        targetLane: "schwer",
         questionType: "interactive_notation",
         prompt: "Setze das eingestrichene G (G4).",
         notationTask: {
@@ -342,8 +352,8 @@ describe("module-store Validierung & Store-Operationen", () => {
 
     const validDurationOnlyTask = validateQuestionInput(
       {
-        moduleId: "mod-notation",
-        targetLane: "exercise",
+        moduleIds: ["mod-notation"],
+        targetLane: "leicht",
         questionType: "interactive_notation",
         prompt: "Wähle eine halbe Note.",
         notationTask: {
@@ -358,7 +368,7 @@ describe("module-store Validierung & Store-Operationen", () => {
 
     const missingNotationTask = validateQuestionInput(
       {
-        moduleId: "mod-notation",
+        moduleIds: ["mod-notation"],
         questionType: "interactive_notation",
         prompt: "Fehlende Config",
       },
@@ -368,7 +378,7 @@ describe("module-store Validierung & Store-Operationen", () => {
 
     const emptyExpectedNotation = validateQuestionInput(
       {
-        moduleId: "mod-notation",
+        moduleIds: ["mod-notation"],
         questionType: "interactive_notation",
         prompt: "Ohne Zielwerte",
         notationTask: {
@@ -382,6 +392,67 @@ describe("module-store Validierung & Store-Operationen", () => {
     expect(emptyExpectedNotation.valid).toBe(false);
   });
 
+  it("erlaubt Quizfragen ohne oder mit mehreren Modulen, Lernpfad-Aufgaben aber nur mit genau einem", () => {
+    let db = createEmptyModulesDatabase();
+    db = upsertModule(db, { id: "mod-a", title: "A" });
+    db = upsertModule(db, { id: "mod-b", title: "B" });
+    const base = {
+      questionType: "single_choice",
+      prompt: "Frage?",
+      correctAnswers: ["Ja"],
+    };
+
+    expect(
+      validateQuestionInput(
+        { ...base, targetLane: "mittel", moduleIds: [] },
+        db,
+      ).valid,
+    ).toBe(true);
+    expect(
+      validateQuestionInput(
+        { ...base, targetLane: "schwer", moduleIds: ["mod-a", "mod-b"] },
+        db,
+      ).valid,
+    ).toBe(true);
+    expect(
+      validateQuestionInput(
+        { ...base, targetLane: "leicht", moduleIds: ["mod-a", "mod-b"] },
+        db,
+      ).valid,
+    ).toBe(false);
+    expect(
+      validateQuestionInput(
+        { ...base, targetLane: "leicht", moduleIds: [] },
+        db,
+      ).valid,
+    ).toBe(false);
+  });
+
+  it("speichert Praxisaufgaben im Modul und bewahrt sie in der Blockreihenfolge", () => {
+    const db = upsertModule(createEmptyModulesDatabase(), {
+      id: "mod-practice",
+      title: "Praxis",
+      practiceBlocks: [
+        { id: "pb-1", title: "Üben", markdownContent: "Spiele C-Dur.", tags: ["Gitarre"] },
+      ],
+      contentOrder: [{ kind: "practice", id: "pb-1" }],
+    });
+    const mod = db.modules[0];
+    expect(mod.practiceBlocks).toHaveLength(1);
+    expect(mod.contentOrder).toEqual([{ kind: "practice", id: "pb-1" }]);
+    expect(getModuleSummary(db, "mod-practice")).toMatchObject({
+      practiceBlockCount: 1,
+      practiceXp: 24,
+    });
+    expect(
+      validateModuleInput({
+        id: "x",
+        title: "x",
+        practiceBlocks: [{ id: "", title: "", markdownContent: "" }],
+      }).valid,
+    ).toBe(false);
+  });
+
   it("wertet Theorie-Blöcke, Lanes und gewichtete Gesamt-XP in getModuleSummary korrekt aus", () => {
     let db = createEmptyModulesDatabase();
     db = upsertModule(db, {
@@ -389,7 +460,6 @@ describe("module-store Validierung & Store-Operationen", () => {
       order: 1,
       title: "Noten & Rhythmus",
       scope: "theory",
-      hasPractice: false,
       theoryBlocks: [
         {
           id: "tb-1",
@@ -408,8 +478,8 @@ describe("module-store Validierung & Store-Operationen", () => {
 
     db = upsertQuestion(db, {
       id: "q-ex",
-      moduleId: "mod-summary",
-      targetLane: "exercise",
+      moduleIds: ["mod-summary"],
+      targetLane: "leicht",
       questionType: "single_choice",
       prompt: "Übung 1",
       correctAnswers: ["A"],
@@ -418,8 +488,8 @@ describe("module-store Validierung & Store-Operationen", () => {
 
     db = upsertQuestion(db, {
       id: "q-quiz",
-      moduleId: "mod-summary",
-      targetLane: "quiz_easy",
+      moduleIds: ["mod-summary"],
+      targetLane: "mittel",
       questionType: "numeric_input",
       prompt: "Quiz 1",
       correctAnswers: ["4"],
@@ -428,8 +498,8 @@ describe("module-store Validierung & Store-Operationen", () => {
 
     db = upsertQuestion(db, {
       id: "q-fast",
-      moduleId: "mod-summary",
-      targetLane: "fastlane",
+      moduleIds: ["mod-summary"],
+      targetLane: "schwer",
       questionType: "interactive_notation",
       prompt: "Fastlane 1",
       notationTask: {
@@ -444,16 +514,18 @@ describe("module-store Validierung & Store-Operationen", () => {
       moduleId: "mod-summary",
       theoryBlockCount: 2,
       theoryXp: 60,
+      practiceBlockCount: 0,
+      practiceXp: 0,
       questionCounts: {
-        exercise: 1,
-        quiz_easy: 1,
-        fastlane: 1,
+        leicht: 1,
+        mittel: 1,
+        schwer: 1,
         total: 3,
       },
       laneXp: {
-        exercise: 15,
-        quiz_easy: 18,
-        fastlane: 38,
+        leicht: 15,
+        mittel: 18,
+        schwer: 38,
       },
       questionsXp: 71,
       totalXp: 131,
@@ -571,7 +643,6 @@ describe("Modules Serverless API (/api/modules)", () => {
           id: "mod-api-1",
           title: "API Modul",
           scope: "theory",
-          hasPractice: false,
         }),
       }),
     );
@@ -587,7 +658,7 @@ describe("Modules Serverless API (/api/modules)", () => {
         body: JSON.stringify({
           entity: "question",
           id: "q-api-1",
-          moduleId: "mod-api-1",
+          moduleIds: ["mod-api-1"],
           questionType: "interactive_notation",
           prompt: "Setze C4",
           notationTask: {

@@ -5,6 +5,7 @@ import {
   isDStage,
   isModuleScope,
   isQuestionType,
+  isQuestionInModule,
   isQuizSettings,
   isTargetLane,
   type LearningModule,
@@ -16,8 +17,10 @@ import {
   type NotationBuilderTaskConfig,
   type NotationTaskDuration,
   type QuestionType,
+  type PracticeBlock,
   type TargetLane,
   type TheoryBlock,
+  normalizeLegacyDatabase,
 } from "./module-schema.ts";
 import {
   createEmptyModulesDatabase,
@@ -60,9 +63,9 @@ const SCOPE_LABELS: Record<ModuleScope, string> = {
 };
 
 const LANE_LABELS: Record<TargetLane, string> = {
-  exercise: "Übung",
-  quiz_easy: "Quiz Einfach",
-  fastlane: "Fastlane-Test",
+  leicht: "Leicht",
+  mittel: "Mittel",
+  schwer: "Schwer",
 };
 
 const QUESTION_TYPE_LABELS: Record<QuestionType, string> = {
@@ -96,13 +99,13 @@ function parseModulesResponse(data: unknown): ModulesDatabase {
   ) {
     throw new Error("Die Moduldaten haben ein ungültiges Format.");
   }
-  return {
+  return normalizeLegacyDatabase({
     modules: data.modules as LearningModule[],
     questions: data.questions as ModuleQuestion[],
     ...(data.quizSettings !== undefined
       ? { quizSettings: data.quizSettings }
       : {}),
-  };
+  });
 }
 
 interface ParsedApiAttempt {
@@ -352,13 +355,22 @@ export function createXpTagPicker(options: {
 export interface TheoryBlockEditorController {
   element: HTMLFieldSetElement;
   addBlock(initial?: Partial<TheoryBlock>): void;
+  addPracticeBlock(initial?: Partial<PracticeBlock>): void;
   items(): TheoryBlock[] | null;
+  practiceItems(): PracticeBlock[] | null;
+  setCreateExerciseHandler(handler: () => void): void;
   setItems(blocks: readonly TheoryBlock[]): void;
+  setPracticeBlocks(blocks: readonly PracticeBlock[]): void;
   setExercises(
     questions: readonly ModuleQuestion[],
     order?: readonly ModuleContentReference[],
   ): void;
   removeExercise(id: string): void;
+  addExercise(question: ModuleQuestion): void;
+  hasDraftExercises(): boolean;
+  isDraftExercise(id: string): boolean;
+  draftExercises(): ModuleQuestion[];
+  setCreateExerciseHandler(handler: () => void): void;
   contentOrder(): ModuleContentReference[];
   clear(): void;
   setDisabled(disabled: boolean): void;
@@ -386,6 +398,7 @@ export function createTheoryBlockEditor(
   const legacyVisuals = new WeakMap<HTMLDivElement, Partial<TheoryBlock>>();
   const blockTags = new WeakMap<HTMLDivElement, XpTagPickerController>();
   let exerciseQuestions: ModuleQuestion[] = [];
+  const draftExerciseIds = new Set<string>();
   const expandedGroups = new Set<string>();
 
   const groupButton = document.createElement("button");
@@ -394,15 +407,29 @@ export function createTheoryBlockEditor(
   groupButton.textContent = "Auswahl gruppieren";
   groupButton.disabled = true;
 
+  const addType = document.createElement("select");
+  addType.className = "theory-block-add-type";
+  addType.setAttribute("aria-label", "Art des neuen Modulblocks");
+  for (const [value, label] of [
+    ["theory", "Theorieteil"],
+    ["leicht", "Aufgabe (leicht, Lernpfad)"],
+    ["practice", "Praxisaufgabe"],
+  ]) {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = label;
+    addType.append(option);
+  }
   const addButton = document.createElement("button");
   addButton.type = "button";
   addButton.className = "theory-block-add";
-  addButton.textContent = "+ Theorie-Block hinzufügen";
+  addButton.textContent = "+ Block hinzufügen";
+  let createExerciseHandler: (() => void) | undefined;
 
   function selectedGroupRows(): HTMLDivElement[] {
     return Array.from(
       rows.querySelectorAll<HTMLDivElement>(
-        ".theory-block-row, .module-exercise-row",
+        ".theory-block-row, .module-exercise-row, .module-practice-row",
       ),
     ).filter(
       (row) =>
@@ -417,7 +444,7 @@ export function createTheoryBlockEditor(
   function allRows(): HTMLDivElement[] {
     return Array.from(
       rows.querySelectorAll<HTMLDivElement>(
-        ".theory-block-row, .module-exercise-row",
+        ".theory-block-row, .module-exercise-row, .module-practice-row",
       ),
     );
   }
@@ -568,9 +595,11 @@ export function createTheoryBlockEditor(
             ".theory-block-title",
           );
           label.textContent = `Theorie ${theoryNumber} · ${title?.value.trim() || "Neuer Block"}`;
-        } else {
+        } else if (row.classList.contains("module-exercise-row")) {
           exerciseNumber += 1;
-          label.textContent = `Übung ${exerciseNumber} · ${row.dataset.prompt ?? ""}`;
+          label.textContent = `Leicht ${exerciseNumber} · ${row.dataset.prompt ?? ""}`;
+        } else {
+          label.textContent = `Praxisaufgabe · ${row.querySelector<HTMLInputElement>(".theory-block-title")?.value.trim() || "Neuer Block"}`;
         }
       }
       const unit = rowUnit(row);
@@ -654,7 +683,7 @@ export function createTheoryBlockEditor(
 
   function refreshCalculatedXp(): void {
     for (const row of rows.querySelectorAll<HTMLDivElement>(
-      ".theory-block-row, .module-exercise-row",
+      ".theory-block-row, .module-exercise-row, .module-practice-row",
     )) {
       const input = row.querySelector<HTMLInputElement>(".theory-block-xp");
       const result = row.querySelector<HTMLElement>(
@@ -662,18 +691,22 @@ export function createTheoryBlockEditor(
       );
       const picker = blockTags.get(row);
       if (!input || !result || !picker) continue;
-      const baseXp = input.value.trim()
-        ? Number(input.value)
+      const defaultXp = row.classList.contains("module-practice-row")
+        ? BASE_XP_DEFAULTS.practice
         : getDefaultBaseXp();
-      result.textContent = `Berechnete XP: ${calculateTheoryBlockXp({ baseXp, tags: picker.selectedTags() }, getDefaultBaseXp())}`;
+      const baseXp = input.value.trim() ? Number(input.value) : defaultXp;
+      result.textContent = `Berechnete XP: ${calculateTheoryBlockXp({ baseXp, tags: picker.selectedTags() }, defaultXp)}`;
     }
   }
 
-  function addBlock(initial: Partial<TheoryBlock> = {}): void {
-    initial = notationToMarkdown(initial);
+  function addContentBlock(
+    initial: Partial<TheoryBlock & PracticeBlock> = {},
+    kind: "theory" | "practice" = "theory",
+  ): void {
+    if (kind === "theory") initial = notationToMarkdown(initial);
     const row = document.createElement("div");
-    row.className = "theory-block-row";
-    if (initial.visualComponent && initial.visualComponent !== "none") {
+    row.className = kind === "theory" ? "theory-block-row" : "module-practice-row";
+    if (kind === "theory" && initial.visualComponent && initial.visualComponent !== "none") {
       legacyVisuals.set(row, {
         visualComponent: initial.visualComponent,
         visualPropsJson: initial.visualPropsJson,
@@ -681,8 +714,8 @@ export function createTheoryBlockEditor(
     }
     row.dataset.blockId =
       initial.id?.trim() ||
-      `tb-${rows.childElementCount + 1}-${crypto.randomUUID().slice(0, 6)}`;
-    if (initial.groupId && initial.groupTitle) {
+      `${kind === "theory" ? "tb" : "pb"}-${rows.childElementCount + 1}-${crypto.randomUUID().slice(0, 6)}`;
+    if (kind === "theory" && initial.groupId && initial.groupTitle) {
       row.dataset.groupId = initial.groupId;
       row.dataset.groupTitle = initial.groupTitle;
     }
@@ -747,7 +780,7 @@ export function createTheoryBlockEditor(
     const titleLabel = document.createElement("label");
     titleLabel.className = "field";
     const titleCaption = document.createElement("span");
-    titleCaption.textContent = "Block-Titel";
+    titleCaption.textContent = kind === "theory" ? "Block-Titel" : "Titel der Praxisaufgabe";
     const titleInput = document.createElement("input");
     titleInput.type = "text";
     titleInput.className = "theory-block-title";
@@ -759,7 +792,7 @@ export function createTheoryBlockEditor(
     const markdownLabel = document.createElement("label");
     markdownLabel.className = "field";
     const markdownCaption = document.createElement("span");
-    markdownCaption.textContent = "Inhalt (Markdown, KaTeX & Notation)";
+    markdownCaption.textContent = kind === "theory" ? "Inhalt (Markdown, KaTeX & Notation)" : "Beschreibung (Markdown, KaTeX & Notation)";
     const markdownInput = document.createElement("textarea");
     markdownInput.className = "theory-block-markdown";
     markdownInput.rows = 4;
@@ -774,20 +807,22 @@ export function createTheoryBlockEditor(
     const xpLabel = document.createElement("label");
     xpLabel.className = "field";
     const xpCaption = document.createElement("span");
-    xpCaption.textContent = "Basis-XP (leer: Modulwert)";
+    xpCaption.textContent = kind === "theory" ? "Basis-XP (leer: Modulwert)" : "Basis-XP";
     const xpInput = document.createElement("input");
     xpInput.type = "number";
     xpInput.min = "0";
     xpInput.step = "1";
     xpInput.className = "theory-block-xp";
-    xpInput.value = initial.baseXp === undefined ? "" : String(initial.baseXp);
+    xpInput.value = initial.baseXp === undefined
+      ? kind === "practice" ? String(BASE_XP_DEFAULTS.practice) : ""
+      : String(initial.baseXp);
     xpInput.addEventListener("input", refreshCalculatedXp);
     xpInput.addEventListener("invalid", () => {
       details.open = true;
     });
     xpLabel.append(xpCaption, xpInput);
     const picker = createXpTagPicker({
-      name: `theory-tags-${row.dataset.blockId}`,
+      name: `${kind}-tags-${row.dataset.blockId}`,
       legend: "Block-Tags",
       defaultTags: initial.tags ?? [],
       includeNeutral: true,
@@ -826,6 +861,14 @@ export function createTheoryBlockEditor(
     renderGroupHeaders();
     syncRowOrder();
     refreshCalculatedXp();
+  }
+
+  function addBlock(initial: Partial<TheoryBlock> = {}): void {
+    addContentBlock(initial, "theory");
+  }
+
+  function addPracticeBlock(initial: Partial<PracticeBlock> = {}): void {
+    addContentBlock(initial, "practice");
   }
 
   groupButton.addEventListener("click", () => {
@@ -869,10 +912,13 @@ export function createTheoryBlockEditor(
   });
 
   addButton.addEventListener("click", () => {
-    addBlock();
-    const lastSummary = rows.querySelector<HTMLElement>(
-      ".theory-block-row:last-child summary",
-    );
+    if (addType.value === "leicht") {
+      createExerciseHandler?.();
+      return;
+    }
+    if (addType.value === "practice") addPracticeBlock();
+    else addBlock();
+    const lastSummary = rows.lastElementChild?.querySelector<HTMLElement>("summary");
     lastSummary?.focus();
   });
 
@@ -961,12 +1007,53 @@ export function createTheoryBlockEditor(
   }
 
   function setItems(blocks: readonly TheoryBlock[]): void {
+    for (const row of rows.querySelectorAll(".theory-block-row")) row.remove();
     expandedGroups.clear();
-    rows.replaceChildren();
     const sorted = [...blocks].sort((a, b) => a.order - b.order);
-    for (const block of sorted) {
-      addBlock(block);
+    for (const block of sorted) addBlock(block);
+    renderGroupHeaders();
+    syncRowOrder();
+  }
+
+  function practiceItems(): PracticeBlock[] | null {
+    const result: PracticeBlock[] = [];
+    const rowElements = Array.from(rows.querySelectorAll<HTMLDivElement>(".module-practice-row"));
+    for (let index = 0; index < rowElements.length; index += 1) {
+      const row = rowElements[index];
+      const title = row.querySelector<HTMLInputElement>(".theory-block-title");
+      const markdown = row.querySelector<HTMLTextAreaElement>(".theory-block-markdown");
+      const xp = row.querySelector<HTMLInputElement>(".theory-block-xp");
+      const picker = blockTags.get(row);
+      if (!title || !markdown || !xp || !picker) throw new Error("Die Felder einer Praxisaufgabe sind unvollständig.");
+      if (!title.value.trim()) {
+        row.querySelector<HTMLDetailsElement>("details")!.open = true;
+        title.setCustomValidity("Bitte gib einen Titel für die Praxisaufgabe ein.");
+        title.reportValidity();
+        title.setCustomValidity("");
+        return null;
+      }
+      const baseXp = xp.value.trim() ? Number(xp.value) : BASE_XP_DEFAULTS.practice;
+      if (!Number.isFinite(baseXp) || baseXp < 0) {
+        row.querySelector<HTMLDetailsElement>("details")!.open = true;
+        xp.setCustomValidity("Bitte gib gültige Basis-XP ab 0 ein.");
+        xp.reportValidity();
+        xp.setCustomValidity("");
+        return null;
+      }
+      result.push({
+        id: row.dataset.blockId || `pb-${index + 1}`,
+        title: title.value.trim(),
+        markdownContent: markdown.value,
+        baseXp,
+        tags: picker.selectedTags(),
+      });
     }
+    return result;
+  }
+
+  function setPracticeBlocks(blocks: readonly PracticeBlock[]): void {
+    for (const row of rows.querySelectorAll(".module-practice-row")) row.remove();
+    for (const block of blocks) addPracticeBlock(block);
     renderGroupHeaders();
     syncRowOrder();
   }
@@ -979,7 +1066,9 @@ export function createTheoryBlockEditor(
       return {
         kind: row.classList.contains("theory-block-row")
           ? "theory"
-          : "exercise",
+          : row.classList.contains("module-practice-row")
+            ? "practice"
+            : "exercise",
         id: row.dataset.blockId,
         ...(row.dataset.groupId
           ? {
@@ -1164,7 +1253,7 @@ export function createTheoryBlockEditor(
       const saveButton = document.createElement("button");
       saveButton.type = "button";
       saveButton.className = "module-exercise-save";
-      saveButton.textContent = "Übung speichern";
+      saveButton.textContent = "Lernpfad-Aufgabe speichern";
       saveButton.addEventListener("click", async () => {
         const correctAnswers: string[] = [];
         let options: string[] | undefined;
@@ -1228,7 +1317,7 @@ export function createTheoryBlockEditor(
         const payload: UpsertQuestionInput & { entity: "question" } = {
           entity: "question",
           id: question.id,
-          moduleId: question.moduleId,
+          moduleIds: question.moduleIds,
           targetLane: question.targetLane,
           questionType: question.questionType,
           prompt: prompt.value.trim(),
@@ -1239,22 +1328,24 @@ export function createTheoryBlockEditor(
           baseXp: Number(baseXp.value),
           tags: tagPicker.selectedTags(),
         };
-        const validation = validateQuestionInput(payload, [
-          { id: question.moduleId } as LearningModule,
-        ]);
+        const validation = validateQuestionInput(
+          payload,
+          question.moduleIds.map((id) => ({ id }) as LearningModule),
+        );
         if (!validation.valid) {
           saveStatus.textContent = validation.errors.join(" ");
           return;
         }
 
         saveButton.disabled = true;
-        saveStatus.textContent = "Übung wird gespeichert …";
+        saveStatus.textContent = "Lernpfad-Aufgabe wird gespeichert …";
         try {
           await sendModulesRequest(
-            "PUT",
+            draftExerciseIds.has(question.id) ? "POST" : "PUT",
             payload,
-            "Die Übung konnte nicht gespeichert werden.",
+            "Die Lernpfad-Aufgabe konnte nicht gespeichert werden.",
           );
+          draftExerciseIds.delete(question.id);
           const updatedQuestion: ModuleQuestion = { ...question, ...payload };
           exerciseQuestions = exerciseQuestions.map((item) =>
             item.id === updatedQuestion.id ? updatedQuestion : item,
@@ -1273,7 +1364,7 @@ export function createTheoryBlockEditor(
             ".module-exercise-status",
           );
           if (savedStatus)
-            savedStatus.textContent = "Übung wurde aktualisiert.";
+            savedStatus.textContent = "Lernpfad-Aufgabe wurde gespeichert.";
         } catch (error) {
           saveStatus.textContent =
             error instanceof Error
@@ -1333,7 +1424,9 @@ export function createTheoryBlockEditor(
       allRows().map((row) => {
         const kind = row.classList.contains("theory-block-row")
           ? "theory"
-          : "exercise";
+          : row.classList.contains("module-practice-row")
+            ? "practice"
+            : "exercise";
         return [`${kind}:${row.dataset.blockId}`, row] as const;
       }),
     );
@@ -1353,6 +1446,7 @@ export function createTheoryBlockEditor(
     exerciseQuestions = exerciseQuestions.filter(
       (question) => question.id !== id,
     );
+    draftExerciseIds.delete(id);
     for (const row of rows.querySelectorAll<HTMLDivElement>(
       ".module-exercise-row",
     )) {
@@ -1365,6 +1459,8 @@ export function createTheoryBlockEditor(
   function clear(): void {
     expandedGroups.clear();
     rows.replaceChildren();
+    exerciseQuestions = [];
+    draftExerciseIds.clear();
     updateGroupButton();
     syncRowOrder();
   }
@@ -1373,19 +1469,36 @@ export function createTheoryBlockEditor(
     fieldset.disabled = disabled;
   }
 
-  if (initialBlocks.length > 0) {
-    setItems(initialBlocks);
-  }
+  if (initialBlocks.length > 0) setItems(initialBlocks);
 
-  fieldset.append(legend, hint, groupButton, rows, addButton);
+  fieldset.append(legend, hint, groupButton, rows, addType, addButton);
 
   return {
     element: fieldset,
     addBlock,
+    addPracticeBlock,
     items,
+    practiceItems,
     setItems,
+    setPracticeBlocks,
     setExercises,
     removeExercise,
+    addExercise(question) {
+      draftExerciseIds.add(question.id);
+      setExercises([...exerciseQuestions, question], contentOrder());
+    },
+    hasDraftExercises() {
+      return draftExerciseIds.size > 0;
+    },
+    isDraftExercise(id) {
+      return draftExerciseIds.has(id);
+    },
+    draftExercises() {
+      return exerciseQuestions.filter((question) => draftExerciseIds.has(question.id));
+    },
+    setCreateExerciseHandler(handler) {
+      createExerciseHandler = handler;
+    },
     contentOrder,
     clear,
     setDisabled,
@@ -1574,11 +1687,6 @@ export function attachModuleBuilderForm(
     "#module-tags-field",
     msg,
   );
-  const hasPracticeInput = requireElement<HTMLInputElement>(
-    form,
-    "#module-has-practice",
-    msg,
-  );
   const theoryBaseXpInput = requireElement<HTMLInputElement>(
     form,
     "#module-theory-base-xp",
@@ -1620,6 +1728,26 @@ export function attachModuleBuilderForm(
     "input",
     theoryBlockEditor.refreshCalculatedXp,
   );
+  theoryBlockEditor.setCreateExerciseHandler(() => {
+    const moduleId = editingModuleId ?? newModuleId ?? `mod-${crypto.randomUUID()}`;
+    if (!editingModuleId) newModuleId = moduleId;
+    const question: ModuleQuestion = {
+      id: `q-${crypto.randomUUID().slice(0, 8)}`,
+      moduleIds: [moduleId],
+      targetLane: "leicht",
+      questionType: "single_choice",
+      prompt: "Neue Lernpfad-Aufgabe",
+      options: ["Antwort A", "Antwort B"],
+      correctAnswers: ["Antwort A"],
+      explanation: "",
+      baseXp: BASE_XP_DEFAULTS.leicht,
+      tags: [],
+    };
+    theoryBlockEditor.addExercise(question);
+    status.textContent = editingModuleId
+      ? "Lernpfad-Aufgabe hinzugefügt."
+      : "Lernpfad-Aufgabe hinzugefügt. Bitte zuerst das Modul speichern, danach die Aufgabe im Block speichern.";
+  });
   blocksContainer.append(theoryBlockEditor.element);
 
   function setModuleExercises(
@@ -1628,9 +1756,9 @@ export function attachModuleBuilderForm(
     order?: readonly ModuleContentReference[],
   ): void {
     theoryBlockEditor.setExercises(
-      questions.filter(
+      [...questions, ...theoryBlockEditor.draftExercises()].filter(
         (question) =>
-          question.moduleId === moduleId && question.targetLane === "exercise",
+          isQuestionInModule(question, moduleId) && question.targetLane === "leicht",
       ),
       order,
     );
@@ -1648,7 +1776,6 @@ export function attachModuleBuilderForm(
       scopeSelect,
       levelSelect,
       dStageSelect,
-      hasPracticeInput,
       theoryBaseXpInput,
       submitButton,
       cancelButton,
@@ -1676,8 +1803,13 @@ export function attachModuleBuilderForm(
   }
 
   async function deleteExercise(question: ModuleQuestion): Promise<void> {
-    if (!window.confirm(`Übung „${question.prompt}“ endgültig löschen?`))
+    if (!window.confirm(`Lernpfad-Aufgabe „${question.prompt}“ endgültig löschen?`))
       return;
+    if (theoryBlockEditor.isDraftExercise(question.id)) {
+      theoryBlockEditor.removeExercise(question.id);
+      status.textContent = "Lernpfad-Aufgabe entfernt.";
+      return;
+    }
     setBusy(true);
     status.textContent = "Übung wird gelöscht …";
     try {
@@ -1714,10 +1846,10 @@ export function attachModuleBuilderForm(
     scopeSelect.value = mod.scope;
     levelSelect.value = String(mod.level);
     dStageSelect.value = mod.dStage ?? "";
-    hasPracticeInput.checked = mod.hasPractice;
     theoryBaseXpInput.value = String(mod.theoryBaseXp);
     tagPicker.setSelectedTags(mod.tags);
     theoryBlockEditor.setItems(mod.theoryBlocks);
+    theoryBlockEditor.setPracticeBlocks(mod.practiceBlocks);
     setModuleExercises(mod.id, questions, mod.contentOrder);
     submitButton.textContent = "Modul-Änderungen speichern";
     cancelButton.hidden = false;
@@ -1726,6 +1858,24 @@ export function attachModuleBuilderForm(
     if (!isDetailPage)
       generalInfo.querySelector<HTMLElement>("summary")?.focus();
   }
+
+  document.addEventListener("module:question-edit", (event) => {
+    if (!(event instanceof CustomEvent) || !isRecord(event.detail)) return;
+    const candidate = event.detail.question;
+    if (!isRecord(candidate) || typeof candidate.id !== "string") return;
+    const question = candidate as unknown as ModuleQuestion;
+    const moduleId = question.moduleIds[0];
+    if (!moduleId) return;
+    void fetchModulesDatabase().then((db) => {
+      const mod = db.modules.find((item) => item.id === moduleId);
+      if (!mod) return;
+      loadModule(mod, db.questions);
+      const row = form.querySelector<HTMLElement>(`.module-exercise-row[data-block-id="${CSS.escape(question.id)}"]`);
+      row?.querySelector<HTMLDetailsElement>("details")?.setAttribute("open", "");
+    }).catch(() => {
+      status.textContent = "Die Lernpfad-Aufgabe konnte nicht geladen werden.";
+    });
+  });
 
   cancelButton.addEventListener("click", () => {
     if (isDetailPage) {
@@ -1774,7 +1924,8 @@ export function attachModuleBuilderForm(
     event.preventDefault();
 
     const theoryBlocks = theoryBlockEditor.items();
-    if (!theoryBlocks) return;
+    const practiceBlocks = theoryBlockEditor.practiceItems();
+    if (!theoryBlocks || !practiceBlocks) return;
 
     const scopeValue = scopeSelect.value;
     const dStageValue = dStageSelect.value;
@@ -1790,9 +1941,9 @@ export function attachModuleBuilderForm(
       level: Number(levelSelect.value),
       ...(isDStage(dStageValue) ? { dStage: dStageValue } : {}),
       tags: tagPicker.selectedTags(),
-      hasPractice: hasPracticeInput.checked,
       theoryBaseXp: Number(theoryBaseXpInput.value),
       theoryBlocks,
+      practiceBlocks,
       contentOrder: theoryBlockEditor.contentOrder(),
     };
 
@@ -1813,10 +1964,18 @@ export function attachModuleBuilderForm(
         "Das Modul konnte nicht gespeichert werden.",
       );
 
-      if (!isDetailPage) resetForm();
-      status.textContent = isUpdate
-        ? "Modul wurde aktualisiert."
-        : "Modul wurde gespeichert.";
+      if (theoryBlockEditor.hasDraftExercises()) {
+        editingModuleId = moduleId;
+        newModuleId = null;
+        submitButton.textContent = "Modul-Änderungen speichern";
+        cancelButton.hidden = false;
+        status.textContent = "Modul gespeichert. Speichere jetzt die neuen Lernpfad-Aufgaben direkt in den Blöcken.";
+      } else if (!isDetailPage) {
+        resetForm();
+        status.textContent = isUpdate ? "Modul wurde aktualisiert." : "Modul wurde gespeichert.";
+      } else {
+        status.textContent = isUpdate ? "Modul wurde aktualisiert." : "Modul wurde gespeichert.";
+      }
       document.dispatchEvent(
         new CustomEvent("modules:updated", { bubbles: true, detail: result }),
       );
@@ -1999,9 +2158,14 @@ export function attachExerciseBuilderForm(
   form.dataset.exerciseBuilderAttached = "true";
 
   const msg = "Felder des Aufgaben-Builder-Formulars fehlen.";
-  const moduleSelect = requireElement<HTMLSelectElement>(
+  const moduleList = requireElement<HTMLFieldSetElement>(
     form,
-    "#exercise-module-id",
+    "#exercise-module-ids",
+    msg,
+  );
+  const moduleOptions = requireElement<HTMLDivElement>(
+    moduleList,
+    ".exercise-module-options",
     msg,
   );
   const laneSelect = requireElement<HTMLSelectElement>(
@@ -2299,36 +2463,32 @@ export function attachExerciseBuilderForm(
 
   function setModules(modules: readonly LearningModule[]): void {
     availableModules = [...modules].sort((a, b) => a.order - b.order);
-    const previousValue = moduleSelect.value;
-    moduleSelect.replaceChildren();
-
+    const selected = new Set(
+      Array.from(moduleOptions.querySelectorAll<HTMLInputElement>("input[type=checkbox]:checked"), (input) => input.value),
+    );
+    moduleOptions.replaceChildren();
     if (availableModules.length === 0) {
-      const emptyOpt = document.createElement("option");
-      emptyOpt.value = "";
-      emptyOpt.textContent =
-        "Noch keine Module vorhanden – bitte zuerst Modul anlegen";
-      moduleSelect.append(emptyOpt);
+      moduleOptions.textContent = "Noch keine Module vorhanden.";
       return;
     }
-
     for (const mod of availableModules) {
-      const option = document.createElement("option");
-      option.value = mod.id;
-      option.textContent = `${mod.order}: ${mod.title} (${mod.id})`;
-      moduleSelect.append(option);
-    }
-
-    if (
-      previousValue &&
-      availableModules.some((mod) => mod.id === previousValue)
-    ) {
-      moduleSelect.value = previousValue;
+      const label = document.createElement("label");
+      label.className = "module-checkbox-label";
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.name = "moduleIds";
+      checkbox.value = mod.id;
+      checkbox.checked = selected.has(mod.id);
+      const text = document.createElement("span");
+      text.textContent = `${mod.order}: ${mod.title}`;
+      label.append(checkbox, text);
+      moduleOptions.append(label);
     }
   }
 
   function setBusy(busy: boolean): void {
     const controls = [
-      moduleSelect,
+      moduleList,
       laneSelect,
       typeSelect,
       promptInput,
@@ -2357,14 +2517,10 @@ export function attachExerciseBuilderForm(
     editingQuestionId = null;
     baseXpManuallyEdited = false;
     delete notationPreviewHost.dataset.previewSignature;
-    const prevModule = moduleSelect.value;
     form.reset();
-    if (prevModule && availableModules.some((m) => m.id === prevModule)) {
-      moduleSelect.value = prevModule;
-    }
-    laneSelect.value = "exercise";
+    laneSelect.value = "mittel";
     typeSelect.value = "single_choice";
-    baseXpInput.value = String(BASE_XP_DEFAULTS.exercise);
+    baseXpInput.value = String(BASE_XP_DEFAULTS.mittel);
     choiceRows.replaceChildren();
     addChoiceRow("", true);
     addChoiceRow("", false);
@@ -2379,16 +2535,10 @@ export function attachExerciseBuilderForm(
     editingQuestionId = question.id;
     baseXpManuallyEdited = true;
     delete notationPreviewHost.dataset.previewSignature;
-    if (
-      question.moduleId &&
-      !availableModules.some((mod) => mod.id === question.moduleId)
-    ) {
-      const option = document.createElement("option");
-      option.value = question.moduleId;
-      option.textContent = question.moduleId;
-      moduleSelect.append(option);
+    const selected = new Set(question.moduleIds);
+    for (const checkbox of moduleOptions.querySelectorAll<HTMLInputElement>("input[type=checkbox]")) {
+      checkbox.checked = selected.has(checkbox.value);
     }
-    moduleSelect.value = question.moduleId;
     laneSelect.value = question.targetLane;
     typeSelect.value = question.questionType;
     promptInput.value = question.prompt;
@@ -2488,7 +2638,13 @@ export function attachExerciseBuilderForm(
       }
       const candidate = event.detail.question;
       if (isRecord(candidate) && typeof candidate.id === "string") {
-        loadQuestion(candidate as unknown as ModuleQuestion);
+        const question = candidate as unknown as ModuleQuestion;
+        if (question.targetLane === "leicht") {
+          document.dispatchEvent(new CustomEvent("module:question-edit", { detail: { question } }));
+          switchStarlightTab(1);
+          return;
+        }
+        loadQuestion(question);
         switchStarlightTab(2);
       }
     }
@@ -2521,7 +2677,7 @@ export function attachExerciseBuilderForm(
 
     const targetLane: TargetLane = isTargetLane(laneSelect.value)
       ? laneSelect.value
-      : "exercise";
+      : "mittel";
     const questionType: QuestionType = isQuestionType(typeSelect.value)
       ? typeSelect.value
       : "single_choice";
@@ -2561,7 +2717,10 @@ export function attachExerciseBuilderForm(
     const payload: UpsertQuestionInput & { entity: "question" } = {
       entity: "question",
       id: questionId,
-      moduleId: moduleSelect.value.trim(),
+      moduleIds: Array.from(
+        moduleOptions.querySelectorAll<HTMLInputElement>("input[type=checkbox]:checked"),
+        (input) => input.value,
+      ),
       targetLane,
       questionType,
       prompt: promptInput.value.trim(),
@@ -2573,12 +2732,7 @@ export function attachExerciseBuilderForm(
       tags: tagPicker.selectedTags(),
     };
 
-    const validationList =
-      availableModules.length > 0
-        ? availableModules
-        : moduleSelect.value.trim()
-          ? [{ id: moduleSelect.value.trim() } as LearningModule]
-          : [];
+    const validationList = availableModules;
     const validation = validateQuestionInput(payload, validationList);
     if (!validation.valid) {
       status.textContent = validation.errors.join(" ");
@@ -2671,6 +2825,8 @@ export function attachModuleCatalogList(
   const cardsIcon = requireElement<SVGElement>(viewToggle, ".cards-icon", msg);
 
   const statusEl = status;
+  const poolList = requireElement<HTMLUListElement>(section, "#module-question-pool-list", msg);
+  const poolEmpty = requireElement<HTMLElement>(section, "#module-question-pool-empty", msg);
   let currentDb: ModulesDatabase = createEmptyModulesDatabase();
   const menus =
     section.querySelectorAll<HTMLDetailsElement>(".contribution-menu");
@@ -2735,7 +2891,7 @@ export function attachModuleCatalogList(
     details.className = "module-questions-details";
 
     const summary = document.createElement("summary");
-    summary.textContent = `Aufgaben & Quiz-Fragen (${questions.length})`;
+    summary.textContent = `Aufgaben (${questions.length})`;
 
     const body = document.createElement("div");
     body.className = "module-questions-body";
@@ -2748,9 +2904,9 @@ export function attachModuleCatalogList(
     );
     const allOpt = document.createElement("option");
     allOpt.value = "";
-    allOpt.textContent = "Alle Lernspuren";
+    allOpt.textContent = "Alle";
     filterSelect.append(allOpt);
-    for (const lane of ["exercise", "quiz_easy", "fastlane"] as const) {
+    for (const lane of ["leicht", "mittel", "schwer"] as const) {
       const opt = document.createElement("option");
       opt.value = lane;
       opt.textContent = LANE_LABELS[lane];
@@ -2770,7 +2926,7 @@ export function attachModuleCatalogList(
       if (filtered.length === 0) {
         const empty = document.createElement("li");
         empty.className = "module-question-empty";
-        empty.textContent = "Keine Aufgaben in dieser Lernspur.";
+        empty.textContent = "Keine Aufgaben in dieser Kategorie.";
         sublist.append(empty);
         return;
       }
@@ -2850,6 +3006,46 @@ export function attachModuleCatalogList(
   function renderDatabase(db: ModulesDatabase): void {
     currentDb = db;
     list.replaceChildren();
+    poolList.replaceChildren();
+    const poolQuestions = db.questions.filter((question) => question.moduleIds.length === 0);
+    poolEmpty.hidden = poolQuestions.length > 0;
+    poolEmpty.textContent = poolQuestions.length > 0 ? "" : "Keine unzugeordneten Quizfragen im Pool.";
+    for (const question of poolQuestions) {
+      const item = document.createElement("li");
+      item.className = "module-question-item";
+      const meta = document.createElement("div");
+      meta.className = "module-question-meta";
+      const lane = document.createElement("span");
+      lane.className = "contribution-area module-badge";
+      lane.textContent = LANE_LABELS[question.targetLane];
+      const xp = document.createElement("span");
+      xp.className = "contribution-tag module-xp-badge";
+      xp.textContent = `${calculateQuestionXp(question.baseXp, question.tags)} XP`;
+      meta.append(lane, xp);
+      const prompt = document.createElement("p");
+      prompt.className = "module-question-prompt";
+      prompt.textContent = question.prompt;
+      const actions = document.createElement("div");
+      actions.className = "module-question-actions";
+      const edit = document.createElement("button");
+      edit.type = "button";
+      edit.className = "contribution-edit module-question-edit";
+      edit.textContent = "Bearbeiten";
+      edit.addEventListener("click", () => document.dispatchEvent(new CustomEvent("question:edit", { detail: { question, modules: currentDb.modules } })));
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "contribution-delete module-question-delete";
+      remove.textContent = "Löschen";
+      remove.addEventListener("click", async () => {
+        if (!window.confirm("Diese Quizfrage wirklich löschen?")) return;
+        remove.disabled = true;
+        try { await deleteEntity("question", question.id); }
+        catch (error) { statusEl.textContent = error instanceof Error ? error.message : "Quizfrage konnte nicht gelöscht werden."; remove.disabled = false; }
+      });
+      actions.append(edit, remove);
+      item.append(meta, prompt, actions);
+      poolList.append(item);
+    }
 
     const selectedScope = scopeFilter.value;
     const filtered = db.modules.filter(
@@ -2869,7 +3065,7 @@ export function attachModuleCatalogList(
 
     for (const [index, mod] of sorted.entries()) {
       const modSummary = getModuleSummary(db, mod.id);
-      const modQuestions = db.questions.filter((q) => q.moduleId === mod.id);
+      const modQuestions = db.questions.filter((q) => isQuestionInModule(q, mod.id));
 
       const item = document.createElement("li");
       item.dataset.moduleId = mod.id;
@@ -2893,10 +3089,7 @@ export function attachModuleCatalogList(
 
       const practiceBadge = document.createElement("span");
       practiceBadge.className = "contribution-status module-badge";
-      practiceBadge.dataset.status = mod.hasPractice ? "Active" : "New";
-      practiceBadge.textContent = mod.hasPractice
-        ? "Mit Praxis"
-        : "Nur Theorie";
+      practiceBadge.textContent = `Praxisaufgaben: ${mod.practiceBlocks?.length ?? 0}`;
 
       meta.append(scopeTag, levelBadge, practiceBadge);
 
@@ -2987,7 +3180,7 @@ export function attachModuleCatalogList(
       deleteBtn.addEventListener("click", async () => {
         if (
           !window.confirm(
-            `Modul „${mod.title}“ inklusive aller ${modQuestions.length} zugehörigen Aufgaben wirklich löschen?`,
+            `Modul „${mod.title}“ löschen? Die Lernpfad-Aufgaben werden mitgelöscht; Quizfragen verlieren nur die Zuordnung zu diesem Modul.`,
           )
         ) {
           return;
@@ -3021,9 +3214,10 @@ export function attachModuleCatalogList(
       if (modSummary) {
         const metrics = [
           `Theorie-Blöcke: ${modSummary.theoryBlockCount}`,
-          `Übungen: ${modSummary.questionCounts.exercise}`,
-          `Quiz Einfach: ${modSummary.questionCounts.quiz_easy}`,
-          `Fastlane: ${modSummary.questionCounts.fastlane}`,
+          `Praxisaufgaben: ${modSummary.practiceBlockCount}`,
+          `Leicht: ${modSummary.questionCounts.leicht}`,
+          `Mittel: ${modSummary.questionCounts.mittel}`,
+          `Schwer: ${modSummary.questionCounts.schwer}`,
           `Gesamt: ${modSummary.totalXp} XP`,
         ];
         for (const metric of metrics) {

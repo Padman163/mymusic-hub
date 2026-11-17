@@ -1,6 +1,8 @@
 import {
+  BASE_XP_DEFAULTS,
   DEFAULT_QUIZ_SETTINGS,
   getAvailableTags,
+  isQuestionInModule,
   isQuizSettings,
   type LearningModule,
   MODULE_SCOPES,
@@ -11,14 +13,14 @@ import {
 } from "./module-schema.ts";
 import { calculateQuestionXp, calculateTheoryBlockXp } from "./xp-tags.ts";
 
-export const LEARNING_PROGRESS_STORAGE_KEY = "mymusic_learning_progress_v1";
+export const LEARNING_PROGRESS_STORAGE_KEY = "mymusic_learning_progress_v2";
 export const XP_PER_LEVEL = 500;
 
 export const LANE_STEPS = [
   "theory",
-  "exercise",
+  "leicht",
   "practice",
-  "quiz_easy",
+  "mittel",
 ] as const;
 export type LaneStep = (typeof LANE_STEPS)[number];
 
@@ -39,6 +41,7 @@ export interface ModuleProgress {
   steps: Record<LaneStep, StepProgressState>;
   solvedQuestionIds: string[];
   completedTheoryBlockIds: string[];
+  completedPracticeBlockIds: string[];
   bestQuizEasyScore?: number;
   bestFastlaneScore?: number;
 }
@@ -117,12 +120,13 @@ function createModuleProgress(
     status: unlocked ? "unlocked" : "locked",
     steps: {
       theory: unlocked ? "unlocked" : "locked",
-      exercise: "locked",
+      leicht: "locked",
       practice: "locked",
-      quiz_easy: "locked",
+      mittel: "locked",
     },
     solvedQuestionIds: [],
     completedTheoryBlockIds: [],
+    completedPracticeBlockIds: [],
   };
 }
 
@@ -135,12 +139,13 @@ function cloneModuleProgress(progress: ModuleProgress): ModuleProgress {
       : {}),
     steps: {
       theory: progress.steps.theory,
-      exercise: progress.steps.exercise,
+      leicht: progress.steps.leicht,
       practice: progress.steps.practice,
-      quiz_easy: progress.steps.quiz_easy,
+      mittel: progress.steps.mittel,
     },
     solvedQuestionIds: [...progress.solvedQuestionIds],
     completedTheoryBlockIds: [...(progress.completedTheoryBlockIds ?? [])],
+    completedPracticeBlockIds: [...(progress.completedPracticeBlockIds ?? [])],
     ...(progress.bestQuizEasyScore !== undefined
       ? { bestQuizEasyScore: progress.bestQuizEasyScore }
       : {}),
@@ -213,17 +218,32 @@ function unlockModuleEntry(progress: ModuleProgress): void {
   }
 }
 
+function allPracticeBlocksCompleted(
+  progress: ModuleProgress,
+  mod: LearningModule,
+): boolean {
+  return mod.practiceBlocks.every((block) =>
+    progress.completedPracticeBlockIds.includes(block.id),
+  );
+}
+
+/** Schaltet nach Abschluss der Lernpfad-Aufgaben den Praxis- beziehungsweise Quiz-Schritt frei. */
 function unlockNextStepAfterExercise(
   progress: ModuleProgress,
   mod: LearningModule,
 ): void {
-  progress.steps.exercise = "completed";
-  if (mod.hasPractice) {
+  progress.steps.leicht = "completed";
+  if (!allPracticeBlocksCompleted(progress, mod)) {
     if (progress.steps.practice === "locked") {
       progress.steps.practice = "unlocked";
     }
-  } else if (progress.steps.quiz_easy === "locked") {
-    progress.steps.quiz_easy = "unlocked";
+    return;
+  }
+  if (mod.practiceBlocks.length > 0) {
+    progress.steps.practice = "completed";
+  }
+  if (progress.steps.mittel === "locked") {
+    progress.steps.mittel = "unlocked";
   }
 }
 
@@ -330,17 +350,18 @@ export function completeTheoryStep(
     target.steps.theory = "completed";
   }
 
-  if (target.steps.exercise === "locked") {
-    target.steps.exercise = "unlocked";
+  if (target.steps.leicht === "locked") {
+    target.steps.leicht = "unlocked";
   }
 
   if (
     moduleQuestions &&
-    target.steps.exercise !== "completed" &&
+    target.steps.leicht !== "completed" &&
     moduleQuestions
       .filter(
         (question) =>
-          question.moduleId === module.id && question.targetLane === "exercise",
+          isQuestionInModule(question, module.id) &&
+          question.targetLane === "leicht",
       )
       .every((question) => target.solvedQuestionIds.includes(question.id))
   ) {
@@ -349,9 +370,9 @@ export function completeTheoryStep(
 
   if (
     target.steps.theory === existing.steps.theory &&
-    target.steps.exercise === existing.steps.exercise &&
+    target.steps.leicht === existing.steps.leicht &&
     target.steps.practice === existing.steps.practice &&
-    target.steps.quiz_easy === existing.steps.quiz_easy
+    target.steps.mittel === existing.steps.mittel
   ) {
     return state;
   }
@@ -394,10 +415,10 @@ export function completeTheoryBlock(
 }
 
 /**
- * Verarbeitet eine beantwortete Übungsaufgabe (`exercise`).
+ * Verarbeitet eine beantwortete Lernpfad-Aufgabe (`leicht`).
  * Bei `isCompleted === true` wird jede `question.id` höchstens einmal vergütet.
- * Sind alle `exercise`-Aufgaben des Moduls gelöst, wird je nach `module.hasPractice`
- * der Praxis-Schritt oder direkt `quiz_easy` freigeschaltet.
+ * Sind alle `leicht`-Aufgaben des Moduls gelöst, wird je nach offenen Praxisaufgaben
+ * der Praxis-Schritt oder direkt das Quiz (`mittel`) freigeschaltet.
  */
 export function recordExerciseAnswer(
   state: LearningProgressState,
@@ -406,7 +427,7 @@ export function recordExerciseAnswer(
   isCompleted: boolean,
   moduleQuestions?: readonly ModuleQuestion[],
 ): LearningProgressState {
-  if (!isCompleted || question.moduleId !== module.id) {
+  if (!isCompleted || !isQuestionInModule(question, module.id)) {
     return state;
   }
 
@@ -414,7 +435,7 @@ export function recordExerciseAnswer(
   if (
     !existing ||
     existing.status === "locked" ||
-    (existing.steps.exercise === "locked" && moduleQuestions === undefined)
+    (existing.steps.leicht === "locked" && moduleQuestions === undefined)
   ) {
     return state;
   }
@@ -422,8 +443,8 @@ export function recordExerciseAnswer(
   const next = cloneState(state);
   const target = next.modules[module.id];
   const solvedSet = new Set(target.solvedQuestionIds);
-  if (target.steps.exercise === "locked") {
-    target.steps.exercise = "unlocked";
+  if (target.steps.leicht === "locked") {
+    target.steps.leicht = "unlocked";
   }
 
   if (!solvedSet.has(question.id)) {
@@ -433,10 +454,11 @@ export function recordExerciseAnswer(
     creditXp(next, questionXp, module.scope, question.tags);
   }
 
-  if (question.targetLane === "exercise") {
+  if (question.targetLane === "leicht") {
     if (moduleQuestions) {
       const exerciseQuestions = moduleQuestions.filter(
-        (item) => item.moduleId === module.id && item.targetLane === "exercise",
+        (item) =>
+          isQuestionInModule(item, module.id) && item.targetLane === "leicht",
       );
       const allExercisesSolved =
         exerciseQuestions.length === 0 ||
@@ -454,32 +476,43 @@ export function recordExerciseAnswer(
 }
 
 /**
- * Markiert den instrumentalen Praxisteil eines Moduls als abgeschlossen
- * und schaltet das einfache Abschluss-Quiz (`quiz_easy`) frei.
- * Bei Modulen mit `hasPractice === false` bleibt der Zustand unverändert.
+ * Schließt eine Praxisaufgabe ab und vergütet ihre XP einmalig.
+ * Sind alle Praxisaufgaben erledigt und die Lernpfad-Aufgaben abgeschlossen,
+ * wird das Quiz (`mittel`) freigeschaltet.
  */
-export function completePracticeStep(
+export function completePracticeBlock(
   state: LearningProgressState,
   module: LearningModule,
+  blockId: string,
 ): LearningProgressState {
-  if (!module.hasPractice) {
-    return state;
-  }
-
   const existing = state.modules[module.id];
+  const block = module.practiceBlocks.find((item) => item.id === blockId);
   if (
     !existing ||
+    !block ||
     existing.status === "locked" ||
-    existing.steps.practice === "locked"
+    existing.completedPracticeBlockIds.includes(blockId)
   ) {
     return state;
   }
 
   const next = cloneState(state);
   const target = next.modules[module.id];
-  target.steps.practice = "completed";
-  if (target.steps.quiz_easy === "locked") {
-    target.steps.quiz_easy = "unlocked";
+  target.completedPracticeBlockIds.push(blockId);
+  creditXp(
+    next,
+    calculateTheoryBlockXp(block, BASE_XP_DEFAULTS.practice),
+    module.scope,
+    block.tags ?? [],
+  );
+
+  if (allPracticeBlocksCompleted(target, module)) {
+    if (target.steps.leicht === "completed") {
+      target.steps.practice = "completed";
+      if (target.steps.mittel === "locked") {
+        target.steps.mittel = "unlocked";
+      }
+    }
   }
 
   next.updatedAt = nowIso();
@@ -487,14 +520,14 @@ export function completePracticeStep(
 }
 
 /**
- * Wertet einen Abschluss-Quiz- (`quiz_easy`) oder Fastlane-Versuch (`fastlane`) aus.
+ * Wertet einen Quiz- (`mittel`) oder Fastlane-Versuch (`schwer`) aus.
  * Vergibt noch nicht verdiente Modul-XP einmalig und schaltet bei Bestehen das Folgemodul frei.
  */
 export function submitQuizAttempt(
   state: LearningProgressState,
   db: ModulesDatabase,
   moduleId: string,
-  lane: "quiz_easy" | "fastlane",
+  lane: "mittel" | "schwer",
   scorePercentage: number,
 ): LearningProgressState {
   const mod = db.modules.find((item) => item.id === moduleId);
@@ -512,8 +545,8 @@ export function submitQuizAttempt(
     return state;
   }
 
-  if (lane === "quiz_easy") {
-    if (target.status === "locked" || target.steps.quiz_easy === "locked") {
+  if (lane === "mittel") {
+    if (target.status === "locked" || target.steps.mittel === "locked") {
       return state;
     }
 
@@ -527,8 +560,8 @@ export function submitQuizAttempt(
       const solvedSet = new Set(target.solvedQuestionIds);
       for (const question of db.questions) {
         if (
-          question.moduleId === moduleId &&
-          question.targetLane === "quiz_easy" &&
+          isQuestionInModule(question, moduleId) &&
+          question.targetLane === "mittel" &&
           !solvedSet.has(question.id)
         ) {
           solvedSet.add(question.id);
@@ -542,7 +575,7 @@ export function submitQuizAttempt(
         }
       }
 
-      target.steps.quiz_easy = "completed";
+      target.steps.mittel = "completed";
       target.status = "completed";
       if (target.completedVia === undefined) {
         target.completedVia = "normal";
@@ -576,9 +609,25 @@ export function submitQuizAttempt(
       }
     }
 
+    const completedPractice = new Set(target.completedPracticeBlockIds);
+    for (const block of mod.practiceBlocks) {
+      if (completedPractice.has(block.id)) continue;
+      completedPractice.add(block.id);
+      target.completedPracticeBlockIds.push(block.id);
+      creditXp(
+        next,
+        calculateTheoryBlockXp(block, BASE_XP_DEFAULTS.practice),
+        mod.scope,
+        block.tags ?? [],
+      );
+    }
+
     const solvedSet = new Set(target.solvedQuestionIds);
     for (const question of db.questions) {
-      if (question.moduleId === moduleId && !solvedSet.has(question.id)) {
+      if (
+        isQuestionInModule(question, moduleId) &&
+        !solvedSet.has(question.id)
+      ) {
         solvedSet.add(question.id);
         target.solvedQuestionIds.push(question.id);
         creditXp(
@@ -689,15 +738,11 @@ function sanitizeStoredProgress(
 
     const steps = {
       theory: isStepState(entry.steps.theory) ? entry.steps.theory : "locked",
-      exercise: isStepState(entry.steps.exercise)
-        ? entry.steps.exercise
-        : "locked",
+      leicht: isStepState(entry.steps.leicht) ? entry.steps.leicht : "locked",
       practice: isStepState(entry.steps.practice)
         ? entry.steps.practice
         : "locked",
-      quiz_easy: isStepState(entry.steps.quiz_easy)
-        ? entry.steps.quiz_easy
-        : "locked",
+      mittel: isStepState(entry.steps.mittel) ? entry.steps.mittel : "locked",
     };
 
     const solvedQuestionIds = Array.isArray(entry.solvedQuestionIds)
@@ -711,6 +756,14 @@ function sanitizeStoredProgress(
         )
       : [];
 
+    const completedPracticeBlockIds = Array.isArray(
+      entry.completedPracticeBlockIds,
+    )
+      ? entry.completedPracticeBlockIds.filter(
+          (id): id is string => typeof id === "string" && id.length > 0,
+        )
+      : [];
+
     sanitizedModules[moduleId] = {
       moduleId,
       status,
@@ -718,6 +771,7 @@ function sanitizeStoredProgress(
       steps,
       solvedQuestionIds,
       completedTheoryBlockIds,
+      completedPracticeBlockIds,
       ...(typeof entry.bestQuizEasyScore === "number" &&
       Number.isFinite(entry.bestQuizEasyScore)
         ? { bestQuizEasyScore: entry.bestQuizEasyScore }

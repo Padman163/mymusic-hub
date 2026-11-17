@@ -6,6 +6,7 @@ import {
   getDefaultBaseXpForLane,
   isDStage,
   isModuleScope,
+  isQuestionInModule,
   isQuestionType,
   isTargetLane,
   isVisualComponent,
@@ -14,6 +15,7 @@ import {
   type ModulesDatabase,
   NOTATION_DURATIONS,
   type NotationBuilderTaskConfig,
+  type PracticeBlock,
   type QuizSettings,
   type TargetLane,
   type TheoryBlock,
@@ -29,6 +31,8 @@ export interface ModuleSummary {
   moduleId: string;
   theoryBlockCount: number;
   theoryXp: number;
+  practiceBlockCount: number;
+  practiceXp: number;
   questionCounts: Record<TargetLane, number> & { total: number };
   laneXp: Record<TargetLane, number>;
   questionsXp: number;
@@ -39,7 +43,7 @@ export type UpsertModuleInput = Partial<LearningModule> &
   Pick<LearningModule, "id" | "title">;
 
 export type UpsertQuestionInput = Partial<ModuleQuestion> &
-  Pick<ModuleQuestion, "id" | "moduleId" | "questionType" | "prompt">;
+  Pick<ModuleQuestion, "id" | "moduleIds" | "questionType" | "prompt">;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -74,6 +78,48 @@ function validateScoreThreshold(
     value > 1
   ) {
     errors.push(`${label} muss eine Zahl zwischen 0 und 1 sein.`);
+  }
+}
+
+function validatePracticeBlocks(blocks: unknown, errors: string[]): void {
+  if (blocks === undefined) return;
+  if (!Array.isArray(blocks)) {
+    errors.push("practiceBlocks muss ein Array sein.");
+    return;
+  }
+
+  const ids = new Set<string>();
+  for (let index = 0; index < blocks.length; index += 1) {
+    const block = blocks[index];
+    const prefix = `practiceBlocks[${index}]`;
+    if (!isRecord(block)) {
+      errors.push(`${prefix} muss ein Objekt sein.`);
+      continue;
+    }
+    if (!isNonEmptyString(block.id)) {
+      errors.push(`${prefix}.id darf nicht leer sein.`);
+    } else if (ids.has(block.id.trim())) {
+      errors.push(`${prefix}.id muss eindeutig sein.`);
+    } else {
+      ids.add(block.id.trim());
+    }
+    if (!isNonEmptyString(block.title)) {
+      errors.push(`${prefix}.title darf nicht leer sein.`);
+    }
+    if (typeof block.markdownContent !== "string") {
+      errors.push(`${prefix}.markdownContent muss ein String sein.`);
+    }
+    if (
+      block.baseXp !== undefined &&
+      (typeof block.baseXp !== "number" ||
+        !Number.isFinite(block.baseXp) ||
+        block.baseXp < 0)
+    ) {
+      errors.push(`${prefix}.baseXp muss eine Zahl >= 0 sein.`);
+    }
+    if (block.tags !== undefined && !isStringArray(block.tags, true)) {
+      errors.push(`${prefix}.tags muss aus nicht-leeren Strings bestehen.`);
+    }
   }
 }
 
@@ -329,12 +375,6 @@ export function validateModuleInput(input: unknown): ValidationResult {
     errors.push("tags muss ein Array aus nicht-leeren Strings sein.");
   }
   if (
-    input.hasPractice !== undefined &&
-    typeof input.hasPractice !== "boolean"
-  ) {
-    errors.push("hasPractice muss ein Boolean sein.");
-  }
-  if (
     input.theoryBaseXp !== undefined &&
     (typeof input.theoryBaseXp !== "number" ||
       !Number.isFinite(input.theoryBaseXp) ||
@@ -346,6 +386,7 @@ export function validateModuleInput(input: unknown): ValidationResult {
   validateScoreThreshold(input.quizEasyMinScore, "quizEasyMinScore", errors);
   validateScoreThreshold(input.fastlaneMinScore, "fastlaneMinScore", errors);
   validateTheoryBlocks(input.theoryBlocks, errors);
+  validatePracticeBlocks(input.practiceBlocks, errors);
   if (input.contentOrder !== undefined) {
     if (!Array.isArray(input.contentOrder)) {
       errors.push("contentOrder muss ein Array sein.");
@@ -356,7 +397,9 @@ export function validateModuleInput(input: unknown): ValidationResult {
       for (const entry of input.contentOrder) {
         if (
           !isRecord(entry) ||
-          (entry.kind !== "theory" && entry.kind !== "exercise") ||
+          (entry.kind !== "theory" &&
+            entry.kind !== "exercise" &&
+            entry.kind !== "practice") ||
           !isNonEmptyString(entry.id)
         ) {
           errors.push("contentOrder enthält einen ungültigen Eintrag.");
@@ -431,12 +474,25 @@ export function validateQuestionInput(
     errors.push("Aufgaben-ID darf nicht leer sein.");
   }
 
-  if (!isNonEmptyString(input.moduleId)) {
-    errors.push("moduleId ist erforderlich.");
+  if (!isStringArray(input.moduleIds, true)) {
+    errors.push("moduleIds muss ein Array aus nicht-leeren Strings sein.");
   } else {
-    const targetModuleId = input.moduleId.trim();
-    if (!moduleList.some((mod) => mod.id === targetModuleId)) {
-      errors.push(`Referenziertes Modul '${targetModuleId}' existiert nicht.`);
+    const targetModuleIds = input.moduleIds.map((id) => id.trim());
+    if (new Set(targetModuleIds).size !== targetModuleIds.length) {
+      errors.push("moduleIds darf keine doppelten Einträge enthalten.");
+    }
+    for (const targetModuleId of targetModuleIds) {
+      if (!moduleList.some((mod) => mod.id === targetModuleId)) {
+        errors.push(
+          `Referenziertes Modul '${targetModuleId}' existiert nicht.`,
+        );
+      }
+    }
+    if (
+      (input.targetLane === undefined || input.targetLane === "leicht") &&
+      targetModuleIds.length !== 1
+    ) {
+      errors.push("Lernpfad-Aufgaben (leicht) benötigen genau ein Modul.");
     }
   }
 
@@ -483,6 +539,16 @@ export function validateQuestionInput(
   }
 
   return { valid: errors.length === 0, errors };
+}
+
+function clonePracticeBlock(block: PracticeBlock): PracticeBlock {
+  return {
+    id: block.id.trim(),
+    title: block.title.trim(),
+    markdownContent: block.markdownContent,
+    ...(block.baseXp !== undefined ? { baseXp: block.baseXp } : {}),
+    ...(block.tags !== undefined ? { tags: [...block.tags] } : {}),
+  };
 }
 
 function cloneTheoryBlock(block: TheoryBlock): TheoryBlock {
@@ -554,8 +620,6 @@ export function upsertModule(
     level: moduleData.level ?? existing?.level ?? 100,
     ...(dStage !== undefined ? { dStage } : {}),
     tags: [...(moduleData.tags ?? existing?.tags ?? [])],
-    hasPractice:
-      moduleData.hasPractice ?? existing?.hasPractice ?? scope !== "theory",
     theoryBaseXp:
       moduleData.theoryBaseXp ??
       existing?.theoryBaseXp ??
@@ -571,6 +635,11 @@ export function upsertModule(
     theoryBlocks: (moduleData.theoryBlocks ?? existing?.theoryBlocks ?? []).map(
       cloneTheoryBlock,
     ),
+    practiceBlocks: (
+      moduleData.practiceBlocks ??
+      existing?.practiceBlocks ??
+      []
+    ).map(clonePracticeBlock),
     ...((moduleData.contentOrder ?? existing?.contentOrder) !== undefined
       ? {
           contentOrder: (
@@ -626,7 +695,10 @@ export function moveModule(
   };
 }
 
-/** Entfernt ein Modul sowie kaskadierend alle zugehörigen Aufgaben. */
+/**
+ * Entfernt ein Modul. Lernpfad-Aufgaben (`leicht`) des Moduls werden mitgelöscht;
+ * Quizfragen (`mittel`/`schwer`) verlieren nur die Zuordnung und bleiben im Pool.
+ */
 export function deleteModule(
   db: ModulesDatabase,
   moduleId: string,
@@ -634,9 +706,20 @@ export function deleteModule(
   return {
     ...db,
     modules: db.modules.filter((mod) => mod.id !== moduleId),
-    questions: db.questions.filter(
-      (question) => question.moduleId !== moduleId,
-    ),
+    questions: db.questions
+      .filter(
+        (question) =>
+          question.targetLane !== "leicht" ||
+          !isQuestionInModule(question, moduleId),
+      )
+      .map((question) =>
+        isQuestionInModule(question, moduleId)
+          ? {
+              ...question,
+              moduleIds: question.moduleIds.filter((id) => id !== moduleId),
+            }
+          : question,
+      ),
   };
 }
 
@@ -655,11 +738,11 @@ export function upsertQuestion(
   }
 
   const id = questionData.id.trim();
-  const moduleId = questionData.moduleId.trim();
+  const moduleIds = [...new Set(questionData.moduleIds.map((id) => id.trim()))];
   const existingIndex = db.questions.findIndex((q) => q.id === id);
   const existing = existingIndex >= 0 ? db.questions[existingIndex] : undefined;
   const targetLane =
-    questionData.targetLane ?? existing?.targetLane ?? "exercise";
+    questionData.targetLane ?? existing?.targetLane ?? "leicht";
   const options = questionData.options ?? existing?.options;
   const notationTask =
     questionData.questionType === "interactive_notation"
@@ -668,7 +751,7 @@ export function upsertQuestion(
 
   const normalizedQuestion: ModuleQuestion = {
     id,
-    moduleId,
+    moduleIds,
     targetLane,
     questionType: questionData.questionType,
     prompt: questionData.prompt.trim(),
@@ -744,21 +827,27 @@ export function getModuleSummary(
     (total, block) => total + calculateTheoryBlockXp(block, mod.theoryBaseXp),
     0,
   );
+  const practiceXp = mod.practiceBlocks.reduce(
+    (total, block) =>
+      total +
+      calculateTheoryBlockXp(block, BASE_XP_DEFAULTS.practice),
+    0,
+  );
   const questionCounts: Record<TargetLane, number> & { total: number } = {
-    exercise: 0,
-    quiz_easy: 0,
-    fastlane: 0,
+    leicht: 0,
+    mittel: 0,
+    schwer: 0,
     total: 0,
   };
   const laneXp: Record<TargetLane, number> = {
-    exercise: 0,
-    quiz_easy: 0,
-    fastlane: 0,
+    leicht: 0,
+    mittel: 0,
+    schwer: 0,
   };
 
   let questionsXp = 0;
   for (const question of db.questions) {
-    if (question.moduleId !== moduleId) continue;
+    if (!isQuestionInModule(question, moduleId)) continue;
     const xp = calculateQuestionXp(question.baseXp, question.tags);
     questionCounts[question.targetLane] += 1;
     questionCounts.total += 1;
@@ -770,9 +859,11 @@ export function getModuleSummary(
     moduleId: mod.id,
     theoryBlockCount,
     theoryXp,
+    practiceBlockCount: mod.practiceBlocks.length,
+    practiceXp,
     questionCounts,
     laneXp,
     questionsXp,
-    totalXp: theoryXp + questionsXp,
+    totalXp: theoryXp + practiceXp + questionsXp,
   };
 }

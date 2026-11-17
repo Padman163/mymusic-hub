@@ -92,7 +92,7 @@ Dort gibt es vier übersichtliche Reiter:
   - **Direktes Bearbeiten & Löschen:** Ein Klick auf den Stift eines Moduls öffnet seine eigene Detailseite; Fragen werden weiterhin im Aufgaben-Reiter bearbeitet. Beim Löschen eines Moduls erinnert eine Sicherheitsabfrage daran, dass alle dazugehörigen Aufgaben mitgelöscht werden.
   - **Reihenfolge ändern:** In der Sortierung „Reihenfolge: 1 → N“ ohne Bereichsfilter verschieben die Pfeile ein Modul jeweils um eine Position. Die Reihenfolge wird dauerhaft gespeichert und gilt für den Lernpfad.
 
-### 2. Reiter „Theorie“ (`src/components/project/ModuleBuilderForm.astro`)
+### 2. Reiter „Modul erstellen“ (`src/components/project/ModuleBuilderForm.astro`)
 - **Wozu er dient:** Hier legst du neue Lernmodule an oder bearbeitest bestehende Module.
 - **Was du einstellen kannst:**
   - **Grunddaten:** Die allgemeinen Informationen sind zunächst eingeklappt. Die eindeutige Modul-ID wird automatisch erstellt und beim Bearbeiten beibehalten. Neue Module werden automatisch hinter dem Modul mit der höchsten Reihenfolge eingefügt; beim Bearbeiten bleibt ihre Position erhalten. Einstellbar sind Titel, Kurzbeschreibung, Bereich (`Theorie`, `Instrument`, `Produktion`, `Band`), Level (`100` bis `500`) und optional die D-Stufe (`D1`, `D2`, `D3`).

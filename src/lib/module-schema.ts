@@ -17,7 +17,7 @@ export type ModuleScope = (typeof MODULE_SCOPES)[number];
 export const D_STAGES = ["D1", "D2", "D3"] as const;
 export type DStage = (typeof D_STAGES)[number];
 
-export const TARGET_LANES = ["exercise", "quiz_easy", "fastlane"] as const;
+export const TARGET_LANES = ["leicht", "mittel", "schwer"] as const;
 export type TargetLane = (typeof TARGET_LANES)[number];
 
 export const QUESTION_TYPES = [
@@ -93,8 +93,16 @@ export interface TheoryBlock {
   visualPropsJson?: string;
 }
 
+export interface PracticeBlock {
+  id: string;
+  title: string;
+  markdownContent: string;
+  baseXp?: number;
+  tags?: string[];
+}
+
 export interface ModuleContentReference {
-  kind: "theory" | "exercise";
+  kind: "theory" | "exercise" | "practice";
   id: string;
   groupId?: string;
   groupTitle?: string;
@@ -115,7 +123,8 @@ export interface NotationBuilderTaskConfig {
 
 export interface ModuleQuestion {
   id: string;
-  moduleId: string;
+  /** Module, in denen die Frage verwendet wird; Lernpfad-Aufgaben (`leicht`) gehören genau einem Modul. */
+  moduleIds: string[];
   targetLane: TargetLane;
   questionType: QuestionType;
   prompt: string;
@@ -136,11 +145,11 @@ export interface LearningModule {
   level: number;
   dStage?: DStage;
   tags: string[];
-  hasPractice: boolean;
   theoryBaseXp: number;
   quizEasyMinScore: number;
   fastlaneMinScore: number;
   theoryBlocks: TheoryBlock[];
+  practiceBlocks: PracticeBlock[];
   contentOrder?: ModuleContentReference[];
   createdAt: string;
   updatedAt: string;
@@ -150,6 +159,44 @@ export interface ModulesDatabase {
   modules: LearningModule[];
   questions: ModuleQuestion[];
   quizSettings?: QuizSettings;
+}
+
+const LEGACY_LANES: Record<string, TargetLane> = {
+  exercise: "leicht",
+  quiz_easy: "mittel",
+  fastlane: "schwer",
+};
+
+/** Überführt Daten im alten Format (moduleId, quiz_easy, hasPractice) ins aktuelle Modell. */
+export function normalizeLegacyDatabase(db: ModulesDatabase): ModulesDatabase {
+  return {
+    ...db,
+    modules: db.modules.map((mod) => {
+      const { hasPractice: _legacy, ...rest } = mod as LearningModule & {
+        hasPractice?: boolean;
+      };
+      return {
+        ...rest,
+        practiceBlocks: Array.isArray(rest.practiceBlocks)
+          ? rest.practiceBlocks
+          : [],
+      };
+    }),
+    questions: db.questions.map((question) => {
+      const { moduleId, ...rest } = question as ModuleQuestion & {
+        moduleId?: string;
+      };
+      return {
+        ...rest,
+        targetLane: LEGACY_LANES[rest.targetLane] ?? rest.targetLane,
+        moduleIds: Array.isArray(rest.moduleIds)
+          ? rest.moduleIds
+          : moduleId
+            ? [moduleId]
+            : [],
+      };
+    }),
+  };
 }
 
 export function isModuleScope(value: unknown): value is ModuleScope {
@@ -187,11 +234,19 @@ export function isVisualComponent(
 /** Liefert die Standard-Basis-XP passend zur Ziel-Lane einer Aufgabe. */
 export function getDefaultBaseXpForLane(lane: TargetLane): number {
   switch (lane) {
-    case "exercise":
-      return BASE_XP_DEFAULTS.exercise;
-    case "quiz_easy":
-      return BASE_XP_DEFAULTS.quizEasy;
-    case "fastlane":
-      return BASE_XP_DEFAULTS.fastlane;
+    case "leicht":
+      return BASE_XP_DEFAULTS.leicht;
+    case "mittel":
+      return BASE_XP_DEFAULTS.mittel;
+    case "schwer":
+      return BASE_XP_DEFAULTS.schwer;
   }
+}
+
+/** Prüft, ob eine Frage dem Modul zugeordnet ist. */
+export function isQuestionInModule(
+  question: Pick<ModuleQuestion, "moduleIds">,
+  moduleId: string,
+): boolean {
+  return question.moduleIds.includes(moduleId);
 }

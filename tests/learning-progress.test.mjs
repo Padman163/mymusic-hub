@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   clearLearningProgress,
-  completePracticeStep,
+  completePracticeBlock,
   completeTheoryBlock,
   completeTheoryStep,
   createInitialProgress,
@@ -45,9 +45,9 @@ describe("Übergreifende Quiz-Einstellungen", () => {
     const db = buildTestDatabase();
     const changed = updateQuizSettings(db, { quizEasyMinScore: 0.9, fastlaneMinScore: 0.95 });
     let state = createInitialProgress(db.modules, changed.quizSettings);
-    state = submitQuizAttempt(state, changed, db.modules[0].id, "fastlane", 0.9);
+    state = submitQuizAttempt(state, changed, db.modules[0].id, "schwer", 0.9);
     expect(state.modules[db.modules[0].id].status).not.toBe("completed");
-    state = submitQuizAttempt(state, changed, db.modules[0].id, "fastlane", 0.95);
+    state = submitQuizAttempt(state, changed, db.modules[0].id, "schwer", 0.95);
     expect(state.modules[db.modules[0].id].status).toBe("completed");
   });
 });
@@ -62,7 +62,6 @@ function buildTestDatabase() {
     scope: "theory",
     level: 100,
     tags: ["Notensystem", "Violinschlüssel"],
-    hasPractice: false,
     theoryBaseXp: 30,
     theoryBlocks: [{ id: "tb-1", order: 1, title: "Theorie", markdownContent: "", tags: ["Notensystem", "Violinschlüssel"] }],
     quizEasyMinScore: 0.8,
@@ -76,9 +75,9 @@ function buildTestDatabase() {
     scope: "instrument",
     level: 100,
     tags: ["Gitarre", "Tabulatur"],
-    hasPractice: true,
     theoryBaseXp: 30,
     theoryBlocks: [{ id: "tb-2", order: 1, title: "Theorie", markdownContent: "", tags: ["Gitarre"] }],
+    practiceBlocks: [{ id: "pb-2", title: "Akkord greifen", markdownContent: "", tags: ["Gitarre"] }],
     quizEasyMinScore: 0.8,
     fastlaneMinScore: 0.85,
   });
@@ -90,7 +89,6 @@ function buildTestDatabase() {
     scope: "theory",
     level: 200,
     tags: ["Rhythmus"],
-    hasPractice: false,
     theoryBaseXp: 30,
     theoryBlocks: [{ id: "tb-3", order: 1, title: "Theorie", markdownContent: "", tags: ["Rhythmus"] }],
   });
@@ -99,8 +97,8 @@ function buildTestDatabase() {
   // q-1: 10 * 1.5 = 15 XP
   db = upsertQuestion(db, {
     id: "q-1",
-    moduleId: "mod-theory-1",
-    targetLane: "exercise",
+    moduleIds: ["mod-theory-1"],
+    targetLane: "leicht",
     questionType: "numeric_input",
     prompt: "Welche Frequenz hat A4?",
     correctAnswers: ["440"],
@@ -111,8 +109,8 @@ function buildTestDatabase() {
   // q-2: 10 * 1.0 = 10 XP
   db = upsertQuestion(db, {
     id: "q-2",
-    moduleId: "mod-theory-1",
-    targetLane: "exercise",
+    moduleIds: ["mod-theory-1"],
+    targetLane: "leicht",
     questionType: "single_choice",
     prompt: "Wofür steht der Violinschlüssel?",
     options: ["G4", "F3"],
@@ -124,8 +122,8 @@ function buildTestDatabase() {
   // q-3: 15 * 1.0 = 15 XP
   db = upsertQuestion(db, {
     id: "q-3",
-    moduleId: "mod-theory-1",
-    targetLane: "quiz_easy",
+    moduleIds: ["mod-theory-1"],
+    targetLane: "mittel",
     questionType: "single_choice",
     prompt: "Wie viele Linien hat das Notensystem?",
     options: ["4", "5"],
@@ -137,8 +135,8 @@ function buildTestDatabase() {
   // q-4: 25 * 1.5 = 38 XP
   db = upsertQuestion(db, {
     id: "q-4",
-    moduleId: "mod-theory-1",
-    targetLane: "fastlane",
+    moduleIds: ["mod-theory-1"],
+    targetLane: "schwer",
     questionType: "interactive_notation",
     prompt: "Setze G4 in den Violinschlüssel.",
     notationTask: { clef: "treble", expectedPitches: ["G4"] },
@@ -150,8 +148,8 @@ function buildTestDatabase() {
   // q-5: 10 * 1.2 = 12 XP
   db = upsertQuestion(db, {
     id: "q-5",
-    moduleId: "mod-guitar-2",
-    targetLane: "exercise",
+    moduleIds: ["mod-guitar-2"],
+    targetLane: "leicht",
     questionType: "single_choice",
     prompt: "Wie viele Saiten hat die Standard-Gitarre?",
     options: ["5", "6"],
@@ -163,8 +161,8 @@ function buildTestDatabase() {
   // q-6: 15 * 1.2 = 18 XP
   db = upsertQuestion(db, {
     id: "q-6",
-    moduleId: "mod-guitar-2",
-    targetLane: "quiz_easy",
+    moduleIds: ["mod-guitar-2"],
+    targetLane: "mittel",
     questionType: "numeric_input",
     prompt: "Auf welchem Bund greift man A auf der G-Saite?",
     correctAnswers: ["2"],
@@ -175,8 +173,8 @@ function buildTestDatabase() {
   // q-7: 25 * 1.2 = 30 XP
   db = upsertQuestion(db, {
     id: "q-7",
-    moduleId: "mod-guitar-2",
-    targetLane: "fastlane",
+    moduleIds: ["mod-guitar-2"],
+    targetLane: "schwer",
     questionType: "single_choice",
     prompt: "Welcher Ton klingt auf der leeren A-Saite?",
     options: ["A2", "E2"],
@@ -203,24 +201,27 @@ describe("Lernfortschritts- & XP-Engine (learning-progress)", () => {
     state = recordExerciseAnswer(state, mod, q1, true, db.questions);
     state = recordExerciseAnswer(state, mod, q2, true, db.questions);
     expect(state.totalXp).toBe(25);
-    expect(state.modules[mod.id].steps.exercise).toBe("unlocked");
-    expect(state.modules[mod.id].steps.quiz_easy).toBe("locked");
+    expect(state.modules[mod.id].steps.leicht).toBe("unlocked");
+    expect(state.modules[mod.id].steps.mittel).toBe("locked");
     state = completeTheoryBlock(state, mod, "tb-1", db.questions);
     expect(state.totalXp).toBe(70);
-    expect(state.modules[mod.id].steps.exercise).toBe("completed");
-    expect(state.modules[mod.id].steps.quiz_easy).toBe("unlocked");
+    expect(state.modules[mod.id].steps.leicht).toBe("completed");
+    expect(state.modules[mod.id].steps.mittel).toBe("unlocked");
     expect(recordExerciseAnswer(state, mod, q1, true, db.questions).totalXp).toBe(70);
   });
 
   it("schaltet ohne Übungen nach der Theorie direkt den Praxisteil frei", () => {
     const db = buildTestDatabase();
-    const mod = { ...db.modules[0], hasPractice: true };
+    const mod = {
+      ...db.modules[0],
+      practiceBlocks: [{ id: "pb-1", title: "Üben", markdownContent: "" }],
+    };
     const state = completeTheoryBlock(
       createInitialProgress([mod]), mod, "tb-1", [],
     );
-    expect(state.modules[mod.id].steps.exercise).toBe("completed");
+    expect(state.modules[mod.id].steps.leicht).toBe("completed");
     expect(state.modules[mod.id].steps.practice).toBe("unlocked");
-    expect(state.modules[mod.id].steps.quiz_easy).toBe("locked");
+    expect(state.modules[mod.id].steps.mittel).toBe("locked");
   });
 
   it("vergibt Block-XP einzeln, speichert den Fortschritt und vergütet Fastlane nur offene Blöcke", () => {
@@ -235,13 +236,13 @@ describe("Lernfortschritts- & XP-Engine (learning-progress)", () => {
     expect(state.totalXp).toBe(24);
     expect(state.xpByTag.Rhythmus).toBe(24);
     expect(state.xpByTag.Notensystem).toBe(0);
-    expect(state.modules[mod.id].steps.exercise).toBe("locked");
+    expect(state.modules[mod.id].steps.leicht).toBe("locked");
     expect(completeTheoryBlock(state, mod, "a")).toBe(state);
     expect(completeTheoryStep(state, mod)).toBe(state);
     saveLearningProgress(state);
     state = loadLearningProgress(db.modules);
     expect(state.modules[mod.id].completedTheoryBlockIds).toEqual(["a"]);
-    state = submitQuizAttempt(state, db, mod.id, "fastlane", 1);
+    state = submitQuizAttempt(state, db, mod.id, "schwer", 1);
     expect(state.totalXp).toBe(24 + 30 + 78);
     expect(state.modules[mod.id].completedTheoryBlockIds).toEqual(["a", "b"]);
     expect(completeTheoryBlock(state, mod, "b")).toBe(state);
@@ -256,7 +257,7 @@ describe("Lernfortschritts- & XP-Engine (learning-progress)", () => {
     saveLearningProgress(state);
     const restored = loadLearningProgress(db.modules);
     expect(completeTheoryBlock(restored, db.modules[0], "tb-1")).toBe(restored);
-    expect(submitQuizAttempt(restored, db, db.modules[0].id, "fastlane", 1).totalXp).toBe(45 + 78);
+    expect(submitQuizAttempt(restored, db, db.modules[0].id, "schwer", 1).totalXp).toBe(45 + 78);
   });
 
   it("initialisiert Modul 1 offen und Folgemodule gesperrt und synchronisiert neue Module ohne Verlust", () => {
@@ -267,9 +268,9 @@ describe("Lernfortschritts- & XP-Engine (learning-progress)", () => {
     expect(initial.modules["mod-theory-1"].status).toBe("unlocked");
     expect(initial.modules["mod-theory-1"].steps).toEqual({
       theory: "unlocked",
-      exercise: "locked",
+      leicht: "locked",
       practice: "locked",
-      quiz_easy: "locked",
+      mittel: "locked",
     });
     expect(initial.modules["mod-rhythm-3"].status).toBe("locked");
 
@@ -277,7 +278,7 @@ describe("Lernfortschritts- & XP-Engine (learning-progress)", () => {
     const synced = syncProgressWithCurriculum(afterTheory, db.modules);
 
     expect(synced.modules["mod-theory-1"].steps.theory).toBe("completed");
-    expect(synced.modules["mod-theory-1"].steps.exercise).toBe("unlocked");
+    expect(synced.modules["mod-theory-1"].steps.leicht).toBe("unlocked");
     expect(synced.modules["mod-guitar-2"].status).toBe("locked");
     expect(synced.modules["mod-rhythm-3"].status).toBe("locked");
     expect(synced.totalXp).toBe(45);
@@ -288,44 +289,44 @@ describe("Lernfortschritts- & XP-Engine (learning-progress)", () => {
     const mod1 = db.modules[0];
     const q1 = db.questions.find((q) => q.id === "q-1");
     const q2 = db.questions.find((q) => q.id === "q-2");
-    expect(mod1.hasPractice).toBe(false);
+    expect(mod1.practiceBlocks).toEqual([]);
     if (!q1 || !q2) throw new Error("Testaufgaben fehlen");
 
     let state = createInitialProgress(db.modules);
     state = completeTheoryBlock(state, mod1, "tb-1");
     expect(state.totalXp).toBe(45); // 30 * 1.5
-    expect(state.modules[mod1.id].steps.exercise).toBe("unlocked");
+    expect(state.modules[mod1.id].steps.leicht).toBe("unlocked");
 
     // Erste Aufgabe gelöst, zweite noch offen -> exercise bleibt unlocked
     state = recordExerciseAnswer(state, mod1, q1, true, db.questions);
     expect(state.totalXp).toBe(60); // +15
-    expect(state.modules[mod1.id].steps.exercise).toBe("unlocked");
-    expect(state.modules[mod1.id].steps.quiz_easy).toBe("locked");
+    expect(state.modules[mod1.id].steps.leicht).toBe("unlocked");
+    expect(state.modules[mod1.id].steps.mittel).toBe("locked");
 
-    // Zweite Aufgabe gelöst -> überspringt practice direkt zu quiz_easy
+    // Zweite Aufgabe gelöst -> überspringt practice direkt zu mittel
     state = recordExerciseAnswer(state, mod1, q2, true, db.questions);
     expect(state.totalXp).toBe(70); // +10
-    expect(state.modules[mod1.id].steps.exercise).toBe("completed");
+    expect(state.modules[mod1.id].steps.leicht).toBe("completed");
     expect(state.modules[mod1.id].steps.practice).toBe("locked");
-    expect(state.modules[mod1.id].steps.quiz_easy).toBe("unlocked");
+    expect(state.modules[mod1.id].steps.mittel).toBe("unlocked");
 
     // Zu niedriger Quiz-Score (< 0.80) schaltet Modul 2 noch nicht frei
-    state = submitQuizAttempt(state, db, mod1.id, "quiz_easy", 0.75);
+    state = submitQuizAttempt(state, db, mod1.id, "mittel", 0.75);
     expect(state.modules[mod1.id].status).toBe("unlocked");
     expect(state.modules[mod1.id].bestQuizEasyScore).toBe(0.75);
     expect(state.modules["mod-guitar-2"].status).toBe("locked");
 
     // Bestandenes Abschluss-Quiz (>= 0.80) schaltet Modul 2 frei
-    state = submitQuizAttempt(state, db, mod1.id, "quiz_easy", 0.8);
+    state = submitQuizAttempt(state, db, mod1.id, "mittel", 0.8);
     expect(state.totalXp).toBe(85); // +15 für q-3
-    expect(state.modules[mod1.id].steps.quiz_easy).toBe("completed");
+    expect(state.modules[mod1.id].steps.mittel).toBe("completed");
     expect(state.modules[mod1.id].status).toBe("completed");
     expect(state.modules[mod1.id].completedVia).toBe("normal");
     expect(state.modules["mod-guitar-2"].status).toBe("unlocked");
     expect(state.modules["mod-guitar-2"].steps.theory).toBe("unlocked");
   });
 
-  it("erzwingt bei Instrumenten-Modulen (hasPractice: true) den Praxisschritt vor quiz_easy", () => {
+  it("erzwingt bei Instrumenten-Modulen (Praxisaufgaben) den Praxisschritt vor mittel", () => {
     const db = buildTestDatabase();
     const mod1 = db.modules[0];
     const mod2 = db.modules[1];
@@ -333,22 +334,25 @@ describe("Lernfortschritts- & XP-Engine (learning-progress)", () => {
     if (!q5) throw new Error("Testaufgabe q-5 fehlt");
 
     let state = createInitialProgress(db.modules);
-    state = submitQuizAttempt(state, db, mod1.id, "fastlane", 0.9);
+    state = submitQuizAttempt(state, db, mod1.id, "schwer", 0.9);
     expect(state.modules[mod2.id].status).toBe("unlocked");
 
-    // completePracticeStep bleibt bei reinen Theorie-Modulen wirkungslos
-    expect(completePracticeStep(state, mod1)).toBe(state);
+    // Unbekannte Praxisaufgaben bleiben wirkungslos
+    expect(completePracticeBlock(state, mod1, "pb-x")).toBe(state);
 
     state = completeTheoryBlock(state, mod2, "tb-2");
     state = recordExerciseAnswer(state, mod2, q5, true, db.questions);
 
-    expect(state.modules[mod2.id].steps.exercise).toBe("completed");
+    expect(state.modules[mod2.id].steps.leicht).toBe("completed");
     expect(state.modules[mod2.id].steps.practice).toBe("unlocked");
-    expect(state.modules[mod2.id].steps.quiz_easy).toBe("locked");
+    expect(state.modules[mod2.id].steps.mittel).toBe("locked");
 
-    state = completePracticeStep(state, mod2);
+    const xpBefore = state.totalXp;
+    state = completePracticeBlock(state, mod2, "pb-2");
+    expect(state.totalXp).toBe(xpBefore + 24); // 20 * 1.2
     expect(state.modules[mod2.id].steps.practice).toBe("completed");
-    expect(state.modules[mod2.id].steps.quiz_easy).toBe("unlocked");
+    expect(state.modules[mod2.id].steps.mittel).toBe("unlocked");
+    expect(completePracticeBlock(state, mod2, "pb-2")).toBe(state);
   });
 
   it("verhindert doppelte XP bei wiederholtem Lösen desselben Schritts oder derselben Aufgabe", () => {
@@ -370,11 +374,11 @@ describe("Lernfortschritts- & XP-Engine (learning-progress)", () => {
     expect(state.totalXp).toBe(60);
     expect(state.modules[mod1.id].solvedQuestionIds).toEqual(["q-1"]);
 
-    // Über quiz_easy wird bereits gelöstes q-1 nicht doppelt bezahlt
+    // Über mittel wird bereits gelöstes q-1 nicht doppelt bezahlt
     state = completeTheoryStep(state, mod1);
-    state = submitQuizAttempt(state, db, mod1.id, "quiz_easy", 1.0);
+    state = submitQuizAttempt(state, db, mod1.id, "mittel", 1.0);
     const xpAfterFirstQuiz = state.totalXp;
-    state = submitQuizAttempt(state, db, mod1.id, "quiz_easy", 1.0);
+    state = submitQuizAttempt(state, db, mod1.id, "mittel", 1.0);
     expect(state.totalXp).toBe(xpAfterFirstQuiz);
   });
 
@@ -387,21 +391,21 @@ describe("Lernfortschritts- & XP-Engine (learning-progress)", () => {
     expect(state.totalXp).toBe(45);
 
     // Offene Aufgaben von Modul 1: q-1 (15) + q-2 (10) + q-3 (15) + q-4 (38) = 78 XP
-    state = submitQuizAttempt(state, db, mod1.id, "fastlane", 0.85);
+    state = submitQuizAttempt(state, db, mod1.id, "schwer", 0.85);
     expect(state.totalXp).toBe(123); // 45 + 78 (ohne doppelte Theorie-XP)
     expect(state.modules[mod1.id].status).toBe("completed");
     expect(state.modules[mod1.id].completedVia).toBe("fastlane");
     expect(state.modules[mod1.id].bestFastlaneScore).toBe(0.85);
     expect(state.modules[mod1.id].steps).toEqual({
       theory: "completed",
-      exercise: "completed",
+      leicht: "completed",
       practice: "completed",
-      quiz_easy: "completed",
+      mittel: "completed",
     });
     expect(state.modules["mod-guitar-2"].status).toBe("unlocked");
 
     // Fastlane funktioniert auch direkt auf einem noch gesperrten Modul (mod-rhythm-3)
-    state = submitQuizAttempt(state, db, "mod-rhythm-3", "fastlane", 0.9);
+    state = submitQuizAttempt(state, db, "mod-rhythm-3", "schwer", 0.9);
     expect(state.modules["mod-rhythm-3"].status).toBe("completed");
     expect(state.modules["mod-rhythm-3"].completedVia).toBe("fastlane");
   });
@@ -414,7 +418,7 @@ describe("Lernfortschritts- & XP-Engine (learning-progress)", () => {
       initial,
       db,
       "mod-guitar-2",
-      "fastlane",
+      "schwer",
       0.84,
     );
 
@@ -455,7 +459,7 @@ describe("Lernfortschritts- & XP-Engine (learning-progress)", () => {
       },
     });
 
-    state = submitQuizAttempt(state, db, "mod-theory-1", "fastlane", 1.0); // 123 XP
+    state = submitQuizAttempt(state, db, "mod-theory-1", "schwer", 1.0); // 123 XP
     const boostedState = {
       ...state,
       totalXp: 625,

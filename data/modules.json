@@ -100,7 +100,6 @@
         "Tabulatur",
         "Gitarre"
       ],
-      "hasPractice": true,
       "theoryBaseXp": 30,
       "quizEasyMinScore": 0.8,
       "fastlaneMinScore": 0.85,
@@ -122,14 +121,14 @@
         }
       ],
       "createdAt": "2026-11-16T00:00:00.000Z",
-      "updatedAt": "2026-11-16T07:40:37.982Z"
+      "updatedAt": "2026-11-16T07:40:37.982Z",
+      "practiceBlocks": []
     }
   ],
   "questions": [
     {
       "id": "q-101-ex-1",
-      "moduleId": "theory-101",
-      "targetLane": "exercise",
+      "targetLane": "leicht",
       "questionType": "numeric_input",
       "prompt": "Welche Frequenz (in Hz) hat eine Oktave über dem Kammerton A4 (440 Hz)?",
       "correctAnswers": [
@@ -140,12 +139,14 @@
       "baseXp": 10,
       "tags": [
         "Allgemein"
+      ],
+      "moduleIds": [
+        "theory-101"
       ]
     },
     {
       "id": "q-101-ex-2",
-      "moduleId": "theory-101",
-      "targetLane": "exercise",
+      "targetLane": "leicht",
       "questionType": "interactive_notation",
       "prompt": "Setze eine Viertelnote auf die zweite Linie von unten (G4) im Violinschlüssel.",
       "correctAnswers": [],
@@ -165,12 +166,14 @@
       "tags": [
         "Notensystem",
         "Violinschlüssel"
+      ],
+      "moduleIds": [
+        "theory-101"
       ]
     },
     {
       "id": "q-101-qe-1",
-      "moduleId": "theory-101",
-      "targetLane": "quiz_easy",
+      "targetLane": "mittel",
       "questionType": "single_choice",
       "prompt": "Wie viele parallele Linien besitzt ein reguläres Notensystem?",
       "options": [
@@ -185,12 +188,14 @@
       "baseXp": 15,
       "tags": [
         "Notensystem"
+      ],
+      "moduleIds": [
+        "theory-101"
       ]
     },
     {
       "id": "q-101-qe-2",
-      "moduleId": "theory-101",
-      "targetLane": "quiz_easy",
+      "targetLane": "mittel",
       "questionType": "multi_select",
       "prompt": "Welche Aussagen zum Kammerton A4 treffen zu?",
       "options": [
@@ -206,12 +211,14 @@
       "baseXp": 15,
       "tags": [
         "Allgemein"
+      ],
+      "moduleIds": [
+        "theory-101"
       ]
     },
     {
       "id": "q-101-fl-1",
-      "moduleId": "theory-101",
-      "targetLane": "fastlane",
+      "targetLane": "schwer",
       "questionType": "numeric_input",
       "prompt": "Berechne die Frequenz zwei Oktaven über 220 Hz (Angabe in Hz).",
       "correctAnswers": [
@@ -222,12 +229,14 @@
       "baseXp": 25,
       "tags": [
         "Allgemein"
+      ],
+      "moduleIds": [
+        "theory-101"
       ]
     },
     {
       "id": "q-101-fl-2",
-      "moduleId": "theory-101",
-      "targetLane": "fastlane",
+      "targetLane": "schwer",
       "questionType": "interactive_notation",
       "prompt": "Setze das eingestrichene C (C4) auf die erste Hilfslinie unter dem Violinschlüssel.",
       "correctAnswers": [],
@@ -247,12 +256,14 @@
       "tags": [
         "Notensystem",
         "Violinschlüssel"
+      ],
+      "moduleIds": [
+        "theory-101"
       ]
     },
     {
       "id": "q-102-ex-1",
-      "moduleId": "guitar-102",
-      "targetLane": "exercise",
+      "targetLane": "leicht",
       "questionType": "single_choice",
       "prompt": "Wie heißen die sechs Leersaiten der Gitarre von der tiefsten zur höchsten Saite?",
       "options": [
@@ -267,12 +278,14 @@
       "baseXp": 10,
       "tags": [
         "Gitarre"
+      ],
+      "moduleIds": [
+        "guitar-102"
       ]
     },
     {
       "id": "q-102-qe-1",
-      "moduleId": "guitar-102",
-      "targetLane": "quiz_easy",
+      "targetLane": "mittel",
       "questionType": "numeric_input",
       "prompt": "Wie viele Saiten hat eine Standard-Gitarre?",
       "correctAnswers": [
@@ -283,12 +296,14 @@
       "tags": [
         "Gitarre",
         "Tabulatur"
+      ],
+      "moduleIds": [
+        "guitar-102"
       ]
     },
     {
       "id": "q-102-fl-1",
-      "moduleId": "guitar-102",
-      "targetLane": "fastlane",
+      "targetLane": "schwer",
       "questionType": "single_choice",
       "prompt": "Was bedeutet die Zahl 0 auf einer Tabulatur-Linie?",
       "options": [
@@ -304,12 +319,14 @@
       "tags": [
         "Tabulatur",
         "Gitarre"
+      ],
+      "moduleIds": [
+        "guitar-102"
       ]
     },
     {
       "id": "q-bf4bfa5f",
-      "moduleId": "theory-101",
-      "targetLane": "exercise",
+      "targetLane": "leicht",
       "questionType": "interactive_notation",
       "prompt": "Zeichne ein B ein",
       "correctAnswers": [],
@@ -328,6 +345,9 @@
       "baseXp": 10,
       "tags": [
         "Notensystem"
+      ],
+      "moduleIds": [
+        "theory-101"
       ]
     }
   ],
