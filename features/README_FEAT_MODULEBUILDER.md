@@ -53,9 +53,9 @@ Warum machen wir das getrennt? Weil so jeder Baustein einzeln geprüft und getes
 ---
 
 ### 4. Der Aktenschrank und die sichere Speicher-Schnittstelle
-- **Lokale Datendatei (`data/modules.json`):** Wird nur beim reinen Astro-Dev-Start verwendet und beim ersten Schreiben erzeugt. Netlify Blobs benötigt keinen Modul-Seed aus dem Repository. Beispieldaten für Tests stehen in `tests/fixtures/modules.ts`.
+- **Lokale Datendatei (`data/modules.json`):** Wird nur beim reinen Astro-Dev-Start verwendet und beim ersten Schreiben erzeugt. Beispieldaten für Tests stehen in `tests/fixtures/modules.ts`.
 - **Schnittstelle zum Speichern und Laden (`netlify/functions/modules.ts`):**
-  - Module und Aufgaben laden (`GET`), anlegen (`POST`), aktualisieren (`PUT`) und löschen (`DELETE`). Einrichtung, Seed und Konfliktschutz stehen in der [Blob-Referenz](README_FEAT_NETLIFYBLOB.md).
+  - Module und Aufgaben laden (`GET`), anlegen (`POST`), aktualisieren (`PUT`) und löschen (`DELETE`). Einrichtung, Initialisierung und Konfliktschutz stehen in der [Blob-Referenz](README_FEAT_NETLIFYBLOB.md).
   - **Größenbegrenzung:** Zu große Anfragen (über 500.000 Bytes) werden sofort abgewiesen.
 
 ---

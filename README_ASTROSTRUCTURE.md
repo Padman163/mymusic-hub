@@ -104,7 +104,7 @@ Der Auszug zeigt nicht alle Projektfelder; verbindlich ist `src/content.config.t
 
 `netlify/functions/contributions.ts` und `netlify/functions/modules.ts` stellen die APIs für Beiträge und Lernmodule bereit. `netlify/functions/lib/blob-store.ts` kapselt die JSON-Persistenz über Netlify Blobs. `public/_redirects` leitet `/api/*` auf Netlify Functions weiter.
 
-`data/contributions.json` ist der Initial-Seed für Beiträge, keine produktive Datenbank. Nur im reinen Astro-Entwicklungsserver liest und schreibt ein Vite-Plugin die lokal erzeugte `data/modules.json`. Details zur Persistenz: [Netlify Blobs](features/README_FEAT_NETLIFYBLOB.md); Fullstack-Start: [Workspace-Setup](README_WORKSPACE_SETUP.md).
+Die Netlify Functions benötigen keine Datenbankdateien aus dem Repository. Nur im reinen Astro-Entwicklungsserver liest und schreibt ein Vite-Plugin die lokal erzeugte `data/modules.json`. Details zur Persistenz: [Netlify Blobs](features/README_FEAT_NETLIFYBLOB.md); Fullstack-Start: [Workspace-Setup](README_WORKSPACE_SETUP.md).
 
 ## 4. Projektstruktur
 
@@ -138,7 +138,7 @@ tests/
 ├── integration/                # Integrationstests
 └── e2e/                        # Playwright-Browsertests
 netlify/functions/              # Serverless Functions und Blob-Adapter unter lib/
-data/                           # Beitrags-Seed; Moduldatei nur lokal erzeugt
+data/                           # Nur lokal erzeugte Moduldatei (Astro-Dev)
 features/                       # Feature-Übersicht, Fachreferenzen und Handoffs
 astro.config.mjs                # Astro-, Starlight- und Dev-Server-Konfiguration
 biome.json                      # Linter und Formatter

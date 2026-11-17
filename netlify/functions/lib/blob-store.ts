@@ -1,4 +1,3 @@
-import { readFile } from 'node:fs/promises';
 import { getStore, type Store } from '@netlify/blobs';
 import { isQuizSettings, type ModulesDatabase } from '../../../src/lib/module-schema';
 import { createEmptyModulesDatabase } from '../../../src/lib/module-store';
@@ -33,7 +32,7 @@ const parse: { [K in Key]: (value: unknown) => Data[K] } = {
 	},
 };
 
-const emptySeed: { [K in Key]: () => Data[K] } = {
+const emptyData: { [K in Key]: () => Data[K] } = {
 	contributions: () => [],
 	modules: createEmptyModulesDatabase,
 };
@@ -44,19 +43,9 @@ export function isBlobStoreUnavailable(error: unknown): boolean {
 	return error instanceof Error && error.name === 'MissingBlobsEnvironmentError';
 }
 
-async function seed<K extends Key>(store: Store, key: K): Promise<void> {
-	let contents: string | undefined;
-	try {
-		if (key === 'contributions') {
-			contents = await readFile('data/contributions.json', 'utf8');
-		}
-	} catch (error) {
-		if (!(error instanceof Error && 'code' in error && error.code === 'ENOENT')) throw error;
-	}
-	const value = contents === undefined ? emptySeed[key]() : parse[key](JSON.parse(contents));
-
+async function initializeKey<K extends Key>(store: Store, key: K): Promise<void> {
 	// Another request may have initialized (and already updated) this key.
-	await store.setJSON(key, value, { onlyIfNew: true });
+	await store.setJSON(key, emptyData[key](), { onlyIfNew: true });
 }
 
 const jsonOptions = { type: 'json', consistency: 'strong' } as const;
@@ -65,7 +54,7 @@ export async function readBlobJSON<K extends Key>(key: K): Promise<Data[K]> {
 	const store = getStore('mymusic-hub-data');
 	let value: unknown = await store.get(key, jsonOptions);
 	if (value === null) {
-		await seed(store, key);
+		await initializeKey(store, key);
 		value = await store.get(key, jsonOptions);
 	}
 	return parse[key](value);
@@ -79,7 +68,7 @@ export async function updateBlobJSON<K extends Key>(
 	for (let attempt = 0; attempt < 3; attempt += 1) {
 		let entry = await store.getWithMetadata(key, jsonOptions);
 		if (entry === null) {
-			await seed(store, key);
+			await initializeKey(store, key);
 			entry = await store.getWithMetadata(key, jsonOptions);
 		}
 		if (entry === null) continue;

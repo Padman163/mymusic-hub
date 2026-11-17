@@ -89,7 +89,7 @@ Lies bei Bedarf `src/components/IssueTrackerForm.astro`, `src/lib/contribution-c
    - **Beschreibung (`description`):** Kompakte Zusammenfassung inkl. Verweis auf `/features/README_FEAT_{{FEATURE_SLUG}}.md` (2–4 Sätze, da in der Übersicht auf 3 Zeilen gekürzt wird).
    - **Checklisten-Punkte (To-Do-Liste):** Alle neuen Teil-Features aus `/features/README_FEAT_{{FEATURE_SLUG}}.md` als einzelne Punkte (**strikt ≤ 200 Zeichen pro Punkt**, maximal **100 Punkte**).
 
-2. **Beitrag direkt einreichen:** Sende das vollständige JSON (`type`, `title`, `description`, `area`, `priority`, `status`, `checklist: [{ "text": "...", "checked": false }]`) per `POST /api/contributions` an die vorgesehene Umgebung. Ist der Endpunkt nicht erreichbar, den Start oder Zugriff klären; `data/contributions.json` ist nur Initial-Seed und aktualisiert keine vorhandenen Blobs.
+2. **Beitrag direkt einreichen:** Sende das vollständige JSON (`type`, `title`, `description`, `area`, `priority`, `status`, `checklist: [{ "text": "...", "checked": false }]`) per `POST /api/contributions` an die vorgesehene Umgebung. Ist der Endpunkt nicht erreichbar, den Start oder Zugriff klären.
 
 ---
 

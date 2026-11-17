@@ -90,7 +90,7 @@ npx netlify-cli dev
 ```
 * **URL:** Öffne `http://localhost:8888`.
 * **Lokaler Blob-Speicher:** Die CLI startet Astro, die Functions und einen lokalen Blob-Server. Dessen Daten bleiben unter `.netlify/` erhalten; konkrete Verzeichnisse und Reset-Hinweise stehen in der [Blob-Referenz](features/README_FEAT_NETLIFYBLOB.md#architektur-und-datenfluss).
-* **Prüfen:** `/api/modules` und `/api/contributions` auf Port 8888 aufrufen. Ein neuer lokaler Store startet mit leerem Modulkatalog und den Beiträgen aus dem Seed. Änderungen laufen über Blobs, nicht über den Astro-Datei-Fallback.
+* **Prüfen:** `/api/modules` und `/api/contributions` auf Port 8888 aufrufen. Ein neuer lokaler Store startet mit leerem Modulkatalog und leerer Beitragsliste. Änderungen laufen über Blobs, nicht über den Astro-Datei-Fallback.
 
 ### Schritt 6: E2E-Testbrowser & Lighthouse CI einrichten (Optional)
 

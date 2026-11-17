@@ -8,7 +8,7 @@ Die Abhängigkeit wurde mit `npm install @netlify/blobs` hinzugefügt. In einem 
 
 1. `feat/netlify-blobs` auschecken. Solange der alte GitHub-Backendstand noch läuft, in der lokalen `.env` vorübergehend `GITHUB_BRANCH=feat/netlify-blobs` setzen, wenn dies der gewünschte Quelldatenstand ist. Nach der Umstellung diese Einstellung entfernen oder auskommentieren: Sie wählt **keinen** Blob-Store.
 2. Im Netlify Dashboard unter **Site configuration → Build & deploy → Continuous deployment → Branches and deploy contexts** den Branch für Branch Deploys/Deploy Previews freigeben oder bewusst als Production Branch setzen.
-3. Unter **Environment variables** die alten `GITHUB_TOKEN`, `GITHUB_REPOSITORY`, `GITHUB_BRANCH`, `GITHUB_DATA_PATH` und `GITHUB_MODULES_PATH` nach dem Wechsel entfernen, sofern sie nicht von anderen Verbrauchern benötigt werden. Für noch aktive alte Deploys oder einen geplanten Rollback erst deren Abhängigkeiten klären. Netlify stellt den Blob-Kontext für die Functions bereit.
+3. Unter **Environment variables** die alten `GITHUB_*`-Variablen für die Datenspeicherung nach dem Wechsel entfernen, sofern sie nicht von anderen Verbrauchern benötigt werden. Für noch aktive alte Deploys oder einen geplanten Rollback erst deren Abhängigkeiten klären. Netlify stellt den Blob-Kontext für die Functions bereit.
 
 **Wichtig:** [`getStore`](https://docs.netlify.com/build/data-and-storage/netlify-blobs/#getstore) ist **siteweit**. Production, Branch Deploys und Previews derselben Site verwenden dieselben Daten und können sie ändern. Für isolierte Online-Abnahmen eine separate Netlify-Site verwenden; Branch-Freigabe und Deploy-Kontext allein isolieren den Store nicht. `getDeployStore` wäre dagegen deployspezifisch und wird hier bewusst nicht verwendet.
 
@@ -16,15 +16,15 @@ Die Abhängigkeit wurde mit `npm install @netlify/blobs` hinzugefügt. In einem 
 
 | Datei | Verantwortung |
 | --- | --- |
-| [`blob-store.ts`](../netlify/functions/lib/blob-store.ts) | Kapselt Store-Namen, typisierte JSON-Keys, Initial-Seed und konfliktgeschützte Schreibzugriffe. |
+| [`blob-store.ts`](../netlify/functions/lib/blob-store.ts) | Kapselt Store-Namen, typisierte JSON-Keys, Initialisierung und konfliktgeschützte Schreibzugriffe. |
 | [`contribution-store.ts`](../netlify/functions/lib/contribution-store.ts) | Fachliche Änderungen am Key `contributions` und Abgleich mit dem erwarteten Beitragsstand. |
 | [`contributions.ts`](../netlify/functions/contributions.ts) | HTTP-API und Validierung für Beiträge. |
 | [`modules.ts`](../netlify/functions/modules.ts) | HTTP-API für den Key `modules` (Module, Aufgaben und Quiz-Einstellungen); Fachregeln bleiben in [`module-store.ts`](../src/lib/module-store.ts). |
 | [`astro.config.mjs`](../astro.config.mjs) | Nur beim reinen Astro-Start liest und schreibt `localModulesApiPlugin()` direkt in `data/modules.json`. Unter Netlify CLI ist dieses Plugin deaktiviert. |
 
-Die Functions lesen mit starker Konsistenz. Fehlt `contributions`, übernimmt der Adapter den mitgelieferten Stand aus `data/contributions.json` oder verwendet `[]`, wenn die Datei fehlt. Ein defekter Beitrags-Seed führt zu einem Fehler statt zu einem leeren Ersatz. Fehlt `modules`, startet der Katalog ohne Dateiseed mit `{ modules: [], questions: [] }`. Bis Quiz-Einstellungen gespeichert werden, gelten die Schema-Standardwerte. `onlyIfNew` verhindert, dass ein paralleler Erstzugriff vorhandene Daten überschreibt. Spätere Änderungen nutzen ETags (`onlyIfMatch`) mit bis zu drei Versuchen, um parallele Änderungen nicht zu verlieren.
+Die Functions lesen mit starker Konsistenz. Fehlt `contributions`, wird `[]` gespeichert. Fehlt `modules`, startet der Katalog mit `{ modules: [], questions: [] }`. Bis Quiz-Einstellungen gespeichert werden, gelten die Schema-Standardwerte. `onlyIfNew` verhindert, dass ein paralleler Erstzugriff vorhandene Daten überschreibt. Spätere Änderungen nutzen ETags (`onlyIfMatch`) mit bis zu drei Versuchen, um parallele Änderungen nicht zu verlieren.
 
-**Vor dem ersten Zugriff** den letzten gewünschten Beitragsstand aus dem bisherigen GitHub-Pfad bzw. -Branch sichern und mit dem Seed abgleichen. Zum Umschalten alte Schreibzugriffe pausieren, damit zwischen Export und Seed keine Daten verloren gehen. Der Seed importiert keine Remote-Dateien und überschreibt keine vorhandenen Keys. Ein Rollback des Codes synchronisiert Blob-Schreibvorgänge nicht zurück nach Git.
+Cloud-Daten bei Bedarf direkt aus Netlify Blobs sichern. Ein neuer Store übernimmt keine Daten aus anderen Stores oder Git. Ein Rollback des Codes synchronisiert Blob-Schreibvorgänge nicht zurück nach Git.
 
 `npx netlify-cli dev` stellt einen lokalen Blob-Server bereit. Die Daten liegen unter `.netlify/` im Workspace, je nach CLI-Version unter `.netlify/blobs/` bzw. bei aktueller CLI unter `.netlify/blobs-serve/`. Sie werden weder nach einem Branch-Wechsel automatisch getrennt noch mit der Cloud synchronisiert. Für einen lokalen Reset den Dev-Server stoppen, Testdaten bei Bedarf sichern und nur das tatsächlich verwendete lokale Blob-Verzeichnis entfernen. Keine Cloud-Keys für einen lokalen Reset löschen.
 
@@ -36,9 +36,9 @@ npx vitest run tests/blob-store.test.ts tests/integration/contributions.test.ts 
 npm run preflight
 ```
 
-- [ ] Den letzten GitHub-Datenstand sichern, mit dem geplanten Seed vergleichen und den Cloud-Store vor dem ersten Zugriff auf vorhandene Keys prüfen.
+- [ ] Vor dem produktiven Deploy den Cloud-Datenbestand sichern und danach unveränderte Beiträge über die API abrufen.
 - [ ] Den Branch im Dashboard freigeben und die alten Variablen nach erfolgreichem Wechsel bereinigen.
-- [ ] Lokal unter Netlify CLI beide APIs aufrufen: Beitrags-Seed und leeren Modulkatalog prüfen, Testdaten und Quiz-Grenzen speichern und nach Neustart erneut abrufen. Die Beitragsdatei darf dabei unverändert bleiben.
+- [ ] Lokal unter Netlify CLI beide APIs aufrufen: leere Beitragsliste und leeren Modulkatalog im neuen Store prüfen, Testdaten und Quiz-Grenzen speichern und nach Neustart erneut abrufen.
 - [ ] Mit reinem `npm run dev` prüfen, dass die Modul-API weiterhin `data/modules.json` als lokalen Fallback nutzt.
 - [ ] Auf einer isolierten Netlify-Site einen Deploy prüfen: Beiträge, Module und Aufgaben anlegen, ändern und löschen; Quiz-Einstellungen speichern. Anschließend die Persistenz über einen weiteren Deploy bestätigen.
 - [ ] Dokumentationscheck und vollständiges Preflight bestehen; produktiven Rollout erst nach der Datenabnahme freigeben.
