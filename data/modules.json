@@ -23,6 +23,8 @@
           "order": 1,
           "title": "Schallwelle & Kammerton A",
           "markdownContent": "Klang entsteht durch periodische Luftdruckschwankungen (Frequenz $f$ in $\\text{Hz}$). Der internationale **Kammerton A4** schwingt mit exakt:\n\n$$f = 440\\text{ Hz}$$\n\nEine **Oktave höher** verdoppelt sich die Frequenz auf $880\\text{ Hz}$; eine Oktave tiefer halbiert sie sich auf $220\\text{ Hz}$.",
+          "groupId": "tg-6cf6941f-0462-49c5-872c-3f853ff20966",
+          "groupTitle": "Schallwelle & Kammerton A, Welche Frequenz (in Hz) hat eine Oktave über dem Kammerton A4 (440 Hz)?, Setze eine Viertelnote auf die zweite Linie von unten (G4) im Violinschlüssel. & Zeichne ein B ein",
           "baseXp": 10,
           "tags": []
         },
@@ -48,31 +50,43 @@
       "contentOrder": [
         {
           "kind": "theory",
-          "id": "tb-101-1"
+          "id": "tb-101-1",
+          "groupId": "tg-6cf6941f-0462-49c5-872c-3f853ff20966",
+          "groupTitle": "Schallwelle & Kammerton A, Welche Frequenz (in Hz) hat eine Oktave über dem Kammerton A4 (440 Hz)?, Setze eine Viertelnote auf die zweite Linie von unten (G4) im Violinschlüssel. & Zeichne ein B ein"
+        },
+        {
+          "kind": "exercise",
+          "id": "q-101-ex-1",
+          "groupId": "tg-6cf6941f-0462-49c5-872c-3f853ff20966",
+          "groupTitle": "Schallwelle & Kammerton A, Welche Frequenz (in Hz) hat eine Oktave über dem Kammerton A4 (440 Hz)?, Setze eine Viertelnote auf die zweite Linie von unten (G4) im Violinschlüssel. & Zeichne ein B ein"
+        },
+        {
+          "kind": "exercise",
+          "id": "q-101-ex-2",
+          "groupId": "tg-6cf6941f-0462-49c5-872c-3f853ff20966",
+          "groupTitle": "Schallwelle & Kammerton A, Welche Frequenz (in Hz) hat eine Oktave über dem Kammerton A4 (440 Hz)?, Setze eine Viertelnote auf die zweite Linie von unten (G4) im Violinschlüssel. & Zeichne ein B ein"
+        },
+        {
+          "kind": "exercise",
+          "id": "q-bf4bfa5f",
+          "groupId": "tg-6cf6941f-0462-49c5-872c-3f853ff20966",
+          "groupTitle": "Schallwelle & Kammerton A, Welche Frequenz (in Hz) hat eine Oktave über dem Kammerton A4 (440 Hz)?, Setze eine Viertelnote auf die zweite Linie von unten (G4) im Violinschlüssel. & Zeichne ein B ein"
         },
         {
           "kind": "theory",
-          "id": "tb-101-2"
+          "id": "tb-101-2",
+          "groupId": "tg-935ca82c-c38f-49ad-ad5c-94ea02692c74",
+          "groupTitle": "Gruppe 1 - Theorie"
         },
         {
           "kind": "theory",
-          "id": "tb-3-3b1b7f"
-        },
-        {
-          "kind": "exercise",
-          "id": "q-101-ex-1"
-        },
-        {
-          "kind": "exercise",
-          "id": "q-101-ex-2"
-        },
-        {
-          "kind": "exercise",
-          "id": "q-bf4bfa5f"
+          "id": "tb-3-3b1b7f",
+          "groupId": "tg-935ca82c-c38f-49ad-ad5c-94ea02692c74",
+          "groupTitle": "Gruppe 1 - Theorie"
         }
       ],
       "createdAt": "2026-11-16T00:00:00.000Z",
-      "updatedAt": "2026-11-17T09:41:48.008Z"
+      "updatedAt": "2026-11-17T13:10:39.917Z"
     },
     {
       "id": "guitar-102",
