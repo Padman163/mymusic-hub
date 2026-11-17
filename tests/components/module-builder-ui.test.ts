@@ -51,9 +51,9 @@ function mountExerciseForm(): HTMLFormElement {
   form.innerHTML = `
     <select id="exercise-module-id" name="moduleId"></select>
     <select id="exercise-target-lane" name="targetLane">
-      <option value="exercise">exercise</option>
-      <option value="quiz_easy">quiz_easy</option>
-      <option value="fastlane">fastlane</option>
+      <option value="leicht">leicht</option>
+      <option value="mittel">mittel</option>
+      <option value="schwer">schwer</option>
     </select>
     <select id="exercise-question-type" name="questionType">
       <option value="single_choice">single_choice</option>
@@ -536,7 +536,7 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     const controller = attachModuleBuilderForm(form);
     const db = seedDb as unknown as ModulesDatabase;
     const exercise = db.questions.find((q) => q.id === "q-101-ex-1");
-    const quiz = db.questions.find((q) => q.targetLane === "quiz_easy");
+    const quiz = db.questions.find((q) => q.targetLane === "mittel");
     if (!exercise || !quiz) throw new Error("Testfragen fehlen");
     const mod = { ...db.modules[0], theoryBlocks: db.modules[0].theoryBlocks.slice(0, 2), contentOrder: undefined };
     controller.loadModule(mod, [exercise, quiz]);
@@ -678,7 +678,7 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     attachModuleBuilderForm(form);
     await vi.waitFor(() => expect(form.querySelector<HTMLInputElement>("#module-title")?.value).toBe(db.modules[0].title));
     expect(form.querySelectorAll(".module-exercise-row").length).toBe(
-      db.questions.filter((q) => q.moduleId === db.modules[0].id && q.targetLane === "exercise").length,
+      db.questions.filter((q) => q.moduleIds.includes(db.modules[0].id) && q.targetLane === "leicht").length,
     );
     form.dispatchEvent(new Event("submit", { cancelable: true }));
     await vi.waitFor(() => expect(form.querySelector(".form-status")?.textContent).toBe("Modul wurde aktualisiert."));
@@ -844,7 +844,7 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     notensystemTag.dispatchEvent(new Event("change", { bubbles: true }));
     expect(xpOut?.textContent).toBe("15 XP");
 
-    laneSelect.value = "fastlane";
+    laneSelect.value = "schwer";
     laneSelect.dispatchEvent(new Event("change", { bubbles: true }));
     expect(xpOut?.textContent).toBe("38 XP");
   });
@@ -861,7 +861,6 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
           level: 100,
           dStage: "D1",
           tags: ["Allgemein"],
-          hasPractice: false,
           theoryBaseXp: 30,
           quizEasyMinScore: 0.8,
           fastlaneMinScore: 0.85,
@@ -873,6 +872,7 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
               markdownContent: "$440\\text{ Hz}$",
             },
           ],
+          practiceBlocks: [],
           createdAt: "2026-11-16T00:00:00.000Z",
           updatedAt: "2026-11-16T00:00:00.000Z",
         },
@@ -880,8 +880,8 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
       questions: [
         {
           id: "q-1",
-          moduleId: "theory-101",
-          targetLane: "exercise",
+          moduleIds: ["theory-101"],
+          targetLane: "leicht",
           questionType: "numeric_input",
           prompt: "Welche Frequenz hat A4?",
           correctAnswers: ["440"],
@@ -891,8 +891,8 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
         },
         {
           id: "q-2",
-          moduleId: "theory-101",
-          targetLane: "fastlane",
+          moduleIds: ["theory-101"],
+          targetLane: "schwer",
           questionType: "interactive_notation",
           prompt: "Setze G4 im Violinschlüssel.",
           correctAnswers: [],
@@ -930,7 +930,7 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     );
     expect(laneFilter).not.toBeNull();
     if (laneFilter) {
-      laneFilter.value = "fastlane";
+      laneFilter.value = "schwer";
       laneFilter.dispatchEvent(new Event("change", { bubbles: true }));
     }
     expect(section.querySelectorAll(".module-question-item")).toHaveLength(1);

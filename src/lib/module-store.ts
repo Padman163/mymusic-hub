@@ -829,8 +829,7 @@ export function getModuleSummary(
   );
   const practiceXp = mod.practiceBlocks.reduce(
     (total, block) =>
-      total +
-      calculateTheoryBlockXp(block, BASE_XP_DEFAULTS.practice),
+      total + calculateTheoryBlockXp(block, BASE_XP_DEFAULTS.practice),
     0,
   );
   const questionCounts: Record<TargetLane, number> & { total: number } = {

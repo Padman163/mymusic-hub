@@ -1472,9 +1472,7 @@ export function attachModuleRoadmap(
         const quizLink = document.createElement("a");
         quizLink.className = "learning-link-btn learning-start-quiz";
         quizLink.href = `${getLessonUrl(lessonBaseUrl, mod.id)}#quiz-step`;
-        quizLink.textContent = quizDone
-          ? "Quiz wiederholen"
-          : "Quiz starten";
+        quizLink.textContent = quizDone ? "Quiz wiederholen" : "Quiz starten";
         actions.append(quizLink);
       } else {
         const quizDisabledBtn = document.createElement("button");
@@ -1579,7 +1577,9 @@ function computeRemainingModuleXp(
       }
     }
   }
-  const completedPractice = new Set(modProgress?.completedPracticeBlockIds ?? []);
+  const completedPractice = new Set(
+    modProgress?.completedPracticeBlockIds ?? [],
+  );
   for (const block of mod.practiceBlocks) {
     if (!completedPractice.has(block.id)) {
       openXp += calculateTheoryBlockXp(block, BASE_XP_DEFAULTS.practice);
@@ -2502,10 +2502,10 @@ export function attachModuleStepper(
           ? practices.length > 0
             ? "learning-content-group"
             : blocks.length > 0 && questions.length === 0
-            ? "learning-theory-group"
-            : questions.length > 0 && blocks.length === 0
-              ? "learning-exercise-group"
-              : "learning-content-group"
+              ? "learning-theory-group"
+              : questions.length > 0 && blocks.length === 0
+                ? "learning-exercise-group"
+                : "learning-content-group"
           : "learning-theory-blocks";
         const blocksHost = document.createElement("div");
         blocksHost.className = grouped

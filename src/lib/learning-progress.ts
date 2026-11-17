@@ -16,12 +16,7 @@ import { calculateQuestionXp, calculateTheoryBlockXp } from "./xp-tags.ts";
 export const LEARNING_PROGRESS_STORAGE_KEY = "mymusic_learning_progress_v2";
 export const XP_PER_LEVEL = 500;
 
-export const LANE_STEPS = [
-  "theory",
-  "leicht",
-  "practice",
-  "mittel",
-] as const;
+export const LANE_STEPS = ["theory", "leicht", "practice", "mittel"] as const;
 export type LaneStep = (typeof LANE_STEPS)[number];
 
 export const STEP_PROGRESS_STATES = [
