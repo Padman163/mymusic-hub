@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import rawSeedDb from "../../data/modules.json";
+import { createModulesTestDatabase } from "../fixtures/modules";
 import {
   clearLearningProgress,
   completeTheoryBlock,
@@ -20,9 +21,12 @@ import {
   evaluateQuestionAnswer,
   renderTheoryMarkdown,
 } from "../../src/lib/module-player-ui";
-import { calculateTheoryBlockXp } from "../../src/lib/xp-tags";
+import {
+  calculateQuestionXp,
+  calculateTheoryBlockXp,
+} from "../../src/lib/xp-tags";
 
-const seedDb = rawSeedDb as unknown as ModulesDatabase;
+const seedDb = createModulesTestDatabase();
 
 function keyPress(target: HTMLElement, key: string): void {
   target.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true }));
@@ -492,7 +496,16 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     expect(root.textContent).toContain("Benötigt: 93 %");
   });
 
-  it("enthält valide Startmodule und Fragen in data/modules.json", () => {
+  it("enthält ein gültiges Modulschema und valide Lernmodul-Fixtures", () => {
+    const productionDb = rawSeedDb as unknown as ModulesDatabase;
+    expect(Array.isArray(productionDb.modules)).toBe(true);
+    expect(Array.isArray(productionDb.questions)).toBe(true);
+    expect(productionDb.quizSettings).toMatchObject({
+      quizEasyMinScore: expect.any(Number),
+      fastlaneMinScore: expect.any(Number),
+      revision: expect.any(Number),
+    });
+
     expect(seedDb.modules.length).toBeGreaterThanOrEqual(2);
     for (const mod of seedDb.modules) {
       expect(validateModuleInput(mod)).toEqual({ valid: true, errors: [] });
@@ -659,6 +672,10 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
   it("fügt fehlende Inhalte aus einer veralteten Reihenfolge an und behandelt Gruppen als Einheit", () => {
     const db = structuredClone(seedDb);
     const mod = db.modules[0];
+    for (const block of mod.theoryBlocks.slice(0, 2)) {
+      block.groupId = "group-basics";
+      block.groupTitle = "Grundlagen";
+    }
     db.questions = db.questions.filter(
       (q) => q.moduleIds[0] !== mod.id || q.targetLane !== "leicht" || q.id === "q-101-ex-1",
     );
@@ -826,10 +843,20 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
       "[data-dashboard-xp]",
     )?.dataset.dashboardXp;
     expect(Number(xpValue)).toBeGreaterThan(0);
-    expect(xpValue).toBe(String(126 + db.modules[0].theoryBlocks.reduce(
-      (total, block) => total + calculateTheoryBlockXp(block, db.modules[0].theoryBaseXp),
-      0,
-    )));
+    const expectedXp =
+      db.modules[0].theoryBlocks.reduce(
+        (total, block) =>
+          total + calculateTheoryBlockXp(block, db.modules[0].theoryBaseXp),
+        0,
+      ) +
+      db.questions
+        .filter((question) => question.moduleIds.includes(db.modules[0].id))
+        .reduce(
+          (total, question) =>
+            total + calculateQuestionXp(question.baseXp, question.tags),
+          0,
+        );
+    expect(xpValue).toBe(String(expectedXp));
     expect(
       dashboardEl.querySelector<HTMLElement>("[data-dashboard-modules]")
         ?.dataset.dashboardModules,

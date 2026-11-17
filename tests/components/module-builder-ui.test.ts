@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import seedDb from "../../data/modules.json";
 import {
   attachExerciseBuilderForm,
   attachModuleBuilderForm,
@@ -13,6 +12,9 @@ import {
   createXpTagPicker,
 } from "../../src/lib/module-builder-ui";
 import type { ModulesDatabase } from "../../src/lib/module-schema";
+import { createModulesTestDatabase } from "../fixtures/modules";
+
+const seedDb = createModulesTestDatabase();
 
 function mountModuleForm(): HTMLFormElement {
   const form = document.createElement("form");
@@ -49,9 +51,10 @@ function mountExerciseForm(): HTMLFormElement {
   const form = document.createElement("form");
   form.id = "exercise-builder-form";
   form.innerHTML = `
-    <select id="exercise-module-id" name="moduleId"></select>
+    <fieldset id="exercise-module-ids">
+      <div class="exercise-module-options"></div>
+    </fieldset>
     <select id="exercise-target-lane" name="targetLane">
-      <option value="leicht">leicht</option>
       <option value="mittel">mittel</option>
       <option value="schwer">schwer</option>
     </select>
@@ -122,6 +125,8 @@ function mountCatalogSection(): HTMLElement {
     </button>
     <p id="module-list-status"></p>
     <ul id="module-catalog-list" class="contribution-list" data-view="list"></ul>
+    <p id="module-question-pool-empty"></p>
+    <ul id="module-question-pool-list" class="contribution-list"></ul>
   `;
   document.body.append(section);
   return section;
@@ -614,7 +619,7 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     });
     await vi.waitFor(() =>
       expect(form.querySelector(".module-exercise-status")?.textContent).toBe(
-        "Übung wurde aktualisiert.",
+        "Lernpfad-Aufgabe wurde gespeichert.",
       ),
     );
     expect(form.querySelector(".module-exercise-row")?.textContent).toContain(
@@ -1022,7 +1027,7 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     expect(fetchWithFallback).toHaveBeenCalledTimes(2);
   });
 
-  it("verlinkt Module auf ihre Detailseite und öffnet Fragen im Aufgaben-Reiter", () => {
+  it("verlinkt Module auf ihre Detailseite und öffnet Fragen im Aufgaben-Reiter", async () => {
     const db = structuredClone(seedDb) as unknown as ModulesDatabase;
     vi.stubGlobal(
       "fetch",
@@ -1051,8 +1056,8 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     const catalog = attachModuleCatalogList(section);
     catalog.renderDatabase(db);
 
-    const exerciseForm = mountExerciseForm();
-    attachExerciseBuilderForm(exerciseForm);
+    const moduleForm = mountModuleForm();
+    attachModuleBuilderForm(moduleForm);
 
     const editLink = section.querySelector<HTMLAnchorElement>(".contribution-edit");
     expect(editLink?.getAttribute("href")).toBe(
@@ -1062,12 +1067,16 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     section.querySelector<HTMLButtonElement>(".module-question-edit")?.click();
     expect(tabButtons.map((btn) => btn.getAttribute("aria-selected"))).toEqual([
       "false",
-      "false",
       "true",
       "false",
+      "false",
     ]);
-    expect(
-      exerciseForm.querySelector<HTMLTextAreaElement>("#exercise-prompt")?.value,
-    ).toBe(db.questions[0].prompt);
+    await vi.waitFor(() =>
+      expect(
+        moduleForm.querySelector<HTMLTextAreaElement>(
+          ".module-exercise-row .module-exercise-editor textarea",
+        )?.value,
+      ).toBe(db.questions[0].prompt),
+    );
   });
 });
