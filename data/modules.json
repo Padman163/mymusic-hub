@@ -20,27 +20,6 @@
         "Notensystem"
       ],
       "moduleIds": []
-    },
-    {
-      "id": "q-101-qe-2",
-      "targetLane": "mittel",
-      "questionType": "multi_select",
-      "prompt": "Welche Aussagen zum Kammerton A4 treffen zu?",
-      "options": [
-        "Er schwingt mit 440 Hz.",
-        "Die Oktave darüber liegt bei 880 Hz.",
-        "Eine Oktave halbiert jede Frequenz."
-      ],
-      "correctAnswers": [
-        "Er schwingt mit 440 Hz.",
-        "Die Oktave darüber liegt bei 880 Hz."
-      ],
-      "explanation": "A4 liegt bei 440 Hz; eine Oktave nach oben verdoppelt die Frequenz auf 880 Hz.",
-      "baseXp": 15,
-      "tags": [
-        "Allgemein"
-      ],
-      "moduleIds": []
     }
   ],
   "quizSettings": {
