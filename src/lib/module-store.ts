@@ -85,11 +85,14 @@ function validateTheoryBlocks(blocks: unknown, errors: string[]): void {
   }
 
   const ids = new Set<string>();
+  const groupTitles = new Map<string, string>();
+  let previousGroupId: string | undefined;
   for (let index = 0; index < blocks.length; index += 1) {
     const block = blocks[index];
     const prefix = `theoryBlocks[${index}]`;
     if (!isRecord(block)) {
       errors.push(`${prefix} muss ein Objekt sein.`);
+      previousGroupId = undefined;
       continue;
     }
     if (!isNonEmptyString(block.id)) {
@@ -111,6 +114,38 @@ function validateTheoryBlocks(blocks: unknown, errors: string[]): void {
     }
     if (typeof block.markdownContent !== "string") {
       errors.push(`${prefix}.markdownContent muss ein String sein.`);
+    }
+    if (
+      (block.groupId === undefined) !== (block.groupTitle === undefined) ||
+      (block.groupId !== undefined && !isNonEmptyString(block.groupId)) ||
+      (block.groupTitle !== undefined && !isNonEmptyString(block.groupTitle))
+    ) {
+      errors.push(
+        `${prefix}.groupId und .groupTitle müssen gemeinsam gültige Strings sein.`,
+      );
+    } else if (
+      typeof block.groupId === "string" &&
+      typeof block.groupTitle === "string"
+    ) {
+      const groupId = block.groupId.trim();
+      const groupTitle = block.groupTitle.trim();
+      const previousTitle = groupTitles.get(groupId);
+      if (previousTitle !== undefined && previousTitle !== groupTitle) {
+        errors.push(
+          `${prefix}.groupTitle muss innerhalb einer Gruppe übereinstimmen.`,
+        );
+      }
+      if (previousTitle !== undefined && previousGroupId !== groupId) {
+        errors.push(
+          `${prefix}.groupId muss in zusammenhängenden Blöcken liegen.`,
+        );
+      }
+      if (previousTitle === undefined) {
+        groupTitles.set(groupId, groupTitle);
+      }
+      previousGroupId = groupId;
+    } else {
+      previousGroupId = undefined;
     }
     if (
       block.baseXp !== undefined &&
@@ -416,6 +451,10 @@ function cloneTheoryBlock(block: TheoryBlock): TheoryBlock {
     order: block.order,
     title: block.title.trim(),
     markdownContent: block.markdownContent,
+    ...(block.groupId !== undefined ? { groupId: block.groupId.trim() } : {}),
+    ...(block.groupTitle !== undefined
+      ? { groupTitle: block.groupTitle.trim() }
+      : {}),
     ...(block.baseXp !== undefined ? { baseXp: block.baseXp } : {}),
     ...(block.tags !== undefined ? { tags: [...block.tags] } : {}),
     ...(block.visualComponent !== undefined

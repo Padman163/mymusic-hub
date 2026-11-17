@@ -85,6 +85,8 @@ export interface TheoryBlock {
   order: number;
   title: string;
   markdownContent: string;
+  groupId?: string;
+  groupTitle?: string;
   baseXp?: number;
   tags?: string[];
   visualComponent?: VisualComponentType;

@@ -367,17 +367,105 @@ export function createTheoryBlockEditor(
   const hint = document.createElement("p");
   hint.className = "field-hint";
   hint.textContent =
-    "Übungen werden vorerst im Reiter „Aufgaben“ bearbeitet. Die Reihenfolge gilt noch nicht im Lernpfad.";
+    "Mehrere Theorieblöcke über die Auswahlfelder markieren, um sie zu gruppieren. Übungen werden vorerst im Reiter „Aufgaben“ bearbeitet; ihre Reihenfolge gilt noch nicht im Lernpfad.";
 
   const rows = document.createElement("div");
   rows.className = "theory-block-rows";
   const legacyVisuals = new WeakMap<HTMLDivElement, Partial<TheoryBlock>>();
   const blockTags = new WeakMap<HTMLDivElement, XpTagPickerController>();
 
+  const groupButton = document.createElement("button");
+  groupButton.type = "button";
+  groupButton.className = "theory-block-group-selected";
+  groupButton.textContent = "Auswahl gruppieren";
+  groupButton.disabled = true;
+
   const addButton = document.createElement("button");
   addButton.type = "button";
   addButton.className = "theory-block-add";
   addButton.textContent = "+ Theorie-Block hinzufügen";
+
+  function selectedTheoryRows(): HTMLDivElement[] {
+    return Array.from(
+      rows.querySelectorAll<HTMLDivElement>(".theory-block-row"),
+    ).filter(
+      (row) =>
+        row.querySelector<HTMLInputElement>(".theory-block-select")?.checked,
+    );
+  }
+
+  function updateGroupButton(): void {
+    groupButton.disabled = selectedTheoryRows().length < 2;
+  }
+
+  function renderGroupHeaders(): void {
+    for (const header of rows.querySelectorAll(
+      ".theory-group-editor-heading",
+    )) {
+      header.remove();
+    }
+    const seenGroups = new Set<string>();
+    for (const row of rows.querySelectorAll<HTMLDivElement>(
+      ".theory-block-row",
+    )) {
+      const groupId = row.dataset.groupId;
+      if (!groupId || seenGroups.has(groupId)) continue;
+      seenGroups.add(groupId);
+
+      const header = document.createElement("div");
+      header.className = "theory-group-editor-heading";
+      const label = document.createElement("label");
+      label.className = "field";
+      const caption = document.createElement("span");
+      const count = rowUnit(row).length;
+      caption.textContent = `Abschnittstitel · ${count} ${count === 1 ? "Theorieblock" : "Theorieblöcke"}`;
+      const titleInput = document.createElement("input");
+      titleInput.type = "text";
+      titleInput.className = "theory-group-title";
+      titleInput.required = true;
+      titleInput.value = row.dataset.groupTitle ?? "";
+      titleInput.addEventListener("input", () => {
+        for (const member of rows.querySelectorAll<HTMLDivElement>(
+          ".theory-block-row",
+        )) {
+          if (member.dataset.groupId === groupId) {
+            member.dataset.groupTitle = titleInput.value;
+          }
+        }
+      });
+      label.append(caption, titleInput);
+
+      const ungroupButton = document.createElement("button");
+      ungroupButton.type = "button";
+      ungroupButton.className = "theory-group-ungroup";
+      ungroupButton.textContent = "Gruppe auflösen";
+      ungroupButton.addEventListener("click", () => {
+        for (const member of rows.querySelectorAll<HTMLDivElement>(
+          ".theory-block-row",
+        )) {
+          if (member.dataset.groupId === groupId) {
+            delete member.dataset.groupId;
+            delete member.dataset.groupTitle;
+          }
+        }
+        renderGroupHeaders();
+        syncRowOrder();
+      });
+      header.append(label, ungroupButton);
+      row.prepend(header);
+    }
+  }
+
+  function rowUnit(row: HTMLDivElement): HTMLDivElement[] {
+    const groupId = row.dataset.groupId;
+    if (!groupId) return [row];
+    return Array.from(rows.children).filter(
+      (element): element is HTMLDivElement =>
+        element instanceof HTMLDivElement &&
+        element.classList.contains("theory-block-row") &&
+        element.dataset.groupId === groupId,
+    );
+  }
 
   function syncRowOrder(): void {
     const rowElements = Array.from(
@@ -401,20 +489,72 @@ export function createTheoryBlockEditor(
           label.textContent = `Übung ${exerciseNumber} · ${row.dataset.prompt ?? ""}`;
         }
       }
+      const unit = rowUnit(row);
+      const firstInUnit = unit[0] === row;
+      const lastInUnit = unit[unit.length - 1] === row;
+      if (row.dataset.groupId) {
+        row.dataset.groupPosition =
+          firstInUnit && lastInUnit
+            ? "single"
+            : firstInUnit
+              ? "first"
+              : lastInUnit
+                ? "last"
+                : "middle";
+      } else {
+        delete row.dataset.groupPosition;
+      }
       const upButton = row.querySelector<HTMLButtonElement>(".theory-block-up");
       const downButton =
         row.querySelector<HTMLButtonElement>(".theory-block-down");
-      if (upButton) upButton.disabled = index === 0;
-      if (downButton) downButton.disabled = index === rowElements.length - 1;
+      if (upButton) {
+        upButton.hidden = !firstInUnit;
+        upButton.disabled = index === 0;
+        const label = row.dataset.groupId
+          ? "Gruppe nach oben verschieben"
+          : "Theorie-Block nach oben verschieben";
+        upButton.title = label;
+        upButton.setAttribute("aria-label", label);
+      }
+      if (downButton) {
+        downButton.hidden = !lastInUnit;
+        downButton.disabled = index === rowElements.length - 1;
+        const label = row.dataset.groupId
+          ? "Gruppe nach unten verschieben"
+          : "Theorie-Block nach unten verschieben";
+        downButton.title = label;
+        downButton.setAttribute("aria-label", label);
+      }
+      const select = row.querySelector<HTMLInputElement>(
+        ".theory-block-select",
+      );
+      if (select) {
+        select.disabled = Boolean(row.dataset.groupId);
+        if (select.disabled) select.checked = false;
+        const selectLabel = select.closest<HTMLLabelElement>(
+          ".theory-block-select-label",
+        );
+        if (selectLabel) selectLabel.hidden = select.disabled;
+      }
     });
+    updateGroupButton();
   }
 
   function moveRow(row: HTMLDivElement, direction: -1 | 1): void {
-    if (direction === -1 && row.previousElementSibling) {
-      rows.insertBefore(row, row.previousElementSibling);
-    } else if (direction === 1 && row.nextElementSibling) {
-      rows.insertBefore(row.nextElementSibling, row);
-    }
+    const unit = rowUnit(row);
+    const first = unit[0];
+    const last = unit[unit.length - 1];
+    const adjacent =
+      direction === -1 ? first.previousElementSibling : last.nextElementSibling;
+    if (!(adjacent instanceof HTMLDivElement)) return;
+    const adjacentUnit = rowUnit(adjacent);
+    const fragment = document.createDocumentFragment();
+    for (const member of unit) fragment.append(member);
+    const anchor =
+      direction === -1
+        ? adjacentUnit[0]
+        : adjacentUnit[adjacentUnit.length - 1].nextElementSibling;
+    rows.insertBefore(fragment, anchor);
     syncRowOrder();
   }
 
@@ -448,6 +588,10 @@ export function createTheoryBlockEditor(
     row.dataset.blockId =
       initial.id?.trim() ||
       `tb-${rows.childElementCount + 1}-${crypto.randomUUID().slice(0, 6)}`;
+    if (initial.groupId && initial.groupTitle) {
+      row.dataset.groupId = initial.groupId;
+      row.dataset.groupTitle = initial.groupTitle;
+    }
 
     const details = document.createElement("details");
     details.className = "theory-block-details";
@@ -458,6 +602,19 @@ export function createTheoryBlockEditor(
 
     const controls = document.createElement("div");
     controls.className = "theory-block-controls";
+
+    const selectLabel = document.createElement("label");
+    selectLabel.className = "theory-block-select-label";
+    selectLabel.title = "Theorie-Block zum Gruppieren auswählen";
+    const selectCheckbox = document.createElement("input");
+    selectCheckbox.type = "checkbox";
+    selectCheckbox.className = "theory-block-select";
+    selectCheckbox.setAttribute(
+      "aria-label",
+      "Theorie-Block zum Gruppieren auswählen",
+    );
+    selectCheckbox.addEventListener("change", updateGroupButton);
+    selectLabel.append(selectCheckbox);
 
     const upButton = document.createElement("button");
     upButton.type = "button";
@@ -486,10 +643,11 @@ export function createTheoryBlockEditor(
     removeButton.setAttribute("aria-label", "Theorie-Block entfernen");
     removeButton.addEventListener("click", () => {
       row.remove();
+      renderGroupHeaders();
       syncRowOrder();
     });
 
-    controls.append(upButton, downButton, removeButton);
+    controls.append(selectLabel, upButton, downButton, removeButton);
     summary.append(orderLabel);
 
     const titleLabel = document.createElement("label");
@@ -571,9 +729,50 @@ export function createTheoryBlockEditor(
     details.append(summary, content);
     row.append(details, controls);
     rows.append(row);
+    renderGroupHeaders();
     syncRowOrder();
     refreshCalculatedXp();
   }
+
+  groupButton.addEventListener("click", () => {
+    const selected = selectedTheoryRows();
+    if (selected.length < 2) return;
+    const firstSelectedIndex = Array.from(rows.children).indexOf(selected[0]);
+    const insertionIndex = Array.from(rows.children)
+      .slice(0, firstSelectedIndex)
+      .filter((row) => !selected.includes(row as HTMLDivElement)).length;
+    const groupId = `tg-${crypto.randomUUID()}`;
+    const titles = selected.map(
+      (row) =>
+        row
+          .querySelector<HTMLInputElement>(".theory-block-title")
+          ?.value.trim() || "Neuer Block",
+    );
+    const lastTitle = titles.pop();
+    const groupTitle = `${titles.join(", ")} & ${lastTitle}`;
+    for (const row of selected) {
+      row.dataset.groupId = groupId;
+      row.dataset.groupTitle = groupTitle;
+      const checkbox = row.querySelector<HTMLInputElement>(
+        ".theory-block-select",
+      );
+      if (checkbox) checkbox.checked = false;
+    }
+    for (const row of selected) row.remove();
+    const anchor = rows.children[insertionIndex] ?? null;
+    const insertBefore = anchor;
+    for (const row of selected) {
+      rows.insertBefore(row, insertBefore);
+    }
+    renderGroupHeaders();
+    syncRowOrder();
+    groupButton.setAttribute("aria-live", "polite");
+    groupButton.textContent = `Gruppe „${groupTitle}“ erstellt`;
+    window.setTimeout(() => {
+      groupButton.textContent = "Auswahl gruppieren";
+      groupButton.removeAttribute("aria-live");
+    }, 2500);
+  });
 
   addButton.addEventListener("click", () => {
     addBlock();
@@ -585,6 +784,7 @@ export function createTheoryBlockEditor(
 
   function items(): TheoryBlock[] | null {
     const result: TheoryBlock[] = [];
+    const validatedGroupTitles = new Set<string>();
     const rowElements = Array.from(
       rows.querySelectorAll<HTMLDivElement>(".theory-block-row"),
     );
@@ -617,6 +817,23 @@ export function createTheoryBlockEditor(
         return null;
       }
 
+      const groupId = row.dataset.groupId;
+      if (groupId && !validatedGroupTitles.has(groupId)) {
+        const groupTitleInput = row.querySelector<HTMLInputElement>(
+          ".theory-group-title",
+        );
+        const groupTitle = row.dataset.groupTitle?.trim() ?? "";
+        if (!groupTitle || !groupTitleInput) {
+          groupTitleInput?.setCustomValidity(
+            "Bitte gib einen Titel für den Abschnitt ein.",
+          );
+          groupTitleInput?.reportValidity();
+          groupTitleInput?.setCustomValidity("");
+          return null;
+        }
+        validatedGroupTitles.add(groupId);
+      }
+
       const baseXp = xpInput.value.trim() ? Number(xpInput.value) : undefined;
       if (baseXp !== undefined && (!Number.isFinite(baseXp) || baseXp < 0)) {
         const details = row.querySelector<HTMLDetailsElement>(
@@ -634,6 +851,12 @@ export function createTheoryBlockEditor(
         order: index + 1,
         title,
         markdownContent: markdownInput.value,
+        ...(row.dataset.groupId
+          ? {
+              groupId: row.dataset.groupId,
+              groupTitle: row.dataset.groupTitle?.trim() ?? "",
+            }
+          : {}),
         ...(baseXp !== undefined ? { baseXp } : {}),
         tags: picker.selectedTags(),
         ...legacyVisuals.get(row),
@@ -649,6 +872,7 @@ export function createTheoryBlockEditor(
     for (const block of sorted) {
       addBlock(block);
     }
+    renderGroupHeaders();
     syncRowOrder();
   }
 
@@ -747,6 +971,7 @@ export function createTheoryBlockEditor(
 
   function clear(): void {
     rows.replaceChildren();
+    updateGroupButton();
     syncRowOrder();
   }
 
@@ -758,7 +983,7 @@ export function createTheoryBlockEditor(
     setItems(initialBlocks);
   }
 
-  fieldset.append(legend, hint, rows, addButton);
+  fieldset.append(legend, hint, groupButton, rows, addButton);
 
   return {
     element: fieldset,

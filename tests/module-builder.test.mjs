@@ -87,6 +87,32 @@ describe("module-store Validierung & Store-Operationen", () => {
     expect(validateModuleInput({ id: "mod", title: "Modul", theoryBlocks: [blocks[0], blocks[0]] }).valid).toBe(false);
   });
 
+  it("speichert benannte Theorieblock-Gruppen und lehnt uneinheitliche Gruppen ab", () => {
+    const group = [
+      { id: "a", order: 1, title: "A", markdownContent: "", groupId: "g1", groupTitle: "Grundlagen" },
+      { id: "b", order: 2, title: "B", markdownContent: "", groupId: "g1", groupTitle: "Grundlagen" },
+    ];
+    const db = upsertModule(createEmptyModulesDatabase(), {
+      id: "grouped", title: "Gruppiertes Modul", theoryBlocks: group,
+    });
+    expect(db.modules[0].theoryBlocks.map(({ groupId, groupTitle }) => [
+      groupId, groupTitle,
+    ])).toEqual([
+      ["g1", "Grundlagen"],
+      ["g1", "Grundlagen"],
+    ]);
+    expect(validateModuleInput({
+      id: "grouped",
+      title: "Gruppiertes Modul",
+      theoryBlocks: [group[0], { ...group[1], groupTitle: "Andere" }],
+    }).valid).toBe(false);
+    expect(validateModuleInput({
+      id: "grouped",
+      title: "Gruppiertes Modul",
+      theoryBlocks: [group[0], { id: "c", order: 3, title: "C", markdownContent: "" }, group[1]],
+    }).valid).toBe(false);
+  });
+
   it("hängt neue Module hinter der höchsten Position an und bewahrt die Position beim Bearbeiten", () => {
     let db = createEmptyModulesDatabase();
     db = upsertModule(db, { id: "first", title: "Erstes" });

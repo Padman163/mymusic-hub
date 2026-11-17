@@ -2049,10 +2049,27 @@ export function attachModuleStepper(
     const sortedBlocks = [...mod.theoryBlocks].sort(
       (a, b) => a.order - b.order,
     );
+    let activeGroupId: string | undefined;
+    let activeGroupBlocks: HTMLElement | null = null;
     for (const block of sortedBlocks) {
+      if (block.groupId !== activeGroupId) {
+        activeGroupId = block.groupId;
+        activeGroupBlocks = null;
+        if (block.groupId) {
+          const group = document.createElement("section");
+          group.className = "learning-theory-group";
+          const groupHeading = document.createElement("h4");
+          groupHeading.textContent = block.groupTitle ?? "";
+          const groupContent = document.createElement("div");
+          groupContent.className = "learning-theory-group-blocks";
+          group.append(groupHeading, groupContent);
+          blocksWrap.append(group);
+          activeGroupBlocks = groupContent;
+        }
+      }
       const blockEl = document.createElement("article");
       blockEl.className = "learning-theory-block";
-      const bTitle = document.createElement("h4");
+      const bTitle = document.createElement(block.groupId ? "h5" : "h4");
       bTitle.textContent = `${block.order}. ${block.title}`;
       const bMd = document.createElement("div");
       bMd.className = "learning-theory-markdown";
@@ -2088,7 +2105,7 @@ export function attachModuleStepper(
         );
       });
       blockEl.append(completeBlockBtn);
-      blocksWrap.append(blockEl);
+      (activeGroupBlocks ?? blocksWrap).append(blockEl);
     }
 
     const completeTheoryBtn = document.createElement("button");

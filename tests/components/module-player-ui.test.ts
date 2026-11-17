@@ -56,6 +56,23 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     expect(root.textContent).not.toContain("<Notation");
   });
 
+  it("rendert gruppierte Theorieblöcke als benannten Lernabschnitt", () => {
+    const root = document.createElement("section");
+    root.dataset.moduleId = "theory-101";
+    document.body.append(root);
+    const db = structuredClone(seedDb);
+    db.modules[0].theoryBlocks[0].groupId = "group-basics";
+    db.modules[0].theoryBlocks[0].groupTitle = "Grundlagen";
+    db.modules[0].theoryBlocks[1].groupId = "group-basics";
+    db.modules[0].theoryBlocks[1].groupTitle = "Grundlagen";
+
+    attachModuleStepper(root, { initialDb: db, autoFetch: false });
+
+    const group = root.querySelector(".learning-theory-group");
+    expect(group?.querySelector("h4")?.textContent).toBe("Grundlagen");
+    expect(group?.querySelectorAll(".learning-theory-block")).toHaveLength(2);
+  });
+
   it("führt keine Ausdrücke aus und lässt Komponenten in Inline-Code unverändert", () => {
     const container = document.createElement("div");
     container.append(renderTheoryMarkdown(

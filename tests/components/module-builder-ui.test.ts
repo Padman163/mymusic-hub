@@ -199,6 +199,122 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     expect(controller.theoryBlockEditor.items()?.[0]?.title).toBe("Schwingung");
   });
 
+  it("gruppiert ausgewählte Theorieblöcke, speichert den Abschnittstitel und verschiebt die Gruppe zusammen", () => {
+    const editor = createTheoryBlockEditor([
+      { id: "a", order: 1, title: "A", markdownContent: "" },
+      { id: "b", order: 2, title: "B", markdownContent: "" },
+      { id: "c", order: 3, title: "C", markdownContent: "" },
+    ]);
+    document.body.append(editor.element);
+
+    const rows = Array.from(
+      editor.element.querySelectorAll<HTMLDivElement>(".theory-block-row"),
+    );
+    for (const index of [0, 2]) {
+      const checkbox = rows[index].querySelector<HTMLInputElement>(
+        ".theory-block-select",
+      );
+      if (!checkbox) throw new Error("Auswahlfeld fehlt");
+      checkbox.checked = true;
+      checkbox.dispatchEvent(new Event("change"));
+    }
+
+    const groupButton = editor.element.querySelector<HTMLButtonElement>(
+      ".theory-block-group-selected",
+    );
+    expect(groupButton?.disabled).toBe(false);
+    groupButton?.click();
+
+    const groupTitle = editor.element.querySelector<HTMLInputElement>(
+      ".theory-group-title",
+    );
+    if (!groupTitle) throw new Error("Gruppentitel fehlt");
+    expect(groupTitle.value).toBe("A & C");
+    expect(rows[0].dataset.groupPosition).toBe("first");
+    expect(rows[2].dataset.groupPosition).toBe("last");
+    expect(rows[1].dataset.groupPosition).toBeUndefined();
+    expect(rows[0].querySelector<HTMLLabelElement>(".theory-block-select-label")?.hidden).toBe(true);
+    expect(rows[2].querySelector<HTMLLabelElement>(".theory-block-select-label")?.hidden).toBe(true);
+    expect(rows[1].querySelector<HTMLLabelElement>(".theory-block-select-label")?.hidden).toBe(false);
+    groupTitle.value = "Grundlagen";
+    groupTitle.dispatchEvent(new Event("input"));
+
+    const lastGroupRow = Array.from(
+      editor.element.querySelectorAll<HTMLDivElement>(".theory-block-row"),
+    ).find((row) => row.querySelector(".theory-block-down:not([hidden])"));
+    lastGroupRow?.querySelector<HTMLButtonElement>(".theory-block-down")?.click();
+
+    expect(editor.items()?.map(({ title, groupTitle: section }) => [
+      title,
+      section,
+    ])).toEqual([
+      ["B", undefined],
+      ["A", "Grundlagen"],
+      ["C", "Grundlagen"],
+    ]);
+    expect(editor.contentOrder().map(({ id }) => id)).toEqual(["b", "a", "c"]);
+
+    const firstGroupBlock = editor.element.querySelector<HTMLDivElement>(
+      '.theory-block-row[data-block-id="a"]',
+    );
+    firstGroupBlock
+      ?.querySelector<HTMLButtonElement>(".theory-block-remove")
+      ?.click();
+    expect(editor.items()?.map(({ title, groupTitle: section }) => [
+      title,
+      section,
+    ])).toEqual([
+      ["B", undefined],
+      ["C", "Grundlagen"],
+    ]);
+    expect(rows[2].dataset.groupPosition).toBe("single");
+  });
+
+  it("verwendet bei mehreren Blöcken ihre Titel als Gruppennamen und zeigt die Auswahl nach Auflösen wieder an", () => {
+    const editor = createTheoryBlockEditor([
+      { id: "a", order: 1, title: " Eins ", markdownContent: "" },
+      { id: "b", order: 2, title: "Zwei", markdownContent: "" },
+      { id: "c", order: 3, title: "Drei", markdownContent: "" },
+    ]);
+    document.body.append(editor.element);
+    const rows = Array.from(
+      editor.element.querySelectorAll<HTMLDivElement>(".theory-block-row"),
+    );
+    for (const row of rows) {
+      const checkbox = row.querySelector<HTMLInputElement>(".theory-block-select");
+      if (!checkbox) throw new Error("Auswahlfeld fehlt");
+      checkbox.checked = true;
+      checkbox.dispatchEvent(new Event("change"));
+    }
+    editor.element.querySelector<HTMLButtonElement>(".theory-block-group-selected")?.click();
+    expect(editor.element.querySelector<HTMLInputElement>(".theory-group-title")?.value).toBe("Eins, Zwei & Drei");
+    expect(rows.map((row) => row.dataset.groupPosition)).toEqual(["first", "middle", "last"]);
+    expect(editor.items()?.map((block) => block.groupTitle)).toEqual([
+      "Eins, Zwei & Drei", "Eins, Zwei & Drei", "Eins, Zwei & Drei",
+    ]);
+
+    editor.element.querySelector<HTMLButtonElement>(".theory-group-ungroup")?.click();
+    expect(rows.map((row) => row.dataset.groupPosition)).toEqual([undefined, undefined, undefined]);
+    expect(rows.every((row) => {
+      const label = row.querySelector<HTMLLabelElement>(".theory-block-select-label");
+      const checkbox = row.querySelector<HTMLInputElement>(".theory-block-select");
+      return label && !label.hidden && checkbox && !checkbox.disabled;
+    })).toBe(true);
+  });
+
+  it("zeigt gespeicherte Gruppen auch nach erneutem Laden als zusammenhängend an", () => {
+    const editor = createTheoryBlockEditor([
+      { id: "a", order: 1, title: "A", markdownContent: "", groupId: "g", groupTitle: "Mein Abschnitt" },
+      { id: "b", order: 2, title: "B", markdownContent: "", groupId: "g", groupTitle: "Mein Abschnitt" },
+    ]);
+    const rows = Array.from(
+      editor.element.querySelectorAll<HTMLDivElement>(".theory-block-row"),
+    );
+    expect(rows.map((row) => row.dataset.groupPosition)).toEqual(["first", "last"]);
+    expect(rows.every((row) => row.querySelector<HTMLLabelElement>(".theory-block-select-label")?.hidden)).toBe(true);
+    expect(editor.element.querySelector<HTMLInputElement>(".theory-group-title")?.value).toBe("Mein Abschnitt");
+  });
+
   it("klappt allgemeine Informationen standardmäßig ein und öffnet sie bei ungültigem Titel", () => {
     const form = mountModuleForm();
     const controller = attachModuleBuilderForm(form);

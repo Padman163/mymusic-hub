@@ -399,6 +399,24 @@
   gap: 1rem;
 }
 
+.learning-theory-group {
+  display: grid;
+  gap: 0.75rem;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 0.5rem;
+  padding: 0.85rem;
+}
+
+.learning-theory-group > h4 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.learning-theory-group-blocks {
+  display: grid;
+  gap: 1rem;
+}
+
 .learning-theory-block {
   border-left: 3px solid var(--sl-color-accent);
   padding: 0.35rem 0 0.35rem 0.9rem;
@@ -406,7 +424,8 @@
   gap: 0.55rem;
 }
 
-.learning-theory-block h4 {
+.learning-theory-block h4,
+.learning-theory-block h5 {
   margin: 0;
   font-size: 1rem;
 }
