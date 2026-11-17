@@ -164,6 +164,7 @@ Die derzeitigen Startdaten in `data/modules.json` enthalten zwei Module:
 ### 2. Das XP-Dashboard (`src/components/learning/ProgressDashboard.astro`)
 - **Wozu es dient:** Zeigt dem Lernenden auf einen Blick das aktuelle **Level**, die **gesammelten Gesamt-XP**, den Fortschrittsbalken bis zum nächsten Level, die Anzahl **abgeschlossener Module** sowie kompakte Badges für XP nach Lernbereich (`Theorie`, `Instrument` …) und Themen (`Notensystem`, `Gitarre` …).
 - **Live-Aktualisierung:** Sobald eine Aufgabe gelöst, Theorie abgeschlossen oder ein Quiz bestanden wird, aktualisiert sich das Dashboard sofort ohne Neuladen der Seite.
+- **Modulkatalog:** Dashboard, Roadmap und Modulansicht übernehmen beim Laden den aktuellen API-Katalog, auch wenn dieser leer ist. Die eingebetteten Startdaten dienen als Fallback, falls die API nicht erreichbar ist.
 - **Geschützter Reset:** Über „Lernfortschritt zurücksetzen“ mit zweistufiger Sicherheitsabfrage lässt sich der eigene Test-Fortschritt jederzeit sauber auf Null stellen.
 
 ### 3. Die Modul-Roadmap (`src/components/learning/ModuleRoadmap.astro`)

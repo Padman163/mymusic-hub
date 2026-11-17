@@ -1275,7 +1275,7 @@ export function attachProgressDashboard(
 
   if (options.autoFetch !== false) {
     void fetchLiveModulesDatabase().then((liveDb) => {
-      if (liveDb && liveDb.modules.length > 0) {
+      if (liveDb) {
         currentDb = liveDb;
         render();
       }
@@ -1525,7 +1525,7 @@ export function attachModuleRoadmap(
 
   if (options.autoFetch !== false) {
     void fetchLiveModulesDatabase().then((liveDb) => {
-      if (liveDb && liveDb.modules.length > 0) {
+      if (liveDb) {
         currentDb = liveDb;
         render();
       }
@@ -2790,7 +2790,7 @@ export function attachModuleStepper(
 
   if (options.autoFetch !== false) {
     void fetchLiveModulesDatabase().then((liveDb) => {
-      if (liveDb && liveDb.modules.length > 0) {
+      if (liveDb) {
         currentDb = liveDb;
         fullRender();
       }

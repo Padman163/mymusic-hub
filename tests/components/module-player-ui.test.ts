@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import rawSeedDb from "../../data/modules.json";
 import {
   clearLearningProgress,
@@ -32,6 +32,68 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
   afterEach(() => {
     clearLearningProgress();
     document.body.replaceChildren();
+    vi.unstubAllGlobals();
+  });
+
+  it("ersetzt eingebettete Module durch einen leeren Live-Katalog", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation(
+        async () =>
+          new Response(JSON.stringify({ modules: [], questions: [] }), {
+            status: 200,
+          }),
+      ),
+    );
+    const dashboard = document.createElement("section");
+    const roadmap = document.createElement("section");
+    const stepper = document.createElement("section");
+    stepper.dataset.moduleId = seedDb.modules[0].id;
+    document.body.append(dashboard, roadmap, stepper);
+
+    attachProgressDashboard(dashboard, { initialDb: seedDb });
+    attachModuleRoadmap(roadmap, { initialDb: seedDb });
+    attachModuleStepper(stepper, { initialDb: seedDb });
+
+    await vi.waitFor(() => {
+      expect(
+        dashboard.querySelector<HTMLElement>("[data-dashboard-modules]")
+          ?.dataset.dashboardModules,
+      ).toBe("0/0");
+      expect(roadmap.querySelector("[data-module-card]")).toBeNull();
+      expect(roadmap.textContent).toContain("noch keine Lernmodule");
+      expect(stepper.textContent).toContain("Kein passendes Lernmodul gefunden");
+    });
+  });
+
+  it("entfernt gelöschte Module bei einem teilweise geleerten Live-Katalog", async () => {
+    const liveDb = structuredClone(seedDb);
+    liveDb.modules = [liveDb.modules[1]];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation(
+        async () => new Response(JSON.stringify(liveDb), { status: 200 }),
+      ),
+    );
+    const dashboard = document.createElement("section");
+    const roadmap = document.createElement("section");
+    document.body.append(dashboard, roadmap);
+
+    attachProgressDashboard(dashboard, { initialDb: seedDb });
+    attachModuleRoadmap(roadmap, { initialDb: seedDb });
+
+    await vi.waitFor(() => {
+      expect(
+        dashboard.querySelector<HTMLElement>("[data-dashboard-modules]")
+          ?.dataset.dashboardModules,
+      ).toBe("0/1");
+      expect(
+        roadmap.querySelector(`[data-module-card="${seedDb.modules[0].id}"]`),
+      ).toBeNull();
+      expect(
+        roadmap.querySelector(`[data-module-card="${seedDb.modules[1].id}"]`),
+      ).not.toBeNull();
+    });
   });
 
   it("schließt eine Übung nach drei Fehlversuchen mit Lösung, Erklärung und einmaligen XP ab", () => {
