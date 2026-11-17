@@ -71,11 +71,11 @@ test('richtet Builder-Karten und Aktionen einheitlich aus', async ({ page }) => 
     const controlsStyle = getComputedStyle(element);
     const rowRect = row.getBoundingClientRect();
     const controlsRect = element.getBoundingClientRect();
+    const summaryRect = row.querySelector<HTMLElement>(
+      '.theory-block-details > summary',
+    )!.getBoundingClientRect();
     return {
-      topOffset: controlsRect.top - rowRect.top,
-      expectedTopOffset:
-        Number.parseFloat(rowStyle.borderTopWidth) +
-        Number.parseFloat(controlsStyle.top),
+      topOffset: controlsRect.top - summaryRect.top,
       topInset: Number.parseFloat(controlsStyle.top),
       rightOffset: rowRect.right - controlsRect.right,
       expectedRightOffset:
@@ -84,7 +84,7 @@ test('richtet Builder-Karten und Aktionen einheitlich aus', async ({ page }) => 
       rightInset: Number.parseFloat(controlsStyle.right),
     };
   });
-  expect(Math.abs(controlPlacement.topOffset - controlPlacement.expectedTopOffset)).toBeLessThan(1);
+  expect(Math.abs(controlPlacement.topOffset)).toBeLessThan(1);
   expect(Math.abs(controlPlacement.rightOffset - controlPlacement.expectedRightOffset)).toBeLessThan(1);
   expect(controlPlacement.topInset).toBeLessThanOrEqual(8);
   expect(controlPlacement.rightInset).toBeLessThanOrEqual(8);
@@ -172,11 +172,9 @@ test('richtet Builder-Karten und Aktionen einheitlich aus', async ({ page }) => 
     const actionsStyle = getComputedStyle(element);
     const rowRect = row.getBoundingClientRect();
     const actionsRect = element.getBoundingClientRect();
+    const summaryRect = row.querySelector<HTMLElement>('.theory-group-summary')!.getBoundingClientRect();
     return {
-      topOffset: actionsRect.top - rowRect.top,
-      expectedTopOffset:
-        Number.parseFloat(rowStyle.borderTopWidth) +
-        Number.parseFloat(actionsStyle.top),
+      topOffset: actionsRect.top - summaryRect.top,
       rightOffset: rowRect.right - actionsRect.right,
       expectedRightOffset:
         Number.parseFloat(rowStyle.borderRightWidth) +
@@ -185,7 +183,7 @@ test('richtet Builder-Karten und Aktionen einheitlich aus', async ({ page }) => 
       rightInset: Number.parseFloat(actionsStyle.right),
     };
   });
-  expect(Math.abs(groupActionPlacement.topOffset - groupActionPlacement.expectedTopOffset)).toBeLessThan(1);
+  expect(Math.abs(groupActionPlacement.topOffset)).toBeLessThan(1);
   expect(Math.abs(groupActionPlacement.rightOffset - groupActionPlacement.expectedRightOffset)).toBeLessThan(1);
   expect(groupActionPlacement.topInset).toBe(controlPlacement.topInset);
   expect(groupActionPlacement.rightInset).toBe(controlPlacement.rightInset);
@@ -194,10 +192,14 @@ test('richtet Builder-Karten und Aktionen einheitlich aus', async ({ page }) => 
   const groupedControlsMargin = Number.parseFloat(
     await nestedControls.evaluate((element) => getComputedStyle(element).marginTop),
   );
+  const firstDetailsMargin = Number.parseFloat(
+    await page.locator('.theory-block-row[data-group-position="first"] .theory-block-details')
+      .evaluate((element) => getComputedStyle(element).marginTop),
+  );
   expect(groupControlBox).not.toBeNull();
   expect(firstDetailsBox).not.toBeNull();
   if (!groupControlBox || !firstDetailsBox) throw new Error('Gruppenaktionen fehlen');
-  expect(groupedControlsMargin).toBe(controlPlacement.topInset);
+  expect(groupedControlsMargin).toBe(firstDetailsMargin);
   expect(Math.abs(groupControlBox.y - firstDetailsBox.y)).toBeLessThan(1);
 
   await page.locator('.theory-group-summary').click();

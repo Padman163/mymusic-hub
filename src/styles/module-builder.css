@@ -65,7 +65,7 @@
   box-sizing: border-box;
   justify-self: start;
   min-height: 2.5rem;
-  margin: 0;
+  margin: 0.5;
   border: 1px solid var(--sl-color-gray-5);
   border-radius: 0.4rem;
   padding: 0.6rem 0.9rem;
@@ -197,7 +197,7 @@
 
 .theory-group-editor-actions {
   position: absolute;
-  top: 0.25rem;
+  top: 0;
   right: 0.25rem;
   display: flex;
   align-items: center;
@@ -440,31 +440,11 @@
 
 .theory-block-controls {
   position: absolute;
-  top: 0.25rem;
+  top: 0;
   right: 0.25rem;
   display: flex;
   align-items: center;
   gap: 0.35rem;
-}
-
-.theory-block-row:not([data-group-position="first"]):not(
-    [data-group-position="single"]
-  )
-  > .theory-block-details:not([open])
-  ~ .theory-block-controls,
-.module-exercise-row:not([data-group-position="first"]):not(
-    [data-group-position="single"]
-  )
-  > .theory-block-details:not([open])
-  ~ .theory-block-controls {
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.theory-block-row[data-group-collapsed="true"] .theory-group-editor-actions,
-.module-exercise-row[data-group-collapsed="true"] .theory-group-editor-actions {
-  top: 50%;
-  transform: translateY(-50%);
 }
 
 :root .checklist-editor .theory-block-controls > button,
