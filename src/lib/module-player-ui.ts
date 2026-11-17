@@ -933,6 +933,23 @@ function renderQuestionInputBlock(
   return container;
 }
 
+function formatExerciseSolution(question: ModuleQuestion): string {
+  if (question.questionType !== "interactive_notation") {
+    return question.correctAnswers.join(
+      question.questionType === "multi_select" ? ", " : " oder ",
+    );
+  }
+  const task = question.notationTask;
+  const parts: string[] = [];
+  if (task?.expectedPitches?.length) {
+    parts.push(`Tonhöhen: ${task.expectedPitches.join(", ")}`);
+  }
+  if (task?.expectedDurations?.length) {
+    parts.push(`Notenwerte: ${task.expectedDurations.join(", ")}`);
+  }
+  return parts.join("; ");
+}
+
 export interface ProgressDashboardController {
   refresh(): void;
   setDatabase(db: ModulesDatabase): void;
@@ -1631,16 +1648,36 @@ export function attachModuleQuizRunner(
       const feedback = document.createElement("div");
       feedback.className = "learning-feedback";
       feedback.hidden = true;
+      feedback.setAttribute("aria-live", "polite");
+      let attempts = 0;
+      let completed = false;
 
       checkBtn.addEventListener("click", () => {
+        if (completed) return;
         const userAnswer = readUserAnswerFromQuestionUi(question, inputsEl);
+        const hasAnswer =
+          userAnswer.kind === "choice"
+            ? userAnswer.selected.length > 0
+            : userAnswer.kind === "numeric"
+              ? userAnswer.value.trim().length > 0
+              : userAnswer.pitches.length > 0;
+        if (!hasAnswer) {
+          feedback.hidden = false;
+          feedback.dataset.outcome = "wrong";
+          feedback.textContent = "Bitte gib zuerst eine Antwort ein.";
+          return;
+        }
+        attempts += 1;
         const result = evaluateQuestionAnswer(question, userAnswer);
+        const exhausted = !result.correct && attempts >= 3;
         feedback.hidden = false;
         feedback.replaceChildren();
 
         const titleEl = document.createElement("strong");
-        if (result.correct) {
-          feedback.dataset.outcome = "correct";
+        if (result.correct || exhausted) {
+          completed = true;
+          checkBtn.disabled = true;
+          feedback.dataset.outcome = result.correct ? "correct" : "wrong";
           const latest = loadLearningProgress(
             db.modules,
             undefined,
@@ -1659,15 +1696,29 @@ export function attachModuleQuizRunner(
           qCard.dataset.questionSolved = "true";
           qXp.classList.add("has-xp");
           qXp.textContent = `${questionXp} XP`;
-          titleEl.textContent = alreadySolved
-            ? "✓ Richtig gelöst (XP bereits erhalten)."
-            : `✓ Richtig! +${questionXp} XP gutgeschrieben.`;
+          titleEl.textContent = result.correct
+            ? alreadySolved
+              ? "✓ Richtig gelöst (XP bereits erhalten)."
+              : `✓ Richtig! +${questionXp} XP gutgeschrieben.`
+            : alreadySolved
+              ? "✗ Drei Versuche verbraucht (XP bereits erhalten)."
+              : `✗ Drei Versuche verbraucht. +${questionXp} XP gutgeschrieben.`;
           feedback.append(titleEl);
+          if (exhausted) {
+            const solutionEl = document.createElement("p");
+            solutionEl.className = "learning-feedback-explanation";
+            solutionEl.textContent = `Richtige Antwort: ${formatExerciseSolution(question)}`;
+            feedback.append(solutionEl);
+            const expEl = document.createElement("p");
+            expEl.className = "learning-feedback-explanation";
+            expEl.textContent =
+              result.explanation || "Keine Erklärung hinterlegt.";
+            feedback.append(expEl);
+          }
           commitProgressChange(updated, db);
         } else {
           feedback.dataset.outcome = "wrong";
-          titleEl.textContent =
-            "✗ Noch nicht richtig – überprüfe deine Lösung.";
+          titleEl.textContent = `✗ Noch nicht richtig – ${3 - attempts} ${attempts === 2 ? "Versuch" : "Versuche"} übrig.`;
           feedback.append(titleEl);
           if (result.explanation) {
             const expEl = document.createElement("p");

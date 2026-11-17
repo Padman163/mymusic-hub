@@ -4,6 +4,7 @@ import {
   clearLearningProgress,
   completeTheoryBlock,
   createInitialProgress,
+  loadLearningProgress,
   saveLearningProgress,
 } from "../../src/lib/learning-progress";
 import type { ModulesDatabase } from "../../src/lib/module-schema";
@@ -13,6 +14,7 @@ import {
 } from "../../src/lib/module-store";
 import {
   attachModuleRoadmap,
+  attachModuleQuizRunner,
   attachModuleStepper,
   attachProgressDashboard,
   evaluateQuestionAnswer,
@@ -30,6 +32,103 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
   afterEach(() => {
     clearLearningProgress();
     document.body.replaceChildren();
+  });
+
+  it("schließt eine Übung nach drei Fehlversuchen mit Lösung, Erklärung und einmaligen XP ab", () => {
+    const db = structuredClone(seedDb);
+    const mod = db.modules[0];
+    mod.contentOrder = [{ kind: "exercise", id: "q-101-ex-1" }];
+    const root = document.createElement("section");
+    root.dataset.moduleId = mod.id;
+    document.body.append(root);
+    attachModuleStepper(root, { initialDb: db, autoFetch: false });
+
+    const input = root.querySelector<HTMLInputElement>(".learning-numeric-input");
+    const check = root.querySelector<HTMLButtonElement>('[data-action="check-exercise"]');
+    const next = root.querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]');
+    if (!input || !check || !next) throw new Error("Übung fehlt");
+    check.click();
+    expect(root.textContent).toContain("Bitte gib zuerst eine Antwort ein.");
+    input.value = "440";
+    check.click();
+    expect(root.textContent).toContain("2 Versuche übrig");
+    expect(next.disabled).toBe(true);
+    check.click();
+    expect(root.textContent).toContain("1 Versuch übrig");
+    expect(loadLearningProgress(db.modules).totalXp).toBe(0);
+    check.click();
+    expect(root.textContent).toContain("Richtige Antwort: 880");
+    expect(root.textContent).toContain("Frequenzverhältnis 2:1");
+    expect(check.disabled).toBe(true);
+    expect(next.disabled).toBe(false);
+    expect(loadLearningProgress(db.modules).totalXp).toBe(10);
+    check.click();
+    expect(loadLearningProgress(db.modules).totalXp).toBe(10);
+
+    next.click();
+    root.querySelector<HTMLButtonElement>('[data-action="previous-lesson-section"]')?.click();
+    const repeatInput = root.querySelector<HTMLInputElement>(".learning-numeric-input");
+    const repeatCheck = root.querySelector<HTMLButtonElement>('[data-action="check-exercise"]');
+    if (!repeatInput || !repeatCheck) throw new Error("Wiederholte Übung fehlt");
+    repeatInput.value = "880";
+    repeatCheck.click();
+    expect(root.textContent).toContain("XP bereits erhalten");
+    expect(loadLearningProgress(db.modules).totalXp).toBe(10);
+  });
+
+  it("zeigt bei Auswahl- und Notationsübungen die tatsächlich erwarteten Lösungen", () => {
+    const db = structuredClone(seedDb);
+    const mod = db.modules[0];
+    const choice = db.questions.find((item) => item.id === "q-101-ex-1");
+    const notation = db.questions.find((item) => item.id === "q-101-ex-2");
+    if (!choice || !notation) throw new Error("Übungen fehlen");
+    choice.questionType = "multi_select";
+    choice.options = ["A", "B", "C"];
+    choice.correctAnswers = ["A", "B"];
+    notation.notationTask = {
+      clef: "treble",
+      expectedPitches: ["C4", "D4"],
+      expectedDurations: ["quarter", "half"],
+    };
+    notation.correctAnswers = [];
+    notation.explanation = "";
+    const root = document.createElement("div");
+    document.body.append(root);
+    attachModuleQuizRunner(root, { module: mod, db, mode: "exercise" });
+    const cards = root.querySelectorAll<HTMLElement>("[data-question-card]");
+    const option = cards[0].querySelector<HTMLInputElement>('input[value="C"]');
+    const choiceCheck = cards[0].querySelector<HTMLButtonElement>('[data-action="check-exercise"]');
+    const builder = cards[1].querySelector<HTMLElement>("[data-notation-builder]");
+    const notationCheck = cards[1].querySelector<HTMLButtonElement>('[data-action="check-exercise"]');
+    if (!option || !choiceCheck || !builder || !notationCheck) throw new Error("Eingaben fehlen");
+    option.checked = true;
+    builder.dataset.placedNotes = '["G4"]';
+    for (let i = 0; i < 3; i += 1) {
+      choiceCheck.click();
+      notationCheck.click();
+    }
+    expect(cards[0].textContent).toContain("Richtige Antwort: A, B");
+    expect(cards[1].textContent).toContain("Tonhöhen: C4, D4; Notenwerte: quarter, half");
+    expect(cards[1].textContent).toContain("Keine Erklärung hinterlegt.");
+  });
+
+  it("vergütet eine richtige Antwort im dritten Versuch ohne Lösungsanzeige", () => {
+    const db = structuredClone(seedDb);
+    const mod = db.modules[0];
+    const root = document.createElement("div");
+    document.body.append(root);
+    attachModuleQuizRunner(root, { module: mod, db, mode: "exercise", exerciseId: "q-101-ex-1" });
+    const input = root.querySelector<HTMLInputElement>(".learning-numeric-input");
+    const check = root.querySelector<HTMLButtonElement>('[data-action="check-exercise"]');
+    if (!input || !check) throw new Error("Übung fehlt");
+    input.value = "440";
+    check.click();
+    check.click();
+    input.value = "880";
+    check.click();
+    expect(root.textContent).toContain("Richtig!");
+    expect(root.textContent).not.toContain("Richtige Antwort:");
+    expect(loadLearningProgress(db.modules).totalXp).toBe(10);
   });
 
   it("rendert Notation an ihrer Textposition ohne Quelltext und unterstützt mehrere Elemente", () => {

@@ -395,7 +395,7 @@ export function completeTheoryBlock(
 
 /**
  * Verarbeitet eine beantwortete Übungsaufgabe (`exercise`).
- * Bei `isCorrect === true` wird jede `question.id` höchstens einmal vergütet.
+ * Bei `isCompleted === true` wird jede `question.id` höchstens einmal vergütet.
  * Sind alle `exercise`-Aufgaben des Moduls gelöst, wird je nach `module.hasPractice`
  * der Praxis-Schritt oder direkt `quiz_easy` freigeschaltet.
  */
@@ -403,10 +403,10 @@ export function recordExerciseAnswer(
   state: LearningProgressState,
   module: LearningModule,
   question: ModuleQuestion,
-  isCorrect: boolean,
+  isCompleted: boolean,
   moduleQuestions?: readonly ModuleQuestion[],
 ): LearningProgressState {
-  if (!isCorrect || question.moduleId !== module.id) {
+  if (!isCompleted || question.moduleId !== module.id) {
     return state;
   }
 
