@@ -1,4 +1,4 @@
-import { type Expression, parseExpressionAt } from "acorn";
+import { type Expression, parseExpressionAt, tokenizer } from "acorn";
 import type { TheoryBlock } from "./module-schema.ts";
 
 function literalValue(node: Expression): unknown {
@@ -51,12 +51,13 @@ function literalValue(node: Expression): unknown {
   throw new Error("Nur feste Werte, Arrays und Objekte sind erlaubt.");
 }
 
-/** Liest ein selbstschließendes Notation-Element, ohne JavaScript auszuführen. */
+/** Liest ein selbstschließendes Notationselement, ohne JavaScript auszuführen. */
 export function parseTheoryNotation(
   input: string,
   start: number,
+  openingTag = "<Notation",
 ): { props: Record<string, unknown>; end: number } {
-  let position = start + "<Notation".length;
+  let position = start + openingTag.length;
   const props: Record<string, unknown> = Object.create(null);
   while (position < input.length) {
     while (/\s/.test(input[position] ?? "")) position += 1;
@@ -84,17 +85,14 @@ export function parseTheoryNotation(
       if (input[position] !== "}") throw new Error("Schließende } fehlt.");
       position += 1;
     } else if (input[position] === '"' || input[position] === "'") {
-      const expression = parseExpressionAt(input, position, {
+      const token = tokenizer(input.slice(position), {
         ecmaVersion: "latest",
-      });
-      if (
-        expression.type !== "Literal" ||
-        typeof expression.value !== "string"
-      ) {
+      }).getToken();
+      if (token.type.label !== "string" || !("value" in token) || typeof token.value !== "string") {
         throw new Error("Ein Textwert wird erwartet.");
       }
-      props[name] = expression.value;
-      position = expression.end;
+      props[name] = token.value;
+      position += token.end;
     } else {
       throw new Error(
         "Prop-Werte müssen in Anführungszeichen oder {...} stehen.",

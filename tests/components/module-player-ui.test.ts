@@ -340,6 +340,48 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     expect(container.textContent).toContain("Danach");
   });
 
+  it("rendert Markdown, verschachteltes Inline-KaTeX und beide Display-Formate", () => {
+    const container = document.createElement("div");
+    container.append(renderTheoryMarkdown([
+      "## Frequenz",
+      "Ein erster Absatz.",
+      String.raw`* **Kammerton $A_4$:** 440 $\text{Hz}$`,
+      String.raw`* Schreibweisen: $a'$, $\sharp$ und $\flat$`,
+      "",
+      "$$f = 440$$",
+      "",
+      "$$",
+      "f_2 = 2 f_1",
+      "$$",
+      "",
+      "Ein zweiter Absatz.",
+    ].join("\n")));
+    expect(container.querySelector("h2")?.textContent).toBe("Frequenz");
+    expect(container.querySelectorAll("ul > li")).toHaveLength(2);
+    expect(container.querySelector("strong .katex")).not.toBeNull();
+    expect(container.querySelectorAll("li .katex")).toHaveLength(5);
+    expect(container.querySelectorAll(".katex-display")).toHaveLength(2);
+    expect(container.textContent).not.toContain("$");
+    expect(container.lastElementChild?.textContent).toBe("Ein zweiter Absatz.");
+  });
+
+  it("bettet die passende Keyboard-Vorlage ein und lässt Codebeispiele unverändert", () => {
+    const root = document.createElement("div");
+    root.innerHTML = '<template data-visual-template="NotationKeyboard" data-show-brace="false" data-right-bar-style="single"><div class="keyboard-notation"></div></template>';
+    root.append(renderTheoryMarkdown([
+      "~~~md",
+      "<NotationKeyboard />",
+      "~~~",
+      "",
+      "<NotationKeyboard showBrace={false} rightBarStyle='single' />",
+      "",
+      "<NotationKeyboard showBrace={window.alert(1)} />",
+    ].join("\n"), root));
+    expect(root.querySelector("pre code")?.textContent).toContain("<NotationKeyboard />");
+    expect(root.querySelectorAll(":scope > .keyboard-notation")).toHaveLength(1);
+    expect(root.querySelector(".learning-notation-error")?.textContent).toContain("Nur feste Werte");
+  });
+
   it("zeigt eine alte Visualisierung nicht doppelt, wenn dieselbe Notation bereits im Text steht", () => {
     const root = document.createElement("section");
     root.dataset.moduleId = "theory-101";
@@ -367,7 +409,7 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     attachModuleStepper(root, { initialDb: db, autoFetch: false });
 
     const group = root.querySelector(".learning-theory-group");
-    expect(group?.querySelector("h4")?.textContent).toBe("Grundlagen");
+    expect(group?.querySelector(".learning-lesson-heading")?.textContent).toBe("101: Grundlagen");
     expect(group?.querySelectorAll(".learning-theory-block")).toHaveLength(2);
     const groupXp = db.modules[0].theoryBlocks
       .slice(0, 2)
@@ -379,7 +421,7 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     expect(group?.querySelector(".learning-theory-heading .learning-xp-badge")?.textContent)
       .toBe(`${groupXp} XP`);
     expect(group?.querySelector(".learning-theory-heading")?.firstElementChild?.tagName)
-      .toBe("H4");
+      .toBe("H3");
   });
 
   it("zeigt gruppierte Übungen gemeinsam mit Theorie und wartet auf beide Abschlüsse", () => {
@@ -409,7 +451,7 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     attachModuleStepper(root, { initialDb: db, autoFetch: false });
 
     const group = root.querySelector(".learning-content-group");
-    expect(group?.querySelector("h4")?.textContent).toBe("Grundlagen");
+    expect(group?.querySelector(".learning-lesson-heading")?.textContent).toBe("101: Grundlagen");
     expect(group?.querySelector(".learning-theory-block")).not.toBeNull();
     expect(group?.querySelector('[data-question-card="q-101-ex-1"]')).not.toBeNull();
     const next = root.querySelector<HTMLButtonElement>(
@@ -438,16 +480,22 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     root.dataset.moduleId = "theory-101";
     document.body.append(root);
     const db = structuredClone(seedDb);
-    const block = db.modules[0].theoryBlocks[0];
+    const mod = db.modules[0];
+    const [block, other] = mod.theoryBlocks;
     delete block.groupId;
     delete block.groupTitle;
+    block.title = "Theorie 1 101.1: Schall, Frequenz & Klangfarbe";
+    mod.level = 200;
+    mod.contentOrder = [{ kind: "theory", id: block.id }, { kind: "theory", id: other.id }];
+    block.order = 99;
 
     attachModuleStepper(root, { initialDb: db, autoFetch: false });
 
     const heading = root.querySelector(".learning-theory-block .learning-theory-heading");
     expect(heading?.querySelector(".learning-xp-badge")?.textContent)
       .toBe(`${calculateTheoryBlockXp(block, db.modules[0].theoryBaseXp)} XP`);
-    expect(heading?.firstElementChild?.tagName).toBe("H4");
+    expect(heading?.firstElementChild?.textContent).toBe("201: Schall, Frequenz & Klangfarbe");
+    expect(root.querySelector(".learning-lesson-step")?.textContent).toBe("201: Schall, Frequenz & Klangfarbe");
   });
 
   it("vergütet beim Abschluss einer teilweise erledigten Gruppe nur offene Blöcke", () => {
@@ -604,11 +652,14 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     document.body.append(stepperEl);
     attachModuleStepper(stepperEl, { initialDb: db, autoFetch: false });
     expect(stepperEl.querySelector(".learning-lesson-counter")?.textContent).toBe("Abschnitt 2 / 5");
-    expect(stepperEl.querySelector(".learning-theory-group h4")?.textContent).toBe("Grundlagen");
+    expect(stepperEl.querySelector(".learning-theory-group .learning-lesson-heading")?.textContent).toBe("102: Grundlagen");
+    expect(stepperEl.querySelector('[data-step-index="1"]')?.textContent).toBe("102: Grundlagen");
     expect(stepperEl.querySelectorAll(".learning-theory-group .learning-theory-block")).toHaveLength(2);
     expect(stepperEl.querySelector(".katex")).not.toBeNull();
     expect(stepperEl.querySelector("svg.notation-staff")).not.toBeNull();
-    stepperEl.querySelector<HTMLButtonElement>('[data-action="complete-theory-block"]')?.click();
+    const readButton = stepperEl.querySelector<HTMLButtonElement>('[data-action="complete-theory-block"]');
+    expect(readButton?.textContent).toBe("Abschnitt gelesen");
+    readButton?.click();
     const groupXp = mod.theoryBlocks.slice(0, 2).reduce(
       (sum, block) => sum + calculateTheoryBlockXp(block, mod.theoryBaseXp), 0,
     );

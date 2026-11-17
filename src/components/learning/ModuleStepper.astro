@@ -30,9 +30,13 @@ const {
   data-mode={mode}
   data-lesson-base-url={lessonBaseUrl}
 >
-  <template data-visual-template="NotationKeyboard">
-    <NotationKeyboard />
-  </template>
+  {([true, false] as const).flatMap((showBrace) =>
+    (["final", "single"] as const).map((rightBarStyle) => (
+      <template data-visual-template="NotationKeyboard" data-show-brace={String(showBrace)} data-right-bar-style={rightBarStyle}>
+        <NotationKeyboard showBrace={showBrace} rightBarStyle={rightBarStyle} />
+      </template>
+    )),
+  )}
   <template data-visual-template="ScalePattern">
     <ScalePattern />
   </template>

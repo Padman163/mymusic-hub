@@ -1,4 +1,10 @@
-import katex from "katex";
+import rehypeKatex from "rehype-katex";
+import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
+import rehypeStringify from "rehype-stringify";
+import remarkMath from "remark-math";
+import remarkParse from "remark-parse";
+import remarkRehype from "remark-rehype";
+import { unified } from "unified";
 import {
   clearLearningProgress,
   completePracticeBlock,
@@ -432,103 +438,66 @@ export function evaluateQuestionAnswer(
   };
 }
 
-function renderInlineMarkdown(text: string): DocumentFragment {
-  const frag = document.createDocumentFragment();
-  const tokenPattern = /(\$[^$\n]+\$|\*\*[^*\n]+\*\*|`[^`\n]+`)/g;
-  let lastIndex = 0;
-
-  for (const match of text.matchAll(tokenPattern)) {
-    const idx = match.index ?? 0;
-    if (idx > lastIndex) {
-      frag.append(document.createTextNode(text.slice(lastIndex, idx)));
-    }
-    const token = match[0];
-    if (token.startsWith("$") && token.endsWith("$")) {
-      const expr = token.slice(1, -1);
-      const span = document.createElement("span");
-      span.className = "learning-inline-math";
-      span.innerHTML = katex.renderToString(expr, {
-        displayMode: false,
-        throwOnError: false,
-      });
-      frag.append(span);
-    } else if (token.startsWith("**") && token.endsWith("**")) {
-      const strong = document.createElement("strong");
-      strong.textContent = token.slice(2, -2);
-      frag.append(strong);
-    } else if (token.startsWith("`") && token.endsWith("`")) {
-      const code = document.createElement("code");
-      code.textContent = token.slice(1, -1);
-      frag.append(code);
-    }
-    lastIndex = idx + token.length;
-  }
-
-  if (lastIndex < text.length) {
-    frag.append(document.createTextNode(text.slice(lastIndex)));
-  }
-
-  return frag;
-}
+const theoryMarkdown = unified()
+  .use(remarkParse)
+  .use(remarkMath)
+  .use(remarkRehype)
+  .use(rehypeSanitize, {
+    ...defaultSchema,
+    attributes: {
+      ...defaultSchema.attributes,
+      code: [["className", /^language-/, "math-inline", "math-display"]],
+    },
+  })
+  .use(rehypeKatex)
+  .use(rehypeStringify);
 
 function renderMarkdownText(markdown: string): DocumentFragment {
-  const frag = document.createDocumentFragment();
-  const normalized = markdown.replace(/\r\n/g, "\n").trim();
-  if (!normalized) {
-    return frag;
+  const tree = theoryMarkdown.parse(markdown);
+  for (const node of tree.children) {
+    if (node.type !== "paragraph" || node.children.length !== 1) continue;
+    const [math] = node.children;
+    const start = math.position?.start.offset;
+    // remark-math treats a same-line $$…$$ paragraph as inline math.
+    if (math.type === "inlineMath" && start !== undefined && markdown.startsWith("$$", start)) {
+      math.data = {
+        ...math.data,
+        hProperties: { className: ["language-math", "math-display"] },
+      };
+    }
   }
+  const template = document.createElement("template");
+  template.innerHTML = theoryMarkdown.stringify(theoryMarkdown.runSync(tree));
+  return template.content;
+}
 
-  const chunks = normalized.split(/\n{2,}/);
-  for (const chunk of chunks) {
-    const trimmed = chunk.trim();
-    if (!trimmed) continue;
-
-    if (trimmed.startsWith("$$") && trimmed.endsWith("$$")) {
-      const expr = trimmed.slice(2, -2).trim();
-      const mathDiv = document.createElement("div");
-      mathDiv.className = "learning-math-block";
-      mathDiv.innerHTML = katex.renderToString(expr, {
-        displayMode: true,
-        throwOnError: false,
-      });
-      frag.append(mathDiv);
-      continue;
-    }
-
-    const lines = trimmed.split("\n");
-    if (lines.every((line) => line.trim().startsWith("- "))) {
-      const ul = document.createElement("ul");
-      for (const line of lines) {
-        const li = document.createElement("li");
-        li.append(renderInlineMarkdown(line.trim().slice(2)));
-        ul.append(li);
-      }
-      frag.append(ul);
-      continue;
-    }
-
-    if (lines.length === 1 && /^#{1,4}\s+/.test(trimmed)) {
-      const heading = document.createElement("h5");
-      heading.append(renderInlineMarkdown(trimmed.replace(/^#{1,4}\s+/, "")));
-      frag.append(heading);
-      continue;
-    }
-
-    const p = document.createElement("p");
-    lines.forEach((line, index) => {
-      if (index > 0) p.append(document.createElement("br"));
-      p.append(renderInlineMarkdown(line));
-    });
-    frag.append(p);
+function renderTheoryKeyboard(
+  props: Record<string, unknown>,
+  templateRoot?: ParentNode,
+): DocumentFragment {
+  const { showBrace = true, rightBarStyle = "final" } = props;
+  if (
+    Object.keys(props).some((key) => key !== "showBrace" && key !== "rightBarStyle") ||
+    typeof showBrace !== "boolean" ||
+    (rightBarStyle !== "single" && rightBarStyle !== "final")
+  ) {
+    throw new Error("NotationKeyboard erwartet showBrace (boolean) und rightBarStyle (single oder final).");
   }
-
-  return frag;
+  const selector = `template[data-visual-template="NotationKeyboard"][data-show-brace="${showBrace}"][data-right-bar-style="${rightBarStyle}"]`;
+  const template =
+    templateRoot?.querySelector<HTMLTemplateElement>(selector) ??
+    document.querySelector<HTMLTemplateElement>(selector);
+  if (!template) throw new Error("Die Keyboard-Vorlage fehlt.");
+  return document.importNode(template.content, true);
 }
 
 /** Wandelt Markdown, KaTeX und sichere Notationselemente in DOM-Elemente um. */
-export function renderTheoryMarkdown(markdown: string): DocumentFragment {
+export function renderTheoryMarkdown(
+  markdown: string,
+  templateRoot?: ParentNode,
+): DocumentFragment {
   const frag = document.createDocumentFragment();
-  const tokens = /(`+|\$\$|\$|<Notation(?=[\s/>]))/g;
+  const tokens = /(<!--|`+|~{3,}|\$+|<Notation(?:Keyboard)?(?=[\s/>]))/g;
   let textStart = 0;
   for (
     let match = tokens.exec(markdown);
@@ -536,16 +505,28 @@ export function renderTheoryMarkdown(markdown: string): DocumentFragment {
     match = tokens.exec(markdown)
   ) {
     const token = match[0];
-    if (token !== "<Notation") {
+    let before = match.index;
+    while (before > 0 && markdown[before - 1] === "\\") before -= 1;
+    const escapes = match.index - before;
+    if (escapes % 2 === 1) continue;
+    if (token === "<!--") {
+      const end = markdown.indexOf("-->", tokens.lastIndex);
+      tokens.lastIndex = end === -1 ? markdown.length : end + 3;
+      continue;
+    }
+    if (!token.startsWith("<")) {
       const end = markdown.indexOf(token, tokens.lastIndex);
       if (end !== -1) tokens.lastIndex = end + token.length;
       continue;
     }
-    if (match.index > 0 && markdown[match.index - 1] === "\\") continue;
     frag.append(renderMarkdownText(markdown.slice(textStart, match.index)));
     try {
-      const parsed = parseTheoryNotation(markdown, match.index);
-      frag.append(buildNotationVisualElement(parsed.props));
+      const parsed = parseTheoryNotation(markdown, match.index, token);
+      frag.append(
+        token === "<NotationKeyboard"
+          ? renderTheoryKeyboard(parsed.props, templateRoot)
+          : buildNotationVisualElement(parsed.props),
+      );
       tokens.lastIndex = parsed.end;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -2111,6 +2092,24 @@ type LessonSection =
   | { kind: "group"; groupTitle: string; items: LessonItem[] }
   | { kind: "quiz" };
 
+function cleanLessonTitle(title: string): string {
+  const trimmed = title.trim();
+  return trimmed.replace(
+    /^(?:\d+(?:\.\d+)*\s*(?::\s*|[.)–-]\s+)|(?:Theorie|Abschnitt|Übung|Praxisaufgabe|Quiz)\s+\d+(?:\.\d+)*(?:\s*[:.)–-])?\s+)*/i,
+    "",
+  ).trim() || trimmed;
+}
+
+function getLessonSectionTitle(section: LessonSection): string {
+  switch (section.kind) {
+    case "group": return cleanLessonTitle(section.groupTitle);
+    case "theory": return cleanLessonTitle(section.blocks[0].title);
+    case "exercise": return cleanLessonTitle(section.question.prompt);
+    case "practice": return cleanLessonTitle(section.block.title);
+    case "quiz": return "Quiz";
+  }
+}
+
 function buildLessonSections(
   mod: LearningModule,
   questions: readonly ModuleQuestion[],
@@ -2329,13 +2328,11 @@ export function attachModuleStepper(
     }
     const modProgress = state.modules[mod.id];
 
-    const headerCard = document.createElement("div");
-    headerCard.className = "learning-card";
-    const headerTop = document.createElement("div");
-    headerTop.className = "learning-card-header";
+    const headerTop = document.createElement("header");
+    headerTop.className = "learning-lesson-header";
     const title = document.createElement("h2");
     title.className = "learning-card-title";
-    title.textContent = `${mod.order}. ${mod.title}`;
+    title.textContent = mod.title;
     const modeActions = document.createElement("div");
     modeActions.className = "learning-stepper-header-actions";
 
@@ -2356,12 +2353,7 @@ export function attachModuleStepper(
     }
 
     headerTop.append(title, modeActions);
-    const desc = document.createElement("p");
-    desc.className = "learning-muted";
-    desc.textContent = mod.description || "";
-    headerCard.append(headerTop);
-    if (mod.description) headerCard.append(desc);
-    contentHost.append(headerCard);
+    contentHost.append(headerTop);
 
     if (mode === "fastlane") {
       const runnerContainer = document.createElement("div");
@@ -2402,6 +2394,9 @@ export function attachModuleStepper(
     initialProgress: ModuleProgress,
   ): void {
     const sections = buildLessonSections(mod, currentDb.questions);
+    const sectionTitles = sections.map(
+      (section, position) => `${mod.level + position + 1}: ${getLessonSectionTitle(section)}`,
+    );
     const firstIncomplete = sections.findIndex(
       (section) => !isLessonSectionComplete(section, initialProgress),
     );
@@ -2433,16 +2428,7 @@ export function attachModuleStepper(
     const renderSidebar = (progress: ModuleProgress) => {
       stepList.replaceChildren();
       sections.forEach((section, stepIndex) => {
-        const label =
-          section.kind === "group"
-            ? section.groupTitle
-            : section.kind === "theory"
-              ? (section.blocks[0].groupTitle ?? section.blocks[0].title)
-              : section.kind === "exercise"
-                ? section.question.prompt
-                : section.kind === "practice"
-                  ? section.block.title
-                  : "Quiz";
+        const label = sectionTitles[stepIndex];
         const completed = isLessonSectionComplete(section, progress);
         const item = document.createElement("li");
         const button = document.createElement("button");
@@ -2457,15 +2443,9 @@ export function attachModuleStepper(
         }
         button.setAttribute(
           "aria-label",
-          `Abschnitt ${stepIndex + 1}: ${label} (${completed ? "abgeschlossen" : "nicht abgeschlossen"})`,
+          `${label} (${completed ? "abgeschlossen" : "nicht abgeschlossen"})`,
         );
-        const number = document.createElement("span");
-        number.className = "learning-lesson-step-number";
-        number.textContent = String(stepIndex + 1);
-        const title = document.createElement("span");
-        title.className = "learning-lesson-step-title";
-        title.textContent = label;
-        button.append(number, title);
+        button.textContent = label;
         button.addEventListener("click", () => {
           if (!completed) return;
           index = stepIndex;
@@ -2509,16 +2489,7 @@ export function attachModuleStepper(
       const heading = document.createElement("h3");
       heading.className = "learning-lesson-heading";
       heading.tabIndex = -1;
-      heading.textContent =
-        section.kind === "group"
-          ? "Abschnitt"
-          : section.kind === "theory"
-            ? "Theorie"
-            : section.kind === "exercise"
-              ? "Übung"
-              : section.kind === "practice"
-                ? "Praxisaufgabe"
-                : "Quiz";
+      heading.textContent = sectionTitles[index];
       card.append(heading);
 
       let completeButton: HTMLButtonElement | null = null;
@@ -2569,11 +2540,8 @@ export function attachModuleStepper(
           return badge;
         };
         if (grouped) {
-          const groupHeading = document.createElement("h4");
-          groupHeading.textContent =
-            section.kind === "group" ? section.groupTitle : "";
-          const heading = document.createElement("div");
-          heading.className = "learning-theory-heading";
+          const headingRow = document.createElement("div");
+          headingRow.className = "learning-theory-heading";
           const groupXp =
             blocks.reduce(
               (total, block) =>
@@ -2591,29 +2559,31 @@ export function attachModuleStepper(
                 calculateTheoryBlockXp(block, BASE_XP_DEFAULTS.practice),
               0,
             );
-          heading.append(groupHeading, getXpBadge(groupXp));
-          wrap.append(heading);
+          headingRow.append(heading, getXpBadge(groupXp));
+          wrap.append(headingRow);
         }
         for (const item of contentItems) {
           if (item.kind === "theory") {
             const block = item.block;
             const blockEl = document.createElement("article");
             blockEl.className = "learning-theory-block";
-            const blockTitle = document.createElement(grouped ? "h5" : "h4");
-            blockTitle.textContent = `${block.order}. ${block.title}`;
-            if (!grouped) {
-              const heading = document.createElement("div");
-              heading.className = "learning-theory-heading";
-              heading.append(
-                blockTitle,
+            if (grouped) {
+              const blockTitle = document.createElement("h4");
+              blockTitle.className = "learning-theory-block-title";
+              blockTitle.textContent = cleanLessonTitle(block.title);
+              blockEl.append(blockTitle);
+            } else {
+              const headingRow = document.createElement("div");
+              headingRow.className = "learning-theory-heading";
+              headingRow.append(
+                heading,
                 getXpBadge(calculateTheoryBlockXp(block, mod.theoryBaseXp)),
               );
-              blockEl.append(heading);
+              blockEl.append(headingRow);
             }
             const markdown = document.createElement("div");
             markdown.className = "learning-theory-markdown";
-            markdown.append(renderTheoryMarkdown(block.markdownContent));
-            if (grouped) blockEl.append(blockTitle);
+            markdown.append(renderTheoryMarkdown(block.markdownContent, root));
             blockEl.append(markdown);
             const visual = renderTheoryVisualElement(block, root);
             if (visual) blockEl.append(visual);
@@ -2623,11 +2593,14 @@ export function attachModuleStepper(
             const blockEl = document.createElement("article");
             blockEl.className = "learning-theory-block learning-practice-block";
             blockEl.dataset.practiceBlock = block.id;
-            const blockTitle = document.createElement(grouped ? "h5" : "h4");
-            blockTitle.textContent = block.title;
-            const heading = document.createElement("div");
-            heading.className = "learning-theory-heading";
-            heading.append(
+            const blockTitle = grouped ? document.createElement("h4") : heading;
+            if (grouped) {
+              blockTitle.className = "learning-theory-block-title";
+              blockTitle.textContent = cleanLessonTitle(block.title);
+            }
+            const headingRow = document.createElement("div");
+            headingRow.className = "learning-theory-heading";
+            headingRow.append(
               blockTitle,
               getXpBadge(
                 calculateTheoryBlockXp(block, BASE_XP_DEFAULTS.practice),
@@ -2635,7 +2608,7 @@ export function attachModuleStepper(
             );
             const markdown = document.createElement("div");
             markdown.className = "learning-theory-markdown";
-            markdown.append(renderTheoryMarkdown(block.markdownContent));
+            markdown.append(renderTheoryMarkdown(block.markdownContent, root));
             const practiceButton = document.createElement("button");
             practiceButton.type = "button";
             practiceButton.className = "learning-btn learning-btn-primary";
@@ -2652,7 +2625,7 @@ export function attachModuleStepper(
               );
             });
             practiceButtons.push({ block, button: practiceButton });
-            blockEl.append(heading, markdown, practiceButton);
+            blockEl.append(headingRow, markdown, practiceButton);
             blocksHost.append(blockEl);
           } else {
             const exercise = document.createElement("div");
@@ -2771,29 +2744,10 @@ export function attachModuleStepper(
           completeButton &&
           (section.kind === "theory" || section.kind === "group")
         ) {
-          const blocks =
-            section.kind === "theory"
-              ? section.blocks
-              : section.items.flatMap((item) =>
-                  item.kind === "theory" ? [item.block] : [],
-                );
-          const remainingXp =
-            latest.steps.theory === "completed"
-              ? 0
-              : blocks
-                  .filter(
-                    (block) =>
-                      !latest.completedTheoryBlockIds.includes(block.id),
-                  )
-                  .reduce(
-                    (sum, block) =>
-                      sum + calculateTheoryBlockXp(block, mod.theoryBaseXp),
-                    0,
-                  );
           completeButton.disabled = completed;
           completeButton.textContent = completed
             ? "✓ Abschnitt gelesen"
-            : `Abschnitt gelesen (+${remainingXp} XP)`;
+            : "Abschnitt gelesen";
         }
         const percent =
           (sections.filter((item) => isLessonSectionComplete(item, latest))
