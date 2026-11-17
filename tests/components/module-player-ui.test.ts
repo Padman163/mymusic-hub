@@ -89,6 +89,57 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
       .toBe("H4");
   });
 
+  it("zeigt gruppierte Übungen gemeinsam mit Theorie und wartet auf beide Abschlüsse", () => {
+    const root = document.createElement("section");
+    root.dataset.moduleId = "theory-101";
+    document.body.append(root);
+    const db = structuredClone(seedDb);
+    const mod = db.modules[0];
+    const block = mod.theoryBlocks[0];
+    const question = db.questions.find((item) => item.id === "q-101-ex-1");
+    if (!question) throw new Error("Gruppenübung fehlt");
+    mod.contentOrder = [
+      {
+        kind: "theory",
+        id: block.id,
+        groupId: "mixed-group",
+        groupTitle: "Grundlagen",
+      },
+      {
+        kind: "exercise",
+        id: question.id,
+        groupId: "mixed-group",
+        groupTitle: "Grundlagen",
+      },
+    ];
+
+    attachModuleStepper(root, { initialDb: db, autoFetch: false });
+
+    const group = root.querySelector(".learning-content-group");
+    expect(group?.querySelector("h4")?.textContent).toBe("Grundlagen");
+    expect(group?.querySelector(".learning-theory-block")).not.toBeNull();
+    expect(group?.querySelector('[data-question-card="q-101-ex-1"]')).not.toBeNull();
+    const next = root.querySelector<HTMLButtonElement>(
+      '[data-action="next-lesson-section"]',
+    );
+    expect(next?.disabled).toBe(true);
+
+    root.querySelector<HTMLButtonElement>(
+      '[data-action="complete-theory-block"]',
+    )?.click();
+    expect(next?.disabled).toBe(true);
+    const input = group?.querySelector<HTMLInputElement>(
+      '[data-question-card="q-101-ex-1"] .learning-numeric-input',
+    );
+    const answerButton = group?.querySelector<HTMLButtonElement>(
+      '[data-question-card="q-101-ex-1"] [data-action="check-exercise"]',
+    );
+    if (!input || !answerButton) throw new Error("Gruppenübung fehlt");
+    input.value = "880";
+    answerButton.click();
+    expect(next?.disabled).toBe(false);
+  });
+
   it("zeigt XP für einzelne Theorieblöcke rechts neben dem Titel", () => {
     const root = document.createElement("section");
     root.dataset.moduleId = "theory-101";

@@ -237,6 +237,18 @@ function requireElement<T extends Element>(
   return el;
 }
 
+function createLabeledField(
+  labelText: string,
+  control: HTMLElement,
+): HTMLLabelElement {
+  const label = document.createElement("label");
+  label.className = "field";
+  const caption = document.createElement("span");
+  caption.textContent = labelText;
+  label.append(caption, control);
+  return label;
+}
+
 export interface XpTagPickerController {
   element: HTMLFieldSetElement;
   selectedTags(): string[];
@@ -367,12 +379,14 @@ export function createTheoryBlockEditor(
   const hint = document.createElement("p");
   hint.className = "field-hint";
   hint.textContent =
-    "Mehrere Theorieblöcke über die Auswahlfelder markieren, um sie zu gruppieren. Übungen werden im Reiter „Aufgaben“ bearbeitet. Die Reihenfolge gilt auch im Lernpfad.";
+    "Mehrere Theorieblöcke und Übungen über die Auswahlfelder markieren, um sie gemeinsam zu gruppieren. Übungen lassen sich direkt aufklappen und bearbeiten. Die Reihenfolge gilt auch im Lernpfad.";
 
   const rows = document.createElement("div");
   rows.className = "theory-block-rows";
   const legacyVisuals = new WeakMap<HTMLDivElement, Partial<TheoryBlock>>();
   const blockTags = new WeakMap<HTMLDivElement, XpTagPickerController>();
+  let exerciseQuestions: ModuleQuestion[] = [];
+  const expandedGroups = new Set<string>();
 
   const groupButton = document.createElement("button");
   groupButton.type = "button";
@@ -385,9 +399,11 @@ export function createTheoryBlockEditor(
   addButton.className = "theory-block-add";
   addButton.textContent = "+ Theorie-Block hinzufügen";
 
-  function selectedTheoryRows(): HTMLDivElement[] {
+  function selectedGroupRows(): HTMLDivElement[] {
     return Array.from(
-      rows.querySelectorAll<HTMLDivElement>(".theory-block-row"),
+      rows.querySelectorAll<HTMLDivElement>(
+        ".theory-block-row, .module-exercise-row",
+      ),
     ).filter(
       (row) =>
         row.querySelector<HTMLInputElement>(".theory-block-select")?.checked,
@@ -395,7 +411,7 @@ export function createTheoryBlockEditor(
   }
 
   function updateGroupButton(): void {
-    groupButton.disabled = selectedTheoryRows().length < 2;
+    groupButton.disabled = selectedGroupRows().length < 2;
   }
 
   function renderGroupHeaders(): void {
@@ -406,19 +422,31 @@ export function createTheoryBlockEditor(
     }
     const seenGroups = new Set<string>();
     for (const row of rows.querySelectorAll<HTMLDivElement>(
-      ".theory-block-row",
+      ".theory-block-row, .module-exercise-row",
     )) {
       const groupId = row.dataset.groupId;
       if (!groupId || seenGroups.has(groupId)) continue;
       seenGroups.add(groupId);
+      const expanded = expandedGroups.has(groupId);
 
       const header = document.createElement("div");
       header.className = "theory-group-editor-heading";
+      const groupDetails = document.createElement("details");
+      groupDetails.className = "theory-group-details";
+      groupDetails.open = expanded;
+      const groupSummary = document.createElement("summary");
+      groupSummary.className = "theory-group-summary";
+      const groupTitleText = document.createElement("span");
+      groupTitleText.className = "theory-group-summary-title";
+      groupTitleText.textContent = `Abschnitt · ${row.dataset.groupTitle ?? ""}`;
+      groupSummary.append(groupTitleText);
+      groupDetails.append(groupSummary);
+
       const label = document.createElement("label");
       label.className = "field";
       const caption = document.createElement("span");
       const count = rowUnit(row).length;
-      caption.textContent = `Abschnittstitel · ${count} ${count === 1 ? "Theorieblock" : "Theorieblöcke"}`;
+      caption.textContent = `Abschnittstitel · ${count} ${count === 1 ? "Eintrag" : "Einträge"}`;
       const titleInput = document.createElement("input");
       titleInput.type = "text";
       titleInput.className = "theory-group-title";
@@ -426,33 +454,78 @@ export function createTheoryBlockEditor(
       titleInput.value = row.dataset.groupTitle ?? "";
       titleInput.addEventListener("input", () => {
         for (const member of rows.querySelectorAll<HTMLDivElement>(
-          ".theory-block-row",
+          ".theory-block-row, .module-exercise-row",
         )) {
           if (member.dataset.groupId === groupId) {
             member.dataset.groupTitle = titleInput.value;
           }
         }
+        groupTitleText.textContent = `Abschnitt · ${titleInput.value}`;
       });
       label.append(caption, titleInput);
+      groupDetails.append(label);
+      groupDetails.addEventListener("toggle", () => {
+        const isExpanded = groupDetails.open;
+        if (isExpanded) expandedGroups.add(groupId);
+        else expandedGroups.delete(groupId);
+        for (const member of rowUnit(row)) {
+          if (isExpanded) delete member.dataset.groupCollapsed;
+          else member.dataset.groupCollapsed = "true";
+        }
+      });
+
+      const actions = document.createElement("div");
+      actions.className = "theory-group-editor-actions";
+
+      const moveUpButton = document.createElement("button");
+      moveUpButton.type = "button";
+      moveUpButton.className = "theory-group-up";
+      moveUpButton.textContent = "↑";
+      moveUpButton.title = "Gruppe nach oben verschieben";
+      moveUpButton.setAttribute("aria-label", "Gruppe nach oben verschieben");
+      moveUpButton.addEventListener("click", () => moveRow(row, -1));
+
+      const moveDownButton = document.createElement("button");
+      moveDownButton.type = "button";
+      moveDownButton.className = "theory-group-down";
+      moveDownButton.textContent = "↓";
+      moveDownButton.title = "Gruppe nach unten verschieben";
+      moveDownButton.setAttribute(
+        "aria-label",
+        "Gruppe nach unten verschieben",
+      );
+      moveDownButton.addEventListener("click", () => moveRow(row, 1));
 
       const ungroupButton = document.createElement("button");
       ungroupButton.type = "button";
-      ungroupButton.className = "theory-group-ungroup";
-      ungroupButton.textContent = "Gruppe auflösen";
+      ungroupButton.className = "checklist-remove theory-group-ungroup";
+      ungroupButton.textContent = "×";
+      ungroupButton.title = "Gruppierung lösen";
+      ungroupButton.setAttribute("aria-label", "Gruppierung lösen");
       ungroupButton.addEventListener("click", () => {
+        expandedGroups.delete(groupId);
         for (const member of rows.querySelectorAll<HTMLDivElement>(
-          ".theory-block-row",
+          ".theory-block-row, .module-exercise-row",
         )) {
           if (member.dataset.groupId === groupId) {
             delete member.dataset.groupId;
             delete member.dataset.groupTitle;
+            delete member.dataset.groupCollapsed;
           }
         }
         renderGroupHeaders();
         syncRowOrder();
       });
-      header.append(label, ungroupButton);
+      actions.append(moveUpButton, moveDownButton, ungroupButton);
+      header.append(groupDetails, actions);
+      for (const member of rowUnit(row)) {
+        if (!expanded) member.dataset.groupCollapsed = "true";
+        else delete member.dataset.groupCollapsed;
+      }
       row.prepend(header);
+    }
+    for (const groupId of expandedGroups) {
+      if (!seenGroups.has(groupId)) expandedGroups.delete(groupId);
     }
   }
 
@@ -462,7 +535,8 @@ export function createTheoryBlockEditor(
     return Array.from(rows.children).filter(
       (element): element is HTMLDivElement =>
         element instanceof HTMLDivElement &&
-        element.classList.contains("theory-block-row") &&
+        (element.classList.contains("theory-block-row") ||
+          element.classList.contains("module-exercise-row")) &&
         element.dataset.groupId === groupId,
     );
   }
@@ -507,8 +581,19 @@ export function createTheoryBlockEditor(
       const upButton = row.querySelector<HTMLButtonElement>(".theory-block-up");
       const downButton =
         row.querySelector<HTMLButtonElement>(".theory-block-down");
+      const groupUpButton =
+        row.querySelector<HTMLButtonElement>(".theory-group-up");
+      if (groupUpButton) {
+        groupUpButton.disabled = rowElements.indexOf(unit[0]) === 0;
+      }
+      const groupDownButton =
+        row.querySelector<HTMLButtonElement>(".theory-group-down");
+      if (groupDownButton) {
+        groupDownButton.disabled =
+          rowElements.indexOf(unit[unit.length - 1]) === rowElements.length - 1;
+      }
       if (upButton) {
-        upButton.hidden = !firstInUnit;
+        upButton.hidden = Boolean(row.dataset.groupId) || !firstInUnit;
         upButton.disabled = index === 0;
         const label = row.dataset.groupId
           ? "Gruppe nach oben verschieben"
@@ -517,7 +602,7 @@ export function createTheoryBlockEditor(
         upButton.setAttribute("aria-label", label);
       }
       if (downButton) {
-        downButton.hidden = !lastInUnit;
+        downButton.hidden = Boolean(row.dataset.groupId) || !lastInUnit;
         downButton.disabled = index === rowElements.length - 1;
         const label = row.dataset.groupId
           ? "Gruppe nach unten verschieben"
@@ -560,7 +645,7 @@ export function createTheoryBlockEditor(
 
   function refreshCalculatedXp(): void {
     for (const row of rows.querySelectorAll<HTMLDivElement>(
-      ".theory-block-row",
+      ".theory-block-row, .module-exercise-row",
     )) {
       const input = row.querySelector<HTMLInputElement>(".theory-block-xp");
       const result = row.querySelector<HTMLElement>(
@@ -735,19 +820,19 @@ export function createTheoryBlockEditor(
   }
 
   groupButton.addEventListener("click", () => {
-    const selected = selectedTheoryRows();
+    const selected = selectedGroupRows();
     if (selected.length < 2) return;
     const firstSelectedIndex = Array.from(rows.children).indexOf(selected[0]);
     const insertionIndex = Array.from(rows.children)
       .slice(0, firstSelectedIndex)
       .filter((row) => !selected.includes(row as HTMLDivElement)).length;
     const groupId = `tg-${crypto.randomUUID()}`;
-    const titles = selected.map(
-      (row) =>
-        row
-          .querySelector<HTMLInputElement>(".theory-block-title")
-          ?.value.trim() || "Neuer Block",
-    );
+    const titles = selected.map((row) => {
+      const title = row
+        .querySelector<HTMLInputElement>(".theory-block-title")
+        ?.value.trim();
+      return title || row.dataset.prompt?.trim() || "Neuer Block";
+    });
     const lastTitle = titles.pop();
     const groupTitle = `${titles.join(", ")} & ${lastTitle}`;
     for (const row of selected) {
@@ -819,9 +904,9 @@ export function createTheoryBlockEditor(
 
       const groupId = row.dataset.groupId;
       if (groupId && !validatedGroupTitles.has(groupId)) {
-        const groupTitleInput = row.querySelector<HTMLInputElement>(
-          ".theory-group-title",
-        );
+        const groupTitleInput = rowUnit(
+          row,
+        )[0]?.querySelector<HTMLInputElement>(".theory-group-title");
         const groupTitle = row.dataset.groupTitle?.trim() ?? "";
         if (!groupTitle || !groupTitleInput) {
           groupTitleInput?.setCustomValidity(
@@ -867,6 +952,7 @@ export function createTheoryBlockEditor(
   }
 
   function setItems(blocks: readonly TheoryBlock[]): void {
+    expandedGroups.clear();
     rows.replaceChildren();
     const sorted = [...blocks].sort((a, b) => a.order - b.order);
     for (const block of sorted) {
@@ -886,6 +972,12 @@ export function createTheoryBlockEditor(
           ? "theory"
           : "exercise",
         id: element.dataset.blockId,
+        ...(element.dataset.groupId
+          ? {
+              groupId: element.dataset.groupId,
+              groupTitle: element.dataset.groupTitle?.trim() ?? "",
+            }
+          : {}),
       };
     });
   }
@@ -896,23 +988,311 @@ export function createTheoryBlockEditor(
   ): void {
     for (const row of rows.querySelectorAll(".module-exercise-row"))
       row.remove();
+    exerciseQuestions = [...questions];
     for (const question of questions) {
       const row = document.createElement("div");
       row.className = "module-exercise-row";
       row.dataset.blockId = question.id;
       row.dataset.prompt = question.prompt;
+      const savedReference = order.find(
+        (entry) => entry.kind === "exercise" && entry.id === question.id,
+      );
+      if (savedReference?.groupId && savedReference.groupTitle) {
+        row.dataset.groupId = savedReference.groupId;
+        row.dataset.groupTitle = savedReference.groupTitle;
+      }
       const details = document.createElement("details");
       details.className = "theory-block-details";
       const summary = document.createElement("summary");
       const label = document.createElement("span");
       label.className = "theory-block-order-label";
       summary.append(label);
+      const editor = document.createElement("div");
+      editor.className = "module-exercise-editor";
+      const prompt = document.createElement("textarea");
+      prompt.rows = 3;
+      prompt.maxLength = 4000;
+      prompt.value = question.prompt;
+      prompt.setAttribute("aria-label", "Aufgabenstellung");
+      editor.append(createLabeledField("Aufgabenstellung", prompt));
+
+      const answers = document.createElement("div");
+      answers.className = "module-exercise-answers";
+      let choiceRows: HTMLDivElement | null = null;
+      let numericAnswer: HTMLInputElement | null = null;
+      let notationFields: {
+        clef: HTMLSelectElement;
+        maxNotes: HTMLInputElement;
+        pitches: HTMLInputElement;
+        durations: HTMLInputElement;
+      } | null = null;
+
+      if (
+        question.questionType === "single_choice" ||
+        question.questionType === "multi_select"
+      ) {
+        choiceRows = document.createElement("div");
+        choiceRows.className = "module-exercise-choice-rows";
+        const correctAnswers = new Set(question.correctAnswers);
+        const addChoice = (text = "", checked = false): void => {
+          if (!choiceRows) return;
+          const choice = document.createElement("div");
+          choice.className = "module-exercise-choice-row";
+          const correct = document.createElement("input");
+          correct.type =
+            question.questionType === "multi_select" ? "checkbox" : "radio";
+          correct.name = `correct-${question.id}`;
+          correct.checked = checked;
+          correct.setAttribute("aria-label", "Als richtige Lösung markieren");
+          const value = document.createElement("input");
+          value.type = "text";
+          value.className = "module-exercise-choice-value";
+          value.value = text;
+          value.placeholder = "Antwortoption";
+          value.setAttribute("aria-label", "Antwortoption");
+          const remove = document.createElement("button");
+          remove.type = "button";
+          remove.className = "checklist-remove";
+          remove.textContent = "×";
+          remove.setAttribute("aria-label", "Antwortoption entfernen");
+          remove.addEventListener("click", () => choice.remove());
+          choice.append(correct, value, remove);
+          choiceRows.append(choice);
+        };
+        for (const option of question.options ?? []) {
+          addChoice(option, correctAnswers.has(option));
+        }
+        if (question.options?.length === 0) addChoice("", true);
+        const addButton = document.createElement("button");
+        addButton.type = "button";
+        addButton.textContent = "+ Antwortoption";
+        addButton.addEventListener("click", () => addChoice());
+        answers.append(
+          createLabeledField("Antwortoptionen und Lösungen", choiceRows),
+          addButton,
+        );
+      } else if (question.questionType === "numeric_input") {
+        numericAnswer = document.createElement("input");
+        numericAnswer.type = "text";
+        numericAnswer.value = question.correctAnswers[0] ?? "";
+        numericAnswer.setAttribute("aria-label", "Erwartete Antwort");
+        answers.append(createLabeledField("Erwartete Antwort", numericAnswer));
+      } else {
+        const task = question.notationTask ?? { clef: "treble" as const };
+        const clef = document.createElement("select");
+        for (const [value, text] of [
+          ["treble", "Violinschlüssel"],
+          ["bass", "Bassschlüssel"],
+        ]) {
+          const option = document.createElement("option");
+          option.value = value;
+          option.textContent = text;
+          clef.append(option);
+        }
+        clef.value = task.clef;
+        const maxNotes = document.createElement("input");
+        maxNotes.type = "number";
+        maxNotes.min = "1";
+        maxNotes.max = "8";
+        maxNotes.step = "1";
+        maxNotes.value = String(task.maxNotes ?? 1);
+        const pitches = document.createElement("input");
+        pitches.type = "text";
+        pitches.value = (task.expectedPitches ?? []).join(", ");
+        pitches.placeholder = "z. B. E4, G4";
+        const durations = document.createElement("input");
+        durations.type = "text";
+        durations.value = (task.expectedDurations ?? []).join(", ");
+        durations.placeholder = "z. B. quarter, half";
+        notationFields = { clef, maxNotes, pitches, durations };
+        answers.append(
+          createLabeledField("Notenschlüssel", clef),
+          createLabeledField("Notenanzahl", maxNotes),
+          createLabeledField("Erwartete Tonhöhen", pitches),
+          createLabeledField("Erwartete Notenwerte", durations),
+        );
+      }
+      editor.append(answers);
+
+      const explanation = document.createElement("textarea");
+      explanation.rows = 3;
+      explanation.maxLength = 4000;
+      explanation.value = question.explanation;
+      explanation.setAttribute("aria-label", "Erklärung bei falscher Antwort");
+      editor.append(
+        createLabeledField("Erklärung bei falscher Antwort", explanation),
+      );
+
+      const baseXp = document.createElement("input");
+      baseXp.type = "number";
+      baseXp.min = "0";
+      baseXp.step = "1";
+      baseXp.value = String(question.baseXp);
+      baseXp.setAttribute("aria-label", "Basis-XP");
+      editor.append(createLabeledField("Basis-XP", baseXp));
+
+      const xpOutput = document.createElement("span");
+      xpOutput.className = "module-exercise-xp";
+      const tagPicker = createXpTagPicker({
+        name: `exercise-tags-${question.id}`,
+        legend: "Themen-Tags",
+        defaultTags: question.tags,
+        onChange: updateXp,
+      });
+      function updateXp(): void {
+        const rawXp = Number(baseXp.value);
+        const validXp = Number.isFinite(rawXp) && rawXp >= 0 ? rawXp : 0;
+        xpOutput.textContent = `Berechnete XP: ${calculateQuestionXp(validXp, tagPicker.selectedTags())}`;
+      }
+      baseXp.addEventListener("input", updateXp);
+      updateXp();
+      editor.append(tagPicker.element, xpOutput);
+
+      const saveStatus = document.createElement("p");
+      saveStatus.className = "module-exercise-status";
+      saveStatus.setAttribute("role", "status");
+      saveStatus.setAttribute("aria-live", "polite");
+      const saveButton = document.createElement("button");
+      saveButton.type = "button";
+      saveButton.className = "module-exercise-save";
+      saveButton.textContent = "Übung speichern";
+      saveButton.addEventListener("click", async () => {
+        const correctAnswers: string[] = [];
+        let options: string[] | undefined;
+        if (choiceRows) {
+          options = [];
+          for (const choice of choiceRows.querySelectorAll<HTMLDivElement>(
+            ".module-exercise-choice-row",
+          )) {
+            const value =
+              choice
+                .querySelector<HTMLInputElement>(
+                  ".module-exercise-choice-value",
+                )
+                ?.value.trim() ?? "";
+            const correct = choice.querySelector<HTMLInputElement>(
+              'input[type="checkbox"], input[type="radio"]',
+            )?.checked;
+            if (!value) continue;
+            options.push(value);
+            if (correct) correctAnswers.push(value);
+          }
+        } else if (numericAnswer) {
+          const answer = numericAnswer.value.trim();
+          if (answer) correctAnswers.push(answer);
+        }
+
+        let notationTask: NotationBuilderTaskConfig | undefined;
+        if (notationFields) {
+          const durations = notationFields.durations.value
+            .split(",")
+            .map((item) => item.trim())
+            .filter(Boolean);
+          const invalidDurations = durations.filter(
+            (duration) => !parseNotationDuration(duration),
+          );
+          if (invalidDurations.length > 0) {
+            saveStatus.textContent = `Ungültige Notenwerte: ${invalidDurations.join(", ")}.`;
+            return;
+          }
+          notationTask = {
+            ...question.notationTask,
+            clef: notationFields.clef.value === "bass" ? "bass" : "treble",
+            maxNotes: Math.max(
+              1,
+              Math.min(
+                8,
+                Math.round(Number(notationFields.maxNotes.value) || 1),
+              ),
+            ),
+            expectedPitches: notationFields.pitches.value
+              .split(",")
+              .map((item) => item.trim())
+              .filter(Boolean),
+            expectedDurations: durations.filter(
+              (duration): duration is NotationTaskDuration =>
+                parseNotationDuration(duration) !== undefined,
+            ),
+          };
+        }
+
+        const payload: UpsertQuestionInput & { entity: "question" } = {
+          entity: "question",
+          id: question.id,
+          moduleId: question.moduleId,
+          targetLane: question.targetLane,
+          questionType: question.questionType,
+          prompt: prompt.value.trim(),
+          ...(options !== undefined ? { options } : {}),
+          correctAnswers,
+          ...(notationTask !== undefined ? { notationTask } : {}),
+          explanation: explanation.value.trim(),
+          baseXp: Number(baseXp.value),
+          tags: tagPicker.selectedTags(),
+        };
+        const validation = validateQuestionInput(payload, [
+          { id: question.moduleId } as LearningModule,
+        ]);
+        if (!validation.valid) {
+          saveStatus.textContent = validation.errors.join(" ");
+          return;
+        }
+
+        saveButton.disabled = true;
+        saveStatus.textContent = "Übung wird gespeichert …";
+        try {
+          await sendModulesRequest(
+            "PUT",
+            payload,
+            "Die Übung konnte nicht gespeichert werden.",
+          );
+          const updatedQuestion: ModuleQuestion = { ...question, ...payload };
+          exerciseQuestions = exerciseQuestions.map((item) =>
+            item.id === updatedQuestion.id ? updatedQuestion : item,
+          );
+          setExercises(exerciseQuestions, contentOrder());
+          document.dispatchEvent(
+            new CustomEvent("modules:updated", {
+              bubbles: true,
+              detail: { questions: exerciseQuestions },
+            }),
+          );
+          const savedRow = Array.from(
+            rows.querySelectorAll<HTMLDivElement>(".module-exercise-row"),
+          ).find((item) => item.dataset.blockId === updatedQuestion.id);
+          const savedStatus = savedRow?.querySelector<HTMLElement>(
+            ".module-exercise-status",
+          );
+          if (savedStatus)
+            savedStatus.textContent = "Übung wurde aktualisiert.";
+        } catch (error) {
+          saveStatus.textContent =
+            error instanceof Error
+              ? error.message
+              : "Die Übung konnte nicht gespeichert werden.";
+          saveButton.disabled = false;
+        }
+      });
+      editor.append(saveButton, saveStatus);
       const meta = document.createElement("p");
-      meta.className = "theory-block-content";
-      meta.textContent = `${QUESTION_TYPE_LABELS[question.questionType]} · ${calculateQuestionXp(question.baseXp, question.tags)} XP`;
-      details.append(summary, meta);
+      meta.className = "field-hint";
+      meta.textContent = QUESTION_TYPE_LABELS[question.questionType];
+      details.append(summary, meta, editor);
       const controls = document.createElement("div");
       controls.className = "theory-block-controls";
+      const selectLabel = document.createElement("label");
+      selectLabel.className = "theory-block-select-label";
+      selectLabel.title = "Übung zum Gruppieren auswählen";
+      const selectCheckbox = document.createElement("input");
+      selectCheckbox.type = "checkbox";
+      selectCheckbox.className = "theory-block-select";
+      selectCheckbox.setAttribute(
+        "aria-label",
+        "Übung zum Gruppieren auswählen",
+      );
+      selectCheckbox.addEventListener("change", updateGroupButton);
+      selectLabel.append(selectCheckbox);
+      controls.append(selectLabel);
       for (const [direction, name, symbol] of [
         [-1, "oben", "↑"],
         [1, "unten", "↓"],
@@ -957,19 +1337,25 @@ export function createTheoryBlockEditor(
       }
     }
     for (const row of available.values()) rows.append(row);
+    renderGroupHeaders();
     syncRowOrder();
   }
 
   function removeExercise(id: string): void {
+    exerciseQuestions = exerciseQuestions.filter(
+      (question) => question.id !== id,
+    );
     for (const row of rows.querySelectorAll<HTMLDivElement>(
       ".module-exercise-row",
     )) {
       if (row.dataset.blockId === id) row.remove();
     }
+    renderGroupHeaders();
     syncRowOrder();
   }
 
   function clear(): void {
+    expandedGroups.clear();
     rows.replaceChildren();
     updateGroupButton();
     syncRowOrder();

@@ -351,6 +351,8 @@ export function validateModuleInput(input: unknown): ValidationResult {
       errors.push("contentOrder muss ein Array sein.");
     } else {
       const seen = new Set<string>();
+      const groupTitles = new Map<string, string>();
+      let previousGroupId: string | undefined;
       for (const entry of input.contentOrder) {
         if (
           !isRecord(entry) ||
@@ -358,12 +360,50 @@ export function validateModuleInput(input: unknown): ValidationResult {
           !isNonEmptyString(entry.id)
         ) {
           errors.push("contentOrder enthält einen ungültigen Eintrag.");
+          previousGroupId = undefined;
           continue;
         }
         const key = `${entry.kind}:${entry.id.trim()}`;
         if (seen.has(key))
           errors.push("contentOrder enthält doppelte Einträge.");
         seen.add(key);
+
+        if (
+          (entry.groupId === undefined) !== (entry.groupTitle === undefined) ||
+          (entry.groupId !== undefined && !isNonEmptyString(entry.groupId)) ||
+          (entry.groupTitle !== undefined &&
+            !isNonEmptyString(entry.groupTitle))
+        ) {
+          errors.push(
+            "contentOrder-Gruppen benötigen gemeinsam gültige groupId und groupTitle.",
+          );
+          previousGroupId = undefined;
+          continue;
+        }
+        if (
+          typeof entry.groupId === "string" &&
+          typeof entry.groupTitle === "string"
+        ) {
+          const groupId = entry.groupId.trim();
+          const groupTitle = entry.groupTitle.trim();
+          const previousTitle = groupTitles.get(groupId);
+          if (previousTitle !== undefined && previousTitle !== groupTitle) {
+            errors.push(
+              "contentOrder.groupTitle muss innerhalb einer Gruppe übereinstimmen.",
+            );
+          }
+          if (previousTitle !== undefined && previousGroupId !== groupId) {
+            errors.push(
+              "contentOrder.groupId muss in zusammenhängenden Einträgen liegen.",
+            );
+          }
+          if (previousTitle === undefined) {
+            groupTitles.set(groupId, groupTitle);
+          }
+          previousGroupId = groupId;
+        } else {
+          previousGroupId = undefined;
+        }
       }
     }
   }
@@ -537,7 +577,16 @@ export function upsertModule(
             moduleData.contentOrder ??
             existing?.contentOrder ??
             []
-          ).map((entry) => ({ kind: entry.kind, id: entry.id.trim() })),
+          ).map((entry) => ({
+            kind: entry.kind,
+            id: entry.id.trim(),
+            ...(entry.groupId !== undefined
+              ? { groupId: entry.groupId.trim() }
+              : {}),
+            ...(entry.groupTitle !== undefined
+              ? { groupTitle: entry.groupTitle.trim() }
+              : {}),
+          })),
         }
       : {}),
     createdAt: moduleData.createdAt ?? existing?.createdAt ?? now,

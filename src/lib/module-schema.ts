@@ -96,6 +96,8 @@ export interface TheoryBlock {
 export interface ModuleContentReference {
   kind: "theory" | "exercise";
   id: string;
+  groupId?: string;
+  groupTitle?: string;
 }
 
 export interface NotationBuilderTaskConfig {

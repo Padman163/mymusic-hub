@@ -73,6 +73,37 @@ describe("module-store Validierung & Store-Operationen", () => {
     expect(validateModuleInput({ id: "mod", title: "Modul", contentOrder: [{ kind: "quiz", id: "x" }] }).valid).toBe(false);
   });
 
+  it("speichert gruppierte Theorie- und Übungseinträge in der Modulreihenfolge", () => {
+    const contentOrder = [
+      { kind: "theory", id: "tb-1", groupId: "g1", groupTitle: "Grundlagen" },
+      { kind: "exercise", id: "q-1", groupId: "g1", groupTitle: "Grundlagen" },
+    ];
+    const db = upsertModule(createEmptyModulesDatabase(), {
+      id: "mod",
+      title: "Modul",
+      contentOrder,
+    });
+
+    expect(db.modules[0].contentOrder).toEqual(contentOrder);
+    expect(validateModuleInput({
+      id: "mod",
+      title: "Modul",
+      contentOrder: [
+        contentOrder[0],
+        { ...contentOrder[1], groupTitle: "Anderer Abschnitt" },
+      ],
+    }).valid).toBe(false);
+    expect(validateModuleInput({
+      id: "mod",
+      title: "Modul",
+      contentOrder: [
+        contentOrder[0],
+        { kind: "theory", id: "tb-2" },
+        contentOrder[1],
+      ],
+    }).valid).toBe(false);
+  });
+
   it("speichert und validiert eigene Theorie-Block-XP und berechnet die Summe", () => {
     const blocks = [
       { id: "a", order: 1, title: "A", markdownContent: "", baseXp: 20, tags: ["Notensystem"] },

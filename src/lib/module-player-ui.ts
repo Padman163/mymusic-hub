@@ -20,6 +20,7 @@ import {
   isQuizSettings,
   type LearningModule,
   MODULE_SCOPES,
+  type ModuleContentReference,
   type ModuleQuestion,
   type ModuleScope,
   type ModulesDatabase,
@@ -1920,6 +1921,14 @@ export interface ModuleStepperController {
 type LessonSection =
   | { kind: "theory"; blocks: TheoryBlock[] }
   | { kind: "exercise"; question: ModuleQuestion }
+  | {
+      kind: "group";
+      groupTitle: string;
+      items: Array<
+        | { kind: "theory"; block: TheoryBlock }
+        | { kind: "exercise"; question: ModuleQuestion }
+      >;
+    }
   | { kind: "practice" }
   | { kind: "quiz_easy" };
 
@@ -1936,36 +1945,71 @@ function buildLessonSections(
   const exercisesById = new Map(
     exercises.map((question) => [question.id, question]),
   );
-  const seenBlocks = new Set<string>();
-  const seenExercises = new Set<string>();
-  const sections: LessonSection[] = [];
-
-  function addTheory(block: TheoryBlock): void {
-    if (seenBlocks.has(block.id)) return;
-    const members = block.groupId
-      ? blocks.filter((item) => item.groupId === block.groupId)
-      : [block];
-    for (const member of members) seenBlocks.add(member.id);
-    sections.push({ kind: "theory", blocks: members });
-  }
-
-  function addExercise(question: ModuleQuestion): void {
-    if (seenExercises.has(question.id)) return;
-    seenExercises.add(question.id);
-    sections.push({ kind: "exercise", question });
-  }
-
-  for (const entry of mod.contentOrder ?? []) {
-    if (entry.kind === "theory") {
-      const block = blocksById.get(entry.id);
-      if (block) addTheory(block);
-    } else {
-      const question = exercisesById.get(entry.id);
-      if (question) addExercise(question);
+  const seen = new Set<string>();
+  const ordered: Array<{
+    groupId?: string;
+    groupTitle?: string;
+    item:
+      | { kind: "theory"; block: TheoryBlock }
+      | { kind: "exercise"; question: ModuleQuestion };
+  }> = [];
+  function addReference(reference: ModuleContentReference): void {
+    const key = `${reference.kind}:${reference.id}`;
+    if (seen.has(key)) return;
+    const block =
+      reference.kind === "theory" ? blocksById.get(reference.id) : undefined;
+    const question =
+      reference.kind === "exercise"
+        ? exercisesById.get(reference.id)
+        : undefined;
+    if (block) {
+      seen.add(key);
+      ordered.push({
+        groupId: reference.groupId ?? block.groupId,
+        groupTitle: reference.groupTitle ?? block.groupTitle,
+        item: { kind: "theory", block },
+      });
+      return;
     }
+    if (!question) return;
+    seen.add(key);
+    ordered.push({
+      groupId: reference.groupId,
+      groupTitle: reference.groupTitle,
+      item: { kind: "exercise", question },
+    });
   }
-  for (const block of blocks) addTheory(block);
-  for (const question of exercises) addExercise(question);
+  for (const reference of mod.contentOrder ?? []) addReference(reference);
+  for (const block of blocks) {
+    addReference({ kind: "theory", id: block.id });
+  }
+  for (const question of exercises) {
+    addReference({ kind: "exercise", id: question.id });
+  }
+
+  const sections: LessonSection[] = [];
+  const addedGroups = new Set<string>();
+  for (const current of ordered) {
+    if (current.groupId) {
+      if (addedGroups.has(current.groupId)) continue;
+      addedGroups.add(current.groupId);
+      const members = ordered.filter(
+        (item) => item.groupId === current.groupId,
+      );
+      sections.push({
+        kind: "group",
+        groupTitle: current.groupTitle ?? "Abschnitt",
+        items: members.map(({ item }) => item),
+      });
+      continue;
+    }
+
+    sections.push(
+      current.item.kind === "theory"
+        ? { kind: "theory", blocks: [current.item.block] }
+        : { kind: "exercise", question: current.item.question },
+    );
+  }
   if (mod.hasPractice) sections.push({ kind: "practice" });
   sections.push({ kind: "quiz_easy" });
   return sections;
@@ -1988,6 +2032,26 @@ function isLessonSectionComplete(
         progress.steps.exercise === "completed" ||
         progress.solvedQuestionIds.includes(section.question.id)
       );
+    case "group": {
+      const blocks = section.items
+        .filter((item) => item.kind === "theory")
+        .map((item) => item.block);
+      const questions = section.items
+        .filter((item) => item.kind === "exercise")
+        .map((item) => item.question);
+      return (
+        (blocks.length === 0 ||
+          progress.steps.theory === "completed" ||
+          blocks.every((block) =>
+            progress.completedTheoryBlockIds.includes(block.id),
+          )) &&
+        (questions.length === 0 ||
+          progress.steps.exercise === "completed" ||
+          questions.every((question) =>
+            progress.solvedQuestionIds.includes(question.id),
+          ))
+      );
+    }
     case "practice":
       return progress.steps.practice === "completed";
     case "quiz_easy":
@@ -2171,13 +2235,15 @@ export function attachModuleStepper(
       stepList.replaceChildren();
       sections.forEach((section, stepIndex) => {
         const label =
-          section.kind === "theory"
-            ? section.blocks[0].groupTitle ?? section.blocks[0].title
-            : section.kind === "exercise"
-              ? section.question.prompt
-              : section.kind === "practice"
-                ? "Praxis am Instrument"
-                : "Abschluss-Quiz Einfach";
+          section.kind === "group"
+            ? section.groupTitle
+            : section.kind === "theory"
+              ? (section.blocks[0].groupTitle ?? section.blocks[0].title)
+              : section.kind === "exercise"
+                ? section.question.prompt
+                : section.kind === "practice"
+                  ? "Praxis am Instrument"
+                  : "Abschluss-Quiz Einfach";
         const completed = isLessonSectionComplete(section, progress);
         const item = document.createElement("li");
         const button = document.createElement("button");
@@ -2245,22 +2311,40 @@ export function attachModuleStepper(
       heading.className = "learning-lesson-heading";
       heading.tabIndex = -1;
       heading.textContent =
-        section.kind === "theory"
-          ? "Theorie"
-          : section.kind === "exercise"
-            ? "Übung"
-            : section.kind === "practice"
-              ? "Praxis am Instrument"
-              : "Abschluss-Quiz Einfach";
+        section.kind === "group"
+          ? "Abschnitt"
+          : section.kind === "theory"
+            ? "Theorie"
+            : section.kind === "exercise"
+              ? "Übung"
+              : section.kind === "practice"
+                ? "Praxis am Instrument"
+                : "Abschluss-Quiz Einfach";
       card.append(heading);
 
       let completeButton: HTMLButtonElement | null = null;
       let practiceBody: HTMLDivElement | null = null;
-      if (section.kind === "theory") {
-        const grouped = Boolean(section.blocks[0].groupId);
+      if (section.kind === "theory" || section.kind === "group") {
+        const grouped = section.kind === "group";
+        const contentItems =
+          section.kind === "group"
+            ? section.items
+            : section.blocks.map(
+                (block) => ({ kind: "theory", block }) as const,
+              );
+        const blocks = contentItems.flatMap((item) =>
+          item.kind === "theory" ? [item.block] : [],
+        );
+        const questions = contentItems.flatMap((item) =>
+          item.kind === "exercise" ? [item.question] : [],
+        );
         const wrap = document.createElement(grouped ? "section" : "div");
         wrap.className = grouped
-          ? "learning-theory-group"
+          ? blocks.length > 0 && questions.length === 0
+            ? "learning-theory-group"
+            : questions.length > 0 && blocks.length === 0
+              ? "learning-exercise-group"
+              : "learning-content-group"
           : "learning-theory-blocks";
         const blocksHost = document.createElement("div");
         blocksHost.className = grouped
@@ -2275,64 +2359,88 @@ export function attachModuleStepper(
         };
         if (grouped) {
           const groupHeading = document.createElement("h4");
-          groupHeading.textContent = section.blocks[0].groupTitle ?? "";
+          groupHeading.textContent =
+            section.kind === "group" ? section.groupTitle : "";
           const heading = document.createElement("div");
           heading.className = "learning-theory-heading";
-          const groupXp = section.blocks.reduce(
-            (total, block) =>
-              total + calculateTheoryBlockXp(block, mod.theoryBaseXp),
-            0,
-          );
+          const groupXp =
+            blocks.reduce(
+              (total, block) =>
+                total + calculateTheoryBlockXp(block, mod.theoryBaseXp),
+              0,
+            ) +
+            questions.reduce(
+              (total, question) =>
+                total + calculateQuestionXp(question.baseXp, question.tags),
+              0,
+            );
           heading.append(groupHeading, getXpBadge(groupXp));
           wrap.append(heading);
         }
-        for (const block of section.blocks) {
-          const blockEl = document.createElement("article");
-          blockEl.className = "learning-theory-block";
-          const blockTitle = document.createElement(grouped ? "h5" : "h4");
-          blockTitle.textContent = `${block.order}. ${block.title}`;
-          if (!grouped) {
-            const heading = document.createElement("div");
-            heading.className = "learning-theory-heading";
-            heading.append(
-              blockTitle,
-              getXpBadge(calculateTheoryBlockXp(block, mod.theoryBaseXp)),
-            );
-            blockEl.append(heading);
+        for (const item of contentItems) {
+          if (item.kind === "theory") {
+            const block = item.block;
+            const blockEl = document.createElement("article");
+            blockEl.className = "learning-theory-block";
+            const blockTitle = document.createElement(grouped ? "h5" : "h4");
+            blockTitle.textContent = `${block.order}. ${block.title}`;
+            if (!grouped) {
+              const heading = document.createElement("div");
+              heading.className = "learning-theory-heading";
+              heading.append(
+                blockTitle,
+                getXpBadge(calculateTheoryBlockXp(block, mod.theoryBaseXp)),
+              );
+              blockEl.append(heading);
+            }
+            const markdown = document.createElement("div");
+            markdown.className = "learning-theory-markdown";
+            markdown.append(renderTheoryMarkdown(block.markdownContent));
+            if (grouped) blockEl.append(blockTitle);
+            blockEl.append(markdown);
+            const visual = renderTheoryVisualElement(block, root);
+            if (visual) blockEl.append(visual);
+            blocksHost.append(blockEl);
+          } else {
+            const exercise = document.createElement("div");
+            exercise.className = "learning-exercise-group-item";
+            attachModuleQuizRunner(exercise, {
+              module: mod,
+              db: currentDb,
+              mode: "exercise",
+              exerciseId: item.question.id,
+              templateRoot: root,
+              lessonBaseUrl,
+            });
+            blocksHost.append(exercise);
           }
-          const markdown = document.createElement("div");
-          markdown.className = "learning-theory-markdown";
-          markdown.append(renderTheoryMarkdown(block.markdownContent));
-          if (grouped) blockEl.append(blockTitle);
-          blockEl.append(markdown);
-          const visual = renderTheoryVisualElement(block, root);
-          if (visual) blockEl.append(visual);
-          blocksHost.append(blockEl);
         }
         wrap.append(blocksHost);
         card.append(wrap);
 
-        completeButton = document.createElement("button");
-        completeButton.type = "button";
-        completeButton.className = "learning-btn learning-btn-primary";
-        completeButton.dataset.action = "complete-theory-block";
-        completeButton.addEventListener("click", () => {
-          let latest = loadLearningProgress(
-            currentDb.modules,
-            undefined,
-            currentDb.quizSettings,
-          );
-          for (const block of section.blocks) {
-            latest = completeTheoryBlock(
-              latest,
-              mod,
-              block.id,
-              currentDb.questions,
+        if (blocks.length > 0) {
+          completeButton = document.createElement("button");
+          completeButton.type = "button";
+          completeButton.className = "learning-btn learning-btn-primary";
+          completeButton.dataset.action = "complete-theory-block";
+          completeButton.addEventListener("click", () => {
+            let latest = loadLearningProgress(
+              currentDb.modules,
+              undefined,
+              currentDb.quizSettings,
             );
-          }
-          commitProgressChange(latest, currentDb);
-        });
-        card.append(completeButton);
+            for (const block of blocks) {
+              latest = completeTheoryBlock(
+                latest,
+                mod,
+                block.id,
+                currentDb.questions,
+              );
+            }
+            commitProgressChange(latest, currentDb);
+          });
+          card.append(completeButton);
+        }
       } else if (section.kind === "exercise") {
         const exercise = document.createElement("div");
         attachModuleQuizRunner(exercise, {
@@ -2404,11 +2512,20 @@ export function attachModuleStepper(
         next.disabled = !completed;
         card.dataset.stepState = completed ? "completed" : "unlocked";
         renderSidebar(latest);
-        if (completeButton && section.kind === "theory") {
+        if (
+          completeButton &&
+          (section.kind === "theory" || section.kind === "group")
+        ) {
+          const blocks =
+            section.kind === "theory"
+              ? section.blocks
+              : section.items.flatMap((item) =>
+                  item.kind === "theory" ? [item.block] : [],
+                );
           const remainingXp =
             latest.steps.theory === "completed"
               ? 0
-              : section.blocks
+              : blocks
                   .filter(
                     (block) =>
                       !latest.completedTheoryBlockIds.includes(block.id),
