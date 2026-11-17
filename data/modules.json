@@ -226,27 +226,6 @@
       ]
     },
     {
-      "id": "q-102-fl-1",
-      "targetLane": "schwer",
-      "questionType": "single_choice",
-      "prompt": "Was bedeutet die Zahl 0 auf einer Tabulatur-Linie?",
-      "options": [
-        "Die Saite wird leer angeschlagen",
-        "Die Saite wird abgedämpft",
-        "Im 10. Bund greifen"
-      ],
-      "correctAnswers": [
-        "Die Saite wird leer angeschlagen"
-      ],
-      "explanation": "Die Ziffer 0 kennzeichnet in der Tabulatur stets eine ungedrückte Leersaite.",
-      "baseXp": 25,
-      "tags": [
-        "Tabulatur",
-        "Gitarre"
-      ],
-      "moduleIds": []
-    },
-    {
       "id": "q-bf4bfa5f",
       "targetLane": "leicht",
       "questionType": "interactive_notation",
