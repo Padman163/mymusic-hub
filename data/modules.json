@@ -87,42 +87,6 @@
       ],
       "createdAt": "2026-11-16T00:00:00.000Z",
       "updatedAt": "2026-11-17T15:09:30.367Z"
-    },
-    {
-      "id": "guitar-102",
-      "order": 2,
-      "title": "Gitarrenlehre",
-      "description": "Aufbau des Griffbretts, Stimmung der sechs Leersaiten (E–A–D–G–B–e) und Orientierung zwischen Noten und Tabulatur.",
-      "scope": "instrument",
-      "level": 100,
-      "dStage": "D1",
-      "tags": [
-        "Tabulatur",
-        "Gitarre"
-      ],
-      "theoryBaseXp": 30,
-      "quizEasyMinScore": 0.8,
-      "fastlaneMinScore": 0.85,
-      "theoryBlocks": [
-        {
-          "id": "tb-102-1",
-          "order": 1,
-          "title": "Die sechs Leersaiten in Standardstimmung",
-          "markdownContent": "Von der tiefsten (6. Saite) zur höchsten (1. Saite) lauten die Leersaiten der Gitarre **E – A – D – G – B – e**. In einer Tabulatur zeigt die Zahl `0`, dass eine Saite leer ohne Greifhand angeschlagen wird.",
-          "visualComponent": "FretboardClickable",
-          "visualPropsJson": "{\"readOnly\":true,\"showNoteNames\":true}"
-        },
-        {
-          "id": "tb-102-2",
-          "order": 2,
-          "title": "Praxishinweis für das Instrument",
-          "markdownContent": "Schlage alle sechs Leersaiten gleichmäßig im Wechselschlag oder mit dem Daumen an und sprich jeden Saitennamen laut mit.",
-          "visualComponent": "none"
-        }
-      ],
-      "createdAt": "2026-11-16T00:00:00.000Z",
-      "updatedAt": "2026-11-16T07:40:37.982Z",
-      "practiceBlocks": []
     }
   ],
   "questions": [
@@ -262,28 +226,6 @@
       ]
     },
     {
-      "id": "q-102-ex-1",
-      "targetLane": "leicht",
-      "questionType": "single_choice",
-      "prompt": "Wie heißen die sechs Leersaiten der Gitarre von der tiefsten zur höchsten Saite?",
-      "options": [
-        "E – A – D – G – B – e",
-        "E – G – D – A – B – e",
-        "A – D – G – C – E – A"
-      ],
-      "correctAnswers": [
-        "E – A – D – G – B – e"
-      ],
-      "explanation": "In Standardstimmung lauten die sechs Leersaiten von der 6. zur 1. Saite E – A – D – G – B – e.",
-      "baseXp": 10,
-      "tags": [
-        "Gitarre"
-      ],
-      "moduleIds": [
-        "guitar-102"
-      ]
-    },
-    {
       "id": "q-102-qe-1",
       "targetLane": "mittel",
       "questionType": "numeric_input",
@@ -297,9 +239,7 @@
         "Gitarre",
         "Tabulatur"
       ],
-      "moduleIds": [
-        "guitar-102"
-      ]
+      "moduleIds": []
     },
     {
       "id": "q-102-fl-1",
@@ -320,9 +260,7 @@
         "Tabulatur",
         "Gitarre"
       ],
-      "moduleIds": [
-        "guitar-102"
-      ]
+      "moduleIds": []
     },
     {
       "id": "q-bf4bfa5f",
