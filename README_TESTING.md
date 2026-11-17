@@ -165,21 +165,20 @@ Externe Links, fachliche Aktualität, dynamische Asset-Pfade und Git-Hygiene wer
 ## 3.1 Sicherheits-Audit (Security Testing)
 
 * **Werkzeuge:** `npm audit`, Git CLI (`git ls-files`, `git grep`).
-* **Zweck & Gegenstand:** Scannt alle Drittanbieter-Pakete in `node_modules` nach bekannten Sicherheitslücken (CVEs) ab Schweregrad `high`. Stellt sicher, dass sensible Konfigurationsdateien (`.env`) niemals im Versionskontrollsystem landen, und verhindert die Offenlegung von Server-Geheimnissen über versehentliche `PUBLIC_`-Präfixe.
+* **Zweck & Gegenstand:** `npm audit` gleicht den Abhängigkeitsbaum mit bekannten Advisories der konfigurierten Registry ab, einschließlich transitiver und Entwicklungsabhängigkeiten. `--audit-level=high` setzt die Fehlerschwelle auf `high`/`critical`, blendet niedrigere Schweregrade aber nicht aus. Ein erfolgreicher Lauf bedeutet daher nicht, dass keine bekannten Schwachstellen vorliegen.
+* **Grenzen und Geheimnisschutz:** Das Paket-Audit prüft weder eigene Anwendungslogik noch Geheimnisse, Git-Historie oder die tatsächliche Ausnutzbarkeit jedes Befunds. Die folgenden Git-Befehle sind ergänzende Suchhilfen, keine vollständigen Secret-Scans. `.gitignore` ignoriert derzeit `.env` und `.env.production`, aber nicht automatisch jede `.env.*`-Variante; bereits getrackte Dateien werden durch Ignore-Regeln nicht entfernt. `PUBLIC_`-Werte können im Client landen und dürfen keine Geheimnisse enthalten.
 * **Befehle:**
   ```bash
-  # Fremdpakete auf Schweregrad High/Critical scannen
+  # Bekannte Paket-Advisories prüfen; Fehlerstatus ab High/Critical
   npm run audit
-  # Fix, falls nötig
-  npm audit fix
-  npm audit fix --force
 
-  # Verifizieren, dass .env nicht im Git-Index getrackt wird - Leere Ausgabe ist gut!
-  git ls-files .env
+  # Getrackte .env-Dateien und Varianten auflisten, ohne Inhalte auszugeben
+  git ls-files -- '.env' '.env.*' '**/.env' '**/.env.*'
 
-  # Exponierte Geheimnisse mit PUBLIC_-Präfix im Quellcode aufspüren - Leere Ausgabe ist gut!
-  git grep -i "PUBLIC_.*\(KEY\|SECRET\|TOKEN\|PASSWORD\)"
+  # Nur Dateinamen mit verdächtigen PUBLIC_-Bezeichnern ausgeben
+  git grep -il -E 'PUBLIC_.*(KEY|SECRET|TOKEN|PASSWORD)' -- src netlify
   ```
+  Leere Git-Ausgaben sind kein Beweis für Geheimnisfreiheit; beispielsweise können `.env.example`-Vorlagen harmlose Treffer liefern und andere Geheimnisnamen unentdeckt bleiben. `git grep` liefert bei fehlenden Treffern Exit-Code 1. Befunde einzeln bewerten; Paketkorrekturen nur nach Prüfung des Diffs und mit erneuten Tests anwenden. `npm audit fix` kann Abhängigkeiten ändern, `--force` zusätzlich inkompatible Versionswechsel erlauben und ist kein routinemäßiger Prüfschritt.
 * **Wann nutzen:**
   * **Nach Paketoperationen:** Direkt nach jeder Installation (`npm install <paket>`) oder Aktualisierung von Abhängigkeiten (`npm update`).
   * **Vor jedem Production-Release:** Als unverzichtbarer Bestandteil des `preflight`-Laufs vor Build und Deployment.
@@ -190,47 +189,51 @@ Externe Links, fachliche Aktualität, dynamische Asset-Pfade und Git-Hygiene wer
 ## 3.2 Performance- & Web-Vitals-Audit
 
 * **Werkzeuge:** Google Lighthouse CI (`@lhci/cli`).
-* **Zweck & Zielmarken:** Überprüft den Produktions-Build. Die folgenden Werte sind Release-Ziele, nicht alle automatisch erzwungene Grenzwerte:
+* **Zweck & Zielmarken:** Misst ausgewählte Seiten des statischen Produktionsbuilds mit Lighthouse in Chromium. `staticDistDir: './dist'` lässt LHCI einen lokalen Server starten; pro ausgewählter URL ist ein Messlauf konfiguriert. Ohne explizite URL-Liste erfolgt die Auswahl automatisch und deckt nicht sämtliche Seiten ab. Die folgenden Werte sind Release-Ziele, nicht alle automatisch erzwungene Grenzwerte:
   * First Contentful Paint: $\text{FCP} < 1.2\text{ s}$
   * Cumulative Layout Shift: $\text{CLS} < 0.05$
   * Mindestens $90$ Punkte in allen vier Kategorien: *Performance*, *Accessibility*, *Best Practices* und *SEO*.
 * **Befehle:**
   ```bash
-  # Produktions-Build erzeugen und automatisierte Lighthouse-Messung starten
-  npm run build && npm run audit:lhci
+  # Produktions-Build erzeugen
+  npm run build
+  # Lighthouse messen und Berichte nur lokal speichern (Linux/Codespace)
+  LHCI_UPLOAD__TARGET=filesystem LHCI_UPLOAD__OUTPUT_DIR=./.lighthouseci/reports npm run audit:lhci
   ```
-  `lighthouserc.cjs` erzwingt derzeit Accessibility ≥ 0,9; Performance ≥ 0,8 sowie Best Practices und SEO ≥ 0,9 erzeugen bei Unterschreitung Warnungen. FCP und CLS sind dort nicht separat konfiguriert. Berichte werden temporär öffentlich hochgeladen.
+  `lighthouserc.cjs` erzwingt derzeit Accessibility ≥ 0,9; Performance ≥ 0,8 sowie Best Practices und SEO ≥ 0,9 erzeugen bei Unterschreitung nur Warnungen. FCP und CLS sind dort nicht separat als Grenzwerte konfiguriert. Ohne die obigen Umgebungsvariablen laden `audit:lhci` und damit auch `preflight` Berichte gemäß Konfiguration in einen temporären öffentlichen Speicher hoch. Vor einem Upload prüfen, ob URLs, Seiteninhalte und Diagnosedaten veröffentlicht werden dürfen.
+* **Aussagekraft und Berichte:** HTML-Berichte im Browser öffnen, im Codespace gegebenenfalls zuvor herunterladen; JSON-Dateien enthalten die Rohdaten. Lokale Berichte sind generiert und können bei späteren Läufen ersetzt werden. Einzelmessungen schwanken mit Rechnerlast und Messumgebung und sind keine Felddaten echter Nutzer. FCP ist keine Core-Web-Vitals-Kennzahl; für eine vollständige Web-Vitals-Bewertung sind insbesondere LCP, INP und CLS relevant. Der automatisierte Seitenlade-Lauf ersetzt keine INP-Messung realer Interaktionen und prüft keine produktive Netlify-/GitHub-Infrastruktur.
 * **Wann nutzen:**
-  * **Nach Import schwerer Bibliotheken:** Wenn Noten-Renderer (`@coderline/alphatab`), Formel-Renderer (`katex`) oder Bildoptimierungs-Pipelines (`sharp`) eingebunden oder aktualisiert werden.
+  * **Nach Bibliotheks- und Build-Änderungen:** Wenn etwa AlphaTab, KaTeX oder die Bildoptimierung mit `sharp` aktualisiert werden. Betroffene Seiten gezielt in die Messung aufnehmen; serverseitige Bibliotheken erhöhen nicht automatisch das Client-Bundle.
   * **Nach Asset- & Schriftartänderungen:** Sobald Webfonts, globale Stylesheets oder umfangreiche SVG-Grafiken angepasst wurden.
-  * **Vor Major-Releases:** Als automatisiertes Gate in der CI/CD-Pipeline vor dem Merge in den Produktivzweig.
+  * **Vor Releases:** Als Teil des lokalen `preflight`-Gates. Eine Einbindung in CI/CD ist eine Empfehlung; ein entsprechender GitHub-Actions-Workflow ist derzeit nicht hinterlegt.
 
 ---
 
 ## 3.3 Barrierefreiheit (a11y)
 
 * **Werkzeuge:** Biome (`a11y`-Linter-Regelwerk), Google Lighthouse CI (`@lhci/cli`), Playwright E2E-Tests.
-* **Zweck & Gegenstand:** Gewährleistet Barrierefreiheit auf statischer Code-Ebene sowie dynamisch im gerenderten DOM:
-  * Alle informativen Grafiken und Noten-SVGs besitzen ein aussagekräftiges `aria-label` oder ein `alt`-Attribut.
-  * Interaktive Touch-Elemente auf Mobilgeräten erfüllen die Mindestgröße von $44 \times 44\text{ px}$.
-  * Text- und Hintergrundfarben erfüllen mindestens den Kontraststandard WCAG AA.
+* **Zweck & Grenzen:** Unterstützt das Auffinden ausgewählter Barrierefreiheitsprobleme, gewährleistet aber weder vollständige Barrierefreiheit noch WCAG-Konformität. Biome prüft statische Muster im konfigurierten Umfang unter `src/`; Lighthouse untersucht automatisierbare Kriterien auf ausgewählten gerenderten Seiten. Die Playwright-Suite enthält keine umfassende Accessibility-Prüfung: Sie prüft unter anderem die Höhe zweier Builder-Aktionsbuttons (≥ 44 px), nicht sämtliche Touch-Ziele oder deren Breite. Auch ein Lighthouse-Accessibility-Score von 100 ist kein Konformitätsnachweis.
+* **Fachliche Prüfziele (zusätzlich manuell prüfen):**
+  * Informative Bilder benötigen passende Textalternativen; informative SVGs eine geeignete zugängliche Benennung und Semantik. Dekorative Grafiken sollen nicht unnötig vorgelesen werden. Ein `aria-label` allein macht komplexe Notation noch nicht verständlich zugänglich.
+  * $44 \times 44\text{ CSS-px}$ ist das Projektziel für Touch-Ziele und entspricht der [erweiterten Zielgröße aus WCAG 2.2 (AAA)](https://www.w3.org/WAI/WCAG22/Understanding/target-size-enhanced.html), mit Ausnahmen. Die [Mindestzielgröße auf AA-Niveau](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html) beträgt dort grundsätzlich $24 \times 24\text{ CSS-px}$, ebenfalls mit Ausnahmen, unter anderem für ausreichende Abstände.
+  * Textkontrast nach WCAG AA grundsätzlich mindestens 4,5:1, bei großem Text 3:1; für relevante nichttextuelle UI-Elemente grundsätzlich 3:1, jeweils unter Beachtung der normativen Ausnahmen.
+  * Tastaturbedienung, sichtbaren Fokus, sinnvolle Fokus-/Lesereihenfolge, verständliche Namen und Statusmeldungen sowie Zoom/Reflow und die Ausgabe mit einem Screenreader prüfen.
 * **Befehle:**
   ```bash
-  # Statische Prüfung auf ARIA-Attribute und Alt-Texte im Quellcode
+  # Statische a11y-Regeln im konfigurierten Biome-Prüfumfang
   npx @biomejs/biome lint --only=a11y .
 
-  # Dynamische Verifizierung im Browser-DOM via Playwright
+  # Vorhandene Browser-Interaktions- und Layoutprüfungen (kein vollständiger a11y-Audit)
+  npm run build
   npm run test:e2e
 
-  # Ganzheitliche Prüfung im Lighthouse-Lauf
-  npm run build && npm run audit:lhci
-
-  # Analyse der Ergebnisse
-  npx serve .lighthouseci
+  # Automatisierte Lighthouse-Prüfungen mit ausschließlich lokalen Berichten
+  LHCI_UPLOAD__TARGET=filesystem LHCI_UPLOAD__OUTPUT_DIR=./.lighthouseci/reports npm run audit:lhci
   ```
+  Anschließend HTML-Berichte im Browser auswerten und die nicht automatisierten Prüfziele manuell prüfen.
 * **Wann nutzen:**
   * **Beim Erstellen interaktiver UI-Elemente:** Wenn Steuerelemente, Navigationsmenüs, Modals oder Noten-Widgets entwickelt werden.
-  * **Nach Anpassung von Farbschemata:** Wenn Tailwind-Themes, Hintergründe oder Textfarben modifiziert werden (Vermeidung von Kontrastproblemen).
+  * **Nach Anpassung von Farbschemata:** Wenn Themes, Hintergründe oder Textfarben verändert werden; betroffene Zustände und Farbschemata gezielt auf Kontrast prüfen.
   * **Vor dem Commit von Template-Änderungen:** Um fehlende Alternativtexte oder fehlerhafte ARIA-Rollen bereits lokal beim Coden abzufangen.
 
 ## 4. Das verbindliche „Doing“ im Entwicklungsprozess
