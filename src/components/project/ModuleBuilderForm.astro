@@ -17,82 +17,87 @@ const scopeLabels: Record<(typeof MODULE_SCOPES)[number], string> = {
 ---
 
 <form id="module-builder-form" class="issue-tracker-form module-builder-form">
-  <div class="field">
-    <label for="module-title">Modultitel</label>
-    <input
-      id="module-title"
-      name="title"
-      type="text"
-      maxlength="140"
-      placeholder="z. B. Schall, Frequenz & Tonsystem"
-      required
-    />
-  </div>
+  <fieldset class="module-general-info">
+    <legend>Allgemeine Informationen</legend>
+    <div class="module-general-info-fields">
+      <div class="field">
+        <label for="module-title">Modultitel</label>
+        <input
+          id="module-title"
+          name="title"
+          type="text"
+          maxlength="140"
+          placeholder="z. B. Schall, Frequenz & Tonsystem"
+          required
+        />
+      </div>
 
-  <div class="field">
-    <label for="module-description">Kurzbeschreibung</label>
-    <textarea
-      id="module-description"
-      name="description"
-      rows="3"
-      maxlength="2000"
-      placeholder="Worum geht es in diesem Lernmodul?"
-    ></textarea>
-  </div>
+      <div class="field">
+        <label for="module-description">Kurzbeschreibung</label>
+        <textarea
+          id="module-description"
+          name="description"
+          rows="3"
+          maxlength="2000"
+          placeholder="Worum geht es in diesem Lernmodul?"
+        ></textarea>
+      </div>
 
-  <div class="module-field-grid">
-    <div class="field">
-      <label for="module-scope">Bereich</label>
-      <select id="module-scope" name="scope">
-        {MODULE_SCOPES.map((scope) => (
-          <option value={scope}>{scopeLabels[scope]}</option>
-        ))}
-      </select>
+      <div class="module-field-grid">
+        <div class="field">
+          <label for="module-scope">Bereich</label>
+          <select id="module-scope" name="scope">
+            {MODULE_SCOPES.map((scope) => (
+              <option value={scope}>{scopeLabels[scope]}</option>
+            ))}
+          </select>
+        </div>
+        <div class="field">
+          <label for="module-level">Level</label>
+          <select id="module-level" name="level">
+            {[100, 200, 300, 400, 500].map((level) => (
+              <option value={String(level)}>Level {level}</option>
+            ))}
+          </select>
+        </div>
+        <div class="field">
+          <label for="module-d-stage">D-Stufe (optional)</label>
+          <select id="module-d-stage" name="dStage">
+            <option value="">Keine</option>
+            {D_STAGES.map((stage) => (
+              <option value={stage}>{stage}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div id="module-tags-field"></div>
+
+      <div class="field">
+        <label class="module-checkbox-label" for="module-has-practice">
+          <input id="module-has-practice" name="hasPractice" type="checkbox" />
+          <span>
+            Dieses Modul enthält einen Praxisteil (bei reinen Theorie-Modulen
+            deaktiviert lassen)
+          </span>
+        </label>
+      </div>
+
+      <div class="module-field-grid">
+        <div class="field">
+          <label for="module-theory-base-xp">Basis-XP je Theorie-Block</label>
+          <input
+            id="module-theory-base-xp"
+            name="theoryBaseXp"
+            type="number"
+            min="0"
+            step="1"
+            value={String(BASE_XP_DEFAULTS.theoryBlock)}
+          />
+        </div>
+      </div>
     </div>
-    <div class="field">
-      <label for="module-level">Level</label>
-      <select id="module-level" name="level">
-        {[100, 200, 300, 400, 500].map((level) => (
-          <option value={String(level)}>Level {level}</option>
-        ))}
-      </select>
-    </div>
-    <div class="field">
-      <label for="module-d-stage">D-Stufe (optional)</label>
-      <select id="module-d-stage" name="dStage">
-        <option value="">Keine</option>
-        {D_STAGES.map((stage) => (
-          <option value={stage}>{stage}</option>
-        ))}
-      </select>
-    </div>
-  </div>
-
-  <div id="module-tags-field"></div>
-
-  <div class="field">
-    <label class="module-checkbox-label" for="module-has-practice">
-      <input id="module-has-practice" name="hasPractice" type="checkbox" />
-      <span>
-        Dieses Modul enthält einen Praxisteil (bei reinen Theorie-Modulen
-        deaktiviert lassen)
-      </span>
-    </label>
-  </div>
-
-  <div class="module-field-grid">
-    <div class="field">
-      <label for="module-theory-base-xp">Basis-XP je Theorie-Block</label>
-      <input
-        id="module-theory-base-xp"
-        name="theoryBaseXp"
-        type="number"
-        min="0"
-        step="1"
-        value={String(BASE_XP_DEFAULTS.theoryBlock)}
-      />
-    </div>
-  </div>
+  </fieldset>
 
   <div id="module-theory-blocks-field"></div>
 

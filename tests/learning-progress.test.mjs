@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   clearLearningProgress,
   completePracticeStep,
+  completeTheoryBlock,
   completeTheoryStep,
   createInitialProgress,
   getDashboardOverview,
@@ -25,14 +26,14 @@ describe("Übergreifende Quiz-Einstellungen", () => {
   it("setzt Lernfortschritt nur bei einer neueren Änderung zurück und ignoriert ältere Anfangsdaten", () => {
     const db = buildTestDatabase();
     let state = createInitialProgress(db.modules);
-    state = completeTheoryStep(state, db.modules[0]);
+    state = completeTheoryBlock(state, db.modules[0], "tb-1");
     saveLearningProgress(state);
     const changed = updateQuizSettings(db, { quizEasyMinScore: 0.9, fastlaneMinScore: 0.9 });
     const reset = loadLearningProgress(db.modules, undefined, changed.quizSettings);
     expect(reset.totalXp).toBe(0);
     expect(reset.modules["mod-theory-1"].steps.theory).toBe("unlocked");
     expect(reset.quizSettings.revision).toBe(1);
-    const earned = completeTheoryStep(reset, db.modules[0]);
+    const earned = completeTheoryBlock(reset, db.modules[0], "tb-1");
     saveLearningProgress(earned);
     expect(loadLearningProgress(db.modules, undefined, changed.quizSettings).totalXp).toBe(45);
     const stale = loadLearningProgress(db.modules);
@@ -63,6 +64,7 @@ function buildTestDatabase() {
     tags: ["Notensystem", "Violinschlüssel"],
     hasPractice: false,
     theoryBaseXp: 30,
+    theoryBlocks: [{ id: "tb-1", order: 1, title: "Theorie", markdownContent: "", tags: ["Notensystem", "Violinschlüssel"] }],
     quizEasyMinScore: 0.8,
     fastlaneMinScore: 0.85,
   });
@@ -76,6 +78,7 @@ function buildTestDatabase() {
     tags: ["Gitarre", "Tabulatur"],
     hasPractice: true,
     theoryBaseXp: 30,
+    theoryBlocks: [{ id: "tb-2", order: 1, title: "Theorie", markdownContent: "", tags: ["Gitarre"] }],
     quizEasyMinScore: 0.8,
     fastlaneMinScore: 0.85,
   });
@@ -89,6 +92,7 @@ function buildTestDatabase() {
     tags: ["Rhythmus"],
     hasPractice: false,
     theoryBaseXp: 30,
+    theoryBlocks: [{ id: "tb-3", order: 1, title: "Theorie", markdownContent: "", tags: ["Rhythmus"] }],
   });
 
   // Modul 1 Aufgaben:
@@ -190,6 +194,42 @@ describe("Lernfortschritts- & XP-Engine (learning-progress)", () => {
     vi.unstubAllGlobals();
   });
 
+  it("vergibt Block-XP einzeln, speichert den Fortschritt und vergütet Fastlane nur offene Blöcke", () => {
+    const db = buildTestDatabase();
+    const mod = db.modules[0];
+    mod.theoryBlocks = [
+      { id: "a", order: 1, title: "A", markdownContent: "", baseXp: 20, tags: ["Rhythmus"] },
+      { id: "b", order: 2, title: "B", markdownContent: "" },
+    ];
+    let state = createInitialProgress(db.modules);
+    state = completeTheoryBlock(state, mod, "a");
+    expect(state.totalXp).toBe(24);
+    expect(state.xpByTag.Rhythmus).toBe(24);
+    expect(state.xpByTag.Notensystem).toBe(0);
+    expect(state.modules[mod.id].steps.exercise).toBe("locked");
+    expect(completeTheoryBlock(state, mod, "a")).toBe(state);
+    expect(completeTheoryStep(state, mod)).toBe(state);
+    saveLearningProgress(state);
+    state = loadLearningProgress(db.modules);
+    expect(state.modules[mod.id].completedTheoryBlockIds).toEqual(["a"]);
+    state = submitQuizAttempt(state, db, mod.id, "fastlane", 1);
+    expect(state.totalXp).toBe(24 + 30 + 78);
+    expect(state.modules[mod.id].completedTheoryBlockIds).toEqual(["a", "b"]);
+    expect(completeTheoryBlock(state, mod, "b")).toBe(state);
+  });
+
+  it("vergibt bereits nach altem Modell abgeschlossene Theorie nicht erneut", () => {
+    const db = buildTestDatabase();
+    const state = createInitialProgress(db.modules);
+    state.modules[db.modules[0].id].steps.theory = "completed";
+    state.totalXp = 45;
+    delete state.modules[db.modules[0].id].completedTheoryBlockIds;
+    saveLearningProgress(state);
+    const restored = loadLearningProgress(db.modules);
+    expect(completeTheoryBlock(restored, db.modules[0], "tb-1")).toBe(restored);
+    expect(submitQuizAttempt(restored, db, db.modules[0].id, "fastlane", 1).totalXp).toBe(45 + 78);
+  });
+
   it("initialisiert Modul 1 offen und Folgemodule gesperrt und synchronisiert neue Module ohne Verlust", () => {
     const db = buildTestDatabase();
     const initial = createInitialProgress([db.modules[2], db.modules[0]]);
@@ -204,7 +244,7 @@ describe("Lernfortschritts- & XP-Engine (learning-progress)", () => {
     });
     expect(initial.modules["mod-rhythm-3"].status).toBe("locked");
 
-    const afterTheory = completeTheoryStep(initial, db.modules[0]);
+    const afterTheory = completeTheoryBlock(initial, db.modules[0], "tb-1");
     const synced = syncProgressWithCurriculum(afterTheory, db.modules);
 
     expect(synced.modules["mod-theory-1"].steps.theory).toBe("completed");
@@ -223,7 +263,7 @@ describe("Lernfortschritts- & XP-Engine (learning-progress)", () => {
     if (!q1 || !q2) throw new Error("Testaufgaben fehlen");
 
     let state = createInitialProgress(db.modules);
-    state = completeTheoryStep(state, mod1);
+    state = completeTheoryBlock(state, mod1, "tb-1");
     expect(state.totalXp).toBe(45); // 30 * 1.5
     expect(state.modules[mod1.id].steps.exercise).toBe("unlocked");
 
@@ -270,7 +310,7 @@ describe("Lernfortschritts- & XP-Engine (learning-progress)", () => {
     // completePracticeStep bleibt bei reinen Theorie-Modulen wirkungslos
     expect(completePracticeStep(state, mod1)).toBe(state);
 
-    state = completeTheoryStep(state, mod2);
+    state = completeTheoryBlock(state, mod2, "tb-2");
     state = recordExerciseAnswer(state, mod2, q5, true, db.questions);
 
     expect(state.modules[mod2.id].steps.exercise).toBe("completed");
@@ -289,8 +329,8 @@ describe("Lernfortschritts- & XP-Engine (learning-progress)", () => {
     if (!q1) throw new Error("Testaufgabe q-1 fehlt");
 
     let state = createInitialProgress(db.modules);
-    state = completeTheoryStep(state, mod1);
-    state = completeTheoryStep(state, mod1);
+    state = completeTheoryBlock(state, mod1, "tb-1");
+    state = completeTheoryBlock(state, mod1, "tb-1");
     expect(state.totalXp).toBe(45);
 
     state = recordExerciseAnswer(state, mod1, q1, false);
@@ -314,7 +354,7 @@ describe("Lernfortschritts- & XP-Engine (learning-progress)", () => {
     const mod1 = db.modules[0];
 
     let state = createInitialProgress(db.modules);
-    state = completeTheoryStep(state, mod1);
+    state = completeTheoryBlock(state, mod1, "tb-1");
     expect(state.totalXp).toBe(45);
 
     // Offene Aufgaben von Modul 1: q-1 (15) + q-2 (10) + q-3 (15) + q-4 (38) = 78 XP

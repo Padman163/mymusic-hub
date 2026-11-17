@@ -79,3 +79,10 @@ export function calculateQuestionXp(
 
   return Math.round(baseXp * effectiveMultiplier);
 }
+
+export function calculateTheoryBlockXp(
+  block: { baseXp?: number; tags?: readonly string[] },
+  defaultBaseXp: number,
+): number {
+  return calculateQuestionXp(block.baseXp ?? defaultBaseXp, block.tags ?? []);
+}

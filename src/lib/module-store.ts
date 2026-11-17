@@ -18,7 +18,7 @@ import {
   type TargetLane,
   type TheoryBlock,
 } from "./module-schema.ts";
-import { calculateQuestionXp } from "./xp-tags.ts";
+import { calculateQuestionXp, calculateTheoryBlockXp } from "./xp-tags.ts";
 
 export interface ValidationResult {
   valid: boolean;
@@ -84,6 +84,7 @@ function validateTheoryBlocks(blocks: unknown, errors: string[]): void {
     return;
   }
 
+  const ids = new Set<string>();
   for (let index = 0; index < blocks.length; index += 1) {
     const block = blocks[index];
     const prefix = `theoryBlocks[${index}]`;
@@ -93,6 +94,10 @@ function validateTheoryBlocks(blocks: unknown, errors: string[]): void {
     }
     if (!isNonEmptyString(block.id)) {
       errors.push(`${prefix}.id darf nicht leer sein.`);
+    } else if (ids.has(block.id.trim())) {
+      errors.push(`${prefix}.id muss eindeutig sein.`);
+    } else {
+      ids.add(block.id.trim());
     }
     if (
       typeof block.order !== "number" ||
@@ -106,6 +111,19 @@ function validateTheoryBlocks(blocks: unknown, errors: string[]): void {
     }
     if (typeof block.markdownContent !== "string") {
       errors.push(`${prefix}.markdownContent muss ein String sein.`);
+    }
+    if (
+      block.baseXp !== undefined &&
+      (typeof block.baseXp !== "number" ||
+        !Number.isFinite(block.baseXp) ||
+        block.baseXp < 0)
+    ) {
+      errors.push(`${prefix}.baseXp muss eine Zahl >= 0 sein.`);
+    }
+    if (block.tags !== undefined && !isStringArray(block.tags, true)) {
+      errors.push(
+        `${prefix}.tags muss ein Array aus nicht-leeren Strings sein.`,
+      );
     }
     if (
       block.visualComponent !== undefined &&
@@ -377,6 +395,8 @@ function cloneTheoryBlock(block: TheoryBlock): TheoryBlock {
     order: block.order,
     title: block.title.trim(),
     markdownContent: block.markdownContent,
+    ...(block.baseXp !== undefined ? { baseXp: block.baseXp } : {}),
+    ...(block.tags !== undefined ? { tags: [...block.tags] } : {}),
     ...(block.visualComponent !== undefined
       ? { visualComponent: block.visualComponent }
       : {}),
@@ -602,7 +622,10 @@ export function getModuleSummary(
   }
 
   const theoryBlockCount = mod.theoryBlocks.length;
-  const theoryXp = theoryBlockCount * mod.theoryBaseXp;
+  const theoryXp = mod.theoryBlocks.reduce(
+    (total, block) => total + calculateTheoryBlockXp(block, mod.theoryBaseXp),
+    0,
+  );
   const questionCounts: Record<TargetLane, number> & { total: number } = {
     exercise: 0,
     quiz_easy: 0,

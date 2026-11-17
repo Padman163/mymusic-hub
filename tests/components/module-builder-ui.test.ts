@@ -195,6 +195,57 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     expect(controller.theoryBlockEditor.items()?.[0]?.title).toBe("Schwingung");
   });
 
+  it("zeigt gespeicherte Theorie-Blöcke kompakt und aktualisiert ihre Titel", () => {
+    const form = mountModuleForm();
+    const controller = attachModuleBuilderForm(form);
+    controller.loadModule(seedDb.modules[0] as ModulesDatabase["modules"][number]);
+
+    const details = form.querySelector<HTMLDetailsElement>(".theory-block-details");
+    const title = details?.querySelector<HTMLInputElement>(".theory-block-title");
+    expect(details?.open).toBe(false);
+    expect(details?.querySelector("summary")?.textContent).toContain(title?.value);
+
+    if (!details || !title) throw new Error("Theorie-Block fehlt");
+    details.open = true;
+    title.value = "Neuer Titel";
+    title.dispatchEvent(new Event("input", { bubbles: true }));
+    expect(details.querySelector("summary")?.textContent).toBe("Theorie 1 · Neuer Titel");
+    expect(controller.theoryBlockEditor.items()?.[0].title).toBe("Neuer Titel");
+  });
+
+  it("öffnet einen zugeklappten Block mit ungültigem Titel beim Speichern", () => {
+    const editor = createTheoryBlockEditor([
+      { id: "tb-1", order: 1, title: "", markdownContent: "" },
+    ]);
+    document.body.append(editor.element);
+    const details = editor.element.querySelector<HTMLDetailsElement>("details");
+    expect(details?.open).toBe(false);
+    expect(editor.items()).toBeNull();
+    expect(details?.open).toBe(true);
+  });
+
+  it("berechnet Block-XP aus eigenem Tag und Basiswert und speichert sie", () => {
+    const form = mountModuleForm();
+    const controller = attachModuleBuilderForm(form);
+    controller.theoryBlockEditor.addBlock({ title: "Töne" });
+    const row = form.querySelector<HTMLElement>(".theory-block-row");
+    if (!row) throw new Error("Theorie-Block fehlt");
+    const xp = row.querySelector<HTMLInputElement>(".theory-block-xp");
+    const tag = row.querySelector<HTMLInputElement>('input[value="Notensystem"]');
+    const result = row.querySelector(".theory-block-calculated-xp");
+    if (!xp || !tag) throw new Error("Block-XP-Felder fehlen");
+    tag.checked = true;
+    tag.dispatchEvent(new Event("change"));
+    expect(result?.textContent).toBe("Berechnete XP: 45");
+    xp.value = "20";
+    xp.dispatchEvent(new Event("input"));
+    expect(result?.textContent).toBe("Berechnete XP: 30");
+    expect(controller.theoryBlockEditor.items()?.[0]).toMatchObject({
+      baseXp: 20,
+      tags: ["Notensystem"],
+    });
+  });
+
   it("bietet nur Tags über Faktor 1 an und bewahrt vorhandene andere Tags", () => {
     const picker = createXpTagPicker({ name: "tags", legend: "Tags" });
     expect(picker.selectedTags()).toEqual([]);

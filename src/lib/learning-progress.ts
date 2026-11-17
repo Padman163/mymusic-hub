@@ -9,7 +9,7 @@ import {
   type ModulesDatabase,
   type QuizSettings,
 } from "./module-schema.ts";
-import { calculateQuestionXp } from "./xp-tags.ts";
+import { calculateQuestionXp, calculateTheoryBlockXp } from "./xp-tags.ts";
 
 export const LEARNING_PROGRESS_STORAGE_KEY = "mymusic_learning_progress_v1";
 export const XP_PER_LEVEL = 500;
@@ -38,6 +38,7 @@ export interface ModuleProgress {
   completedVia?: ModuleCompletionMode;
   steps: Record<LaneStep, StepProgressState>;
   solvedQuestionIds: string[];
+  completedTheoryBlockIds: string[];
   bestQuizEasyScore?: number;
   bestFastlaneScore?: number;
 }
@@ -121,6 +122,7 @@ function createModuleProgress(
       quiz_easy: "locked",
     },
     solvedQuestionIds: [],
+    completedTheoryBlockIds: [],
   };
 }
 
@@ -138,6 +140,7 @@ function cloneModuleProgress(progress: ModuleProgress): ModuleProgress {
       quiz_easy: progress.steps.quiz_easy,
     },
     solvedQuestionIds: [...progress.solvedQuestionIds],
+    completedTheoryBlockIds: [...(progress.completedTheoryBlockIds ?? [])],
     ...(progress.bestQuizEasyScore !== undefined
       ? { bestQuizEasyScore: progress.bestQuizEasyScore }
       : {}),
@@ -300,28 +303,29 @@ export function syncProgressWithCurriculum(
 }
 
 /**
- * Schließt den Theorie-Schritt eines Moduls ab, schreibt einmalig die Theorie-XP
- * (inkl. Tag-Multiplikator) gut und schaltet den Aufgaben-Schritt (`exercise`) frei.
+ * Schließt einen leeren oder vollständig bearbeiteten Theorie-Schritt ab.
  */
 export function completeTheoryStep(
   state: LearningProgressState,
   module: LearningModule,
 ): LearningProgressState {
   const existing = state.modules[module.id];
-  if (!existing) {
+  if (
+    !existing ||
+    existing.status === "locked" ||
+    existing.steps.theory === "locked" ||
+    (existing.steps.theory !== "completed" &&
+      module.theoryBlocks.some(
+        (block) => !existing.completedTheoryBlockIds?.includes(block.id),
+      ))
+  ) {
     return state;
   }
 
   const next = cloneState(state);
   const target = next.modules[module.id];
 
-  if (target.status === "locked") {
-    target.status = "unlocked";
-  }
-
   if (target.steps.theory !== "completed") {
-    const theoryXp = calculateQuestionXp(module.theoryBaseXp, module.tags);
-    creditXp(next, theoryXp, module.scope, module.tags);
     target.steps.theory = "completed";
   }
 
@@ -331,6 +335,38 @@ export function completeTheoryStep(
 
   next.updatedAt = nowIso();
   return next;
+}
+
+export function completeTheoryBlock(
+  state: LearningProgressState,
+  module: LearningModule,
+  blockId: string,
+): LearningProgressState {
+  const existing = state.modules[module.id];
+  const block = module.theoryBlocks.find((item) => item.id === blockId);
+  if (
+    !existing ||
+    !block ||
+    existing.status === "locked" ||
+    existing.steps.theory !== "unlocked" ||
+    existing.completedTheoryBlockIds?.includes(blockId)
+  ) {
+    return state;
+  }
+  const next = cloneState(state);
+  next.modules[module.id].completedTheoryBlockIds.push(blockId);
+  creditXp(
+    next,
+    calculateTheoryBlockXp(block, module.theoryBaseXp),
+    module.scope,
+    block.tags ?? [],
+  );
+  next.updatedAt = nowIso();
+  return module.theoryBlocks.every((item) =>
+    next.modules[module.id].completedTheoryBlockIds.includes(item.id),
+  )
+    ? completeTheoryStep(next, module)
+    : next;
 }
 
 /**
@@ -499,12 +535,18 @@ export function submitQuizAttempt(
   const settings = getEffectiveQuizSettings(next, db);
   if (normalizedScore >= settings.fastlaneMinScore) {
     if (target.steps.theory !== "completed") {
-      creditXp(
-        next,
-        calculateQuestionXp(mod.theoryBaseXp, mod.tags),
-        mod.scope,
-        mod.tags,
-      );
+      const completedBlocks = new Set(target.completedTheoryBlockIds);
+      for (const block of mod.theoryBlocks) {
+        if (completedBlocks.has(block.id)) continue;
+        completedBlocks.add(block.id);
+        target.completedTheoryBlockIds.push(block.id);
+        creditXp(
+          next,
+          calculateTheoryBlockXp(block, mod.theoryBaseXp),
+          mod.scope,
+          block.tags ?? [],
+        );
+      }
     }
 
     const solvedSet = new Set(target.solvedQuestionIds);
@@ -636,6 +678,11 @@ function sanitizeStoredProgress(
           (id): id is string => typeof id === "string" && id.length > 0,
         )
       : [];
+    const completedTheoryBlockIds = Array.isArray(entry.completedTheoryBlockIds)
+      ? entry.completedTheoryBlockIds.filter(
+          (id): id is string => typeof id === "string" && id.length > 0,
+        )
+      : [];
 
     sanitizedModules[moduleId] = {
       moduleId,
@@ -643,6 +690,7 @@ function sanitizeStoredProgress(
       ...(completedVia !== undefined ? { completedVia } : {}),
       steps,
       solvedQuestionIds,
+      completedTheoryBlockIds,
       ...(typeof entry.bestQuizEasyScore === "number" &&
       Number.isFinite(entry.bestQuizEasyScore)
         ? { bestQuizEasyScore: entry.bestQuizEasyScore }

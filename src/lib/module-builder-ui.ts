@@ -40,6 +40,7 @@ import { type Duration, durationLabels } from "./rhythm.ts";
 import {
   BASE_XP_DEFAULTS,
   calculateQuestionXp,
+  calculateTheoryBlockXp,
   getAvailableTags,
   TAG_DEFINITIONS,
 } from "./xp-tags.ts";
@@ -247,6 +248,7 @@ export function createXpTagPicker(options: {
   name: string;
   legend: string;
   defaultTags?: readonly string[];
+  includeNeutral?: boolean;
   onChange?: (selected: string[]) => void;
 }): XpTagPickerController {
   const defaultTags = options.defaultTags ?? [];
@@ -261,7 +263,8 @@ export function createXpTagPicker(options: {
 
   const checkboxes: HTMLInputElement[] = [];
   const availableTags = getAvailableTags().filter(
-    (tagName) => TAG_DEFINITIONS[tagName].multiplier > 1,
+    (tagName) =>
+      options.includeNeutral || TAG_DEFINITIONS[tagName].multiplier > 1,
   );
   const available = new Set(availableTags);
   let retainedTags = defaultTags.filter((tag) => !available.has(tag));
@@ -339,11 +342,13 @@ export interface TheoryBlockEditorController {
   setItems(blocks: readonly TheoryBlock[]): void;
   clear(): void;
   setDisabled(disabled: boolean): void;
+  refreshCalculatedXp(): void;
 }
 
 /** Erzeugt einen dynamischen Editor für sortierbare Theorie-Blöcke. */
 export function createTheoryBlockEditor(
   initialBlocks: readonly TheoryBlock[] = [],
+  getDefaultBaseXp: () => number = () => BASE_XP_DEFAULTS.theoryBlock,
 ): TheoryBlockEditorController {
   const fieldset = document.createElement("fieldset");
   fieldset.className = "checklist-editor theory-block-editor";
@@ -354,6 +359,7 @@ export function createTheoryBlockEditor(
   const rows = document.createElement("div");
   rows.className = "theory-block-rows";
   const legacyVisuals = new WeakMap<HTMLDivElement, Partial<TheoryBlock>>();
+  const blockTags = new WeakMap<HTMLDivElement, XpTagPickerController>();
 
   const addButton = document.createElement("button");
   addButton.type = "button";
@@ -367,7 +373,10 @@ export function createTheoryBlockEditor(
     rowElements.forEach((row, index) => {
       const label = row.querySelector<HTMLElement>(".theory-block-order-label");
       if (label) {
-        label.textContent = `Block ${index + 1}`;
+        const title = row.querySelector<HTMLInputElement>(
+          ".theory-block-title",
+        );
+        label.textContent = `Theorie ${index + 1} · ${title?.value.trim() || "Neuer Block"}`;
       }
       const upButton = row.querySelector<HTMLButtonElement>(".theory-block-up");
       const downButton =
@@ -386,6 +395,23 @@ export function createTheoryBlockEditor(
     syncRowOrder();
   }
 
+  function refreshCalculatedXp(): void {
+    for (const row of rows.querySelectorAll<HTMLDivElement>(
+      ".theory-block-row",
+    )) {
+      const input = row.querySelector<HTMLInputElement>(".theory-block-xp");
+      const result = row.querySelector<HTMLElement>(
+        ".theory-block-calculated-xp",
+      );
+      const picker = blockTags.get(row);
+      if (!input || !result || !picker) continue;
+      const baseXp = input.value.trim()
+        ? Number(input.value)
+        : getDefaultBaseXp();
+      result.textContent = `Berechnete XP: ${calculateTheoryBlockXp({ baseXp, tags: picker.selectedTags() }, getDefaultBaseXp())}`;
+    }
+  }
+
   function addBlock(initial: Partial<TheoryBlock> = {}): void {
     initial = notationToMarkdown(initial);
     const row = document.createElement("div");
@@ -400,8 +426,9 @@ export function createTheoryBlockEditor(
       initial.id?.trim() ||
       `tb-${rows.childElementCount + 1}-${crypto.randomUUID().slice(0, 6)}`;
 
-    const rowHeader = document.createElement("div");
-    rowHeader.className = "theory-block-row-header";
+    const details = document.createElement("details");
+    details.className = "theory-block-details";
+    const summary = document.createElement("summary");
 
     const orderLabel = document.createElement("span");
     orderLabel.className = "theory-block-order-label";
@@ -440,7 +467,7 @@ export function createTheoryBlockEditor(
     });
 
     controls.append(upButton, downButton, removeButton);
-    rowHeader.append(orderLabel, controls);
+    summary.append(orderLabel);
 
     const titleLabel = document.createElement("label");
     titleLabel.className = "field";
@@ -451,6 +478,7 @@ export function createTheoryBlockEditor(
     titleInput.className = "theory-block-title";
     titleInput.placeholder = "z. B. Frequenz & Tonhöhe";
     titleInput.value = initial.title ?? "";
+    titleInput.addEventListener("input", syncRowOrder);
     titleLabel.append(titleCaption, titleInput);
 
     const markdownLabel = document.createElement("label");
@@ -468,7 +496,38 @@ export function createTheoryBlockEditor(
     katexHint.textContent =
       'Formeln mit $...$ oder $$...$$; Notation direkt im Text: <Notation clef="treble" notes={[]} />.';
     markdownLabel.append(markdownCaption, markdownInput, katexHint);
-    row.append(rowHeader, titleLabel, markdownLabel);
+    const xpLabel = document.createElement("label");
+    xpLabel.className = "field";
+    const xpCaption = document.createElement("span");
+    xpCaption.textContent = "Basis-XP (leer: Modulwert)";
+    const xpInput = document.createElement("input");
+    xpInput.type = "number";
+    xpInput.min = "0";
+    xpInput.step = "1";
+    xpInput.className = "theory-block-xp";
+    xpInput.value = initial.baseXp === undefined ? "" : String(initial.baseXp);
+    xpInput.addEventListener("input", refreshCalculatedXp);
+    xpLabel.append(xpCaption, xpInput);
+    const picker = createXpTagPicker({
+      name: `theory-tags-${row.dataset.blockId}`,
+      legend: "Block-Tags",
+      defaultTags: initial.tags ?? [],
+      includeNeutral: true,
+      onChange: refreshCalculatedXp,
+    });
+    blockTags.set(row, picker);
+    const calculatedXp = document.createElement("p");
+    calculatedXp.className = "theory-block-calculated-xp";
+    calculatedXp.setAttribute("aria-live", "polite");
+    const content = document.createElement("div");
+    content.className = "theory-block-content";
+    content.append(
+      titleLabel,
+      markdownLabel,
+      xpLabel,
+      picker.element,
+      calculatedXp,
+    );
     if (legacyVisuals.has(row)) {
       const legacyHint = document.createElement("small");
       legacyHint.className = "field-hint";
@@ -481,14 +540,21 @@ export function createTheoryBlockEditor(
         legacyHint.remove();
         removeVisual.remove();
       });
-      row.append(legacyHint, removeVisual);
+      content.append(legacyHint, removeVisual);
     }
+    details.append(summary, content);
+    row.append(details, controls);
     rows.append(row);
     syncRowOrder();
+    refreshCalculatedXp();
   }
 
   addButton.addEventListener("click", () => {
     addBlock();
+    const lastDetails = rows.querySelector<HTMLDetailsElement>(
+      ".theory-block-row:last-child .theory-block-details",
+    );
+    if (lastDetails) lastDetails.open = true;
     const lastTitle = rows.querySelector<HTMLInputElement>(
       ".theory-block-row:last-child .theory-block-title",
     );
@@ -509,12 +575,18 @@ export function createTheoryBlockEditor(
       const markdownInput = row.querySelector<HTMLTextAreaElement>(
         ".theory-block-markdown",
       );
-      if (!titleInput || !markdownInput) {
+      const xpInput = row.querySelector<HTMLInputElement>(".theory-block-xp");
+      const picker = blockTags.get(row);
+      if (!titleInput || !markdownInput || !xpInput || !picker) {
         throw new Error("Die Felder eines Theorie-Blocks sind unvollständig.");
       }
 
       const title = titleInput.value.trim();
       if (!title) {
+        const details = row.querySelector<HTMLDetailsElement>(
+          ".theory-block-details",
+        );
+        if (details) details.open = true;
         titleInput.setCustomValidity(
           "Bitte gib einen Titel für den Theorie-Block ein.",
         );
@@ -523,11 +595,25 @@ export function createTheoryBlockEditor(
         return null;
       }
 
+      const baseXp = xpInput.value.trim() ? Number(xpInput.value) : undefined;
+      if (baseXp !== undefined && (!Number.isFinite(baseXp) || baseXp < 0)) {
+        const details = row.querySelector<HTMLDetailsElement>(
+          ".theory-block-details",
+        );
+        if (details) details.open = true;
+        xpInput.setCustomValidity("Bitte gib gültige Basis-XP ab 0 ein.");
+        xpInput.reportValidity();
+        xpInput.setCustomValidity("");
+        return null;
+      }
+
       result.push({
         id: row.dataset.blockId?.trim() || `tb-${index + 1}`,
         order: index + 1,
         title,
         markdownContent: markdownInput.value,
+        ...(baseXp !== undefined ? { baseXp } : {}),
+        tags: picker.selectedTags(),
         ...legacyVisuals.get(row),
       });
     }
@@ -566,6 +652,7 @@ export function createTheoryBlockEditor(
     setItems,
     clear,
     setDisabled,
+    refreshCalculatedXp,
   };
 }
 
@@ -775,7 +862,13 @@ export function attachModuleBuilderForm(
   });
   tagsContainer.append(tagPicker.element);
 
-  const theoryBlockEditor = createTheoryBlockEditor();
+  const theoryBlockEditor = createTheoryBlockEditor([], () =>
+    Number(theoryBaseXpInput.value),
+  );
+  theoryBaseXpInput.addEventListener(
+    "input",
+    theoryBlockEditor.refreshCalculatedXp,
+  );
   blocksContainer.append(theoryBlockEditor.element);
 
   let editingModuleId: string | null = null;

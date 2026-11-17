@@ -58,6 +58,20 @@ describe("xp-tags Konfiguration & Berechnung", () => {
 });
 
 describe("module-store Validierung & Store-Operationen", () => {
+  it("speichert und validiert eigene Theorie-Block-XP und berechnet die Summe", () => {
+    const blocks = [
+      { id: "a", order: 1, title: "A", markdownContent: "", baseXp: 20, tags: ["Notensystem"] },
+      { id: "b", order: 2, title: "B", markdownContent: "" },
+    ];
+    const db = upsertModule(createEmptyModulesDatabase(), {
+      id: "mod", title: "Modul", theoryBaseXp: 30, tags: ["Notensystem"], theoryBlocks: blocks,
+    });
+    expect(db.modules[0].theoryBlocks[0]).toMatchObject({ baseXp: 20, tags: ["Notensystem"] });
+    expect(getModuleSummary(db, "mod")?.theoryXp).toBe(60);
+    expect(validateModuleInput({ id: "mod", title: "Modul", theoryBlocks: [{ ...blocks[0], baseXp: -1 }] }).valid).toBe(false);
+    expect(validateModuleInput({ id: "mod", title: "Modul", theoryBlocks: [blocks[0], blocks[0]] }).valid).toBe(false);
+  });
+
   it("hängt neue Module hinter der höchsten Position an und bewahrt die Position beim Bearbeiten", () => {
     let db = createEmptyModulesDatabase();
     db = upsertModule(db, { id: "first", title: "Erstes" });

@@ -2,6 +2,7 @@ import katex from "katex";
 import {
   clearLearningProgress,
   completePracticeStep,
+  completeTheoryBlock,
   completeTheoryStep,
   createInitialProgress,
   getDashboardOverview,
@@ -50,6 +51,7 @@ import { type Duration, durationLabels } from "./rhythm.ts";
 import { layoutNotationSystems, type NotationProps } from "./system-layout.ts";
 import {
   calculateQuestionXp,
+  calculateTheoryBlockXp,
   getAvailableTags,
   TAG_DEFINITIONS,
 } from "./xp-tags.ts";
@@ -132,7 +134,10 @@ function computeModuleStats(
 } {
   const totalTheory = mod.theoryBlocks.length;
   const theoryDone = modProgress?.steps.theory === "completed";
-  const completedTheory = theoryDone ? totalTheory : 0;
+  const completedIds = new Set(modProgress?.completedTheoryBlockIds ?? []);
+  const completedTheory = theoryDone
+    ? totalTheory
+    : mod.theoryBlocks.filter((block) => completedIds.has(block.id)).length;
 
   const exerciseQuestions = modQuestions.filter(
     (q) => q.targetLane === "exercise",
@@ -1496,7 +1501,12 @@ function computeRemainingModuleXp(
 
   let openXp = 0;
   if (modProgress?.steps.theory !== "completed") {
-    openXp += calculateQuestionXp(mod.theoryBaseXp, mod.tags);
+    const completed = new Set(modProgress?.completedTheoryBlockIds ?? []);
+    for (const block of mod.theoryBlocks) {
+      if (!completed.has(block.id)) {
+        openXp += calculateTheoryBlockXp(block, mod.theoryBaseXp);
+      }
+    }
   }
   for (const q of db.questions) {
     if (q.moduleId === mod.id && !solvedSet.has(q.id)) {
@@ -2053,19 +2063,44 @@ export function attachModuleStepper(
       if (visualEl) {
         blockEl.append(visualEl);
       }
+      const blockXp = calculateTheoryBlockXp(block, mod.theoryBaseXp);
+      const completed =
+        theoryStepState === "completed" ||
+        modProgress?.completedTheoryBlockIds.includes(block.id);
+      const completeBlockBtn = document.createElement("button");
+      completeBlockBtn.type = "button";
+      completeBlockBtn.className = "learning-btn learning-btn-primary";
+      completeBlockBtn.dataset.action = "complete-theory-block";
+      completeBlockBtn.dataset.blockId = block.id;
+      completeBlockBtn.disabled = !!completed;
+      completeBlockBtn.textContent = completed
+        ? `✓ Block abgeschlossen (+${blockXp} XP)`
+        : `Block abschließen (+${blockXp} XP)`;
+      completeBlockBtn.addEventListener("click", () => {
+        const latest = loadLearningProgress(
+          currentDb.modules,
+          undefined,
+          currentDb.quizSettings,
+        );
+        commitProgressChange(
+          completeTheoryBlock(latest, mod, block.id),
+          currentDb,
+        );
+      });
+      blockEl.append(completeBlockBtn);
       blocksWrap.append(blockEl);
     }
 
-    const theoryXp = calculateQuestionXp(mod.theoryBaseXp, mod.tags);
     const completeTheoryBtn = document.createElement("button");
     completeTheoryBtn.type = "button";
     completeTheoryBtn.className = "learning-btn learning-btn-primary";
     completeTheoryBtn.dataset.action = "complete-theory";
+    completeTheoryBtn.hidden = sortedBlocks.length > 0;
     if (theoryStepState === "completed") {
       completeTheoryBtn.disabled = true;
-      completeTheoryBtn.textContent = `✓ Theorie abgeschlossen (+${theoryXp} XP)`;
+      completeTheoryBtn.textContent = "✓ Theorie abgeschlossen";
     } else {
-      completeTheoryBtn.textContent = `Theorie abschließen (+${theoryXp} XP)`;
+      completeTheoryBtn.textContent = "Theorie abschließen";
     }
 
     completeTheoryBtn.addEventListener("click", () => {
@@ -2274,6 +2309,22 @@ export function attachModuleStepper(
     };
 
     const prevTheory = updateBadge("theory", modProgress.steps.theory);
+    for (const btn of stepElements.theory.querySelectorAll<HTMLButtonElement>(
+      '[data-action="complete-theory-block"]',
+    )) {
+      const block = mod.theoryBlocks.find(
+        (item) => item.id === btn.dataset.blockId,
+      );
+      if (!block) continue;
+      const completed =
+        modProgress.steps.theory === "completed" ||
+        modProgress.completedTheoryBlockIds.includes(block.id);
+      const xp = calculateTheoryBlockXp(block, mod.theoryBaseXp);
+      btn.disabled = completed;
+      btn.textContent = completed
+        ? `✓ Block abgeschlossen (+${xp} XP)`
+        : `Block abschließen (+${xp} XP)`;
+    }
     if (
       prevTheory !== modProgress.steps.theory &&
       modProgress.steps.theory === "completed"
@@ -2282,9 +2333,8 @@ export function attachModuleStepper(
         '[data-action="complete-theory"]',
       );
       if (btn) {
-        const theoryXp = calculateQuestionXp(mod.theoryBaseXp, mod.tags);
         btn.disabled = true;
-        btn.textContent = `✓ Theorie abgeschlossen (+${theoryXp} XP)`;
+        btn.textContent = "✓ Theorie abgeschlossen";
       }
     }
 

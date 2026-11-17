@@ -107,6 +107,11 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
   });
 
   it("sperrt nachfolgende Stepper-Schritte initial und entsperrt Schritt 2 nach Theorie-Abschluss live inklusive Dashboard-Update", () => {
+    const db = structuredClone(seedDb);
+    db.questions = db.questions.filter((q) =>
+      q.moduleId !== "theory-101" || q.targetLane !== "exercise" ||
+      ["q-101-ex-1", "q-101-ex-2"].includes(q.id),
+    );
     const dashboardEl = document.createElement("section");
     const stepperEl = document.createElement("section");
     stepperEl.dataset.moduleId = "theory-101";
@@ -114,10 +119,10 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     document.body.append(dashboardEl, stepperEl);
 
     attachProgressDashboard(dashboardEl, {
-      initialDb: seedDb,
+      initialDb: db,
       autoFetch: false,
     });
-    attachModuleStepper(stepperEl, { initialDb: seedDb, autoFetch: false });
+    attachModuleStepper(stepperEl, { initialDb: db, autoFetch: false });
 
     const theoryStep = stepperEl.querySelector<HTMLElement>(
       '[data-step="theory"]',
@@ -143,11 +148,17 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     ).toBe("0");
 
     // Schritt 1 abschließen -> Theorie wird completed, Aufgaben werden unlocked
-    const completeTheoryBtn = stepperEl.querySelector<HTMLButtonElement>(
-      '[data-action="complete-theory"]',
+    const blockButtons = stepperEl.querySelectorAll<HTMLButtonElement>(
+      '[data-action="complete-theory-block"]',
     );
-    expect(completeTheoryBtn).not.toBeNull();
-    completeTheoryBtn?.click();
+    expect(blockButtons.length).toBe(db.modules[0].theoryBlocks.length);
+    blockButtons[0].click();
+    expect(blockButtons[0].disabled).toBe(true);
+    expect(exerciseStep?.dataset.stepState).toBe("locked");
+    expect(
+      dashboardEl.querySelector<HTMLElement>("[data-dashboard-xp]")?.dataset.dashboardXp,
+    ).toBe("30");
+    blockButtons.forEach((button) => button.click());
 
     expect(theoryStep?.dataset.stepState).toBe("completed");
     expect(exerciseStep?.dataset.stepState).toBe("unlocked");
@@ -158,7 +169,7 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     expect(
       dashboardEl.querySelector<HTMLElement>("[data-dashboard-xp]")?.dataset
         .dashboardXp,
-    ).toBe("45");
+    ).toBe(String(db.modules[0].theoryBlocks.length * db.modules[0].theoryBaseXp));
 
     // Falsche Antwort auf Aufgabe 1 zeigt didaktische Erklärung
     const ex1Card = stepperEl.querySelector<HTMLElement>(
@@ -204,7 +215,7 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
 
     const roadmapCheck = document.createElement("section");
     document.body.append(roadmapCheck);
-    attachModuleRoadmap(roadmapCheck, { initialDb: seedDb, autoFetch: false });
+    attachModuleRoadmap(roadmapCheck, { initialDb: db, autoFetch: false });
     const mod1Card = roadmapCheck.querySelector<HTMLElement>(
       '[data-module-card="theory-101"]',
     );
@@ -219,6 +230,11 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
   });
 
   it("aktualisiert Dashboard und Roadmap nach bestandenem Fastlane-Quiz inklusive Freischaltung von Modul 2", () => {
+    const db = structuredClone(seedDb);
+    db.questions = db.questions.filter((q) =>
+      q.moduleId !== "theory-101" || q.targetLane !== "exercise" ||
+      ["q-101-ex-1", "q-101-ex-2"].includes(q.id),
+    );
     const dashboardEl = document.createElement("section");
     const roadmapEl = document.createElement("section");
     const stepperEl = document.createElement("section");
@@ -227,11 +243,11 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     document.body.append(dashboardEl, roadmapEl, stepperEl);
 
     attachProgressDashboard(dashboardEl, {
-      initialDb: seedDb,
+      initialDb: db,
       autoFetch: false,
     });
-    attachModuleRoadmap(roadmapEl, { initialDb: seedDb, autoFetch: false });
-    attachModuleStepper(stepperEl, { initialDb: seedDb, autoFetch: false });
+    attachModuleRoadmap(roadmapEl, { initialDb: db, autoFetch: false });
+    attachModuleStepper(stepperEl, { initialDb: db, autoFetch: false });
 
     const mod1Before = roadmapEl.querySelector<HTMLElement>(
       '[data-module-card="theory-101"]',
@@ -337,7 +353,7 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
       "[data-dashboard-xp]",
     )?.dataset.dashboardXp;
     expect(Number(xpValue)).toBeGreaterThan(0);
-    expect(xpValue).toBe("171");
+    expect(xpValue).toBe(String(126 + db.modules[0].theoryBlocks.length * db.modules[0].theoryBaseXp));
     expect(
       dashboardEl.querySelector<HTMLElement>("[data-dashboard-modules]")
         ?.dataset.dashboardModules,
