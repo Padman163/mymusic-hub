@@ -76,6 +76,34 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     const group = root.querySelector(".learning-theory-group");
     expect(group?.querySelector("h4")?.textContent).toBe("Grundlagen");
     expect(group?.querySelectorAll(".learning-theory-block")).toHaveLength(2);
+    const groupXp = db.modules[0].theoryBlocks
+      .slice(0, 2)
+      .reduce(
+        (total, block) =>
+          total + calculateTheoryBlockXp(block, db.modules[0].theoryBaseXp),
+        0,
+      );
+    expect(group?.querySelector(".learning-theory-heading .learning-xp-badge")?.textContent)
+      .toBe(`${groupXp} XP`);
+    expect(group?.querySelector(".learning-theory-heading")?.firstElementChild?.tagName)
+      .toBe("H4");
+  });
+
+  it("zeigt XP für einzelne Theorieblöcke rechts neben dem Titel", () => {
+    const root = document.createElement("section");
+    root.dataset.moduleId = "theory-101";
+    document.body.append(root);
+    const db = structuredClone(seedDb);
+    const block = db.modules[0].theoryBlocks[0];
+    delete block.groupId;
+    delete block.groupTitle;
+
+    attachModuleStepper(root, { initialDb: db, autoFetch: false });
+
+    const heading = root.querySelector(".learning-theory-block .learning-theory-heading");
+    expect(heading?.querySelector(".learning-xp-badge")?.textContent)
+      .toBe(`${calculateTheoryBlockXp(block, db.modules[0].theoryBaseXp)} XP`);
+    expect(heading?.firstElementChild?.tagName).toBe("H4");
   });
 
   it("vergütet beim Abschluss einer teilweise erledigten Gruppe nur offene Blöcke", () => {
@@ -180,12 +208,18 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     attachModuleStepper(stepperEl, { initialDb: db, autoFetch: false });
 
     expect(stepperEl.querySelector(".learning-lesson-counter")?.textContent).toBe("Abschnitt 1 / 5");
+    const steps = stepperEl.querySelectorAll<HTMLButtonElement>(".learning-lesson-step");
+    expect(steps).toHaveLength(5);
+    expect(Array.from(steps).every((step) => step.disabled)).toBe(true);
     expect(stepperEl.querySelectorAll(".learning-quiz-card")).toHaveLength(1);
     expect(stepperEl.querySelector(".learning-theory-block")).toBeNull();
     expect(stepperEl.querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]')?.disabled).toBe(true);
     const ex1Card = stepperEl.querySelector<HTMLElement>(
       '[data-question-card="q-101-ex-1"]',
     );
+    const ex1Xp = ex1Card?.querySelector<HTMLElement>(".learning-xp-badge");
+    expect(ex1Xp?.closest(".learning-card-header")?.lastElementChild).toBe(ex1Xp);
+    expect(ex1Xp?.classList.contains("has-xp")).toBe(false);
     const ex1Input = ex1Card?.querySelector<HTMLInputElement>(
       ".learning-numeric-input",
     );
@@ -199,14 +233,26 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     const feedback = ex1Card?.querySelector<HTMLElement>(".learning-feedback");
     expect(feedback?.dataset.outcome).toBe("wrong");
     expect(feedback?.textContent).toContain("Frequenzverhältnis 2:1");
+    expect(ex1Xp?.classList.contains("has-xp")).toBe(false);
     expect(stepperEl.querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]')?.disabled).toBe(true);
 
     ex1Input.value = "880 Hz";
     ex1Btn.click();
     expect(feedback?.dataset.outcome).toBe("correct");
+    expect(ex1Xp?.classList.contains("has-xp")).toBe(true);
+    expect(ex1Xp?.textContent).toMatch(/^\d+ XP$/);
     expect(stepperEl.querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]')?.disabled).toBe(false);
+    expect(stepperEl.querySelector<HTMLButtonElement>('[data-step-index="0"]')?.disabled).toBe(false);
+    expect(stepperEl.querySelector<HTMLButtonElement>('[data-step-index="1"]')?.disabled).toBe(true);
     expect(stepperEl.querySelector('[data-question-card="q-101-ex-1"]')).not.toBeNull();
     expect(dashboardEl.querySelector<HTMLElement>("[data-dashboard-xp]")?.dataset.dashboardXp).toBe("10");
+
+    stepperEl.querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]')?.click();
+    expect(stepperEl.querySelector(".learning-lesson-counter")?.textContent).toBe("Abschnitt 2 / 5");
+    stepperEl.querySelector<HTMLButtonElement>('[data-step-index="0"]')?.click();
+    expect(stepperEl.querySelector('[data-question-card="q-101-ex-1"]')).not.toBeNull();
+    stepperEl.querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]')?.click();
+    expect(stepperEl.querySelector(".learning-theory-group")).not.toBeNull();
 
     stepperEl.remove();
     stepperEl = document.createElement("section");

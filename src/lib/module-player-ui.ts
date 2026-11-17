@@ -1607,10 +1607,11 @@ export function attachModuleQuizRunner(
         ? question.prompt
         : `Aufgabe ${index + 1} / ${questions.length}: ${question.prompt}`;
       const qXp = document.createElement("span");
-      qXp.className = "contribution-tag learning-xp-badge has-xp";
+      qXp.className = "contribution-tag learning-xp-badge";
       const questionXp = calculateQuestionXp(question.baseXp, question.tags);
+      if (solvedSet.has(question.id)) qXp.classList.add("has-xp");
       qXp.textContent = solvedSet.has(question.id)
-        ? `✓ Gelöst (${questionXp} XP)`
+        ? `${questionXp} XP`
         : `+${questionXp} XP`;
       qHeader.append(qTitle, qXp);
 
@@ -1655,7 +1656,8 @@ export function attachModuleQuizRunner(
             db.questions,
           );
           qCard.dataset.questionSolved = "true";
-          qXp.textContent = `✓ Gelöst (${questionXp} XP)`;
+          qXp.classList.add("has-xp");
+          qXp.textContent = `${questionXp} XP`;
           titleEl.textContent = alreadySolved
             ? "✓ Richtig gelöst (XP bereits erhalten)."
             : `✓ Richtig! +${questionXp} XP gutgeschrieben.`;
@@ -2151,7 +2153,63 @@ export function attachModuleStepper(
 
     const sequenceHost = document.createElement("div");
     sequenceHost.className = "learning-lesson-sequence";
+    const lessonContent = document.createElement("div");
+    lessonContent.className = "learning-lesson-content";
+    const sidebar = document.createElement("nav");
+    sidebar.className = "learning-lesson-sidebar";
+    sidebar.setAttribute("aria-label", "Lektionsschritte");
+    const sidebarTitle = document.createElement("h4");
+    sidebarTitle.className = "learning-lesson-sidebar-title";
+    sidebarTitle.textContent = "Lektionsschritte";
+    const stepList = document.createElement("ol");
+    stepList.className = "learning-lesson-step-list";
+    sidebar.append(sidebarTitle, stepList);
+    sequenceHost.append(lessonContent, sidebar);
     host.append(sequenceHost);
+
+    const renderSidebar = (progress: ModuleProgress) => {
+      stepList.replaceChildren();
+      sections.forEach((section, stepIndex) => {
+        const label =
+          section.kind === "theory"
+            ? section.blocks[0].groupTitle ?? section.blocks[0].title
+            : section.kind === "exercise"
+              ? section.question.prompt
+              : section.kind === "practice"
+                ? "Praxis am Instrument"
+                : "Abschluss-Quiz Einfach";
+        const completed = isLessonSectionComplete(section, progress);
+        const item = document.createElement("li");
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "learning-lesson-step";
+        button.dataset.stepIndex = String(stepIndex);
+        button.dataset.stepCompleted = String(completed);
+        button.disabled = !completed;
+        if (stepIndex === index) {
+          button.classList.add("is-current");
+          button.setAttribute("aria-current", "step");
+        }
+        button.setAttribute(
+          "aria-label",
+          `Abschnitt ${stepIndex + 1}: ${label} (${completed ? "abgeschlossen" : "nicht abgeschlossen"})`,
+        );
+        const number = document.createElement("span");
+        number.className = "learning-lesson-step-number";
+        number.textContent = String(stepIndex + 1);
+        const title = document.createElement("span");
+        title.className = "learning-lesson-step-title";
+        title.textContent = label;
+        button.append(number, title);
+        button.addEventListener("click", () => {
+          if (!completed) return;
+          index = stepIndex;
+          renderCurrent(true);
+        });
+        item.append(button);
+        stepList.append(item);
+      });
+    };
 
     const renderCurrent = (focusHeading = false) => {
       const section = sections[index];
@@ -2165,7 +2223,8 @@ export function attachModuleStepper(
         return;
       }
 
-      sequenceHost.replaceChildren();
+      lessonContent.replaceChildren();
+      renderSidebar(progress);
       const counter = document.createElement("p");
       counter.className = "learning-lesson-counter";
       counter.textContent = `Abschnitt ${index + 1} / ${sections.length}`;
@@ -2207,20 +2266,45 @@ export function attachModuleStepper(
         blocksHost.className = grouped
           ? "learning-theory-group-blocks"
           : "learning-theory-blocks";
+        const getXpBadge = (xp: number) => {
+          const badge = document.createElement("span");
+          badge.className = "contribution-tag learning-xp-badge";
+          if (xp > 0) badge.classList.add("has-xp");
+          badge.textContent = `${xp} XP`;
+          return badge;
+        };
         if (grouped) {
           const groupHeading = document.createElement("h4");
           groupHeading.textContent = section.blocks[0].groupTitle ?? "";
-          wrap.append(groupHeading);
+          const heading = document.createElement("div");
+          heading.className = "learning-theory-heading";
+          const groupXp = section.blocks.reduce(
+            (total, block) =>
+              total + calculateTheoryBlockXp(block, mod.theoryBaseXp),
+            0,
+          );
+          heading.append(groupHeading, getXpBadge(groupXp));
+          wrap.append(heading);
         }
         for (const block of section.blocks) {
           const blockEl = document.createElement("article");
           blockEl.className = "learning-theory-block";
           const blockTitle = document.createElement(grouped ? "h5" : "h4");
           blockTitle.textContent = `${block.order}. ${block.title}`;
+          if (!grouped) {
+            const heading = document.createElement("div");
+            heading.className = "learning-theory-heading";
+            heading.append(
+              blockTitle,
+              getXpBadge(calculateTheoryBlockXp(block, mod.theoryBaseXp)),
+            );
+            blockEl.append(heading);
+          }
           const markdown = document.createElement("div");
           markdown.className = "learning-theory-markdown";
           markdown.append(renderTheoryMarkdown(block.markdownContent));
-          blockEl.append(blockTitle, markdown);
+          if (grouped) blockEl.append(blockTitle);
+          blockEl.append(markdown);
           const visual = renderTheoryVisualElement(block, root);
           if (visual) blockEl.append(visual);
           blocksHost.append(blockEl);
@@ -2306,7 +2390,7 @@ export function attachModuleStepper(
         renderCurrent(true);
       });
       navigation.append(previous, next);
-      sequenceHost.append(counter, progressBar, card, navigation);
+      lessonContent.append(counter, progressBar, card, navigation);
 
       let practiceState = progress.steps.practice;
       updateCurrentSection = () => {
@@ -2319,6 +2403,7 @@ export function attachModuleStepper(
         const completed = isLessonSectionComplete(section, latest);
         next.disabled = !completed;
         card.dataset.stepState = completed ? "completed" : "unlocked";
+        renderSidebar(latest);
         if (completeButton && section.kind === "theory") {
           const remainingXp =
             latest.steps.theory === "completed"
