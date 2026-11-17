@@ -122,26 +122,30 @@ npx @biomejs/biome check --write .
 
 * **Werkzeuge:** `@playwright/test`.
 * **Testdateien:** `tests/e2e/smoke.spec.ts`.
-* **Gegenstand:** Startet den Astro-Produktionsserver und prüft Navigation, HTTP-Status 200, fehlerfreie Klickpfade und responsive Darstellung in Desktop Chrome und Mobile Safari.
-* **Visuelle Prüfung:** Die aktuellen E2E-Tests prüfen Notationsgeometrie und responsives Layout; sie enthalten derzeit keine Screenshot-Vergleiche.
+* **Testumgebung:** `playwright.config.ts` verwendet Chromium mit dem Geräteprofil „Desktop Chrome“ und WebKit mit dem Profil „iPhone 14“ unter dem Projektnamen „Mobile Safari“. Das ist Browser-/Geräteemulation, kein Test auf einem echten iPhone oder mit installiertem Google Chrome.
+* **Server und Voraussetzung:** Die Tests benötigen einen aktuellen Produktionsbuild. Playwright startet dafür `npm run preview` unter `http://localhost:4321`; außerhalb von CI darf ein bereits erreichbarer Server wiederverwendet werden. Für reproduzierbare Produktionsprüfungen dort keinen abweichenden Dev-Server laufen lassen. `test:e2e` baut das Projekt nicht selbst.
+* **Gegenstand:** Drei festgelegte Seiten werden auf HTTP 200, eine sichtbare Hauptüberschrift und bis zum Prüfzeitpunkt aufgetretene JavaScript-`pageerror`-Ereignisse geprüft. Weitere Tests prüfen Builder-Klickpfade sowie Notationsgeometrie, rhythmische Abstände, Schlüssel-/Taktartdarstellung, Größenanpassung und horizontales Scrollen an ausgewählten Beispielen. Ein eigener Test prüft den scrollbaren Fallback ohne JavaScript.
+* **Visuelle Prüfung und Grenzen:** Die Suite wertet DOM, SVG, berechnete Styles und Geometrie im Browser aus; sie enthält keine Screenshot-Vergleiche. Sie prüft weder alle Seiten noch alle Klickpfade, Konsolenmeldungen, Netzwerkfehler oder Darstellungsvarianten. Erfolgreiches Speichern über die produktive API, AlphaTab-/Audiowiedergabe und vollständige Barrierefreiheit sind damit nicht abgesichert.
 * **Builder-Smoke-Tests:** Prüfen Gruppieren/Auflösen, sichtbare Aktionsbuttons mit mindestens 44 px Höhe und überlappungsfreie Gruppenkarten statt exakter CSS-Abstände. Der Bearbeitungstest öffnet ein Modul über den Katalog und kehrt über den echten Zurück-Button zur Übersicht zurück; die API liefert dabei feste Testdaten ohne Schreibzugriffe. Die Cursor-Ausrichtung der Notationsvorschau wird separat geprüft.
 * **Befehle:**
   ```bash
+  # vor dem Testen einen aktuellen Produktionsbuild erzeugen:
+  npm run build
   npm run test:e2e
-  # bei beabsichtigten Design-Änderungen:
+  # dieselbe Suite mit Snapshot-Aktualisierung (derzeit ohne Snapshot-Assertions):
   npm run test:visual
-  # interaktives UI-Debugging:
+  # alternativ interaktives UI-Debugging, ebenfalls mit aktuellem Build:
   npm run test:e2e:ui
   ```
+* **Fehlerdiagnose:** Playwright speichert Screenshots nur bei Fehlern und Traces beim ersten Wiederholungsversuch. In CI sind bis zu zwei Wiederholungen konfiguriert, lokal standardmäßig keine; ein lokaler Fehler erzeugt deshalb nicht automatisch einen Trace.
 * **Wann nutzen:**
   * **`npm run test:e2e` (Smoke-Tests & kritische User-Flows):**
     * Vor jedem Release und Produktiv-Deployment.
     * Vor dem Mergen eines Pull Requests in den Hauptzweig (`main`).
-    * Nach Versions-Upgrades von Astro, Starlight oder Routing-Anpassungen, um sicherzustellen, dass alle Seiten mit HTTP 200 antworten und Kernfunktionen bedienbar sind.
-  * **`npm run test:visual` (Snapshot-Aktualisierung, falls Snapshot-Tests vorhanden sind):**
-    * Nach globalen Styling-Updates (z. B. Tailwind-Konfiguration, Typografie, Farbschemata).
-    * Nach Updates der SVG-Renderings (alphaTab, Notengrafiken) oder KaTeX-Formeln, um unerwünschte Layout-Verschiebungen ("Pixel-Drift") sofort zu erkennen.
-    * Aktualisiert Snapshot-Referenzen (`--update-snapshots`), falls solche Tests künftig hinzugefügt werden.
+    * Nach Versions-Upgrades von Astro, Starlight, Routing- oder Styling-Anpassungen, um die abgedeckten Seiten, Klickpfade und Layoutregeln zu prüfen. Nicht abgedeckte Bereiche zusätzlich gezielt testen.
+  * **`npm run test:visual` (derzeit kein separater visueller Test):**
+    * Führt aktuell dieselben Prüfungen wie `test:e2e` aus; `--update-snapshots` hat ohne Snapshot-Assertions keine zusätzliche Wirkung.
+    * Falls künftig Screenshot-/Snapshot-Tests hinzukommen, Referenzen nur bei beabsichtigten Änderungen und nach Sichtprüfung aktualisieren. Der Befehl ersetzt keine manuelle Prüfung globaler Styling-, AlphaTab- oder KaTeX-Änderungen.
 
 ### Dokumentationscheck
 
