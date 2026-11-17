@@ -32,7 +32,7 @@
           "title": "Fünf Linien & der Violinschlüssel",
           "markdownContent": "Ein Standard-Notensystem besitzt **fünf Linien** und vier Zwischenräume. Der **Violinschlüssel (G-Schlüssel)** umschlingt die zweite Linie von unten und verankert dort das eingestrichene **G4**.\n\n<Notation clef={\"treble\"} notes={[{\"type\":\"filled\",\"step\":2,\"duration\":\"quarter\"},{\"type\":\"filled\",\"step\":4,\"duration\":\"quarter\"}]} />",
           "groupId": "tg-935ca82c-c38f-49ad-ad5c-94ea02692c74",
-          "groupTitle": "Gruppe 1",
+          "groupTitle": "Gruppe 1 - Theorie",
           "tags": []
         },
         {
@@ -41,7 +41,7 @@
           "title": "notation beispiel",
           "markdownContent": "### Zwölf Töne und die Oktave\n\nFür Musik teilen wir den Weg von einem Ton bis zu seinem nächsthöheren Namensvetter in **zwölf Halbtonschritte**. So entstehen die zwölf Tonklassen: **C, C♯/D♭, D, D♯/E♭, E, F, F♯/G♭, G, G♯/A♭, A, A♯/B♭ und B**. Stell sie dir wie zwölf gleichmäßige Stufen vor; nach der zwölften Stufe beginnt dieselbe Folge wieder.\n\n<Notation clef=\"treble\" notes={[]} />",
           "groupId": "tg-935ca82c-c38f-49ad-ad5c-94ea02692c74",
-          "groupTitle": "Gruppe 1",
+          "groupTitle": "Gruppe 1 - Theorie",
           "tags": []
         }
       ],
@@ -72,7 +72,7 @@
         }
       ],
       "createdAt": "2026-11-16T00:00:00.000Z",
-      "updatedAt": "2026-11-17T09:34:04.976Z"
+      "updatedAt": "2026-11-17T09:41:48.008Z"
     },
     {
       "id": "guitar-102",
