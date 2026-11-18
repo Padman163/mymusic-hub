@@ -105,7 +105,7 @@ Dort gibt es vier übersichtliche Reiter:
     Erklärung danach.
     ```
 
-    Es werden ausschließlich feste Werte, Arrays und Objekte unterstützt, keine ausführbaren JavaScript-Ausdrücke oder Imports. Alte getrennte Notations-Props werden beim Bearbeiten in den Text übernommen. Andere bereits gespeicherte Visualisierungen bleiben erhalten; eine Definition weiterer Komponententypen im Text wird nicht unterstützt.
+    Es werden ausschließlich feste Werte, Arrays und Objekte unterstützt, keine ausführbaren JavaScript-Ausdrücke oder Imports. Statische Inline-SVGs in `<figure>` werden mit einer begrenzten Element- und Attributliste gerendert; Skripte, Event-Handler, Inline-CSS und externe SVG-Ressourcen sind nicht erlaubt. Alte getrennte Notations-Props werden beim Bearbeiten in den Text übernommen. Andere bereits gespeicherte Visualisierungen bleiben erhalten; eine Definition weiterer Komponententypen im Text wird nicht unterstützt.
 
 ### 3. Reiter „Quizfragen“ (`src/components/project/ExerciseBuilderForm.astro`)
 - **Wozu er dient:** Hier erstellst du wiederverwendbare Quiz- und Fastlane-Fragen und ordnest sie optional einem oder mehreren Modulen zu. Lernpfad-Aufgaben entstehen dagegen in der Modul-Blockliste.

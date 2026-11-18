@@ -1,4 +1,5 @@
 import rehypeKatex from "rehype-katex";
+import rehypeRaw from "rehype-raw";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import rehypeStringify from "rehype-stringify";
 import remarkMath from "remark-math";
@@ -438,15 +439,117 @@ export function evaluateQuestionAnswer(
   };
 }
 
+const safeSvgPaint =
+  /^(?:#[\da-f]{3,8}|[a-z]+|currentColor|none|transparent)$/i;
+
 const theoryMarkdown = unified()
   .use(remarkParse)
   .use(remarkMath)
-  .use(remarkRehype)
+  .use(remarkRehype, { allowDangerousHtml: true })
+  .use(rehypeRaw)
   .use(rehypeSanitize, {
     ...defaultSchema,
+    tagNames: [
+      ...(defaultSchema.tagNames ?? []),
+      "figure",
+      "figcaption",
+      "svg",
+      "title",
+      "desc",
+      "g",
+      "path",
+      "line",
+      "polyline",
+      "polygon",
+      "rect",
+      "circle",
+      "ellipse",
+      "text",
+      "tspan",
+    ],
     attributes: {
       ...defaultSchema.attributes,
       code: [["className", /^language-/, "math-inline", "math-display"]],
+      figure: ["ariaDescribedBy", "ariaLabel", "ariaLabelledBy"],
+      svg: [
+        "viewBox",
+        "role",
+        "ariaLabel",
+        "ariaLabelledBy",
+        "ariaDescribedBy",
+        "preserveAspectRatio",
+      ],
+      line: [
+        "x1",
+        "y1",
+        "x2",
+        "y2",
+        ["stroke", safeSvgPaint],
+        "strokeWidth",
+        "strokeDashArray",
+      ],
+      path: [
+        "d",
+        ["fill", safeSvgPaint],
+        ["stroke", safeSvgPaint],
+        "strokeWidth",
+        "strokeDashArray",
+      ],
+      polyline: [
+        "points",
+        ["fill", safeSvgPaint],
+        ["stroke", safeSvgPaint],
+        "strokeWidth",
+      ],
+      polygon: [
+        "points",
+        ["fill", safeSvgPaint],
+        ["stroke", safeSvgPaint],
+        "strokeWidth",
+      ],
+      rect: [
+        "x",
+        "y",
+        "width",
+        "height",
+        "rx",
+        "ry",
+        ["fill", safeSvgPaint],
+        ["stroke", safeSvgPaint],
+        "strokeWidth",
+      ],
+      circle: [
+        "cx",
+        "cy",
+        "r",
+        ["fill", safeSvgPaint],
+        ["stroke", safeSvgPaint],
+        "strokeWidth",
+      ],
+      ellipse: [
+        "cx",
+        "cy",
+        "rx",
+        "ry",
+        ["fill", safeSvgPaint],
+        ["stroke", safeSvgPaint],
+        "strokeWidth",
+      ],
+      g: [
+        ["fill", safeSvgPaint],
+        ["stroke", safeSvgPaint],
+        "strokeWidth",
+        "opacity",
+      ],
+      text: [
+        "x",
+        "y",
+        ["fill", safeSvgPaint],
+        "fontSize",
+        "fontWeight",
+        "textAnchor",
+      ],
+      tspan: ["x", "y", "dx", "dy"],
     },
   })
   .use(rehypeKatex)

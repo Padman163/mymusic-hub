@@ -365,6 +365,41 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     expect(container.lastElementChild?.textContent).toBe("Ein zweiter Absatz.");
   });
 
+  it("rendert statische Inline-SVG-Figuren und entfernt aktive oder nicht erlaubte SVG-Inhalte", () => {
+    const container = document.createElement("div");
+    container.append(renderTheoryMarkdown([
+      '<figure onclick="alert(1)">',
+      '  <svg viewBox="0 0 720 250" role="img" aria-labelledby="wave-title wave-description" onload="alert(1)" style="background:url(javascript:alert(1))">',
+      '    <title id="wave-title">Schwingungen</title>',
+      '    <desc id="wave-description">Zwei Wellen im Vergleich.</desc>',
+      '    <line x1="190" y1="48" x2="650" y2="48" stroke="#64748b" stroke-dasharray="4 5" />',
+      '    <text x="12" y="53" fill="currentColor" font-size="16" text-anchor="middle">Langsam</text>',
+      '    <path d="M190 48 Q305 8 420 48 T650 48" fill="none" stroke="#38bdf8" stroke-width="4" />',
+      '    <path d="M0 0" fill="url(javascript:alert(1))" />',
+      '    <script>alert(1)</script>',
+      '    <foreignObject><iframe src="https://example.com" onload="alert(1)"></iframe></foreignObject>',
+      "  </svg>",
+      "  <figcaption>Statische SVG-Figur.</figcaption>",
+      "</figure>",
+    ].join("\n")));
+
+    const figure = container.querySelector("figure");
+    const svg = figure?.querySelector("svg");
+    expect(figure?.querySelector("figcaption")?.textContent).toBe("Statische SVG-Figur.");
+    expect(svg?.getAttribute("viewBox")).toBe("0 0 720 250");
+    expect(svg?.getAttribute("aria-labelledby")).toBe(
+      "user-content-wave-title user-content-wave-description",
+    );
+    expect(svg?.querySelector("line")?.getAttribute("stroke-dasharray")).toBe("4 5");
+    expect(svg?.querySelector("text")?.getAttribute("font-size")).toBe("16");
+    expect(svg?.querySelector("path")?.getAttribute("stroke-width")).toBe("4");
+    expect(svg?.querySelectorAll("path")[1]?.hasAttribute("fill")).toBe(false);
+    expect(figure?.hasAttribute("onclick")).toBe(false);
+    expect(svg?.hasAttribute("onload")).toBe(false);
+    expect(svg?.hasAttribute("style")).toBe(false);
+    expect(svg?.querySelector("script, foreignObject, iframe")).toBeNull();
+  });
+
   it("bettet die passende Keyboard-Vorlage ein und lässt Codebeispiele unverändert", () => {
     const root = document.createElement("div");
     root.innerHTML = '<template data-visual-template="NotationKeyboard" data-show-brace="false" data-right-bar-style="single"><div class="keyboard-notation"></div></template>';

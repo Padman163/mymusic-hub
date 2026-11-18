@@ -566,6 +566,23 @@
   overflow-x: auto;
 }
 
+.learning-theory-markdown figure {
+  margin: 0.75em 0;
+  overflow-x: auto;
+}
+
+.learning-theory-markdown figure svg {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+}
+
+.learning-theory-markdown figcaption {
+  color: var(--sl-color-gray-2);
+  font-size: 0.9em;
+}
+
 .learning-theory-visual {
   overflow-x: auto;
   padding-block: 0.25rem;
