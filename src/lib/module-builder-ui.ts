@@ -88,12 +88,13 @@ const QUESTION_TYPE_LABELS: Record<QuestionType, string> = {
 
 const BLOCK_ROLE_LABELS = {
   theory: "Theorieteil",
-  exercise_intro: "Aufgabeneinleitung",
+  exercise_intro: "Aufgabenbeschreibung",
   practice: "Praxisaufgabe",
   exercise: "Aufgabe",
 } as const;
 type BlockEditorRole = keyof typeof BLOCK_ROLE_LABELS;
 type BlockEditorKind = Exclude<BlockEditorRole, "exercise_intro">;
+type BuilderXpRole = BlockEditorKind | "mixed";
 interface BlockRoleDrafts {
   templates: Partial<Record<BlockEditorKind, HTMLDivElement>>;
   exercise?: ModuleQuestion;
@@ -465,8 +466,13 @@ export function createTheoryBlockEditor(
   const inactiveExerciseIds = new Set<string>();
   let previewRenderer: Promise<typeof import("./module-player-ui.ts")> | undefined;
 
-  function updateBuilderXpBadge(badge: HTMLElement, xp: number): void {
+  function updateBuilderXpBadge(
+    badge: HTMLElement,
+    xp: number,
+    role: BuilderXpRole,
+  ): void {
     badge.setAttribute("aria-live", "polite");
+    badge.dataset.xpRole = role;
     updateXpBadge(badge, xp);
     if (badge.closest("details")?.open) badge.prepend("berechnet: ");
   }
@@ -508,7 +514,7 @@ export function createTheoryBlockEditor(
       return `Praxisaufgabe · ${title || "Neuer Block"}`;
     }
     return row.dataset.blockRole === "exercise_intro"
-      ? `Aufgabeneinleitung · ${title || "Neuer Block"}`
+      ? `Aufgabenbeschreibung · ${title || "Neuer Block"}`
       : `Theorie · ${title || "Neuer Block"}`;
   }
 
@@ -691,6 +697,13 @@ export function createTheoryBlockEditor(
     if (row.classList.contains("module-practice-row")) return "practice";
     if (row.classList.contains("module-exercise-row")) return "exercise";
     return undefined;
+  }
+
+  function blockXpRole(row: HTMLDivElement): BlockEditorKind {
+    if (row.dataset.blockRole === "exercise_intro") return "exercise";
+    const kind = blockKind(row);
+    if (!kind) throw new Error("Die XP-Anzeige benötigt eine gültige Blockrolle.");
+    return kind;
   }
 
   function showBlockRoleError(row: HTMLDivElement, message: string): void {
@@ -914,11 +927,18 @@ export function createTheoryBlockEditor(
       ".theory-group-summary > .learning-xp-badge",
     );
     if (!badge) return;
-    const xp = Array.from(group.children).reduce(
+    const members = Array.from(group.children).filter(
+      (child): child is HTMLDivElement =>
+        child instanceof HTMLDivElement && blockKind(child) !== undefined,
+    );
+    const xp = members.reduce(
       (total, child) => total + (xpByRow.get(child) ?? 0),
       0,
     );
-    updateBuilderXpBadge(badge, xp);
+    const roles = new Set(members.map(blockXpRole));
+    const role =
+      roles.size > 1 ? "mixed" : (roles.values().next().value ?? "theory");
+    updateBuilderXpBadge(badge, xp, role);
   }
 
   function renderGroupHeaders(): void {
@@ -1115,7 +1135,7 @@ export function createTheoryBlockEditor(
             ".theory-block-title",
           );
           if (row.dataset.blockRole === "exercise_intro") {
-            label.textContent = `Aufgabeneinleitung · ${title?.value.trim() || "Neuer Block"}`;
+            label.textContent = `Aufgabenbeschreibung · ${title?.value.trim() || "Neuer Block"}`;
           } else {
             theoryNumber += 1;
             label.textContent = `Theorie ${theoryNumber} · ${title?.value.trim() || "Neuer Block"}`;
@@ -1243,7 +1263,7 @@ export function createTheoryBlockEditor(
       const badge = row.querySelector<HTMLElement>(
         "summary > .learning-xp-badge",
       );
-      if (badge) updateBuilderXpBadge(badge, xp);
+      if (badge) updateBuilderXpBadge(badge, xp, blockXpRole(row));
     }
     for (const group of rows.querySelectorAll<HTMLElement>(
       ".theory-block-group",
@@ -1804,7 +1824,7 @@ export function createTheoryBlockEditor(
         tags: tagPicker.selectedTags(),
       });
       xpByRow.set(row, xp);
-      updateBuilderXpBadge(badge, xp);
+      updateBuilderXpBadge(badge, xp, "exercise");
       const group = row.closest<HTMLElement>(".theory-block-group");
       if (group) refreshGroupXp(group);
     }

@@ -104,6 +104,16 @@ test('gruppiert Builder-Karten und hält Aktionen bedienbar', async ({ page }) =
   await expect(rows).toHaveCount(2);
 
   const actionButton = page.locator('.theory-block-group-selected');
+  const addButton = page.locator('.theory-block-add');
+  const groupMargin = await actionButton.evaluate((button) => getComputedStyle(button).marginBottom);
+  const addMargin = await addButton.evaluate((button) => getComputedStyle(button).marginTop);
+  expect(parseFloat(addMargin)).toBeGreaterThan(0);
+  expect(addMargin).toBe(groupMargin);
+  const blocksBox = await page.locator('.theory-block-rows').boundingBox();
+  const addBox = await addButton.boundingBox();
+  expect(blocksBox).not.toBeNull();
+  expect(addBox).not.toBeNull();
+  expect(addBox!.y - (blocksBox!.y + blocksBox!.height)).toBeGreaterThanOrEqual(parseFloat(addMargin) - 1);
   await rows.nth(0).locator('.theory-block-select').check();
   await rows.nth(1).locator('.theory-block-select').check();
   await actionButton.click();

@@ -856,7 +856,7 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     });
   });
 
-  it("erstellt Aufgabeneinleitungen und erhält Inhalte beim Wechsel der Blockrolle", () => {
+  it("erstellt Aufgabenbeschreibungen und erhält Inhalte beim Wechsel der Blockrolle", () => {
     const editor = createTheoryBlockEditor();
     document.body.append(editor.element);
     addBlockWithRole(editor.element, "exercise_intro");
@@ -875,6 +875,7 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     expect(editor.element.querySelector(".field-hint")).toBeNull();
     expect(introRole.nextElementSibling?.classList.contains("contribution-tag")).toBe(true);
     expect(introRole.checked).toBe(true);
+    expect(introRole.nextElementSibling?.textContent).toBe("Aufgabenbeschreibung");
     title.value = "Muster vergleichen";
     markdown.value = "<DrumPattern />";
     expect(editor.items()?.[0]).toMatchObject({
@@ -884,6 +885,7 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     expect(blockTags.hidden).toBe(true);
     expect(badge.hidden).toBe(false);
     expect(badge.textContent).toBe("berechnet: 0 XP");
+    expect(badge.dataset.xpRole).toBe("exercise");
 
     theoryRole.nextElementSibling?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     expect(theoryRole.checked).toBe(true);
@@ -891,6 +893,7 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     expect(editor.items()?.[0].role).toBeUndefined();
     expect(xpField.hidden).toBe(true);
     expect(blockTags.hidden).toBe(false);
+    expect(badge.dataset.xpRole).toBe("theory");
     expect(badge.hidden).toBe(false);
     expect(editor.items()?.[0].markdownContent).toBe("<DrumPattern />");
 
@@ -974,6 +977,7 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     tag.checked = true;
     tag.dispatchEvent(new Event("change"));
     expect(badge?.textContent).toBe("45 XP");
+    expect(badge?.getAttribute("data-xp-role")).toBe("theory");
     expect(row.querySelector(".theory-block-calculated-xp")).toBeNull();
     details.open = true;
     await vi.waitFor(() => expect(badge?.textContent).toBe("berechnet: 45 XP"));
@@ -1017,6 +1021,9 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     expect(groupBadge?.textContent).toBe("40 XP");
     expect(practiceBadge?.textContent).toBe("20 XP");
     expect(exerciseBadge?.textContent).toBe("10 XP");
+    expect(groupBadge?.getAttribute("data-xp-role")).toBe("mixed");
+    expect(practiceBadge?.getAttribute("data-xp-role")).toBe("practice");
+    expect(exerciseBadge?.getAttribute("data-xp-role")).toBe("exercise");
     expect(form.querySelector(".module-practice-row .theory-block-xp")?.closest("label")?.hidden)
       .toBe(true);
     expect(exerciseXp.closest("label")?.hidden).toBe(true);
@@ -1043,6 +1050,44 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     moduleXp.dispatchEvent(new Event("input"));
     expect(groupBadge?.textContent).toBe("berechnet: 60 XP");
     expect(practiceBadge?.textContent).toBe("20 XP");
+  });
+
+  it.each([
+    { roles: ["theory", "theory"], colorRole: "theory" },
+    { roles: ["exercise_intro", "exercise_intro"], colorRole: "exercise" },
+    { roles: ["practice", "practice"], colorRole: "practice" },
+    { roles: ["exercise_intro", "exercise"], colorRole: "exercise" },
+    { roles: ["theory", "exercise_intro"], colorRole: "mixed" },
+    { roles: ["practice", "exercise"], colorRole: "mixed" },
+  ])("ordnet Gruppen aus $roles die XP-Farbe $colorRole zu", ({ roles, colorRole }) => {
+    const form = mountModuleForm();
+    const { theoryBlockEditor: editor } = attachModuleBuilderForm(form);
+    for (let index = 0; index < roles.length; index += 1) {
+      editor.addBlock({
+        id: `block-${index}`, title: `Block ${index}`, markdownContent: "Text",
+        groupId: "g", groupTitle: "Abschnitt",
+      });
+    }
+    roles.forEach((role, index) => {
+      form.querySelector<HTMLInputElement>(
+        `[data-block-id="block-${index}"] .theory-block-role[value="${role}"]`,
+      )!.click();
+    });
+    const badge = () => form.querySelector(".theory-group-summary > .learning-xp-badge");
+    expect(badge()?.getAttribute("data-xp-role")).toBe(colorRole);
+    if (roles.every((role) => role === "exercise_intro")) {
+      expect(badge()?.textContent).toBe("0 XP");
+    }
+    if (colorRole === "theory") {
+      form.querySelector<HTMLInputElement>(
+        '[data-block-id="block-0"] .theory-block-role[value="exercise_intro"]',
+      )!.click();
+      expect(badge()?.getAttribute("data-xp-role")).toBe("mixed");
+      form.querySelector<HTMLInputElement>(
+        '[data-block-id="block-1"] .theory-block-role[value="exercise"]',
+      )!.click();
+      expect(badge()?.getAttribute("data-xp-role")).toBe("exercise");
+    }
   });
 
   it("sortiert Übungen zwischen Theorieblöcke und lädt die gespeicherte Reihenfolge", async () => {

@@ -185,7 +185,8 @@
   gap: 0.85rem;
 }
 
-.theory-block-group-selected {
+.theory-block-editor > .theory-block-group-selected,
+.theory-block-editor > .theory-block-add {
   display: block;
   margin: 0.5rem 0;
 }
@@ -296,6 +297,35 @@
   position: absolute;
   top: 0.85rem;
   left: 0.85rem;
+}
+
+.module-builder-form .contribution-tag.learning-xp-badge[data-xp-role] {
+  border-color: var(--builder-xp-color, var(--sl-color-gray-4));
+  color: var(--builder-xp-color, var(--sl-color-gray-2));
+}
+
+.module-builder-form .learning-xp-badge[data-xp-role="exercise"] {
+  --builder-xp-color: #1d4ed8;
+}
+
+.module-builder-form .learning-xp-badge[data-xp-role="practice"] {
+  --builder-xp-color: #15803d;
+}
+
+.module-builder-form .learning-xp-badge[data-xp-role="mixed"] {
+  --builder-xp-color: #a16207;
+}
+
+:root[data-theme="dark"] .module-builder-form .learning-xp-badge[data-xp-role="exercise"] {
+  --builder-xp-color: #93c5fd;
+}
+
+:root[data-theme="dark"] .module-builder-form .learning-xp-badge[data-xp-role="practice"] {
+  --builder-xp-color: #86efac;
+}
+
+:root[data-theme="dark"] .module-builder-form .learning-xp-badge[data-xp-role="mixed"] {
+  --builder-xp-color: #fde047;
 }
 
 .theory-group-summary:focus-visible {
@@ -412,11 +442,6 @@
 
 :root .checklist-editor .theory-block-controls > button[hidden] {
   display: none;
-}
-
-.theory-block-add {
-  display: block;
-  margin: 0.5rem 0 0;
 }
 
 .exercise-dynamic-section {
