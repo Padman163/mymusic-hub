@@ -357,7 +357,7 @@ function localModulesApiPlugin() {
                 );
               let nextDb;
               try {
-                nextDb = store.upsertModuleWithExercises(db, typedModule, body.exercises);
+                nextDb = store.upsertModuleWithExercises(db, typedModule, body.exercises, body.exerciseRoleChanges);
               } catch (error) {
                 if (!(error instanceof store.ModuleExerciseSaveError)) throw error;
                 sendLocalJson(res, 400, { error: error.message });
@@ -372,7 +372,7 @@ function localModulesApiPlugin() {
                   ? "Modul wurde gespeichert."
                   : "Modul wurde aktualisiert.",
                 module: savedModule,
-                ...(body.exercises !== undefined ? { questions: nextDb.questions } : {}),
+                ...(body.exercises !== undefined || body.exerciseRoleChanges !== undefined ? { questions: nextDb.questions } : {}),
               });
             }).then(resolve, reject);
           });

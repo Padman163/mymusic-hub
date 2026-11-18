@@ -17,6 +17,13 @@ import { createModulesTestDatabase } from "../fixtures/modules";
 
 const seedDb = createModulesTestDatabase();
 
+function addBlockWithRole(container: HTMLElement, role: string): void {
+  container.querySelector<HTMLButtonElement>(".theory-block-add")!.click();
+  container.querySelector<HTMLInputElement>(
+    `.module-block-pending .theory-block-role[value="${role}"]`,
+  )!.click();
+}
+
 function mountModuleForm(): HTMLFormElement {
   const form = document.createElement("form");
   form.id = "module-builder-form";
@@ -139,12 +146,12 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
 
     const addBtn = form.querySelector<HTMLButtonElement>(".theory-block-add");
     expect(addBtn).not.toBeNull();
-    addBtn?.click();
-    addBtn?.click();
+    addBlockWithRole(form, "theory");
+    addBlockWithRole(form, "theory");
 
     const rows = form.querySelectorAll<HTMLDivElement>(".theory-block-row");
     expect(rows).toHaveLength(2);
-    expect(Array.from(rows).every((row) => !row.querySelector("details")?.open)).toBe(true);
+    expect(Array.from(rows).every((row) => row.querySelector("details")?.open)).toBe(true);
 
     const titles = form.querySelectorAll<HTMLInputElement>(
       ".theory-block-title",
@@ -732,13 +739,127 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     expect(controller.theoryBlockEditor.items()?.[0].title).toBe("Neuer Titel");
   });
 
+  it("legt neue Blöcke ohne Rolle oder Vorlage an und verlangt eine Rollenwahl", () => {
+    const form = mountModuleForm();
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    attachModuleBuilderForm(form);
+    form.querySelector<HTMLButtonElement>(".theory-block-add")!.click();
+    const pending = form.querySelector<HTMLElement>(".module-block-pending")!;
+    expect(pending.querySelectorAll(".theory-block-role")).toHaveLength(4);
+    expect(pending.querySelector(".theory-block-role:checked")).toBeNull();
+    expect(pending.querySelector("textarea, .theory-block-title, .module-content-preview")).toBeNull();
+    expect(form.querySelector(".theory-block-add-type")).toBeNull();
+    form.dispatchEvent(new Event("submit", { cancelable: true }));
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(pending.querySelector(".block-role-error")?.textContent).toContain("Bitte wähle eine Blockrolle");
+    pending.querySelector<HTMLInputElement>('.theory-block-role[value="practice"]')!.click();
+    expect(form.querySelector(".module-block-pending")).toBeNull();
+    expect(form.querySelector(".module-practice-row .theory-block-markdown")).not.toBeNull();
+    expect(form.querySelector(".module-exercise-editor, .theory-block-row")).toBeNull();
+  });
+
+  it("lädt aus einem Theorieblock die Aufgabenvorlage mit derselben Modulzuordnung", () => {
+    const form = mountModuleForm();
+    const controller = attachModuleBuilderForm(form);
+    controller.loadModule(seedDb.modules[0]);
+    const source = seedDb.modules[0].theoryBlocks[0];
+    form.querySelector<HTMLInputElement>('.theory-block-role[value="exercise"]')!.click();
+    const row = form.querySelector<HTMLElement>(".module-exercise-row")!;
+    expect(row.querySelector<HTMLInputElement>(".module-exercise-title")!.value).toBe(source.title);
+    expect(row.querySelector<HTMLTextAreaElement>(".module-exercise-prompt")!.value).toBe(source.markdownContent);
+    expect(row.querySelectorAll(".exercise-choice-text")).toHaveLength(2);
+    expect(controller.theoryBlockEditor.exerciseUpdates()[0]).toMatchObject({
+      id: source.id, moduleIds: [seedDb.modules[0].id],
+      targetLane: "leicht", difficulty: "einfach", questionType: "single_choice",
+    });
+    expect(controller.theoryBlockEditor.items()?.some(({ id }) => id === source.id)).toBe(false);
+    expect(controller.theoryBlockEditor.contentOrder()[0]).toEqual({ kind: "exercise", id: source.id });
+  });
+
+  it("erhält Titel, Text, Gruppierung und unvollständige Aufgabenentwürfe beim Rollenwechsel", () => {
+    const exercise = { ...seedDb.questions[0], title: "Oberton" };
+    const editor = createTheoryBlockEditor(seedDb.modules[0].theoryBlocks);
+    document.body.append(editor.element);
+    const group = { groupId: "g", groupTitle: "Abschnitt" };
+    const order = [
+      { kind: "theory" as const, id: seedDb.modules[0].theoryBlocks[0].id, ...group },
+      { kind: "exercise" as const, id: exercise.id, ...group },
+    ];
+    editor.setExercises([exercise], order);
+    const row = editor.element.querySelector<HTMLDivElement>(".module-exercise-row")!;
+    const answer = row.querySelector<HTMLInputElement>('[id$="exercise-numeric-answer"]')!;
+    const hint = row.querySelector<HTMLTextAreaElement>('textarea[aria-label^="Einfacher Hinweis"]')!;
+    answer.value = "";
+    hint.value = "Doppelte Frequenz";
+    row.querySelector<HTMLInputElement>('.question-difficulty-picker input[value="schwer"]')!.click();
+    row.querySelector<HTMLInputElement>('.theory-block-role[value="practice"]')!.click();
+    const practice = editor.element.querySelector<HTMLDivElement>(".module-practice-row")!;
+    expect(practice.dataset.blockId).toBe(exercise.id);
+    expect(practice.querySelector<HTMLInputElement>(".theory-block-title")!.value).toBe("Oberton");
+    expect(practice.querySelector<HTMLTextAreaElement>(".theory-block-markdown")!.value).toBe(exercise.prompt);
+    practice.querySelector<HTMLTextAreaElement>(".theory-block-markdown")!.value = "Neuer gemeinsamer Text";
+    practice.querySelector<HTMLInputElement>('.theory-block-role[value="theory"]')!.click();
+    const theory = editor.element.querySelector<HTMLDivElement>(`.theory-block-row[data-block-id="${exercise.id}"]`)!;
+    theory.querySelector<HTMLInputElement>('.theory-block-role[value="exercise_intro"]')!.click();
+    expect(editor.exerciseUpdates()).toEqual([]);
+    expect(editor.exerciseRoleChanges()).toEqual([{ id: exercise.id, kind: "theory" }]);
+    expect(editor.contentOrder()[1]).toEqual({ ...order[1], kind: "theory" });
+    theory.querySelector<HTMLInputElement>('.theory-block-role[value="exercise"]')!.click();
+    expect(editor.element.querySelector(".module-exercise-row")).toBe(row);
+    expect(answer.value).toBe("");
+    expect(hint.value).toBe("Doppelte Frequenz");
+    expect(row.querySelector<HTMLInputElement>('.question-difficulty-picker input:checked')!.value).toBe("schwer");
+    expect(row.querySelector<HTMLTextAreaElement>(".module-exercise-prompt")!.value).toBe("Neuer gemeinsamer Text");
+    expect(editor.contentOrder()[1]).toEqual(order[1]);
+    expect(editor.exerciseRoleChanges()).toEqual([]);
+    answer.value = "900";
+    expect(editor.exerciseUpdates()[0]).toMatchObject({
+      id: exercise.id, questionType: "numeric_input", difficulty: "schwer",
+      correctAnswers: ["900"], simpleHint: "Doppelte Frequenz",
+    });
+    row.querySelector<HTMLInputElement>('.theory-block-role[value="practice"]')!.click();
+    editor.markRoleChangesSaved();
+    expect(editor.exerciseRoleChanges()).toEqual([]);
+    practice.querySelector<HTMLInputElement>('.theory-block-role[value="exercise"]')!.click();
+    expect(editor.isDraftExercise(exercise.id)).toBe(true);
+    expect(editor.exerciseUpdates()[0].correctAnswers).toEqual(["900"]);
+  });
+
+  it("speichert den Rollenwechsel einer vorhandenen Aufgabe gemeinsam mit dem Ersatzblock", async () => {
+    let db = structuredClone(seedDb);
+    const exercise = db.questions[0];
+    db.questions = [exercise];
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const payload = JSON.parse(String(init?.body));
+      db = upsertModuleWithExercises(db, payload, payload.exercises, payload.exerciseRoleChanges);
+      return Response.json({ questions: db.questions });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const form = mountModuleForm();
+    const controller = attachModuleBuilderForm(form);
+    controller.loadModule(db.modules[0], [exercise]);
+    const row = form.querySelector<HTMLElement>(".module-exercise-row")!;
+    row.querySelector<HTMLInputElement>('.theory-block-role[value="practice"]')!.click();
+    form.querySelector<HTMLInputElement>(".module-practice-row .theory-block-title")!.value = "Oberton spielen";
+    document.dispatchEvent(new CustomEvent("modules:updated", { detail: { questions: [exercise] } }));
+    expect(form.querySelector(".module-exercise-row")).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+    form.dispatchEvent(new Event("submit", { cancelable: true }));
+    await vi.waitFor(() => expect(form.querySelector(".form-status")?.textContent).toBe("Modul wurde aktualisiert."));
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const payload = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
+    expect(payload.exerciseRoleChanges).toEqual([{ id: exercise.id, kind: "practice" }]);
+    expect(db.questions).toEqual([]);
+    expect(db.modules[0].practiceBlocks[0]).toMatchObject({
+      id: exercise.id, title: "Oberton spielen", markdownContent: exercise.prompt,
+    });
+  });
+
   it("erstellt Aufgabeneinleitungen und erhält Inhalte beim Wechsel der Blockrolle", () => {
     const editor = createTheoryBlockEditor();
     document.body.append(editor.element);
-    const addType = editor.element.querySelector<HTMLSelectElement>(".theory-block-add-type");
-    if (!addType) throw new Error("Blocktyp-Auswahl fehlt");
-    addType.value = "exercise_intro";
-    editor.element.querySelector<HTMLButtonElement>(".theory-block-add")?.click();
+    addBlockWithRole(editor.element, "exercise_intro");
     const title = editor.element.querySelector<HTMLInputElement>(".theory-block-title");
     const markdown = editor.element.querySelector<HTMLTextAreaElement>(".theory-block-markdown");
     const roleOptions = editor.element.querySelector<HTMLFieldSetElement>(".theory-block-role-options");
@@ -762,7 +883,7 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     expect(xpField.hidden).toBe(true);
     expect(blockTags.hidden).toBe(true);
     expect(badge.hidden).toBe(false);
-    expect(badge.textContent).toBe("0 XP");
+    expect(badge.textContent).toBe("berechnet: 0 XP");
 
     theoryRole.nextElementSibling?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     expect(theoryRole.checked).toBe(true);
@@ -1170,8 +1291,7 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
       const controller = attachModuleBuilderForm(form);
       const mod = (seedDb as unknown as ModulesDatabase).modules[0];
       controller.loadModule(mod);
-      form.querySelector<HTMLSelectElement>(".theory-block-add-type")!.value = "leicht";
-      form.querySelector<HTMLButtonElement>(".theory-block-add")!.click();
+      addBlockWithRole(form, "exercise");
 
       const row = () => form.querySelector<HTMLElement>(".module-exercise-row")!;
       const field = <T extends HTMLElement>(id: string) =>
@@ -1280,8 +1400,7 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     vi.stubGlobal("fetch", fetchMock);
     const form = mountModuleForm();
     attachModuleBuilderForm(form);
-    form.querySelector<HTMLSelectElement>(".theory-block-add-type")!.value = "leicht";
-    form.querySelector<HTMLButtonElement>(".theory-block-add")!.click();
+    addBlockWithRole(form, "exercise");
     const prompt = form.querySelector<HTMLTextAreaElement>(".module-exercise-prompt")!;
     const validPrompt = prompt.value;
     prompt.value = "";

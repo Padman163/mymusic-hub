@@ -199,7 +199,7 @@ async function handleWriteRequest(
 	}
 
 	const nextDb = await updateModules(
-		(db) => upsertModuleWithExercises(db, rawModule as UpsertModuleInput, body.exercises),
+		(db) => upsertModuleWithExercises(db, rawModule as UpsertModuleInput, body.exercises, body.exerciseRoleChanges),
 	);
 
 	const savedModule = nextDb.modules.find(
@@ -208,7 +208,7 @@ async function handleWriteRequest(
 	return jsonResponse(isPost ? 201 : 200, {
 		message: isPost ? 'Modul wurde gespeichert.' : 'Modul wurde aktualisiert.',
 		module: savedModule,
-		...(body.exercises !== undefined ? { questions: nextDb.questions } : {}),
+		...(body.exercises !== undefined || body.exerciseRoleChanges !== undefined ? { questions: nextDb.questions } : {}),
 	});
 }
 

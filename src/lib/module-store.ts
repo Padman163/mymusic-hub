@@ -756,22 +756,28 @@ export function upsertModule(
 
 export class ModuleExerciseSaveError extends Error {}
 
-/** Bereitet Modul und geänderte Lernpfad-Aufgaben für einen gemeinsamen Schreibvorgang vor. */
+export interface ModuleExerciseRoleChange {
+  id: string;
+  kind: "theory" | "practice";
+}
+
+/** Bereitet Modul, Lernpfad-Aufgaben und Rollenwechsel für einen gemeinsamen Schreibvorgang vor. */
 export function upsertModuleWithExercises(
   db: ModulesDatabase,
   moduleData: UpsertModuleInput,
   exercises: unknown,
+  exerciseRoleChanges?: unknown,
 ): ModulesDatabase {
   let nextDb = upsertModule(db, moduleData);
-  if (exercises === undefined) return nextDb;
-  if (!Array.isArray(exercises)) {
+  const pendingExercises = exercises === undefined ? [] : exercises;
+  if (!Array.isArray(pendingExercises)) {
     throw new ModuleExerciseSaveError(
       "Lernpfad-Aufgaben müssen als Liste übergeben werden.",
     );
   }
   const moduleId = moduleData.id.trim();
   const seenIds = new Set<string>();
-  for (const exercise of exercises) {
+  for (const exercise of pendingExercises) {
     if (
       !isRecord(exercise) ||
       !isNonEmptyString(exercise.id) ||
@@ -804,6 +810,51 @@ export function upsertModuleWithExercises(
       if (!(error instanceof Error)) throw error;
       throw new ModuleExerciseSaveError(error.message, { cause: error });
     }
+  }
+  if (exerciseRoleChanges === undefined) return nextDb;
+  if (!Array.isArray(exerciseRoleChanges)) {
+    throw new ModuleExerciseSaveError(
+      "Rollenwechsel müssen als Liste übergeben werden.",
+    );
+  }
+  const mod = nextDb.modules.find((item) => item.id === moduleId);
+  for (const change of exerciseRoleChanges) {
+    if (
+      !isRecord(change) ||
+      !isNonEmptyString(change.id) ||
+      (change.kind !== "theory" && change.kind !== "practice")
+    ) {
+      throw new ModuleExerciseSaveError(
+        "Der Rollenwechsel enthält keinen gültigen Zielblock.",
+      );
+    }
+    const id = change.id.trim();
+    const existing = db.questions.find((question) => question.id === id);
+    const replacement =
+      change.kind === "theory" ? mod?.theoryBlocks : mod?.practiceBlocks;
+    if (
+      seenIds.has(id) ||
+      !existing ||
+      existing.targetLane !== "leicht" ||
+      existing.moduleIds.length !== 1 ||
+      existing.moduleIds[0] !== moduleId ||
+      !replacement?.some((block) => block.id === id) ||
+      !mod?.contentOrder?.some(
+        (entry) => entry.id === id && entry.kind === change.kind,
+      ) ||
+      mod.contentOrder.some(
+        (entry) => entry.id === id && entry.kind === "exercise",
+      )
+    ) {
+      throw new ModuleExerciseSaveError(
+        "Nur eine Lernpfad-Aufgabe dieses Moduls kann durch einen eindeutig zugeordneten Block ersetzt werden.",
+      );
+    }
+    seenIds.add(id);
+    nextDb = {
+      ...nextDb,
+      questions: nextDb.questions.filter((question) => question.id !== id),
+    };
   }
   return nextDb;
 }

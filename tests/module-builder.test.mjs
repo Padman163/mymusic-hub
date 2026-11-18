@@ -17,6 +17,7 @@ import {
   getModuleSummary,
   moveModule,
   upsertModule,
+  upsertModuleWithExercises,
   upsertQuestion,
   validateModuleInput,
   validateQuestionInput,
@@ -844,6 +845,60 @@ describe("Modules Serverless API (/api/modules)", () => {
       questions: [exercise],
     });
     expect(storedDb().questions).toMatchObject([exercise]);
+  });
+
+  it.each(["theory", "practice"])("wandelt eine Lernpfad-Aufgabe atomar in einen %s-Block um", async (kind) => {
+    const exercise = {
+      id: "q", moduleIds: ["m"], targetLane: "leicht",
+      questionType: "numeric_input", prompt: "Oberton?", correctAnswers: ["880"],
+    };
+    const db = upsertModuleWithExercises(createEmptyModulesDatabase(), { id: "m", title: "Test" }, [exercise]);
+    store.put("modules", db);
+    const block = { id: "q", title: "Oberton", markdownContent: exercise.prompt, order: 1 };
+    const response = await modulesHandler(new Request("http://localhost/api/modules", {
+      method: "PUT", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        entity: "module", id: "m", title: "Test",
+        [kind === "theory" ? "theoryBlocks" : "practiceBlocks"]: [block],
+        contentOrder: [{ kind, id: "q" }],
+        exerciseRoleChanges: [{ kind, id: "q" }],
+      }),
+    }));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ questions: [] });
+    expect(storedDb().questions).toEqual([]);
+    expect(storedDb().modules[0][kind === "theory" ? "theoryBlocks" : "practiceBlocks"][0])
+      .toMatchObject({ id: "q", title: "Oberton" });
+  });
+
+  it.each([
+    { name: "fremde Lernpfad-Aufgabe", moduleIds: ["other"], targetLane: "leicht", replacement: true },
+    { name: "Quizfrage", moduleIds: ["m"], targetLane: "mittel", replacement: true },
+    { name: "fehlender Ersatzblock", moduleIds: ["m"], targetLane: "leicht", replacement: false },
+  ])("lehnt Rollenwechsel für $name ohne Teilspeicherung ab", async ({ moduleIds, targetLane, replacement }) => {
+    let db = upsertModule(createEmptyModulesDatabase(), { id: "m", title: "Unverändert" });
+    db = upsertModule(db, { id: "other", title: "Anderes Modul" });
+    db = upsertQuestion(db, {
+      id: "q", moduleIds, targetLane, questionType: "numeric_input",
+      prompt: "Oberton?", correctAnswers: ["880"],
+    });
+    store.put("modules", db);
+    const before = structuredClone(storedDb());
+    const response = await modulesHandler(new Request("http://localhost/api/modules", {
+      method: "PUT", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        entity: "module", id: "m", title: "Nicht speichern",
+        theoryBlocks: replacement ? [{ id: "q", title: "Ersatz", markdownContent: "Text", order: 1 }] : [],
+        contentOrder: replacement ? [{ kind: "theory", id: "q" }] : [],
+        exercises: [{
+          id: "new", moduleIds: ["m"], targetLane: "leicht",
+          questionType: "numeric_input", prompt: "Neue Aufgabe", correctAnswers: ["1"],
+        }],
+        exerciseRoleChanges: [{ id: "q", kind: "theory" }],
+      }),
+    }));
+    expect(response.status).toBe(400);
+    expect(storedDb()).toEqual(before);
   });
 
   it("speichert globale Grenzen mit Konfliktschutz und erhält sie bei späteren Moduländerungen", async () => {

@@ -29,6 +29,7 @@ import {
 import {
   createEmptyModulesDatabase,
   getModuleSummary,
+  type ModuleExerciseRoleChange,
   type UpsertModuleInput,
   type UpsertQuestionInput,
   validateModuleInput,
@@ -84,6 +85,20 @@ const QUESTION_TYPE_LABELS: Record<QuestionType, string> = {
   numeric_input: "Zahleneingabe / Wert",
   interactive_notation: "Interaktive Notation",
 };
+
+const BLOCK_ROLE_LABELS = {
+  theory: "Theorieteil",
+  exercise_intro: "Aufgabeneinleitung",
+  practice: "Praxisaufgabe",
+  exercise: "Aufgabe",
+} as const;
+type BlockEditorRole = keyof typeof BLOCK_ROLE_LABELS;
+type BlockEditorKind = Exclude<BlockEditorRole, "exercise_intro">;
+interface BlockRoleDrafts {
+  templates: Partial<Record<BlockEditorKind, HTMLDivElement>>;
+  exercise?: ModuleQuestion;
+  savedExercise?: ModuleQuestion;
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -400,7 +415,7 @@ export interface TheoryBlockEditorController {
   addPracticeBlock(initial?: Partial<PracticeBlock>): void;
   items(): TheoryBlock[] | null;
   practiceItems(): PracticeBlock[] | null;
-  setCreateExerciseHandler(handler: () => void): void;
+  setCreateExerciseHandler(handler: () => ModuleQuestion): void;
   setItems(blocks: readonly TheoryBlock[]): void;
   setPracticeBlocks(blocks: readonly PracticeBlock[]): void;
   setExercises(
@@ -410,6 +425,8 @@ export interface TheoryBlockEditorController {
   removeExercise(id: string): void;
   addExercise(question: ModuleQuestion): void;
   exerciseUpdates(): ModuleQuestion[];
+  exerciseRoleChanges(): ModuleExerciseRoleChange[];
+  markRoleChangesSaved(): void;
   markExercisesSaved(exercises: readonly ModuleQuestion[]): void;
   isDraftExercise(id: string): boolean;
   draftExercises(): ModuleQuestion[];
@@ -440,9 +457,12 @@ export function createTheoryBlockEditor(
   const legacyVisuals = new WeakMap<HTMLDivElement, Partial<TheoryBlock>>();
   const blockTags = new WeakMap<HTMLDivElement, XpTagPickerController>();
   const xpByRow = new WeakMap<Element, number>();
+  const refreshExerciseXp = new WeakMap<HTMLDivElement, () => void>();
   let exerciseQuestions: ModuleQuestion[] = [];
   const draftExerciseIds = new Set<string>();
   const expandedGroups = new Set<string>();
+  const roleDrafts = new WeakMap<HTMLDivElement, BlockRoleDrafts>();
+  const inactiveExerciseIds = new Set<string>();
   let previewRenderer: Promise<typeof import("./module-player-ui.ts")> | undefined;
 
   function updateBuilderXpBadge(badge: HTMLElement, xp: number): void {
@@ -660,25 +680,207 @@ export function createTheoryBlockEditor(
   groupButton.textContent = "Auswahl gruppieren";
   groupButton.disabled = true;
 
-  const addType = document.createElement("select");
-  addType.className = "theory-block-add-type";
-  addType.setAttribute("aria-label", "Art des neuen Modulblocks");
-  for (const [value, label] of [
-    ["theory", "Theorieteil"],
-    ["exercise_intro", "Aufgabeneinleitung"],
-    ["leicht", "Aufgabe (leicht, Lernpfad)"],
-    ["practice", "Praxisaufgabe"],
-  ]) {
-    const option = document.createElement("option");
-    option.value = value;
-    option.textContent = label;
-    addType.append(option);
-  }
   const addButton = document.createElement("button");
   addButton.type = "button";
   addButton.className = "theory-block-add";
   addButton.textContent = "+ Block hinzufügen";
-  let createExerciseHandler: (() => void) | undefined;
+  let createExerciseHandler: (() => ModuleQuestion) | undefined;
+
+  function blockKind(row: HTMLDivElement): BlockEditorKind | undefined {
+    if (row.classList.contains("theory-block-row")) return "theory";
+    if (row.classList.contains("module-practice-row")) return "practice";
+    if (row.classList.contains("module-exercise-row")) return "exercise";
+    return undefined;
+  }
+
+  function showBlockRoleError(row: HTMLDivElement, message: string): void {
+    const error = row.querySelector<HTMLElement>(".block-role-error");
+    if (!error) throw new Error("Die Fehlermeldung für die Blockrolle fehlt.");
+    error.textContent = message;
+    error.hidden = !message;
+  }
+
+  function setBlockRole(row: HTMLDivElement, role: BlockEditorRole): void {
+    row.dataset.blockRole = role;
+    for (const input of row.querySelectorAll<HTMLInputElement>(
+      ".theory-block-role",
+    )) {
+      input.checked = input.value === role;
+    }
+    const picker = blockTags.get(row);
+    if (picker) picker.element.hidden = role === "exercise_intro";
+  }
+
+  function installBlockRolePicker(
+    row: HTMLDivElement,
+    role?: BlockEditorRole,
+  ): BlockRoleDrafts {
+    const state: BlockRoleDrafts = { templates: {} };
+    const kind = blockKind(row);
+    if (kind) state.templates[kind] = row;
+    roleDrafts.set(row, state);
+    const picker = document.createElement("fieldset");
+    picker.className = "contribution-type-picker theory-block-role-options";
+    const legend = document.createElement("legend");
+    legend.textContent = "Blockrolle";
+    const choices = document.createElement("div");
+    choices.className = "contribution-type-choices xp-tag-choices";
+    for (const value of Object.keys(BLOCK_ROLE_LABELS) as BlockEditorRole[]) {
+      const label = document.createElement("label");
+      const input = document.createElement("input");
+      input.type = "radio";
+      input.name = `block-role-${row.dataset.blockId}`;
+      input.value = value;
+      input.className = "theory-block-role";
+      input.checked = value === role;
+      input.addEventListener("change", () => {
+        if (!input.checked) return;
+        try {
+          changeBlockRole(row, value);
+        } catch (error) {
+          showBlockRoleError(
+            row,
+            error instanceof Error ? error.message : String(error),
+          );
+          for (const option of choices.querySelectorAll<HTMLInputElement>(
+            "input",
+          )) {
+            option.checked = option.value === row.dataset.blockRole;
+          }
+        }
+      });
+      const badge = document.createElement("span");
+      badge.className = "contribution-tag xp-tag-chip";
+      badge.textContent = BLOCK_ROLE_LABELS[value];
+      label.append(input, badge);
+      choices.append(label);
+    }
+    picker.append(legend, choices);
+    const error = document.createElement("p");
+    error.className = "block-role-error";
+    error.setAttribute("role", "alert");
+    error.hidden = true;
+    const host =
+      row.querySelector(".theory-block-content, .module-exercise-editor") ?? row;
+    host.prepend(picker, error);
+    if (role) setBlockRole(row, role);
+    return state;
+  }
+
+  function changeBlockRole(row: HTMLDivElement, role: BlockEditorRole): void {
+    const state = roleDrafts.get(row);
+    const id = row.dataset.blockId;
+    if (!state || !id) throw new Error("Der Block kann nicht zugeordnet werden.");
+    const kind = role === "exercise_intro" ? "theory" : role;
+    let target = state.templates[kind];
+    if (!target) {
+      if (kind === "exercise") {
+        if (!createExerciseHandler) {
+          throw new Error("Eine Aufgabe benötigt eine Modulzuordnung.");
+        }
+        const exercise = {
+          ...createExerciseHandler(),
+          id,
+          tags: blockTags.get(row)?.selectedTags() ?? [],
+        };
+        target = createExerciseRow(exercise);
+        state.exercise = exercise;
+      } else {
+        target = createContentBlock(
+          { id, tags: blockTags.get(row)?.selectedTags() ?? [] },
+          kind,
+        );
+      }
+      state.templates[kind] = target;
+      roleDrafts.set(target, state);
+    }
+    if (target !== row) {
+      const title = row.querySelector<HTMLInputElement>(
+        ".theory-block-title, .module-exercise-title",
+      );
+      const text = row.querySelector<HTMLTextAreaElement>(
+        ".theory-block-markdown, .module-exercise-prompt",
+      );
+      const targetTitle = target.querySelector<HTMLInputElement>(
+        ".theory-block-title, .module-exercise-title",
+      );
+      const targetText = target.querySelector<HTMLTextAreaElement>(
+        ".theory-block-markdown, .module-exercise-prompt",
+      );
+      if (title && targetTitle) targetTitle.value = title.value;
+      if (text && targetText) targetText.value = text.value;
+      const selected = row.querySelector<HTMLInputElement>(".theory-block-select");
+      const targetSelected = target.querySelector<HTMLInputElement>(
+        ".theory-block-select",
+      );
+      if (selected && targetSelected) targetSelected.checked = selected.checked;
+      const details = target.querySelector<HTMLDetailsElement>(
+        ".theory-block-details",
+      );
+      const open =
+        row.querySelector<HTMLDetailsElement>(".theory-block-details")?.open ??
+        true;
+      if (details) details.open = open;
+      const preview = getDirectPreview(target);
+      if (preview) preview.open = open;
+      for (const key of ["groupId", "groupTitle", "groupCollapsed"] as const) {
+        const value = row.dataset[key];
+        if (value !== undefined) target.dataset[key] = value;
+        else delete target.dataset[key];
+      }
+      if (row.classList.contains("module-exercise-row")) {
+        inactiveExerciseIds.add(id);
+        exerciseQuestions = exerciseQuestions.filter(
+          (question) => question.id !== id,
+        );
+      }
+      if (kind === "exercise") {
+        if (!state.exercise) throw new Error("Die Aufgabenvorlage fehlt.");
+        inactiveExerciseIds.delete(id);
+        if (!state.savedExercise) draftExerciseIds.add(id);
+        exerciseQuestions.push(state.exercise);
+      }
+      row.replaceWith(target);
+    }
+    setBlockRole(target, role);
+    showBlockRoleError(target, "");
+    renderGroupHeaders();
+    syncRowOrder();
+    refreshCalculatedXp();
+    refreshExerciseXp.get(target)?.();
+    refreshPreviewForRow(target);
+    if (target !== row) {
+      target
+        .querySelector<HTMLInputElement>(".theory-block-role:checked")
+        ?.focus();
+    }
+  }
+
+  function removeBlockRow(row: HTMLDivElement): void {
+    const state = roleDrafts.get(row);
+    const question =
+      state?.savedExercise ??
+      (blockKind(row) === "exercise" ? state?.exercise : undefined);
+    if (question) {
+      if (!deleteExercise) {
+        showBlockRoleError(
+          row,
+          "Die Aufgabe kann hier nicht gelöscht werden.",
+        );
+        return;
+      }
+      deleteExercise(question);
+      return;
+    }
+    const id = row.dataset.blockId;
+    if (id && state?.exercise) {
+      removeExercise(id);
+      return;
+    }
+    row.remove();
+    renderGroupHeaders();
+    syncRowOrder();
+  }
 
   function selectedGroupRows(): HTMLDivElement[] {
     return Array.from(
@@ -698,7 +900,7 @@ export function createTheoryBlockEditor(
   function allRows(): HTMLDivElement[] {
     return Array.from(
       rows.querySelectorAll<HTMLDivElement>(
-        ".theory-block-row, .module-exercise-row, .module-practice-row",
+        ".theory-block-row, .module-exercise-row, .module-practice-row, .module-block-pending",
       ),
     );
   }
@@ -1050,10 +1252,10 @@ export function createTheoryBlockEditor(
     }
   }
 
-  function addContentBlock(
+  function createContentBlock(
     initial: Partial<TheoryBlock & PracticeBlock> = {},
     kind: "theory" | "practice" = "theory",
-  ): void {
+  ): HTMLDivElement {
     if (kind === "theory") initial = notationToMarkdown(initial);
     const row = document.createElement("div");
     row.className =
@@ -1138,9 +1340,7 @@ export function createTheoryBlockEditor(
     removeButton.title = "Block entfernen";
     removeButton.setAttribute("aria-label", "Theorie-Block entfernen");
     removeButton.addEventListener("click", () => {
-      row.remove();
-      renderGroupHeaders();
-      syncRowOrder();
+      removeBlockRow(row);
     });
 
     controls.append(
@@ -1209,44 +1409,6 @@ export function createTheoryBlockEditor(
     const content = document.createElement("div");
     content.className = "theory-block-content";
     content.append(titleLabel, markdownLabel, xpLabel, picker.element);
-    if (kind === "theory") {
-      const roleOptions = document.createElement("fieldset");
-      roleOptions.className = "contribution-type-picker theory-block-role-options";
-      const roleLegend = document.createElement("legend");
-      roleLegend.textContent = "Blockrolle";
-      const roleChoices = document.createElement("div");
-      roleChoices.className = "contribution-type-choices xp-tag-choices";
-      roleOptions.append(roleLegend, roleChoices);
-      const updateRole = (role: string) => {
-        row.dataset.blockRole = role;
-        const introduction = role === "exercise_intro";
-        picker.element.hidden = introduction;
-        syncRowOrder();
-        refreshCalculatedXp();
-      };
-      for (const [value, label] of [
-        ["theory", "Theorieteil"],
-        ["exercise_intro", "Aufgabeneinleitung"],
-      ]) {
-        const optionLabel = document.createElement("label");
-        const option = document.createElement("input");
-        option.type = "radio";
-        option.className = "theory-block-role";
-        option.name = `block-role-${row.dataset.blockId}`;
-        option.value = value;
-        option.checked = value === (initial.role ?? "theory");
-        option.addEventListener("change", () => {
-          if (option.checked) updateRole(value);
-        });
-        const chip = document.createElement("span");
-        chip.className = "contribution-tag xp-tag-chip";
-        chip.textContent = label;
-        optionLabel.append(option, chip);
-        roleChoices.append(optionLabel);
-        if (option.checked) updateRole(value);
-      }
-      content.prepend(roleOptions);
-    }
     if (legacyVisuals.has(row)) {
       const removeVisual = document.createElement("button");
       removeVisual.type = "button";
@@ -1260,6 +1422,14 @@ export function createTheoryBlockEditor(
     }
     details.append(summary, content);
     row.append(details, controls, preview);
+    installBlockRolePicker(
+      row,
+      kind === "theory" ? (initial.role ?? "theory") : "practice",
+    );
+    return row;
+  }
+
+  function appendContentRow(row: HTMLDivElement): void {
     rows.append(row);
     renderGroupHeaders();
     refreshPreviewForRow(row);
@@ -1268,11 +1438,11 @@ export function createTheoryBlockEditor(
   }
 
   function addBlock(initial: Partial<TheoryBlock> = {}): void {
-    addContentBlock(initial, "theory");
+    appendContentRow(createContentBlock(initial, "theory"));
   }
 
   function addPracticeBlock(initial: Partial<PracticeBlock> = {}): void {
-    addContentBlock(initial, "practice");
+    appendContentRow(createContentBlock(initial, "practice"));
   }
 
   groupButton.addEventListener("click", () => {
@@ -1322,20 +1492,35 @@ export function createTheoryBlockEditor(
   });
 
   addButton.addEventListener("click", () => {
-    if (addType.value === "leicht") {
-      createExerciseHandler?.();
-      return;
-    }
-    if (addType.value === "practice") addPracticeBlock();
-    else if (addType.value === "exercise_intro")
-      addBlock({ role: "exercise_intro" });
-    else addBlock();
-    const lastSummary =
-      rows.lastElementChild?.querySelector<HTMLElement>("summary");
-    lastSummary?.focus();
+    const row = document.createElement("div");
+    row.className = "module-block-pending";
+    row.dataset.blockId = `block-${crypto.randomUUID()}`;
+    installBlockRolePicker(row);
+    const controls = document.createElement("div");
+    controls.className = "theory-block-controls";
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "checklist-remove theory-block-remove";
+    remove.textContent = "×";
+    remove.setAttribute("aria-label", "Block entfernen");
+    remove.addEventListener("click", () => removeBlockRow(row));
+    controls.append(remove);
+    row.append(controls);
+    rows.append(row);
+    syncRowOrder();
+    row.querySelector<HTMLInputElement>(".theory-block-role")?.focus();
   });
 
   function items(): TheoryBlock[] | null {
+    const pending = rows.querySelector<HTMLDivElement>(".module-block-pending");
+    if (pending) {
+      showBlockRoleError(
+        pending,
+        "Bitte wähle eine Blockrolle oder entferne den leeren Block.",
+      );
+      pending.querySelector<HTMLInputElement>(".theory-block-role")?.focus();
+      return null;
+    }
     const result: TheoryBlock[] = [];
     const validatedGroupTitles = new Set<string>();
     const rowElements = Array.from(
@@ -1498,16 +1683,15 @@ export function createTheoryBlockEditor(
   }
 
   function contentOrder(): ModuleContentReference[] {
-    return allRows().map((row) => {
+    const result: ModuleContentReference[] = [];
+    for (const row of allRows()) {
+      const kind = blockKind(row);
+      if (!kind) continue;
       if (!row.dataset.blockId) {
         throw new Error("Ein Modulblock hat keine gültige ID.");
       }
-      return {
-        kind: row.classList.contains("theory-block-row")
-          ? "theory"
-          : row.classList.contains("module-practice-row")
-            ? "practice"
-            : "exercise",
+      result.push({
+        kind,
         id: row.dataset.blockId,
         ...(row.dataset.groupId
           ? {
@@ -1515,14 +1699,222 @@ export function createTheoryBlockEditor(
               groupTitle: row.dataset.groupTitle?.trim() ?? "",
             }
           : {}),
-      };
+      });
+    }
+    return result;
+  }
+
+  function createExerciseRow(
+    question: ModuleQuestion,
+    open = false,
+  ): HTMLDivElement {
+    const row = document.createElement("div");
+    row.className = "module-exercise-row";
+    row.dataset.blockId = question.id;
+    const details = document.createElement("details");
+    details.className = "theory-block-details";
+    details.open = open;
+    const summary = document.createElement("summary");
+    const preview = createPreviewPanel("Blockvorschau");
+    preview.open = details.open;
+    details.addEventListener("toggle", () => {
+      preview.open = details.open;
+      updateXp();
+      if (details.open) updatePreview(preview, row);
     });
+    preview.addEventListener("toggle", () => {
+      if (details.open !== preview.open) details.open = preview.open;
+    });
+    const label = document.createElement("span");
+    label.className = "theory-block-order-label";
+    const badge = createXpBadge();
+    summary.append(label, " ", badge);
+    const editor = document.createElement("div");
+    editor.className = "module-exercise-editor";
+    editor.addEventListener("input", () => refreshPreviewForRow(row));
+    editor.addEventListener("change", () => refreshPreviewForRow(row));
+    editor.addEventListener("click", () => refreshPreviewForRow(row));
+    const title = document.createElement("input");
+    title.type = "text";
+    title.className = "module-exercise-title";
+    title.value = question.title ?? "";
+    title.addEventListener("input", syncRowOrder);
+    editor.append(createLabeledField("Aufgabentitel", title));
+    const prompt = document.createElement("textarea");
+    prompt.className = "module-exercise-prompt";
+    prompt.rows = 3;
+    prompt.maxLength = 4000;
+    prompt.value = question.prompt;
+    prompt.setAttribute("aria-label", "Aufgabenstellung");
+    prompt.addEventListener("input", syncRowOrder);
+    editor.append(createLabeledField("Aufgabenstellung", prompt));
+
+    const typeEditor = createQuestionTypeEditor(`inline-${question.id}-`);
+    typeEditor.load(question);
+    editor.append(typeEditor.element);
+
+    const addFeedbackField = (label: string, value = "") => {
+      const field = document.createElement("textarea");
+      field.rows = 3;
+      field.maxLength = 4000;
+      field.value = value;
+      field.setAttribute("aria-label", label);
+      editor.append(createLabeledField(label, field));
+      return field;
+    };
+    const simpleHint = addFeedbackField(
+      "Einfacher Hinweis nach dem zweiten Fehlversuch (optional)",
+      question.simpleHint,
+    );
+    const strongHint = addFeedbackField(
+      "Stärkerer Hinweis zum Aufklappen vor dem letzten Versuch (optional)",
+      question.strongHint,
+    );
+    const explanation = addFeedbackField(
+      "Erklärung nach drei Fehlversuchen",
+      question.explanation,
+    );
+
+    const baseXp = document.createElement("input");
+    baseXp.type = "number";
+    baseXp.min = "0";
+    baseXp.step = "1";
+    baseXp.value = String(QUESTION_BASE_XP);
+    baseXp.setAttribute("aria-label", "Basis-XP");
+    const baseXpField = createLabeledField("Basis-XP", baseXp);
+    baseXpField.hidden = true;
+    editor.append(baseXpField);
+
+    const difficulty = createQuestionDifficultyPicker(
+      `exercise-difficulty-${question.id}`,
+      question.difficulty ?? "einfach",
+      updateXp,
+    );
+    editor.prepend(difficulty.element);
+    const tagPicker = createXpTagPicker({
+      name: `exercise-tags-${question.id}`,
+      legend: "Themen-Tags",
+      defaultTags: question.tags,
+      onChange: updateXp,
+    });
+    blockTags.set(row, tagPicker);
+    function updateXp(): void {
+      const xp = calculateModuleQuestionXp({
+        difficulty: difficulty.value(),
+        tags: tagPicker.selectedTags(),
+      });
+      xpByRow.set(row, xp);
+      updateBuilderXpBadge(badge, xp);
+      const group = row.closest<HTMLElement>(".theory-block-group");
+      if (group) refreshGroupXp(group);
+    }
+    refreshExerciseXp.set(row, updateXp);
+    updateXp();
+    editor.append(tagPicker.element);
+
+    function readExercise(): ModuleQuestion {
+      const typeFields = typeEditor.read();
+      if (
+        question.questionType === "numeric_input" &&
+        typeFields.questionType === "numeric_input" &&
+        typeFields.correctAnswers[0] === question.correctAnswers[0]?.trim()
+      ) {
+        typeFields.correctAnswers = question.correctAnswers;
+      }
+      return {
+        id: question.id,
+        moduleIds: question.moduleIds,
+        targetLane: "leicht",
+        difficulty: difficulty.value(),
+        ...typeFields,
+        title: title.value.trim(),
+        prompt: prompt.value.trim(),
+        simpleHint: simpleHint.value.trim(),
+        strongHint: strongHint.value.trim(),
+        explanation: explanation.value.trim(),
+        baseXp: QUESTION_BASE_XP,
+        tags: tagPicker.selectedTags(),
+      };
+    }
+    const initialExercise = JSON.stringify(readExercise());
+    readExerciseUpdate.set(row, () => {
+      try {
+        const update = readExercise();
+        if (
+          !draftExerciseIds.has(question.id) &&
+          JSON.stringify(update) === initialExercise
+        ) {
+          return null;
+        }
+        const validation = validateQuestionInput(
+          update,
+          question.moduleIds.map((id) => ({ id })),
+        );
+        if (!validation.valid) throw new Error(validation.errors.join(" "));
+        return update;
+      } catch (error) {
+        const groupDetails = row
+          .closest(".theory-block-group")
+          ?.querySelector<HTMLDetailsElement>(".theory-group-details");
+        if (groupDetails) groupDetails.open = true;
+        details.open = true;
+        const message =
+          error instanceof Error ? error.message : "Ungültige Aufgabendaten.";
+        throw new Error(
+          `${formatExerciseTitle(title.value, prompt.value)} – ${message}`,
+          { cause: error },
+        );
+      }
+    });
+    details.append(summary, editor);
+    const controls = document.createElement("div");
+    controls.className = "theory-block-controls";
+    const selectLabel = document.createElement("label");
+    selectLabel.className = "theory-block-select-label";
+    selectLabel.title = "Übung zum Gruppieren auswählen";
+    const selectCheckbox = document.createElement("input");
+    selectCheckbox.type = "checkbox";
+    selectCheckbox.className = "theory-block-select";
+    selectCheckbox.setAttribute("aria-label", "Übung zum Gruppieren auswählen");
+    selectCheckbox.addEventListener("change", updateGroupButton);
+    selectLabel.append(selectCheckbox);
+    controls.append(selectLabel);
+    for (const [direction, name, symbol] of [
+      [-1, "oben", "↑"],
+      [1, "unten", "↓"],
+    ] as const) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className =
+        direction === -1 ? "theory-block-up" : "theory-block-down";
+      button.textContent = symbol;
+      button.setAttribute("aria-label", `Übung nach ${name} verschieben`);
+      button.addEventListener("click", () => moveRow(row, direction));
+      controls.append(button);
+    }
+    controls.append(createUngroupItemButton(row));
+    if (deleteExercise) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "checklist-remove module-exercise-remove";
+      button.textContent = "×";
+      button.title = "Übung löschen";
+      button.setAttribute("aria-label", "Übung löschen");
+      button.addEventListener("click", () => removeBlockRow(row));
+      controls.append(button);
+    }
+    row.append(details, controls, preview);
+    installBlockRolePicker(row, "exercise").exercise = question;
+    return row;
   }
 
   function setExercises(
     questions: readonly ModuleQuestion[],
     order: readonly ModuleContentReference[] = contentOrder(),
   ): void {
+    const pendingRows = allRows().flatMap((row, index) =>
+      blockKind(row) ? [] : [{ row, index }],
+    );
     const previousQuestions = new Map(
       exerciseQuestions.map((question) => [question.id, question]),
     );
@@ -1533,13 +1925,25 @@ export function createTheoryBlockEditor(
       if (row.dataset.blockId) previousRows.set(row.dataset.blockId, row);
       row.remove();
     }
-    exerciseQuestions = [...questions];
-    for (const question of questions) {
+    exerciseQuestions = questions.filter(
+      (question) => !inactiveExerciseIds.has(question.id),
+    );
+    for (const question of exerciseQuestions) {
       const previous = previousRows.get(question.id);
       const reuse = previous && previousQuestions.get(question.id) === question;
-      const row = reuse ? previous : document.createElement("div");
-      row.className = "module-exercise-row";
-      row.dataset.blockId = question.id;
+      const row = reuse
+        ? previous
+        : createExerciseRow(
+            question,
+            previous?.querySelector("details")?.open ??
+              draftExerciseIds.has(question.id),
+          );
+      const state = (previous && roleDrafts.get(previous)) ?? roleDrafts.get(row);
+      if (!state) throw new Error("Der Blockentwurf der Aufgabe fehlt.");
+      roleDrafts.set(row, state);
+      state.templates.exercise = row;
+      state.exercise = question;
+      if (!draftExerciseIds.has(question.id)) state.savedExercise = question;
       const savedReference = order.find(
         (entry) => entry.kind === "exercise" && entry.id === question.id,
       );
@@ -1550,217 +1954,13 @@ export function createTheoryBlockEditor(
         delete row.dataset.groupId;
         delete row.dataset.groupTitle;
       }
-      if (reuse) {
-        rows.append(row);
-        continue;
-      }
-      const details = document.createElement("details");
-      details.className = "theory-block-details";
-      details.open =
-        previous?.querySelector("details")?.open ??
-        draftExerciseIds.has(question.id);
-      const summary = document.createElement("summary");
-      const preview = createPreviewPanel("Blockvorschau");
-      preview.open = details.open;
-      details.addEventListener("toggle", () => {
-        preview.open = details.open;
-        updateXp();
-        if (details.open) updatePreview(preview, row);
-      });
-      preview.addEventListener("toggle", () => {
-        if (details.open !== preview.open) details.open = preview.open;
-      });
-      const label = document.createElement("span");
-      label.className = "theory-block-order-label";
-      const badge = createXpBadge();
-      summary.append(label, " ", badge);
-      const editor = document.createElement("div");
-      editor.className = "module-exercise-editor";
-      editor.addEventListener("input", () => refreshPreviewForRow(row));
-      editor.addEventListener("change", () => refreshPreviewForRow(row));
-      editor.addEventListener("click", () => refreshPreviewForRow(row));
-      const title = document.createElement("input");
-      title.type = "text";
-      title.className = "module-exercise-title";
-      title.value = question.title ?? "";
-      title.addEventListener("input", syncRowOrder);
-      editor.append(createLabeledField("Aufgabentitel", title));
-      const prompt = document.createElement("textarea");
-      prompt.className = "module-exercise-prompt";
-      prompt.rows = 3;
-      prompt.maxLength = 4000;
-      prompt.value = question.prompt;
-      prompt.setAttribute("aria-label", "Aufgabenstellung");
-      prompt.addEventListener("input", syncRowOrder);
-      editor.append(createLabeledField("Aufgabenstellung", prompt));
-
-      const typeEditor = createQuestionTypeEditor(`inline-${question.id}-`);
-      typeEditor.load(question);
-      editor.append(typeEditor.element);
-
-      const addFeedbackField = (label: string, value = "") => {
-        const field = document.createElement("textarea");
-        field.rows = 3;
-        field.maxLength = 4000;
-        field.value = value;
-        field.setAttribute("aria-label", label);
-        editor.append(createLabeledField(label, field));
-        return field;
-      };
-      const simpleHint = addFeedbackField(
-        "Einfacher Hinweis nach dem zweiten Fehlversuch (optional)",
-        question.simpleHint,
-      );
-      const strongHint = addFeedbackField(
-        "Stärkerer Hinweis zum Aufklappen vor dem letzten Versuch (optional)",
-        question.strongHint,
-      );
-      const explanation = addFeedbackField(
-        "Erklärung nach drei Fehlversuchen",
-        question.explanation,
-      );
-
-      const baseXp = document.createElement("input");
-      baseXp.type = "number";
-      baseXp.min = "0";
-      baseXp.step = "1";
-      baseXp.value = String(QUESTION_BASE_XP);
-      baseXp.setAttribute("aria-label", "Basis-XP");
-      const baseXpField = createLabeledField("Basis-XP", baseXp);
-      baseXpField.hidden = true;
-      editor.append(baseXpField);
-
-      const difficulty = createQuestionDifficultyPicker(
-        `exercise-difficulty-${question.id}`,
-        question.difficulty ?? "einfach",
-        updateXp,
-      );
-      editor.prepend(difficulty.element);
-      const tagPicker = createXpTagPicker({
-        name: `exercise-tags-${question.id}`,
-        legend: "Themen-Tags",
-        defaultTags: question.tags,
-        onChange: updateXp,
-      });
-      function updateXp(): void {
-        const xp = calculateModuleQuestionXp({
-          difficulty: difficulty.value(),
-          tags: tagPicker.selectedTags(),
-        });
-        xpByRow.set(row, xp);
-        updateBuilderXpBadge(badge, xp);
-        const group = row.closest<HTMLElement>(".theory-block-group");
-        if (group) refreshGroupXp(group);
-      }
-      updateXp();
-      editor.append(tagPicker.element);
-
-      function readExercise(): ModuleQuestion {
-        const typeFields = typeEditor.read();
-        if (
-          question.questionType === "numeric_input" &&
-          typeFields.questionType === "numeric_input" &&
-          typeFields.correctAnswers[0] === question.correctAnswers[0]?.trim()
-        ) {
-          typeFields.correctAnswers = question.correctAnswers;
-        }
-        return {
-          id: question.id,
-          moduleIds: question.moduleIds,
-          targetLane: "leicht",
-          difficulty: difficulty.value(),
-          ...typeFields,
-          title: title.value.trim(),
-          prompt: prompt.value.trim(),
-          simpleHint: simpleHint.value.trim(),
-          strongHint: strongHint.value.trim(),
-          explanation: explanation.value.trim(),
-          baseXp: QUESTION_BASE_XP,
-          tags: tagPicker.selectedTags(),
-        };
-      }
-      const initialExercise = JSON.stringify(readExercise());
-      readExerciseUpdate.set(row, () => {
-        try {
-          const update = readExercise();
-          if (
-            !draftExerciseIds.has(question.id) &&
-            JSON.stringify(update) === initialExercise
-          ) {
-            return null;
-          }
-          const validation = validateQuestionInput(
-            update,
-            question.moduleIds.map((id) => ({ id })),
-          );
-          if (!validation.valid) throw new Error(validation.errors.join(" "));
-          return update;
-        } catch (error) {
-          const groupDetails = row
-            .closest(".theory-block-group")
-            ?.querySelector<HTMLDetailsElement>(".theory-group-details");
-          if (groupDetails) groupDetails.open = true;
-          details.open = true;
-          const message =
-            error instanceof Error ? error.message : "Ungültige Aufgabendaten.";
-          throw new Error(
-            `${formatExerciseTitle(title.value, prompt.value)} – ${message}`,
-            { cause: error },
-          );
-        }
-      });
-      details.append(summary, editor);
-      const controls = document.createElement("div");
-      controls.className = "theory-block-controls";
-      const selectLabel = document.createElement("label");
-      selectLabel.className = "theory-block-select-label";
-      selectLabel.title = "Übung zum Gruppieren auswählen";
-      const selectCheckbox = document.createElement("input");
-      selectCheckbox.type = "checkbox";
-      selectCheckbox.className = "theory-block-select";
-      selectCheckbox.setAttribute(
-        "aria-label",
-        "Übung zum Gruppieren auswählen",
-      );
-      selectCheckbox.addEventListener("change", updateGroupButton);
-      selectLabel.append(selectCheckbox);
-      controls.append(selectLabel);
-      for (const [direction, name, symbol] of [
-        [-1, "oben", "↑"],
-        [1, "unten", "↓"],
-      ] as const) {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className =
-          direction === -1 ? "theory-block-up" : "theory-block-down";
-        button.textContent = symbol;
-        button.setAttribute("aria-label", `Übung nach ${name} verschieben`);
-        button.addEventListener("click", () => moveRow(row, direction));
-        controls.append(button);
-      }
-      controls.append(createUngroupItemButton(row));
-      if (deleteExercise) {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "checklist-remove module-exercise-remove";
-        button.textContent = "×";
-        button.title = "Übung löschen";
-        button.setAttribute("aria-label", "Übung löschen");
-        button.addEventListener("click", () => deleteExercise(question));
-        controls.append(button);
-      }
-      row.append(details, controls, preview);
       rows.append(row);
       refreshPreviewForRow(row);
     }
 
     const available = new Map(
       allRows().map((row) => {
-        const kind = row.classList.contains("theory-block-row")
-          ? "theory"
-          : row.classList.contains("module-practice-row")
-            ? "practice"
-            : "exercise";
+        const kind = blockKind(row) ?? "pending";
         return [`${kind}:${row.dataset.blockId}`, row] as const;
       }),
     );
@@ -1772,6 +1972,10 @@ export function createTheoryBlockEditor(
       }
     }
     for (const row of available.values()) rows.append(row);
+    for (const { row, index } of pendingRows) {
+      const siblings = allRows().filter((candidate) => candidate !== row);
+      rows.insertBefore(row, siblings[index] ?? null);
+    }
     renderGroupHeaders();
     syncRowOrder();
   }
@@ -1781,10 +1985,11 @@ export function createTheoryBlockEditor(
       (question) => question.id !== id,
     );
     draftExerciseIds.delete(id);
-    for (const row of rows.querySelectorAll<HTMLDivElement>(
-      ".module-exercise-row",
-    )) {
-      if (row.dataset.blockId === id) row.remove();
+    inactiveExerciseIds.delete(id);
+    for (const row of allRows()) {
+      if (row.dataset.blockId === id && roleDrafts.get(row)?.exercise) {
+        row.remove();
+      }
     }
     renderGroupHeaders();
     syncRowOrder();
@@ -1795,6 +2000,7 @@ export function createTheoryBlockEditor(
     rows.replaceChildren();
     exerciseQuestions = [];
     draftExerciseIds.clear();
+    inactiveExerciseIds.clear();
     updateGroupButton();
     syncRowOrder();
   }
@@ -1805,7 +2011,7 @@ export function createTheoryBlockEditor(
 
   if (initialBlocks.length > 0) setItems(initialBlocks);
 
-  fieldset.append(legend, groupButton, rows, addType, addButton);
+  fieldset.append(legend, groupButton, rows, addButton);
 
   return {
     element: fieldset,
@@ -1830,6 +2036,26 @@ export function createTheoryBlockEditor(
         if (update) updates.push(update);
       }
       return updates;
+    },
+    exerciseRoleChanges() {
+      const changes: ModuleExerciseRoleChange[] = [];
+      for (const row of allRows()) {
+        const exercise = roleDrafts.get(row)?.savedExercise;
+        const kind = blockKind(row);
+        if (exercise && (kind === "theory" || kind === "practice")) {
+          changes.push({ id: exercise.id, kind });
+        }
+      }
+      return changes;
+    },
+    markRoleChangesSaved() {
+      for (const row of allRows()) {
+        const state = roleDrafts.get(row);
+        if (state && blockKind(row) !== "exercise") {
+          state.savedExercise = undefined;
+          if (state.exercise) draftExerciseIds.delete(state.exercise.id);
+        }
+      }
     },
     markExercisesSaved(exercises) {
       for (const exercise of exercises) draftExerciseIds.delete(exercise.id);
@@ -2095,8 +2321,7 @@ export function attachModuleBuilderForm(
       baseXp: BASE_XP_DEFAULTS.leicht,
       tags: [],
     };
-    theoryBlockEditor.addExercise(question);
-    status.textContent = "Lernpfad-Aufgabe hinzugefügt.";
+    return question;
   });
   blocksContainer.append(theoryBlockEditor.element);
 
@@ -2205,6 +2430,7 @@ export function attachModuleBuilderForm(
     archivedInput.checked = mod.archived === true;
     theoryBaseXpInput.value = String(mod.theoryBaseXp);
     tagPicker.setSelectedTags(mod.tags);
+    theoryBlockEditor.clear();
     theoryBlockEditor.setItems(mod.theoryBlocks);
     theoryBlockEditor.setPracticeBlocks(mod.practiceBlocks);
     setModuleExercises(mod.id, questions, mod.contentOrder);
@@ -2289,8 +2515,9 @@ export function attachModuleBuilderForm(
     if (submitButton.disabled) return;
 
     const theoryBlocks = theoryBlockEditor.items();
+    if (!theoryBlocks) return;
     const practiceBlocks = theoryBlockEditor.practiceItems();
-    if (!theoryBlocks || !practiceBlocks) return;
+    if (!practiceBlocks) return;
 
     const scopeValue = scopeSelect.value;
     const dStageValue = dStageSelect.value;
@@ -2325,14 +2552,19 @@ export function attachModuleBuilderForm(
 
     try {
       const exercises = theoryBlockEditor.exerciseUpdates();
+      const exerciseRoleChanges = theoryBlockEditor.exerciseRoleChanges();
       exerciseRefreshVersion += 1;
       const result = await sendModulesRequest(
         isUpdate ? "PUT" : "POST",
-        exercises.length > 0 ? { ...payload, exercises } : payload,
+        {
+          ...payload,
+          ...(exercises.length > 0 ? { exercises } : {}),
+          ...(exerciseRoleChanges.length > 0 ? { exerciseRoleChanges } : {}),
+        },
         "Das Modul konnte nicht gespeichert werden.",
       );
       if (
-        exercises.length > 0 &&
+        (exercises.length > 0 || exerciseRoleChanges.length > 0) &&
         (!isRecord(result) || !Array.isArray(result.questions))
       ) {
         throw new Error(
@@ -2342,6 +2574,7 @@ export function attachModuleBuilderForm(
       editingModuleId = moduleId;
       newModuleId = null;
       theoryBlockEditor.markExercisesSaved(exercises);
+      theoryBlockEditor.markRoleChangesSaved();
       submitButton.textContent = "Modul-Änderungen speichern";
       cancelButton.hidden = false;
 

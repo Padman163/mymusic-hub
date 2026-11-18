@@ -97,7 +97,9 @@ test('gruppiert Builder-Karten und hält Aktionen bedienbar', async ({ page }) =
 
   await page.getByRole('tab', { name: 'Modul erstellen' }).click();
   await page.locator('.theory-block-add').click();
+  await page.locator('.module-block-pending').getByText('Theorieteil', { exact: true }).click();
   await page.locator('.theory-block-add').click();
+  await page.locator('.module-block-pending').getByText('Theorieteil', { exact: true }).click();
   const rows = page.locator('.theory-block-row');
   await expect(rows).toHaveCount(2);
 
@@ -107,7 +109,7 @@ test('gruppiert Builder-Karten und hält Aktionen bedienbar', async ({ page }) =
   await actionButton.click();
   await page.locator('.theory-group-summary').click();
   await expect(page.locator('.theory-block-row[data-group-position="last"]')).toBeVisible();
-  await expect(page.locator('.theory-block-add-type')).toBeVisible();
+  await expect(page.locator('.theory-block-add-type')).toHaveCount(0);
   for (const button of [actionButton, page.locator('.theory-block-add')]) {
     await expect(button).toBeVisible();
     const box = await button.boundingBox();
