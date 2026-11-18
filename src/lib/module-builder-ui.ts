@@ -577,6 +577,44 @@ export function createTheoryBlockEditor(
     }
   }
 
+  function ungroupRow(row: HTMLDivElement): void {
+    const groupId = row.dataset.groupId;
+    if (!groupId) return;
+
+    const members = allRows().filter(
+      (member) => member.dataset.groupId === groupId,
+    );
+    if (members.length <= 2) {
+      expandedGroups.delete(groupId);
+      for (const member of members) {
+        delete member.dataset.groupId;
+        delete member.dataset.groupTitle;
+        delete member.dataset.groupCollapsed;
+      }
+    } else {
+      delete row.dataset.groupId;
+      delete row.dataset.groupTitle;
+      delete row.dataset.groupCollapsed;
+      const group = rowContainer(row);
+      rows.insertBefore(row, group.nextSibling);
+    }
+
+    renderGroupHeaders();
+    syncRowOrder();
+  }
+
+  function createUngroupItemButton(row: HTMLDivElement): HTMLButtonElement {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "checklist-remove theory-block-ungroup-item";
+    button.textContent = "−";
+    button.title = "Aus Gruppe lösen";
+    button.setAttribute("aria-label", "Aus Gruppe lösen");
+    button.hidden = true;
+    button.addEventListener("click", () => ungroupRow(row));
+    return button;
+  }
+
   function rowUnit(row: HTMLDivElement): HTMLDivElement[] {
     const groupId = row.dataset.groupId;
     if (!groupId) return [row];
@@ -666,6 +704,14 @@ export function createTheoryBlockEditor(
         );
         if (selectLabel) selectLabel.hidden = select.disabled;
       }
+      const ungroupButton = row.querySelector<HTMLButtonElement>(
+        ".theory-block-ungroup-item",
+      );
+      if (ungroupButton) ungroupButton.hidden = !row.dataset.groupId;
+      const removeButton = row.querySelector<HTMLButtonElement>(
+        ".theory-block-remove, .module-exercise-remove",
+      );
+      if (removeButton) removeButton.hidden = Boolean(row.dataset.groupId);
     });
     updateGroupButton();
   }
@@ -780,7 +826,13 @@ export function createTheoryBlockEditor(
       syncRowOrder();
     });
 
-    controls.append(selectLabel, upButton, downButton, removeButton);
+    controls.append(
+      selectLabel,
+      upButton,
+      downButton,
+      createUngroupItemButton(row),
+      removeButton,
+    );
     summary.append(orderLabel);
 
     const titleLabel = document.createElement("label");
@@ -1309,6 +1361,7 @@ export function createTheoryBlockEditor(
         button.addEventListener("click", () => moveRow(row, direction));
         controls.append(button);
       }
+      controls.append(createUngroupItemButton(row));
       if (deleteExercise) {
         const button = document.createElement("button");
         button.type = "button";

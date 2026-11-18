@@ -293,6 +293,156 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     expect(editor.element.querySelector<HTMLInputElement>(".theory-group-title")?.value).toBe("Mein Abschnitt");
   });
 
+  it("löst einen einzelnen Theorieblock aus einer Dreiergruppe und erhält Gruppe und Eingaben", () => {
+    const groupId = "group-three";
+    const groupTitle = "Grundlagen";
+    const editor = createTheoryBlockEditor([
+      { id: "a", order: 1, title: "A", markdownContent: "", groupId, groupTitle },
+      { id: "b", order: 2, title: "B", markdownContent: "", groupId, groupTitle },
+      { id: "c", order: 3, title: "C", markdownContent: "", groupId, groupTitle },
+    ]);
+    document.body.append(editor.element);
+
+    const rows = Array.from(
+      editor.element.querySelectorAll<HTMLDivElement>(".theory-block-row"),
+    );
+    const groupDetails = editor.element.querySelector<HTMLDetailsElement>(
+      ".theory-block-group .theory-group-details",
+    );
+    if (!groupDetails) throw new Error("Gruppe fehlt");
+    groupDetails.open = true;
+    groupDetails.dispatchEvent(new Event("toggle"));
+
+    const groupTitleInput = editor.element.querySelector<HTMLInputElement>(
+      ".theory-group-title",
+    );
+    if (!groupTitleInput) throw new Error("Gruppentitel fehlt");
+    groupTitleInput.value = "Ungespeicherte Gruppe";
+    groupTitleInput.dispatchEvent(new Event("input"));
+
+    const markdown = rows[1].querySelector<HTMLTextAreaElement>(
+      ".theory-block-markdown",
+    );
+    if (!markdown) throw new Error("Blockinhalt fehlt");
+    markdown.value = "Ungespeicherter Inhalt";
+    rows[1]
+      .querySelector<HTMLButtonElement>(".theory-block-ungroup-item")
+      ?.click();
+
+    expect(editor.contentOrder()).toEqual([
+      { kind: "theory", id: "a", groupId, groupTitle: "Ungespeicherte Gruppe" },
+      { kind: "theory", id: "c", groupId, groupTitle: "Ungespeicherte Gruppe" },
+      { kind: "theory", id: "b" },
+    ]);
+    expect(editor.items()?.map(({ id, markdownContent }) => [id, markdownContent]))
+      .toEqual([
+        ["a", ""],
+        ["c", ""],
+        ["b", "Ungespeicherter Inhalt"],
+      ]);
+    expect(rows.map((row) => row.dataset.groupPosition)).toEqual([
+      "first",
+      undefined,
+      "last",
+    ]);
+    expect(rows[1].querySelector<HTMLButtonElement>(".theory-block-remove")?.hidden)
+      .toBe(false);
+    expect(rows[1].querySelector<HTMLLabelElement>(".theory-block-select-label")?.hidden)
+      .toBe(false);
+    expect(rows[1].querySelector<HTMLInputElement>(".theory-block-select")?.disabled)
+      .toBe(false);
+    expect(rows[0].querySelector<HTMLButtonElement>(".theory-block-remove")?.hidden)
+      .toBe(true);
+    expect(rows[0].querySelector<HTMLButtonElement>(".theory-block-ungroup-item")?.hidden)
+      .toBe(false);
+  });
+
+  it("löst eine Zweiergruppe beim Herauslösen automatisch vollständig auf", () => {
+    const groupId = "group-two";
+    const groupTitle = "Grundlagen";
+    const editor = createTheoryBlockEditor([
+      { id: "a", order: 1, title: "A", markdownContent: "", groupId, groupTitle },
+      { id: "b", order: 2, title: "B", markdownContent: "", groupId, groupTitle },
+    ]);
+    document.body.append(editor.element);
+
+    const rows = Array.from(
+      editor.element.querySelectorAll<HTMLDivElement>(".theory-block-row"),
+    );
+    rows[0]
+      .querySelector<HTMLButtonElement>(".theory-block-ungroup-item")
+      ?.click();
+
+    expect(editor.element.querySelector(".theory-block-group")).toBeNull();
+    expect(editor.contentOrder()).toEqual([
+      { kind: "theory", id: "a" },
+      { kind: "theory", id: "b" },
+    ]);
+    expect(editor.items()?.every((block) => !block.groupId && !block.groupTitle))
+      .toBe(true);
+    expect(rows.every((row) => row.dataset.groupPosition === undefined)).toBe(true);
+    expect(rows.every((row) =>
+      row.querySelector<HTMLButtonElement>(".theory-block-remove")?.hidden ===
+        false &&
+      row.querySelector<HTMLButtonElement>(".theory-block-ungroup-item")?.hidden ===
+        true &&
+      row.querySelector<HTMLLabelElement>(".theory-block-select-label")?.hidden ===
+        false &&
+      row.querySelector<HTMLInputElement>(".theory-block-select")?.disabled ===
+        false
+    )).toBe(true);
+  });
+
+  it("löst eine gruppierte Lernpfad-Übung mit auf, wenn nur ein Theorieblock verbleibt", () => {
+    const db = seedDb as unknown as ModulesDatabase;
+    const exercise = db.questions.find((question) => question.targetLane === "leicht");
+    if (!exercise) throw new Error("Testübung fehlt");
+    const groupId = "group-exercise";
+    const groupTitle = "Gemischter Abschnitt";
+    const editor = createTheoryBlockEditor(
+      [
+        {
+          id: "theory",
+          order: 1,
+          title: "Theorie",
+          markdownContent: "",
+          groupId,
+          groupTitle,
+        },
+      ],
+      () => 30,
+      () => {},
+    );
+    editor.setExercises(
+      [exercise],
+      [
+        { kind: "theory", id: "theory", groupId, groupTitle },
+        { kind: "exercise", id: exercise.id, groupId, groupTitle },
+      ],
+    );
+    document.body.append(editor.element);
+
+    const exerciseRow = editor.element.querySelector<HTMLDivElement>(
+      ".module-exercise-row",
+    );
+    if (!exerciseRow) throw new Error("Lernpfad-Übung fehlt");
+    exerciseRow
+      .querySelector<HTMLButtonElement>(".theory-block-ungroup-item")
+      ?.click();
+
+    expect(editor.contentOrder()).toEqual([
+      { kind: "theory", id: "theory" },
+      { kind: "exercise", id: exercise.id },
+    ]);
+    expect(exerciseRow.dataset.groupId).toBeUndefined();
+    expect(exerciseRow.querySelector<HTMLButtonElement>(".module-exercise-remove")?.hidden)
+      .toBe(false);
+    expect(exerciseRow.querySelector<HTMLLabelElement>(".theory-block-select-label")?.hidden)
+      .toBe(false);
+    expect(exerciseRow.querySelector<HTMLInputElement>(".theory-block-select")?.disabled)
+      .toBe(false);
+  });
+
   it("gruppiert Theorieblöcke und Übungen gemeinsam und speichert die Gruppe", async () => {
     const db = seedDb as unknown as ModulesDatabase;
     const exercise = db.questions.find((q) => q.id === "q-101-ex-1");

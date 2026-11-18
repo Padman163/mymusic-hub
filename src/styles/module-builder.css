@@ -387,6 +387,14 @@
   line-height: 1;
 }
 
+:root .checklist-editor .theory-block-controls > button[hidden] {
+  display: none;
+}
+
+.module-block-group-hint {
+  margin-bottom: 0.5rem;
+}
+
 .theory-block-add {
   display: block;
   margin: 0.5rem 0 0;
