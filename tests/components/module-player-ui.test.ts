@@ -768,6 +768,53 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     expect(root.textContent).toContain("Benötigt: 93 %");
   });
 
+  it.each([
+    ["Mit welcher Frequenz (in Hz) schwingt der Ton?", ["880"], "Hz"],
+    ["Mit welcher Frequenz schwingt der Ton?", ["880 Hz"], "Hz"],
+    ["Wie viele Schläge dauert der Ton?", ["880"], null],
+    ["Mit welcher Frequenz schwingt der Ton?", ["880 Hz", "0,88 kHz"], null],
+  ] as const)(
+    "zeigt eine eindeutige feste Einheit für %s (Antworten: %j)",
+    (prompt, correctAnswers, unit) => {
+      const db = structuredClone(seedDb);
+      const mod = db.modules[0];
+      const question = db.questions.find(({ id }) => id === "q-101-ex-1");
+      if (!question) throw new Error("Zahlenfrage fehlt");
+      question.prompt = prompt;
+      question.correctAnswers = [...correctAnswers];
+      const root = document.createElement("section");
+      document.body.append(root);
+      const render = () =>
+        attachModuleQuizRunner(root, {
+          module: mod,
+          db,
+          mode: "leicht",
+          exerciseId: question.id,
+        });
+      render();
+
+      const input = root.querySelector<HTMLInputElement>(".learning-numeric-input");
+      const check = root.querySelector<HTMLButtonElement>('[data-action="check-exercise"]');
+      if (!input || !check) throw new Error("Zahleneingabe fehlt");
+      expect(input.value).toBe("");
+      expect(root.querySelector(".learning-numeric-unit")?.textContent ?? null)
+        .toBe(unit);
+      if (unit) {
+        expect(input.nextElementSibling?.textContent).toBe(unit);
+        expect(evaluateQuestionAnswer(question, { kind: "numeric", value: "880 kHz" }).correct)
+          .toBe(false);
+      }
+
+      input.value = "880";
+      check.click();
+      expect(root.querySelector(".learning-feedback")?.getAttribute("data-outcome"))
+        .toBe("correct");
+      render();
+      expect(root.querySelector<HTMLInputElement>(".learning-numeric-input")?.value)
+        .toBe(unit ? "880" : correctAnswers[0]);
+    },
+  );
+
   it("enthält valide Lernmodul-Fixtures", () => {
     expect(seedDb.modules.length).toBeGreaterThanOrEqual(2);
     for (const mod of seedDb.modules) {

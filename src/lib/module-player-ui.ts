@@ -328,20 +328,40 @@ function normalizeText(value: string): string {
 
 function parseNumericAndUnit(raw: string): {
   num: number | null;
+  numericText: string;
   unit: string;
   normalized: string;
 } {
-  const normalized = normalizeText(raw);
-  const match = /^([+-]?\d+(?:[.,]\d+)?)\s*(.*)$/.exec(normalized);
+  const text = raw.trim().replace(/\s+/g, " ");
+  const normalized = text.toLowerCase();
+  const match = /^([+-]?\d+(?:[.,]\d+)?)\s*(.*)$/.exec(text);
   if (!match) {
-    return { num: null, unit: normalized, normalized };
+    return { num: null, numericText: "", unit: normalized, normalized };
   }
   const num = Number(match[1].replace(",", "."));
   return {
     num: Number.isFinite(num) ? num : null,
+    numericText: match[1],
     unit: match[2].trim(),
     normalized,
   };
+}
+
+function getNumericQuestionUnit(question: ModuleQuestion): string {
+  const explicitUnit = /\(in\s+([^()]+)\)/i.exec(question.prompt)?.[1].trim();
+  const isUnit = (value: string) =>
+    /^[\p{L}%°µ€$][\p{L}%°µ€$²³/·^0-9-]*$/u.test(value);
+  if (explicitUnit && isUnit(explicitUnit)) return explicitUnit;
+
+  const units = new Map<string, string>();
+  for (const answer of question.correctAnswers) {
+    const { num, unit } = parseNumericAndUnit(answer);
+    if (num === null || (unit && !isUnit(unit))) return "";
+    if (unit && !units.has(normalizeText(unit))) {
+      units.set(normalizeText(unit), unit);
+    }
+  }
+  return units.size === 1 ? (units.values().next().value ?? "") : "";
 }
 
 function matchesExpectedPitch(actualRaw: string, expectedRaw: string): boolean {
@@ -388,9 +408,18 @@ export function evaluateQuestionAnswer(
   } else if (question.questionType === "numeric_input") {
     if (answer.kind === "numeric") {
       const actual = parseNumericAndUnit(answer.value);
-      if (actual.normalized.length > 0) {
+      const actualUnit = normalizeText(actual.unit);
+      const fixedUnit = normalizeText(getNumericQuestionUnit(question));
+      if (
+        actual.normalized &&
+        (!fixedUnit || !actualUnit || actualUnit === fixedUnit)
+      ) {
         correct = question.correctAnswers.some((expectedRaw) => {
           const expected = parseNumericAndUnit(expectedRaw);
+          const expectedUnit = normalizeText(expected.unit);
+          if (fixedUnit && expectedUnit && expectedUnit !== fixedUnit) {
+            return false;
+          }
           if (actual.normalized === expected.normalized) {
             return true;
           }
@@ -399,11 +428,7 @@ export function evaluateQuestionAnswer(
             expected.num !== null &&
             Math.abs(actual.num - expected.num) < 1e-6
           ) {
-            return (
-              actual.unit === expected.unit ||
-              actual.unit === "" ||
-              expected.unit === ""
-            );
+            return actualUnit === expectedUnit || !actualUnit || !expectedUnit;
           }
           return false;
         });
@@ -1116,10 +1141,35 @@ function renderQuestionInputBlock(
     const input = document.createElement("input");
     input.type = "text";
     input.className = "learning-numeric-input";
-    input.placeholder = "Antwort eingeben (z. B. 880 oder 880 Hz)";
-    input.setAttribute("aria-label", question.prompt);
-    if (showSolution) input.value = question.correctAnswers[0] ?? "";
-    container.append(input);
+    const unit = getNumericQuestionUnit(question);
+    if (unit) {
+      const field = document.createElement("label");
+      field.className = "learning-numeric-field";
+      const suffix = document.createElement("span");
+      suffix.className = "learning-numeric-unit";
+      suffix.textContent = unit;
+      suffix.setAttribute("aria-hidden", "true");
+      input.inputMode = "decimal";
+      input.setAttribute("aria-label", `${question.prompt} Einheit: ${unit}`);
+      if (showSolution) {
+        const numericSolution = question.correctAnswers
+          .map(parseNumericAndUnit)
+          .find(
+            (parsed) =>
+              parsed.num !== null &&
+              (!parsed.unit ||
+                normalizeText(parsed.unit) === normalizeText(unit)),
+          );
+        input.value = numericSolution?.numericText ?? "";
+      }
+      field.append(input, suffix);
+      container.append(field);
+    } else {
+      input.placeholder = "Antwort eingeben";
+      input.setAttribute("aria-label", question.prompt);
+      if (showSolution) input.value = question.correctAnswers[0] ?? "";
+      container.append(input);
+    }
     return container;
   }
 

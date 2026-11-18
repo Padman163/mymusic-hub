@@ -639,7 +639,8 @@
   margin: 0;
 }
 
-.learning-numeric-input {
+.learning-numeric-input,
+.learning-numeric-field {
   box-sizing: border-box;
   width: 100%;
   max-width: 18rem;
@@ -649,6 +650,30 @@
   background: var(--sl-color-bg);
   color: var(--sl-color-text);
   font: inherit;
+}
+
+.learning-numeric-field {
+  display: inline-flex;
+  align-items: baseline;
+  cursor: text;
+}
+
+.learning-numeric-field .learning-numeric-input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  text-align: end;
+}
+
+.learning-numeric-field:focus-within {
+  outline: 2px solid var(--sl-color-accent);
+  outline-offset: 2px;
+}
+
+.learning-numeric-field .learning-numeric-input:focus {
+  outline: none;
 }
 
 .learning-feedback {

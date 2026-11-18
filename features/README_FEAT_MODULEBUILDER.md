@@ -138,7 +138,7 @@ Dort gibt es vier übersichtliche Reiter:
   - Du wählst bei Bedarf zugehörige Module und die Lern-Spur **Mittel (Quiz)** oder **Schwer (Fastlane)**. Dabei passen sich die vorgeschlagenen Basis-XP automatisch an (`15` oder `25 XP`). Ohne Modulwahl bleibt die Frage im Pool.
   - Je nach gewähltem **Aufgabentyp** zeigt das Formular automatisch nur die passenden Eingabefelder:
     - **Eine oder mehrere richtige Antworten:** Eine flexible Liste von Antwortmöglichkeiten, in der du mit Klick die richtigen Lösungen markierst.
-    - **Zahleneingabe:** Ein Feld für die exakte Antwort (z. B. `880` oder `880 Hz`).
+    - **Zahleneingabe:** Hinterlege die Antwort als Zahl (z. B. `880`) oder mit Einheit (z. B. `880 Hz`). Steht die Einheit ausdrücklich in der Frage (z. B. „in Hz“ in Klammern) oder ergibt sie sich eindeutig aus den hinterlegten Antworten, steht sie fest im Eingabefeld. Lernende geben dann nur die Zahl ein.
     - **Interaktive Notenaufgabe (`NotationBuilder`):** Einstellfelder für Notenschlüssel (Violin-/Bassschlüssel), optionale Taktart (z. B. `3/4`), Notenanzahl (`1` bis `8`), feste oder wählbare Notenwerte, kompakte/breite Darstellung, Tastatur-Hinweise sowie die erwarteten Töne oder Notenwerte.
   - **Direkte Live-Vorschau:** Bei interaktiven Notenaufgaben siehst du direkt unter den Einstellungen das echte interaktive Notensystem als Vorschau – und kannst sofort prüfen, wie die Aufgabe später für Lernende aussieht.
   - **Live-XP-Rechner:** Sobald du Basis-XP, Spur oder Themen-Etiketten änderst, rechnet das Formular sofort die gewichteten XP aus.
