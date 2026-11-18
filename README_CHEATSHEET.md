@@ -43,6 +43,7 @@ npm run test:visual          # E2E mit --update-snapshots; derzeit keine Snapsho
 npm run preflight            # Kombinierte Kette vor jedem Push / Pull Request:
                              # Ergebnisbericht zu Validierung, Vitest, Build, E2E, Lighthouse und Git-Diff
 npm run audit                # Separates Dependency-Audit; nicht Teil des Preflights
+npm run cleanup:check        # Nicht-destruktiver Bericht zu den fünf Cleanup-Schritten
 ```
 
 Lighthouse lädt Berichte standardmäßig temporär öffentlich hoch. Lokale Ablage und Testgrenzen stehen im [Testing-Leitfaden](README_TESTING.md).

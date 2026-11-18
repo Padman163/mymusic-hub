@@ -4,7 +4,9 @@ const npmCli = process.env.npm_execpath;
 const results = [];
 
 if (!npmCli) {
-  console.error("npm konnte nicht ermittelt werden. Bitte `npm run preflight` starten.");
+  console.error(
+    "npm konnte nicht ermittelt werden. Bitte `npm run preflight` starten.",
+  );
   process.exitCode = 1;
 } else {
   function runStep(name, command, run, correction) {
@@ -25,7 +27,9 @@ if (!npmCli) {
       detail,
       correction: passed ? undefined : correction,
     });
-    console.log(`\n${passed ? "BESTANDEN" : "FEHLGESCHLAGEN"}: ${name} (${detail})`);
+    console.log(
+      `\n${passed ? "BESTANDEN" : "FEHLGESCHLAGEN"}: ${name} (${detail})`,
+    );
     return passed;
   }
 
@@ -34,18 +38,40 @@ if (!npmCli) {
     return runStep(
       name,
       command,
-      () => spawnSync(process.execPath, [npmCli, ...args], { stdio: "inherit" }),
+      () =>
+        spawnSync(process.execPath, [npmCli, ...args], { stdio: "inherit" }),
       correction,
     );
   }
 
-  runNpm("Validierung", "validate", "Biome-, Astro- oder TypeScript-Fehler beheben.");
-  runNpm("Vitest", "test", "Fehlgeschlagene Tests anhand der Ausgabe oben korrigieren.", "npm test");
-  const buildPassed = runNpm("Produktions-Build", "build", "Buildfehler anhand der Astro-/Vite-Ausgabe beheben.");
+  runNpm(
+    "Validierung",
+    "validate",
+    "Biome-, Astro- oder TypeScript-Fehler beheben.",
+  );
+  runNpm(
+    "Vitest",
+    "test",
+    "Fehlgeschlagene Tests anhand der Ausgabe oben korrigieren.",
+    "npm test",
+  );
+  const buildPassed = runNpm(
+    "Produktions-Build",
+    "build",
+    "Buildfehler anhand der Astro-/Vite-Ausgabe beheben.",
+  );
 
   if (buildPassed) {
-    runNpm("Playwright E2E", "test:e2e", "Fehlgeschlagene Browser-Tests anhand der Playwright-Ausgabe korrigieren.");
-    runNpm("Lighthouse CI", "audit:lhci", "Lighthouse-Befunde und konfigurierte Grenzwerte prüfen.");
+    runNpm(
+      "Playwright E2E",
+      "test:e2e",
+      "Fehlgeschlagene Browser-Tests anhand der Playwright-Ausgabe korrigieren.",
+    );
+    runNpm(
+      "Lighthouse CI",
+      "audit:lhci",
+      "Lighthouse-Befunde und konfigurierte Grenzwerte prüfen.",
+    );
   } else {
     for (const [name, correction] of [
       ["Playwright E2E", "Zuerst den Build erfolgreich abschließen."],
@@ -67,16 +93,23 @@ if (!npmCli) {
     "Whitespace-Fehler im Git-Diff beheben.",
   );
 
-  const failures = results.filter((result) => result.status === "FEHLGESCHLAGEN");
+  const failures = results.filter(
+    (result) => result.status === "FEHLGESCHLAGEN",
+  );
   console.log("\n=== Preflight-Auswertung ===");
   for (const result of results) {
     console.log(`- ${result.status}: ${result.name} — ${result.detail}`);
-    if (result.correction) console.log(`  Nächster Schritt: ${result.correction}`);
+    if (result.correction)
+      console.log(`  Nächster Schritt: ${result.correction}`);
   }
-  console.log("\n`npm audit` ist nicht Teil des Preflights; separat ausführen: `npm run audit`.");
+  console.log(
+    "\n`npm audit` ist nicht Teil des Preflights; separat ausführen: `npm run audit`.",
+  );
 
   if (failures.length > 0) {
-    console.error(`Preflight fehlgeschlagen: ${failures.length} Schritt(e) müssen korrigiert werden.`);
+    console.error(
+      `Preflight fehlgeschlagen: ${failures.length} Schritt(e) müssen korrigiert werden.`,
+    );
     process.exitCode = 1;
   } else {
     console.log("Preflight erfolgreich: alle ausgeführten Schritte bestanden.");

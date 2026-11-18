@@ -2,6 +2,16 @@
 
 Diese Anleitung ist bei Bedarf wiederholbar. Ausgangspunkt ist das Repository-Root. Erst prüfen, dann Änderungen gezielt und nach Freigabe durchführen; fremde oder ungesicherte Änderungen nicht überschreiben.
 
+## Automatischer, nicht-destruktiver Bericht
+
+Vom Repository-Root aus:
+
+```bash
+npm run cleanup:check
+```
+
+Der Bericht geht die fünf Schritte durch und fasst Git-Status, Ignore-Regeln, getrackte Artefakte, Dokumentations- und Linktest, statische Dateiverweise, alte Storage-Bezeichner, Notations-Wrapper und Handoffs zusammen. Mögliche ungenutzte Dateien werden ausschließlich als **Prüfkandidaten** markiert: Eine statische Namenssuche erkennt keine dynamischen Imports oder externen Nutzungen. Es wird nichts gelöscht, verschoben oder aus dem Git-Index entfernt. Der Dokumentationscheck wird ausgeführt; das vollständige `npm run preflight` und manuelle Funktions-, Daten- und Sichtprüfungen bleiben separate Schritte.
+
 ## Vorbereitung
 
 ```bash
