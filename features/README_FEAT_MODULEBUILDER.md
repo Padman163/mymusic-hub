@@ -46,6 +46,7 @@ Warum machen wir das getrennt? Weil so jeder Baustein einzeln geprüft und getes
 - **Was es ist:** Das Regelwerk, das alle Änderungen prüft und sauber verarbeitet, bevor etwas gespeichert wird.
 - **Was es übernimmt:**
   - **Eingabe-Prüfung:** Lehnt unvollständige oder fehlerhafte Eingaben ab – zum Beispiel Module ohne Titel, ungültige Bestehensgrenzen (unter 0 % oder über 100 %), fehlerhafte Zusatzkonfigurationen oder Aufgaben, deren Ziel-Modul gar nicht existiert. Bei interaktiven Notenaufgaben wird außerdem geprüft, ob ein Notenschlüssel sowie mindestens eine erwartete Tonhöhe oder Notendauer hinterlegt ist.
+  - **Quellenmarker entfernen:** Generierte Quellenverweise in eckigen Klammern werden aus Modul-, Block- und Aufgabentexten entfernt, bevor die Daten gespeichert werden.
   - **Sauberes Aufräumen (kaskadierendes Löschen):** Beim Löschen eines Moduls werden seine Lernpfad-Aufgaben (`leicht`) entfernt. Quizfragen (`mittel`/`schwer`) verlieren nur die Zuordnung zu diesem Modul; sie bleiben für andere Module oder im Pool erhalten.
   - **Modul-Zusammenfassung auf Knopfdruck:** Zählt Theorie- und Praxisblöcke, Aufgaben je Lern-Spur (`leicht`, `mittel`, `schwer`) und die gewichteten XP eines Moduls.
 - **Warum:** Lernpfad-Aufgaben bleiben eindeutig zugeordnet; wiederverwendbare Quizfragen werden nicht versehentlich zusammen mit einem Modul gelöscht.

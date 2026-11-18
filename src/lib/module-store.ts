@@ -54,6 +54,12 @@ function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
 }
 
+const citationMarkerPattern = String.raw`[ \t]*\[${"cite"}\b[^\]]*\][ \t]*`;
+
+function removeCitationMarkers(value: string): string {
+  return value.replace(new RegExp(citationMarkerPattern, "gi"), " ");
+}
+
 function isStringArray(
   value: unknown,
   requireNonEmptyItems = false,
@@ -567,10 +573,12 @@ export function validateQuestionInput(
 function clonePracticeBlock(block: PracticeBlock): PracticeBlock {
   return {
     id: block.id.trim(),
-    title: block.title.trim(),
-    markdownContent: block.markdownContent,
+    title: removeCitationMarkers(block.title).trim(),
+    markdownContent: removeCitationMarkers(block.markdownContent),
     ...(block.baseXp !== undefined ? { baseXp: block.baseXp } : {}),
-    ...(block.tags !== undefined ? { tags: [...block.tags] } : {}),
+    ...(block.tags !== undefined
+      ? { tags: block.tags.map((tag) => removeCitationMarkers(tag).trim()) }
+      : {}),
   };
 }
 
@@ -578,19 +586,21 @@ function cloneTheoryBlock(block: TheoryBlock): TheoryBlock {
   return {
     id: block.id.trim(),
     order: block.order,
-    title: block.title.trim(),
-    markdownContent: block.markdownContent,
+    title: removeCitationMarkers(block.title).trim(),
+    markdownContent: removeCitationMarkers(block.markdownContent),
     ...(block.groupId !== undefined ? { groupId: block.groupId.trim() } : {}),
     ...(block.groupTitle !== undefined
-      ? { groupTitle: block.groupTitle.trim() }
+      ? { groupTitle: removeCitationMarkers(block.groupTitle).trim() }
       : {}),
     ...(block.baseXp !== undefined ? { baseXp: block.baseXp } : {}),
-    ...(block.tags !== undefined ? { tags: [...block.tags] } : {}),
+    ...(block.tags !== undefined
+      ? { tags: block.tags.map((tag) => removeCitationMarkers(tag).trim()) }
+      : {}),
     ...(block.visualComponent !== undefined
       ? { visualComponent: block.visualComponent }
       : {}),
     ...(block.visualPropsJson !== undefined
-      ? { visualPropsJson: block.visualPropsJson }
+      ? { visualPropsJson: removeCitationMarkers(block.visualPropsJson) }
       : {}),
   };
 }
@@ -639,12 +649,16 @@ export function upsertModule(
       moduleData.order ??
       existing?.order ??
       db.modules.reduce((highest, mod) => Math.max(highest, mod.order), 0) + 1,
-    title: moduleData.title.trim(),
-    description: moduleData.description ?? existing?.description ?? "",
+    title: removeCitationMarkers(moduleData.title).trim(),
+    description: removeCitationMarkers(
+      moduleData.description ?? existing?.description ?? "",
+    ).trim(),
     scope,
     level: moduleData.level ?? existing?.level ?? 100,
     ...(dStage !== undefined ? { dStage } : {}),
-    tags: [...(moduleData.tags ?? existing?.tags ?? [])],
+    tags: (moduleData.tags ?? existing?.tags ?? []).map((tag) =>
+      removeCitationMarkers(tag).trim(),
+    ),
     ...(prerequisiteModuleIds !== undefined
       ? { prerequisiteModuleIds: prerequisiteModuleIds.map((id) => id.trim()) }
       : {}),
@@ -681,7 +695,9 @@ export function upsertModule(
               ? { groupId: entry.groupId.trim() }
               : {}),
             ...(entry.groupTitle !== undefined
-              ? { groupTitle: entry.groupTitle.trim() }
+              ? {
+                  groupTitle: removeCitationMarkers(entry.groupTitle).trim(),
+                }
               : {}),
           })),
         }
@@ -689,6 +705,11 @@ export function upsertModule(
     createdAt: moduleData.createdAt ?? existing?.createdAt ?? now,
     updatedAt: moduleData.updatedAt ?? now,
   };
+
+  const normalizedValidation = validateModuleInput(normalizedModule);
+  if (!normalizedValidation.valid) {
+    throw new Error(normalizedValidation.errors.join(" "));
+  }
 
   const modules =
     existingIndex >= 0
@@ -782,21 +803,41 @@ export function upsertQuestion(
     moduleIds,
     targetLane,
     questionType: questionData.questionType,
-    prompt: questionData.prompt.trim(),
-    ...(options !== undefined ? { options: [...options] } : {}),
+    prompt: removeCitationMarkers(questionData.prompt).trim(),
+    ...(options !== undefined
+      ? {
+          options: options.map((option) =>
+            removeCitationMarkers(option).trim(),
+          ),
+        }
+      : {}),
     correctAnswers: [
-      ...(questionData.correctAnswers ?? existing?.correctAnswers ?? []),
+      ...(questionData.correctAnswers ?? existing?.correctAnswers ?? []).map(
+        (answer) => removeCitationMarkers(answer).trim(),
+      ),
     ],
     ...(notationTask !== undefined
       ? { notationTask: cloneNotationTask(notationTask) }
       : {}),
-    explanation: questionData.explanation ?? existing?.explanation ?? "",
+    explanation: removeCitationMarkers(
+      questionData.explanation ?? existing?.explanation ?? "",
+    ).trim(),
     baseXp:
       questionData.baseXp ??
       existing?.baseXp ??
       getDefaultBaseXpForLane(targetLane),
-    tags: [...(questionData.tags ?? existing?.tags ?? [])],
+    tags: (questionData.tags ?? existing?.tags ?? []).map((tag) =>
+      removeCitationMarkers(tag).trim(),
+    ),
   };
+
+  const normalizedValidation = validateQuestionInput(
+    normalizedQuestion,
+    db.modules,
+  );
+  if (!normalizedValidation.valid) {
+    throw new Error(normalizedValidation.errors.join(" "));
+  }
 
   const questions =
     existingIndex >= 0

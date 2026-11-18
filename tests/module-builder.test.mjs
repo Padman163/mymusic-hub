@@ -70,6 +70,8 @@ describe("xp-tags Konfiguration & Berechnung", () => {
 });
 
 describe("module-store Validierung & Store-Operationen", () => {
+  const sourceMarker = (number) => `[${"cite"}: ${number}]`;
+
   it("speichert explizite Voraussetzungen und erhält sie bei Teiländerungen", () => {
     const empty = createEmptyModulesDatabase();
     const db = upsertModule(empty, { id: "elementarlehre", title: "Elementarlehre" });
@@ -112,6 +114,53 @@ describe("module-store Validierung & Store-Operationen", () => {
     expect(db.modules[0].contentOrder).toHaveLength(2);
     expect(validateModuleInput({ id: "mod", title: "Modul", contentOrder: [{ kind: "theory", id: "x" }, { kind: "theory", id: "x" }] }).valid).toBe(false);
     expect(validateModuleInput({ id: "mod", title: "Modul", contentOrder: [{ kind: "quiz", id: "x" }] }).valid).toBe(false);
+  });
+
+  it("entfernt Quellenmarker aus Modul- und Aufgabentexten beim Speichern", () => {
+    let db = upsertModule(createEmptyModulesDatabase(), {
+      id: "mod",
+      title: `Modul ${sourceMarker(1)}`,
+      description: `Beschreibung ${sourceMarker(2)}`,
+      theoryBlocks: [{
+        id: "tb",
+        order: 1,
+        title: `Theorie ${sourceMarker(3)}`,
+        markdownContent: `Text ${sourceMarker(4)} weiter`,
+      }],
+      practiceBlocks: [{
+        id: "pb",
+        title: `Praxis ${sourceMarker(5)}`,
+        markdownContent: `Übung ${sourceMarker(6)} weiter`,
+      }],
+    });
+
+    expect(db.modules[0]).toMatchObject({
+      title: "Modul",
+      description: "Beschreibung",
+    });
+    expect(db.modules[0].theoryBlocks[0]).toMatchObject({
+      title: "Theorie",
+      markdownContent: "Text weiter",
+    });
+    expect(db.modules[0].practiceBlocks[0]).toMatchObject({
+      title: "Praxis",
+      markdownContent: "Übung weiter",
+    });
+
+    db = upsertQuestion(db, {
+      id: "q",
+      moduleIds: [],
+      targetLane: "mittel",
+      questionType: "numeric_input",
+      prompt: `Frage ${sourceMarker(7)}`,
+      correctAnswers: [`Antwort ${sourceMarker(8)}`],
+      explanation: `Erklärung ${sourceMarker(9)}`,
+    });
+    expect(db.questions[0]).toMatchObject({
+      prompt: "Frage",
+      correctAnswers: ["Antwort"],
+      explanation: "Erklärung",
+    });
   });
 
   it("speichert gruppierte Theorie- und Übungseinträge in der Modulreihenfolge", () => {

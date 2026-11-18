@@ -4,6 +4,79 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 const root = process.cwd();
+const ignoredDirectories = new Set([
+  ".astro",
+  ".git",
+  ".netlify",
+  "coverage",
+  "dist",
+  "node_modules",
+  "test-results",
+]);
+const textExtensions = new Set([
+  ".astro",
+  ".cjs",
+  ".css",
+  ".html",
+  ".js",
+  ".json",
+  ".md",
+  ".mdx",
+  ".mjs",
+  ".scss",
+  ".ts",
+  ".tsx",
+  ".txt",
+  ".yaml",
+  ".yml",
+]);
+const citationMarkerPattern = String.raw`\[${"cite"}\b[^\]]*\]`;
+
+async function findCitationMarkers(
+  directory: string,
+  relativeDirectory: string,
+  includeExtensionlessFiles = false,
+): Promise<string[]> {
+  const violations: string[] = [];
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    const relativePath = path.join(relativeDirectory, entry.name);
+    const fullPath = path.join(directory, entry.name);
+    if (entry.isDirectory()) {
+      if (!ignoredDirectories.has(entry.name)) {
+        violations.push(
+          ...(await findCitationMarkers(fullPath, relativePath, includeExtensionlessFiles)),
+        );
+      }
+      continue;
+    }
+
+    if (
+      !entry.isFile() ||
+      (!includeExtensionlessFiles &&
+        !textExtensions.has(path.extname(entry.name).toLowerCase()))
+    ) {
+      continue;
+    }
+
+    const content = await readFile(fullPath, "utf8");
+    const matches = [...content.matchAll(new RegExp(citationMarkerPattern, "gi"))];
+    if (matches.length > 0) {
+      violations.push(`${relativePath}: ${matches.length} Quellenmarker`);
+    }
+  }
+  return violations;
+}
+
+async function findLocalBlobCitationMarkers(): Promise<string[]> {
+  const entriesPath = path.join(root, ".netlify", "blobs-serve", "entries");
+  try {
+    await stat(entriesPath);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return [];
+    throw error;
+  }
+  return findCitationMarkers(entriesPath, path.join(".netlify", "blobs-serve", "entries"), true);
+}
 
 describe("README-Dokumentation", () => {
   it("verweist auf vorhandene lokale Ziele und npm-Skripte", async () => {
@@ -71,5 +144,14 @@ describe("README-Dokumentation", () => {
     }
 
     expect(errors).toEqual([]);
+  });
+
+  it("enthält keine Quellenmarker in Projekttexten oder lokalen Modul-Blobs", async () => {
+    const violations = [
+      ...(await findCitationMarkers(root, ".", false)),
+      ...(await findLocalBlobCitationMarkers()),
+    ];
+
+    expect(violations).toEqual([]);
   });
 });
