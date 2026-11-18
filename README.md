@@ -24,6 +24,7 @@ Die Oberfläche läuft unter `http://localhost:4321`. Erst-Setup und Start mit N
 | [README_TESTING.md](README_TESTING.md) | Teststrategie und Release-Audit |
 | [README_WORKSPACE_SETUP.md](README_WORKSPACE_SETUP.md) | Einrichtung, Netlify und Umgebungsvariablen |
 | [README_FEAT.md](features/README_FEAT.md) | Übersicht über Funktionen und Fachmodule |
+| [Wiki: Beiträge verwalten](src/content/docs/wiki/beitraege.mdx) | Bedienungsanleitung für Nutzer |
 | [README_FEAT_MODULEBUILDER.md](features/README_FEAT_MODULEBUILDER.md) | Module Builder – Autorenwerkbank & Lernpfad |
 | [README_FEAT_NETLIFYBLOB.md](features/README_FEAT_NETLIFYBLOB.md) | Netlify Blobs – Einrichtung, Datenmigration und Abnahme |
 | [README_FEAT_NOTATION.md](features/README_FEAT_NOTATION.md) | API und Architektur der Notation |

@@ -424,6 +424,10 @@ export default defineConfig({
       },
       sidebar: [
         {
+          label: "Wiki",
+          items: [{ label: "Beiträge verwalten", slug: "wiki/beitraege" }],
+        },
+        {
           label: "Projektierung",
           items: [
             { label: "Beiträge", slug: "projektierung/beitraege" },

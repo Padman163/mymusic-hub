@@ -2,6 +2,8 @@
 
 Diese Referenz beschreibt die Erfassung und Verwaltung von Bugs, Features und Decisions auf der Seite [Projektierung → Beiträge](../src/content/docs/projektierung/beitraege.mdx). Die Beitragsliste ist eine browserseitige Oberfläche; Speicherung und Prüfung laufen über `/api/contributions` und Netlify Blobs. Bereitstellung, lokale Entwicklung und Verhalten des gemeinsam genutzten Blob-Stores sind in der [Netlify-Blob-Referenz](README_FEAT_NETLIFYBLOB.md) beschrieben.
 
+Die nutzerorientierte [Bedienungsanleitung für Beiträge](../src/content/docs/wiki/beitraege.mdx) steht im Wiki.
+
 ## Fachliches Modell
 
 Ein Beitrag besteht aus einer ID, einem Typ, Titel, Beschreibung und Erstellungszeitpunkt. Bereich, Priorität, Status und Checkliste sind optionale Felder im gespeicherten Modell, damit auch ältere Einträge ohne diese Angaben gelesen werden können.

@@ -46,6 +46,18 @@ test('filtert Beiträge standardmäßig nach offenen Status', async ({ page }) =
   await expect(page.locator('#contribution-list > li')).toHaveCount(3);
 });
 
+test('verbindet Beiträge mit der Wiki-Anleitung', async ({ page }) => {
+  await page.route('**/api/contributions', (route) =>
+    route.fulfill({ json: { contributions: [] } }),
+  );
+  await page.goto('/projektierung/beitraege/');
+  await page.getByRole('link', { name: 'Anleitung: Beiträge verwalten' }).click();
+  await expect(page).toHaveURL('/wiki/beitraege/');
+  await expect(page.getByRole('heading', { level: 1, name: 'Beiträge verwalten' })).toBeVisible();
+  await page.getByRole('link', { name: 'Projektierung → Beiträge' }).click();
+  await expect(page).toHaveURL('/projektierung/beitraege/');
+});
+
 test('gruppiert Builder-Karten und hält Aktionen bedienbar', async ({ page }) => {
   await page.goto('/projektierung/modul-builder/');
   await expect(page.getByRole('tab')).toHaveText([
