@@ -69,6 +69,10 @@ export function createDrumPatternElement(
   const {
     steps = DEFAULT_DRUM_PATTERN_PROPS.steps,
     bpm = DEFAULT_DRUM_PATTERN_PROPS.bpm,
+    showPlaybackButton = DEFAULT_DRUM_PATTERN_PROPS.showPlaybackButton,
+    showTempo = DEFAULT_DRUM_PATTERN_PROPS.showTempo,
+    showPlaybackHint = DEFAULT_DRUM_PATTERN_PROPS.showPlaybackHint,
+    showAudioHelp = DEFAULT_DRUM_PATTERN_PROPS.showAudioHelp,
     timeSignature = DEFAULT_DRUM_PATTERN_PROPS.timeSignature,
     resolution = DEFAULT_DRUM_PATTERN_PROPS.resolution,
     highlightTrack = DEFAULT_DRUM_PATTERN_PROPS.highlightTrack,
@@ -121,6 +125,10 @@ export function createDrumPatternElement(
   if (enableAudio) {
     pattern.dataset.enableAudio = "true";
     pattern.dataset.bpm = String(bpm);
+    pattern.dataset.showPlaybackButton = String(showPlaybackButton);
+    pattern.dataset.showTempo = String(showTempo);
+    pattern.dataset.showPlaybackHint = String(showPlaybackHint);
+    pattern.dataset.showAudioHelp = String(showAudioHelp);
     pattern.dataset.timeSignature = timeSignature;
     pattern.dataset.resolution = resolution;
   }
@@ -473,15 +481,14 @@ function initializeDrumPatternAudio(pattern: HTMLElement): void {
   status.className = "drum-audio-status";
   status.setAttribute("role", "status");
   status.hidden = true;
-  const help = pattern.ownerDocument.createElement("a");
-  help.className = "drum-audio-help";
-  help.href = "/wiki/drum-pattern/";
-  help.textContent = "Hilfe zur Drum-Audiowiedergabe";
-  pattern.append(status, help);
-  attachDrumPatternPlayback(pattern, (message) => {
-    status.hidden = !message;
-    status.textContent = message;
-  });
+  pattern.append(status);
+  if (pattern.dataset.showAudioHelp !== "false") {
+    const help = pattern.ownerDocument.createElement("a");
+    help.className = "drum-audio-help";
+    help.href = "/wiki/drum-pattern/";
+    help.textContent = "Hilfe zur Drum-Audiowiedergabe";
+    pattern.append(help);
+  }
   const timers = new WeakMap<HTMLElement, ReturnType<typeof setTimeout>>();
 
   rows.forEach((row) => {
@@ -508,7 +515,17 @@ function initializeDrumPatternAudio(pattern: HTMLElement): void {
       .forEach((cell) => updateAudioTrigger(cell, name));
   });
 
+  attachDrumPatternPlayback(pattern, (message) => {
+    status.hidden = !message;
+    status.textContent = message;
+  });
+
   function getTrigger(event: Event): HTMLElement | null {
+    if (
+      event.target instanceof Element &&
+      event.target.closest("input, button")
+    )
+      return null;
     return event.target instanceof Element
       ? event.target.closest<HTMLElement>("[data-audio-trigger]")
       : null;
@@ -610,7 +627,10 @@ export function initializeDrumPatterns(root: ParentNode): void {
       rows.forEach((candidate) =>
         candidate.classList.toggle("selected", candidate === row),
       );
-      if (hasVelocity) {
+      if (
+        hasVelocity &&
+        !(isInteractive && pattern.dataset.enableAudio === "true")
+      ) {
         rows.forEach((candidate) => {
           const target = candidate.dataset.soundUrl
             ? candidate.querySelector<HTMLElement>(".track-info")
@@ -629,6 +649,11 @@ export function initializeDrumPatterns(root: ParentNode): void {
         row.dataset.bound = "true";
         row.addEventListener("click", () => selectRow(row));
         row.addEventListener("keydown", (event) => {
+          if (
+            event.target instanceof Element &&
+            event.target.closest("input, button")
+          )
+            return;
           if (event.key !== "Enter" && event.key !== " ") return;
           event.preventDefault();
           selectRow(row);

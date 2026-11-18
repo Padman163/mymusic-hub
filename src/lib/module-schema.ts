@@ -59,6 +59,10 @@ export interface DrumPatternProps {
   highlightTracks?: string[];
   interactive?: boolean;
   enableAudio?: boolean;
+  showPlaybackButton?: boolean;
+  showTempo?: boolean;
+  showPlaybackHint?: boolean;
+  showAudioHelp?: boolean;
   showVelocity?: boolean;
   showTrackNote?: boolean;
   showFooter?: boolean;
@@ -112,6 +116,10 @@ export const DEFAULT_DRUM_PATTERN_PROPS: Required<
 > = {
   steps: 8,
   bpm: 120,
+  showPlaybackButton: true,
+  showTempo: true,
+  showPlaybackHint: true,
+  showAudioHelp: true,
   timeSignature: "4/4",
   resolution: "1/8",
   highlightTrack: "",
@@ -158,6 +166,10 @@ export function getDrumPatternPropsErrors(value: unknown): string[] {
     "highlightTracks",
     "interactive",
     "enableAudio",
+    "showPlaybackButton",
+    "showTempo",
+    "showPlaybackHint",
+    "showAudioHelp",
     "showVelocity",
     "showTrackNote",
     "showFooter",
@@ -258,6 +270,10 @@ export function getDrumPatternPropsErrors(value: unknown): string[] {
   for (const name of [
     "interactive",
     "enableAudio",
+    "showPlaybackButton",
+    "showTempo",
+    "showPlaybackHint",
+    "showAudioHelp",
     "showVelocity",
     "showTrackNote",
     "showFooter",

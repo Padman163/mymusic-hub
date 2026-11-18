@@ -23,20 +23,50 @@ Wenn die Anschlagzeile sichtbar ist, wählt ein Spurklick deren Werte aus.
 
 ## Pattern durchlaufen lassen
 
-1. Stelle am Pattern das gewünschte **Tempo (Viertel-BPM)** ein. Standard ist
-   `120`; kleinere Werte spielen langsamer, größere schneller.
-2. Verlasse das BPM-Eingabefeld mit **Tab** und fokussiere das Pattern oder eine
-   seiner Zellen. Du kannst auch auf eine freie Stelle im Raster klicken.
-3. Halte die **Leertaste** gedrückt: Das Pattern startet bei Step 1, spielt alle
-   hinterlegten Instrumente gemeinsam und wiederholt sich nach dem letzten Step.
-   Die weiße Umrandung zeigt die aktuelle Position, auch bei Pausen.
-4. Lasse die **Leertaste** los: Der Lauf und noch klingende Sounds dieser Wiedergabe
-   stoppen sofort. Beim nächsten Drücken beginnt das Pattern wieder bei Step 1.
+1. Stelle, falls angezeigt, am Pattern das gewünschte **Tempo (Viertel-BPM)** ein.
+   Ohne Tempo-Feld gilt das vom Autor vorgegebene Tempo; Standard ist `120`.
+2. Wähle bei Bedarf die gewünschten Spuren aus; ohne Markierung werden alle
+   Spuren mit Sound abgespielt.
+3. Tippe auf das **Play-Dreieck** links im Header. Das Pattern startet bei Step 1,
+   wiederholt sich nach dem letzten Step und läuft ohne Gedrückthalten weiter.
+   Das Symbol wechselt zum **Stop-Quadrat**. Die weiße Umrandung zeigt die
+   Position, auch bei Pausen.
+4. Tippe auf das **Stop-Quadrat**: Der Lauf und noch klingende Sounds dieser
+   Wiedergabe stoppen sofort. Beim nächsten Play beginnt das Pattern wieder bei Step 1.
 
-Die Leertaste verändert keine Zellen, auch nicht im editierbaren Raster.
-Außerhalb des Patterns sowie in Eingabefeldern und Links startet sie keinen Lauf.
-Fokuswechsel aus dem Raster, Tabwechsel oder Verlassen der Seite stoppen ebenfalls.
-Eine Tempoänderung gilt beim nächsten Start.
+Der kompakte Symbol-Button ist so hoch wie eine Rasterzelle. Button, Tempo-Feld,
+Bedienhinweis, Hilfe-Link und Footer können je nach Beispiel unabhängig
+ausgeblendet sein. Ohne Button kannst du die Wiedergabe mit der Leertaste bedienen.
+
+### Spuren auswählen
+
+Hervorgehobene Spuren sind die voreingestellte Wiedergabe-Auswahl. Ist das
+Pattern interaktiv, kannst du diese Auswahl ändern:
+
+- **Klick auf einen Spurkopf:** Nur diese Spur auswählen.
+- **Shift+Klick auf einen Spurkopf:** Spur zur Auswahl hinzufügen oder daraus entfernen.
+- **Auswahlkästchen am Spurkopf:** Spuren einzeln an- und abwählen, auch per Touch
+  oder mit **Tab** und **Leertaste**, ohne einen Vorschauton auszulösen.
+- **Keine Spur markiert:** Alle Spuren mit Sound werden abgespielt.
+
+Die Markierung und die Auswahlkästchen gehören zur Wiedergabe. Ein unterstrichener
+Spurname zeigt dagegen nur, welche Spur gerade in der Anschlagzeile angezeigt wird.
+Die Wiedergabe-Auswahl wird bei jedem Start übernommen; Änderungen während eines
+Laufs gelten beim nächsten Start. Einzelne Sounds kannst du unabhängig davon
+weiterhin vorhören.
+
+### Alternative mit Tastatur
+
+Verlasse das BPM-Feld mit **Tab** und fokussiere das Pattern oder eine seiner
+Zellen. Halte die **Leertaste** gedrückt, um dieselbe Spurauswahl ab Step 1
+abzuspielen. Loslassen stoppt sofort; erneutes Drücken startet wieder vorne.
+Dabei werden keine Zellen verändert.
+
+Außerhalb des Patterns sowie in Eingabefeldern und Links startet die Leertaste
+keinen Halte-Lauf. Fokuswechsel aus dem Raster stoppt die Halte-Wiedergabe,
+nicht aber einen per Play gestarteten Lauf. Tab-/Fensterwechsel oder Verlassen
+der Seite stoppen beide Varianten. Eine Tempoänderung beendet den aktuellen
+Lauf und gilt beim nächsten Start.
 
 **Zählweise:** BPM bezieht sich hier immer auf Viertelnoten. Bei `120 BPM` dauert
 eine Viertelnote `0,5 s`, ein Achtel-Step `0,25 s` und ein Sechzehntel-Step

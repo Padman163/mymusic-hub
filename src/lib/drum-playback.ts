@@ -1,3 +1,4 @@
+import { addIcon } from "./contribution-types.ts";
 import { drumAudioEngine } from "./drum-audio.ts";
 import { DEFAULT_DRUM_PATTERN_PROPS } from "./module-schema.ts";
 import { validateTimeSignature } from "./time-signature.ts";
@@ -51,6 +52,10 @@ export function attachDrumPatternPlayback(
   const document = pattern.ownerDocument;
   const window = document.defaultView;
   if (!window) return;
+  const buttonContainer =
+    pattern.dataset.showPlaybackButton === "false"
+      ? null
+      : pattern.querySelector<HTMLElement>(".pattern-header .header-spacer");
   const controls = document.createElement("div");
   controls.className = "drum-playback-controls";
   const label = document.createElement("label");
@@ -64,10 +69,13 @@ export function attachDrumPatternPlayback(
   tempo.value = pattern.dataset.bpm ?? String(DEFAULT_DRUM_PATTERN_PROPS.bpm);
   label.append(tempo);
   const hint = document.createElement("span");
-  hint.textContent =
-    "Pattern fokussieren und Leertaste halten: abspielen. Loslassen: stoppen.";
-  controls.append(label, hint);
-  pattern.prepend(controls);
+  hint.className = "drum-playback-hint";
+  hint.textContent = buttonContainer
+    ? "Play/Stop oder Leertaste halten. Spurauswahl wird beim Start übernommen."
+    : "Leertaste halten. Spurauswahl wird beim Start übernommen.";
+  if (pattern.dataset.showTempo !== "false") controls.append(label);
+  if (pattern.dataset.showPlaybackHint !== "false") controls.append(hint);
+  if (controls.hasChildNodes()) pattern.prepend(controls);
   pattern.tabIndex = 0;
   pattern.setAttribute("role", "group");
   pattern.setAttribute(
@@ -75,10 +83,90 @@ export function attachDrumPatternPlayback(
     "Schlagzeug-Pattern. Leertaste halten zum Abspielen.",
   );
 
+  const tracks = Array.from(
+    pattern.querySelectorAll<HTMLElement>(".track-row:not(.velocity-row)"),
+  );
+  if (pattern.dataset.interactive === "true") {
+    tracks.forEach((row) => {
+      const header = row.querySelector<HTMLElement>(".track-info");
+      const name = header?.querySelector<HTMLElement>(".track-name");
+      if (!header || !name) return;
+      row.removeAttribute("role");
+      row.removeAttribute("aria-pressed");
+      row.removeAttribute("tabindex");
+      header.setAttribute("role", "group");
+      header.setAttribute("aria-label", `Spur ${name.textContent}`);
+      header.removeAttribute("aria-pressed");
+      header.removeAttribute("tabindex");
+      if (row.dataset.soundUrl) {
+        name.dataset.audioTrigger = "true";
+        name.setAttribute("role", "button");
+        name.setAttribute("aria-label", `${name.textContent} abspielen`);
+        name.tabIndex = 0;
+      }
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.className = "drum-track-toggle";
+      checkbox.checked = row.classList.contains("highlighted");
+      checkbox.setAttribute(
+        "aria-label",
+        `${name.textContent} für Pattern-Wiedergabe auswählen`,
+      );
+      header.prepend(checkbox);
+      checkbox.addEventListener("change", () => {
+        row.classList.toggle("highlighted", checkbox.checked);
+      });
+      header.addEventListener("click", (event) => {
+        if (event.target instanceof Element && event.target.closest("input"))
+          return;
+        const selected = new Set(
+          event.shiftKey
+            ? tracks.filter((track) => track.classList.contains("highlighted"))
+            : [],
+        );
+        if (event.shiftKey && selected.has(row)) selected.delete(row);
+        else selected.add(row);
+        tracks.forEach((track) => {
+          const checked = selected.has(track);
+          track.classList.toggle("highlighted", checked);
+          const toggle =
+            track.querySelector<HTMLInputElement>(".drum-track-toggle");
+          if (toggle) toggle.checked = checked;
+        });
+      });
+    });
+  }
+
+  const playButton = document.createElement("button");
+  playButton.type = "button";
+  playButton.className = "drum-playback-toggle";
+  addIcon(playButton, ["M8 5L19 12L8 19Z"]);
+  const icon = playButton.querySelector("svg");
+  icon?.setAttribute("fill", "currentColor");
+  icon?.setAttribute("stroke", "none");
+
+  function setButtonPlaying(playing: boolean): void {
+    const label = playing ? "Pattern stoppen" : "Pattern abspielen";
+    playButton.setAttribute("aria-label", label);
+    playButton.setAttribute("aria-pressed", String(playing));
+    playButton.title = label;
+    icon?.querySelector("path")?.setAttribute(
+      "d",
+      playing ? "M6 6h12v12H6Z" : "M8 5L19 12L8 19Z",
+    );
+  }
+
+  setButtonPlaying(false);
+  if (buttonContainer) {
+    buttonContainer.removeAttribute("aria-hidden");
+    buttonContainer.classList.add("has-playback-controls");
+    buttonContainer.append(playButton);
+  }
   const headers = pattern.querySelectorAll<HTMLElement>(
     ".pattern-header .step-number",
   );
   let run: AbortController | undefined;
+  let playbackMode: "hold" | "toggle" | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined;
   const visualTimers = new Set<ReturnType<typeof setTimeout>>();
 
@@ -91,6 +179,8 @@ export function attachDrumPatternPlayback(
   function stop(): void {
     run?.abort();
     run = undefined;
+    playbackMode = undefined;
+    setButtonPlaying(false);
     clearTimeout(timer);
     visualTimers.forEach(clearTimeout);
     visualTimers.clear();
@@ -114,7 +204,7 @@ export function attachDrumPatternPlayback(
     setStatus(valid ? "" : "Bitte ein endliches Tempo größer 0 BPM eingeben.");
   });
 
-  const start = async (): Promise<void> => {
+  const start = async (mode: "hold" | "toggle"): Promise<void> => {
     if (run) return;
     let stepSeconds: number;
     try {
@@ -132,14 +222,19 @@ export function attachDrumPatternPlayback(
 
     const controller = new AbortController();
     run = controller;
+    playbackMode = mode;
+    setButtonPlaying(true);
     const { signal } = controller;
-    const rows = pattern.querySelectorAll<HTMLElement>(
-      ".track-row[data-sound-url]",
+    const marked = tracks.filter((row) =>
+      row.classList.contains("highlighted"),
+    );
+    const rows = (marked.length ? marked : tracks).filter(
+      (row) => row.dataset.soundUrl,
     );
     document.addEventListener(
       "keyup",
       (event) => {
-        if (!isSpace(event)) return;
+        if (!isSpace(event) || mode !== "hold") return;
         event.preventDefault();
         stop();
       },
@@ -230,6 +325,10 @@ export function attachDrumPatternPlayback(
     schedule();
   };
 
+  playButton.addEventListener("click", () => {
+    if (run) stop();
+    else void start("toggle");
+  });
   pattern.addEventListener("pointerdown", (event) => {
     if (
       acceptsSpace(event.target) &&
@@ -254,11 +353,12 @@ export function attachDrumPatternPlayback(
         return;
       event.preventDefault();
       event.stopPropagation();
-      if (!event.repeat) void start();
+      if (!event.repeat) void start("hold");
     },
     true,
   );
   pattern.addEventListener("focusout", (event) => {
+    if (playbackMode !== "hold" || event.relatedTarget === playButton) return;
     if (
       !(event.relatedTarget instanceof Node) ||
       !pattern.contains(event.relatedTarget) ||

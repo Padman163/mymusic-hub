@@ -64,6 +64,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  document.dispatchEvent(new Event("astro:before-swap"));
   document.dispatchEvent(new KeyboardEvent("keyup", { key: " " }));
   document.body.replaceChildren();
   vi.restoreAllMocks();
@@ -341,6 +342,7 @@ describe("DrumPattern-Audiobedienung", () => {
       expect(pattern.querySelector("[data-audio-trigger]")).toBeNull();
       expect(pattern.querySelector(".drum-audio-help")).toBeNull();
       expect(pattern.querySelector(".drum-playback-controls")).toBeNull();
+      expect(pattern.querySelector(".drum-playback-toggle")).toBeNull();
     }
     expect(drumAudioEngine.preloadSounds).not.toHaveBeenCalled();
     expect(drumAudioEngine.playSound).not.toHaveBeenCalled();
@@ -351,12 +353,18 @@ describe("DrumPattern-Audiobedienung", () => {
     expect(getDrumPatternPropsErrors({ enableAudio: "true" }).join()).toContain("enableAudio");
     expect(getDrumPatternPropsErrors({ patternData: [{ ...tracks[0], soundUrl: "" }] }).join()).toContain("soundUrl");
     expect(getDrumPatternPropsErrors({ bpm: 93.5 })).toEqual([]);
+    expect(getDrumPatternPropsErrors({
+      showPlaybackButton: false, showTempo: false, showPlaybackHint: false, showAudioHelp: false,
+    })).toEqual([]);
+    for (const name of ["showPlaybackButton", "showTempo", "showPlaybackHint", "showAudioHelp"]) {
+      expect(getDrumPatternPropsErrors({ [name]: "false" }).join()).toContain(name);
+    }
     for (const bpm of [0, -1, Number.NaN, Number.POSITIVE_INFINITY, "120"]) {
       expect(getDrumPatternPropsErrors({ bpm }).join()).toContain("bpm");
     }
   });
 
-  describe("Haltewiedergabe", () => {
+  describe("Pattern-Wiedergabe", () => {
     beforeEach(() => {
       vi.useFakeTimers();
       vi.setSystemTime(0);
@@ -367,6 +375,205 @@ describe("DrumPattern-Audiobedienung", () => {
       target.dispatchEvent(event);
       return event;
     }
+
+    it.each([true, false])("setzt den Play-Button unabhängig vom Footer links in den Header (showFooter=%s)", (showFooter) => {
+      const pattern = render({ showFooter, showFooterInfo: false });
+      initializeDrumPatterns(pattern);
+      const container = cell(pattern, ".pattern-header .header-spacer");
+      const button = cell(pattern, ".drum-playback-toggle");
+      expect(container.firstElementChild).toBe(button);
+      expect(container.hasAttribute("aria-hidden")).toBe(false);
+      expect(pattern.querySelectorAll(".pattern-header .step-number")).toHaveLength(4);
+      expect(pattern.querySelector(".pattern-footer .drum-playback-toggle")).toBeNull();
+      expect(pattern.querySelector(".pattern-footer")?.getAttribute("aria-hidden")).toBe(showFooter ? "true" : undefined);
+      expect(button.textContent).toBe("");
+      expect(button.getAttribute("aria-label")).toBe("Pattern abspielen");
+      expect(button.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
+      expect(button.getAttribute("aria-pressed")).toBe("false");
+      expect(pattern.querySelectorAll(".drum-playback-toggle")).toHaveLength(1);
+    });
+
+    it.each([true, false])("blendet nur den Play-Button aus und erhält die Haltewiedergabe (showFooter=%s)", async (showFooter) => {
+      const pattern = render({ showPlaybackButton: false, showFooter });
+      expect(pattern.querySelector(".drum-playback-toggle")).toBeNull();
+      expect(Boolean(pattern.querySelector(".pattern-footer"))).toBe(showFooter);
+      expect(cell(pattern, ".pattern-header .header-spacer").getAttribute("aria-hidden")).toBe("true");
+      expect(cell(pattern, ".drum-playback-hint").textContent).not.toContain("Play/Stop");
+      expect(cell(pattern, ".drum-playback-hint").textContent).toContain("Leertaste");
+      pattern.focus();
+      space(pattern);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(pattern.dataset.playing).toBe("true");
+      expect(drumAudioEngine.playSound).toHaveBeenCalled();
+      document.dispatchEvent(new KeyboardEvent("keyup", { key: " ", code: "Space" }));
+      expect(pattern.dataset.playing).toBeUndefined();
+    });
+
+    it("läuft per Button ohne Halten weiter, stoppt und beginnt beim nächsten Play wieder bei Step 1", async () => {
+      const pattern = render();
+      const button = cell(pattern, ".drum-playback-toggle");
+      const playShape = button.querySelector("path")?.getAttribute("d");
+      button.focus();
+      button.click();
+      expect(button.textContent).toBe("");
+      expect(button.getAttribute("aria-label")).toBe("Pattern stoppen");
+      expect(button.querySelector("path")?.getAttribute("d")).not.toBe(playShape);
+      expect(button.getAttribute("aria-pressed")).toBe("true");
+      await vi.advanceTimersByTimeAsync(0);
+      const signal = vi.mocked(drumAudioEngine.playSound).mock.calls[0][2]?.signal;
+      const other = document.createElement("button");
+      document.body.append(other);
+      other.focus();
+      document.dispatchEvent(new KeyboardEvent("keyup", { key: " " }));
+      await vi.advanceTimersByTimeAsync(1125);
+      expect(pattern.dataset.playing).toBe("true");
+      expect(vi.mocked(drumAudioEngine.playSound).mock.calls.filter(([, , options]) => options?.when === 1)).toHaveLength(2);
+      button.click();
+      expect(signal?.aborted).toBe(true);
+      expect(button.getAttribute("aria-label")).toBe("Pattern abspielen");
+      expect(button.querySelector("path")?.getAttribute("d")).toBe(playShape);
+      expect(button.getAttribute("aria-pressed")).toBe("false");
+      expect(pattern.querySelector(".is-current-step")).toBeNull();
+      const count = vi.mocked(drumAudioEngine.playSound).mock.calls.length;
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(drumAudioEngine.playSound).toHaveBeenCalledTimes(count);
+      button.click();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(vi.mocked(drumAudioEngine.playSound).mock.calls.slice(-2).map(([url, , options]) =>
+        [url, options?.when],
+      )).toEqual([["/kick.wav", 2.125], ["/snare.wav", 2.125]]);
+      expect(cell(pattern, ".step-number").classList.contains("is-current-step")).toBe(true);
+    });
+
+    it.each([
+      [{ highlightTrack: "Kick" }, ["/kick.wav"]],
+      [{ highlightTracks: ["Kick", "Snare"] }, ["/kick.wav", "/snare.wav"]],
+      [{ highlightTrack: "Stumm" }, []],
+    ])("begrenzt Button und Leertaste auf hervorgehobene Spuren (%j)", async (props, urls) => {
+      for (const mode of ["button", "hold"]) {
+        const pattern = render(props);
+        if (mode === "button") cell(pattern, ".drum-playback-toggle").click();
+        else space(pattern);
+        await vi.advanceTimersByTimeAsync(0);
+        expect(vi.mocked(drumAudioEngine.playSound).mock.calls.map(([url]) => url)).toEqual(urls);
+        document.dispatchEvent(new Event("astro:before-swap"));
+        vi.mocked(drumAudioEngine.playSound).mockClear();
+      }
+    });
+
+    it("verwechselt die anfängliche Anschlagspur nicht mit einer Wiedergabe-Markierung", async () => {
+      const pattern = render({ interactive: true, showVelocity: true });
+      expect(pattern.querySelectorAll(".track-row.selected")).toHaveLength(1);
+      expect(pattern.querySelector(".track-row.highlighted")).toBeNull();
+      cell(pattern, ".drum-playback-toggle").click();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(vi.mocked(drumAudioEngine.playSound).mock.calls.map(([url]) => url)).toEqual(["/kick.wav", "/snare.wav"]);
+    });
+
+    it("übernimmt Highlights und erlaubt Einfach-/Shift-Mehrfachauswahl sowie das Abwählen aller Spuren", async () => {
+      const pattern = render({ interactive: true, showVelocity: true, highlightTrack: "Kick" });
+      const headers = pattern.querySelectorAll<HTMLElement>(".track-row:not(.velocity-row) .track-info");
+      const toggles = pattern.querySelectorAll<HTMLInputElement>(".drum-track-toggle");
+      expect(Array.from(toggles, (toggle) => toggle.checked)).toEqual([true, false, false]);
+      headers[1].dispatchEvent(new MouseEvent("click", { bubbles: true, shiftKey: true }));
+      expect(Array.from(toggles, (toggle) => toggle.checked)).toEqual([true, true, false]);
+      expect(pattern.querySelectorAll(".track-row.selected")).toHaveLength(1);
+      expect(pattern.querySelectorAll(".track-row.highlighted")).toHaveLength(2);
+      const button = cell(pattern, ".drum-playback-toggle");
+      button.click();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(vi.mocked(drumAudioEngine.playSound).mock.calls.filter(([, , options]) => options?.signal).map(([url]) => url))
+        .toEqual(["/kick.wav", "/snare.wav"]);
+      button.click();
+      headers[1].click();
+      expect(Array.from(toggles, (toggle) => toggle.checked)).toEqual([false, true, false]);
+      headers[1].dispatchEvent(new MouseEvent("click", { bubbles: true, shiftKey: true }));
+      expect(Array.from(toggles, (toggle) => toggle.checked)).toEqual([false, false, false]);
+      vi.mocked(drumAudioEngine.playSound).mockClear();
+      button.click();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(vi.mocked(drumAudioEngine.playSound).mock.calls.filter(([, , options]) => options?.signal).map(([url]) => url))
+        .toEqual(["/kick.wav", "/snare.wav"]);
+    });
+
+    it("ermöglicht additive Touch-Auswahl ohne Vorschauton oder Step-Änderung und ohne verschachtelte Buttons", async () => {
+      const pattern = render({ interactive: true, showVelocity: true });
+      const before = Array.from(pattern.querySelectorAll(".step-cell"), (cell) => cell.classList.contains("active"));
+      const toggle = pattern.querySelector<HTMLInputElement>(".track-row:nth-child(2) .drum-track-toggle");
+      if (!toggle) throw new Error("Spurauswahl fehlt");
+      expect(toggle.closest('[role="button"]')).toBeNull();
+      toggle.click();
+      expect(toggle.checked).toBe(true);
+      expect(space(toggle).defaultPrevented).toBe(false);
+      expect(drumAudioEngine.playSound).not.toHaveBeenCalled();
+      expect(Array.from(pattern.querySelectorAll(".step-cell"), (cell) => cell.classList.contains("active"))).toEqual(before);
+      cell(pattern, ".drum-playback-toggle").click();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(vi.mocked(drumAudioEngine.playSound).mock.calls.map(([url]) => url)).toEqual(["/snare.wav"]);
+    });
+
+    it("übernimmt eine geänderte Auswahl beim nächsten Start", async () => {
+      const pattern = render({ interactive: true, highlightTrack: "Kick" });
+      const button = cell(pattern, ".drum-playback-toggle");
+      button.click();
+      await vi.advanceTimersByTimeAsync(0);
+      cell(pattern, ".track-row:nth-child(2) .drum-track-toggle").click();
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(vi.mocked(drumAudioEngine.playSound).mock.calls.every(([url]) => url === "/kick.wav")).toBe(true);
+      button.click();
+      vi.mocked(drumAudioEngine.playSound).mockClear();
+      button.click();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(vi.mocked(drumAudioEngine.playSound).mock.calls.map(([url]) => url)).toEqual(["/kick.wav", "/snare.wav"]);
+    });
+
+    it("kann einen Button-Start schon während der Audiofreigabe abbrechen", async () => {
+      let unlock!: (value: boolean) => void;
+      vi.mocked(drumAudioEngine.unlock).mockImplementationOnce(() => new Promise((resolve) => {
+        unlock = resolve;
+      }));
+      const pattern = render();
+      const button = cell(pattern, ".drum-playback-toggle");
+      button.click();
+      expect(button.getAttribute("aria-label")).toBe("Pattern stoppen");
+      button.click();
+      expect(button.getAttribute("aria-label")).toBe("Pattern abspielen");
+      unlock(true);
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(drumAudioEngine.playSound).not.toHaveBeenCalled();
+      expect(pattern.dataset.playing).toBeUndefined();
+    });
+
+    it.each([
+      [{ showTempo: false }, ".drum-playback-tempo", [".drum-playback-hint", ".drum-audio-help"]],
+      [{ showPlaybackHint: false }, ".drum-playback-hint", [".drum-playback-tempo", ".drum-audio-help"]],
+      [{ showAudioHelp: false }, ".drum-audio-help", [".drum-playback-tempo", ".drum-playback-hint"]],
+    ] as const)("blendet Audio-Bedienelemente unabhängig aus (%j)", (props, hidden, visible) => {
+      const pattern = render(props);
+      expect(pattern.querySelector(hidden)).toBeNull();
+      visible.forEach((selector) => expect(pattern.querySelector(selector)).not.toBeNull());
+      expect(pattern.querySelector(".drum-playback-toggle")).not.toBeNull();
+    });
+
+    it("spielt mit ausgeblendetem Tempo, Hinweis und Link beim BPM-Prop weiter und zeigt Fehler weiterhin an", async () => {
+      const pattern = render({
+        bpm: 60, resolution: "1/4",
+        showTempo: false, showPlaybackHint: false, showAudioHelp: false,
+      });
+      expect(pattern.querySelector('input[type="number"]')).toBeNull();
+      expect(pattern.querySelector(".drum-playback-controls")).toBeNull();
+      expect(pattern.querySelector(".drum-audio-help")).toBeNull();
+      const button = cell(pattern, ".drum-playback-toggle");
+      button.click();
+      await vi.advanceTimersByTimeAsync(1925);
+      expect(vi.mocked(drumAudioEngine.playSound).mock.calls.map(([, , options]) => options?.when)).toEqual([0, 0, 2]);
+      button.click();
+      vi.mocked(drumAudioEngine.playSound).mockResolvedValue(false);
+      button.click();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(cell(pattern, "[role='status']").hidden).toBe(false);
+      expect(button.getAttribute("aria-label")).toBe("Pattern abspielen");
+    });
 
     it("überspringt Step 1 nicht, wenn die Audiouhr vor dem ersten Scheduler-Aufruf weiterläuft", async () => {
       vi.spyOn(drumAudioEngine, "currentTime", "get")

@@ -99,12 +99,57 @@ Umschalten der Steps erhalten: Ein zuvor aktiver Step erklingt vor dem Ausschalt
 **Haltewiedergabe:** `bpm?: number` setzt das anfängliche Tempo (Standard `120`,
 endliche Zahl größer `0`). Ein beschriftetes BPM-Feld erlaubt lokale Änderungen;
 diese werden nicht gespeichert und gelten beim nächsten Start. Hält der Nutzer
-die Leertaste im fokussierten Pattern oder einer seiner Zellen, laufen alle
-Spuren gemeinsam in einer Schleife ab Step 1. Tastenwiederholungen starten keinen
+die Leertaste im fokussierten Pattern oder einer seiner Zellen, laufen die
+ausgewählten Spuren gemeinsam in einer Schleife ab Step 1. Tastenwiederholungen starten keinen
 zweiten Lauf und ändern keine Steps. Eingabefelder und Links bleiben ausgenommen.
 Loslassen, Fokusverlust aus dem Raster, Fenster-/Tabwechsel, Navigation oder
 Entfernen des Patterns stoppen den Lauf einschließlich klingender und
 vorgeplanter Sounds. Erneutes Drücken startet wieder bei Step 1.
+
+**Play/Stop im Header:** Ein nativer Symbol-Button links im Header startet
+dieselbe Wiedergabe ohne Gedrückthalten. Seine Höhe entspricht `stepSize`,
+seine Breite dem 1,125-Fachen davon. Das gefüllte Play-Dreieck wechselt
+unmittelbar zum Stop-Quadrat, auch während der Audiofreigabe. Es gibt keinen
+sichtbaren Button-Text; `aria-label`, `aria-pressed` und Tooltip beschreiben
+den aktuellen Zustand. Stoppen bricht klingende,
+vorgeplante und noch ladende Sounds dieser Wiedergabe ab; der nächste Start
+beginnt bei Step 1. Fokuswechsel innerhalb der Seite und Loslassen der Leertaste
+beenden einen Button-Lauf nicht. Fenster-/Tabwechsel, Navigation, Entfernen
+des Patterns, Tempoänderungen und Audiofehler stoppen weiterhin.
+`showPlaybackButton={false}` blendet nur den Button aus; die Leertaste bleibt
+nutzbar. `showFooter={false}` blendet unabhängig davon den gesamten Footer aus.
+`showFooterInfo={false}` blendet nur dessen Metadaten aus. Der Header-Platzhalter
+mit Button ist für assistive Technik sichtbar, ein leerer Footer bleibt `aria-hidden`.
+
+**Optionale Audio-Bedienhinweise:** Diese booleschen Props sind standardmäßig
+`true` und werden auch vom dynamischen Modul-Player unterstützt:
+
+| Prop | Wirkung bei `false` |
+| --- | --- |
+| `showPlaybackButton` | Blendet den Play/Stop-Button im Header aus; die Haltewiedergabe bleibt verfügbar. |
+| `showTempo` | Blendet das BPM-Eingabefeld aus; `bpm` bestimmt unverändert das Wiedergabetempo. |
+| `showPlaybackHint` | Blendet den allgemeinen Bedienhinweis oberhalb des Rasters aus. |
+| `showAudioHelp` | Blendet den Wiki-Hilfelink unterhalb des Patterns aus. |
+
+Sind Tempo und Bedienhinweis ausgeblendet, entfällt auch deren leere
+Bedienleiste. Fehlermeldungen bleiben unabhängig davon sichtbar.
+`showFooterInfo={false}` blendet separat die Metadaten zu Taktart, Auflösung
+und Step-Anzahl aus, lässt aber den Symbol-Button bestehen.
+
+**Spurauswahl für beide Startarten:** `highlightTrack` und `highlightTracks`
+geben die anfängliche Wiedergabe-Auswahl vor. Keine Markierung bedeutet alle
+Spuren mit Sound; eine oder mehrere Markierungen begrenzen den Lauf auf genau
+diese Spuren. Markierte Spuren ohne Sound bleiben stumm und lösen keinen
+Fallback auf andere Spuren aus.
+Bei `interactive={true}` ersetzt ein Klick auf den Spurkopf die Auswahl;
+Shift+Klick fügt Spuren hinzu oder wählt sie ab. Native Auswahlkästchen bieten
+dieselbe additive Auswahl für Touch und Tastatur ohne Vorschauton.
+Bei `interactive={false}` bleiben die Hervorhebungen unveränderlich.
+Die Auswahl wird pro Start übernommen; Änderungen im laufenden Pattern gelten
+beim nächsten Start. Die separate `.selected`-Spur der Anschlagzeile ist kein
+Wiedergabefilter und wird bei Audio-Patterns nur durch einen unterstrichenen
+Spurnamen angezeigt. Hintergrund-Markierung und Kästchen zeigen die
+Wiedergabe-Auswahl; Patterns ohne Sounds bleiben unverändert.
 
 `src/lib/drum-playback.ts` kapselt Tempo-Bedienung, Tastatursteuerung und den
 Scheduler. Er plant alle 25 ms bis zu 100 ms auf der Web-Audio-Uhr voraus,
@@ -137,7 +182,13 @@ Bedienung: [Wiki: Drum-Pattern anhören](../src/content/docs/wiki/drum-pattern.m
 Polyphonie, Velocity, Fehler, SSR und DOM-/Tastaturinteraktionen mit Audio-Mocks
 sowie BPM-/Auflösungs-Timing, Loops, sofortiges Stoppen und Neustarts. Abbruch
 während des Ladens oder der Audiofreigabe und unabhängige Wiedergaben sind
-ebenfalls abgedeckt.
+ebenfalls abgedeckt. Weitere DOM-Tests sichern Header-/Button-Zustände,
+die unabhängige Sichtbarkeit von Footer und Button sowie Haltewiedergabe ohne Button,
+fortlaufende Button-Wiedergabe, Highlight-Filter, Shift- und Touch-Mehrfachauswahl,
+leere Auswahl sowie die Trennung von Anschlagspur und Wiedergabe-Auswahl ab.
+Darstellungsoptionen werden einzeln und gemeinsam geprüft, insbesondere die
+BPM-basierte Wiedergabe und sichtbare Fehler bei vollständig ausgeblendeten
+Tempo-/Hilfselementen sowie der barrierefrei benannte Symbolwechsel.
 Echte Audiogeräte-Latenz und Browser-Audiofreigaben werden damit nicht gemessen.
 
 ### 2.4 Die Songwriting-Gesamtpartitur (`ScorePattern.astro`)

@@ -193,9 +193,17 @@ Das Raster zeigt einen Takt im 4/4-Takt mit acht Steps, also Achtel-Auflösung. 
 Mit hinterlegten Sounds kannst du aktive Zellen und Instrumentennamen anklicken
 oder mit **Tab** und **Enter** anhören. Ein aktiver Step verwendet seine
 Velocity; der Instrumentenname spielt in voller Lautstärke.
-Stelle das gewünschte Tempo im BPM-Feld ein, verlasse das Feld mit **Tab** und
+Stelle, falls angezeigt, das gewünschte Tempo im BPM-Feld ein, verlasse das Feld mit **Tab** und
 halte im fokussierten Raster die **Leertaste**: Das Pattern läuft in einer Schleife.
 Loslassen stoppt sofort; erneutes Drücken startet wieder bei Step 1.
+Ohne Tastatur tippst du links im Header auf das **Play-Dreieck**. Das Symbol wechselt
+zum **Stop-Quadrat**, und das Pattern läuft bis zum Stoppen weiter. Ein neuer Start beginnt
+immer wieder bei Step 1.
+Hervorgehobene Spuren begrenzen beide Wiedergabearten; ohne Markierung werden
+alle Spuren abgespielt. Bei `interactive={true}` wählst du per Spurklick eine Spur,
+mit **Shift+Klick** mehrere oder nutzt die Auswahlkästchen für Touch und Tastatur.
+Die Auswahl wird beim nächsten Start übernommen. `highlightTrack` beziehungsweise
+`highlightTracks` gibt die Startauswahl vor; die Anschlag-Anzeige allein ist kein Filter.
 Die [Wiki-Anleitung](/wiki/drum-pattern/) erklärt Bedienung und Audiofreigabe.
 
 Lege zuerst eine eigene oder passend lizenzierte `kick.wav` unter
@@ -207,6 +215,10 @@ import DrumPattern from '../../../../components/DrumPattern.astro';
 
 <DrumPattern
   bpm={120}
+  showTempo={false}
+  showPlaybackHint={false}
+  showAudioHelp={false}
+  showFooter={false}
   interactive={false}
   patternData={[
     {
@@ -221,6 +233,10 @@ import DrumPattern from '../../../../components/DrumPattern.astro';
 
 <DrumPattern
   bpm={120}
+  showTempo={false}
+  showPlaybackHint={false}
+  showAudioHelp={false}
+  showFooter={false}
   interactive={false}
   patternData={[
     {
@@ -230,6 +246,14 @@ import DrumPattern from '../../../../components/DrumPattern.astro';
     },
   ]}
 />
+
+Das kompakte Beispiel blendet mit `showTempo`, `showPlaybackHint` und
+`showAudioHelp` Tempo-Feld, Bedienhinweis und Hilfe-Link aus. `bpm={120}` legt
+weiterhin das Tempo fest. `showFooter={false}` blendet den gesamten Footer aus;
+der Play/Stop-Button bleibt im Header sichtbar. Mit `showPlaybackButton={false}`
+kannst du ihn unabhängig davon ausblenden; die Leertaste funktioniert weiterhin.
+Lasse diese Props weg oder setze sie auf `true`, um die jeweiligen Elemente
+wieder anzuzeigen.
 
 Bei `120 BPM` dauert eine Viertelnote eine halbe Sekunde. Die acht Achtel-Steps
 einschließlich der Pausen ergeben einen zwei Sekunden langen 4/4-Takt.

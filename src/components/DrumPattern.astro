@@ -11,6 +11,10 @@ export type Props = DrumPatternProps;
 const {
   steps = DEFAULT_DRUM_PATTERN_PROPS.steps,
   bpm = DEFAULT_DRUM_PATTERN_PROPS.bpm,
+  showPlaybackButton = DEFAULT_DRUM_PATTERN_PROPS.showPlaybackButton,
+  showTempo = DEFAULT_DRUM_PATTERN_PROPS.showTempo,
+  showPlaybackHint = DEFAULT_DRUM_PATTERN_PROPS.showPlaybackHint,
+  showAudioHelp = DEFAULT_DRUM_PATTERN_PROPS.showAudioHelp,
   timeSignature = DEFAULT_DRUM_PATTERN_PROPS.timeSignature,
   resolution = DEFAULT_DRUM_PATTERN_PROPS.resolution,
   highlightTrack = DEFAULT_DRUM_PATTERN_PROPS.highlightTrack,
@@ -94,6 +98,10 @@ const stepLabels = Array.from(
   data-continuous={continuous}
   data-enable-audio={enableAudio ? "true" : undefined}
   data-bpm={enableAudio ? bpm : undefined}
+  data-show-playback-button={enableAudio ? showPlaybackButton : undefined}
+  data-show-tempo={enableAudio ? showTempo : undefined}
+  data-show-playback-hint={enableAudio ? showPlaybackHint : undefined}
+  data-show-audio-help={enableAudio ? showAudioHelp : undefined}
   data-time-signature={enableAudio ? timeSignature : undefined}
   data-resolution={enableAudio ? resolution : undefined}
 >
@@ -227,6 +235,10 @@ const stepLabels = Array.from(
     user-select: none;
     overflow: auto hidden;
     box-sizing: border-box;
+  }
+
+  .studio-one-pattern:not(:has(.pattern-footer)) {
+    padding-bottom: 8px;
   }
 
   .pattern-header,
@@ -370,14 +382,14 @@ const stepLabels = Array.from(
     outline-offset: 2px;
   }
 
-  .track-row.selected .track-info,
-  .track-row.selected .step-row,
+  .studio-one-pattern:not([data-enable-audio="true"]) .track-row.selected .track-info,
+  .studio-one-pattern:not([data-enable-audio="true"]) .track-row.selected .step-row,
   .track-row.highlighted .track-info,
   .track-row.highlighted .step-row {
     background-color: #27272a;
   }
 
-  .track-row.selected,
+  .studio-one-pattern:not([data-enable-audio="true"]) .track-row.selected,
   .track-row.highlighted {
     outline: 1px solid #52525b;
     outline-offset: -1px;
@@ -625,6 +637,56 @@ const stepLabels = Array.from(
   .studio-one-pattern :global(.step-cell.is-current-step),
   .studio-one-pattern :global(.step-number.is-current-step) {
     box-shadow: inset 0 0 0 2px #fff;
+  }
+
+  .studio-one-pattern :global(.header-spacer.has-playback-controls) {
+    display: flex;
+    align-items: center;
+  }
+
+  .studio-one-pattern :global(.drum-playback-toggle) {
+    display: grid;
+    place-items: center;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    width: calc(var(--step-size) * 1.125);
+    height: var(--step-size);
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    border: 1px solid #52525b;
+    border-radius: 4px;
+    background: #27272a;
+    color: #fff;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  .studio-one-pattern :global(.drum-playback-toggle svg) {
+    width: 50%;
+    height: 50%;
+  }
+
+  .studio-one-pattern :global(.drum-playback-toggle[aria-pressed="true"]) {
+    background: #3f3f46;
+  }
+
+  .studio-one-pattern :global(.drum-playback-toggle:focus-visible) {
+    outline: 2px solid #d4d4d8;
+    outline-offset: 2px;
+  }
+
+  .studio-one-pattern :global(.drum-track-toggle) {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    margin: 0;
+    cursor: pointer;
+  }
+
+  .studio-one-pattern[data-enable-audio="true"][data-show-velocity="true"] .track-row.selected .track-name {
+    text-decoration: underline;
+    text-underline-offset: 2px;
   }
 </style>
 
