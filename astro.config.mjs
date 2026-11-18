@@ -425,7 +425,11 @@ export default defineConfig({
       sidebar: [
         {
           label: "Wiki",
-          items: [{ label: "Beiträge verwalten", slug: "wiki/beitraege" }],
+          items: [
+            { label: "Beiträge verwalten", slug: "wiki/beitraege" },
+            { label: "Modul-Builder bedienen", slug: "wiki/modul-builder" },
+            { label: "NotationBuilder bedienen", slug: "wiki/notation-builder" },
+          ],
         },
         {
           label: "Projektierung",

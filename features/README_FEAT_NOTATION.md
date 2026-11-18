@@ -2,6 +2,8 @@
 
 Diese Dokumentation beschreibt die vereinheitlichte, deklarative **`<Notation />`**-Komponente (`src/components/notation/Notation.astro`) auf Basis des hauseigenen Bravura-SVG-Renderers (`src/lib/notation-renderer.ts` und `src/lib/system-layout.ts`) sowie den interaktiven **`<NotationBuilder />`**. Weitere Features stehen in der [Übersicht](README_FEAT.md); ergänzende Übergabeinformationen zum Notationsrenderer im [Notation-Handoff](README_FEAT_NOTATION_HANDOFF.md).
 
+Die nutzerorientierte [Anleitung für den NotationBuilder](../src/content/docs/wiki/notation-builder.mdx) steht im Wiki.
+
 ---
 
 ## Inhaltsverzeichnis

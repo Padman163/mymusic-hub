@@ -2,6 +2,8 @@
 
 Dieses Dokument ist die Feature-Referenz für den **Admin Modul- & Aufgaben-Builder** und den **Interaktiven Lernpfad für Lernende**. Die Etappen 1 bis 3B beschreiben die umgesetzten Bausteine; Testbefehle und aktuelle Ergebnisse stehen im [Testing-Leitfaden](../README_TESTING.md).
 
+Die nutzerorientierte [Anleitung für den Modul-Builder](../src/content/docs/wiki/modul-builder.mdx) steht im Wiki.
+
 ---
 
 ## Das Grundprinzip: Erst das Fundament, dann die Oberfläche

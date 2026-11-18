@@ -58,6 +58,32 @@ test('verbindet Beiträge mit der Wiki-Anleitung', async ({ page }) => {
   await expect(page).toHaveURL('/projektierung/beitraege/');
 });
 
+for (const guide of [
+  { source: '/projektierung/modul-builder/', link: 'Anleitung: Modul-Builder bedienen', target: '/wiki/modul-builder/', title: 'Modul-Builder bedienen' },
+  { source: '/audio/referenzen-werkzeuge/visualisierungen-erklaert/notationbuilder/', link: 'Anleitung: NotationBuilder bedienen', target: '/wiki/notation-builder/', title: 'NotationBuilder bedienen' },
+]) {
+  test(`öffnet die Wiki-Anleitung: ${guide.title}`, async ({ page }) => {
+    await page.route('**/api/modules', (route) =>
+      route.fulfill({ json: createModulesTestDatabase() }),
+    );
+    await page.goto(guide.source);
+    await page.getByRole('link', { name: guide.link }).click();
+    await expect(page).toHaveURL(guide.target);
+    await expect(page.getByRole('heading', { level: 1, name: guide.title })).toBeVisible();
+  });
+}
+
+test('ermöglicht Noteneingabe im Wiki-Beispiel', async ({ page }) => {
+  await page.goto('/wiki/notation-builder/');
+  const builder = page.locator('[data-notation-builder]').first();
+  await builder.focus();
+  await page.keyboard.press('Space');
+  await expect(builder).toHaveAttribute('data-placed-count', '1');
+  await page.keyboard.press('ArrowLeft');
+  await page.keyboard.press('Delete');
+  await expect(builder).toHaveAttribute('data-placed-count', '0');
+});
+
 test('gruppiert Builder-Karten und hält Aktionen bedienbar', async ({ page }) => {
   await page.goto('/projektierung/modul-builder/');
   await expect(page.getByRole('tab')).toHaveText([
