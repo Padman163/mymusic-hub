@@ -23,6 +23,10 @@ import {
   calculateQuestionXp,
   calculateTheoryBlockXp,
 } from "../../src/lib/xp-tags";
+import {
+  getTheoryDrumPatternError,
+  parseTheoryDrumPattern,
+} from "../../src/lib/module-theory-notation";
 
 const seedDb = createModulesTestDatabase();
 
@@ -338,6 +342,62 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     expect(container.textContent).not.toContain("<Notation");
     expect(container.textContent).toContain("Vorher");
     expect(container.textContent).toContain("Danach");
+  });
+
+  it("parst statische DrumPattern-Props und weist ungültige Props oder Code zurück", () => {
+    const markdown =
+      '<DrumPattern steps={4} continuous={true} patternData={[{ name: "Kick", note: "C1", color: "#ef4444", activeSteps: [0, 2], eventPositions: [1.5], cellLabels: ["K", "", "K", ""] }]} />';
+    const parsed = parseTheoryDrumPattern(markdown, 0);
+    expect(parsed.props).toMatchObject({
+      steps: 4,
+      continuous: true,
+      patternData: [{
+        name: "Kick",
+        activeSteps: [0, 2],
+        eventPositions: [1.5],
+        cellLabels: ["K", "", "K", ""],
+      }],
+    });
+    expect(markdown.slice(parsed.end)).toBe("");
+    expect(getTheoryDrumPatternError('<DrumPattern steps={0} />')).toContain(
+      "steps muss eine ganze Zahl",
+    );
+    expect(
+      getTheoryDrumPatternError("<DrumPattern interactive={window.alert(1)} />"),
+    ).toContain("Nur feste Werte");
+    expect(getTheoryDrumPatternError("`<DrumPattern steps={0} />`")).toBeNull();
+    expect(
+      getTheoryDrumPatternError("<!-- <DrumPattern steps={0} /> -->"),
+    ).toBeNull();
+  });
+
+  it("rendert DrumPattern-Props samt Event-Markern und bindet die Interaktion", () => {
+    const root = document.createElement("section");
+    root.innerHTML =
+      '<div hidden data-visual-template="DrumPattern"><div class="studio-one-pattern astro-test"></div></div>';
+    root.append(
+      renderTheoryMarkdown(
+        '<DrumPattern steps={4} continuous={true} showVelocity={true} patternData={[{ name: "Kick", note: "C1", color: "#ef4444", activeSteps: [0, 2], cellLabels: ["K", "", "K", ""], eventPositions: [1.5], eventLabels: ["+"] }]} />',
+        root,
+      ),
+    );
+    const pattern = root.querySelector<HTMLElement>(
+      '.studio-one-pattern[data-continuous="true"]',
+    );
+    if (!pattern) throw new Error("DrumPattern fehlt");
+    const cells = pattern.querySelectorAll<HTMLElement>(".step-cell");
+    expect(pattern.dataset.continuous).toBe("true");
+    expect(pattern.classList.contains("astro-test")).toBe(true);
+    expect(cells[0].querySelector(".step-cell-label")?.textContent).toBe("K");
+    expect(pattern.querySelector(".event-marker")?.textContent).toBe("+");
+    expect(
+      (pattern.querySelector(".event-marker") as HTMLElement).style.getPropertyValue(
+        "--event-step",
+      ),
+    ).toBe("1.5");
+    expect(pattern.querySelector(".velocity-row")).not.toBeNull();
+    cells[0].click();
+    expect(cells[0].classList.contains("active")).toBe(false);
   });
 
   it("rendert Markdown, verschachteltes Inline-KaTeX und beide Display-Formate", () => {

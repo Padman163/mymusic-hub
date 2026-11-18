@@ -38,6 +38,277 @@ export const VISUAL_COMPONENTS = [
 ] as const;
 export type VisualComponentType = (typeof VISUAL_COMPONENTS)[number];
 
+export interface DrumPatternTrack {
+  name: string;
+  note: string;
+  color: string;
+  activeSteps: number[];
+  cellLabels?: string[];
+  eventPositions?: number[];
+  eventLabels?: string[];
+  velocities?: number[];
+}
+
+export interface DrumPatternProps {
+  steps?: number;
+  timeSignature?: string;
+  resolution?: string;
+  interactive?: boolean;
+  showVelocity?: boolean;
+  showTrackNote?: boolean;
+  useTrackColors?: boolean;
+  continuous?: boolean;
+  keepEmptyTracks?: boolean;
+  stepSize?: number;
+  stepLabels?: string[];
+  patternData?: DrumPatternTrack[];
+}
+
+export const DEFAULT_DRUM_PATTERN_DATA: DrumPatternTrack[] = [
+  { name: "Kick - Hit", note: "C1", color: "#ef4444", activeSteps: [0, 4] },
+  {
+    name: "Snare - Center",
+    note: "D1",
+    color: "#f97316",
+    activeSteps: [2, 6],
+  },
+  { name: "Snare - Edge", note: "A0", color: "#f97316", activeSteps: [] },
+  {
+    name: "Floortom 2 - Center",
+    note: "F1",
+    color: "#eab308",
+    activeSteps: [],
+  },
+  {
+    name: "Hi-Hat - Closed Edge",
+    note: "A#-1",
+    color: "#22c55e",
+    activeSteps: [0, 1, 2, 3, 4, 5, 6, 7],
+  },
+  {
+    name: "Hi-Hat - Open Edge 0",
+    note: "E3",
+    color: "#22c55e",
+    activeSteps: [],
+  },
+  {
+    name: "Hi-Hat - Open Edge 3",
+    note: "D0",
+    color: "#22c55e",
+    activeSteps: [],
+  },
+  { name: "Crash 1 - Crash", note: "D5", color: "#0ea5e9", activeSteps: [] },
+];
+
+export const DEFAULT_DRUM_PATTERN_PROPS: Required<
+  Omit<DrumPatternProps, "stepLabels">
+> = {
+  steps: 8,
+  timeSignature: "4/4",
+  resolution: "1/8",
+  interactive: true,
+  showVelocity: false,
+  showTrackNote: true,
+  useTrackColors: false,
+  continuous: false,
+  keepEmptyTracks: false,
+  stepSize: 32.5,
+  patternData: DEFAULT_DRUM_PATTERN_DATA,
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return (
+    Array.isArray(value) && value.every((item) => typeof item === "string")
+  );
+}
+
+function isNumberArray(value: unknown): value is number[] {
+  return (
+    Array.isArray(value) &&
+    value.every((item) => typeof item === "number" && Number.isFinite(item))
+  );
+}
+
+export function getDrumPatternPropsErrors(value: unknown): string[] {
+  if (!isRecord(value)) return ["Die Props müssen ein Objekt sein."];
+
+  const errors: string[] = [];
+  const propNames = new Set([
+    "steps",
+    "timeSignature",
+    "resolution",
+    "interactive",
+    "showVelocity",
+    "showTrackNote",
+    "useTrackColors",
+    "continuous",
+    "keepEmptyTracks",
+    "stepSize",
+    "stepLabels",
+    "patternData",
+  ]);
+  for (const name of Object.keys(value)) {
+    if (!propNames.has(name)) errors.push(`Unbekannte Prop „${name}“.`);
+  }
+
+  const steps =
+    typeof value.steps === "number" &&
+    Number.isInteger(value.steps) &&
+    value.steps >= 1 &&
+    value.steps <= 64
+      ? value.steps
+      : DEFAULT_DRUM_PATTERN_PROPS.steps;
+  if (
+    value.steps !== undefined &&
+    (typeof value.steps !== "number" ||
+      !Number.isInteger(value.steps) ||
+      value.steps < 1 ||
+      value.steps > 64)
+  ) {
+    errors.push("steps muss eine ganze Zahl zwischen 1 und 64 sein.");
+  }
+
+  for (const name of ["timeSignature", "resolution"] as const) {
+    if (
+      value[name] !== undefined &&
+      (typeof value[name] !== "string" || value[name].trim().length === 0)
+    ) {
+      errors.push(`${name} muss ein nicht-leerer Text sein.`);
+    }
+  }
+
+  for (const name of [
+    "interactive",
+    "showVelocity",
+    "showTrackNote",
+    "useTrackColors",
+    "continuous",
+    "keepEmptyTracks",
+  ] as const) {
+    if (value[name] !== undefined && typeof value[name] !== "boolean") {
+      errors.push(`${name} muss true oder false sein.`);
+    }
+  }
+
+  if (
+    value.stepSize !== undefined &&
+    (typeof value.stepSize !== "number" ||
+      !Number.isFinite(value.stepSize) ||
+      value.stepSize <= 0 ||
+      value.stepSize > 128)
+  ) {
+    errors.push("stepSize muss eine Zahl größer 0 und höchstens 128 sein.");
+  }
+
+  if (value.stepLabels !== undefined) {
+    if (!isStringArray(value.stepLabels) || value.stepLabels.length > steps) {
+      errors.push(
+        "stepLabels muss ein Text-Array mit höchstens steps Labels sein.",
+      );
+    }
+  }
+
+  if (value.patternData !== undefined) {
+    if (!Array.isArray(value.patternData) || value.patternData.length > 64) {
+      errors.push("patternData muss ein Array mit höchstens 64 Spuren sein.");
+    } else {
+      for (let index = 0; index < value.patternData.length; index += 1) {
+        const track = value.patternData[index];
+        const prefix = `patternData[${index}]`;
+        if (!isRecord(track)) {
+          errors.push(`${prefix} muss ein Objekt sein.`);
+          continue;
+        }
+        for (const name of Object.keys(track)) {
+          if (
+            ![
+              "name",
+              "note",
+              "color",
+              "activeSteps",
+              "cellLabels",
+              "eventPositions",
+              "eventLabels",
+              "velocities",
+            ].includes(name)
+          ) {
+            errors.push(
+              `${prefix} enthält die unbekannte Eigenschaft „${name}“.`,
+            );
+          }
+        }
+        for (const name of ["name", "note"] as const) {
+          if (
+            typeof track[name] !== "string" ||
+            track[name].trim().length === 0
+          ) {
+            errors.push(`${prefix}.${name} muss ein nicht-leerer Text sein.`);
+          }
+        }
+        if (
+          typeof track.color !== "string" ||
+          !/^(?:#[\da-f]{3,8}|[a-z]+)$/i.test(track.color)
+        ) {
+          errors.push(`${prefix}.color muss ein Hex- oder CSS-Farbname sein.`);
+        }
+        if (!Array.isArray(track.activeSteps)) {
+          errors.push(`${prefix}.activeSteps muss ein Zahlen-Array sein.`);
+        } else if (
+          !track.activeSteps.every(
+            (step) =>
+              typeof step === "number" &&
+              Number.isInteger(step) &&
+              step >= 0 &&
+              step < steps,
+          )
+        ) {
+          errors.push(
+            `${prefix}.activeSteps muss gültige Step-Indizes enthalten.`,
+          );
+        }
+        for (const name of ["cellLabels", "eventLabels"] as const) {
+          if (track[name] !== undefined && !isStringArray(track[name])) {
+            errors.push(`${prefix}.${name} muss ein Text-Array sein.`);
+          }
+        }
+        if (
+          track.eventPositions !== undefined &&
+          (!isNumberArray(track.eventPositions) ||
+            track.eventPositions.some(
+              (position) => position < 0 || position >= steps,
+            ))
+        ) {
+          errors.push(
+            `${prefix}.eventPositions muss Positionen innerhalb der Steps enthalten.`,
+          );
+        }
+        if (
+          track.velocities !== undefined &&
+          (!isNumberArray(track.velocities) ||
+            track.velocities.some(
+              (velocity) =>
+                !Number.isInteger(velocity) || velocity < 0 || velocity > 127,
+            ))
+        ) {
+          errors.push(
+            `${prefix}.velocities muss Ganzzahlen zwischen 0 und 127 enthalten.`,
+          );
+        }
+      }
+    }
+  }
+
+  return errors;
+}
+
+export function isDrumPatternProps(value: unknown): value is DrumPatternProps {
+  return getDrumPatternPropsErrors(value).length === 0;
+}
+
 export const NOTATION_DURATIONS = [
   "whole",
   "half",

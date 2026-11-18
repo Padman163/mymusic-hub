@@ -626,6 +626,28 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     expect(details?.open).toBe(true);
   });
 
+  it("zeigt ungültige DrumPattern-Props beim Speichern im Theorieblock an", () => {
+    const editor = createTheoryBlockEditor([
+      { id: "tb-1", order: 1, title: "Rhythmus", markdownContent: "" },
+    ]);
+    document.body.append(editor.element);
+    const details = editor.element.querySelector<HTMLDetailsElement>("details");
+    const markdown = editor.element.querySelector<HTMLTextAreaElement>(
+      ".theory-block-markdown",
+    );
+    if (!markdown) throw new Error("Markdown-Feld fehlt");
+    markdown.value = "<DrumPattern steps={0} />";
+    let validationMessage = "";
+    vi.spyOn(markdown, "reportValidity").mockImplementation(() => {
+      validationMessage = markdown.validationMessage;
+      return false;
+    });
+
+    expect(editor.items()).toBeNull();
+    expect(validationMessage).toContain("steps muss eine ganze Zahl");
+    expect(details?.open).toBe(true);
+  });
+
   it("berechnet Block-XP aus eigenem Tag und Basiswert und speichert sie", () => {
     const form = mountModuleForm();
     const controller = attachModuleBuilderForm(form);

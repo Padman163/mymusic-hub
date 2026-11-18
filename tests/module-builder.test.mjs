@@ -159,6 +159,34 @@ describe("module-store Validierung & Store-Operationen", () => {
     expect(validateModuleInput({ id: "mod", title: "Modul", theoryBlocks: [blocks[0], blocks[0]] }).valid).toBe(false);
   });
 
+  it("validiert statische DrumPattern-Visualisierungen in Theorieblöcken", () => {
+    const valid = validateModuleInput({
+      id: "drums",
+      title: "Drums",
+      theoryBlocks: [{
+        id: "tb-1",
+        order: 1,
+        title: "Pattern",
+        markdownContent:
+          '<DrumPattern steps={4} continuous={true} patternData={[{ name: "Kick", note: "C1", color: "#ef4444", activeSteps: [0], eventPositions: [1.5] }]} />',
+      }],
+    });
+    expect(valid.valid).toBe(true);
+
+    const invalid = validateModuleInput({
+      id: "drums",
+      title: "Drums",
+      theoryBlocks: [{
+        id: "tb-1",
+        order: 1,
+        title: "Pattern",
+        markdownContent: "<DrumPattern steps={0} />",
+      }],
+    });
+    expect(invalid.valid).toBe(false);
+    expect(invalid.errors.join(" ")).toContain("DrumPattern");
+  });
+
   it("speichert benannte Theorieblock-Gruppen und lehnt uneinheitliche Gruppen ab", () => {
     const group = [
       { id: "a", order: 1, title: "A", markdownContent: "", groupId: "g1", groupTitle: "Grundlagen" },

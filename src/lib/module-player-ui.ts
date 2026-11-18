@@ -7,6 +7,10 @@ import remarkParse from "remark-parse";
 import remarkRehype from "remark-rehype";
 import { unified } from "unified";
 import {
+  createDrumPatternElement,
+  initializeDrumPatterns,
+} from "./drum-pattern.ts";
+import {
   clearLearningProgress,
   completePracticeBlock,
   completeTheoryBlock,
@@ -42,6 +46,7 @@ import {
 import { createEmptyModulesDatabase } from "./module-store.ts";
 import {
   hasEquivalentNotation,
+  parseTheoryDrumPattern,
   parseTheoryNotation,
 } from "./module-theory-notation.ts";
 import {
@@ -562,7 +567,11 @@ function renderMarkdownText(markdown: string): DocumentFragment {
     const [math] = node.children;
     const start = math.position?.start.offset;
     // remark-math treats a same-line $$…$$ paragraph as inline math.
-    if (math.type === "inlineMath" && start !== undefined && markdown.startsWith("$$", start)) {
+    if (
+      math.type === "inlineMath" &&
+      start !== undefined &&
+      markdown.startsWith("$$", start)
+    ) {
       math.data = {
         ...math.data,
         hProperties: { className: ["language-math", "math-display"] },
@@ -580,11 +589,15 @@ function renderTheoryKeyboard(
 ): DocumentFragment {
   const { showBrace = true, rightBarStyle = "final" } = props;
   if (
-    Object.keys(props).some((key) => key !== "showBrace" && key !== "rightBarStyle") ||
+    Object.keys(props).some(
+      (key) => key !== "showBrace" && key !== "rightBarStyle",
+    ) ||
     typeof showBrace !== "boolean" ||
     (rightBarStyle !== "single" && rightBarStyle !== "final")
   ) {
-    throw new Error("NotationKeyboard erwartet showBrace (boolean) und rightBarStyle (single oder final).");
+    throw new Error(
+      "NotationKeyboard erwartet showBrace (boolean) und rightBarStyle (single oder final).",
+    );
   }
   const selector = `template[data-visual-template="NotationKeyboard"][data-show-brace="${showBrace}"][data-right-bar-style="${rightBarStyle}"]`;
   const template =
@@ -594,13 +607,14 @@ function renderTheoryKeyboard(
   return document.importNode(template.content, true);
 }
 
-/** Wandelt Markdown, KaTeX und sichere Notationselemente in DOM-Elemente um. */
+/** Wandelt Markdown, KaTeX und sichere Visual-Elemente in DOM-Elemente um. */
 export function renderTheoryMarkdown(
   markdown: string,
   templateRoot?: ParentNode,
 ): DocumentFragment {
   const frag = document.createDocumentFragment();
-  const tokens = /(<!--|`+|~{3,}|\$+|<Notation(?:Keyboard)?(?=[\s/>]))/g;
+  const tokens =
+    /(<!--|`+|~{3,}|\$+|<Notation(?:Keyboard)?(?=[\s/>])|<DrumPattern(?=[\s/>]))/g;
   let textStart = 0;
   for (
     let match = tokens.exec(markdown);
@@ -624,18 +638,31 @@ export function renderTheoryMarkdown(
     }
     frag.append(renderMarkdownText(markdown.slice(textStart, match.index)));
     try {
-      const parsed = parseTheoryNotation(markdown, match.index, token);
-      frag.append(
-        token === "<NotationKeyboard"
-          ? renderTheoryKeyboard(parsed.props, templateRoot)
-          : buildNotationVisualElement(parsed.props),
-      );
-      tokens.lastIndex = parsed.end;
+      if (token === "<DrumPattern") {
+        const drumPattern = parseTheoryDrumPattern(
+          markdown,
+          match.index,
+          token,
+        );
+        frag.append(createDrumPatternElement(drumPattern.props, templateRoot));
+        tokens.lastIndex = drumPattern.end;
+      } else {
+        const parsed = parseTheoryNotation(markdown, match.index, token);
+        frag.append(
+          token === "<NotationKeyboard"
+            ? renderTheoryKeyboard(parsed.props, templateRoot)
+            : buildNotationVisualElement(parsed.props),
+        );
+        tokens.lastIndex = parsed.end;
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       const warning = document.createElement("p");
       warning.className = "learning-notation-error";
-      warning.textContent = `Notation konnte nicht dargestellt werden: ${message}`;
+      warning.textContent =
+        token === "<DrumPattern"
+          ? `DrumPattern konnte nicht dargestellt werden: ${message}`
+          : `Notation konnte nicht dargestellt werden: ${message}`;
       frag.append(warning);
       const end = markdown.indexOf("/>", match.index);
       tokens.lastIndex = end === -1 ? markdown.length : end + 2;
@@ -643,6 +670,7 @@ export function renderTheoryMarkdown(
     textStart = tokens.lastIndex;
   }
   frag.append(renderMarkdownText(markdown.slice(textStart)));
+  initializeDrumPatterns(frag);
   return frag;
 }
 
@@ -2197,19 +2225,28 @@ type LessonSection =
 
 function cleanLessonTitle(title: string): string {
   const trimmed = title.trim();
-  return trimmed.replace(
-    /^(?:\d+(?:\.\d+)*\s*(?::\s*|[.)–-]\s+)|(?:Theorie|Abschnitt|Übung|Praxisaufgabe|Quiz)\s+\d+(?:\.\d+)*(?:\s*[:.)–-])?\s+)*/i,
-    "",
-  ).trim() || trimmed;
+  return (
+    trimmed
+      .replace(
+        /^(?:\d+(?:\.\d+)*\s*(?::\s*|[.)–-]\s+)|(?:Theorie|Abschnitt|Übung|Praxisaufgabe|Quiz)\s+\d+(?:\.\d+)*(?:\s*[:.)–-])?\s+)*/i,
+        "",
+      )
+      .trim() || trimmed
+  );
 }
 
 function getLessonSectionTitle(section: LessonSection): string {
   switch (section.kind) {
-    case "group": return cleanLessonTitle(section.groupTitle);
-    case "theory": return cleanLessonTitle(section.blocks[0].title);
-    case "exercise": return cleanLessonTitle(section.question.prompt);
-    case "practice": return cleanLessonTitle(section.block.title);
-    case "quiz": return "Quiz";
+    case "group":
+      return cleanLessonTitle(section.groupTitle);
+    case "theory":
+      return cleanLessonTitle(section.blocks[0].title);
+    case "exercise":
+      return cleanLessonTitle(section.question.prompt);
+    case "practice":
+      return cleanLessonTitle(section.block.title);
+    case "quiz":
+      return "Quiz";
   }
 }
 
@@ -2498,7 +2535,8 @@ export function attachModuleStepper(
   ): void {
     const sections = buildLessonSections(mod, currentDb.questions);
     const sectionTitles = sections.map(
-      (section, position) => `${mod.level + position + 1}: ${getLessonSectionTitle(section)}`,
+      (section, position) =>
+        `${mod.level + position + 1}: ${getLessonSectionTitle(section)}`,
     );
     const firstIncomplete = sections.findIndex(
       (section) => !isLessonSectionComplete(section, initialProgress),

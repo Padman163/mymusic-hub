@@ -2,6 +2,7 @@
 import "../../styles/contribution-tags.css";
 import "../../styles/module-player.css";
 import "../../styles/notation.css";
+import DrumPattern from "../DrumPattern.astro";
 import FretboardClickable from "../FretboardClickable.astro";
 import NotationKeyboard from "../notation/NotationKeyboard.astro";
 import ScalePattern from "../ScalePattern.astro";
@@ -43,6 +44,9 @@ const {
   <template data-visual-template="FretboardClickable">
     <FretboardClickable readOnly showNoteNames />
   </template>
+  <div hidden inert aria-hidden="true" data-visual-template="DrumPattern">
+    <DrumPattern interactive={false} patternData={[]} />
+  </div>
 
   <div data-stepper-content>
     <p class="learning-muted">Lektion wird geladen …</p>

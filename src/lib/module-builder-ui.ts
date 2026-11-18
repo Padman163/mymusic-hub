@@ -31,7 +31,10 @@ import {
   validateModuleInput,
   validateQuestionInput,
 } from "./module-store.ts";
-import { notationToMarkdown } from "./module-theory-notation.ts";
+import {
+  getTheoryDrumPatternError,
+  notationToMarkdown,
+} from "./module-theory-notation.ts";
 import {
   attachNotationBuilder,
   DEFAULT_BUILDER_DURATIONS,
@@ -1021,6 +1024,18 @@ export function createTheoryBlockEditor(
         );
         titleInput.reportValidity();
         titleInput.setCustomValidity("");
+        return null;
+      }
+
+      const drumPatternError = getTheoryDrumPatternError(markdownInput.value);
+      if (drumPatternError) {
+        const details = row.querySelector<HTMLDetailsElement>(
+          ".theory-block-details",
+        );
+        if (details) details.open = true;
+        markdownInput.setCustomValidity(drumPatternError);
+        markdownInput.reportValidity();
+        markdownInput.setCustomValidity("");
         return null;
       }
 

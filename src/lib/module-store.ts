@@ -20,6 +20,7 @@ import {
   type TargetLane,
   type TheoryBlock,
 } from "./module-schema.ts";
+import { getTheoryDrumPatternError } from "./module-theory-notation.ts";
 import { calculateQuestionXp, calculateTheoryBlockXp } from "./xp-tags.ts";
 
 export interface ValidationResult {
@@ -160,6 +161,11 @@ function validateTheoryBlocks(blocks: unknown, errors: string[]): void {
     }
     if (typeof block.markdownContent !== "string") {
       errors.push(`${prefix}.markdownContent muss ein String sein.`);
+    } else {
+      const drumPatternError = getTheoryDrumPatternError(block.markdownContent);
+      if (drumPatternError) {
+        errors.push(`${prefix}.markdownContent: ${drumPatternError}`);
+      }
     }
     if (
       (block.groupId === undefined) !== (block.groupTitle === undefined) ||
