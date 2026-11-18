@@ -46,7 +46,7 @@ Details stehen im [Testing-Leitfaden](README_TESTING.md).
 
 ## Release-Checkliste
 
-Die Netlify Functions für Beiträge und Lernmodule speichern über Netlify Blobs. Der produktive Umstieg und die Datenübernahme sind separat anhand der [Blob-Abnahme](features/README_FEAT_NETLIFYBLOB.md#qualitätssicherung-und-manuelle-abnahme) zu prüfen.
+Die Netlify Functions für Beiträge und Lernmodule speichern über Netlify Blobs. Hinweise zum produktiven Umstieg und zur Datenübernahme stehen in der [Blob-Referenz](features/README_FEAT_NETLIFYBLOB.md).
 
 Die folgenden offenen Prüfpunkte fassen das [Release-Audit](README_TESTING.md#5-der-5-phasen-release-audit-vor-dem-release) zusammen; sie sind keine Aussage über den aktuellen Prüfstatus:
 

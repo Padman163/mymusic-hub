@@ -28,17 +28,12 @@ Cloud-Daten bei Bedarf direkt aus Netlify Blobs sichern. Ein neuer Store überni
 
 `npx netlify-cli dev` stellt einen lokalen Blob-Server bereit. Die Daten liegen unter `.netlify/` im Workspace, je nach CLI-Version unter `.netlify/blobs/` bzw. bei aktueller CLI unter `.netlify/blobs-serve/`. Sie werden weder nach einem Branch-Wechsel automatisch getrennt noch mit der Cloud synchronisiert. Für einen lokalen Reset den Dev-Server stoppen, Testdaten bei Bedarf sichern und nur das tatsächlich verwendete lokale Blob-Verzeichnis entfernen. Keine Cloud-Keys für einen lokalen Reset löschen.
 
-## Qualitätssicherung und manuelle Abnahme
+Vor dem produktiven Umstieg den Cloud-Datenbestand sichern und die Datenübernahme sowie Rollback-Abhängigkeiten prüfen. Schreibtests in der Cloud nur auf einer isolierten Netlify-Site durchführen.
+
+## Qualitätssicherung
 
 ```bash
 npx vitest run tests/documentation.test.ts
 npx vitest run tests/blob-store.test.ts tests/integration/contributions.test.ts tests/module-builder.test.mjs
 npm run preflight
 ```
-
-- [ ] Vor dem produktiven Deploy den Cloud-Datenbestand sichern und danach unveränderte Beiträge über die API abrufen.
-- [ ] Den Branch im Dashboard freigeben und die alten Variablen nach erfolgreichem Wechsel bereinigen.
-- [ ] Lokal unter Netlify CLI beide APIs aufrufen: leere Beitragsliste und leeren Modulkatalog im neuen Store prüfen, Testdaten und Quiz-Grenzen speichern und nach Neustart erneut abrufen.
-- [ ] Mit reinem `npm run dev` prüfen, dass die Modul-API weiterhin `data/modules.json` als lokalen Fallback nutzt.
-- [ ] Auf einer isolierten Netlify-Site einen Deploy prüfen: Beiträge, Module und Aufgaben anlegen, ändern und löschen; Quiz-Einstellungen speichern. Anschließend die Persistenz über einen weiteren Deploy bestätigen.
-- [ ] Dokumentationscheck und vollständiges Preflight bestehen; produktiven Rollout erst nach der Datenabnahme freigeben.

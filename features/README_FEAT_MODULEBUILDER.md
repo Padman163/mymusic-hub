@@ -157,8 +157,8 @@ Die Code-Markierungen in diesen Beispielen dienen nur der Dokumentation: Im Buil
 
 - **Erreichbare XP:** Eingeklappte Theorieblöcke, Praxisblöcke und Lernpfad-Aufgaben zeigen ein XP-Badge wie im Lektions-Player. Bei einer eingeklappten Gruppe zeigt das Badge die Summe ihrer Einträge. Änderungen an Basis-XP und Tags werden direkt berücksichtigt.
 - **Hinweise für Lernpfad-Aufgaben:** In der aufgeklappten Aufgabe kannst du einen einfachen und einen stärkeren Hinweis hinterlegen. Beide sind optional und sollten helfen, ohne die Lösung zu verraten. Die separate Erklärung ist für die Auflösung nach drei Fehlversuchen gedacht.
-- **Lektionsgruppen erstellen:** Markiere mehrere ungruppierte Theorieblöcke und Lernpfad-Aufgaben über ihre Auswahlfelder und wähle **„Auswahl gruppieren“**. Die Einträge werden zu einer benannten Gruppe zusammengefasst; der Titel lässt sich im Gruppen-Header ändern.
-- **Einzelne Einträge lösen:** Mit dem **`−`-Button („Aus Gruppe lösen“)** wird ein einzelner Theorieblock oder eine Lernpfad-Aufgabe aus der Gruppe genommen, ohne das Element zu löschen. Es erscheint direkt nach der Gruppe wieder als eigenständiger Eintrag. Bleibt nur ein Gruppeneintrag übrig, wird auch dieser automatisch ungruppiert.
+- **Lektionsgruppen erstellen:** Markiere mehrere ungruppierte Theorieblöcke, Lernpfad- oder Praxisaufgaben über ihre Auswahlfelder und wähle **„Auswahl gruppieren“**. Die Einträge werden zu einer benannten Gruppe zusammengefasst; der Titel lässt sich im Gruppen-Header ändern.
+- **Einzelne Einträge lösen:** Mit dem **`−`-Button („Aus Gruppe lösen“)** wird ein einzelner Eintrag aus der Gruppe genommen, ohne ihn zu löschen. Er erscheint direkt nach der Gruppe wieder als eigenständiger Eintrag. Bleibt nur ein Gruppeneintrag übrig, wird auch dieser automatisch ungruppiert.
 - **Löschen und Auflösen:** Ungruppierte Einträge löschst du über **`×`**. Der **`−`-Button im Gruppen-Header** löst die gesamte Gruppe auf; die Einträge bleiben erhalten. Die Pfeile im Header verschieben die Gruppe als Einheit.
 - **Automatische Lektionsnummerierung:** Der Lektions-Player nummeriert Abschnitte automatisch nach `Modul-Level + Position` (bei Level 100 z. B. `101`, `102`). Nummern gehören daher nicht als Präfix in die Blocktitel.
 
@@ -195,7 +195,7 @@ Damit Lernende sehen können, wie weit sie sind und welche Module noch gesperrt 
   - Innerhalb eines Moduls folgen Theorieblöcke, Lernpfad-Aufgaben, Praxisblöcke und Gruppen der gespeicherten Reihenfolge aus dem Editor. Nicht in der Reihenfolge enthaltene Inhalte werden ergänzt. Danach folgt das Quiz. Erst nach dem Abschluss öffnet sich automatisch das nächste Modul.
   - Kommen später über den Modul-Builder neue Module im Katalog hinzu, werden sie automatisch einsortiert, ohne dass bereits verdiente XP oder erledigte Module verloren gehen.
 - **Keine doppelten Punkte:** Das System merkt sich jede bereits gelöste Aufgabe und jeden erledigten Schritt. Wer eine Aufgabe zur Übung noch einmal löst, lernt zwar weiter, bekommt die XP aber fair nur beim ersten Mal gutgeschrieben.
-- **Der „⚡ Fastlane“-Schnelltest:** Wer ein Thema bereits beherrscht, kann auch bei gesperrten Folgemodulen das schwere Fastlane-Quiz versuchen. Bei Erreichen der Bestehensgrenze (Standard: **85 %**) gilt das Modul als bestanden und das nächste wird freigeschaltet. Die XP noch offener Theorieblöcke und ungelöster Fragen werden einmalig gutgeschrieben. Unter der Grenze wird der persönliche Bestwert gespeichert, aber es gibt keine Punkte oder Freischaltung.
+- **Der „⚡ Fastlane“-Schnelltest:** Der schwere Fastlane-Modus kann über die Modul-URL mit `mode=fastlane` auch für gesperrte Folgemodule aufgerufen werden; die Fastlane-Links in Roadmap und Lektion sind derzeit ausgeblendet. Bei Erreichen der Bestehensgrenze (Standard: **85 %**) gilt das Modul als bestanden und das nächste wird freigeschaltet. Die XP noch offener Theorieblöcke und ungelöster Fragen werden einmalig gutgeschrieben. Unter der Grenze wird der persönliche Bestwert gespeichert, aber es gibt keine Punkte oder Freischaltung.
 - **Theorie-XP:** Jeder abgeschlossene Theorieblock schreibt seine eigenen, anhand seiner Tags gewichteten XP einmalig gut. Beim Abschluss einer Gruppe werden die noch offenen Blöcke gemeinsam vergütet. Alte Blöcke ohne eigene Werte verwenden den Theorie-Basiswert des Moduls und zunächst keine Tags; bereits abgeschlossene Theorie bleibt abgeschlossen und wird nicht erneut vergütet. Ein Modul ohne Theorieblöcke wird ohne Theorie-XP übersprungen.
 - **Level-System:** Alle **500 XP** steigt man automatisch ein Level höher (Level 1 ab 0 XP, Level 2 ab 500 XP usw.), inklusive Aufschlüsselung nach Lernbereichen und Themen-Etiketten.
 - **Prüfstrecke (`tests/learning-progress.test.mjs`):** Tests prüfen diese Regeln, darunter Doppel-XP-Schutz, Fastlane, Dashboard-Kennzahlen und Speicherung.
@@ -217,15 +217,15 @@ Ein neuer Katalog enthält keine Module oder Fragen. Bis eigene Quiz-Einstellung
 
 ### 3. Die Modul-Roadmap (`src/components/learning/ModuleRoadmap.astro`)
 - **Wozu sie dient:** Zeigt alle Module in der richtigen Reihenfolge als übersichtliche Karten.
-- **Etappen-Pills:** Jede Karte bildet den exakten Status der Schritte ab (`✓` erledigt, `●` aktiv, `🔒` gesperrt) – inklusive *3. Praxis* nur dann, wenn das Modul auch tatsächlich einen Praxisteil besitzt.
-- **Zwei Wege pro Modul:** **„Lektion öffnen“** (sobald das Modul freigeschaltet ist) oder jederzeit **„⚡ Fastlane (Schweres Quiz)“** (auch für noch gesperrte Folgemodule).
+- **Fortschritt:** Die Karte zeigt Gesamtfortschritt sowie Balken für Theorie, Aufgaben und Quiz. Status-Badges und der Fastlane-Link sind derzeit ausgeblendet.
+- **Aktionen:** **„Lektion öffnen“** führt zur Modulansicht; gesperrte Module zeigen dort einen Sperrhinweis. **„Quiz starten“** wird erst bei Quizbereitschaft aktiviert. Der geschützte Reset setzt den gesamten lokalen Lernfortschritt zurück.
 
 ### 4. Der Lektions-Parcours & Aufgaben-Runner (`ModuleStepper.astro` & `ModuleQuizRunner.astro`)
 - **Geführter Schritt-für-Schritt-Aufbau (`/audio/theory/modul/?id=...`):**
   - **Ein Abschnitt nach dem anderen:** Eine Gruppe zählt als ein Schritt; ihre Untertitel brauchen keine Nummern. Mit **„Abschnitt gelesen“** werden die XP gutgeschrieben, ohne sie im Button anzuzeigen. Der Abschluss schaltet **„Weiter“** frei. Solange im aktuellen Abschnitt eine Lernpfad- oder Praxisaufgabe offen ist, sind **„Zurück“** und frühere Sidebar-Schritte gesperrt. Nach Erledigung oder nach drei Fehlversuchen bei einer Lernpfad-Aufgabe wird der Rückweg freigegeben. Beim erneuten Öffnen beginnt die Lektion beim ersten offenen Abschnitt. Bei älteren oder unvollständigen Reihenfolgen werden fehlende Blöcke und Übungen ergänzt. Das Dashboard bleibt auf der Lernpfadseite.
   - **Theorie und Übungen:** Theorie unterstützt Markdown und KaTeX (`$…$` im Text, `$$…$$` als abgesetzte Formel). `Notation` und `NotationKeyboard` lassen sich als selbstschließende Elemente im Theorietext einbetten; `FretboardClickable` und `ScalePattern` sind als separate Block-Visualisierungen verfügbar. Übungen bieten Multiple/Single Choice, Zahleneingabe (z. B. `880` oder `880 Hz`) und das interaktive Notensystem (`NotationBuilder.astro`). Nach dem ersten Fehlversuch wird nur die Zahl der verbleibenden Versuche angezeigt. Nach dem zweiten erscheint, sofern hinterlegt, der einfache Hinweis; den stärkeren Hinweis kannst du vor der letzten Antwort aufklappen. Erst nach dem dritten Fehlversuch erscheinen Lösung und Erklärung. Auch dann wird die Übung abgeschlossen und ihre XP werden einmalig gutgeschrieben. Leere Antworten zählen nicht als Versuch. Abschluss-Quiz und Fastlane bleiben unverändert.
-  - **Praxis (optional):** Folgt nach allen Theorieblöcken und Übungen und schaltet nach Bestätigung das Abschluss-Quiz frei. Leere Theorie- oder Übungsteile werden übersprungen.
-  - **Abschluss-Quiz Einfach & Fastlane-Modus (`?id=...&mode=fastlane`):** Führen Frage für Frage mit Fortschrittsbalken (`Frage X / Y`), XP-Bonus-Vorschau, konfigurierbarer Bestehensschwelle (Standard: `80 %` bzw. `85 %`) und automatischer Freischaltung des Folgemoduls durch die Prüfung.
+  - **Praxis (optional):** Praxisaufgaben erscheinen an ihrer gespeicherten Position, einzeln oder in Gruppen. Sie werden jeweils bestätigt; das Quiz folgt erst nach den Inhaltsabschnitten.
+  - **Abschluss-Quiz (`mittel`) & Fastlane-Modus (`?id=...&mode=fastlane`, `schwer`):** Führen Frage für Frage mit Fortschrittsbalken (`Frage X / Y`), XP-Bonus-Vorschau, konfigurierbarer Bestehensschwelle (Standard: `80 %` bzw. `85 %`) und automatischer Freischaltung des Folgemoduls durch die Prüfung.
 - **UI-Tests (`tests/components/module-player-ui.test.ts`):** Prüfen unter anderem Startdaten, das Entsperren des Steppers und den Fastlane-Durchlauf mit Dashboard und Roadmap.
 
 ---
@@ -237,7 +237,7 @@ Ein neuer Katalog enthält keine Module oder Fragen. Bis eigene Quiz-Einstellung
 
 ---
 
-## Schnittstellen & Abnahme
+## Schnittstellen & Qualitätssicherung
 
 ### Datenmodell und Einbindung
 
@@ -256,35 +256,6 @@ Die drei Builder-Formulare unter `src/components/project/` werden in `src/conten
 
 Die Netlify Function `netlify/functions/modules.ts` stellt die Modul-API bereit. In der Astro-Entwicklung ergänzt ein Vite-Plugin den lokalen Endpunkt, der `data/modules.json` verwendet. XP- und Validierungsregeln liegen in `src/lib/xp-tags.ts`, `src/lib/module-schema.ts` und `src/lib/module-store.ts`; UI-Logik und Styles liegen in `src/lib/module-builder-ui.ts`, `src/lib/module-player-ui.ts`, `src/styles/module-builder.css` und `src/styles/module-player.css`.
 
-### Manuelle Abnahme-Checkliste
-
-- [ ] Die Modul-Builder-Seite zeigt alle vier Tabs und lädt den Katalog ohne Fehler.
-- [ ] Ein Modul mit gültiger ID, Bereich, Level, Tags und Theorie-Blöcken lässt sich lokal speichern und erneut laden.
-- [ ] Theorie-Blöcke lassen sich hinzufügen, entfernen und umsortieren; KaTeX-Inhalte werden im Lernpfad dargestellt.
-- [ ] Visuelle Theorie-Bausteine lassen sich konfigurieren und im Lernpfad prüfen.
-- [ ] Reine Theorie-Module ohne Praxisschritt sowie Module mit Praxisschritt werden korrekt gespeichert und angezeigt.
-- [ ] Ungültige Pflichtfelder und Bestehensgrenzen außerhalb von 0 bis 100 werden abgewiesen.
-- [ ] XP-Basiswerte und Tag-Faktoren werden im Aufgaben-Builder korrekt angezeigt und neu berechnet.
-- [ ] Single-Choice-, Multi-Select- und Zahleneingabe-Aufgaben lassen sich erstellen und bearbeiten.
-- [ ] Notationsaufgaben zeigen die Builder-Vorschau und speichern Konfiguration sowie erwartete Töne oder Dauern.
-- [ ] Lernpfad-Aufgaben benötigen genau ein vorhandenes Modul; Quizfragen erlauben null bis mehrere vorhandene Module. Ungültige Notationskonfigurationen werden abgewiesen.
-- [ ] Der Katalog wechselt zwischen Karten- und Listenansicht und filtert nach Bereich sowie Lernspur.
-- [ ] Katalog-Zusammenfassungen zeigen Theorie-Blöcke, Aufgaben je Spur und gewichtete XP passend zu den Daten.
-- [ ] Bearbeiten aus dem Katalog öffnet die Modul-Detailseite beziehungsweise die Quizfrage im passenden Tab.
-- [ ] Beim Löschen eines Moduls bestätigt der Dialog die Aktion; Lernpfad-Aufgaben werden entfernt, Quizfragen verlieren nur die Modulzuordnung.
-- [ ] Die Modul-API lädt und speichert in Netlify Blobs; der reine Astro-Dev-Endpunkt nutzt `data/modules.json`.
-- [ ] HTML-Fehlerantworten und API-Fehler werden sichtbar behandelt, statt als erfolgreiche JSON-Antworten zu gelten.
-- [ ] Das Dashboard zeigt Level, Gesamt-XP, Fortschritt, abgeschlossene Module sowie XP nach Bereich und Tag.
-- [ ] Fortschritt bleibt nach erneutem Laden im Browser erhalten; serverseitiges Rendering läuft ohne `localStorage`.
-- [ ] Theorieblöcke, Übungen, Praxisblöcke und gemischte Gruppen erscheinen als Schritte in der gespeicherten Reihenfolge; danach folgt das Quiz.
-- [ ] Übungen lassen sich in der gemeinsamen Modul-Blockliste aufklappen, direkt bearbeiten und speichern.
-- [ ] Wiederholtes Lösen derselben Aufgabe vergibt keine doppelten XP; 500 XP entsprechen einem Level.
-- [ ] Quiz und Fastlane verwenden die globalen Bestehensgrenzen; Nichtbestehen vergibt keine Abschluss-XP und entsperrt kein Folgemodul.
-- [ ] Fastlane ist auch für gesperrte Module erreichbar; Bestehen aktualisiert Fortschritt und Roadmap.
-- [ ] Zahleneingaben mit Einheiten und interaktive Notationsantworten werden gemäß Aufgaben-Konfiguration bewertet.
-- [ ] Dashboard und Roadmap aktualisieren sich nach Fortschrittsänderungen ohne Seitenneuladen.
-- [ ] Der Fortschritt-Reset erfordert Bestätigung und setzt den lokalen Lernstand zurück.
-
 ### Automatisierte Qualitätssicherung
 
 Die fachlichen Regeln und die Builder-/Player-Interaktionen werden in den vier oben genannten Feature-Testdateien geprüft. Gezielt ausführen:
@@ -293,4 +264,4 @@ Die fachlichen Regeln und die Builder-/Player-Interaktionen werden in den vier o
 npx vitest run tests/learning-progress.test.mjs tests/module-builder.test.mjs tests/components/module-builder-ui.test.ts tests/components/module-player-ui.test.ts
 ```
 
-`npm test` führt alle Vitest-Tests aus; das vollständige Projekt-Quality-Gate ist `npm run preflight`. Manuelle Abnahmepunkte bleiben zusätzlich zu prüfen.
+`npm test` führt alle Vitest-Tests aus; das vollständige Projekt-Quality-Gate ist `npm run preflight`.

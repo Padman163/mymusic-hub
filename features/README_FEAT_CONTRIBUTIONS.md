@@ -111,7 +111,7 @@ Der Request-Body darf höchstens 500.000 Bytes umfassen. Ungültiges JSON, ungü
 | [`netlify/functions/lib/blob-store.ts`](../netlify/functions/lib/blob-store.ts) | Gemeinsamer Blob-Zugriff, Initialisierung und ETag-Schreibschutz. |
 | [`src/styles/contribution-tags.css`](../src/styles/contribution-tags.css), [`src/styles/contribution-checklist.css`](../src/styles/contribution-checklist.css) | Tag-, Auswahl- und Checklistenstyles. |
 
-## Tests und manuelle Abnahme
+## Tests
 
 Relevante automatisierte Tests:
 
@@ -125,12 +125,3 @@ npm run build
 npx vitest run tests/integration/contributions.test.ts tests/components/checklist-editor.test.ts tests/blob-store.test.ts
 npx playwright test tests/e2e/smoke.spec.ts -g "filtert Beiträge standardmäßig nach offenen Status"
 ```
-
-Manuelle Abnahme:
-
-- [ ] Beitrag mit allen drei Typen und den verschiedenen Bereichen und Prioritäten erstellen; Pflichtbereich und Standardwerte prüfen.
-- [ ] Status-, Typ-, Bereichs- und Prioritätsfilter einzeln und kombiniert prüfen, einschließlich „Ohne Bereich“ und „Alle Status“.
-- [ ] Sortierung nach Datum und Priorität samt Gleichstandsregel prüfen; zwischen Karten- und Listenansicht wechseln.
-- [ ] Checklistenpunkte mit Enter, über die Eingabezeile beim Speichern sowie durch Umformulieren, Abhaken und Entfernen prüfen; 100-Punkte- und 200-Zeichen-Grenze beachten.
-- [ ] Beitrag bearbeiten und löschen; Abbruch, Bestätigungsdialog, Fehlermeldungen und Fokusführung prüfen.
-- [ ] Alte Einträge ohne Status, Priorität oder Bereich prüfen; für die Persistenz zusätzlich die lokale Netlify-CLI- und Cloud-Abnahme aus der [Blob-Referenz](README_FEAT_NETLIFYBLOB.md) ausführen.
