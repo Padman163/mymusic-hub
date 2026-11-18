@@ -2,7 +2,6 @@ import { addIcon } from "./contribution-types.ts";
 import {
   DEFAULT_QUIZ_SETTINGS,
   formatExerciseTitle,
-  getDefaultBaseXpForLane,
   isDStage,
   isModuleScope,
   isQuestionInModule,
@@ -19,7 +18,10 @@ import {
   type NotationTaskDuration,
   normalizeLegacyDatabase,
   type PracticeBlock,
+  QUESTION_DIFFICULTIES,
+  QUESTION_DIFFICULTY_LABELS,
   QUESTION_TYPES,
+  type QuestionDifficulty,
   type QuestionType,
   type TargetLane,
   type TheoryBlock,
@@ -49,9 +51,11 @@ import { type Duration, durationLabels } from "./rhythm.ts";
 import { createXpBadge, updateXpBadge } from "./xp-badge.ts";
 import {
   BASE_XP_DEFAULTS,
-  calculateQuestionXp,
+  calculateModuleQuestionXp,
   calculateTheoryBlockXp,
   getAvailableTags,
+  QUESTION_BASE_XP,
+  QUESTION_DIFFICULTY_MULTIPLIERS,
   TAG_DEFINITIONS,
 } from "./xp-tags.ts";
 
@@ -266,12 +270,53 @@ export interface XpTagPickerController {
   setDisabled(disabled: boolean): void;
 }
 
+function createQuestionDifficultyPicker(
+  name: string,
+  initial: QuestionDifficulty,
+  onChange: () => void,
+) {
+  const element = document.createElement("fieldset");
+  element.className = "contribution-type-picker question-difficulty-picker";
+  const legend = document.createElement("legend");
+  legend.textContent = "Schwierigkeit";
+  const choices = document.createElement("div");
+  choices.className = "contribution-type-choices xp-tag-choices";
+  let selected = initial;
+  const inputs = QUESTION_DIFFICULTIES.map((difficulty) => {
+    const label = document.createElement("label");
+    const input = document.createElement("input");
+    input.type = "radio";
+    input.name = name;
+    input.value = difficulty;
+    input.checked = difficulty === initial;
+    input.addEventListener("change", () => {
+      if (!input.checked) return;
+      selected = difficulty;
+      onChange();
+    });
+    const chip = document.createElement("span");
+    chip.className = "contribution-tag xp-tag-chip";
+    chip.textContent = QUESTION_DIFFICULTY_LABELS[difficulty];
+    label.append(input, chip);
+    choices.append(label);
+    return input;
+  });
+  element.append(legend, choices);
+  return {
+    element,
+    value: () => selected,
+    setValue(value: QuestionDifficulty): void {
+      selected = value;
+      for (const input of inputs) input.checked = input.value === value;
+    },
+  };
+}
+
 /** Erzeugt eine Multi-Select-Tag-Auswahl mit Anzeige des XP-Multiplikators. */
 export function createXpTagPicker(options: {
   name: string;
   legend: string;
   defaultTags?: readonly string[];
-  includeNeutral?: boolean;
   onChange?: (selected: string[]) => void;
 }): XpTagPickerController {
   const defaultTags = options.defaultTags ?? [];
@@ -286,8 +331,7 @@ export function createXpTagPicker(options: {
 
   const checkboxes: HTMLInputElement[] = [];
   const availableTags = getAvailableTags().filter(
-    (tagName) =>
-      options.includeNeutral || TAG_DEFINITIONS[tagName].multiplier > 1,
+    (tagName) => TAG_DEFINITIONS[tagName].multiplier > 1,
   );
   const available = new Set(availableTags);
   let retainedTags = defaultTags.filter((tag) => !available.has(tag));
@@ -315,14 +359,7 @@ export function createXpTagPicker(options: {
     choices.append(label);
   }
 
-  const retainedHint = document.createElement("small");
-  retainedHint.className = "field-hint";
-  function updateRetainedHint(): void {
-    retainedHint.hidden = retainedTags.length === 0;
-    retainedHint.textContent = `Bisherige Tags bleiben erhalten: ${retainedTags.join(", ")}.`;
-  }
-  updateRetainedHint();
-  fieldset.append(legend, choices, retainedHint);
+  fieldset.append(legend, choices);
 
   function selectedTags(): string[] {
     return [
@@ -337,7 +374,6 @@ export function createXpTagPicker(options: {
     for (const box of checkboxes) {
       box.checked = wanted.has(box.value);
     }
-    updateRetainedHint();
     options.onChange?.(selectedTags());
   }
 
@@ -394,10 +430,6 @@ export function createTheoryBlockEditor(
 
   const legend = document.createElement("legend");
   legend.textContent = "Modulblöcke";
-  const hint = document.createElement("p");
-  hint.className = "field-hint";
-  hint.textContent =
-    "Freie Theorieblöcke und Lernpfad-Aufgaben auswählen und gruppieren; einzelne Elemente über „−“ lösen.";
 
   const rows = document.createElement("div");
   rows.className = "theory-block-rows";
@@ -412,6 +444,12 @@ export function createTheoryBlockEditor(
   const draftExerciseIds = new Set<string>();
   const expandedGroups = new Set<string>();
   let previewRenderer: Promise<typeof import("./module-player-ui.ts")> | undefined;
+
+  function updateBuilderXpBadge(badge: HTMLElement, xp: number): void {
+    badge.setAttribute("aria-live", "polite");
+    updateXpBadge(badge, xp);
+    if (badge.closest("details")?.open) badge.prepend("berechnet: ");
+  }
 
   function createPreviewPanel(ariaLabel: string): HTMLDetailsElement {
     const panel = document.createElement("details");
@@ -605,7 +643,7 @@ export function createTheoryBlockEditor(
     heading.className = "learning-theory-block-title";
     heading.textContent = title;
     const description = document.createElement("p");
-    description.textContent = `${members.length} ${members.length === 1 ? "Eintrag" : "Einträge"}; Einzelvorschauen stehen auf Höhe der jeweiligen Blöcke.`;
+    description.textContent = `${members.length} ${members.length === 1 ? "Eintrag" : "Einträge"}`;
     body.replaceChildren(heading, description);
   }
 
@@ -678,7 +716,7 @@ export function createTheoryBlockEditor(
       (total, child) => total + (xpByRow.get(child) ?? 0),
       0,
     );
-    updateXpBadge(badge, xp);
+    updateBuilderXpBadge(badge, xp);
   }
 
   function renderGroupHeaders(): void {
@@ -750,6 +788,7 @@ export function createTheoryBlockEditor(
       groupDetails.append(label);
       groupDetails.addEventListener("toggle", () => {
         const isExpanded = groupDetails.open;
+        refreshGroupXp(group);
         if (isExpanded) expandedGroups.add(groupId);
         else expandedGroups.delete(groupId);
         groupPreview.open = isExpanded;
@@ -982,11 +1021,8 @@ export function createTheoryBlockEditor(
       ".theory-block-row, .module-practice-row",
     )) {
       const input = row.querySelector<HTMLInputElement>(".theory-block-xp");
-      const result = row.querySelector<HTMLElement>(
-        ".theory-block-calculated-xp",
-      );
       const picker = blockTags.get(row);
-      if (!input || !result || !picker) continue;
+      if (!input || !picker) continue;
       const defaultXp = row.classList.contains("module-practice-row")
         ? BASE_XP_DEFAULTS.practice
         : getDefaultBaseXp();
@@ -1002,11 +1038,10 @@ export function createTheoryBlockEditor(
         defaultXp,
       );
       xpByRow.set(row, xp);
-      result.textContent = `Berechnete XP: ${xp}`;
       const badge = row.querySelector<HTMLElement>(
         "summary > .learning-xp-badge",
       );
-      if (badge) updateXpBadge(badge, xp);
+      if (badge) updateBuilderXpBadge(badge, xp);
     }
     for (const group of rows.querySelectorAll<HTMLElement>(
       ".theory-block-group",
@@ -1051,6 +1086,7 @@ export function createTheoryBlockEditor(
     preview.open = details.open;
     details.addEventListener("toggle", () => {
       preview.open = details.open;
+      refreshCalculatedXp();
       if (details.open) updatePreview(preview, row);
     });
     preview.addEventListener("toggle", () => {
@@ -1124,7 +1160,6 @@ export function createTheoryBlockEditor(
     const titleInput = document.createElement("input");
     titleInput.type = "text";
     titleInput.className = "theory-block-title";
-    titleInput.placeholder = "z. B. Frequenz & Tonhöhe";
     titleInput.value = initial.title ?? "";
     titleInput.addEventListener("input", () => {
       syncRowOrder();
@@ -1135,24 +1170,16 @@ export function createTheoryBlockEditor(
     const markdownLabel = document.createElement("label");
     markdownLabel.className = "field";
     const markdownCaption = document.createElement("span");
-    markdownCaption.textContent =
-      kind === "theory"
-        ? "Inhalt (Markdown, KaTeX & Notation)"
-        : "Beschreibung (Markdown, KaTeX & Notation)";
+    markdownCaption.textContent = kind === "theory" ? "Inhalt" : "Beschreibung";
     const markdownInput = document.createElement("textarea");
     markdownInput.className = "theory-block-markdown";
-    markdownInput.rows = 4;
-    markdownInput.placeholder =
-      "Erklärungstext. Formeln mit $f = 440\\text{ Hz}$ oder $$...$$ einfügen.";
+    markdownInput.rows = kind === "theory" ? 12 : 4;
     markdownInput.value = initial.markdownContent ?? "";
     markdownInput.addEventListener("input", () => refreshPreviewForRow(row));
-    const katexHint = document.createElement("small");
-    katexHint.className = "field-hint";
-    katexHint.textContent =
-      'Formeln mit $...$ oder $$...$$; Notation direkt im Text: <Notation clef="treble" notes={[]} />.';
-    markdownLabel.append(markdownCaption, markdownInput, katexHint);
+    markdownLabel.append(markdownCaption, markdownInput);
     const xpLabel = document.createElement("label");
     xpLabel.className = "field";
+    xpLabel.hidden = true;
     const xpCaption = document.createElement("span");
     xpCaption.textContent =
       kind === "theory" ? "Basis-XP (leer: Modulwert)" : "Basis-XP";
@@ -1176,73 +1203,60 @@ export function createTheoryBlockEditor(
       name: `${kind}-tags-${row.dataset.blockId}`,
       legend: "Block-Tags",
       defaultTags: initial.tags ?? [],
-      includeNeutral: true,
       onChange: refreshCalculatedXp,
     });
     blockTags.set(row, picker);
-    const calculatedXp = document.createElement("p");
-    calculatedXp.className = "theory-block-calculated-xp";
-    calculatedXp.setAttribute("aria-live", "polite");
     const content = document.createElement("div");
     content.className = "theory-block-content";
-    content.append(
-      titleLabel,
-      markdownLabel,
-      xpLabel,
-      picker.element,
-      calculatedXp,
-    );
+    content.append(titleLabel, markdownLabel, xpLabel, picker.element);
     if (kind === "theory") {
-      const roleLabel = document.createElement("label");
-      roleLabel.className = "field";
-      const roleCaption = document.createElement("span");
-      roleCaption.textContent = "Blockrolle";
-      const roleSelect = document.createElement("select");
-      roleSelect.className = "theory-block-role";
-      for (const [value, label] of [
-        ["theory", "Theorieteil"],
-        ["exercise_intro", "Aufgabeneinleitung (ohne Abschluss und XP)"],
-      ]) {
-        const option = document.createElement("option");
-        option.value = value;
-        option.textContent = label;
-        roleSelect.append(option);
-      }
-      roleSelect.value = initial.role ?? "theory";
-      const roleHint = document.createElement("small");
-      roleHint.className = "field-hint";
-      roleHint.textContent =
-        "Eine Aufgabeneinleitung erklärt die folgenden Fragen. Gruppiere sie mit den zugehörigen Aufgaben; sie benötigt keinen eigenen Abschluss und gibt keine XP.";
-      const updateRole = () => {
-        const introduction = roleSelect.value === "exercise_intro";
-        row.dataset.blockRole = roleSelect.value;
-        xpLabel.hidden = introduction;
+      const roleOptions = document.createElement("fieldset");
+      roleOptions.className = "contribution-type-picker theory-block-role-options";
+      const roleLegend = document.createElement("legend");
+      roleLegend.textContent = "Blockrolle";
+      const roleChoices = document.createElement("div");
+      roleChoices.className = "contribution-type-choices xp-tag-choices";
+      roleOptions.append(roleLegend, roleChoices);
+      const updateRole = (role: string) => {
+        row.dataset.blockRole = role;
+        const introduction = role === "exercise_intro";
         picker.element.hidden = introduction;
-        calculatedXp.hidden = introduction;
-        const badge = summary.querySelector<HTMLElement>(".learning-xp-badge");
-        if (badge) badge.hidden = introduction;
         syncRowOrder();
         refreshCalculatedXp();
       };
-      roleSelect.addEventListener("change", updateRole);
-      roleLabel.append(roleCaption, roleSelect, roleHint);
-      content.prepend(roleLabel);
-      updateRole();
+      for (const [value, label] of [
+        ["theory", "Theorieteil"],
+        ["exercise_intro", "Aufgabeneinleitung"],
+      ]) {
+        const optionLabel = document.createElement("label");
+        const option = document.createElement("input");
+        option.type = "radio";
+        option.className = "theory-block-role";
+        option.name = `block-role-${row.dataset.blockId}`;
+        option.value = value;
+        option.checked = value === (initial.role ?? "theory");
+        option.addEventListener("change", () => {
+          if (option.checked) updateRole(value);
+        });
+        const chip = document.createElement("span");
+        chip.className = "contribution-tag xp-tag-chip";
+        chip.textContent = label;
+        optionLabel.append(option, chip);
+        roleChoices.append(optionLabel);
+        if (option.checked) updateRole(value);
+      }
+      content.prepend(roleOptions);
     }
     if (legacyVisuals.has(row)) {
-      const legacyHint = document.createElement("small");
-      legacyHint.className = "field-hint";
-      legacyHint.textContent = `Bisherige Visualisierung (${initial.visualComponent}) bleibt erhalten.`;
       const removeVisual = document.createElement("button");
       removeVisual.type = "button";
-      removeVisual.textContent = "Bisherige Visualisierung entfernen";
+      removeVisual.textContent = `Bisherige Visualisierung entfernen (${initial.visualComponent})`;
       removeVisual.addEventListener("click", () => {
         legacyVisuals.delete(row);
-        legacyHint.remove();
         removeVisual.remove();
         refreshPreviewForRow(row);
       });
-      content.append(legacyHint, removeVisual);
+      content.append(removeVisual);
     }
     details.append(summary, content);
     row.append(details, controls, preview);
@@ -1550,6 +1564,7 @@ export function createTheoryBlockEditor(
       preview.open = details.open;
       details.addEventListener("toggle", () => {
         preview.open = details.open;
+        updateXp();
         if (details.open) updatePreview(preview, row);
       });
       preview.addEventListener("toggle", () => {
@@ -1577,13 +1592,7 @@ export function createTheoryBlockEditor(
       prompt.value = question.prompt;
       prompt.setAttribute("aria-label", "Aufgabenstellung");
       prompt.addEventListener("input", syncRowOrder);
-      const promptField = createLabeledField("Aufgabenstellung", prompt);
-      const promptHint = document.createElement("small");
-      promptHint.className = "field-hint";
-      promptHint.textContent =
-        "Markdown, KaTeX und Visuals wie <Notation /> werden in der Vorschau gerendert.";
-      promptField.append(promptHint);
-      editor.append(promptField);
+      editor.append(createLabeledField("Aufgabenstellung", prompt));
 
       const typeEditor = createQuestionTypeEditor(`inline-${question.id}-`);
       typeEditor.load(question);
@@ -1615,12 +1624,18 @@ export function createTheoryBlockEditor(
       baseXp.type = "number";
       baseXp.min = "0";
       baseXp.step = "1";
-      baseXp.value = String(question.baseXp);
+      baseXp.value = String(QUESTION_BASE_XP);
       baseXp.setAttribute("aria-label", "Basis-XP");
-      editor.append(createLabeledField("Basis-XP", baseXp));
+      const baseXpField = createLabeledField("Basis-XP", baseXp);
+      baseXpField.hidden = true;
+      editor.append(baseXpField);
 
-      const xpOutput = document.createElement("span");
-      xpOutput.className = "module-exercise-xp";
+      const difficulty = createQuestionDifficultyPicker(
+        `exercise-difficulty-${question.id}`,
+        question.difficulty ?? "einfach",
+        updateXp,
+      );
+      editor.prepend(difficulty.element);
       const tagPicker = createXpTagPicker({
         name: `exercise-tags-${question.id}`,
         legend: "Themen-Tags",
@@ -1628,19 +1643,17 @@ export function createTheoryBlockEditor(
         onChange: updateXp,
       });
       function updateXp(): void {
-        const xp = calculateQuestionXp(
-          Number(baseXp.value),
-          tagPicker.selectedTags(),
-        );
+        const xp = calculateModuleQuestionXp({
+          difficulty: difficulty.value(),
+          tags: tagPicker.selectedTags(),
+        });
         xpByRow.set(row, xp);
-        updateXpBadge(badge, xp);
-        xpOutput.textContent = `Berechnete XP: ${xp}`;
+        updateBuilderXpBadge(badge, xp);
         const group = row.closest<HTMLElement>(".theory-block-group");
         if (group) refreshGroupXp(group);
       }
-      baseXp.addEventListener("input", updateXp);
       updateXp();
-      editor.append(tagPicker.element, xpOutput);
+      editor.append(tagPicker.element);
 
       function readExercise(): ModuleQuestion {
         const typeFields = typeEditor.read();
@@ -1655,13 +1668,14 @@ export function createTheoryBlockEditor(
           id: question.id,
           moduleIds: question.moduleIds,
           targetLane: "leicht",
+          difficulty: difficulty.value(),
           ...typeFields,
           title: title.value.trim(),
           prompt: prompt.value.trim(),
           simpleHint: simpleHint.value.trim(),
           strongHint: strongHint.value.trim(),
           explanation: explanation.value.trim(),
-          baseXp: Number(baseXp.value),
+          baseXp: QUESTION_BASE_XP,
           tags: tagPicker.selectedTags(),
         };
       }
@@ -1791,7 +1805,7 @@ export function createTheoryBlockEditor(
 
   if (initialBlocks.length > 0) setItems(initialBlocks);
 
-  fieldset.append(legend, hint, groupButton, rows, addType, addButton);
+  fieldset.append(legend, groupButton, rows, addType, addButton);
 
   return {
     element: fieldset,
@@ -2531,10 +2545,9 @@ function createQuestionTypeEditor(prefix = "") {
     return control;
   }
 
-  function input(id: string, type = "text", placeholder = "") {
+  function input(id: string, type = "text") {
     const control = identify(document.createElement("input"), id);
     control.type = type;
-    control.placeholder = placeholder;
     return control;
   }
 
@@ -2563,11 +2576,7 @@ function createQuestionTypeEditor(prefix = "") {
   choices.append(rows, add);
 
   const numeric = section("exercise-numeric-section", "Exakte Lösung");
-  const answer = input(
-    "exercise-numeric-answer",
-    "text",
-    "z. B. 880 oder 880 Hz",
-  );
+  const answer = input("exercise-numeric-answer");
   numeric.append(createLabeledField("Erwartete Antwort", answer));
 
   const notation = section(
@@ -2578,7 +2587,7 @@ function createQuestionTypeEditor(prefix = "") {
     ["treble", "Violinschlüssel"],
     ["bass", "Bassschlüssel"],
   ]);
-  const time = input("notation-time-signature", "text", "z. B. 4/4");
+  const time = input("notation-time-signature");
   const maxNotes = input("notation-max-notes", "number");
   maxNotes.min = "1";
   maxNotes.max = "8";
@@ -2597,16 +2606,8 @@ function createQuestionTypeEditor(prefix = "") {
   ]);
   const picker = input("notation-show-duration-picker", "checkbox");
   const hints = input("notation-show-hints", "checkbox");
-  const pitches = input(
-    "notation-expected-pitches",
-    "text",
-    "z. B. C4, E4, G4",
-  );
-  const durations = input(
-    "notation-expected-durations",
-    "text",
-    "z. B. quarter, half",
-  );
+  const pitches = input("notation-expected-pitches");
+  const durations = input("notation-expected-durations");
   const grid = document.createElement("div");
   grid.className = "module-field-grid";
   grid.append(
@@ -2670,7 +2671,6 @@ function createQuestionTypeEditor(prefix = "") {
     const value = document.createElement("input");
     value.type = "text";
     value.className = "exercise-choice-text";
-    value.placeholder = "Antwortoption";
     value.setAttribute("aria-label", "Antwortoption");
     value.value = text;
     const remove = document.createElement("button");
@@ -2913,7 +2913,12 @@ export function attachExerciseBuilderForm(
 
   let availableModules: LearningModule[] = [];
   let editingQuestionId: string | null = null;
-  let baseXpManuallyEdited = false;
+  const difficulty = createQuestionDifficultyPicker(
+    "exercise-difficulty",
+    "einfach",
+    refreshCalculatedXp,
+  );
+  typeFieldsHost.before(difficulty.element);
 
   const tagPicker = createXpTagPicker({
     name: "exerciseTags",
@@ -2925,16 +2930,13 @@ export function attachExerciseBuilderForm(
   tagsContainer.append(tagPicker.element);
 
   function refreshCalculatedXp(): number {
-    const rawBase = Number(baseXpInput.value);
-    const baseXp = Number.isFinite(rawBase) && rawBase >= 0 ? rawBase : 0;
     const tags = tagPicker.selectedTags();
-    const totalXp = calculateQuestionXp(baseXp, tags);
+    const totalXp = calculateModuleQuestionXp({
+      difficulty: difficulty.value(),
+      tags,
+    });
     calculatedXpOutput.textContent = `${totalXp} XP`;
-    const factor =
-      baseXp > 0
-        ? `${(totalXp / baseXp).toFixed(2).replace(/\.00$/, "")}x`
-        : "1x";
-    calculatedXpDetail.textContent = `Basis ${baseXp} XP · Faktor ${factor}`;
+    calculatedXpDetail.textContent = `Basis ${QUESTION_BASE_XP} XP · Schwierigkeit ${QUESTION_DIFFICULTY_MULTIPLIERS[difficulty.value()]}x`;
     return totalXp;
   }
 
@@ -2972,6 +2974,7 @@ export function attachExerciseBuilderForm(
     const controls = [
       moduleList,
       laneSelect,
+      difficulty.element,
       typeEditor.element,
       promptInput,
       explanationInput,
@@ -2987,11 +2990,11 @@ export function attachExerciseBuilderForm(
 
   function resetForm(): void {
     editingQuestionId = null;
-    baseXpManuallyEdited = false;
     form.reset();
     laneSelect.value = "mittel";
     typeEditor.load();
-    baseXpInput.value = String(BASE_XP_DEFAULTS.mittel);
+    baseXpInput.value = String(QUESTION_BASE_XP);
+    difficulty.setValue("einfach");
     tagPicker.clear();
     submitButton.textContent = "Aufgabe speichern";
     cancelButton.hidden = true;
@@ -3000,7 +3003,6 @@ export function attachExerciseBuilderForm(
 
   function loadQuestion(question: ModuleQuestion): void {
     editingQuestionId = question.id;
-    baseXpManuallyEdited = true;
     const selected = new Set(question.moduleIds);
     for (const checkbox of moduleOptions.querySelectorAll<HTMLInputElement>(
       "input[type=checkbox]",
@@ -3011,7 +3013,8 @@ export function attachExerciseBuilderForm(
     typeEditor.load(question);
     promptInput.value = question.prompt;
     explanationInput.value = question.explanation;
-    baseXpInput.value = String(question.baseXp);
+    baseXpInput.value = String(QUESTION_BASE_XP);
+    difficulty.setValue(question.difficulty ?? "einfach");
     tagPicker.setSelectedTags(question.tags);
 
     submitButton.textContent = "Aufgaben-Änderungen speichern";
@@ -3022,14 +3025,6 @@ export function attachExerciseBuilderForm(
   }
 
   laneSelect.addEventListener("change", () => {
-    if (!baseXpManuallyEdited && isTargetLane(laneSelect.value)) {
-      baseXpInput.value = String(getDefaultBaseXpForLane(laneSelect.value));
-    }
-    refreshCalculatedXp();
-  });
-
-  baseXpInput.addEventListener("input", () => {
-    baseXpManuallyEdited = true;
     refreshCalculatedXp();
   });
 
@@ -3108,10 +3103,11 @@ export function attachExerciseBuilderForm(
         (input) => input.value,
       ),
       targetLane,
+      difficulty: difficulty.value(),
       ...typeFields,
       prompt: promptInput.value.trim(),
       explanation: explanationInput.value.trim(),
-      baseXp: Number(baseXpInput.value),
+      baseXp: QUESTION_BASE_XP,
       tags: tagPicker.selectedTags(),
     };
 
@@ -3338,7 +3334,7 @@ export function attachModuleCatalogList(
 
         const xpBadge = document.createElement("span");
         xpBadge.className = "contribution-tag module-xp-badge";
-        xpBadge.textContent = `${calculateQuestionXp(question.baseXp, question.tags)} XP`;
+        xpBadge.textContent = `${calculateModuleQuestionXp(question)} XP`;
 
         qMeta.append(laneBadge, typeBadge, xpBadge);
 
@@ -3415,7 +3411,7 @@ export function attachModuleCatalogList(
       lane.textContent = LANE_LABELS[question.targetLane];
       const xp = document.createElement("span");
       xp.className = "contribution-tag module-xp-badge";
-      xp.textContent = `${calculateQuestionXp(question.baseXp, question.tags)} XP`;
+      xp.textContent = `${calculateModuleQuestionXp(question)} XP`;
       meta.append(lane, xp);
       const prompt = document.createElement("p");
       prompt.className = "module-question-prompt";

@@ -1,5 +1,5 @@
 import { getStore, type Store } from '@netlify/blobs';
-import { isQuizSettings, type ModulesDatabase } from '../../../src/lib/module-schema';
+import { isQuizSettings, normalizeLegacyDatabase, type ModulesDatabase } from '../../../src/lib/module-schema';
 import { createEmptyModulesDatabase } from '../../../src/lib/module-store';
 
 type Data = {
@@ -26,9 +26,9 @@ const parse: { [K in Key]: (value: unknown) => Data[K] } = {
 		}
 		const { modules, questions } = value;
 		const quizSettings = 'quizSettings' in value ? value.quizSettings : undefined;
-		if (quizSettings === undefined) return { modules, questions };
+		if (quizSettings === undefined) return normalizeLegacyDatabase({ modules, questions });
 		if (!isQuizSettings(quizSettings)) throw new Error('Die Moduldaten haben ein ungültiges Format.');
-		return { modules, questions, quizSettings };
+		return normalizeLegacyDatabase({ modules, questions, quizSettings });
 	},
 };
 

@@ -20,7 +20,7 @@ import {
   renderTheoryMarkdown,
 } from "../../src/lib/module-player-ui";
 import {
-  calculateQuestionXp,
+  calculateModuleQuestionXp,
   calculateTheoryBlockXp,
 } from "../../src/lib/xp-tags";
 import {
@@ -1386,7 +1386,7 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
         .filter((question) => question.moduleIds.includes(db.modules[0].id))
         .reduce(
           (total, question) =>
-            total + calculateQuestionXp(question.baseXp, question.tags),
+            total + calculateModuleQuestionXp(question),
           0,
         );
     expect(xpValue).toBe(String(expectedXp));

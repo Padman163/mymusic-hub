@@ -120,28 +120,30 @@ function buildTestDatabase() {
     tags: ["Violinschlüssel"],
   });
 
-  // q-3: 15 * 1.0 = 15 XP
+  // q-3: 10 * 1.5 * 1.0 = 15 XP
   db = upsertQuestion(db, {
     id: "q-3",
     moduleIds: ["mod-theory-1"],
     targetLane: "mittel",
+    difficulty: "mittel",
     questionType: "single_choice",
     prompt: "Wie viele Linien hat das Notensystem?",
     options: ["4", "5"],
     correctAnswers: ["5"],
-    baseXp: 15,
+    baseXp: 10,
     tags: ["Allgemein"],
   });
 
-  // q-4: 25 * 1.5 = 38 XP
+  // q-4: 10 * 2 * 1.5 = 30 XP
   db = upsertQuestion(db, {
     id: "q-4",
     moduleIds: ["mod-theory-1"],
     targetLane: "schwer",
+    difficulty: "schwer",
     questionType: "interactive_notation",
     prompt: "Setze G4 in den Violinschlüssel.",
     notationTask: { clef: "treble", expectedPitches: ["G4"] },
-    baseXp: 25,
+    baseXp: 10,
     tags: ["Notensystem"],
   });
 
@@ -159,28 +161,30 @@ function buildTestDatabase() {
     tags: ["Gitarre"],
   });
 
-  // q-6: 15 * 1.2 = 18 XP
+  // q-6: 10 * 1.5 * 1.2 = 18 XP
   db = upsertQuestion(db, {
     id: "q-6",
     moduleIds: ["mod-guitar-2"],
     targetLane: "mittel",
+    difficulty: "mittel",
     questionType: "numeric_input",
     prompt: "Auf welchem Bund greift man A auf der G-Saite?",
     correctAnswers: ["2"],
-    baseXp: 15,
+    baseXp: 10,
     tags: ["Gitarre"],
   });
 
-  // q-7: 25 * 1.2 = 30 XP
+  // q-7: 10 * 2 * 1.2 = 24 XP
   db = upsertQuestion(db, {
     id: "q-7",
     moduleIds: ["mod-guitar-2"],
     targetLane: "schwer",
+    difficulty: "schwer",
     questionType: "single_choice",
     prompt: "Welcher Ton klingt auf der leeren A-Saite?",
     options: ["A2", "E2"],
     correctAnswers: ["A2"],
-    baseXp: 25,
+    baseXp: 10,
     tags: ["Gitarre"],
   });
 
@@ -191,6 +195,16 @@ describe("Lernfortschritts- & XP-Engine (learning-progress)", () => {
   afterEach(() => {
     clearLearningProgress();
     vi.unstubAllGlobals();
+  });
+
+  it("vergütet eine schwere Lernpfad-Aufgabe mit festen Basis-XP und Tag-Faktor genau einmal", () => {
+    const db = buildTestDatabase();
+    const mod = db.modules[0];
+    const question = { ...db.questions[0], difficulty: "schwer", baseXp: 99 };
+    const initial = createInitialProgress(db.modules);
+    const solved = recordExerciseAnswer(initial, mod, question, true, db.questions);
+    expect(solved.totalXp).toBe(30);
+    expect(recordExerciseAnswer(solved, mod, question, true, db.questions).totalXp).toBe(30);
   });
 
   it("vergibt Übungs-XP vor Theorieabschluss, schaltet das Quiz aber erst nach allen Inhalten frei", () => {
@@ -414,9 +428,9 @@ describe("Lernfortschritts- & XP-Engine (learning-progress)", () => {
     state = completeTheoryBlock(state, mod1, "tb-1");
     expect(state.totalXp).toBe(45);
 
-    // Offene Aufgaben von Modul 1: q-1 (15) + q-2 (10) + q-3 (15) + q-4 (38) = 78 XP
+    // Offene Aufgaben von Modul 1: q-1 (15) + q-2 (10) + q-3 (15) + q-4 (30) = 70 XP
     state = submitQuizAttempt(state, db, mod1.id, "schwer", 0.85);
-    expect(state.totalXp).toBe(123); // 45 + 78 (ohne doppelte Theorie-XP)
+    expect(state.totalXp).toBe(115); // 45 + 70 (ohne doppelte Theorie-XP)
     expect(state.modules[mod1.id].status).toBe("completed");
     expect(state.modules[mod1.id].completedVia).toBe("fastlane");
     expect(state.modules[mod1.id].bestFastlaneScore).toBe(0.85);
@@ -475,7 +489,7 @@ describe("Lernfortschritts- & XP-Engine (learning-progress)", () => {
       xpByTag: Object.fromEntries(getAvailableTags().map((tag) => [tag, 0])),
     });
 
-    state = submitQuizAttempt(state, db, "mod-theory-1", "schwer", 1.0); // 123 XP
+    state = submitQuizAttempt(state, db, "mod-theory-1", "schwer", 1.0); // 115 XP
     const boostedState = {
       ...state,
       totalXp: 625,
@@ -488,14 +502,14 @@ describe("Lernfortschritts- & XP-Engine (learning-progress)", () => {
     expect(overview.completedModules).toBe(1);
     expect(overview.totalModules).toBe(3);
     expect(overview.overallPercent).toBe(33);
-    expect(overview.xpByScope.theory).toBe(123);
-    expect(overview.xpByTag.Notensystem).toBe(98); // 45 (Theory) + 15 (q-1) + 38 (q-4)
+    expect(overview.xpByScope.theory).toBe(115);
+    expect(overview.xpByTag.Notensystem).toBe(90); // 45 (Theory) + 15 (q-1) + 30 (q-4)
 
     // Persistenz in localStorage
     saveLearningProgress(state);
     expect(window.localStorage.getItem(LEARNING_PROGRESS_STORAGE_KEY)).not.toBeNull();
     const reloaded = loadLearningProgress(db.modules);
-    expect(reloaded.totalXp).toBe(123);
+    expect(reloaded.totalXp).toBe(115);
     expect(reloaded.modules["mod-theory-1"].status).toBe("completed");
 
     // SSR-Fallback ohne window

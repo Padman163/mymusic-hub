@@ -741,28 +741,45 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     editor.element.querySelector<HTMLButtonElement>(".theory-block-add")?.click();
     const title = editor.element.querySelector<HTMLInputElement>(".theory-block-title");
     const markdown = editor.element.querySelector<HTMLTextAreaElement>(".theory-block-markdown");
-    const role = editor.element.querySelector<HTMLSelectElement>(".theory-block-role");
+    const roleOptions = editor.element.querySelector<HTMLFieldSetElement>(".theory-block-role-options");
+    const theoryRole = editor.element.querySelector<HTMLInputElement>('.theory-block-role[value="theory"]');
+    const introRole = editor.element.querySelector<HTMLInputElement>('.theory-block-role[value="exercise_intro"]');
     const badge = editor.element.querySelector<HTMLElement>("summary .learning-xp-badge");
-    if (!title || !markdown || !role || !badge) throw new Error("Einleitung fehlt");
+    const xpField = editor.element.querySelector(".theory-block-xp")?.closest("label");
+    const blockTags = editor.element.querySelector<HTMLFieldSetElement>(".xp-tag-picker");
+    if (!title || !markdown || !roleOptions || !theoryRole || !introRole || !badge || !xpField || !blockTags) throw new Error("Einleitung fehlt");
+    expect(roleOptions.querySelector("details")).toBeNull();
+    expect(roleOptions.querySelectorAll("legend")).toHaveLength(1);
+    expect(roleOptions.querySelector("legend")?.textContent).toBe("Blockrolle");
+    expect(editor.element.querySelector(".field-hint")).toBeNull();
+    expect(introRole.nextElementSibling?.classList.contains("contribution-tag")).toBe(true);
+    expect(introRole.checked).toBe(true);
     title.value = "Muster vergleichen";
     markdown.value = "<DrumPattern />";
     expect(editor.items()?.[0]).toMatchObject({
       role: "exercise_intro", title: "Muster vergleichen", markdownContent: "<DrumPattern />",
     });
-    expect(badge.hidden).toBe(true);
+    expect(xpField.hidden).toBe(true);
+    expect(blockTags.hidden).toBe(true);
+    expect(badge.hidden).toBe(false);
+    expect(badge.textContent).toBe("0 XP");
 
-    role.value = "theory";
-    role.dispatchEvent(new Event("change"));
+    theoryRole.nextElementSibling?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(theoryRole.checked).toBe(true);
+    expect(introRole.checked).toBe(false);
     expect(editor.items()?.[0].role).toBeUndefined();
+    expect(xpField.hidden).toBe(true);
+    expect(blockTags.hidden).toBe(false);
     expect(badge.hidden).toBe(false);
     expect(editor.items()?.[0].markdownContent).toBe("<DrumPattern />");
 
-    role.value = "exercise_intro";
-    role.dispatchEvent(new Event("change"));
+    introRole.click();
+    expect(xpField.hidden).toBe(true);
+    expect(blockTags.hidden).toBe(true);
     const saved = editor.items();
     if (!saved) throw new Error("Einleitung ist ungültig");
     editor.setItems(saved);
-    expect(editor.element.querySelector<HTMLSelectElement>(".theory-block-role")?.value)
+    expect(editor.element.querySelector<HTMLInputElement>(".theory-block-role:checked")?.value)
       .toBe("exercise_intro");
     expect(editor.items()?.[0].markdownContent).toBe("<DrumPattern />");
   });
@@ -822,7 +839,7 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     expect(editor.items()?.[0].markdownContent).toBe(markdownContent);
   });
 
-  it("berechnet Block-XP aus eigenem Tag und Basiswert und speichert sie", () => {
+  it("berechnet Block-XP und zeigt sie auch im geöffneten Block oben an", async () => {
     const form = mountModuleForm();
     const controller = attachModuleBuilderForm(form);
     controller.theoryBlockEditor.addBlock({ title: "Töne" });
@@ -830,24 +847,27 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     if (!row) throw new Error("Theorie-Block fehlt");
     const xp = row.querySelector<HTMLInputElement>(".theory-block-xp");
     const tag = row.querySelector<HTMLInputElement>('input[value="Notensystem"]');
-    const result = row.querySelector(".theory-block-calculated-xp");
+    const details = row.querySelector<HTMLDetailsElement>(".theory-block-details");
     const badge = row.querySelector("summary > .learning-xp-badge");
-    if (!xp || !tag) throw new Error("Block-XP-Felder fehlen");
+    if (!xp || !tag || !details) throw new Error("Block-XP-Felder fehlen");
     tag.checked = true;
     tag.dispatchEvent(new Event("change"));
-    expect(result?.textContent).toBe("Berechnete XP: 45");
     expect(badge?.textContent).toBe("45 XP");
+    expect(row.querySelector(".theory-block-calculated-xp")).toBeNull();
+    details.open = true;
+    await vi.waitFor(() => expect(badge?.textContent).toBe("berechnet: 45 XP"));
     xp.value = "20";
     xp.dispatchEvent(new Event("input"));
-    expect(result?.textContent).toBe("Berechnete XP: 30");
-    expect(badge?.textContent).toBe("30 XP");
+    expect(badge?.textContent).toBe("berechnet: 30 XP");
     expect(controller.theoryBlockEditor.items()?.[0]).toMatchObject({
       baseXp: 20,
       tags: ["Notensystem"],
     });
+    details.open = false;
+    await vi.waitFor(() => expect(badge?.textContent).toBe("30 XP"));
   });
 
-  it("zeigt erreichbare XP für Praxis, Übungen und gemischte Gruppen", () => {
+  it("zeigt erreichbare XP für Praxis, Übungen und gemischte Gruppen", async () => {
     const db = seedDb as unknown as ModulesDatabase;
     const question = db.questions.find(({ id }) => id === "q-101-ex-1");
     if (!question) throw new Error("Testübung fehlt");
@@ -866,25 +886,41 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     const groupBadge = groupDetails?.querySelector("summary > .learning-xp-badge");
     const practiceBadge = form.querySelector(".module-practice-row summary > .learning-xp-badge");
     const exerciseRow = form.querySelector(".module-exercise-row");
+    const exerciseDetails = exerciseRow?.querySelector<HTMLDetailsElement>(".theory-block-details");
     const exerciseBadge = exerciseRow?.querySelector("summary > .learning-xp-badge");
     const exerciseXp = exerciseRow?.querySelector<HTMLInputElement>('input[aria-label="Basis-XP"]');
     const moduleXp = form.querySelector<HTMLInputElement>("#module-theory-base-xp");
-    if (!exerciseXp || !moduleXp) throw new Error("Basis-XP-Felder fehlen");
+    if (!exerciseXp || !moduleXp || !groupDetails || !exerciseDetails) throw new Error("Basis-XP-Felder fehlen");
 
     expect(groupDetails?.open).toBe(false);
     expect(groupBadge?.textContent).toBe("40 XP");
     expect(practiceBadge?.textContent).toBe("20 XP");
     expect(exerciseBadge?.textContent).toBe("10 XP");
+    expect(form.querySelector(".module-practice-row .theory-block-xp")?.closest("label")?.hidden)
+      .toBe(true);
+    expect(exerciseXp.closest("label")?.hidden).toBe(true);
 
-    exerciseXp.value = "0";
+    groupDetails.open = true;
+    exerciseDetails.open = true;
+    await vi.waitFor(() => {
+      expect(groupBadge?.textContent).toBe("berechnet: 40 XP");
+      expect(exerciseBadge?.textContent).toBe("berechnet: 10 XP");
+    });
+
+    exerciseXp.value = "999";
     exerciseXp.dispatchEvent(new Event("input"));
-    expect(exerciseBadge?.textContent).toBe("0 XP");
-    expect(exerciseBadge?.classList.contains("has-xp")).toBe(false);
-    expect(groupBadge?.textContent).toBe("30 XP");
+    const hard = exerciseRow?.querySelector<HTMLInputElement>(
+      '.question-difficulty-picker input[value="schwer"]',
+    );
+    if (!hard) throw new Error("Schwierigkeitsauswahl fehlt");
+    hard.click();
+    expect(exerciseBadge?.textContent).toBe("berechnet: 20 XP");
+    expect(exerciseBadge?.classList.contains("has-xp")).toBe(true);
+    expect(groupBadge?.textContent).toBe("berechnet: 50 XP");
 
     moduleXp.value = "40";
     moduleXp.dispatchEvent(new Event("input"));
-    expect(groupBadge?.textContent).toBe("40 XP");
+    expect(groupBadge?.textContent).toBe("berechnet: 60 XP");
     expect(practiceBadge?.textContent).toBe("20 XP");
   });
 
@@ -961,7 +997,10 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     const strongHint = editor?.querySelector<HTMLTextAreaElement>(
       'textarea[aria-label^="Stärkerer Hinweis"]',
     );
-    if (!row || !editor || !prompt || !answer || !explanation || !simpleHint || !strongHint) {
+    const difficulty = editor?.querySelector<HTMLInputElement>(
+      '.question-difficulty-picker input[value="mittel"]',
+    );
+    if (!row || !editor || !prompt || !answer || !explanation || !simpleHint || !strongHint || !difficulty) {
       throw new Error("Inline-Editor für Übung fehlt");
     }
     row.querySelector<HTMLDetailsElement>("details")!.open = true;
@@ -970,6 +1009,7 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     simpleHint.value = "Einfacher Tipp";
     strongHint.value = "Genauerer Tipp";
     explanation.value = "Neue Erklärung";
+    difficulty.click();
     expect(editor.querySelector(".module-exercise-save")).toBeNull();
     form.dispatchEvent(new Event("submit", { cancelable: true }));
 
@@ -984,6 +1024,9 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
       simpleHint: "Einfacher Tipp",
       strongHint: "Genauerer Tipp",
       explanation: "Neue Erklärung",
+      difficulty: "mittel",
+      targetLane: "leicht",
+      baseXp: 10,
     });
     await vi.waitFor(() =>
       expect(form.querySelector(".form-status")?.textContent).toBe(
@@ -1332,7 +1375,8 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     expect(picker.element.querySelector('input[value="Notensystem"]')).not.toBeNull();
     picker.setSelectedTags(["Allgemein", "Altes Thema", "Notensystem"]);
     expect(picker.selectedTags()).toEqual(["Allgemein", "Altes Thema", "Notensystem"]);
-    expect(picker.element.textContent).toContain("Bisherige Tags bleiben erhalten");
+    expect(picker.element.textContent).not.toContain("Allgemein");
+    expect(picker.element.textContent).not.toContain("Altes Thema");
     picker.clear();
     expect(picker.selectedTags()).toEqual([]);
   });
@@ -1389,7 +1433,7 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     expect(blocks?.[1].visualPropsJson).toBe('{"readOnly":true}');
     editor.element.querySelectorAll<HTMLButtonElement>("button")
       .forEach((button) => {
-        if (button.textContent === "Bisherige Visualisierung entfernen") button.click();
+        if (button.textContent?.startsWith("Bisherige Visualisierung entfernen")) button.click();
       });
     expect(editor.items()?.[1].visualComponent).toBeUndefined();
   });
@@ -1453,7 +1497,7 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     ).not.toBeNull();
   });
 
-  it("berechnet die Aufgaben-XP live anhand von Tag-Multiplikator und Ziel-Lane", () => {
+  it("berechnet Aufgaben-XP anhand von Tags und Schwierigkeit unabhängig von der Lernspur", () => {
     const emptyDb: ModulesDatabase = { modules: [], questions: [] };
     vi.stubGlobal(
       "fetch",
@@ -1483,7 +1527,11 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
 
     laneSelect.value = "schwer";
     laneSelect.dispatchEvent(new Event("change", { bubbles: true }));
-    expect(xpOut?.textContent).toBe("38 XP");
+    expect(xpOut?.textContent).toBe("15 XP");
+    form.querySelector<HTMLInputElement>('.question-difficulty-picker input[value="mittel"]')?.click();
+    expect(xpOut?.textContent).toBe("23 XP");
+    form.querySelector<HTMLInputElement>('.question-difficulty-picker input[value="schwer"]')?.click();
+    expect(xpOut?.textContent).toBe("30 XP");
   });
 
   it("stellt im Modul-Katalog die Zusammenfassung, Ansichts-Umschaltung und Lane-Filter bereit", async () => {
@@ -1552,7 +1600,7 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
 
     expect(section.textContent).toContain("1. Schall & Frequenz");
     expect(section.textContent).toContain("Theorie-Blöcke: 1");
-    expect(section.textContent).toContain("Gesamt: 78 XP");
+    expect(section.textContent).toContain("Gesamt: 55 XP");
 
     const toggle = section.querySelector<HTMLButtonElement>("#module-view-toggle");
     const list = section.querySelector<HTMLUListElement>("#module-catalog-list");

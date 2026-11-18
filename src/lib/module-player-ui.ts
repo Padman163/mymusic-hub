@@ -77,7 +77,7 @@ import { type Duration, durationLabels } from "./rhythm.ts";
 import { layoutNotationSystems, type NotationProps } from "./system-layout.ts";
 import { createXpBadge } from "./xp-badge.ts";
 import {
-  calculateQuestionXp,
+  calculateModuleQuestionXp,
   calculateTheoryBlockXp,
   getAvailableTags,
   TAG_DEFINITIONS,
@@ -1818,7 +1818,7 @@ function computeRemainingModuleXp(
           q.targetLane === "mittel" &&
           !solvedSet.has(q.id),
       )
-      .reduce((sum, q) => sum + calculateQuestionXp(q.baseXp, q.tags), 0);
+      .reduce((sum, q) => sum + calculateModuleQuestionXp(q), 0);
   }
 
   let openXp = 0;
@@ -1840,7 +1840,7 @@ function computeRemainingModuleXp(
   }
   for (const q of db.questions) {
     if (isQuestionInModule(q, mod.id) && !solvedSet.has(q.id)) {
-      openXp += calculateQuestionXp(q.baseXp, q.tags);
+      openXp += calculateModuleQuestionXp(q);
     }
   }
   return openXp;
@@ -1967,7 +1967,7 @@ export function attachModuleQuizRunner(
         : `Aufgabe ${index + 1} / ${questions.length}`;
       const qXp = document.createElement("span");
       qXp.className = "contribution-tag learning-xp-badge";
-      const questionXp = calculateQuestionXp(question.baseXp, question.tags);
+      const questionXp = calculateModuleQuestionXp(question);
       if (solvedSet.has(question.id)) qXp.classList.add("has-xp");
       qXp.textContent = solvedSet.has(question.id)
         ? `${questionXp} XP`
@@ -2741,7 +2741,7 @@ export function attachModuleStepper(
             ) +
             questions.reduce(
               (total, question) =>
-                total + calculateQuestionXp(question.baseXp, question.tags),
+                total + calculateModuleQuestionXp(question),
               0,
             ) +
             practices.reduce(

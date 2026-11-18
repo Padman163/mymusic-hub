@@ -18,7 +18,6 @@ const laneLabels: Record<(typeof TARGET_LANES)[number], string> = {
     <div class="field">
       <fieldset id="exercise-module-ids" class="exercise-module-list">
         <legend>Zugehörige Module (optional)</legend>
-        <p class="field-hint">Ohne Auswahl bleibt die Quizfrage im wiederverwendbaren Pool.</p>
         <div class="exercise-module-options">Module werden geladen …</div>
       </fieldset>
     </div>
@@ -40,12 +39,8 @@ const laneLabels: Record<(typeof TARGET_LANES)[number], string> = {
       name="prompt"
       rows="3"
       maxlength="4000"
-      placeholder="Frage oder Arbeitsanweisung; Markdown, KaTeX und Visuals werden unterstützt"
       required
     ></textarea>
-    <small class="field-hint">
-      Visuals wie <code>&lt;Notation /&gt;</code> werden direkt in der Aufgabenstellung dargestellt.
-    </small>
   </div>
 
   <div id="exercise-type-fields"></div>
@@ -57,11 +52,10 @@ const laneLabels: Record<(typeof TARGET_LANES)[number], string> = {
       name="explanation"
       rows="3"
       maxlength="4000"
-      placeholder="Kurze Begründung, die Lernenden nach der Auswertung hilft"
     ></textarea>
   </div>
 
-  <div class="module-field-grid">
+  <div class="module-field-grid" hidden>
     <div class="field">
       <label for="exercise-base-xp">Basis-XP</label>
       <input

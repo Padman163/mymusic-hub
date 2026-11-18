@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { BlobStoreConflictError, readBlobJSON, updateBlobJSON } from '../netlify/functions/lib/blob-store';
 import { mockBlobStore } from './fixtures/blob-store';
+import { createModulesTestDatabase } from './fixtures/modules';
 
 const getStoreMock = vi.hoisted(() => vi.fn<(name: string) => ReturnType<typeof mockBlobStore>>());
 vi.mock('@netlify/blobs', () => ({ getStore: getStoreMock }));
@@ -27,6 +28,17 @@ describe('Blob-Store und Initialisierung', () => {
 		const quizSettings = { quizEasyMinScore: 0.9, fastlaneMinScore: 0.95, revision: 1 };
 		await updateBlobJSON('modules', (db) => ({ ...db, quizSettings }));
 		expect(await readBlobJSON('modules')).toEqual({ modules: [], questions: [], quizSettings });
+	});
+
+	it('normalisiert bestehende Aufgaben beim Lesen und sichert die Werte erst beim Schreiben', async () => {
+		const db = createModulesTestDatabase();
+		db.questions[0].baseXp = 99;
+		store.put('modules', db);
+		const loaded = await readBlobJSON('modules');
+		expect(loaded.questions[0]).toMatchObject({ baseXp: 10, difficulty: 'einfach' });
+		expect(store.setJSON).not.toHaveBeenCalled();
+		await updateBlobJSON('modules', (current) => current);
+		expect(store.value('modules')).toEqual(loaded);
 	});
 
 	it('erhält vorhandene Daten, wenn ein anderer Request bei der Initialisierung schneller war', async () => {

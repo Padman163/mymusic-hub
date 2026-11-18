@@ -42,7 +42,6 @@ const scopeLabels: Record<(typeof MODULE_SCOPES)[number], string> = {
           name="title"
           type="text"
           maxlength="140"
-          placeholder="z. B. Schall, Frequenz & Tonsystem"
           required
         />
       </div>
@@ -54,7 +53,6 @@ const scopeLabels: Record<(typeof MODULE_SCOPES)[number], string> = {
           name="description"
           rows="3"
           maxlength="2000"
-          placeholder="Worum geht es in diesem Lernmodul?"
         ></textarea>
       </div>
 
@@ -92,7 +90,7 @@ const scopeLabels: Record<(typeof MODULE_SCOPES)[number], string> = {
         Blocklager – nur im Modul-Builder anzeigen
       </label>
 
-      <div class="module-field-grid">
+      <div class="module-field-grid" hidden>
         <div class="field">
           <label for="module-theory-base-xp">Basis-XP je Theorie-Block</label>
           <input

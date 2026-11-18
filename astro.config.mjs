@@ -135,11 +135,11 @@ function localModulesApiPlugin() {
               ) {
                 throw new Error("Ungültiges Format in data/modules.json.");
               }
-              return /** @type {import("./src/lib/module-schema.ts").ModulesDatabase} */ ({
+              return schema.normalizeLegacyDatabase(/** @type {import("./src/lib/module-schema.ts").ModulesDatabase} */ ({
                 modules: parsed.modules,
                 questions: parsed.questions,
                 ...(parsed.quizSettings !== undefined ? { quizSettings: parsed.quizSettings } : {}),
-              });
+              }));
             } catch (err) {
               if (
                 isLocalRecord(err) &&

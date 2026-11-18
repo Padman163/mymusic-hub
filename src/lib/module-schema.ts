@@ -1,6 +1,7 @@
 import {
   BASE_XP_DEFAULTS,
   getAvailableTags,
+  QUESTION_BASE_XP,
   type TagDefinition,
 } from "./xp-tags.ts";
 
@@ -19,6 +20,14 @@ export type DStage = (typeof D_STAGES)[number];
 
 export const TARGET_LANES = ["leicht", "mittel", "schwer"] as const;
 export type TargetLane = (typeof TARGET_LANES)[number];
+
+export const QUESTION_DIFFICULTIES = ["einfach", "mittel", "schwer"] as const;
+export type QuestionDifficulty = (typeof QUESTION_DIFFICULTIES)[number];
+export const QUESTION_DIFFICULTY_LABELS: Record<QuestionDifficulty, string> = {
+  einfach: "Einfach",
+  mittel: "Mittel",
+  schwer: "Schwer",
+};
 
 export const QUESTION_TYPES = [
   "single_choice",
@@ -498,6 +507,7 @@ export interface ModuleQuestion {
   /** Module, in denen die Frage verwendet wird; Lernpfad-Aufgaben (`leicht`) gehören genau einem Modul. */
   moduleIds: string[];
   targetLane: TargetLane;
+  difficulty?: QuestionDifficulty;
   questionType: QuestionType;
   title?: string;
   prompt: string;
@@ -573,7 +583,7 @@ const LEGACY_LANES: Record<string, TargetLane> = {
   fastlane: "schwer",
 };
 
-/** Überführt Daten im alten Format (moduleId, quiz_easy, hasPractice) ins aktuelle Modell. */
+/** Normalisiert Altdaten, Aufgabenschwierigkeit und feste Aufgaben-Basis-XP. */
 export function normalizeLegacyDatabase(db: ModulesDatabase): ModulesDatabase {
   return {
     ...db,
@@ -592,9 +602,14 @@ export function normalizeLegacyDatabase(db: ModulesDatabase): ModulesDatabase {
       const { moduleId, ...rest } = question as ModuleQuestion & {
         moduleId?: string;
       };
+      if (rest.difficulty !== undefined && !isQuestionDifficulty(rest.difficulty)) {
+        throw new Error(`Ungültige Schwierigkeit für Aufgabe '${rest.id}'.`);
+      }
       return {
         ...rest,
         targetLane: LEGACY_LANES[rest.targetLane] ?? rest.targetLane,
+        difficulty: rest.difficulty ?? "einfach",
+        baseXp: QUESTION_BASE_XP,
         moduleIds: Array.isArray(rest.moduleIds)
           ? rest.moduleIds
           : moduleId
@@ -625,6 +640,13 @@ export function isQuestionType(value: unknown): value is QuestionType {
   return (
     typeof value === "string" &&
     QUESTION_TYPES.some((questionType) => questionType === value)
+  );
+}
+
+export function isQuestionDifficulty(value: unknown): value is QuestionDifficulty {
+  return (
+    typeof value === "string" &&
+    QUESTION_DIFFICULTIES.some((difficulty) => difficulty === value)
   );
 }
 

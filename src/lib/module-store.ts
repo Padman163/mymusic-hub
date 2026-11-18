@@ -3,9 +3,9 @@ import {
   DEFAULT_FASTLANE_MIN_SCORE,
   DEFAULT_QUIZ_EASY_MIN_SCORE,
   DEFAULT_QUIZ_SETTINGS,
-  getDefaultBaseXpForLane,
   isDStage,
   isModuleScope,
+  isQuestionDifficulty,
   isQuestionInModule,
   isQuestionType,
   isTargetLane,
@@ -21,7 +21,11 @@ import {
   type TheoryBlock,
 } from "./module-schema.ts";
 import { getTheoryDrumPatternError } from "./module-theory-notation.ts";
-import { calculateQuestionXp, calculateTheoryBlockXp } from "./xp-tags.ts";
+import {
+  calculateModuleQuestionXp,
+  calculateTheoryBlockXp,
+  QUESTION_BASE_XP,
+} from "./xp-tags.ts";
 
 export interface ValidationResult {
   valid: boolean;
@@ -546,6 +550,10 @@ export function validateQuestionInput(
     errors.push("targetLane ist ungültig.");
   }
 
+  if (input.difficulty !== undefined && !isQuestionDifficulty(input.difficulty)) {
+    errors.push("Schwierigkeit muss einfach, mittel oder schwer sein.");
+  }
+
   if (!isQuestionType(input.questionType)) {
     errors.push("questionType ist ungültig.");
   } else if (input.questionType === "interactive_notation") {
@@ -890,6 +898,7 @@ export function upsertQuestion(
     id,
     moduleIds,
     targetLane,
+    difficulty: questionData.difficulty ?? existing?.difficulty ?? "einfach",
     questionType: questionData.questionType,
     ...(title ? { title } : {}),
     prompt: removeCitationMarkers(questionData.prompt).trim(),
@@ -913,10 +922,7 @@ export function upsertQuestion(
     explanation: removeCitationMarkers(
       questionData.explanation ?? existing?.explanation ?? "",
     ).trim(),
-    baseXp:
-      questionData.baseXp ??
-      existing?.baseXp ??
-      getDefaultBaseXpForLane(targetLane),
+    baseXp: QUESTION_BASE_XP,
     tags: (questionData.tags ?? existing?.tags ?? []).map((tag) =>
       removeCitationMarkers(tag).trim(),
     ),
@@ -1009,7 +1015,7 @@ export function getModuleSummary(
   let questionsXp = 0;
   for (const question of db.questions) {
     if (!isQuestionInModule(question, moduleId)) continue;
-    const xp = calculateQuestionXp(question.baseXp, question.tags);
+    const xp = calculateModuleQuestionXp(question);
     questionCounts[question.targetLane] += 1;
     questionCounts.total += 1;
     laneXp[question.targetLane] += xp;

@@ -8,6 +8,7 @@ import {
   DEFAULT_FASTLANE_MIN_SCORE,
   DEFAULT_QUIZ_EASY_MIN_SCORE,
   getLearningCatalog,
+  normalizeLegacyDatabase,
 } from "../src/lib/module-schema.ts";
 import {
   createEmptyModulesDatabase,
@@ -23,6 +24,7 @@ import {
 import {
   BASE_XP_DEFAULTS,
   calculateQuestionXp,
+  calculateModuleQuestionXp,
   getAvailableTags,
   TAG_DEFINITIONS,
 } from "../src/lib/xp-tags.ts";
@@ -33,8 +35,8 @@ describe("xp-tags Konfiguration & Berechnung", () => {
       theoryBlock: 30,
       practice: 20,
       leicht: 10,
-      mittel: 15,
-      schwer: 25,
+      mittel: 10,
+      schwer: 10,
     });
     expect(getAvailableTags()).toEqual(
       expect.arrayContaining([
@@ -69,9 +71,36 @@ describe("xp-tags Konfiguration & Berechnung", () => {
     expect(getAvailableTags()).toContain(tag);
     expect(calculateQuestionXp(10, [tag])).toBe(xp);
   });
+
+  it.each([
+    [undefined, [], 10],
+    ["einfach", ["Notensystem"], 15],
+    ["mittel", ["Notensystem"], 23],
+    ["schwer", ["Notensystem", "Rhythmus"], 30],
+  ])("berechnet Aufgaben mit Schwierigkeit %s und Tag-Faktor", (difficulty, tags, xp) => {
+    expect(calculateModuleQuestionXp({ baseXp: 99, difficulty, tags })).toBe(xp);
+  });
 });
 
 describe("module-store Validierung & Store-Operationen", () => {
+  it("normalisiert bestehende Aufgaben auf 10 Basis-XP und erhält die Schwierigkeit unabhängig von der Lernspur", () => {
+    const db = upsertModule(createEmptyModulesDatabase(), { id: "mod", title: "Modul" });
+    const question = {
+      id: "q", moduleIds: ["mod"], targetLane: "leicht",
+      questionType: "numeric_input", prompt: "Frage", correctAnswers: ["1"],
+      difficulty: "schwer", baseXp: 99, tags: ["Rhythmus"],
+    };
+    const saved = upsertQuestion(db, question);
+    expect(saved.questions[0]).toMatchObject({ difficulty: "schwer", baseXp: 10, targetLane: "leicht" });
+    expect(getModuleSummary(saved, "mod")?.questionsXp).toBe(24);
+    const { difficulty, ...legacy } = question;
+    const normalized = normalizeLegacyDatabase({ ...db, questions: [legacy] });
+    expect(normalized.questions[0]).toMatchObject({ difficulty: "einfach", baseXp: 10 });
+    expect(upsertQuestion(saved, legacy).questions[0].difficulty).toBe("schwer");
+    expect(validateQuestionInput({ ...question, difficulty: "unbekannt" }, db).valid).toBe(false);
+    expect(() => normalizeLegacyDatabase({ ...db, questions: [{ ...question, difficulty: "unbekannt" }] }))
+      .toThrow("Ungültige Schwierigkeit");
+  });
   it("behält das Blocklager beim Speichern und trennt es vom Lern- und Quizangebot", () => {
     let db = upsertModule(createEmptyModulesDatabase(), { id: "basics", title: "Basics" });
     db = upsertModule(db, { id: "lager", title: "Blocklager", archived: true });
@@ -689,16 +718,18 @@ describe("module-store Validierung & Store-Operationen", () => {
       id: "q-quiz",
       moduleIds: ["mod-summary"],
       targetLane: "mittel",
+      difficulty: "mittel",
       questionType: "numeric_input",
       prompt: "Quiz 1",
       correctAnswers: ["4"],
       tags: ["Gitarre"],
-    }); // baseXp 15 * 1.2 = 18
+    });
 
     db = upsertQuestion(db, {
       id: "q-fast",
       moduleIds: ["mod-summary"],
       targetLane: "schwer",
+      difficulty: "schwer",
       questionType: "interactive_notation",
       prompt: "Fastlane 1",
       notationTask: {
@@ -706,7 +737,7 @@ describe("module-store Validierung & Store-Operationen", () => {
         expectedPitches: ["E4", "G4"],
       },
       tags: ["Notensystem", "Violinschlüssel"],
-    }); // baseXp 25 * 1.5 = 38 (Math.round(37.5))
+    });
 
     const summary = getModuleSummary(db, "mod-summary");
     expect(summary).toEqual({
@@ -724,15 +755,15 @@ describe("module-store Validierung & Store-Operationen", () => {
       laneXp: {
         leicht: 15,
         mittel: 18,
-        schwer: 38,
+        schwer: 30,
       },
-      questionsXp: 71,
-      totalXp: 131,
+      questionsXp: 63,
+      totalXp: 123,
     });
 
     const afterQuestionDelete = deleteQuestion(db, "q-quiz");
     expect(getModuleSummary(afterQuestionDelete, "mod-summary")?.totalXp).toBe(
-      113,
+      105,
     );
     expect(getModuleSummary(db, "nicht-vorhanden")).toBeNull();
   });

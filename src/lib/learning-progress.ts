@@ -11,7 +11,7 @@ import {
   type ModulesDatabase,
   type QuizSettings,
 } from "./module-schema.ts";
-import { calculateQuestionXp, calculateTheoryBlockXp } from "./xp-tags.ts";
+import { calculateModuleQuestionXp, calculateTheoryBlockXp } from "./xp-tags.ts";
 
 export const LEARNING_PROGRESS_STORAGE_KEY = "mymusic_learning_progress_v2";
 export const XP_PER_LEVEL = 500;
@@ -450,7 +450,7 @@ export function recordExerciseAnswer(
   if (!solvedSet.has(question.id)) {
     solvedSet.add(question.id);
     target.solvedQuestionIds.push(question.id);
-    const questionXp = calculateQuestionXp(question.baseXp, question.tags);
+    const questionXp = calculateModuleQuestionXp(question);
     creditXp(next, questionXp, module.scope, question.tags);
   }
 
@@ -568,7 +568,7 @@ export function submitQuizAttempt(
           target.solvedQuestionIds.push(question.id);
           creditXp(
             next,
-            calculateQuestionXp(question.baseXp, question.tags),
+            calculateModuleQuestionXp(question),
             mod.scope,
             question.tags,
           );
@@ -633,7 +633,7 @@ export function submitQuizAttempt(
         target.solvedQuestionIds.push(question.id);
         creditXp(
           next,
-          calculateQuestionXp(question.baseXp, question.tags),
+          calculateModuleQuestionXp(question),
           mod.scope,
           question.tags,
         );
