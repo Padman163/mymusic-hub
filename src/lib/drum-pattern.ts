@@ -68,6 +68,7 @@ export function createDrumPatternElement(
     timeSignature = DEFAULT_DRUM_PATTERN_PROPS.timeSignature,
     resolution = DEFAULT_DRUM_PATTERN_PROPS.resolution,
     highlightTrack = DEFAULT_DRUM_PATTERN_PROPS.highlightTrack,
+    highlightTracks = DEFAULT_DRUM_PATTERN_PROPS.highlightTracks,
     interactive = DEFAULT_DRUM_PATTERN_PROPS.interactive,
     showVelocity = DEFAULT_DRUM_PATTERN_PROPS.showVelocity,
     showTrackNote = DEFAULT_DRUM_PATTERN_PROPS.showTrackNote,
@@ -152,18 +153,28 @@ export function createDrumPatternElement(
     scopeClasses,
     "pattern-grid",
   );
-  const highlightedTrack = highlightTrack.trim();
-  const selectedTrackIndex = highlightedTrack
-    ? visibleTracks.findIndex((track) => track.name === highlightedTrack)
-    : interactive || showVelocity
-      ? 0
+  const highlightedTracks = new Set([
+    ...highlightTracks.map((track) => track.trim()),
+    ...(highlightTrack.trim() ? [highlightTrack.trim()] : []),
+  ]);
+  const selectedTrackIndex =
+    interactive || showVelocity
+      ? highlightedTracks.size > 0
+        ? visibleTracks.findIndex(
+            (track) => highlightedTracks.has(track.name),
+          )
+        : 0
       : -1;
   for (const [trackIndex, track] of visibleTracks.entries()) {
+    const isHighlighted = highlightedTracks.has(track.name);
+    const isSelected = trackIndex === selectedTrackIndex;
     const row = createScopedElement(
       document,
       "div",
       scopeClasses,
-      `track-row ${trackIndex === selectedTrackIndex ? "selected" : ""}`,
+      `track-row ${isHighlighted ? "highlighted" : ""} ${
+        isSelected ? "selected" : ""
+      }`,
     );
     row.dataset.color = track.color;
     row.dataset.velocities = JSON.stringify(track.velocities);

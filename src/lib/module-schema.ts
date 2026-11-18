@@ -54,6 +54,7 @@ export interface DrumPatternProps {
   timeSignature?: string;
   resolution?: string;
   highlightTrack?: string;
+  highlightTracks?: string[];
   interactive?: boolean;
   showVelocity?: boolean;
   showTrackNote?: boolean;
@@ -110,6 +111,7 @@ export const DEFAULT_DRUM_PATTERN_PROPS: Required<
   timeSignature: "4/4",
   resolution: "1/8",
   highlightTrack: "",
+  highlightTracks: [],
   interactive: true,
   showVelocity: false,
   showTrackNote: true,
@@ -148,6 +150,7 @@ export function getDrumPatternPropsErrors(value: unknown): string[] {
     "timeSignature",
     "resolution",
     "highlightTrack",
+    "highlightTracks",
     "interactive",
     "showVelocity",
     "showTrackNote",
@@ -190,25 +193,51 @@ export function getDrumPatternPropsErrors(value: unknown): string[] {
     }
   }
 
-  if (
-    value.highlightTrack !== undefined &&
-    typeof value.highlightTrack !== "string"
-  ) {
-    errors.push("highlightTrack muss ein Spur-Name sein.");
-  } else if (
-    typeof value.highlightTrack === "string" &&
-    value.highlightTrack.trim().length > 0
-  ) {
-    const highlightTrack = value.highlightTrack.trim();
-    const tracks =
-      value.patternData === undefined
-        ? DEFAULT_DRUM_PATTERN_DATA
-        : value.patternData;
+  const requestedHighlights: Array<{
+    name: string;
+    prop: "highlightTrack" | "highlightTracks";
+  }> = [];
+  if (value.highlightTrack !== undefined) {
+    if (typeof value.highlightTrack !== "string") {
+      errors.push("highlightTrack muss ein Spur-Name sein.");
+    } else if (value.highlightTrack.trim()) {
+      requestedHighlights.push({
+        name: value.highlightTrack.trim(),
+        prop: "highlightTrack",
+      });
+    }
+  }
+  if (value.highlightTracks !== undefined) {
     if (
-      Array.isArray(tracks) &&
-      !tracks.some((track) => isRecord(track) && track.name === highlightTrack)
+      !isStringArray(value.highlightTracks) ||
+      value.highlightTracks.length > 64 ||
+      value.highlightTracks.some((track) => track.trim().length === 0)
     ) {
-      errors.push("highlightTrack muss einem Namen in patternData entsprechen.");
+      errors.push(
+        "highlightTracks muss ein Array nicht-leerer Spur-Namen sein.",
+      );
+    } else {
+      requestedHighlights.push(
+        ...value.highlightTracks.map((name) => ({
+          name: name.trim(),
+          prop: "highlightTracks" as const,
+        })),
+      );
+    }
+  }
+  const tracks =
+    value.patternData === undefined
+      ? DEFAULT_DRUM_PATTERN_DATA
+      : value.patternData;
+  if (Array.isArray(tracks)) {
+    for (const { name, prop } of requestedHighlights) {
+      if (!tracks.some((track) => isRecord(track) && track.name === name)) {
+        errors.push(
+          prop === "highlightTrack"
+            ? "highlightTrack muss einem Namen in patternData entsprechen."
+            : `highlightTracks enthält den unbekannten Spur-Namen „${name}“.`,
+        );
+      }
     }
   }
 

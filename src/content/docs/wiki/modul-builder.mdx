@@ -35,7 +35,7 @@ Die Einleitung hat keinen eigenen „Abschnitt gelesen“-Button und keine eigen
 
 Beim `DrumPattern` zeigt die Fußzeile standardmäßig Taktart, Auflösung und Schrittzahl. Mit `showFooterInfo={false}` bleibt die Leiste sichtbar, aber leer. Mit `showFooter={false}` blendest du sie vollständig aus.
 
-Mit der Eigenschaft `highlightTrack` kannst du eine Spur anhand ihres Namens hervorheben, ohne das Pattern interaktiv zu machen. Zum Beispiel: `<DrumPattern interactive={false} highlightTrack="Kick - Hit" />`. Der Name muss mit `name` in `patternData` übereinstimmen.
+Mit `highlightTrack` markierst du eine Spur und mit `highlightTracks` mehrere. Die Namen müssen mit `name` in `patternData` übereinstimmen. Zum Beispiel: `<DrumPattern interactive={false} highlightTracks={["Muster A", "Muster C"]} />`. Die Markierung selbst ist statisch; mit `interactive={false}` deaktivierst du zusätzlich die Interaktion.
 
 Verschiebe einzelne Blöcke mit den Pfeilen nach oben oder unten. Um mehrere freie Theorieblöcke, Lernpfad- oder Praxisaufgaben zu einem Abschnitt zusammenzufassen, markiere sie und wähle **Auswahl gruppieren**. Du kannst die Gruppe benennen und als Ganzes verschieben.
 

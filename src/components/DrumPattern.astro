@@ -13,6 +13,7 @@ const {
   timeSignature = DEFAULT_DRUM_PATTERN_PROPS.timeSignature,
   resolution = DEFAULT_DRUM_PATTERN_PROPS.resolution,
   highlightTrack = DEFAULT_DRUM_PATTERN_PROPS.highlightTrack,
+  highlightTracks = DEFAULT_DRUM_PATTERN_PROPS.highlightTracks,
   interactive = DEFAULT_DRUM_PATTERN_PROPS.interactive,
   showVelocity = DEFAULT_DRUM_PATTERN_PROPS.showVelocity,
   showTrackNote = DEFAULT_DRUM_PATTERN_PROPS.showTrackNote,
@@ -61,11 +62,17 @@ const visiblePatternData = patternData
   }));
 
 const initialTrack = visiblePatternData[0];
-const highlightedTrack = highlightTrack.trim();
-const selectedTrackIndex = highlightedTrack
-  ? visiblePatternData.findIndex((track) => track.name === highlightedTrack)
-  : interactive || showVelocity
-    ? 0
+const highlightedTracks = new Set([
+  ...highlightTracks.map((track) => track.trim()),
+  ...(highlightTrack.trim() ? [highlightTrack.trim()] : []),
+]);
+const selectedTrackIndex =
+  interactive || showVelocity
+    ? highlightedTracks.size > 0
+      ? visiblePatternData.findIndex(
+          (track) => highlightedTracks.has(track.name),
+        )
+      : 0
     : -1;
 const stepLabels = Array.from(
   { length: steps },
@@ -93,7 +100,9 @@ const stepLabels = Array.from(
   <div class="pattern-grid">
     {visiblePatternData.map((track, trackIndex) => (
       <div
-        class={`track-row ${trackIndex === selectedTrackIndex ? 'selected' : ''}`}
+        class={`track-row ${
+          highlightedTracks.has(track.name) ? 'highlighted' : ''
+        } ${trackIndex === selectedTrackIndex ? 'selected' : ''}`}
         data-color={track.color}
         data-velocities={JSON.stringify(track.velocities)}
         aria-label={`Instrument ${track.name}, Note ${track.note}`}
@@ -351,11 +360,14 @@ const stepLabels = Array.from(
   }
 
   .track-row.selected .track-info,
-  .track-row.selected .step-row {
+  .track-row.selected .step-row,
+  .track-row.highlighted .track-info,
+  .track-row.highlighted .step-row {
     background-color: #27272a;
   }
 
-  .track-row.selected {
+  .track-row.selected,
+  .track-row.highlighted {
     outline: 1px solid #52525b;
     outline-offset: -1px;
   }

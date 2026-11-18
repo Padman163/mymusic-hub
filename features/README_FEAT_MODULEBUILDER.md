@@ -116,13 +116,13 @@ Dort gibt es vier übersichtliche Reiter:
     Erklärung danach.
     ```
 
-    Neben `<Notation />` und `<NotationKeyboard />` unterstützt der Theorie-Renderer auch `<DrumPattern />` mit den Props `steps`, `timeSignature`, `resolution`, `highlightTrack`, `interactive`, `showVelocity`, `showTrackNote`, `useTrackColors`, `continuous`, `keepEmptyTracks`, `stepSize`, `stepLabels` und `patternData`. `highlightTrack` markiert statisch eine Spur anhand ihres Namens; es aktiviert keine Interaktion. Die Props müssen statische Werte, Arrays oder Objekte sein; ausführbare JavaScript-Ausdrücke und Imports werden nicht unterstützt. Statische Zahlenoperationen wie `4 / 3` sind zulässig. Beispiel:
+    Neben `<Notation />` und `<NotationKeyboard />` unterstützt der Theorie-Renderer auch `<DrumPattern />` mit den Props `steps`, `timeSignature`, `resolution`, `highlightTrack`, `highlightTracks`, `interactive`, `showVelocity`, `showTrackNote`, `useTrackColors`, `continuous`, `keepEmptyTracks`, `stepSize`, `stepLabels` und `patternData`. `highlightTrack` markiert eine und `highlightTracks` mehrere Spuren anhand ihrer Namen; die Markierung aktiviert selbst keine Interaktion. Für ein nicht-interaktives Pattern muss zusätzlich `interactive={false}` gesetzt werden. Die Props müssen statische Werte, Arrays oder Objekte sein; ausführbare JavaScript-Ausdrücke und Imports werden nicht unterstützt. Statische Zahlenoperationen wie `4 / 3` sind zulässig. Beispiel:
 
     ```mdx
     <DrumPattern
       steps={8}
       interactive={false}
-      highlightTrack="Kick"
+      highlightTracks={["Kick", "Snare - Center"]}
       continuous={true}
       patternData={[{
         name: "Kick",
@@ -132,6 +132,11 @@ Dort gibt es vier übersichtliche Reiter:
         cellLabels: ["1", "", "", "", "3", "", "", ""],
         eventPositions: [1.5],
         eventLabels: ["+"],
+      }, {
+        name: "Snare - Center",
+        note: "D1",
+        color: "#f97316",
+        activeSteps: [2, 6],
       }]}
     />
     ```
