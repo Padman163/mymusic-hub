@@ -18,6 +18,34 @@ for (const path of pages) {
   });
 }
 
+test('filtert Beiträge standardmäßig nach offenen Status', async ({ page }) => {
+  await page.route('**/api/contributions', (route) =>
+    route.fulfill({
+      json: {
+        contributions: [
+          { id: 'new', type: 'Feature', title: 'Neuer Beitrag', description: '', createdAt: '2025-01-03T00:00:00.000Z' },
+          { id: 'active', type: 'Bug', title: 'Aktiver Beitrag', description: '', createdAt: '2025-01-02T00:00:00.000Z', status: 'Active' },
+          { id: 'resolved', type: 'Decision', title: 'Erledigter Beitrag', description: '', createdAt: '2025-01-01T00:00:00.000Z', status: 'Resolved' },
+        ],
+      },
+    }),
+  );
+  await page.goto('/projektierung/beitraege/');
+
+  const resolved = page.locator('[data-contribution-id="resolved"]');
+  await expect(page.locator('[data-contribution-id="new"]')).toBeVisible();
+  await expect(page.locator('[data-contribution-id="active"]')).toBeVisible();
+  await expect(resolved).toBeHidden();
+
+  await page.locator('.contribution-menu').first().locator('summary').click();
+  await page.locator('#filter-status').selectOption('Resolved');
+  await expect(resolved).toBeVisible();
+  await expect(page.locator('[data-contribution-id="new"]')).toBeHidden();
+
+  await page.locator('#filter-status').selectOption('');
+  await expect(page.locator('#contribution-list > li')).toHaveCount(3);
+});
+
 test('gruppiert Builder-Karten und hält Aktionen bedienbar', async ({ page }) => {
   await page.goto('/projektierung/modul-builder/');
   await expect(page.getByRole('tab')).toHaveText([

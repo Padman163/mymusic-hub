@@ -1,6 +1,7 @@
 ---
 import { contributionAreas } from "../lib/contribution-area";
 import { contributionPriorities } from "../lib/contribution-priority";
+import { contributionStatuses } from "../lib/contribution-status";
 import { contributionTypes } from "../lib/contribution-types";
 import IssueTrackerForm from "./IssueTrackerForm.astro";
 import "../styles/contribution-tags.css";
@@ -22,6 +23,12 @@ import "../styles/contribution-checklist.css";
 					<select id="filter-type">
 						<option value="">Alle Typen</option>
 						{contributionTypes.map((type) => <option value={type}>{type}</option>)}
+					</select>
+					<label for="filter-status">Status</label>
+					<select id="filter-status">
+						<option value="open">Offene Beiträge (New &amp; Active)</option>
+						<option value="">Alle Status</option>
+						{contributionStatuses.map((status) => <option value={status}>{status}</option>)}
 					</select>
 					<label for="filter-area">Bereich</label>
 					<select id="filter-area">
@@ -539,6 +546,7 @@ import "../styles/contribution-checklist.css";
 	const listIcon = viewToggle?.querySelector<SVGElement>('.list-icon');
 	const cardsIcon = viewToggle?.querySelector<SVGElement>('.cards-icon');
 	const filterType = document.querySelector<HTMLSelectElement>('#filter-type');
+	const filterStatus = document.querySelector<HTMLSelectElement>('#filter-status');
 	const filterArea = document.querySelector<HTMLSelectElement>('#filter-area');
 	const filterPriority = document.querySelector<HTMLSelectElement>('#filter-priority');
 	const sortSelect = document.querySelector<HTMLSelectElement>('#sort-contributions');
@@ -549,7 +557,8 @@ import "../styles/contribution-checklist.css";
 		!(list instanceof HTMLUListElement) || !(status instanceof HTMLParagraphElement) ||
 		!(newButton instanceof HTMLButtonElement) || !(viewToggle instanceof HTMLButtonElement) ||
 		!(listIcon instanceof SVGElement) || !(cardsIcon instanceof SVGElement) || !(newCard instanceof HTMLDivElement) ||
-		!(filterType instanceof HTMLSelectElement) || !(filterArea instanceof HTMLSelectElement) ||
+		!(filterType instanceof HTMLSelectElement) || !(filterStatus instanceof HTMLSelectElement) ||
+		!(filterArea instanceof HTMLSelectElement) ||
 		!(filterPriority instanceof HTMLSelectElement) || !(sortSelect instanceof HTMLSelectElement) ||
 		!(closeButton instanceof HTMLButtonElement) || !(newForm instanceof HTMLFormElement)
 	) {
@@ -578,7 +587,7 @@ import "../styles/contribution-checklist.css";
 		}
 	});
 
-	for (const control of [filterType, filterArea, filterPriority, sortSelect]) {
+	for (const control of [filterType, filterStatus, filterArea, filterPriority, sortSelect]) {
 		control.addEventListener('change', () => {
 			if (listLoaded) updateCount();
 		});
@@ -699,7 +708,12 @@ import "../styles/contribution-checklist.css";
 		});
 		let visible = 0;
 		sorted.forEach(([element, contribution]) => {
+			const contributionStatus = contribution.status ?? defaultContributionStatus;
+			const matchesStatus = filterStatus!.value === 'open'
+				? contributionStatus !== 'Resolved'
+				: !filterStatus!.value || contributionStatus === filterStatus!.value;
 			const matches = (!filterType!.value || contribution.type === filterType!.value) &&
+				matchesStatus &&
 				(!filterArea!.value || (contribution.area ?? 'none') === filterArea!.value) &&
 				(!filterPriority!.value || (contribution.priority ?? defaultContributionPriority) === filterPriority!.value);
 			element.hidden = !matches;
