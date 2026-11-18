@@ -40,9 +40,12 @@ const laneLabels: Record<(typeof TARGET_LANES)[number], string> = {
       name="prompt"
       rows="3"
       maxlength="4000"
-      placeholder="Formuliere die Frage oder Arbeitsanweisung (KaTeX mit $...$ möglich)"
+      placeholder="Frage oder Arbeitsanweisung; Markdown, KaTeX und Visuals werden unterstützt"
       required
     ></textarea>
+    <small class="field-hint">
+      Visuals wie <code>&lt;Notation /&gt;</code> werden direkt in der Aufgabenstellung dargestellt.
+    </small>
   </div>
 
   <div id="exercise-type-fields"></div>

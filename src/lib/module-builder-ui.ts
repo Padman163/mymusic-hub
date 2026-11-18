@@ -485,7 +485,11 @@ export function createTheoryBlockEditor(
       previewRenderer = import("./module-player-ui.ts");
     }
     void previewRenderer.then(
-      ({ renderTheoryMarkdown, renderTheoryVisualElement }) => {
+      ({
+        renderQuestionPrompt,
+        renderTheoryMarkdown,
+        renderTheoryVisualElement,
+      }) => {
         if (
           !panel.isConnected ||
           panel.dataset.previewRevision !== revision
@@ -514,10 +518,7 @@ export function createTheoryBlockEditor(
           }
           article.append(cardHeader);
           if (prompt) {
-            const promptElement = document.createElement("p");
-            promptElement.className = "learning-quiz-question";
-            promptElement.textContent = prompt;
-            article.append(promptElement);
+            article.append(renderQuestionPrompt(prompt, fieldset));
           }
           const options = Array.from(
             row.querySelectorAll<HTMLInputElement>(".exercise-choice-text"),
@@ -1576,7 +1577,13 @@ export function createTheoryBlockEditor(
       prompt.value = question.prompt;
       prompt.setAttribute("aria-label", "Aufgabenstellung");
       prompt.addEventListener("input", syncRowOrder);
-      editor.append(createLabeledField("Aufgabenstellung", prompt));
+      const promptField = createLabeledField("Aufgabenstellung", prompt);
+      const promptHint = document.createElement("small");
+      promptHint.className = "field-hint";
+      promptHint.textContent =
+        "Markdown, KaTeX und Visuals wie <Notation /> werden in der Vorschau gerendert.";
+      promptField.append(promptHint);
+      editor.append(promptField);
 
       const typeEditor = createQuestionTypeEditor(`inline-${question.id}-`);
       typeEditor.load(question);

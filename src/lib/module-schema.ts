@@ -421,7 +421,12 @@ export interface ModuleQuestion {
 
 export function formatExerciseTitle(title?: string, fallback = ""): string {
   const text = title?.trim().replace(/^Aufgabe:\s*/i, "");
-  return `Aufgabe: ${text || fallback.trim() || "Neue Aufgabe"}`;
+  const promptFallback = fallback
+    .replace(/<(?:Notation(?:Keyboard)?|DrumPattern)\b[\s\S]*?\/>/gi, " ")
+    .replace(/<figure\b[\s\S]*?<\/figure>/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return `Aufgabe: ${text || promptFallback || "Neue Aufgabe"}`;
 }
 
 export interface LearningModule {

@@ -13,7 +13,15 @@ Mit dem [Modul-Builder](/projektierung/modul-builder/) erstellst du Lernmodule u
 4. Klappe einen Block auf, um ihn zu bearbeiten und rechts die passende Vorschau auf gleicher Höhe zu sehen. Beide Bereiche öffnen und schließen sich gemeinsam; du kannst den Zustand auch rechts umschalten. Bei Lernpfad-Aufgaben wählst du einen Aufgabentyp und hinterlegst die Lösung; einfache und stärkere Hinweise sind optional. Die Vorschau aktualisiert sich während der Eingabe.
 5. Wähle **Modul speichern**. Das Modul und seine Lernpfad-Aufgaben werden gemeinsam gespeichert. Achte auf die Rückmeldung unter dem Formular.
 
-Theorie- und Praxistexte unterstützen Markdown und mathematische Formeln, zum Beispiel `$f = 440\,\text{Hz}$`. Eine Praxisaufgabe ist optional. In Theorieblöcken können auch unterstützte Notations- und Rhythmusdarstellungen eingebunden werden.
+Theorie- und Praxistexte sowie Aufgabenstellungen unterstützen Markdown, mathematische Formeln und Visuals. Zum Beispiel kannst du ein Notenbild direkt in die Aufgabenstellung setzen:
+
+```mdx
+Welche Note ist dargestellt?
+
+<Notation clef="treble" notes={[{ step: 2, duration: "quarter" }]} />
+```
+
+Unterstützt werden dieselben sicheren Darstellungen wie in Theorieblöcken, darunter `<Notation />`, `<NotationKeyboard />`, `<DrumPattern />` und statische Inline-SVGs. Die Vorschau im Modul-Builder sowie der Lernpfad und das Quiz zeigen sie an; Hinweise und Antwortfelder bleiben Klartext.
 
 ### Eine Aufgabeneinleitung erstellen
 
@@ -40,7 +48,7 @@ Die XP-Anzeige zeigt die erreichbaren Punkte für eingeklappte Blöcke und Grupp
 Du kannst das Abschluss-Quiz später ergänzen: Solange dem Modul keine Fragen der Lernspur **Mittel (Quiz)** zugeordnet sind, erscheint in der Lektion kein Quizschritt. Theorieblöcke und Lernpfad-Aufgaben bleiben davon unabhängig.
 
 1. Öffne den Reiter **Quizfragen** und wähle optional ein oder mehrere zugehörige Module. Ohne Auswahl bleibt die Frage im Fragenpool.
-2. Wähle **Mittel (Quiz)** oder **Schwer (Fastlane)** und gib die Aufgabenstellung ein.
+2. Wähle **Mittel (Quiz)** oder **Schwer (Fastlane)** und gib die Aufgabenstellung ein. Du kannst darin auch Markdown, KaTeX und unterstützte Visuals wie `<Notation />` verwenden.
 3. Wähle den Aufgabentyp: Einfachauswahl, Mehrfachauswahl, Zahleneingabe oder interaktive Notationsaufgabe. Ergänze die passenden Antworten oder erwarteten Noten.
 4. Ergänze bei Bedarf eine Erklärung, Basis-XP und Tags. Bei Notationsaufgaben kannst du die Eingabe in der Vorschau ausprobieren; Hilfe dazu findest du unter [NotationBuilder bedienen](/wiki/notation-builder/).
 5. Wähle **Aufgabe speichern** und beachte die Rückmeldung.

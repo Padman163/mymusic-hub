@@ -3,6 +3,7 @@ import type { TargetLane } from "../../lib/module-schema";
 import "../../styles/contribution-tags.css";
 import "../../styles/module-player.css";
 import "../../styles/notation.css";
+import ModuleVisualTemplates from "./ModuleVisualTemplates.astro";
 
 interface Props {
   id?: string;
@@ -16,6 +17,8 @@ const {
   mode = "mittel",
 } = Astro.props;
 ---
+
+<ModuleVisualTemplates />
 
 <div
   id={id}

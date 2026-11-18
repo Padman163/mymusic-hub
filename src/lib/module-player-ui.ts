@@ -737,6 +737,16 @@ export function renderTheoryMarkdown(
   return frag;
 }
 
+export function renderQuestionPrompt(
+  prompt: string,
+  templateRoot?: ParentNode,
+): HTMLElement {
+  const content = document.createElement("div");
+  content.className = "learning-quiz-question";
+  content.append(renderTheoryMarkdown(prompt, templateRoot));
+  return content;
+}
+
 function buildNotationVisualElement(
   rawProps: Record<string, unknown>,
 ): HTMLElement {
@@ -1950,9 +1960,11 @@ export function attachModuleQuizRunner(
         config.exerciseId && !config.exerciseTitleInSection;
       qTitle.textContent = config.exerciseId
         ? showExerciseTitle
-          ? formatExerciseTitle(question.title, question.prompt)
-          : question.prompt
-        : `Aufgabe ${index + 1} / ${questions.length}: ${question.prompt}`;
+          ? question.title?.trim()
+            ? formatExerciseTitle(question.title)
+            : "Aufgabe"
+          : "Aufgabenstellung"
+        : `Aufgabe ${index + 1} / ${questions.length}`;
       const qXp = document.createElement("span");
       qXp.className = "contribution-tag learning-xp-badge";
       const questionXp = calculateQuestionXp(question.baseXp, question.tags);
@@ -2092,11 +2104,7 @@ export function attachModuleQuizRunner(
       });
 
       qCard.append(qHeader);
-      if (showExerciseTitle && question.title?.trim()) {
-        const prompt = document.createElement("p");
-        prompt.textContent = question.prompt;
-        qCard.append(prompt);
-      }
+      qCard.append(renderQuestionPrompt(question.prompt, templateRoot));
       qCard.append(inputsEl, checkBtn, feedback);
       container.append(qCard);
     });
@@ -2168,10 +2176,11 @@ export function attachModuleQuizRunner(
     bar.append(fill);
 
     const question = questions[currentIndex];
-    const promptEl = document.createElement("p");
+    const promptEl = document.createElement("div");
+    promptEl.className = "learning-quiz-question";
     promptEl.style.fontWeight = "600";
     promptEl.style.margin = "0";
-    promptEl.textContent = question.prompt;
+    promptEl.append(renderTheoryMarkdown(question.prompt, templateRoot));
 
     const inputsEl = renderQuestionInputBlock(
       question,

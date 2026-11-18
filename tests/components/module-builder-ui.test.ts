@@ -992,6 +992,37 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     );
   });
 
+  it("zeigt Visuals aus der Aufgabenstellung in der Live-Vorschau", async () => {
+    const db = structuredClone(seedDb);
+    const exercise = db.questions.find(({ id }) => id === "q-101-ex-1");
+    if (!exercise) throw new Error("Testübung fehlt");
+    exercise.title = "Visuelle Aufgabe";
+    exercise.prompt =
+      'Welche Note ist dargestellt?\n\n<Notation clef="treble" notes={[{ step: 2, duration: "quarter" }]} />';
+
+    const form = mountModuleForm();
+    const controller = attachModuleBuilderForm(form);
+    controller.loadModule(db.modules[0], [exercise]);
+    const row = form.querySelector<HTMLDivElement>(".module-exercise-row");
+    const details = row?.querySelector<HTMLDetailsElement>(
+      ".theory-block-details",
+    );
+    const preview = row?.querySelector<HTMLDetailsElement>(
+      ".module-content-preview",
+    );
+    if (!row || !details || !preview)
+      throw new Error("Vorschau der Testübung fehlt");
+
+    details.open = true;
+    details.dispatchEvent(new Event("toggle"));
+    await vi.waitFor(() =>
+      expect(
+        preview.querySelector(".learning-quiz-question svg.notation-staff"),
+      ).not.toBeNull(),
+    );
+    expect(preview.textContent).not.toContain("<Notation");
+  });
+
   it("speichert geänderte Hinweise mit dem Modul und behält sie bei einem Schreibfehler im Entwurf", async () => {
     let db = structuredClone(seedDb);
     const mod = db.modules[0];

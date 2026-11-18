@@ -118,7 +118,7 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
 
     expect(root.querySelector(".learning-lesson-heading")?.textContent).toBe("Aufgabe: Kammerton");
     expect(root.querySelector("[data-question-card] .learning-card-header strong")?.textContent)
-      .toBe(exercise.prompt);
+      .toBe("Aufgabenstellung");
     const input = root.querySelector<HTMLInputElement>(".learning-numeric-input");
     const check = root.querySelector<HTMLButtonElement>('[data-action="check-exercise"]');
     const next = root.querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]');
@@ -672,6 +672,28 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     attachModuleStepper(root, { initialDb: db, autoFetch: false });
     expect(root.querySelector(".learning-theory-block")?.querySelectorAll("svg.notation-staff")).toHaveLength(1);
     expect(root.textContent).not.toContain("<Notation");
+  });
+
+  it("rendert Visuals in Lernpfad-Aufgabenstellungen", () => {
+    const root = document.createElement("section");
+    root.dataset.moduleId = "theory-101";
+    document.body.append(root);
+    const db = structuredClone(seedDb);
+    const mod = db.modules[0];
+    const question = db.questions.find(({ id }) => id === "q-101-ex-1");
+    if (!question) throw new Error("Testaufgabe fehlt");
+    question.prompt =
+      'Welche Note ist dargestellt?\n\n<Notation clef="treble" notes={[{ step: 2, duration: "quarter" }]} />';
+    mod.contentOrder = [{ kind: "exercise", id: question.id }];
+
+    attachModuleStepper(root, { initialDb: db, autoFetch: false });
+
+    const prompt = root.querySelector(".learning-quiz-question");
+    expect(prompt?.querySelector("svg.notation-staff")).not.toBeNull();
+    expect(prompt?.textContent).not.toContain("<Notation");
+    expect(root.querySelector(".learning-lesson-heading")?.textContent).toBe(
+      "Aufgabe: Welche Note ist dargestellt?",
+    );
   });
 
   it("rendert gruppierte Theorieblöcke als benannten Lernabschnitt", () => {
