@@ -392,7 +392,7 @@ export function createTheoryBlockEditor(
   const hint = document.createElement("p");
   hint.className = "field-hint";
   hint.textContent =
-    "Mehrere Theorieblöcke und Übungen über die Auswahlfelder markieren, um sie gemeinsam zu gruppieren. Übungen lassen sich direkt aufklappen und bearbeiten. Die Reihenfolge gilt auch im Lernpfad.";
+    "Freie Theorieblöcke und Lernpfad-Aufgaben auswählen und gruppieren; einzelne Elemente über „−“ lösen.";
 
   const rows = document.createElement("div");
   rows.className = "theory-block-rows";
