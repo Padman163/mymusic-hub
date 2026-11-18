@@ -96,7 +96,7 @@ Dort gibt es vier übersichtliche Reiter:
   - **Praxisaufgaben:** Über die Blocktyp-Auswahl fügst du Praxisaufgaben mit Titel, Text, Basis-XP und Tags hinzu. Einen separaten Praxisteil-Schalter gibt es nicht; entscheidend sind die vorhandenen Praxisblöcke.
   - **Punkte:** Theorie-Basis-XP (Standard: `30`) dienen als Vorgabe für Blöcke ohne eigenen Wert. Die Bestehensgrenzen stehen in den übergreifenden Einstellungen.
   - **Gemeinsame Blockliste:** Lernpfad-Aufgaben werden direkt zwischen den Theorie- und Praxisblöcken erstellt, sortiert und gruppiert. Klappe eine Aufgabe auf, um ihren Typ (Einfachauswahl, Mehrfachauswahl, Zahleneingabe oder interaktive Notation), Aufgabenstellung, Erklärung, Basis-XP und Tags zu bearbeiten. Die Typfelder und die interaktive Notationsvorschau entsprechen denen im [Quizfragen-Editor](#3-reiter-quizfragen-srccomponentsprojectexercisebuilderformastro). Zum direkten Speichern in der Blockkarte muss das Modul bereits gespeichert sein. Quizfragen erscheinen nicht in der Blockliste.
-  - **Dynamischer Theorie-Block-Editor:** Gespeicherte Lernabschnitte erscheinen als kompakte, aufklappbare Zeilen. Du kannst beliebig viele hinzufügen und per Pfeiltasten (`↑` / `↓`) neu sortieren. Theorieblöcke können eigene Basis-XP und Tags erhalten; ihre berechneten XP verwenden ausschließlich diese Tags. Ohne eigenen Basiswert gilt die Modulvorgabe. Das Textfeld unterstützt KaTeX-Formeln (`$...$` / `$$...$$`) und Notationen direkt an der gewünschten Stelle:
+  - **Dynamischer Theorie-Block-Editor:** Gespeicherte Lernabschnitte erscheinen als kompakte, aufklappbare Zeilen. Du kannst beliebig viele hinzufügen und per Pfeiltasten (`↑` / `↓`) neu sortieren. Theorieblöcke können eigene Basis-XP und Tags erhalten; ihre berechneten XP verwenden ausschließlich diese Tags. Ohne eigenen Basiswert gilt die Modulvorgabe. Das Textfeld unterstützt [Matheformeln mit KaTeX](#matheformeln-mit-katex) und Notationen direkt an der gewünschten Stelle:
 
     ```mdx
     Erklärung vor dem Notensystem.
@@ -106,7 +106,7 @@ Dort gibt es vier übersichtliche Reiter:
     Erklärung danach.
     ```
 
-    Neben `<Notation />` und `<NotationKeyboard />` unterstützt der Theorie-Renderer auch `<DrumPattern />` mit den Props `steps`, `timeSignature`, `resolution`, `interactive`, `showVelocity`, `showTrackNote`, `useTrackColors`, `continuous`, `keepEmptyTracks`, `stepSize`, `stepLabels` und `patternData`. Die Props müssen statische Werte, Arrays oder Objekte sein; ausführbare JavaScript-Ausdrücke und Imports werden nicht unterstützt. Statische Zahlenoperationen wie `4 / 3` sind zulässig. Im Lektions-Player wird `$\fermata$` als Fermaten-Symbol dargestellt. Beispiel:
+    Neben `<Notation />` und `<NotationKeyboard />` unterstützt der Theorie-Renderer auch `<DrumPattern />` mit den Props `steps`, `timeSignature`, `resolution`, `interactive`, `showVelocity`, `showTrackNote`, `useTrackColors`, `continuous`, `keepEmptyTracks`, `stepSize`, `stepLabels` und `patternData`. Die Props müssen statische Werte, Arrays oder Objekte sein; ausführbare JavaScript-Ausdrücke und Imports werden nicht unterstützt. Statische Zahlenoperationen wie `4 / 3` sind zulässig. Beispiel:
 
     ```mdx
     <DrumPattern
@@ -125,6 +125,31 @@ Dort gibt es vier übersichtliche Reiter:
     ```
 
     Statische Inline-SVGs in `<figure>` werden mit einer begrenzten Element- und Attributliste gerendert; Skripte, Event-Handler, Inline-CSS und externe SVG-Ressourcen sind nicht erlaubt. Alte getrennte Notations-Props werden beim Bearbeiten in den Text übernommen. Andere bereits gespeicherte Visualisierungen bleiben erhalten; eine Definition weiterer Komponententypen im Text wird nicht unterstützt.
+
+#### Matheformeln mit KaTeX
+
+Schreibe Formeln in LaTeX-Schreibweise direkt in den Markdown-Text eines Theorie- oder Praxisblocks. Im Builder steht der Quelltext; im Lektions-Player rendert KaTeX daraus die gesetzte Formel. Du brauchst weder eine LaTeX-Datei noch einen Import. Aufgabenstellungen, Hinweise und Antwortfelder werden dagegen als Klartext behandelt.
+
+- **Im Fließtext:** Setze die Formel zwischen einzelne Dollarzeichen, z. B. `Der Kammerton $A_4$ hat eine Frequenz von $440\,\text{Hz}$.`
+- **Als eigene, abgesetzte Formel:** Setze `$$` auf je eine eigene Zeile. Lass vor und nach dem Formelblock eine Leerzeile. Zum Kopieren in das Textfeld:
+
+  ```markdown
+  Eine Oktave höher verdoppelt sich die Frequenz.
+
+  $$
+  f_2 = 2 \cdot f_1 = 880\,\text{Hz}
+  $$
+  ```
+
+| Schreibweise | Bedeutung |
+| --- | --- |
+| `$f_1$`, `$2^{12}$` | Tief- und Hochstellung; `{…}` fasst mehrere Zeichen zusammen. |
+| `$\frac{3}{2}$` | Bruch, z. B. das Frequenzverhältnis einer reinen Quinte. |
+| `$440\,\text{Hz}$` | Kleiner Abstand und aufrechte Einheit. |
+| `$\sharp$`, `$\flat$`, `$\natural$` | Kreuz, Be und Auflösungszeichen im Text. |
+| `$\fermata$` | Fermatenzeichen; der Lektions-Player unterstützt diesen Ausdruck als einzelnes Inline-Symbol. |
+
+Die Code-Markierungen in diesen Beispielen dienen nur der Dokumentation: Im Builder schreibst du die Formeln **ohne Backticks und ohne Codeblock**. Wenn eine Formel als Text erscheint, prüfe zuerst die Dollarzeichen und die Klammern. KaTeX unterstützt viele, aber nicht alle LaTeX-Befehle; prüfe die Darstellung nach dem Speichern im Lektions-Player.
 
 #### Modulblöcke & Gruppenverwaltung
 - **Hinweise für Lernpfad-Aufgaben:** In der aufgeklappten Aufgabe kannst du einen einfachen und einen stärkeren Hinweis hinterlegen. Beide sind optional und sollten helfen, ohne die Lösung zu verraten. Die separate Erklärung ist für die Auflösung nach drei Fehlversuchen gedacht. Wenn du Hinweise änderst, speichert der Modul-Button die betroffene Aufgabe mit. Du kannst sie auch weiterhin direkt in ihrer Blockkarte speichern.
