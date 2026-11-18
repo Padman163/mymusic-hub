@@ -528,6 +528,9 @@ export function validateQuestionInput(
   if (!isNonEmptyString(input.prompt)) {
     errors.push("Aufgabenstellung (prompt) ist erforderlich.");
   }
+  if (input.title !== undefined && typeof input.title !== "string") {
+    errors.push("Aufgabentitel muss ein Text sein.");
+  }
 
   if (input.targetLane !== undefined && !isTargetLane(input.targetLane)) {
     errors.push("targetLane ist ungültig.");
@@ -730,6 +733,60 @@ export function upsertModule(
   return { ...db, modules, questions: [...db.questions] };
 }
 
+export class ModuleExerciseSaveError extends Error {}
+
+/** Bereitet Modul und geänderte Lernpfad-Aufgaben für einen gemeinsamen Schreibvorgang vor. */
+export function upsertModuleWithExercises(
+  db: ModulesDatabase,
+  moduleData: UpsertModuleInput,
+  exercises: unknown,
+): ModulesDatabase {
+  let nextDb = upsertModule(db, moduleData);
+  if (exercises === undefined) return nextDb;
+  if (!Array.isArray(exercises)) {
+    throw new ModuleExerciseSaveError(
+      "Lernpfad-Aufgaben müssen als Liste übergeben werden.",
+    );
+  }
+  const moduleId = moduleData.id.trim();
+  const seenIds = new Set<string>();
+  for (const exercise of exercises) {
+    if (
+      !isRecord(exercise) ||
+      !isNonEmptyString(exercise.id) ||
+      exercise.targetLane !== "leicht"
+    ) {
+      throw new ModuleExerciseSaveError(
+        "Nur Lernpfad-Aufgaben mit gültiger ID können zusammen mit dem Modul gespeichert werden.",
+      );
+    }
+    const validation = validateQuestionInput(exercise, [{ id: moduleId }]);
+    if (!validation.valid) {
+      throw new ModuleExerciseSaveError(validation.errors.join(" "));
+    }
+    const id = exercise.id.trim();
+    const existing = db.questions.find((question) => question.id === id);
+    if (
+      seenIds.has(id) ||
+      (existing &&
+        (existing.targetLane !== "leicht" ||
+          !isQuestionInModule(existing, moduleId)))
+    ) {
+      throw new ModuleExerciseSaveError(
+        "Eine Aufgaben-ID ist doppelt oder gehört nicht zu diesem Lernpfad.",
+      );
+    }
+    seenIds.add(id);
+    try {
+      nextDb = upsertQuestion(nextDb, exercise as UpsertQuestionInput);
+    } catch (error) {
+      if (!(error instanceof Error)) throw error;
+      throw new ModuleExerciseSaveError(error.message, { cause: error });
+    }
+  }
+  return nextDb;
+}
+
 /** Verschiebt ein Modul relativ zu seinem erwarteten Nachbarn. */
 export function moveModule(
   db: ModulesDatabase,
@@ -801,6 +858,9 @@ export function upsertQuestion(
   const existing = existingIndex >= 0 ? db.questions[existingIndex] : undefined;
   const targetLane =
     questionData.targetLane ?? existing?.targetLane ?? "leicht";
+  const title = removeCitationMarkers(
+    questionData.title ?? existing?.title ?? "",
+  ).trim();
   const options = questionData.options ?? existing?.options;
   const notationTask =
     questionData.questionType === "interactive_notation"
@@ -818,6 +878,7 @@ export function upsertQuestion(
     moduleIds,
     targetLane,
     questionType: questionData.questionType,
+    ...(title ? { title } : {}),
     prompt: removeCitationMarkers(questionData.prompt).trim(),
     ...(options !== undefined
       ? {

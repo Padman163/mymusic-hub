@@ -108,6 +108,7 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     mod.contentOrder = [{ kind: "exercise", id: "q-101-ex-1" }];
     const exercise = db.questions.find(({ id }) => id === "q-101-ex-1");
     if (!exercise) throw new Error("Übung fehlt");
+    exercise.title = "Kammerton";
     exercise.simpleHint = "Vergleiche die Tonhöhen.";
     exercise.strongHint = "Überlege, wie sich die Frequenz bei einer Oktave ändert.";
     const root = document.createElement("section");
@@ -115,6 +116,9 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     document.body.append(root);
     attachModuleStepper(root, { initialDb: db, autoFetch: false });
 
+    expect(root.querySelector(".learning-lesson-heading")?.textContent).toBe("Aufgabe: Kammerton");
+    expect(root.querySelector("[data-question-card] .learning-card-header strong")?.textContent)
+      .toBe(exercise.prompt);
     const input = root.querySelector<HTMLInputElement>(".learning-numeric-input");
     const check = root.querySelector<HTMLButtonElement>('[data-action="check-exercise"]');
     const next = root.querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]');
@@ -681,6 +685,7 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     const block = mod.theoryBlocks[0];
     const question = db.questions.find((item) => item.id === "q-101-ex-1");
     if (!question) throw new Error("Gruppenübung fehlt");
+    question.title = "Kammerton";
     mod.contentOrder = [
       {
         kind: "theory",
@@ -701,7 +706,10 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     const group = root.querySelector(".learning-content-group");
     expect(group?.querySelector(".learning-lesson-heading")?.textContent).toBe("101: Grundlagen");
     expect(group?.querySelector(".learning-theory-block")).not.toBeNull();
-    expect(group?.querySelector('[data-question-card="q-101-ex-1"]')).not.toBeNull();
+    const exerciseCard = group?.querySelector('[data-question-card="q-101-ex-1"]');
+    expect(exerciseCard?.querySelector(".learning-card-header strong")?.textContent)
+      .toBe("Aufgabe: Kammerton");
+    expect(exerciseCard?.textContent).toContain(question.prompt);
     const next = root.querySelector<HTMLButtonElement>(
       '[data-action="next-lesson-section"]',
     );

@@ -353,7 +353,14 @@ function localModulesApiPlugin() {
                 /** @type {import("./src/lib/module-store.ts").UpsertModuleInput} */ (
                   rawModule
                 );
-              const nextDb = store.upsertModule(db, typedModule);
+              let nextDb;
+              try {
+                nextDb = store.upsertModuleWithExercises(db, typedModule, body.exercises);
+              } catch (error) {
+                if (!(error instanceof store.ModuleExerciseSaveError)) throw error;
+                sendLocalJson(res, 400, { error: error.message });
+                return;
+              }
               await writeDb(nextDb);
               const savedModule = nextDb.modules.find(
                 (item) => item.id === String(rawModule.id).trim(),
@@ -363,6 +370,7 @@ function localModulesApiPlugin() {
                   ? "Modul wurde gespeichert."
                   : "Modul wurde aktualisiert.",
                 module: savedModule,
+                ...(body.exercises !== undefined ? { questions: nextDb.questions } : {}),
               });
             }).then(resolve, reject);
           });

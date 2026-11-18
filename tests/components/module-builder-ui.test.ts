@@ -12,7 +12,7 @@ import {
   createXpTagPicker,
 } from "../../src/lib/module-builder-ui";
 import type { ModulesDatabase } from "../../src/lib/module-schema";
-import { upsertQuestion } from "../../src/lib/module-store";
+import { upsertModuleWithExercises } from "../../src/lib/module-store";
 import { createModulesTestDatabase } from "../fixtures/modules";
 
 const seedDb = createModulesTestDatabase();
@@ -771,13 +771,11 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
   });
 
   it("bearbeitet aufgeklappte Übungen direkt in der Modul-Blockliste", async () => {
-    const fetchMock = vi.fn(async (
-      _input: RequestInfo | URL,
-      _init?: RequestInit,
-    ) => new Response("{}", {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    }));
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const payload = JSON.parse(String(init?.body));
+      const next = upsertModuleWithExercises(seedDb, payload, payload.exercises);
+      return Response.json({ questions: next.questions });
+    });
     vi.stubGlobal("fetch", fetchMock);
     const form = mountModuleForm();
     const controller = attachModuleBuilderForm(form);
@@ -810,13 +808,14 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     simpleHint.value = "Einfacher Tipp";
     strongHint.value = "Genauerer Tipp";
     explanation.value = "Neue Erklärung";
-    editor.querySelector<HTMLButtonElement>(".module-exercise-save")?.click();
+    expect(editor.querySelector(".module-exercise-save")).toBeNull();
+    form.dispatchEvent(new Event("submit", { cancelable: true }));
 
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     const saved = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
     expect(fetchMock.mock.calls[0][1]?.method).toBe("PUT");
-    expect(saved).toMatchObject({
-      entity: "question",
+    expect(saved.entity).toBe("module");
+    expect(saved.exercises[0]).toMatchObject({
       id: exercise.id,
       prompt: "Neue Aufgabenstellung",
       correctAnswers: ["900 Hz"],
@@ -825,12 +824,9 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
       explanation: "Neue Erklärung",
     });
     await vi.waitFor(() =>
-      expect(form.querySelector(".module-exercise-status")?.textContent).toBe(
-        "Lernpfad-Aufgabe wurde gespeichert.",
+      expect(form.querySelector(".form-status")?.textContent).toBe(
+        "Modul wurde aktualisiert.",
       ),
-    );
-    expect(form.querySelector(".module-exercise-row")?.textContent).toContain(
-      "Neue Aufgabenstellung",
     );
   });
 
@@ -844,12 +840,11 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
       if (init?.method !== "PUT") return Response.json(db);
       const payload = JSON.parse(String(init.body));
       writes.push(payload.entity);
-      if (payload.entity === "module") return Response.json({ module: mod });
       if (failQuestionSave) {
         return Response.json({ error: "Aufgabe konnte nicht gespeichert werden." }, { status: 500 });
       }
-      db = upsertQuestion(db, payload);
-      return Response.json({ question: db.questions.find(({ id }) => id === payload.id) });
+      db = upsertModuleWithExercises(db, payload, payload.exercises);
+      return Response.json({ module: mod, questions: db.questions });
     }));
 
     const form = mountModuleForm();
@@ -867,7 +862,7 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     submit();
     await vi.waitFor(() =>
       expect(form.querySelector(".form-status")?.textContent)
-        .toContain("Aufgabenhinweise konnten nicht vollständig gespeichert werden"),
+        .toContain("Aufgabe konnte nicht gespeichert werden"),
     );
     expect(hint("Einfacher").value).toBe("Vergleiche die Tonhöhen.");
     expect(hint("Stärkerer").value).toBe("Denke an das Frequenzverhältnis.");
@@ -877,7 +872,7 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     await vi.waitFor(() =>
       expect(form.querySelector(".form-status")?.textContent).toBe("Modul wurde aktualisiert."),
     );
-    expect(writes).toEqual(["module", "question", "module", "question"]);
+    expect(writes).toEqual(["module", "module"]);
     const saved = db.questions.find(({ id }) => id === exercise.id);
     expect(saved).toMatchObject({
       simpleHint: "Vergleiche die Tonhöhen.",
@@ -889,12 +884,51 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     expect(hint("Stärkerer").value).toBe("Denke an das Frequenzverhältnis.");
   });
 
+  it("zeigt den Aufgabentitel sofort an und speichert ihn auch ohne weitere Aufgabenänderungen", async () => {
+    let db = structuredClone(seedDb);
+    const mod = db.modules[0];
+    const exercise = db.questions.find(({ id }) => id === "q-101-ex-1")!;
+    vi.stubGlobal("fetch", vi.fn(async (_url: string, init?: RequestInit) => {
+      if (init?.method !== "PUT") return Response.json(db);
+      const payload = JSON.parse(String(init.body));
+      db = upsertModuleWithExercises(db, payload, payload.exercises);
+      return Response.json({ module: mod, questions: db.questions });
+    }));
+
+    const form = mountModuleForm();
+    const controller = attachModuleBuilderForm(form);
+    controller.loadModule(mod, db.questions);
+    const row = () => form.querySelector(`.module-exercise-row[data-block-id="${exercise.id}"]`)!;
+    const title = () => row().querySelector<HTMLInputElement>(".module-exercise-title")!;
+    const caption = () => row().querySelector(".theory-block-order-label")?.textContent;
+    expect(row().querySelector("details")?.open).toBe(false);
+    expect(caption()).toBe(`Aufgabe: ${exercise.prompt}`);
+    title().value = "Aufgabe: Kammerton";
+    title().dispatchEvent(new Event("input", { bubbles: true }));
+    expect(caption()).toBe("Aufgabe: Kammerton");
+
+    form.dispatchEvent(new Event("submit", { cancelable: true }));
+    await vi.waitFor(() =>
+      expect(form.querySelector(".form-status")?.textContent).toBe("Modul wurde aktualisiert."),
+    );
+    expect(db.questions.find(({ id }) => id === exercise.id)).toMatchObject({
+      title: "Aufgabe: Kammerton",
+      prompt: exercise.prompt,
+      correctAnswers: exercise.correctAnswers,
+    });
+    controller.loadModule(mod, db.questions);
+    expect(caption()).toBe("Aufgabe: Kammerton");
+  });
+
   it.each(["multi_select", "numeric_input", "interactive_notation"] as const)(
     "erstellt und bearbeitet %s direkt in der Modul-Blockliste",
     async (questionType) => {
-      const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) =>
-        new Response("{}", { status: 200, headers: { "Content-Type": "application/json" } }),
-      );
+      let db = structuredClone(seedDb);
+      const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+        const payload = JSON.parse(String(init?.body));
+        db = upsertModuleWithExercises(db, payload, payload.exercises);
+        return Response.json({ module: db.modules[0], questions: db.questions });
+      });
       vi.stubGlobal("fetch", fetchMock);
       const form = mountModuleForm();
       const controller = attachModuleBuilderForm(form);
@@ -911,9 +945,9 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
         control.value = value;
         control.dispatchEvent(new Event("change", { bubbles: true }));
       };
-      const save = () => row().querySelector<HTMLButtonElement>(".module-exercise-save")!.click();
-      const saveMessage = () => row().querySelector(".module-exercise-status")?.textContent;
+      const save = () => form.dispatchEvent(new Event("submit", { cancelable: true }));
       expect(row().querySelector("details")?.open).toBe(true);
+      row().querySelector<HTMLInputElement>(".module-exercise-title")!.value = "Ton erkennen";
       const type = field<HTMLSelectElement>("exercise-question-type");
       expect(Array.from(type.options, (option) => option.textContent)).toEqual([
         "Eine richtige Antwort", "Mehrere richtige Antworten",
@@ -965,15 +999,16 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
       }
 
       save();
-      await vi.waitFor(() => expect(saveMessage()).toBe("Lernpfad-Aufgabe wurde gespeichert."));
+      await vi.waitFor(() => expect(form.querySelector(".form-status")?.textContent).toBe("Modul wurde aktualisiert."));
       const first = fetchMock.mock.calls[0];
-      const created = JSON.parse(String(first[1]?.body));
+      const created = JSON.parse(String(first[1]?.body)).exercises[0];
       expect(first[0]).toBe("/api/modules");
-      expect(first[1]?.method).toBe("POST");
+      expect(first[1]?.method).toBe("PUT");
       expect(created).toMatchObject({
-        entity: "question", targetLane: "leicht", moduleIds: [mod.id], questionType, baseXp: 10, ...expected,
+        targetLane: "leicht", moduleIds: [mod.id], questionType, title: "Ton erkennen", baseXp: 10, ...expected,
       });
 
+      controller.loadModule(db.modules[0], db.questions.filter(({ id }) => id === created.id));
       expect(field<HTMLSelectElement>("exercise-question-type").value).toBe(questionType);
       if (questionType === "multi_select") {
         expect(row().querySelectorAll(".exercise-choice-correct:checked")).toHaveLength(2);
@@ -993,25 +1028,42 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
       await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
       const updated = fetchMock.mock.calls[1][1];
       expect(updated?.method).toBe("PUT");
-      expect(JSON.parse(String(updated?.body))).toMatchObject({
+      expect(JSON.parse(String(updated?.body)).exercises[0]).toMatchObject({
         id: created.id, targetLane: "leicht", moduleIds: [mod.id], questionType, ...expected,
       });
     },
   );
 
-  it("verhindert das Speichern einer Aufgabe vor dem ersten Speichern ihres Moduls", async () => {
-    const fetchMock = vi.fn();
+  it("erstellt ein neues Modul und seine Lernpfad-Aufgabe mit einem einzigen Speichervorgang", async () => {
+    let db = structuredClone(seedDb);
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const payload = JSON.parse(String(init?.body));
+      db = upsertModuleWithExercises(db, payload, payload.exercises);
+      return Response.json({ questions: db.questions });
+    });
     vi.stubGlobal("fetch", fetchMock);
     const form = mountModuleForm();
     attachModuleBuilderForm(form);
     form.querySelector<HTMLSelectElement>(".theory-block-add-type")!.value = "leicht";
     form.querySelector<HTMLButtonElement>(".theory-block-add")!.click();
-    form.querySelector<HTMLButtonElement>(".module-exercise-save")!.click();
-    await vi.waitFor(() =>
-      expect(form.querySelector(".module-exercise-status")?.textContent)
-        .toContain("zuerst das Modul"),
-    );
+    const prompt = form.querySelector<HTMLTextAreaElement>(".module-exercise-prompt")!;
+    const validPrompt = prompt.value;
+    prompt.value = "";
+    form.dispatchEvent(new Event("submit", { cancelable: true }));
+    expect(form.querySelector(".form-status")?.textContent).toContain("Aufgabenstellung");
     expect(fetchMock).not.toHaveBeenCalled();
+    prompt.value = validPrompt;
+    form.dispatchEvent(new Event("submit", { cancelable: true }));
+    await vi.waitFor(() =>
+      expect(form.querySelector(".form-status")?.textContent).toBe("Modul wurde gespeichert."),
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][1]?.method).toBe("POST");
+    const saved = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
+    const exercise = saved.exercises[0];
+    expect(db.modules.find(({ id }) => id === saved.id)?.contentOrder)
+      .toEqual([{ kind: "exercise", id: exercise.id }]);
+    expect(db.questions.find(({ id }) => id === exercise.id)?.moduleIds).toEqual([saved.id]);
   });
 
   it("löscht Übungen nur nach Bestätigung und zeigt Fehler an", async () => {

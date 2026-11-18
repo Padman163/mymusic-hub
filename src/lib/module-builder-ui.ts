@@ -1,6 +1,7 @@
 import { addIcon } from "./contribution-types.ts";
 import {
   DEFAULT_QUIZ_SETTINGS,
+  formatExerciseTitle,
   getDefaultBaseXpForLane,
   isDStage,
   isModuleScope,
@@ -372,8 +373,8 @@ export interface TheoryBlockEditorController {
   ): void;
   removeExercise(id: string): void;
   addExercise(question: ModuleQuestion): void;
-  hasDraftExercises(): boolean;
-  saveExercisesWithEditedHints(): Promise<void>;
+  exerciseUpdates(): ModuleQuestion[];
+  markExercisesSaved(exercises: readonly ModuleQuestion[]): void;
   isDraftExercise(id: string): boolean;
   draftExercises(): ModuleQuestion[];
   contentOrder(): ModuleContentReference[];
@@ -387,7 +388,6 @@ export function createTheoryBlockEditor(
   initialBlocks: readonly TheoryBlock[] = [],
   getDefaultBaseXp: () => number = () => BASE_XP_DEFAULTS.theoryBlock,
   deleteExercise?: (question: ModuleQuestion) => void,
-  getSavedModuleId?: () => string | null,
 ): TheoryBlockEditorController {
   const fieldset = document.createElement("fieldset");
   fieldset.className = "checklist-editor theory-block-editor";
@@ -401,9 +401,9 @@ export function createTheoryBlockEditor(
 
   const rows = document.createElement("div");
   rows.className = "theory-block-rows";
-  const exerciseHintSaves = new WeakMap<
+  const readExerciseUpdate = new WeakMap<
     HTMLDivElement,
-    { hasChanges: () => boolean; save: () => Promise<void> }
+    () => ModuleQuestion | null
   >();
   const legacyVisuals = new WeakMap<HTMLDivElement, Partial<TheoryBlock>>();
   const blockTags = new WeakMap<HTMLDivElement, XpTagPickerController>();
@@ -647,7 +647,6 @@ export function createTheoryBlockEditor(
   function syncRowOrder(): void {
     const rowElements = allRows();
     let theoryNumber = 0;
-    let exerciseNumber = 0;
     rowElements.forEach((row, index) => {
       const label = row.querySelector<HTMLElement>(".theory-block-order-label");
       if (label) {
@@ -658,8 +657,12 @@ export function createTheoryBlockEditor(
           );
           label.textContent = `Theorie ${theoryNumber} · ${title?.value.trim() || "Neuer Block"}`;
         } else if (row.classList.contains("module-exercise-row")) {
-          exerciseNumber += 1;
-          label.textContent = `Leicht ${exerciseNumber} · ${row.dataset.prompt ?? ""}`;
+          label.textContent = formatExerciseTitle(
+            row.querySelector<HTMLInputElement>(".module-exercise-title")
+              ?.value,
+            row.querySelector<HTMLTextAreaElement>(".module-exercise-prompt")
+              ?.value,
+          );
         } else {
           label.textContent = `Praxisaufgabe · ${row.querySelector<HTMLInputElement>(".theory-block-title")?.value.trim() || "Neuer Block"}`;
         }
@@ -986,7 +989,13 @@ export function createTheoryBlockEditor(
       const title = row
         .querySelector<HTMLInputElement>(".theory-block-title")
         ?.value.trim();
-      return title || row.dataset.prompt?.trim() || "Neuer Block";
+      const exerciseTitle = row
+        .querySelector<HTMLInputElement>(".module-exercise-title")
+        ?.value.trim();
+      const prompt = row
+        .querySelector<HTMLTextAreaElement>(".module-exercise-prompt")
+        ?.value.trim();
+      return title || exerciseTitle || prompt || "Neuer Block";
     });
     const lastTitle = titles.pop();
     const groupTitle = `${titles.join(", ")} & ${lastTitle}`;
@@ -1228,7 +1237,6 @@ export function createTheoryBlockEditor(
       const row = reuse ? previous : document.createElement("div");
       row.className = "module-exercise-row";
       row.dataset.blockId = question.id;
-      row.dataset.prompt = question.prompt;
       const savedReference = order.find(
         (entry) => entry.kind === "exercise" && entry.id === question.id,
       );
@@ -1255,11 +1263,19 @@ export function createTheoryBlockEditor(
       summary.append(label, " ", badge);
       const editor = document.createElement("div");
       editor.className = "module-exercise-editor";
+      const title = document.createElement("input");
+      title.type = "text";
+      title.className = "module-exercise-title";
+      title.value = question.title ?? "";
+      title.addEventListener("input", syncRowOrder);
+      editor.append(createLabeledField("Aufgabentitel", title));
       const prompt = document.createElement("textarea");
+      prompt.className = "module-exercise-prompt";
       prompt.rows = 3;
       prompt.maxLength = 4000;
       prompt.value = question.prompt;
       prompt.setAttribute("aria-label", "Aufgabenstellung");
+      prompt.addEventListener("input", syncRowOrder);
       editor.append(createLabeledField("Aufgabenstellung", prompt));
 
       const typeEditor = createQuestionTypeEditor(`inline-${question.id}-`);
@@ -1319,24 +1335,7 @@ export function createTheoryBlockEditor(
       updateXp();
       editor.append(tagPicker.element, xpOutput);
 
-      const saveStatus = document.createElement("p");
-      saveStatus.className = "module-exercise-status";
-      saveStatus.setAttribute("role", "status");
-      saveStatus.setAttribute("aria-live", "polite");
-      const saveButton = document.createElement("button");
-      saveButton.type = "button";
-      saveButton.className = "module-exercise-save";
-      saveButton.textContent = "Lernpfad-Aufgabe speichern";
-      async function saveExercise(): Promise<void> {
-        if (saveButton.disabled) {
-          throw new Error("Die Lernpfad-Aufgabe wird bereits gespeichert.");
-        }
-        const moduleId = getSavedModuleId?.();
-        if (!moduleId || !isQuestionInModule(question, moduleId)) {
-          throw new Error(
-            "Bitte speichere zuerst das Modul. Danach kannst du die Lernpfad-Aufgabe speichern.",
-          );
-        }
+      function readExercise(): ModuleQuestion {
         const typeFields = typeEditor.read();
         if (
           question.questionType === "numeric_input" &&
@@ -1345,84 +1344,50 @@ export function createTheoryBlockEditor(
         ) {
           typeFields.correctAnswers = question.correctAnswers;
         }
-        const payload = {
-          entity: "question",
+        return {
           id: question.id,
-          moduleIds: [moduleId],
+          moduleIds: question.moduleIds,
           targetLane: "leicht",
           ...typeFields,
+          title: title.value.trim(),
           prompt: prompt.value.trim(),
           simpleHint: simpleHint.value.trim(),
           strongHint: strongHint.value.trim(),
           explanation: explanation.value.trim(),
           baseXp: Number(baseXp.value),
           tags: tagPicker.selectedTags(),
-        } satisfies ModuleQuestion & { entity: "question" };
-        const validation = validateQuestionInput(payload, [{ id: moduleId }]);
-        if (!validation.valid) {
-          throw new Error(validation.errors.join(" "));
-        }
-
-        saveButton.disabled = true;
-        saveStatus.textContent = "Lernpfad-Aufgabe wird gespeichert …";
-        try {
-          await sendModulesRequest(
-            draftExerciseIds.has(question.id) ? "POST" : "PUT",
-            payload,
-            "Die Lernpfad-Aufgabe konnte nicht gespeichert werden.",
-          );
-          if (!rows.contains(row) || getSavedModuleId?.() !== moduleId) return;
-          draftExerciseIds.delete(question.id);
-          const { entity: _entity, ...updatedQuestion } = payload;
-          const updatedQuestions = exerciseQuestions.map((item) =>
-            item.id === updatedQuestion.id ? updatedQuestion : item,
-          );
-          setExercises(updatedQuestions);
-          document.dispatchEvent(
-            new CustomEvent("modules:updated", {
-              bubbles: true,
-              detail: {
-                questions: updatedQuestions.filter(
-                  (item) => !draftExerciseIds.has(item.id),
-                ),
-              },
-            }),
-          );
-          const savedRow = Array.from(
-            rows.querySelectorAll<HTMLDivElement>(".module-exercise-row"),
-          ).find((item) => item.dataset.blockId === updatedQuestion.id);
-          const savedStatus = savedRow?.querySelector<HTMLElement>(
-            ".module-exercise-status",
-          );
-          if (savedStatus)
-            savedStatus.textContent = "Lernpfad-Aufgabe wurde gespeichert.";
-        } catch (error) {
-          saveStatus.textContent =
-            error instanceof Error
-              ? error.message
-              : "Speichern fehlgeschlagen.";
-          throw error;
-        } finally {
-          saveButton.disabled = false;
-        }
+        };
       }
-      exerciseHintSaves.set(row, {
-        hasChanges: () =>
-          simpleHint.value.trim() !== (question.simpleHint ?? "").trim() ||
-          strongHint.value.trim() !== (question.strongHint ?? "").trim(),
-        save: saveExercise,
-      });
-      saveButton.addEventListener("click", async () => {
+      const initialExercise = JSON.stringify(readExercise());
+      readExerciseUpdate.set(row, () => {
         try {
-          await saveExercise();
+          const update = readExercise();
+          if (
+            !draftExerciseIds.has(question.id) &&
+            JSON.stringify(update) === initialExercise
+          ) {
+            return null;
+          }
+          const validation = validateQuestionInput(
+            update,
+            question.moduleIds.map((id) => ({ id })),
+          );
+          if (!validation.valid) throw new Error(validation.errors.join(" "));
+          return update;
         } catch (error) {
-          saveStatus.textContent =
-            error instanceof Error
-              ? error.message
-              : "Die Übung konnte nicht gespeichert werden.";
+          const groupDetails = row
+            .closest(".theory-block-group")
+            ?.querySelector<HTMLDetailsElement>(".theory-group-details");
+          if (groupDetails) groupDetails.open = true;
+          details.open = true;
+          const message =
+            error instanceof Error ? error.message : "Ungültige Aufgabendaten.";
+          throw new Error(
+            `${formatExerciseTitle(title.value, prompt.value)} – ${message}`,
+            { cause: error },
+          );
         }
       });
-      editor.append(saveButton, saveStatus);
       details.append(summary, editor);
       const controls = document.createElement("div");
       controls.className = "theory-block-controls";
@@ -1534,16 +1499,18 @@ export function createTheoryBlockEditor(
       draftExerciseIds.add(question.id);
       setExercises([...exerciseQuestions, question], contentOrder());
     },
-    hasDraftExercises() {
-      return draftExerciseIds.size > 0;
-    },
-    async saveExercisesWithEditedHints() {
+    exerciseUpdates() {
+      const updates: ModuleQuestion[] = [];
       for (const row of rows.querySelectorAll<HTMLDivElement>(
         ".module-exercise-row",
       )) {
-        const action = exerciseHintSaves.get(row);
-        if (action?.hasChanges()) await action.save();
+        const update = readExerciseUpdate.get(row)?.();
+        if (update) updates.push(update);
       }
+      return updates;
+    },
+    markExercisesSaved(exercises) {
+      for (const exercise of exercises) draftExerciseIds.delete(exercise.id);
     },
     isDraftExercise(id) {
       return draftExerciseIds.has(id);
@@ -1780,7 +1747,6 @@ export function attachModuleBuilderForm(
     [],
     () => Number(theoryBaseXpInput.value),
     (question) => void deleteExercise(question),
-    () => editingModuleId,
   );
   theoryBaseXpInput.addEventListener(
     "input",
@@ -1803,9 +1769,7 @@ export function attachModuleBuilderForm(
       tags: [],
     };
     theoryBlockEditor.addExercise(question);
-    status.textContent = editingModuleId
-      ? "Lernpfad-Aufgabe hinzugefügt."
-      : "Lernpfad-Aufgabe hinzugefügt. Bitte zuerst das Modul speichern, danach die Aufgabe im Block speichern.";
+    status.textContent = "Lernpfad-Aufgabe hinzugefügt.";
   });
   blocksContainer.append(theoryBlockEditor.element);
 
@@ -1993,6 +1957,7 @@ export function attachModuleBuilderForm(
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
+    if (submitButton.disabled) return;
 
     const theoryBlocks = theoryBlockEditor.items();
     const practiceBlocks = theoryBlockEditor.practiceItems();
@@ -2028,33 +1993,32 @@ export function attachModuleBuilderForm(
     status.textContent = "Modul wird gespeichert …";
     setBusy(true);
 
-    let moduleSaved = false;
     try {
+      const exercises = theoryBlockEditor.exerciseUpdates();
+      exerciseRefreshVersion += 1;
       const result = await sendModulesRequest(
         isUpdate ? "PUT" : "POST",
-        payload,
+        exercises.length > 0 ? { ...payload, exercises } : payload,
         "Das Modul konnte nicht gespeichert werden.",
       );
-      moduleSaved = true;
+      if (
+        exercises.length > 0 &&
+        (!isRecord(result) || !Array.isArray(result.questions))
+      ) {
+        throw new Error(
+          "Das Speichern der Lernpfad-Aufgaben wurde vom Server nicht bestätigt.",
+        );
+      }
       editingModuleId = moduleId;
       newModuleId = null;
+      theoryBlockEditor.markExercisesSaved(exercises);
       submitButton.textContent = "Modul-Änderungen speichern";
       cancelButton.hidden = false;
-      await theoryBlockEditor.saveExercisesWithEditedHints();
 
-      if (theoryBlockEditor.hasDraftExercises()) {
-        status.textContent =
-          "Modul gespeichert. Speichere jetzt die neuen Lernpfad-Aufgaben direkt in den Blöcken.";
-      } else if (!isDetailPage) {
-        resetForm();
-        status.textContent = isUpdate
-          ? "Modul wurde aktualisiert."
-          : "Modul wurde gespeichert.";
-      } else {
-        status.textContent = isUpdate
-          ? "Modul wurde aktualisiert."
-          : "Modul wurde gespeichert.";
-      }
+      if (!isDetailPage) resetForm();
+      status.textContent = isUpdate
+        ? "Modul wurde aktualisiert."
+        : "Modul wurde gespeichert.";
       document.dispatchEvent(
         new CustomEvent("modules:updated", { bubbles: true, detail: result }),
       );
@@ -2063,9 +2027,7 @@ export function attachModuleBuilderForm(
         error instanceof Error
           ? error.message
           : "Das Modul konnte wegen eines unerwarteten Fehlers nicht gespeichert werden.";
-      status.textContent = moduleSaved
-        ? `Modul gespeichert, aber die geänderten Aufgabenhinweise konnten nicht vollständig gespeichert werden: ${message}`
-        : message;
+      status.textContent = message;
     } finally {
       setBusy(false);
     }

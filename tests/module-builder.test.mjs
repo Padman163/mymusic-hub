@@ -72,6 +72,20 @@ describe("xp-tags Konfiguration & Berechnung", () => {
 describe("module-store Validierung & Store-Operationen", () => {
   const sourceMarker = (number) => `[${"cite"}: ${number}]`;
 
+  it("speichert Aufgabentitel getrennt von der Frage und erlaubt ihr Entfernen", () => {
+    const db = upsertModule(createEmptyModulesDatabase(), { id: "mod", title: "Modul" });
+    const question = {
+      id: "q", moduleIds: ["mod"], targetLane: "leicht",
+      questionType: "numeric_input", prompt: "Frage", correctAnswers: ["1"],
+    };
+    expect(validateQuestionInput({ ...question, title: 1 }, db).valid).toBe(false);
+    const titled = upsertQuestion(db, { ...question, title: ` Kammerton ${sourceMarker(1)} ` });
+    expect(titled.questions[0]).toMatchObject({ title: "Kammerton", prompt: "Frage" });
+    expect(upsertQuestion(titled, question).questions[0].title).toBe("Kammerton");
+    expect(upsertQuestion(titled, { ...question, title: "" }).questions[0])
+      .not.toHaveProperty("title");
+  });
+
   it("speichert optionale Aufgabenhinweise und erlaubt ihr Entfernen", () => {
     const db = upsertModule(createEmptyModulesDatabase(), { id: "mod", title: "Modul" });
     const question = {
@@ -681,6 +695,31 @@ describe("Modules Serverless API (/api/modules)", () => {
     store = mockBlobStore();
     store.put("modules", { modules: [], questions: [] });
     vi.mocked(getStore).mockReset().mockReturnValue(store);
+  });
+
+  it("speichert Modul und Lernpfad-Aufgaben gemeinsam oder lehnt den ganzen Schreibvorgang ab", async () => {
+    const request = (body) => modulesHandler(new Request("http://localhost/api/modules", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+    }));
+    const exercise = {
+      id: "q", moduleIds: ["m"], targetLane: "leicht",
+      questionType: "numeric_input", prompt: "Frage", correctAnswers: ["1"],
+    };
+    const payload = {
+      entity: "module", id: "m", title: "Test", contentOrder: [{ kind: "exercise", id: "q" }],
+    };
+    const invalid = await request({
+      ...payload, exercises: [exercise, { ...exercise, id: "invalid", correctAnswers: [] }],
+    });
+    expect(invalid.status).toBe(400);
+    expect(storedDb()).toEqual({ modules: [], questions: [] });
+    const saved = await request({ ...payload, exercises: [exercise] });
+    expect(saved.status).toBe(201);
+    expect(await saved.json()).toMatchObject({
+      module: { id: "m", contentOrder: payload.contentOrder },
+      questions: [exercise],
+    });
+    expect(storedDb().questions).toMatchObject([exercise]);
   });
 
   it("speichert globale Grenzen mit Konfliktschutz und erhält sie bei späteren Moduländerungen", async () => {

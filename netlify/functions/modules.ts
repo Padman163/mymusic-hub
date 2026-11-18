@@ -6,7 +6,8 @@ import {
 	moveModule,
 	type UpsertModuleInput,
 	type UpsertQuestionInput,
-	upsertModule,
+	ModuleExerciseSaveError,
+	upsertModuleWithExercises,
 	upsertQuestion,
 	updateQuizSettings,
 	validateModuleInput,
@@ -193,7 +194,7 @@ async function handleWriteRequest(
 
 	const nextDb = await updateBlobJSON(
 		'modules',
-		(db) => upsertModule(db, rawModule as UpsertModuleInput),
+		(db) => upsertModuleWithExercises(db, rawModule as UpsertModuleInput, body.exercises),
 	);
 
 	const savedModule = nextDb.modules.find(
@@ -202,6 +203,7 @@ async function handleWriteRequest(
 	return jsonResponse(isPost ? 201 : 200, {
 		message: isPost ? 'Modul wurde gespeichert.' : 'Modul wurde aktualisiert.',
 		module: savedModule,
+		...(body.exercises !== undefined ? { questions: nextDb.questions } : {}),
 	});
 }
 
@@ -281,7 +283,7 @@ export default async (request: Request): Promise<Response> => {
 		if (isBlobStoreUnavailable(error)) {
 			return jsonResponse(503, { error: 'Der Modul-Builder ist noch nicht konfiguriert.' });
 		}
-		if (error instanceof ModuleValidationError) {
+		if (error instanceof ModuleValidationError || error instanceof ModuleExerciseSaveError) {
 			return jsonResponse(400, { error: error.message });
 		}
 		if (error instanceof ModuleNotFoundError) {

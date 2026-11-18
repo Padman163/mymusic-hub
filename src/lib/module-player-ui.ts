@@ -29,6 +29,7 @@ import {
 } from "./learning-progress.ts";
 import {
   BASE_XP_DEFAULTS,
+  formatExerciseTitle,
   isQuestionInModule,
   isQuizSettings,
   type LearningModule,
@@ -1767,6 +1768,7 @@ export interface QuizRunnerMountConfig {
   db: ModulesDatabase;
   mode: TargetLane;
   exerciseId?: string;
+  exerciseTitleInSection?: boolean;
   templateRoot?: ParentNode;
   lessonBaseUrl?: string;
 }
@@ -1926,8 +1928,12 @@ export function attachModuleQuizRunner(
       const qHeader = document.createElement("div");
       qHeader.className = "learning-card-header";
       const qTitle = document.createElement("strong");
+      const showExerciseTitle =
+        config.exerciseId && !config.exerciseTitleInSection;
       qTitle.textContent = config.exerciseId
-        ? question.prompt
+        ? showExerciseTitle
+          ? formatExerciseTitle(question.title, question.prompt)
+          : question.prompt
         : `Aufgabe ${index + 1} / ${questions.length}: ${question.prompt}`;
       const qXp = document.createElement("span");
       qXp.className = "contribution-tag learning-xp-badge";
@@ -2067,7 +2073,13 @@ export function attachModuleQuizRunner(
         }
       });
 
-      qCard.append(qHeader, inputsEl, checkBtn, feedback);
+      qCard.append(qHeader);
+      if (showExerciseTitle && question.title?.trim()) {
+        const prompt = document.createElement("p");
+        prompt.textContent = question.prompt;
+        qCard.append(prompt);
+      }
+      qCard.append(inputsEl, checkBtn, feedback);
       container.append(qCard);
     });
     return;
@@ -2338,7 +2350,10 @@ function getLessonSectionTitle(section: LessonSection): string {
     case "theory":
       return cleanLessonTitle(section.blocks[0].title);
     case "exercise":
-      return cleanLessonTitle(section.question.prompt);
+      return formatExerciseTitle(
+        section.question.title,
+        section.question.prompt,
+      );
     case "practice":
       return cleanLessonTitle(section.block.title);
     case "quiz":
@@ -2767,7 +2782,10 @@ export function attachModuleStepper(
       const heading = document.createElement("h3");
       heading.className = "learning-lesson-heading";
       heading.tabIndex = -1;
-      heading.textContent = sectionTitles[index];
+      heading.textContent =
+        section.kind === "exercise"
+          ? getLessonSectionTitle(section)
+          : sectionTitles[index];
       card.append(heading);
 
       let completeButton: HTMLButtonElement | null = null;
@@ -2945,6 +2963,7 @@ export function attachModuleStepper(
           db: currentDb,
           mode: "leicht",
           exerciseId: section.question.id,
+          exerciseTitleInSection: true,
           templateRoot: root,
           lessonBaseUrl,
         });

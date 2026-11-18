@@ -398,6 +398,7 @@ export interface ModuleQuestion {
   moduleIds: string[];
   targetLane: TargetLane;
   questionType: QuestionType;
+  title?: string;
   prompt: string;
   options?: string[];
   correctAnswers: string[];
@@ -407,6 +408,11 @@ export interface ModuleQuestion {
   explanation: string;
   baseXp: number;
   tags: string[];
+}
+
+export function formatExerciseTitle(title?: string, fallback = ""): string {
+  const text = title?.trim().replace(/^Aufgabe:\s*/i, "");
+  return `Aufgabe: ${text || fallback.trim() || "Neue Aufgabe"}`;
 }
 
 export interface LearningModule {
