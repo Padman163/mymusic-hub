@@ -372,6 +372,7 @@ export interface TheoryBlockEditorController {
   removeExercise(id: string): void;
   addExercise(question: ModuleQuestion): void;
   hasDraftExercises(): boolean;
+  saveExercisesWithEditedHints(): Promise<void>;
   isDraftExercise(id: string): boolean;
   draftExercises(): ModuleQuestion[];
   contentOrder(): ModuleContentReference[];
@@ -399,6 +400,10 @@ export function createTheoryBlockEditor(
 
   const rows = document.createElement("div");
   rows.className = "theory-block-rows";
+  const exerciseHintSaves = new WeakMap<
+    HTMLDivElement,
+    { hasChanges: () => boolean; save: () => Promise<void> }
+  >();
   const legacyVisuals = new WeakMap<HTMLDivElement, Partial<TheoryBlock>>();
   const blockTags = new WeakMap<HTMLDivElement, XpTagPickerController>();
   let exerciseQuestions: ModuleQuestion[] = [];
@@ -1231,13 +1236,26 @@ export function createTheoryBlockEditor(
       typeEditor.load(question);
       editor.append(typeEditor.element);
 
-      const explanation = document.createElement("textarea");
-      explanation.rows = 3;
-      explanation.maxLength = 4000;
-      explanation.value = question.explanation;
-      explanation.setAttribute("aria-label", "Erklärung bei falscher Antwort");
-      editor.append(
-        createLabeledField("Erklärung bei falscher Antwort", explanation),
+      const addFeedbackField = (label: string, value = "") => {
+        const field = document.createElement("textarea");
+        field.rows = 3;
+        field.maxLength = 4000;
+        field.value = value;
+        field.setAttribute("aria-label", label);
+        editor.append(createLabeledField(label, field));
+        return field;
+      };
+      const simpleHint = addFeedbackField(
+        "Einfacher Hinweis nach dem zweiten Fehlversuch (optional)",
+        question.simpleHint,
+      );
+      const strongHint = addFeedbackField(
+        "Stärkerer Hinweis zum Aufklappen vor dem letzten Versuch (optional)",
+        question.strongHint,
+      );
+      const explanation = addFeedbackField(
+        "Erklärung nach drei Fehlversuchen",
+        question.explanation,
       );
 
       const baseXp = document.createElement("input");
@@ -1273,20 +1291,23 @@ export function createTheoryBlockEditor(
       saveButton.type = "button";
       saveButton.className = "module-exercise-save";
       saveButton.textContent = "Lernpfad-Aufgabe speichern";
-      saveButton.addEventListener("click", async () => {
+      async function saveExercise(): Promise<void> {
+        if (saveButton.disabled) {
+          throw new Error("Die Lernpfad-Aufgabe wird bereits gespeichert.");
+        }
         const moduleId = getSavedModuleId?.();
         if (!moduleId || !isQuestionInModule(question, moduleId)) {
-          saveStatus.textContent =
-            "Bitte speichere zuerst das Modul. Danach kannst du die Lernpfad-Aufgabe speichern.";
-          return;
+          throw new Error(
+            "Bitte speichere zuerst das Modul. Danach kannst du die Lernpfad-Aufgabe speichern.",
+          );
         }
-        let typeFields: ReturnType<typeof typeEditor.read>;
-        try {
-          typeFields = typeEditor.read();
-        } catch (error) {
-          saveStatus.textContent =
-            error instanceof Error ? error.message : String(error);
-          return;
+        const typeFields = typeEditor.read();
+        if (
+          question.questionType === "numeric_input" &&
+          typeFields.questionType === "numeric_input" &&
+          typeFields.correctAnswers[0] === question.correctAnswers[0]?.trim()
+        ) {
+          typeFields.correctAnswers = question.correctAnswers;
         }
         const payload = {
           entity: "question",
@@ -1295,14 +1316,15 @@ export function createTheoryBlockEditor(
           targetLane: "leicht",
           ...typeFields,
           prompt: prompt.value.trim(),
+          simpleHint: simpleHint.value.trim(),
+          strongHint: strongHint.value.trim(),
           explanation: explanation.value.trim(),
           baseXp: Number(baseXp.value),
           tags: tagPicker.selectedTags(),
         } satisfies ModuleQuestion & { entity: "question" };
         const validation = validateQuestionInput(payload, [{ id: moduleId }]);
         if (!validation.valid) {
-          saveStatus.textContent = validation.errors.join(" ");
-          return;
+          throw new Error(validation.errors.join(" "));
         }
 
         saveButton.disabled = true;
@@ -1342,8 +1364,26 @@ export function createTheoryBlockEditor(
           saveStatus.textContent =
             error instanceof Error
               ? error.message
-              : "Die Übung konnte nicht gespeichert werden.";
+              : "Speichern fehlgeschlagen.";
+          throw error;
+        } finally {
           saveButton.disabled = false;
+        }
+      }
+      exerciseHintSaves.set(row, {
+        hasChanges: () =>
+          simpleHint.value.trim() !== (question.simpleHint ?? "").trim() ||
+          strongHint.value.trim() !== (question.strongHint ?? "").trim(),
+        save: saveExercise,
+      });
+      saveButton.addEventListener("click", async () => {
+        try {
+          await saveExercise();
+        } catch (error) {
+          saveStatus.textContent =
+            error instanceof Error
+              ? error.message
+              : "Die Übung konnte nicht gespeichert werden.";
         }
       });
       editor.append(saveButton, saveStatus);
@@ -1460,6 +1500,14 @@ export function createTheoryBlockEditor(
     },
     hasDraftExercises() {
       return draftExerciseIds.size > 0;
+    },
+    async saveExercisesWithEditedHints() {
+      for (const row of rows.querySelectorAll<HTMLDivElement>(
+        ".module-exercise-row",
+      )) {
+        const action = exerciseHintSaves.get(row);
+        if (action?.hasChanges()) await action.save();
+      }
     },
     isDraftExercise(id) {
       return draftExerciseIds.has(id);
@@ -1944,18 +1992,21 @@ export function attachModuleBuilderForm(
     status.textContent = "Modul wird gespeichert …";
     setBusy(true);
 
+    let moduleSaved = false;
     try {
       const result = await sendModulesRequest(
         isUpdate ? "PUT" : "POST",
         payload,
         "Das Modul konnte nicht gespeichert werden.",
       );
+      moduleSaved = true;
+      editingModuleId = moduleId;
+      newModuleId = null;
+      submitButton.textContent = "Modul-Änderungen speichern";
+      cancelButton.hidden = false;
+      await theoryBlockEditor.saveExercisesWithEditedHints();
 
       if (theoryBlockEditor.hasDraftExercises()) {
-        editingModuleId = moduleId;
-        newModuleId = null;
-        submitButton.textContent = "Modul-Änderungen speichern";
-        cancelButton.hidden = false;
         status.textContent =
           "Modul gespeichert. Speichere jetzt die neuen Lernpfad-Aufgaben direkt in den Blöcken.";
       } else if (!isDetailPage) {
@@ -1972,10 +2023,13 @@ export function attachModuleBuilderForm(
         new CustomEvent("modules:updated", { bubbles: true, detail: result }),
       );
     } catch (error) {
-      status.textContent =
+      const message =
         error instanceof Error
           ? error.message
           : "Das Modul konnte wegen eines unerwarteten Fehlers nicht gespeichert werden.";
+      status.textContent = moduleSaved
+        ? `Modul gespeichert, aber die geänderten Aufgabenhinweise konnten nicht vollständig gespeichert werden: ${message}`
+        : message;
     } finally {
       setBusy(false);
     }

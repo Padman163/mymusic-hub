@@ -402,6 +402,8 @@ export interface ModuleQuestion {
   options?: string[];
   correctAnswers: string[];
   notationTask?: NotationBuilderTaskConfig;
+  simpleHint?: string;
+  strongHint?: string;
   explanation: string;
   baseXp: number;
   tags: string[];

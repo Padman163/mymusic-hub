@@ -72,6 +72,22 @@ describe("xp-tags Konfiguration & Berechnung", () => {
 describe("module-store Validierung & Store-Operationen", () => {
   const sourceMarker = (number) => `[${"cite"}: ${number}]`;
 
+  it("speichert optionale Aufgabenhinweise und erlaubt ihr Entfernen", () => {
+    const db = upsertModule(createEmptyModulesDatabase(), { id: "mod", title: "Modul" });
+    const question = {
+      id: "q", moduleIds: ["mod"], targetLane: "leicht",
+      questionType: "numeric_input", prompt: "Frage", correctAnswers: ["1"],
+    };
+    expect(validateQuestionInput({ ...question, simpleHint: 1 }, db).valid).toBe(false);
+    const withHints = upsertQuestion(db, {
+      ...question, simpleHint: " Einfach ", strongHint: "Genauer",
+    });
+    expect(withHints.questions[0]).toMatchObject({ simpleHint: "Einfach", strongHint: "Genauer" });
+    const updated = upsertQuestion(withHints, { ...question, simpleHint: "" });
+    expect(updated.questions[0]).not.toHaveProperty("simpleHint");
+    expect(updated.questions[0].strongHint).toBe("Genauer");
+  });
+
   it("speichert explizite Voraussetzungen und erhält sie bei Teiländerungen", () => {
     const empty = createEmptyModulesDatabase();
     const db = upsertModule(empty, { id: "elementarlehre", title: "Elementarlehre" });

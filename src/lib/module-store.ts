@@ -555,6 +555,15 @@ export function validateQuestionInput(
   ) {
     errors.push("explanation muss ein String sein.");
   }
+  for (const [field, label] of [
+    ["simpleHint", "Einfacher Hinweis"],
+    ["strongHint", "Stärkerer Hinweis"],
+  ] as const) {
+    const hint = input[field];
+    if (hint !== undefined && typeof hint !== "string") {
+      errors.push(`${label} muss ein Text sein.`);
+    }
+  }
   if (
     input.baseXp !== undefined &&
     (typeof input.baseXp !== "number" ||
@@ -797,6 +806,12 @@ export function upsertQuestion(
     questionData.questionType === "interactive_notation"
       ? (questionData.notationTask ?? existing?.notationTask)
       : undefined;
+  const simpleHint = removeCitationMarkers(
+    questionData.simpleHint ?? existing?.simpleHint ?? "",
+  ).trim();
+  const strongHint = removeCitationMarkers(
+    questionData.strongHint ?? existing?.strongHint ?? "",
+  ).trim();
 
   const normalizedQuestion: ModuleQuestion = {
     id,
@@ -819,6 +834,8 @@ export function upsertQuestion(
     ...(notationTask !== undefined
       ? { notationTask: cloneNotationTask(notationTask) }
       : {}),
+    ...(simpleHint ? { simpleHint } : {}),
+    ...(strongHint ? { strongHint } : {}),
     explanation: removeCitationMarkers(
       questionData.explanation ?? existing?.explanation ?? "",
     ).trim(),

@@ -12,6 +12,7 @@ import {
   createXpTagPicker,
 } from "../../src/lib/module-builder-ui";
 import type { ModulesDatabase } from "../../src/lib/module-schema";
+import { upsertQuestion } from "../../src/lib/module-store";
 import { createModulesTestDatabase } from "../fixtures/modules";
 
 const seedDb = createModulesTestDatabase();
@@ -746,13 +747,23 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     const answer = editor?.querySelector<HTMLInputElement>(
       '[id$="exercise-numeric-answer"]',
     );
-    const explanation = editor?.querySelectorAll<HTMLTextAreaElement>("textarea")[1];
-    if (!row || !prompt || !answer || !explanation) {
+    const explanation = editor?.querySelector<HTMLTextAreaElement>(
+      'textarea[aria-label="Erklärung nach drei Fehlversuchen"]',
+    );
+    const simpleHint = editor?.querySelector<HTMLTextAreaElement>(
+      'textarea[aria-label^="Einfacher Hinweis"]',
+    );
+    const strongHint = editor?.querySelector<HTMLTextAreaElement>(
+      'textarea[aria-label^="Stärkerer Hinweis"]',
+    );
+    if (!row || !editor || !prompt || !answer || !explanation || !simpleHint || !strongHint) {
       throw new Error("Inline-Editor für Übung fehlt");
     }
     row.querySelector<HTMLDetailsElement>("details")!.open = true;
     prompt.value = "Neue Aufgabenstellung";
     answer.value = "900 Hz";
+    simpleHint.value = "Einfacher Tipp";
+    strongHint.value = "Genauerer Tipp";
     explanation.value = "Neue Erklärung";
     editor.querySelector<HTMLButtonElement>(".module-exercise-save")?.click();
 
@@ -764,6 +775,8 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
       id: exercise.id,
       prompt: "Neue Aufgabenstellung",
       correctAnswers: ["900 Hz"],
+      simpleHint: "Einfacher Tipp",
+      strongHint: "Genauerer Tipp",
       explanation: "Neue Erklärung",
     });
     await vi.waitFor(() =>
@@ -774,6 +787,61 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     expect(form.querySelector(".module-exercise-row")?.textContent).toContain(
       "Neue Aufgabenstellung",
     );
+  });
+
+  it("speichert geänderte Hinweise mit dem Modul und behält sie bei einem Schreibfehler im Entwurf", async () => {
+    let db = structuredClone(seedDb);
+    const mod = db.modules[0];
+    const exercise = db.questions.find(({ id }) => id === "q-101-ex-1")!;
+    let failQuestionSave = true;
+    const writes: string[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (_url: string, init?: RequestInit) => {
+      if (init?.method !== "PUT") return Response.json(db);
+      const payload = JSON.parse(String(init.body));
+      writes.push(payload.entity);
+      if (payload.entity === "module") return Response.json({ module: mod });
+      if (failQuestionSave) {
+        return Response.json({ error: "Aufgabe konnte nicht gespeichert werden." }, { status: 500 });
+      }
+      db = upsertQuestion(db, payload);
+      return Response.json({ question: db.questions.find(({ id }) => id === payload.id) });
+    }));
+
+    const form = mountModuleForm();
+    const controller = attachModuleBuilderForm(form);
+    controller.loadModule(mod, db.questions);
+    const hint = (kind: "Einfacher" | "Stärkerer") =>
+      form.querySelector<HTMLTextAreaElement>(
+        `.module-exercise-row[data-block-id="${exercise.id}"] textarea[aria-label^="${kind} Hinweis"]`,
+      )!;
+    const submit = () =>
+      form.dispatchEvent(new Event("submit", { cancelable: true }));
+    hint("Einfacher").value = "Vergleiche die Tonhöhen.";
+    hint("Stärkerer").value = "Denke an das Frequenzverhältnis.";
+
+    submit();
+    await vi.waitFor(() =>
+      expect(form.querySelector(".form-status")?.textContent)
+        .toContain("Aufgabenhinweise konnten nicht vollständig gespeichert werden"),
+    );
+    expect(hint("Einfacher").value).toBe("Vergleiche die Tonhöhen.");
+    expect(hint("Stärkerer").value).toBe("Denke an das Frequenzverhältnis.");
+
+    failQuestionSave = false;
+    submit();
+    await vi.waitFor(() =>
+      expect(form.querySelector(".form-status")?.textContent).toBe("Modul wurde aktualisiert."),
+    );
+    expect(writes).toEqual(["module", "question", "module", "question"]);
+    const saved = db.questions.find(({ id }) => id === exercise.id);
+    expect(saved).toMatchObject({
+      simpleHint: "Vergleiche die Tonhöhen.",
+      strongHint: "Denke an das Frequenzverhältnis.",
+      correctAnswers: exercise.correctAnswers,
+    });
+    controller.loadModule(mod, db.questions);
+    expect(hint("Einfacher").value).toBe("Vergleiche die Tonhöhen.");
+    expect(hint("Stärkerer").value).toBe("Denke an das Frequenzverhältnis.");
   });
 
   it.each(["multi_select", "numeric_input", "interactive_notation"] as const)(
@@ -886,7 +954,7 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     },
   );
 
-  it("verhindert das Speichern einer Aufgabe vor dem ersten Speichern ihres Moduls", () => {
+  it("verhindert das Speichern einer Aufgabe vor dem ersten Speichern ihres Moduls", async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
     const form = mountModuleForm();
@@ -894,8 +962,11 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     form.querySelector<HTMLSelectElement>(".theory-block-add-type")!.value = "leicht";
     form.querySelector<HTMLButtonElement>(".theory-block-add")!.click();
     form.querySelector<HTMLButtonElement>(".module-exercise-save")!.click();
+    await vi.waitFor(() =>
+      expect(form.querySelector(".module-exercise-status")?.textContent)
+        .toContain("zuerst das Modul"),
+    );
     expect(fetchMock).not.toHaveBeenCalled();
-    expect(form.querySelector(".module-exercise-status")?.textContent).toContain("zuerst das Modul");
   });
 
   it("löscht Übungen nur nach Bestätigung und zeigt Fehler an", async () => {

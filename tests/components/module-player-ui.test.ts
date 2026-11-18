@@ -106,6 +106,10 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     const db = structuredClone(seedDb);
     const mod = db.modules[0];
     mod.contentOrder = [{ kind: "exercise", id: "q-101-ex-1" }];
+    const exercise = db.questions.find(({ id }) => id === "q-101-ex-1");
+    if (!exercise) throw new Error("Übung fehlt");
+    exercise.simpleHint = "Vergleiche die Tonhöhen.";
+    exercise.strongHint = "Überlege, wie sich die Frequenz bei einer Oktave ändert.";
     const root = document.createElement("section");
     root.dataset.moduleId = mod.id;
     document.body.append(root);
@@ -120,10 +124,28 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     input.value = "440";
     check.click();
     expect(root.textContent).toContain("2 Versuche übrig");
+    expect(root.textContent).not.toContain(exercise.simpleHint);
+    expect(root.textContent).not.toContain(exercise.strongHint);
+    expect(root.textContent).not.toContain(exercise.explanation);
+    expect(root.textContent).not.toContain("Richtige Antwort:");
     expect(next.disabled).toBe(true);
     check.click();
     expect(root.textContent).toContain("1 Versuch übrig");
+    expect(root.textContent).toContain(exercise.simpleHint);
+    const strongerHint = root.querySelector<HTMLDetailsElement>(".learning-feedback details");
+    expect(strongerHint?.open).toBe(false);
+    expect(strongerHint?.querySelector("summary")?.textContent)
+      .toBe("Stärkeren Hinweis anzeigen");
+    expect(strongerHint?.querySelector("p")?.textContent).toBe(exercise.strongHint);
+    expect(root.textContent).not.toContain(exercise.explanation);
+    expect(root.textContent).not.toContain("Richtige Antwort:");
+    input.value = "";
+    check.click();
+    expect(root.textContent).toContain("Bitte gib zuerst eine Antwort ein.");
+    expect(root.textContent).toContain("1 Versuch übrig");
+    expect(root.contains(strongerHint ?? null)).toBe(true);
     expect(loadLearningProgress(db.modules).totalXp).toBe(0);
+    input.value = "440";
     check.click();
     expect(root.textContent).toContain("Richtige Antwort: 880");
     expect(root.textContent).toContain("Frequenzverhältnis 2:1");
@@ -897,7 +919,8 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     ex1Btn.click();
     const feedback = ex1Card?.querySelector<HTMLElement>(".learning-feedback");
     expect(feedback?.dataset.outcome).toBe("wrong");
-    expect(feedback?.textContent).toContain("Frequenzverhältnis 2:1");
+    expect(feedback?.textContent).toContain("2 Versuche übrig");
+    expect(feedback?.textContent).not.toContain("Frequenzverhältnis 2:1");
     expect(ex1Xp?.classList.contains("has-xp")).toBe(false);
     expect(stepperEl.querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]')?.disabled).toBe(true);
 

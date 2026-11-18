@@ -1955,6 +1955,8 @@ export function attachModuleQuizRunner(
       feedback.className = "learning-feedback";
       feedback.hidden = !alreadyCompleted;
       feedback.setAttribute("aria-live", "polite");
+      const missingAnswer = document.createElement("p");
+      missingAnswer.textContent = "Bitte gib zuerst eine Antwort ein.";
       if (alreadyCompleted) {
         inputsEl.inert = true;
         inputsEl
@@ -1989,7 +1991,7 @@ export function attachModuleQuizRunner(
         if (!hasAnswer) {
           feedback.hidden = false;
           feedback.dataset.outcome = "wrong";
-          feedback.textContent = "Bitte gib zuerst eine Antwort ein.";
+          feedback.append(missingAnswer);
           return;
         }
         attempts += 1;
@@ -2045,11 +2047,21 @@ export function attachModuleQuizRunner(
           feedback.dataset.outcome = "wrong";
           titleEl.textContent = `✗ Noch nicht richtig – ${3 - attempts} ${attempts === 2 ? "Versuch" : "Versuche"} übrig.`;
           feedback.append(titleEl);
-          if (result.explanation) {
-            const expEl = document.createElement("p");
-            expEl.className = "learning-feedback-explanation";
-            expEl.textContent = result.explanation;
-            feedback.append(expEl);
+          if (attempts === 2) {
+            if (question.simpleHint?.trim()) {
+              const hint = document.createElement("p");
+              hint.textContent = `Hinweis: ${question.simpleHint}`;
+              feedback.append(hint);
+            }
+            if (question.strongHint?.trim()) {
+              const details = document.createElement("details");
+              const summary = document.createElement("summary");
+              summary.textContent = "Stärkeren Hinweis anzeigen";
+              const hint = document.createElement("p");
+              hint.textContent = question.strongHint;
+              details.append(summary, hint);
+              feedback.append(details);
+            }
           }
         }
       });
