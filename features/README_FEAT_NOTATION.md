@@ -1,6 +1,6 @@
 # `<Notation />` – Vollständige Feature-Dokumentation & Cheat Sheet
 
-Diese Dokumentation beschreibt die vereinheitlichte, deklarative **`<Notation />`**-Komponente (`src/components/notation/Notation.astro`) auf Basis des hauseigenen Bravura-SVG-Renderers (`src/lib/notation-renderer.ts` und `src/lib/system-layout.ts`). Weitere Features stehen in der [Übersicht](README_FEAT.md); ergänzende Übergabeinformationen im [Notation-Handoff](README_FEAT_NOTATION_HANDOFF.md) und im [NotationBuilder-Handoff](README_FEAT_NOTATIONBUILDER_HANDOFF.md).
+Diese Dokumentation beschreibt die vereinheitlichte, deklarative **`<Notation />`**-Komponente (`src/components/notation/Notation.astro`) auf Basis des hauseigenen Bravura-SVG-Renderers (`src/lib/notation-renderer.ts` und `src/lib/system-layout.ts`) sowie den interaktiven **`<NotationBuilder />`**. Weitere Features stehen in der [Übersicht](README_FEAT.md); ergänzende Übergabeinformationen zum Notationsrenderer im [Notation-Handoff](README_FEAT_NOTATION_HANDOFF.md).
 
 ---
 
@@ -21,6 +21,7 @@ Diese Dokumentation beschreibt die vereinheitlichte, deklarative **`<Notation />
 6. [Vertikale Sicherheitszonen & A4-Druck (`@media print`)](#6-vertikale-sicherheitszonen--a4-druck-media-print)
 7. [Praxis-Rezepte (Copy & Paste MDX-Vorlagen)](#7-praxis-rezepte-copy--paste-mdx-vorlagen)
 8. [Validierungsregeln & Fehlermeldungen](#8-validierungsregeln--fehlermeldungen)
+9. [Interaktiver NotationBuilder](#9-interaktiver-notationbuilder)
 
 ---
 
@@ -454,3 +455,13 @@ Der Renderer prüft beim Build/Dev-Lauf verschiedene Eingaberegeln und wirft bei
 | Haltebogen (`type: "tie"`) überspannt eine Pause | `Ein Haltebogen darf keine Pause überspannen.` |
 | `ritAt` und `aTempoAt` liegen zu nah beieinander | `Zwischen "rit." und "a tempo" müssen mindestens zwei Notenpositionen liegen.` |
 | Summe von `layout={[...]}` stimmt nicht mit `measures.length` überein | `Die Taktzahlen der Systeme müssen zusammen alle Takte umfassen.` |
+
+---
+
+## 9. Interaktiver NotationBuilder
+
+`<NotationBuilder />` ergänzt das native SVG-Notationssystem um interaktive Noteneingabe. Die Astro-Komponente rendert die Oberfläche; `src/lib/notation-builder.ts` stellt die Builder-Logik und die Client-Interaktion bereit. Der Builder verwendet den gemeinsamen Notationsrenderer und bleibt unabhängig von AlphaTab und MusicXML.
+
+Der Builder unterstützt Maus- und Tastaturbedienung, mehrere Notenslots, eine optionale Notenwertauswahl und das Sperren eines Notenwerts. Er meldet Änderungen und Aktionen über `notationbuilder:change`, `notationbuilder:submit`, `notationbuilder:reset` und `notationbuilder:set-duration`. Die vollständige Prop-, Bedienungs- und Eventreferenz mit Beispielen steht in der [NotationBuilder-Dokumentation](../src/content/docs/audio/referenzen-werkzeuge/visualisierungen-erklaert/notationbuilder.mdx).
+
+Die Builder-Logik und Interaktion werden durch `tests/music-notation.test.mjs` und `tests/components/notation-builder.test.ts` geprüft. Prüfkommandos und Voraussetzungen stehen im [Testing-Leitfaden](../README_TESTING.md).

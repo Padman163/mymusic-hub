@@ -1,8 +1,8 @@
 # Features & Architektur des Gitarrenlernpfads
 
-Dieses Dokument gibt einen Überblick über die wichtigsten Komponenten und Subsysteme des Musik-Hubs. Details zum [Beitragssystem](README_FEAT_CONTRIBUTIONS.md), zum [Modul-Builder und Lernpfad](README_FEAT_MODULEBUILDER.md), zur [Notation](README_FEAT_NOTATION.md), zu [Netlify Blobs](README_FEAT_NETLIFYBLOB.md) und zu [Tests](../README_TESTING.md) stehen in den jeweiligen Leitfäden.
+Dieses Dokument gibt einen Überblick über die wichtigsten Komponenten und Subsysteme des Musik-Hubs. Details zum [Beitragssystem](README_FEAT_CONTRIBUTIONS.md), zum [Modul-Builder und Lernpfad](README_FEAT_MODULEBUILDER.md), zur [Notation und zum NotationBuilder](README_FEAT_NOTATION.md), zu den [Anforderungen für den Neuaufbau des Level-100-Quiz](README_FEAT_LEVEL100QUIZ.md), zu [Netlify Blobs](README_FEAT_NETLIFYBLOB.md) und zu [Tests](../README_TESTING.md) stehen in den jeweiligen Leitfäden.
 
-Für Übergaben gibt es separate Handoffs zur [Notation](README_FEAT_NOTATION_HANDOFF.md) und zum [NotationBuilder](README_FEAT_NOTATIONBUILDER_HANDOFF.md). Sie ergänzen die Fachreferenzen, ersetzen sie aber nicht.
+Der separate [Notation-Handoff](README_FEAT_NOTATION_HANDOFF.md) ergänzt die Fachreferenz zum Notationsrenderer.
 
 ---
 
