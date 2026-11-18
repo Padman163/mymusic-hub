@@ -602,7 +602,10 @@ export function normalizeLegacyDatabase(db: ModulesDatabase): ModulesDatabase {
       const { moduleId, ...rest } = question as ModuleQuestion & {
         moduleId?: string;
       };
-      if (rest.difficulty !== undefined && !isQuestionDifficulty(rest.difficulty)) {
+      if (
+        rest.difficulty !== undefined &&
+        !isQuestionDifficulty(rest.difficulty)
+      ) {
         throw new Error(`Ungültige Schwierigkeit für Aufgabe '${rest.id}'.`);
       }
       return {
@@ -643,7 +646,9 @@ export function isQuestionType(value: unknown): value is QuestionType {
   );
 }
 
-export function isQuestionDifficulty(value: unknown): value is QuestionDifficulty {
+export function isQuestionDifficulty(
+  value: unknown,
+): value is QuestionDifficulty {
   return (
     typeof value === "string" &&
     QUESTION_DIFFICULTIES.some((difficulty) => difficulty === value)

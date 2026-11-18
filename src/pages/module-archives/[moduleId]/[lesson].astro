@@ -2,13 +2,18 @@
 import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
 import archive from "../../../../module-archives/index.json";
 import ModuleArchiveLesson from "../../../components/learning/ModuleArchiveLesson.astro";
-import type { ArchivedModule, ArchiveLesson } from "../../../lib/module-archive";
+import type {
+  ArchivedModule,
+  ArchiveLesson,
+} from "../../../lib/module-archive";
 
 export function getStaticPaths() {
-  return archive.modules.flatMap((module) => module.lessons.map((lesson, position) => ({
-    params: { moduleId: module.directory, lesson: lesson.slug },
-    props: { module, lesson, position },
-  })));
+  return archive.modules.flatMap((module) =>
+    module.lessons.map((lesson, position) => ({
+      params: { moduleId: module.directory, lesson: lesson.slug },
+      props: { module, lesson, position },
+    })),
+  );
 }
 
 interface Props {
@@ -17,14 +22,21 @@ interface Props {
   position: number;
 }
 const { module, lesson, position } = Astro.props;
-const sources = import.meta.glob<string>("../../../../module-archives/**/*.mdx", {
-  query: "?raw", import: "default", eager: true,
-});
+const sources = import.meta.glob<string>(
+  "../../../../module-archives/**/*.mdx",
+  {
+    query: "?raw",
+    import: "default",
+    eager: true,
+  },
+);
 const source = sources[`../../../../module-archives/${lesson.source}`];
-if (source === undefined) throw new Error(`Archivdatei fehlt: ${lesson.source}`);
+if (source === undefined)
+  throw new Error(`Archivdatei fehlt: ${lesson.source}`);
 const previous = module.lessons[position - 1];
 const next = module.lessons[position + 1];
-const link = (slug: string) => `/module-archives/${encodeURIComponent(module.directory)}/${slug}/`;
+const link = (slug: string) =>
+  `/module-archives/${encodeURIComponent(module.directory)}/${slug}/`;
 ---
 
 <StarlightPage frontmatter={{ title: lesson.title, description: module.title, tableOfContents: false, editUrl: false }}>

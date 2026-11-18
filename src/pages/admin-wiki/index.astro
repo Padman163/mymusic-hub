@@ -3,8 +3,18 @@ import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
 import { adminWikiDocuments } from "../../lib/admin-wiki";
 
 const groups = [
-  { title: "Entwickler-Leitfäden", documents: adminWikiDocuments.filter((item) => !item.sourcePath.startsWith("features/")) },
-  { title: "Feature-Referenzen", documents: adminWikiDocuments.filter((item) => item.sourcePath.startsWith("features/")) },
+  {
+    title: "Entwickler-Leitfäden",
+    documents: adminWikiDocuments.filter(
+      (item) => !item.sourcePath.startsWith("features/"),
+    ),
+  },
+  {
+    title: "Feature-Referenzen",
+    documents: adminWikiDocuments.filter((item) =>
+      item.sourcePath.startsWith("features/"),
+    ),
+  },
 ];
 ---
 

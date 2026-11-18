@@ -1,12 +1,17 @@
 ---
 import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
-import { adminWikiDocuments, renderAdminWikiDocument } from "../../lib/admin-wiki";
+import {
+  adminWikiDocuments,
+  renderAdminWikiDocument,
+} from "../../lib/admin-wiki";
 
 export async function getStaticPaths() {
-  return Promise.all(adminWikiDocuments.map(async (document) => ({
-    params: { slug: document.slug },
-    props: { document, rendered: await renderAdminWikiDocument(document) },
-  })));
+  return Promise.all(
+    adminWikiDocuments.map(async (document) => ({
+      params: { slug: document.slug },
+      props: { document, rendered: await renderAdminWikiDocument(document) },
+    })),
+  );
 }
 
 type Props = Awaited<ReturnType<typeof getStaticPaths>>[number]["props"];

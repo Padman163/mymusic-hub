@@ -550,7 +550,10 @@ export function validateQuestionInput(
     errors.push("targetLane ist ungültig.");
   }
 
-  if (input.difficulty !== undefined && !isQuestionDifficulty(input.difficulty)) {
+  if (
+    input.difficulty !== undefined &&
+    !isQuestionDifficulty(input.difficulty)
+  ) {
     errors.push("Schwierigkeit muss einfach, mittel oder schwer sein.");
   }
 

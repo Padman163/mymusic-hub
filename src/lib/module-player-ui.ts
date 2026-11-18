@@ -28,6 +28,13 @@ import {
   syncProgressWithCurriculum,
 } from "./learning-progress.ts";
 import {
+  buildLessonSections,
+  cleanLessonTitle,
+  getLessonSectionTitle,
+  type LessonItem,
+  type LessonSection,
+} from "./module-lessons.ts";
+import {
   BASE_XP_DEFAULTS,
   formatExerciseTitle,
   getLearningCatalog,
@@ -45,13 +52,6 @@ import {
   type TheoryBlock,
 } from "./module-schema.ts";
 import { createEmptyModulesDatabase } from "./module-store.ts";
-import {
-  buildLessonSections,
-  cleanLessonTitle,
-  getLessonSectionTitle,
-  type LessonItem,
-  type LessonSection,
-} from "./module-lessons.ts";
 import {
   hasEquivalentNotation,
   parseTheoryDrumPattern,
@@ -2561,7 +2561,8 @@ export function attachModuleStepper(
     if (sections.length === 0) {
       const empty = document.createElement("p");
       empty.className = "learning-muted";
-      empty.textContent = "Für dieses Modul sind noch keine Lerninhalte vorhanden.";
+      empty.textContent =
+        "Für dieses Modul sind noch keine Lerninhalte vorhanden.";
       host.append(empty);
       return;
     }
@@ -2740,8 +2741,7 @@ export function attachModuleStepper(
               0,
             ) +
             questions.reduce(
-              (total, question) =>
-                total + calculateModuleQuestionXp(question),
+              (total, question) => total + calculateModuleQuestionXp(question),
               0,
             ) +
             practices.reduce(
@@ -2769,7 +2769,9 @@ export function attachModuleStepper(
               headingRow.append(heading);
               if (block.role !== "exercise_intro") {
                 headingRow.append(
-                  createXpBadge(calculateTheoryBlockXp(block, mod.theoryBaseXp)),
+                  createXpBadge(
+                    calculateTheoryBlockXp(block, mod.theoryBaseXp),
+                  ),
                 );
               }
               blockEl.append(headingRow);

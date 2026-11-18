@@ -316,15 +316,21 @@
   --builder-xp-color: #a16207;
 }
 
-:root[data-theme="dark"] .module-builder-form .learning-xp-badge[data-xp-role="exercise"] {
+:root[data-theme="dark"]
+  .module-builder-form
+  .learning-xp-badge[data-xp-role="exercise"] {
   --builder-xp-color: #93c5fd;
 }
 
-:root[data-theme="dark"] .module-builder-form .learning-xp-badge[data-xp-role="practice"] {
+:root[data-theme="dark"]
+  .module-builder-form
+  .learning-xp-badge[data-xp-role="practice"] {
   --builder-xp-color: #86efac;
 }
 
-:root[data-theme="dark"] .module-builder-form .learning-xp-badge[data-xp-role="mixed"] {
+:root[data-theme="dark"]
+  .module-builder-form
+  .learning-xp-badge[data-xp-role="mixed"] {
   --builder-xp-color: #fde047;
 }
 

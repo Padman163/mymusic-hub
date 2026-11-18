@@ -464,7 +464,9 @@ export function createTheoryBlockEditor(
   const expandedGroups = new Set<string>();
   const roleDrafts = new WeakMap<HTMLDivElement, BlockRoleDrafts>();
   const inactiveExerciseIds = new Set<string>();
-  let previewRenderer: Promise<typeof import("./module-player-ui.ts")> | undefined;
+  let previewRenderer:
+    | Promise<typeof import("./module-player-ui.ts")>
+    | undefined;
 
   function updateBuilderXpBadge(
     badge: HTMLElement,
@@ -501,11 +503,14 @@ export function createTheoryBlockEditor(
 
   function getPreviewLabel(row: HTMLDivElement): string {
     const title =
-      row.querySelector<HTMLInputElement>(
-        ".theory-block-title, .module-exercise-title",
-      )?.value.trim() ?? "";
+      row
+        .querySelector<HTMLInputElement>(
+          ".theory-block-title, .module-exercise-title",
+        )
+        ?.value.trim() ?? "";
     const prompt =
-      row.querySelector<HTMLTextAreaElement>(".module-exercise-prompt")
+      row
+        .querySelector<HTMLTextAreaElement>(".module-exercise-prompt")
         ?.value.trim() ?? "";
     if (row.classList.contains("module-exercise-row")) {
       return formatExerciseTitle(title, prompt);
@@ -533,11 +538,14 @@ export function createTheoryBlockEditor(
     );
     if (!body) throw new Error("Der Inhaltsbereich der Vorschau fehlt.");
     const title =
-      row.querySelector<HTMLInputElement>(
-        ".theory-block-title, .module-exercise-title",
-      )?.value.trim() ?? "";
+      row
+        .querySelector<HTMLInputElement>(
+          ".theory-block-title, .module-exercise-title",
+        )
+        ?.value.trim() ?? "";
     const prompt =
-      row.querySelector<HTMLTextAreaElement>(".module-exercise-prompt")
+      row
+        .querySelector<HTMLTextAreaElement>(".module-exercise-prompt")
         ?.value.trim() ?? "";
     const isExercise = row.classList.contains("module-exercise-row");
     updatePreviewSummary(panel, `Vorschau · ${getPreviewLabel(row)}`);
@@ -548,110 +556,108 @@ export function createTheoryBlockEditor(
     if (!previewRenderer) {
       previewRenderer = import("./module-player-ui.ts");
     }
-    void previewRenderer.then(
-      ({
-        renderQuestionPrompt,
-        renderTheoryMarkdown,
-        renderTheoryVisualElement,
-      }) => {
-        if (
-          !panel.isConnected ||
-          panel.dataset.previewRevision !== revision
-        ) {
+    void previewRenderer
+      .then(
+        ({
+          renderQuestionPrompt,
+          renderTheoryMarkdown,
+          renderTheoryVisualElement,
+        }) => {
+          if (
+            !panel.isConnected ||
+            panel.dataset.previewRevision !== revision
+          ) {
+            return;
+          }
+          const article = document.createElement("article");
+          article.className = isExercise
+            ? "learning-quiz-card"
+            : "learning-theory-block";
+
+          if (isExercise) {
+            const cardHeader = document.createElement("div");
+            cardHeader.className = "learning-card-header";
+            const questionTitle = document.createElement("strong");
+            questionTitle.textContent = formatExerciseTitle(title, prompt);
+            cardHeader.append(questionTitle);
+            const type = row.querySelector<HTMLSelectElement>(
+              ".question-type-editor select",
+            );
+            if (type?.selectedOptions[0]?.textContent) {
+              const badge = document.createElement("span");
+              badge.className = "module-badge";
+              badge.textContent = type.selectedOptions[0].textContent;
+              cardHeader.append(badge);
+            }
+            article.append(cardHeader);
+            if (prompt) {
+              article.append(renderQuestionPrompt(prompt, fieldset));
+            }
+            const options = Array.from(
+              row.querySelectorAll<HTMLInputElement>(".exercise-choice-text"),
+            )
+              .map((input) => input.value.trim())
+              .filter(Boolean);
+            if (options.length > 0) {
+              const list = document.createElement("div");
+              list.className = "learning-quiz-options";
+              for (const option of options) {
+                const item = document.createElement("div");
+                item.className = "learning-quiz-option";
+                const text = document.createElement("span");
+                text.textContent = option;
+                item.append(text);
+                list.append(item);
+              }
+              article.append(list);
+            }
+            const notationPreview = row.querySelector<HTMLElement>(
+              ".notation-live-preview-box",
+            );
+            if (type?.value === "interactive_notation" && notationPreview) {
+              article.append(notationPreview.cloneNode(true));
+            }
+          } else {
+            const markdown =
+              row.querySelector<HTMLTextAreaElement>(".theory-block-markdown")
+                ?.value ?? "";
+            const heading = document.createElement("h3");
+            heading.className = "learning-theory-block-title";
+            heading.textContent = title || "Neuer Block";
+            article.append(heading);
+            if (markdown.trim()) {
+              const content = document.createElement("div");
+              content.className = "learning-theory-markdown";
+              content.append(renderTheoryMarkdown(markdown, fieldset));
+              article.append(content);
+            }
+            if (row.classList.contains("theory-block-row")) {
+              const visual = renderTheoryVisualElement(
+                {
+                  id: row.dataset.blockId ?? "preview",
+                  order: 0,
+                  title,
+                  markdownContent: markdown,
+                  ...legacyVisuals.get(row),
+                },
+                fieldset,
+              );
+              if (visual) article.append(visual);
+            }
+          }
+          body.replaceChildren(article);
+        },
+      )
+      .catch((error: unknown) => {
+        if (!panel.isConnected || panel.dataset.previewRevision !== revision) {
           return;
         }
-        const article = document.createElement("article");
-        article.className = isExercise
-          ? "learning-quiz-card"
-          : "learning-theory-block";
-
-        if (isExercise) {
-          const cardHeader = document.createElement("div");
-          cardHeader.className = "learning-card-header";
-          const questionTitle = document.createElement("strong");
-          questionTitle.textContent = formatExerciseTitle(title, prompt);
-          cardHeader.append(questionTitle);
-          const type = row.querySelector<HTMLSelectElement>(
-            ".question-type-editor select",
-          );
-          if (type?.selectedOptions[0]?.textContent) {
-            const badge = document.createElement("span");
-            badge.className = "module-badge";
-            badge.textContent = type.selectedOptions[0].textContent;
-            cardHeader.append(badge);
-          }
-          article.append(cardHeader);
-          if (prompt) {
-            article.append(renderQuestionPrompt(prompt, fieldset));
-          }
-          const options = Array.from(
-            row.querySelectorAll<HTMLInputElement>(".exercise-choice-text"),
-          )
-            .map((input) => input.value.trim())
-            .filter(Boolean);
-          if (options.length > 0) {
-            const list = document.createElement("div");
-            list.className = "learning-quiz-options";
-            for (const option of options) {
-              const item = document.createElement("div");
-              item.className = "learning-quiz-option";
-              const text = document.createElement("span");
-              text.textContent = option;
-              item.append(text);
-              list.append(item);
-            }
-            article.append(list);
-          }
-          const notationPreview = row.querySelector<HTMLElement>(
-            ".notation-live-preview-box",
-          );
-          if (type?.value === "interactive_notation" && notationPreview) {
-            article.append(notationPreview.cloneNode(true));
-          }
-        } else {
-          const markdown =
-            row.querySelector<HTMLTextAreaElement>(
-              ".theory-block-markdown",
-            )?.value ?? "";
-          const heading = document.createElement("h3");
-          heading.className = "learning-theory-block-title";
-          heading.textContent = title || "Neuer Block";
-          article.append(heading);
-          if (markdown.trim()) {
-            const content = document.createElement("div");
-            content.className = "learning-theory-markdown";
-            content.append(renderTheoryMarkdown(markdown, fieldset));
-            article.append(content);
-          }
-          if (row.classList.contains("theory-block-row")) {
-            const visual = renderTheoryVisualElement(
-              {
-                id: row.dataset.blockId ?? "preview",
-                order: 0,
-                title,
-                markdownContent: markdown,
-                ...legacyVisuals.get(row),
-              },
-              fieldset,
-            );
-            if (visual) article.append(visual);
-          }
-        }
-        body.replaceChildren(article);
-      },
-    ).catch((error: unknown) => {
-      if (
-        !panel.isConnected ||
-        panel.dataset.previewRevision !== revision
-      ) {
-        return;
-      }
-      const message = error instanceof Error ? error.message : String(error);
-      const warning = document.createElement("p");
-      warning.className = "learning-notation-error";
-      warning.textContent = `Vorschau nicht verfügbar: ${message}`;
-      body.replaceChildren(warning);
-    });
+        const message = error instanceof Error ? error.message : String(error);
+        const warning = document.createElement("p");
+        warning.className = "learning-notation-error";
+        warning.textContent = `Vorschau nicht verfügbar: ${message}`;
+        body.replaceChildren(warning);
+      });
   }
 
   function updateGroupPreview(
@@ -702,7 +708,8 @@ export function createTheoryBlockEditor(
   function blockXpRole(row: HTMLDivElement): BlockEditorKind {
     if (row.dataset.blockRole === "exercise_intro") return "exercise";
     const kind = blockKind(row);
-    if (!kind) throw new Error("Die XP-Anzeige benötigt eine gültige Blockrolle.");
+    if (!kind)
+      throw new Error("Die XP-Anzeige benötigt eine gültige Blockrolle.");
     return kind;
   }
 
@@ -774,7 +781,8 @@ export function createTheoryBlockEditor(
     error.setAttribute("role", "alert");
     error.hidden = true;
     const host =
-      row.querySelector(".theory-block-content, .module-exercise-editor") ?? row;
+      row.querySelector(".theory-block-content, .module-exercise-editor") ??
+      row;
     host.prepend(picker, error);
     if (role) setBlockRole(row, role);
     return state;
@@ -783,7 +791,8 @@ export function createTheoryBlockEditor(
   function changeBlockRole(row: HTMLDivElement, role: BlockEditorRole): void {
     const state = roleDrafts.get(row);
     const id = row.dataset.blockId;
-    if (!state || !id) throw new Error("Der Block kann nicht zugeordnet werden.");
+    if (!state || !id)
+      throw new Error("Der Block kann nicht zugeordnet werden.");
     const kind = role === "exercise_intro" ? "theory" : role;
     let target = state.templates[kind];
     if (!target) {
@@ -822,7 +831,9 @@ export function createTheoryBlockEditor(
       );
       if (title && targetTitle) targetTitle.value = title.value;
       if (text && targetText) targetText.value = text.value;
-      const selected = row.querySelector<HTMLInputElement>(".theory-block-select");
+      const selected = row.querySelector<HTMLInputElement>(
+        ".theory-block-select",
+      );
       const targetSelected = target.querySelector<HTMLInputElement>(
         ".theory-block-select",
       );
@@ -876,10 +887,7 @@ export function createTheoryBlockEditor(
       (blockKind(row) === "exercise" ? state?.exercise : undefined);
     if (question) {
       if (!deleteExercise) {
-        showBlockRoleError(
-          row,
-          "Die Aufgabe kann hier nicht gelöscht werden.",
-        );
+        showBlockRoleError(row, "Die Aufgabe kann hier nicht gelöscht werden.");
         return;
       }
       deleteExercise(question);
@@ -1958,7 +1966,8 @@ export function createTheoryBlockEditor(
             previous?.querySelector("details")?.open ??
               draftExerciseIds.has(question.id),
           );
-      const state = (previous && roleDrafts.get(previous)) ?? roleDrafts.get(row);
+      const state =
+        (previous && roleDrafts.get(previous)) ?? roleDrafts.get(row);
       if (!state) throw new Error("Der Blockentwurf der Aufgabe fehlt.");
       roleDrafts.set(row, state);
       state.templates.exercise = row;

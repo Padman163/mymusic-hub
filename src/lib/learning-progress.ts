@@ -11,7 +11,10 @@ import {
   type ModulesDatabase,
   type QuizSettings,
 } from "./module-schema.ts";
-import { calculateModuleQuestionXp, calculateTheoryBlockXp } from "./xp-tags.ts";
+import {
+  calculateModuleQuestionXp,
+  calculateTheoryBlockXp,
+} from "./xp-tags.ts";
 
 export const LEARNING_PROGRESS_STORAGE_KEY = "mymusic_learning_progress_v2";
 export const XP_PER_LEVEL = 500;

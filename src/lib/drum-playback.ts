@@ -150,10 +150,9 @@ export function attachDrumPatternPlayback(
     playButton.setAttribute("aria-label", label);
     playButton.setAttribute("aria-pressed", String(playing));
     playButton.title = label;
-    icon?.querySelector("path")?.setAttribute(
-      "d",
-      playing ? "M6 6h12v12H6Z" : "M8 5L19 12L8 19Z",
-    );
+    icon
+      ?.querySelector("path")
+      ?.setAttribute("d", playing ? "M6 6h12v12H6Z" : "M8 5L19 12L8 19Z");
   }
 
   setButtonPlaying(false);
