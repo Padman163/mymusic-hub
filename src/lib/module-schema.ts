@@ -47,6 +47,7 @@ export interface DrumPatternTrack {
   eventPositions?: number[];
   eventLabels?: string[];
   velocities?: number[];
+  soundUrl?: string;
 }
 
 export interface DrumPatternProps {
@@ -56,6 +57,7 @@ export interface DrumPatternProps {
   highlightTrack?: string;
   highlightTracks?: string[];
   interactive?: boolean;
+  enableAudio?: boolean;
   showVelocity?: boolean;
   showTrackNote?: boolean;
   showFooter?: boolean;
@@ -105,7 +107,7 @@ export const DEFAULT_DRUM_PATTERN_DATA: DrumPatternTrack[] = [
 ];
 
 export const DEFAULT_DRUM_PATTERN_PROPS: Required<
-  Omit<DrumPatternProps, "stepLabels">
+  Omit<DrumPatternProps, "stepLabels" | "enableAudio">
 > = {
   steps: 8,
   timeSignature: "4/4",
@@ -152,6 +154,7 @@ export function getDrumPatternPropsErrors(value: unknown): string[] {
     "highlightTrack",
     "highlightTracks",
     "interactive",
+    "enableAudio",
     "showVelocity",
     "showTrackNote",
     "showFooter",
@@ -243,6 +246,7 @@ export function getDrumPatternPropsErrors(value: unknown): string[] {
 
   for (const name of [
     "interactive",
+    "enableAudio",
     "showVelocity",
     "showTrackNote",
     "showFooter",
@@ -296,6 +300,7 @@ export function getDrumPatternPropsErrors(value: unknown): string[] {
               "eventPositions",
               "eventLabels",
               "velocities",
+              "soundUrl",
             ].includes(name)
           ) {
             errors.push(
@@ -310,6 +315,12 @@ export function getDrumPatternPropsErrors(value: unknown): string[] {
           ) {
             errors.push(`${prefix}.${name} muss ein nicht-leerer Text sein.`);
           }
+        }
+        if (
+          track.soundUrl !== undefined &&
+          (typeof track.soundUrl !== "string" || !track.soundUrl.trim())
+        ) {
+          errors.push(`${prefix}.soundUrl muss ein nicht-leerer Text sein.`);
         }
         if (
           typeof track.color !== "string" ||

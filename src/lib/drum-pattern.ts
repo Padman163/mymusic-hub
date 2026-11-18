@@ -1,3 +1,4 @@
+import { drumAudioEngine } from "./drum-audio.ts";
 import {
   DEFAULT_DRUM_PATTERN_PROPS,
   type DrumPatternTrack,
@@ -23,6 +24,7 @@ const NOTE_COLORS: Record<string, string> = {
 interface VisibleTrack extends DrumPatternTrack {
   color: string;
   velocities: number[];
+  soundVelocities: number[];
 }
 
 function createScopedElement(
@@ -80,6 +82,7 @@ export function createDrumPatternElement(
     stepSize = DEFAULT_DRUM_PATTERN_PROPS.stepSize,
     stepLabels: customStepLabels,
     patternData = DEFAULT_DRUM_PATTERN_PROPS.patternData,
+    enableAudio = patternData.some((track) => Boolean(track.soundUrl)),
   } = rawProps;
 
   const visibleTracks: VisibleTrack[] = patternData
@@ -91,6 +94,7 @@ export function createDrumPatternElement(
     )
     .map((track) => ({
       ...track,
+      soundVelocities: track.velocities ?? [],
       color: useTrackColors
         ? track.color
         : (NOTE_COLORS[track.note.match(/^[A-G]#?/)?.[0] ?? ""] ?? track.color),
@@ -112,6 +116,7 @@ export function createDrumPatternElement(
   pattern.dataset.showVelocity = String(showVelocity);
   pattern.dataset.showTrackNote = String(showTrackNote);
   pattern.dataset.continuous = String(continuous);
+  if (enableAudio) pattern.dataset.enableAudio = "true";
 
   const header = createScopedElement(
     document,
@@ -160,9 +165,7 @@ export function createDrumPatternElement(
   const selectedTrackIndex =
     interactive || showVelocity
       ? highlightedTracks.size > 0
-        ? visibleTracks.findIndex(
-            (track) => highlightedTracks.has(track.name),
-          )
+        ? visibleTracks.findIndex((track) => highlightedTracks.has(track.name))
         : 0
       : -1;
   for (const [trackIndex, track] of visibleTracks.entries()) {
@@ -178,6 +181,10 @@ export function createDrumPatternElement(
     );
     row.dataset.color = track.color;
     row.dataset.velocities = JSON.stringify(track.velocities);
+    if (enableAudio && track.soundUrl) {
+      row.dataset.soundUrl = track.soundUrl;
+      row.dataset.soundVelocities = JSON.stringify(track.soundVelocities);
+    }
     row.setAttribute(
       "aria-label",
       `Instrument ${track.name}, Note ${track.note}`,
@@ -409,6 +416,139 @@ function updateVelocityCell(cell: HTMLDivElement, velocity: number): void {
   label.dataset.inBar = String(value >= 40);
 }
 
+function updateAudioTrigger(cell: HTMLElement, name: string): void {
+  const active = cell.classList.contains("active");
+  if (active) {
+    cell.dataset.audioTrigger = "true";
+    cell.setAttribute("role", "button");
+    cell.setAttribute(
+      "aria-label",
+      `${name}, Step ${Number(cell.dataset.step) + 1} abspielen`,
+    );
+    cell.tabIndex = 0;
+  } else {
+    delete cell.dataset.audioTrigger;
+    cell.removeAttribute("role");
+    cell.removeAttribute("aria-label");
+    cell.removeAttribute("tabindex");
+  }
+}
+
+function setTrackVelocity(row: HTMLElement, step: number, value: number): void {
+  const values: number[] = JSON.parse(row.dataset.velocities ?? "[]");
+  values[step] = value;
+  row.dataset.velocities = JSON.stringify(values);
+  if (row.dataset.soundUrl) {
+    const soundValues: (number | null)[] = JSON.parse(
+      row.dataset.soundVelocities ?? "[]",
+    );
+    soundValues[step] = value;
+    row.dataset.soundVelocities = JSON.stringify(soundValues);
+  }
+}
+
+function initializeDrumPatternAudio(pattern: HTMLElement): void {
+  if (
+    pattern.dataset.enableAudio !== "true" ||
+    pattern.dataset.audioBound === "true"
+  )
+    return;
+  pattern.dataset.audioBound = "true";
+  const rows = pattern.querySelectorAll<HTMLElement>(
+    ".track-row[data-sound-url]",
+  );
+  if (!rows.length) return;
+
+  void drumAudioEngine.preloadSounds(
+    Array.from(rows, (row) => row.dataset.soundUrl ?? ""),
+  );
+  const status = pattern.ownerDocument.createElement("p");
+  status.className = "drum-audio-status";
+  status.setAttribute("role", "status");
+  status.hidden = true;
+  const help = pattern.ownerDocument.createElement("a");
+  help.className = "drum-audio-help";
+  help.href = "/wiki/drum-pattern/";
+  help.textContent = "Hilfe zur Drum-Audiowiedergabe";
+  pattern.append(status, help);
+  const timers = new WeakMap<HTMLElement, ReturnType<typeof setTimeout>>();
+
+  rows.forEach((row) => {
+    const name = row.querySelector(".track-name")?.textContent ?? "Instrument";
+    const header = row.querySelector<HTMLElement>(".track-info");
+    if (header) {
+      // Keine verschachtelten Buttons: Die Spurauswahl bleibt am Header bedienbar.
+      row.removeAttribute("role");
+      row.removeAttribute("aria-pressed");
+      row.removeAttribute("tabindex");
+      header.dataset.audioTrigger = "true";
+      header.setAttribute("role", "button");
+      header.setAttribute("aria-label", `${name} abspielen`);
+      header.tabIndex = 0;
+      if (pattern.dataset.showVelocity === "true") {
+        header.setAttribute(
+          "aria-pressed",
+          String(row.classList.contains("selected")),
+        );
+      }
+    }
+    row
+      .querySelectorAll<HTMLElement>(".step-cell")
+      .forEach((cell) => updateAudioTrigger(cell, name));
+  });
+
+  function getTrigger(event: Event): HTMLElement | null {
+    return event.target instanceof Element
+      ? event.target.closest<HTMLElement>("[data-audio-trigger]")
+      : null;
+  }
+
+  pattern.addEventListener("pointerdown", (event) => {
+    if (getTrigger(event)) void drumAudioEngine.unlock();
+  });
+  pattern.addEventListener(
+    "keydown",
+    (event) => {
+      const trigger = getTrigger(event);
+      if (!trigger || (event.key !== "Enter" && event.key !== " ")) return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (!event.repeat) trigger.click();
+    },
+    true,
+  );
+  // Vor dem bestehenden Step-Editor auslösen, der den aktiven Zustand umschaltet.
+  pattern.addEventListener(
+    "click",
+    (event) => {
+      const trigger = getTrigger(event);
+      const row = trigger?.closest<HTMLElement>(".track-row");
+      const url = row?.dataset.soundUrl;
+      if (!trigger || !row || !url) return;
+      const values: (number | null)[] = JSON.parse(
+        row.dataset.soundVelocities ?? "[]",
+      );
+      const velocity = trigger.classList.contains("step-cell")
+        ? (values[Number(trigger.dataset.step)] ?? undefined)
+        : undefined;
+      void drumAudioEngine.playSound(url, velocity).then((played) => {
+        status.hidden = played;
+        if (!played)
+          status.textContent =
+            "Sound nicht verfügbar. Browser-Audiofreigabe und Sounddatei prüfen; danach erneut versuchen.";
+        if (!played) return;
+        clearTimeout(timers.get(trigger));
+        trigger.classList.add("is-playing");
+        timers.set(
+          trigger,
+          setTimeout(() => trigger.classList.remove("is-playing"), 150),
+        );
+      });
+    },
+    true,
+  );
+}
+
 export function initializeDrumPatterns(root: ParentNode): void {
   const patterns = Array.from(
     root.querySelectorAll<HTMLElement>(".studio-one-pattern"),
@@ -418,6 +558,7 @@ export function initializeDrumPatterns(root: ParentNode): void {
   }
 
   patterns.forEach((pattern) => {
+    initializeDrumPatternAudio(pattern);
     const rows = pattern.querySelectorAll<HTMLDivElement>(
       ".track-row:not(.velocity-row)",
     );
@@ -459,9 +600,12 @@ export function initializeDrumPatterns(root: ParentNode): void {
         candidate.classList.toggle("selected", candidate === row),
       );
       if (hasVelocity) {
-        rows.forEach((candidate) =>
-          candidate.setAttribute("aria-pressed", String(candidate === row)),
-        );
+        rows.forEach((candidate) => {
+          const target = candidate.dataset.soundUrl
+            ? candidate.querySelector<HTMLElement>(".track-info")
+            : candidate;
+          target?.setAttribute("aria-pressed", String(candidate === row));
+        });
       }
       velocityRow?.classList.remove("selected");
       if (hasVelocity) renderVelocity(row);
@@ -490,8 +634,17 @@ export function initializeDrumPatterns(root: ParentNode): void {
 
           const values = JSON.parse(row.dataset.velocities ?? "[]") as number[];
           const stepIndex = Number(cell.dataset.step);
-          values[stepIndex] = isActive ? values[stepIndex] || 90 : 0;
-          row.dataset.velocities = JSON.stringify(values);
+          setTrackVelocity(
+            row,
+            stepIndex,
+            isActive ? values[stepIndex] || 90 : 0,
+          );
+          if (row.dataset.soundUrl) {
+            updateAudioTrigger(
+              cell,
+              row.querySelector(".track-name")?.textContent ?? "Instrument",
+            );
+          }
           renderVelocity(row);
         });
       });
@@ -510,11 +663,11 @@ export function initializeDrumPatterns(root: ParentNode): void {
         updateVelocityCell(cell, ratio * 127);
 
         if (selectedTrack) {
-          const values = JSON.parse(
-            selectedTrack.dataset.velocities ?? "[]",
-          ) as number[];
-          values[Number(cell.dataset.step)] = Number(cell.dataset.velocity);
-          selectedTrack.dataset.velocities = JSON.stringify(values);
+          setTrackVelocity(
+            selectedTrack,
+            Number(cell.dataset.step),
+            Number(cell.dataset.velocity),
+          );
         }
       };
 
@@ -545,11 +698,11 @@ export function initializeDrumPatterns(root: ParentNode): void {
         updateVelocityCell(cell, current + changes[event.key]);
 
         if (selectedTrack) {
-          const values = JSON.parse(
-            selectedTrack.dataset.velocities ?? "[]",
-          ) as number[];
-          values[Number(cell.dataset.step)] = Number(cell.dataset.velocity);
-          selectedTrack.dataset.velocities = JSON.stringify(values);
+          setTrackVelocity(
+            selectedTrack,
+            Number(cell.dataset.step),
+            Number(cell.dataset.velocity),
+          );
         }
       });
     });

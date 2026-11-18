@@ -433,6 +433,7 @@ export default defineConfig({
             { label: "Beiträge verwalten", slug: "wiki/beitraege" },
             { label: "Modul-Builder bedienen", slug: "wiki/modul-builder" },
             { label: "NotationBuilder bedienen", slug: "wiki/notation-builder" },
+            { label: "Drum-Pattern anhören", slug: "wiki/drum-pattern" },
           ],
         },
         {

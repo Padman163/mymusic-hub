@@ -188,6 +188,54 @@ Das Raster zeigt einen Takt im 4/4-Takt mit acht Steps, also Achtel-Auflösung. 
 
 <DrumPattern showVelocity={true} />
 
+### Drum-Pattern mit Soundfiles
+
+Mit hinterlegten Sounds kannst du aktive Zellen und Instrumentennamen anklicken
+oder mit **Tab** und **Enter/Leertaste** anhören. Ein aktiver Step verwendet seine
+Velocity; der Instrumentenname spielt in voller Lautstärke.
+Die [Wiki-Anleitung](/wiki/drum-pattern/) erklärt Bedienung und Audiofreigabe.
+
+Lege zuerst eine eigene oder passend lizenzierte `kick.wav` unter
+`public/sounds/drums/` ab. Das Projekt liefert keine Drum-Samples mit.
+Kopiere anschließend dieses Beispiel in eine MDX-Seite gleicher Verzeichnistiefe:
+
+```mdx
+import DrumPattern from '../../../../components/DrumPattern.astro';
+
+<DrumPattern
+  interactive={false}
+  patternData={[
+    {
+      name: "Kick", note: "C1", color: "#ef4444",
+      activeSteps: [0, 4], velocities: [127, 0, 0, 0, 64],
+      soundUrl: "/sounds/drums/Kick.wav",
+    },
+  ]}
+/>
+```
+
+
+<DrumPattern
+  interactive={false}
+  patternData={[
+    {
+      name: "Kick", note: "C1", color: "#ef4444",
+      activeSteps: [0, 4], velocities: [127, 0, 0, 0, 127],
+      soundUrl: "/sounds/drums/Kick.wav",
+    },
+  ]}
+/>
+
+Audio ist mit `soundUrl` automatisch aktiv; `enableAudio={false}` schaltet es
+aus. Ohne explizite Velocity gilt volle Lautstärke, `0` bleibt stumm.
+`interactive={false}` macht das Beispiel zu einem reinen Hörraster. Bei
+editierbaren Patterns schaltet der Zellklick weiterhin den Step um und spielt
+einen zuvor aktiven Schlag ab. Fehlende oder blockierte Sounds zeigen beim
+Abspielversuch einen Hinweis; das Raster bleibt nutzbar.
+Nach dem Vorladen und der Browserfreigabe erfolgt der Start ohne erneuten
+Download oder Decodierung; eine absolute Latenzfreiheit des Audiogeräts ist
+nicht garantiert.
+
 ## Akkordfolge
 
 Das Visual zeigt die Akkorde eines Taktes nebeneinander und ordnet sie der Tonart E-Moll zu. Es stellt weder einzelne Noten noch Rhythmus dar.

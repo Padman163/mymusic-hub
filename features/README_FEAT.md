@@ -51,6 +51,63 @@ Die Plattform verbindet musiktheoretische Didaktik mit interaktiven Web-Technolo
   * `VocalPattern.astro`: Melodische Verläufe und Silbenrhythmik.
 * **Architektur:** Die Komponenten erhalten deklarative Daten über ihre jeweiligen Props und generieren daraus HTML-/SVG-Gitter. `DrumPattern` verwendet beispielsweise `patternData` mit `activeSteps`.
 
+#### DrumPattern mit Soundfiles
+
+`src/lib/drum-audio.ts` kapselt die native Web Audio API ohne Audio-Bibliothek.
+Der gemeinsame `DrumAudioEngine` lädt und decodiert URLs einmal pro Seitenlauf;
+parallele Ladevorgänge teilen sich denselben Cache. Nach Preloading und
+Audiofreigabe startet jeder Schlag direkt mit einem eigenen BufferSource- und
+GainNode; Schläge überlagern sich polyphon. Geräte-/Browserlatenz sowie die
+Ladezeit beim ersten, noch nicht vorbereiteten Schlag bleiben technisch bedingt.
+
+`patternData[].soundUrl?: string` hinterlegt einen Sound. `enableAudio?: boolean`
+ist automatisch aktiv, sobald eine Spur eine Sound-URL hat; `false` deaktiviert
+Preloading und Audio-Bedienung. Ohne Sound-URLs bleibt das bisherige Verhalten
+unverändert. WAV, MP3 und OGG werden je nach Browser unterstützt.
+Dateien gehören nach `public/sounds/drums/`; dort dokumentiert die
+[Asset-Anleitung](../public/sounds/drums/README.md) Benennung und Lizenzangaben.
+Es werden keine Samples mitgeliefert.
+
+Nach dem Ablegen von `kick.wav` ist dieses MDX-Beispiel direkt verwendbar:
+
+```mdx
+import DrumPattern from '../../../../components/DrumPattern.astro';
+
+<DrumPattern
+  interactive={false}
+  patternData={[
+    {
+      name: "Kick", note: "C1", color: "#ef4444",
+      activeSteps: [0, 4], velocities: [127, 0, 0, 0, 64],
+      soundUrl: "/sounds/drums/kick.wav",
+    },
+  ]}
+/>
+```
+
+Der Importpfad gilt für die Feature-Seite unter
+`src/content/docs/audio/referenzen-werkzeuge/`; bei anderer Seitentiefe anpassen.
+
+Aktive Zellen spielen ihren Step-Anschlag (`0–127` linear auf `0–1`) ab;
+ohne expliziten Wert gilt volle Lautstärke. Spur-Header spielen immer in voller
+Lautstärke. Enter/Leertaste und Tab sind unterstützt; erfolgreich gestartete
+Schläge leuchten etwa 150 ms auf. Bei `interactive={true}` bleibt das bisherige
+Umschalten der Steps erhalten: Ein zuvor aktiver Step erklingt vor dem Ausschalten.
+Änderungen in der Anschlagzeile wirken auch auf Audio.
+
+`src/lib/drum-pattern.ts` verbindet Audio mit dem DOM-Controller
+`initializeDrumPatterns` und dem dynamischen Modul-Player; Props und Validierung
+liegen in `src/lib/module-schema.ts`. SSR greift nicht auf Browser-Audio zu.
+Audiofreigabe erfolgt innerhalb einer Nutzeraktion. Fehlende Dateien,
+Decodierfehler und blockiertes Audio werden in der Konsole gemeldet; fehlgeschlagene
+Abspielversuche zeigen zusätzlich einen Statushinweis im Pattern, ohne die
+Rasterbedienung zu blockieren. Ein erneuter Versuch ist möglich.
+
+Bedienung: [Wiki: Drum-Pattern anhören](../src/content/docs/wiki/drum-pattern.mdx).
+`tests/drum-audio.test.ts` prüft Cache, paralleles Laden, synchronen Cache-Start,
+Polyphonie, Velocity, Fehler, SSR und DOM-/Tastaturinteraktionen mit Audio-Mocks.
+Echte Audiogeräte-Latenz und Browser-Audiofreigaben werden damit nicht gemessen.
+
 ### 2.4 Die Songwriting-Gesamtpartitur (`ScorePattern.astro`)
 * **Datei:** `src/components/ScorePattern.astro`
 * **Funktionsweise:**
