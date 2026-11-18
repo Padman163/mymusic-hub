@@ -36,9 +36,8 @@ Vor dem produktiven Umstieg den Cloud-Datenbestand sichern und die Datenübernah
 npx vitest run tests/documentation.test.ts
 ```
 
-Integrationstests und Preflight erst am Branch-Abschluss ausführen (siehe [Testing-Leitfaden](../README_TESTING.md)):
+Die Integrationstests laufen erst am Branch-Abschluss im manuell vom Nutzer gestarteten Preflight (siehe [Testing-Leitfaden](../README_TESTING.md)):
 
 ```bash
-npx vitest run tests/blob-store.test.ts tests/integration/contributions.test.ts tests/module-builder.test.mjs
 npm run preflight
 ```

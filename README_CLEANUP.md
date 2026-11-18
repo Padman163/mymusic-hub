@@ -73,7 +73,7 @@ Eine Tabelle mit Pfad, Fundstellen und Empfehlung **Behalten**, **Prüfen** oder
 ## 5. Tests und Abschluss
 
 1. [README_TESTING.md](README_TESTING.md), `vitest.config.ts`, Testdateien und `package.json` mit dem tatsächlichen Stand vergleichen. Testauswahl und Skripte prüfen; keine Umbenennung nur um der Einheitlichkeit willen.
-2. Während der Entwicklung Stufen 0 und 1 gezielt ausführen, bei Bedarf Stufe 2 ergänzen. Erst am Branch-Abschluss die umfassenden Prüfungen starten:
+2. Nach jeder Anpassung Stufe 1 ausführen, bei größeren Komponentenänderungen zusätzlich passende Tests der Stufe 2. Erst am Branch-Abschluss startet der Nutzer den Preflight (einschließlich Stufen 0, 3 und 4) und das separate Audit manuell:
 
    ```bash
    npm run preflight
@@ -82,5 +82,5 @@ Eine Tabelle mit Pfad, Fundstellen und Empfehlung **Behalten**, **Prüfen** oder
    git diff --check
    ```
 
-3. Fehler und Warnungen untersuchen und das Gate nach Korrekturen erneut ausführen. `npm run audit` scheitert erst ab `high`; niedrigere gemeldete Schwachstellen separat bewerten.
+3. Fehler und Warnungen untersuchen. Nach Korrekturen startet der Nutzer das Gate erneut manuell. `npm run audit` scheitert erst ab `high`; niedrigere gemeldete Schwachstellen separat bewerten.
 4. Änderungen und verbleibende Risiken zusammenfassen. Lighthouse läuft gemäß `package.json` im Preflight mit; Messumfang und öffentlicher Standard-Upload sind im Testing-Leitfaden beschrieben. Manuelle Release-Prüfungen und externe Asset-Verwendungen sind nicht automatisch durch Preflight abgedeckt.

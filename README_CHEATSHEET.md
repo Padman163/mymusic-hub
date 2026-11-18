@@ -40,8 +40,9 @@ npm run test:visual          # E2E mit --update-snapshots; derzeit keine Snapsho
 
 ### 1.4 Prüfungen im Alltag und am Branch-Ende
 ```bash
-npm run validate             # Alltag: Stufe 0, plus gezielte Unit-Tests und bei Bedarf Stufe 2
-npm run preflight            # Nur zum Branch-Abschluss:
+npm run test:unit            # Stufe 1 nach jeder Anpassung, wenn kein passenderer Unit-Test vorliegt
+npm run test:component       # Stufe 2 zusätzlich bei größeren Komponentenänderungen; bevorzugt gezielt
+npm run preflight            # Nur manuell durch den Nutzer am Branch-Ende (u. a. Stufen 0, 3 und 4):
                              # Ergebnisbericht zu Validierung, Vitest, Build, E2E, Lighthouse und Git-Diff
 npm run audit                # Separates Dependency-Audit; nicht Teil des Preflights
 npm run cleanup:check        # Nicht-destruktiver Bericht zu den fünf Cleanup-Schritten

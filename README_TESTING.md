@@ -42,10 +42,7 @@ npx astro check
 npx tsc --noEmit
 ```
 - **Wann nutzen:**
-  * **Vor jedem Commit:** Als Standard-Prüfung vor dem Einchecken (ideal als Git Pre-Commit Hook), damit fehlerhafter Code gar nicht erst im Repository landet.
-  * **Nach Refactorings & Umbenennungen:** Sobald Dateien verschoben, Markdown/MDX-Frontmatter-Felder angepasst oder TypeScript-Interfaces modifiziert wurden.
-  * **Nach Dependency-Updates:** Um inkompatible Typdefinitionen oder veraltete Imports unmittelbar aufzudecken.
-  * **Als erstes CI-Gate (Empfehlung):** Vor Build und Laufzeittests ausführen, um statisch erkennbare Fehler früh abzufangen. Ein GitHub-Actions-Workflow ist derzeit nicht im Repository hinterlegt.
+  * Ausschließlich im manuellen Preflight am Branch-Ende. Die Einzelbefehle erklären den Prüfumfang und sind keine Routinechecks.
 
 ```bash
 npm run fix
@@ -72,7 +69,7 @@ npx @biomejs/biome check --write .
   npm run test:watch
   ```
 * **Wann nutzen:**
-  * **Während der aktiven Feature-Entwicklung (TDD / Watch-Modus):** Beim Implementieren von Notationslayout, XP-Berechnungen oder Freischaltregeln für schnelles Feedback nach jedem Speichern.
+  * **Nach jeder Anpassung:** Einen kurzen, zur Änderung passenden Unit-Test ausführen. Wenn kein passenderer Unit-Test vorliegt, `npm run test:unit` als Kurzcheck verwenden.
   * **Bei Performance-Optimierungen:** Wenn Rechenoperationen refaktoriert werden und sichergestellt werden muss, dass etwa Notenabstände, Pausenpositionen und XP-Ergebnisse korrekt bleiben. Die Tests messen dabei nicht automatisch die Laufzeit.
   * **Beim Debuggen:** Wenn ein Notationsfehler gemeldet wird; den Fall zunächst als fehlschlagenden Unit-Test isolieren (`red`), dann den Bug beheben (`green`).
 
@@ -88,8 +85,8 @@ npx @biomejs/biome check --write .
   npm run test:component
   ```
 
-* **Wann nutzen:**
-  * **Beim Bau interaktiver UI-Elemente:** Nach Änderungen an Widgets, Formularen, interaktiven Musik-Tools oder Editoren.
+* **Wann nutzen:** Zusätzlich zu Stufe 1 bei größeren Komponenten- oder Interaktionsänderungen, zum Beispiel an `DrumPattern`.
+  * **Beim Bau interaktiver UI-Elemente:** Passende Tests für Widgets, Formulare, interaktive Musik-Tools oder Editoren auswählen.
   * **Bei Accessibility- & Event-Anpassungen:** Geänderte Tastaturaktionen, Fokus-Steuerung oder ARIA-Attribute gezielt mit passenden Assertions absichern. Bestehende Tests prüfen unter anderem `Enter` im Checklisten-Editor sowie Pfeiltasten, Notenwertauswahl, Leertaste und Löschen im Notations-Builder; sie sind kein vollständiger Accessibility-Audit.
   * **Vor strukturellen UI-Refactorings:** Für schnelles Feedback zu Event-Handlern und Zustandsänderungen. Bei Änderungen am Astro-Markup zusätzlich echte Seiten im Browser prüfen, da manuell erzeugte Test-DOMs von den Komponenten abweichen können.
 
@@ -113,8 +110,8 @@ npx @biomejs/biome check --write .
 
   `test:integration` wählt ausschließlich `tests/integration/` und erfasst die Modul-API-Tests nicht. Über `npm test` laufen beide Testgruppen zusammen mit den übrigen Vitest-Tests.
 
-* **Wann nutzen:**
-  * **Beim Branch-Abschluss:** Insbesondere wenn Backend-Logik, Middleware oder Serverless-Routen geändert wurden.
+* **Wann nutzen:** Ausschließlich im manuellen Preflight am Branch-Ende.
+  * **Bei Änderungen an Backend-Logik, Middleware oder Serverless-Routen:** Die zugehörigen Prüfungen decken diese Änderungen im Abschlusslauf ab.
   * **Bei Schema- oder Payload-Updates im Abschlusslauf:** Wenn sich die Datenstruktur von Frontend-Formularen oder API-Schnittstellen geändert hat.
   * **Bei Validierungs- und Fehlerbehandlungsprüfungen:** Fehlenden Blob-Kontext, ungültige Eingaben und Konfliktfälle ohne Zugriff auf Netlify absichern. Neue Fehlerpfade benötigen eigene Assertions; die vorhandene Suite ist kein vollständiger Sicherheits-Audit.
 
@@ -139,7 +136,7 @@ npx @biomejs/biome check --write .
   npm run test:e2e:ui
   ```
 * **Fehlerdiagnose:** Playwright speichert Screenshots nur bei Fehlern und Traces beim ersten Wiederholungsversuch. In CI sind bis zu zwei Wiederholungen konfiguriert, lokal standardmäßig keine; ein lokaler Fehler erzeugt deshalb nicht automatisch einen Trace.
-* **Wann nutzen:**
+* **Wann nutzen:** Die E2E-Suite läuft ausschließlich im manuellen Preflight am Branch-Ende.
   * **`npm run test:e2e` (Smoke-Tests & kritische User-Flows):**
     * Vor jedem Release und Produktiv-Deployment.
     * Vor dem Mergen eines Pull Requests in den Hauptzweig (`main`).
@@ -240,21 +237,20 @@ Externe Links, fachliche Aktualität, dynamische Asset-Pfade und Git-Hygiene wer
 
 ## 4. Das verbindliche „Doing“ im Entwicklungsprozess
 
-### 4.1 Während der Entwicklung: Stufe 0 und 1, bei Bedarf Stufe 2
+### 4.1 Während der Entwicklung: Stufe 1, bei größeren Änderungen zusätzlich Stufe 2
 
-Für einzelne Arbeitsschritte, Zwischen-Commits und Zwischen-Pushes reichen statische Prüfungen und zur Änderung passende Unit-Tests. Komponententests kommen nur bei betroffener Oberfläche hinzu. Für reine Dokumentationsänderungen genügt der Dokumentationstest (`npx vitest run tests/documentation.test.ts`).
+Nach jeder Anpassung, auch einer kleinen, führt Copilot einen kurzen Unit-Test der Stufe 1 aus. Bei größeren Änderungen an Komponenten oder ihrer Interaktion, etwa an `DrumPattern`, führt Copilot zusätzlich passende Tests der Stufe 2 aus. Bei Doku-Änderungen kommt der Dokumentationstest hinzu (`npx vitest run tests/documentation.test.ts`).
 
 ```bash
-npm run validate        # Stufe 0
-npm run test:unit       # Beispiel für Stufe 1: Notationslogik
-git diff --check
+npm run test:unit       # Stufe 1: Notationslogik, wenn kein passenderer Unit-Test vorliegt
+npx vitest run tests/components/module-player-ui.test.ts -t "DrumPattern"  # Stufe 2: Modul-Player-Verhalten
 ```
 
 Wähle passende Testdateien oder Testgruppen gezielt aus. Bei gemischten Dateien schränkt `-t` den Lauf auf passende Tests ein, z. B. `npx vitest run tests/module-builder.test.mjs -t "xp-tags|module-store"`. `npm test` enthält auch Integrationstests und ist daher kein Routinekommando für Stufe 1.
 
-### 4.2 Erst am Branch-Ende: Stufen 2, 3 und 4, Audit und Lighthouse
+### 4.2 Erst am Branch-Ende: manueller Preflight mit Stufen 0, 3 und 4
 
-Der Nutzer führt die Abschlussprüfung am fertigen Branch durch, nicht bei jedem Push oder beim Öffnen eines Draft-PRs. Copilot startet sie nur auf ausdrücklichen Auftrag. `npm run preflight` bündelt die Abschlussprüfung als Option; `npm run audit` muss separat laufen. Wer die Schritte einzeln ausführt, kann `npm test` für die vollständigen Komponenten- und Integrationstests verwenden und danach `npm run build`, `npm run test:e2e`, `npm run audit` und `npm run audit:lhci` ausführen.
+Stufen 0, 3 und 4 laufen ausschließlich in `npm run preflight`, den der Nutzer am fertigen Branch manuell startet. Copilot startet weder den Preflight noch diese Stufen separat. Es gibt keinen automatischen Abschlusslauf bei Zwischen-Commits, Pushes oder Draft-PRs. Der Preflight enthält auch die vollständigen Prüfungen der Stufen 1 und 2 sowie Lighthouse; der Nutzer startet `npm run audit` separat.
 
 `preflight` führt Validierung, Vitest, Build, Playwright, Lighthouse CI und `git diff --check` einzeln aus und gibt für jeden Schritt einen Ergebnisbericht mit Hinweisen zur Fehlerbehebung aus. Ein fehlgeschlagener unabhängiger Schritt verhindert nicht die Auswertung der übrigen Schritte. Playwright und Lighthouse CI werden übersprungen, wenn der Build fehlschlägt. Der Prozess endet mit Exit-Code 1, sobald mindestens ein ausgeführter Schritt fehlschlägt. `npm audit` ist separat mit `npm run audit` aufzurufen.
 
@@ -311,7 +307,7 @@ Vor einem Release auf `main` wird diese Checkliste vollständig abgearbeitet:
 
 Ein Release gilt erst dann als **vollständig fertiggestellt und freigegeben**, wenn:
 
-1. Die Abschlussprüfungen erfolgreich sind (`npm run preflight` und `npm run audit` oder die entsprechenden Einzelbefehle).
+1. Der manuell gestartete Preflight (`npm run preflight`) und das separate Audit (`npm run audit`) erfolgreich sind.
 2. Ein vollständiger manueller Testlauf auf einem mobilen Touch-Endgerät erfolgreich protokolliert wurde.
 3. Impressum, Datenschutzerklärung und 404-Seite funktionstüchtig live geschaltet sind.
 4. Alle E2E-Browsertests bestehen und relevante visuelle Änderungen geprüft sind; vorhandene Snapshots bestehen ohne unbeabsichtigte Abweichung.

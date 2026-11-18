@@ -43,18 +43,8 @@ npm run dev
 * **Was geprüft wird:** Lädt das Astro-Frontend? Werden Styles, die Starlight-Sidebar und statische Komponenten gerendert?
 * **Warum dieser Schritt nötig ist:** Netlify Functions bleiben inaktiv. Die lokale Modul-API startet ohne Katalogdatei leer und erzeugt `data/modules.json` beim ersten Speichern. Die Datei bleibt lokal und wird nicht eingecheckt.
 
-### Schritt 4: Statische Hygiene & Code-Validierung prüfen und anpassen
-Stelle sicher, dass im geklonten Branch keine Typen- oder Syntaxkonflikte vorliegen:
-```bash
-npm run validate
-```
-**Was geprüft wird:** 
-
-```biome check .```: Prüft Code-Style, Formatting und Linter-Regeln. Enthält: ```biome lint .```
-
-```astro check```: Validiert Astro-Templates, Props und TypeScript-Typen über das gesamte Projekt hinweg.
-
-```tsc --noEmit```: Führt die echte Typüberprüfung über dein gesamtes Projekt hinweg durch. Das Flag --noEmit sorgt dafür, dass nur Fehler gemeldet werden, ohne kompilierte .js-Dateien auf die Festplatte zu schreiben.
+### Schritt 4: Prüfablauf beachten
+Nach Änderungen im Workspace gelten die kurzen Prüfungen aus dem [Testing-Leitfaden](README_TESTING.md). Die statische Projektprüfung mit Biome, Astro und TypeScript (Stufe 0) läuft erst im manuell vom Nutzer gestarteten Preflight am Branch-Ende, nicht beim Workspace-Setup.
 
 ```bash
 npm run fix
@@ -65,7 +55,7 @@ npm run fix
 
 Verwende ```npm run fix``` im Alltag, um alles Automatische (Formatierung + sichere Lint-Korrekturen) auf einmal schreiben zu lassen.
 
-Typfehler, die danach noch bei npm run validate durch astro check oder tsc gemeldet werden, müssen manuell behoben werden.
+Typfehler, die Astro oder TypeScript im Preflight meldet, müssen manuell behoben werden.
 
 ### Schritt 5: Netlify CLI verknüpfen, Umgebungsvariablen für das Backend einrichten & Fullstack starten
 ```bash

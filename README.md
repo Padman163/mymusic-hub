@@ -36,7 +36,7 @@ Die Oberfläche läuft unter `http://localhost:4321`. Erst-Setup und Start mit N
 
 ## Qualitätssicherung (Pre-Flight)
 
-Während der Entwicklung: `npm run validate` und gezielte Unit-Tests, bei UI-Änderungen zusätzlich passende Komponententests. Die vollständige Abschlussprüfung mit E2E, Audit und Lighthouse ist erst am Branch-Ende fällig. Details und Befehle stehen im [Testing-Leitfaden](README_TESTING.md).
+Nach jeder Anpassung: gezielte Unit-Tests (Stufe 1), bei größeren Komponentenänderungen zusätzlich passende Komponententests (Stufe 2). Stufen 0, 3 und 4 laufen erst am Branch-Ende im manuell vom Nutzer gestarteten `npm run preflight`. Details und Befehle stehen im [Testing-Leitfaden](README_TESTING.md).
 
 ---
 
