@@ -33,6 +33,11 @@ Um maximale Stabilität bei minimaler Testlaufzeit zu gewährleisten, gliedert s
 - **Zweck:** Prüft Formatierung, Lint-Regeln und Typen sowie beispielsweise unauflösbare Imports und Schemafehler in Inhaltsdaten. Die Prüfungen ersetzen keine Laufzeittests und erkennen weder beliebige Tippfehler noch fachlich falsche Inhalte. Insbesondere Astro- und TypeScript-Prüfungen benötigen mehr als Sekundenbruchteile.
 - **Umfang:** Biome prüft gemäß `biome.json` unterstützte Dateien unter `src/` und berücksichtigt Git-Ignore-Regeln; einzelne Regeln sind für Astro-Dateien deaktiviert. Astro und TypeScript prüfen anhand der Projektkonfiguration. Ein erfolgreicher Lauf garantiert daher nicht, dass jede Datei vollständig geprüft wurde.
 - **Befehle:**
+```bash
+npm run fix
+# oder einzeln:
+npx @biomejs/biome check --write .
+```
 
 ```bash
 npm run validate
@@ -44,16 +49,12 @@ npx tsc --noEmit
 - **Wann nutzen:**
   * Ausschließlich im manuellen Preflight am Branch-Ende. Die Einzelbefehle erklären den Prüfumfang und sind keine Routinechecks.
 
-```bash
-npm run fix
-# oder einzeln:
-npx @biomejs/biome check --write .
-```
 
 ### Stufe 1: Unit-Tests (Reine Logik & Mathematik)
 
 - **Werkzeuge:** Vitest.
 - **Konfiguration:** `vitest.config.ts` erfasst `.test`- und `.spec`-Dateien in TypeScript, JavaScript und MJS unter `tests/`, ausgenommen `tests/e2e/`. Standardumgebung ist `happy-dom`; einzelne Dateien können Node wählen.
+- **Admin-Wiki:** `tests/admin-wiki.test.ts` nutzt Node für den serverseitigen Markdown-Renderer samt Shiki und nativen Web-APIs. Nur zur Prüfung des erzeugten HTML wird ein isoliertes Happy-DOM-Fenster angelegt; dessen unvollständige `Response`-Implementierung ersetzt dadurch nicht die Node-API.
 - **Testdateien:** `tests/music-notation.test.mjs`, `tests/module-builder.test.mjs`, `tests/learning-progress.test.mjs`.
 - **Gegenstand:** Notationsgeometrie, rhythmische Positionierung, Systemumbrüche, SVG-Ausgabe und Notations-Builder-Zuordnungen sowie Tag-/XP-Berechnungen, Modul-/Aufgaben-Validierung und Store-Operationen. Die Lernfortschrittstests prüfen Zustandsübergänge, Freischaltungen, XP-Vergabe und Speicherung/Wiederherstellung. Eine Testabdeckung für Frequenzformeln oder allgemeine Transponierungslogik wird damit nicht zugesichert.
 - **Abgrenzung:** `tests/module-builder.test.mjs` enthält zusätzlich Serverless-API-Tests (Stufe 3); `tests/learning-progress.test.mjs` prüft neben Logik auch Browser-Persistenz. Die Dateigrenzen entsprechen somit nicht strikt den Stufen der Testpyramide.

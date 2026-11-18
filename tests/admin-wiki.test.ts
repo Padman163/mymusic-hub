@@ -1,4 +1,7 @@
+// @vitest-environment node
+
 import { readdir } from "node:fs/promises";
+import { Window } from "happy-dom";
 import { describe, expect, it } from "vitest";
 import { adminWikiDocuments, renderAdminWikiDocument, resolveAdminWikiLink } from "../src/lib/admin-wiki";
 
@@ -32,10 +35,15 @@ describe("Admin-Wiki", () => {
     const document = adminWikiDocuments.find((item) => item.sourcePath === "README.md");
     if (!document) throw new Error("README.md fehlt im Admin-Wiki.");
     const { code } = await renderAdminWikiDocument(document);
-    const rendered = new DOMParser().parseFromString(code, "text/html");
-    expect(rendered.querySelector("h1")).toBeNull();
-    expect(rendered.querySelector("#dokumentation")).not.toBeNull();
-    expect(rendered.querySelector('a[href="/admin-wiki/readme-testing/"]')).not.toBeNull();
-    expect(rendered.querySelector("pre code")?.textContent).toContain("npm install");
+    const window = new Window();
+    try {
+      const rendered = new window.DOMParser().parseFromString(code, "text/html");
+      expect(rendered.querySelector("h1")).toBeNull();
+      expect(rendered.querySelector("#dokumentation")).not.toBeNull();
+      expect(rendered.querySelector('a[href="/admin-wiki/readme-testing/"]')).not.toBeNull();
+      expect(rendered.querySelector("pre code")?.textContent).toContain("npm install");
+    } finally {
+      await window.happyDOM.close();
+    }
   });
 });

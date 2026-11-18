@@ -281,7 +281,7 @@ describe("Lernfortschritts- & XP-Engine (learning-progress)", () => {
     state = loadLearningProgress(db.modules);
     expect(state.modules[mod.id].completedTheoryBlockIds).toEqual(["a"]);
     state = submitQuizAttempt(state, db, mod.id, "schwer", 1);
-    expect(state.totalXp).toBe(24 + 30 + 78);
+    expect(state.totalXp).toBe(24 + 30 + 70);
     expect(state.modules[mod.id].completedTheoryBlockIds).toEqual(["a", "b"]);
     expect(completeTheoryBlock(state, mod, "b")).toBe(state);
   });
@@ -295,7 +295,7 @@ describe("Lernfortschritts- & XP-Engine (learning-progress)", () => {
     saveLearningProgress(state);
     const restored = loadLearningProgress(db.modules);
     expect(completeTheoryBlock(restored, db.modules[0], "tb-1")).toBe(restored);
-    expect(submitQuizAttempt(restored, db, db.modules[0].id, "schwer", 1).totalXp).toBe(45 + 78);
+    expect(submitQuizAttempt(restored, db, db.modules[0].id, "schwer", 1).totalXp).toBe(45 + 70);
   });
 
   it("initialisiert Modul 1 offen und Folgemodule gesperrt und synchronisiert neue Module ohne Verlust", () => {
