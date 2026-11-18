@@ -21,7 +21,9 @@ for (const path of pages) {
 test('gliedert die Navigation in Admin, Bediener und Sonstiges', async ({ page }) => {
   await page.goto('/');
 
-  const sections = page.locator('.sidebar-content > .top-level > li > details');
+  const sections = page
+    .getByRole('navigation', { name: 'Hauptnavigation', includeHidden: true })
+    .locator('.top-level > li > details');
   await expect(sections.locator(':scope > summary')).toHaveText([
     'Admin',
     'Bediener',
@@ -238,32 +240,23 @@ test('richtet den Cursor der Notationsvorschau an den Noten aus', async ({ page 
   for (let slot = 0; slot < 4; slot += 1) {
     await page.keyboard.press('Space');
   }
-  const alignment = await preview.evaluate((el) => {
-    const notes = [...el.querySelectorAll<SVGElement>('.notation-note')];
-    return notes.map((note) => {
-      const nRect = note.getBoundingClientRect();
-      return {
-        cx: nRect.left + nRect.width / 2,
-        cy: nRect.top + nRect.height / 2,
-      };
-    });
-  });
-  expect(alignment).toHaveLength(4);
+  await expect(preview.locator('.notation-note')).toHaveCount(4);
   for (let slot = 0; slot < 3; slot += 1) {
     await page.keyboard.press('ArrowLeft');
   }
   for (let slot = 0; slot < 4; slot += 1) {
-    const cursorCenter = await preview
-      .locator('.notation-builder-cursor-head')
-      .evaluate((cursor) => {
-        const cRect = cursor.getBoundingClientRect();
-        return {
-          cx: cRect.left + cRect.width / 2,
-          cy: cRect.top + cRect.height / 2,
-        };
-      });
-    expect(Math.abs(cursorCenter.cx - alignment[slot].cx)).toBeLessThan(1);
-    expect(Math.abs(cursorCenter.cy - alignment[slot].cy)).toBeLessThan(1);
+    await expect(preview).toHaveAttribute('data-active-slot', String(slot));
+    await expect.poll(() => preview.evaluate((el, index) => {
+      const note = el.querySelectorAll('.notation-note')[index];
+      const cursor = el.querySelector('.notation-builder-cursor-head');
+      if (!note || !cursor) throw new Error('Note oder Cursor fehlt in der Notationsvorschau.');
+      const nRect = note.getBoundingClientRect();
+      const cRect = cursor.getBoundingClientRect();
+      return Math.max(
+        Math.abs(cRect.left + cRect.width / 2 - (nRect.left + nRect.width / 2)),
+        Math.abs(cRect.top + cRect.height / 2 - (nRect.top + nRect.height / 2)),
+      );
+    }, slot)).toBeLessThan(1);
     if (slot < 3) {
       await page.keyboard.press('ArrowRight');
     }

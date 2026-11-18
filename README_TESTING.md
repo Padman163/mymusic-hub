@@ -63,12 +63,11 @@ npx tsc --noEmit
   ```bash
   # alle Vitest-Tests, inklusive Komponenten, Integration und Dokumentation:
   npm test
-  # ausschließlich tests/music-notation.test.mjs:
-  npm run test:unit
   # alle drei oben genannten Testdateien, inklusive ihrer gemischten Testarten:
-  npx vitest run tests/music-notation.test.mjs tests/module-builder.test.mjs tests/learning-progress.test.mjs
-  # alle Vitest-Tests im Watch-Modus:
-  npm run test:watch
+  npx vitest run tests/music-notation.test.mjs 
+  npx vitest run tests/module-builder.test.mjs 
+  npx vitest run tests/learning-progress.test.mjs
+
   ```
 * **Wann nutzen:**
   * **Nach Zustimmung oder ausdrücklichem Testauftrag:** Copilot fragt nach jeweils zehn Nutzer-Prompts, ob Stufen 1 und 2 ausgeführt werden sollen. Keine automatischen Tests nach einzelnen Änderungen. Wenn kein passenderer Unit-Test vorliegt, `npm run test:unit` als Kurzcheck verwenden.
@@ -106,8 +105,6 @@ npx tsc --noEmit
   ```bash
   # Beitragstests unter tests/integration/:
   npm run test:integration
-  # zusätzlich gezielt die Serverless-API-Tests für Module:
-  npx vitest run tests/module-builder.test.mjs -t "Modules Serverless API"
   ```
 
   `test:integration` wählt ausschließlich `tests/integration/` und erfasst die Modul-API-Tests nicht. Über `npm test` laufen beide Testgruppen zusammen mit den übrigen Vitest-Tests.
@@ -125,8 +122,9 @@ npx tsc --noEmit
 * **Testumgebung:** `playwright.config.ts` verwendet Chromium mit dem Geräteprofil „Desktop Chrome“ und WebKit mit dem Profil „iPhone 14“ unter dem Projektnamen „Mobile Safari“. Das ist Browser-/Geräteemulation, kein Test auf einem echten iPhone oder mit installiertem Google Chrome.
 * **Server und Voraussetzung:** Die Tests benötigen einen aktuellen Produktionsbuild. Playwright startet dafür `npm run preview` unter `http://localhost:4321`; außerhalb von CI darf ein bereits erreichbarer Server wiederverwendet werden. Für reproduzierbare Produktionsprüfungen dort keinen abweichenden Dev-Server laufen lassen. `test:e2e` baut das Projekt nicht selbst.
 * **Gegenstand:** Drei festgelegte Seiten werden auf HTTP 200, eine sichtbare Hauptüberschrift und bis zum Prüfzeitpunkt aufgetretene JavaScript-`pageerror`-Ereignisse geprüft. Weitere Tests prüfen Builder-Klickpfade sowie Notationsgeometrie, rhythmische Abstände, Schlüssel-/Taktartdarstellung, Größenanpassung und horizontales Scrollen an ausgewählten Beispielen. Ein eigener Test prüft den scrollbaren Fallback ohne JavaScript.
+* **Navigation:** Der Navigationstest prüft Reihenfolge und Zuordnung von Admin, Bediener und Sonstiges innerhalb der Hauptnavigation, unabhängig von Starlights Sidebar-Zwischenelementen. Auf Mobilgeräten wird auch die zunächst eingeklappte Navigation geprüft. Ein weiterer Test öffnet Entwickler-READMEs im Admin-Wiki und folgt ihren Querverweisen.
 * **Visuelle Prüfung und Grenzen:** Die Suite wertet DOM, SVG, berechnete Styles und Geometrie im Browser aus; sie enthält keine Screenshot-Vergleiche. Sie prüft weder alle Seiten noch alle Klickpfade, Konsolenmeldungen, Netzwerkfehler oder Darstellungsvarianten. Erfolgreiches Speichern über die produktive API, AlphaTab-/Audiowiedergabe und vollständige Barrierefreiheit sind damit nicht abgesichert.
-* **Builder-Smoke-Tests:** Prüfen Gruppieren/Auflösen, sichtbare Aktionsbuttons mit mindestens 44 px Höhe und überlappungsfreie Gruppenkarten statt exakter CSS-Abstände. Der Bearbeitungstest öffnet ein Modul über den Katalog und kehrt über den echten Zurück-Button zur Übersicht zurück; die API liefert dabei feste Testdaten ohne Schreibzugriffe. Die Cursor-Ausrichtung der Notationsvorschau wird separat geprüft.
+* **Builder-Smoke-Tests:** Prüfen Gruppieren/Auflösen, sichtbare Aktionsbuttons mit mindestens 44 px Höhe und überlappungsfreie Gruppenkarten statt exakter CSS-Abstände. Der Bearbeitungstest öffnet ein Modul über den Katalog und kehrt über den echten Zurück-Button zur Übersicht zurück; die API liefert dabei feste Testdaten ohne Schreibzugriffe. Die Cursor-Ausrichtung der Notationsvorschau wird separat mit gleichzeitig gemessenen Noten- und Cursorpositionen und weniger als einem Pixel Abweichung je Achse geprüft.
 * **Befehle:**
   ```bash
   # vor dem Testen einen aktuellen Produktionsbuild erzeugen:
