@@ -58,41 +58,8 @@ function mountExerciseForm(): HTMLFormElement {
       <option value="mittel">mittel</option>
       <option value="schwer">schwer</option>
     </select>
-    <select id="exercise-question-type" name="questionType">
-      <option value="single_choice">single_choice</option>
-      <option value="multi_select">multi_select</option>
-      <option value="numeric_input">numeric_input</option>
-      <option value="interactive_notation">interactive_notation</option>
-    </select>
     <textarea id="exercise-prompt" name="prompt"></textarea>
-    <section id="exercise-choice-section">
-      <div id="exercise-choice-rows"></div>
-      <button id="exercise-choice-add" type="button">+ Antwortoption</button>
-    </section>
-    <section id="exercise-numeric-section" hidden>
-      <input id="exercise-numeric-answer" name="numericAnswer" type="text" />
-    </section>
-    <section id="exercise-notation-section" hidden>
-      <select id="notation-clef" name="clef">
-        <option value="treble">treble</option>
-        <option value="bass">bass</option>
-      </select>
-      <input id="notation-max-notes" name="maxNotes" type="number" value="1" />
-      <select id="notation-lock-duration" name="lockDuration">
-        <option value="none">none</option>
-        <option value="quarter">quarter</option>
-      </select>
-      <select id="notation-compact" name="compact">
-        <option value="tight">Kompakt</option>
-        <option value="wide" selected>Standard</option>
-        <option value="false">Breit</option>
-      </select>
-      <input id="notation-show-duration-picker" name="showDurationPicker" type="checkbox" />
-      <input id="notation-show-hints" name="showHints" type="checkbox" checked />
-      <input id="notation-expected-pitches" name="expectedPitches" type="text" />
-      <input id="notation-expected-durations" name="expectedDurations" type="text" />
-      <div id="notation-live-preview"></div>
-    </section>
+    <div id="exercise-type-fields"></div>
     <textarea id="exercise-explanation" name="explanation"></textarea>
     <input id="exercise-base-xp" name="baseXp" type="number" value="10" />
     <div id="exercise-tags-field"></div>
@@ -595,7 +562,7 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     const editor = row?.querySelector<HTMLElement>(".module-exercise-editor");
     const prompt = editor?.querySelector<HTMLTextAreaElement>("textarea");
     const answer = editor?.querySelector<HTMLInputElement>(
-      ".module-exercise-answers input",
+      '[id$="exercise-numeric-answer"]',
     );
     const explanation = editor?.querySelectorAll<HTMLTextAreaElement>("textarea")[1];
     if (!row || !prompt || !answer || !explanation) {
@@ -625,6 +592,128 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     expect(form.querySelector(".module-exercise-row")?.textContent).toContain(
       "Neue Aufgabenstellung",
     );
+  });
+
+  it.each(["multi_select", "numeric_input", "interactive_notation"] as const)(
+    "erstellt und bearbeitet %s direkt in der Modul-Blockliste",
+    async (questionType) => {
+      const fetchMock = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) =>
+        new Response("{}", { status: 200, headers: { "Content-Type": "application/json" } }),
+      );
+      vi.stubGlobal("fetch", fetchMock);
+      const form = mountModuleForm();
+      const controller = attachModuleBuilderForm(form);
+      const mod = (seedDb as unknown as ModulesDatabase).modules[0];
+      controller.loadModule(mod);
+      form.querySelector<HTMLSelectElement>(".theory-block-add-type")!.value = "leicht";
+      form.querySelector<HTMLButtonElement>(".theory-block-add")!.click();
+
+      const row = () => form.querySelector<HTMLElement>(".module-exercise-row")!;
+      const field = <T extends HTMLElement>(id: string) =>
+        row().querySelector<T>(`[id$="${id}"]`)!;
+      const set = (id: string, value: string) => {
+        const control = field<HTMLInputElement | HTMLSelectElement>(id);
+        control.value = value;
+        control.dispatchEvent(new Event("change", { bubbles: true }));
+      };
+      const save = () => row().querySelector<HTMLButtonElement>(".module-exercise-save")!.click();
+      const saveMessage = () => row().querySelector(".module-exercise-status")?.textContent;
+      expect(row().querySelector("details")?.open).toBe(true);
+      const type = field<HTMLSelectElement>("exercise-question-type");
+      expect(Array.from(type.options, (option) => option.textContent)).toEqual([
+        "Eine richtige Antwort", "Mehrere richtige Antworten",
+        "Zahleneingabe / Wert", "Interaktive Notation",
+      ]);
+      expect(row().querySelectorAll(".exercise-choice-correct[type=radio]")).toHaveLength(2);
+      set("exercise-question-type", questionType);
+
+      let expected: Record<string, unknown>;
+      if (questionType === "multi_select") {
+        field<HTMLButtonElement>("exercise-choice-add").click();
+        const choices = row().querySelectorAll<HTMLInputElement>(".exercise-choice-correct[type=checkbox]");
+        expect(choices).toHaveLength(3);
+        choices[1].checked = true;
+        row().querySelectorAll<HTMLInputElement>(".exercise-choice-text")[2].value = "Antwort C";
+        expected = { options: ["Antwort A", "Antwort B", "Antwort C"], correctAnswers: ["Antwort A", "Antwort B"] };
+      } else if (questionType === "numeric_input") {
+        set("exercise-numeric-answer", "880 Hz");
+        expected = { options: [], correctAnswers: ["880 Hz"] };
+      } else {
+        set("notation-clef", "bass");
+        set("notation-time-signature", "3/4");
+        set("notation-max-notes", "3");
+        set("notation-lock-duration", "quarter");
+        set("notation-compact", "tight");
+        set("notation-expected-pitches", "C4, E4, G4");
+        set("notation-expected-durations", "quarter, half");
+        const picker = field<HTMLInputElement>("notation-show-duration-picker");
+        picker.checked = true;
+        picker.dispatchEvent(new Event("change", { bubbles: true }));
+        const preview = field<HTMLElement>("notation-live-preview");
+        expect(preview.querySelector("svg.notation-staff")).not.toBeNull();
+        expect(preview.querySelector(".notation-builder-duration-picker")).not.toBeNull();
+        const builder = preview.querySelector<HTMLElement>("[data-notation-builder]")!;
+        expect(JSON.parse(builder.dataset.builderConfig!)).toMatchObject({
+          clef: "bass", timeSignature: { numerator: 3, denominator: 4 }, maxNotes: 3,
+        });
+        const previousStep = Number(builder.dataset.cursorStep);
+        builder.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
+        expect(Number(builder.dataset.cursorStep)).toBe(previousStep + 1);
+        expected = {
+          options: [], correctAnswers: [],
+          notationTask: {
+            clef: "bass", timeSignature: { numerator: 3, denominator: 4 }, maxNotes: 3,
+            lockDuration: "quarter", compact: "tight", showDurationPicker: true, showHints: true,
+            expectedPitches: ["C4", "E4", "G4"], expectedDurations: ["quarter", "half"],
+          },
+        };
+      }
+
+      save();
+      await vi.waitFor(() => expect(saveMessage()).toBe("Lernpfad-Aufgabe wurde gespeichert."));
+      const first = fetchMock.mock.calls[0];
+      const created = JSON.parse(String(first[1]?.body));
+      expect(first[0]).toBe("/api/modules");
+      expect(first[1]?.method).toBe("POST");
+      expect(created).toMatchObject({
+        entity: "question", targetLane: "leicht", moduleIds: [mod.id], questionType, baseXp: 10, ...expected,
+      });
+
+      expect(field<HTMLSelectElement>("exercise-question-type").value).toBe(questionType);
+      if (questionType === "multi_select") {
+        expect(row().querySelectorAll(".exercise-choice-correct:checked")).toHaveLength(2);
+        row().querySelectorAll<HTMLButtonElement>('[aria-label="Antwortoption entfernen"]')[2].click();
+        expected.options = ["Antwort A", "Antwort B"];
+      } else if (questionType === "numeric_input") {
+        expect(field<HTMLInputElement>("exercise-numeric-answer").value).toBe("880 Hz");
+        set("exercise-numeric-answer", "900 Hz");
+        expected.correctAnswers = ["900 Hz"];
+      } else {
+        expect(field<HTMLInputElement>("notation-time-signature").value).toBe("3/4");
+        expect(field<HTMLElement>("notation-live-preview").querySelector("svg")).not.toBeNull();
+        set("notation-compact", "false");
+        expected.notationTask = { ...(expected.notationTask as object), compact: false };
+      }
+      save();
+      await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+      const updated = fetchMock.mock.calls[1][1];
+      expect(updated?.method).toBe("PUT");
+      expect(JSON.parse(String(updated?.body))).toMatchObject({
+        id: created.id, targetLane: "leicht", moduleIds: [mod.id], questionType, ...expected,
+      });
+    },
+  );
+
+  it("verhindert das Speichern einer Aufgabe vor dem ersten Speichern ihres Moduls", () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const form = mountModuleForm();
+    attachModuleBuilderForm(form);
+    form.querySelector<HTMLSelectElement>(".theory-block-add-type")!.value = "leicht";
+    form.querySelector<HTMLButtonElement>(".theory-block-add")!.click();
+    form.querySelector<HTMLButtonElement>(".module-exercise-save")!.click();
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(form.querySelector(".module-exercise-status")?.textContent).toContain("zuerst das Modul");
   });
 
   it("löscht Übungen nur nach Bestätigung und zeigt Fehler an", async () => {

@@ -18,6 +18,7 @@ import {
   type NotationTaskDuration,
   normalizeLegacyDatabase,
   type PracticeBlock,
+  QUESTION_TYPES,
   type QuestionType,
   type TargetLane,
   type TheoryBlock,
@@ -71,7 +72,7 @@ const LANE_LABELS: Record<TargetLane, string> = {
 const QUESTION_TYPE_LABELS: Record<QuestionType, string> = {
   single_choice: "Eine richtige Antwort",
   multi_select: "Mehrere richtige Antworten",
-  numeric_input: "Zahleneingabe",
+  numeric_input: "Zahleneingabe / Wert",
   interactive_notation: "Interaktive Notation",
 };
 
@@ -381,6 +382,7 @@ export function createTheoryBlockEditor(
   initialBlocks: readonly TheoryBlock[] = [],
   getDefaultBaseXp: () => number = () => BASE_XP_DEFAULTS.theoryBlock,
   deleteExercise?: (question: ModuleQuestion) => void,
+  getSavedModuleId?: () => string | null,
 ): TheoryBlockEditorController {
   const fieldset = document.createElement("fieldset");
   fieldset.className = "checklist-editor theory-block-editor";
@@ -1108,11 +1110,21 @@ export function createTheoryBlockEditor(
     questions: readonly ModuleQuestion[],
     order: readonly ModuleContentReference[] = contentOrder(),
   ): void {
-    for (const row of rows.querySelectorAll(".module-exercise-row"))
+    const previousQuestions = new Map(
+      exerciseQuestions.map((question) => [question.id, question]),
+    );
+    const previousRows = new Map<string, HTMLDivElement>();
+    for (const row of rows.querySelectorAll<HTMLDivElement>(
+      ".module-exercise-row",
+    )) {
+      if (row.dataset.blockId) previousRows.set(row.dataset.blockId, row);
       row.remove();
+    }
     exerciseQuestions = [...questions];
     for (const question of questions) {
-      const row = document.createElement("div");
+      const previous = previousRows.get(question.id);
+      const reuse = previous && previousQuestions.get(question.id) === question;
+      const row = reuse ? previous : document.createElement("div");
       row.className = "module-exercise-row";
       row.dataset.blockId = question.id;
       row.dataset.prompt = question.prompt;
@@ -1122,9 +1134,19 @@ export function createTheoryBlockEditor(
       if (savedReference?.groupId && savedReference.groupTitle) {
         row.dataset.groupId = savedReference.groupId;
         row.dataset.groupTitle = savedReference.groupTitle;
+      } else {
+        delete row.dataset.groupId;
+        delete row.dataset.groupTitle;
+      }
+      if (reuse) {
+        rows.append(row);
+        continue;
       }
       const details = document.createElement("details");
       details.className = "theory-block-details";
+      details.open =
+        previous?.querySelector("details")?.open ??
+        draftExerciseIds.has(question.id);
       const summary = document.createElement("summary");
       const label = document.createElement("span");
       label.className = "theory-block-order-label";
@@ -1138,103 +1160,9 @@ export function createTheoryBlockEditor(
       prompt.setAttribute("aria-label", "Aufgabenstellung");
       editor.append(createLabeledField("Aufgabenstellung", prompt));
 
-      const answers = document.createElement("div");
-      answers.className = "module-exercise-answers";
-      let choiceRows: HTMLDivElement | null = null;
-      let numericAnswer: HTMLInputElement | null = null;
-      let notationFields: {
-        clef: HTMLSelectElement;
-        maxNotes: HTMLInputElement;
-        pitches: HTMLInputElement;
-        durations: HTMLInputElement;
-      } | null = null;
-
-      if (
-        question.questionType === "single_choice" ||
-        question.questionType === "multi_select"
-      ) {
-        choiceRows = document.createElement("div");
-        choiceRows.className = "module-exercise-choice-rows";
-        const correctAnswers = new Set(question.correctAnswers);
-        const addChoice = (text = "", checked = false): void => {
-          if (!choiceRows) return;
-          const choice = document.createElement("div");
-          choice.className = "module-exercise-choice-row";
-          const correct = document.createElement("input");
-          correct.type =
-            question.questionType === "multi_select" ? "checkbox" : "radio";
-          correct.name = `correct-${question.id}`;
-          correct.checked = checked;
-          correct.setAttribute("aria-label", "Als richtige Lösung markieren");
-          const value = document.createElement("input");
-          value.type = "text";
-          value.className = "module-exercise-choice-value";
-          value.value = text;
-          value.placeholder = "Antwortoption";
-          value.setAttribute("aria-label", "Antwortoption");
-          const remove = document.createElement("button");
-          remove.type = "button";
-          remove.className = "checklist-remove";
-          remove.textContent = "×";
-          remove.setAttribute("aria-label", "Antwortoption entfernen");
-          remove.addEventListener("click", () => choice.remove());
-          choice.append(correct, value, remove);
-          choiceRows.append(choice);
-        };
-        for (const option of question.options ?? []) {
-          addChoice(option, correctAnswers.has(option));
-        }
-        if (question.options?.length === 0) addChoice("", true);
-        const addButton = document.createElement("button");
-        addButton.type = "button";
-        addButton.textContent = "+ Antwortoption";
-        addButton.addEventListener("click", () => addChoice());
-        answers.append(
-          createLabeledField("Antwortoptionen und Lösungen", choiceRows),
-          addButton,
-        );
-      } else if (question.questionType === "numeric_input") {
-        numericAnswer = document.createElement("input");
-        numericAnswer.type = "text";
-        numericAnswer.value = question.correctAnswers[0] ?? "";
-        numericAnswer.setAttribute("aria-label", "Erwartete Antwort");
-        answers.append(createLabeledField("Erwartete Antwort", numericAnswer));
-      } else {
-        const task = question.notationTask ?? { clef: "treble" as const };
-        const clef = document.createElement("select");
-        for (const [value, text] of [
-          ["treble", "Violinschlüssel"],
-          ["bass", "Bassschlüssel"],
-        ]) {
-          const option = document.createElement("option");
-          option.value = value;
-          option.textContent = text;
-          clef.append(option);
-        }
-        clef.value = task.clef;
-        const maxNotes = document.createElement("input");
-        maxNotes.type = "number";
-        maxNotes.min = "1";
-        maxNotes.max = "8";
-        maxNotes.step = "1";
-        maxNotes.value = String(task.maxNotes ?? 1);
-        const pitches = document.createElement("input");
-        pitches.type = "text";
-        pitches.value = (task.expectedPitches ?? []).join(", ");
-        pitches.placeholder = "z. B. E4, G4";
-        const durations = document.createElement("input");
-        durations.type = "text";
-        durations.value = (task.expectedDurations ?? []).join(", ");
-        durations.placeholder = "z. B. quarter, half";
-        notationFields = { clef, maxNotes, pitches, durations };
-        answers.append(
-          createLabeledField("Notenschlüssel", clef),
-          createLabeledField("Notenanzahl", maxNotes),
-          createLabeledField("Erwartete Tonhöhen", pitches),
-          createLabeledField("Erwartete Notenwerte", durations),
-        );
-      }
-      editor.append(answers);
+      const typeEditor = createQuestionTypeEditor(`inline-${question.id}-`);
+      typeEditor.load(question);
+      editor.append(typeEditor.element);
 
       const explanation = document.createElement("textarea");
       explanation.rows = 3;
@@ -1279,83 +1207,32 @@ export function createTheoryBlockEditor(
       saveButton.className = "module-exercise-save";
       saveButton.textContent = "Lernpfad-Aufgabe speichern";
       saveButton.addEventListener("click", async () => {
-        const correctAnswers: string[] = [];
-        let options: string[] | undefined;
-        if (choiceRows) {
-          options = [];
-          for (const choice of choiceRows.querySelectorAll<HTMLDivElement>(
-            ".module-exercise-choice-row",
-          )) {
-            const value =
-              choice
-                .querySelector<HTMLInputElement>(
-                  ".module-exercise-choice-value",
-                )
-                ?.value.trim() ?? "";
-            const correct = choice.querySelector<HTMLInputElement>(
-              'input[type="checkbox"], input[type="radio"]',
-            )?.checked;
-            if (!value) continue;
-            options.push(value);
-            if (correct) correctAnswers.push(value);
-          }
-        } else if (numericAnswer) {
-          const answer = numericAnswer.value.trim();
-          if (answer) correctAnswers.push(answer);
+        const moduleId = getSavedModuleId?.();
+        if (!moduleId || !isQuestionInModule(question, moduleId)) {
+          saveStatus.textContent =
+            "Bitte speichere zuerst das Modul. Danach kannst du die Lernpfad-Aufgabe speichern.";
+          return;
         }
-
-        let notationTask: NotationBuilderTaskConfig | undefined;
-        if (notationFields) {
-          const durations = notationFields.durations.value
-            .split(",")
-            .map((item) => item.trim())
-            .filter(Boolean);
-          const invalidDurations = durations.filter(
-            (duration) => !parseNotationDuration(duration),
-          );
-          if (invalidDurations.length > 0) {
-            saveStatus.textContent = `Ungültige Notenwerte: ${invalidDurations.join(", ")}.`;
-            return;
-          }
-          notationTask = {
-            ...question.notationTask,
-            clef: notationFields.clef.value === "bass" ? "bass" : "treble",
-            maxNotes: Math.max(
-              1,
-              Math.min(
-                8,
-                Math.round(Number(notationFields.maxNotes.value) || 1),
-              ),
-            ),
-            expectedPitches: notationFields.pitches.value
-              .split(",")
-              .map((item) => item.trim())
-              .filter(Boolean),
-            expectedDurations: durations.filter(
-              (duration): duration is NotationTaskDuration =>
-                parseNotationDuration(duration) !== undefined,
-            ),
-          };
+        let typeFields: ReturnType<typeof typeEditor.read>;
+        try {
+          typeFields = typeEditor.read();
+        } catch (error) {
+          saveStatus.textContent =
+            error instanceof Error ? error.message : String(error);
+          return;
         }
-
-        const payload: UpsertQuestionInput & { entity: "question" } = {
+        const payload = {
           entity: "question",
           id: question.id,
-          moduleIds: question.moduleIds,
-          targetLane: question.targetLane,
-          questionType: question.questionType,
+          moduleIds: [moduleId],
+          targetLane: "leicht",
+          ...typeFields,
           prompt: prompt.value.trim(),
-          ...(options !== undefined ? { options } : {}),
-          correctAnswers,
-          ...(notationTask !== undefined ? { notationTask } : {}),
           explanation: explanation.value.trim(),
           baseXp: Number(baseXp.value),
           tags: tagPicker.selectedTags(),
-        };
-        const validation = validateQuestionInput(
-          payload,
-          question.moduleIds.map((id) => ({ id }) as LearningModule),
-        );
+        } satisfies ModuleQuestion & { entity: "question" };
+        const validation = validateQuestionInput(payload, [{ id: moduleId }]);
         if (!validation.valid) {
           saveStatus.textContent = validation.errors.join(" ");
           return;
@@ -1369,16 +1246,21 @@ export function createTheoryBlockEditor(
             payload,
             "Die Lernpfad-Aufgabe konnte nicht gespeichert werden.",
           );
+          if (!rows.contains(row) || getSavedModuleId?.() !== moduleId) return;
           draftExerciseIds.delete(question.id);
-          const updatedQuestion: ModuleQuestion = { ...question, ...payload };
-          exerciseQuestions = exerciseQuestions.map((item) =>
+          const { entity: _entity, ...updatedQuestion } = payload;
+          const updatedQuestions = exerciseQuestions.map((item) =>
             item.id === updatedQuestion.id ? updatedQuestion : item,
           );
-          setExercises(exerciseQuestions, contentOrder());
+          setExercises(updatedQuestions);
           document.dispatchEvent(
             new CustomEvent("modules:updated", {
               bubbles: true,
-              detail: { questions: exerciseQuestions },
+              detail: {
+                questions: updatedQuestions.filter(
+                  (item) => !draftExerciseIds.has(item.id),
+                ),
+              },
             }),
           );
           const savedRow = Array.from(
@@ -1398,10 +1280,7 @@ export function createTheoryBlockEditor(
         }
       });
       editor.append(saveButton, saveStatus);
-      const meta = document.createElement("p");
-      meta.className = "field-hint";
-      meta.textContent = QUESTION_TYPE_LABELS[question.questionType];
-      details.append(summary, meta, editor);
+      details.append(summary, editor);
       const controls = document.createElement("div");
       controls.className = "theory-block-controls";
       const selectLabel = document.createElement("label");
@@ -1749,6 +1628,7 @@ export function attachModuleBuilderForm(
     [],
     () => Number(theoryBaseXpInput.value),
     (question) => void deleteExercise(question),
+    () => editingModuleId,
   );
   theoryBaseXpInput.addEventListener(
     "input",
@@ -2192,6 +2072,331 @@ function buildLivePreviewElement(
   return root;
 }
 
+let nextQuestionEditorId = 0;
+
+function createQuestionTypeEditor(prefix = "") {
+  const element = document.createElement("fieldset");
+  element.className = "question-type-editor";
+  const radioName = `exerciseChoiceCorrect-${++nextQuestionEditorId}`;
+
+  function identify<T extends HTMLElement>(control: T, id: string): T {
+    control.id = `${prefix}${id}`;
+    return control;
+  }
+
+  function select(id: string, values: readonly (readonly [string, string])[]) {
+    const control = identify(document.createElement("select"), id);
+    for (const [value, text] of values) {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = text;
+      control.append(option);
+    }
+    return control;
+  }
+
+  function input(id: string, type = "text", placeholder = "") {
+    const control = identify(document.createElement("input"), id);
+    control.type = type;
+    control.placeholder = placeholder;
+    return control;
+  }
+
+  function section(id: string, heading: string) {
+    const control = identify(document.createElement("section"), id);
+    control.className = "exercise-dynamic-section";
+    control.setAttribute("aria-label", heading);
+    return control;
+  }
+
+  const type = select(
+    "exercise-question-type",
+    QUESTION_TYPES.map(
+      (value) => [value, QUESTION_TYPE_LABELS[value]] as const,
+    ),
+  );
+  const choices = section(
+    "exercise-choice-section",
+    "Antwortoptionen und Lösungen",
+  );
+  const rows = identify(document.createElement("div"), "exercise-choice-rows");
+  rows.className = "exercise-choice-rows";
+  const add = identify(document.createElement("button"), "exercise-choice-add");
+  add.type = "button";
+  add.textContent = "+ Antwortoption";
+  choices.append(rows, add);
+
+  const numeric = section("exercise-numeric-section", "Exakte Lösung");
+  const answer = input(
+    "exercise-numeric-answer",
+    "text",
+    "z. B. 880 oder 880 Hz",
+  );
+  numeric.append(createLabeledField("Erwartete Antwort", answer));
+
+  const notation = section(
+    "exercise-notation-section",
+    "Interaktive Notationsaufgabe",
+  );
+  const clef = select("notation-clef", [
+    ["treble", "Violinschlüssel"],
+    ["bass", "Bassschlüssel"],
+  ]);
+  const time = input("notation-time-signature", "text", "z. B. 4/4");
+  const maxNotes = input("notation-max-notes", "number");
+  maxNotes.min = "1";
+  maxNotes.max = "8";
+  maxNotes.step = "1";
+  const lock = select("notation-lock-duration", [
+    ["none", "Keine Sperre"],
+    ["default", "Standard-Notenwert"],
+    ...NOTATION_DURATIONS.map(
+      (duration) => [duration, durationLabels[duration]] as const,
+    ),
+  ]);
+  const compact = select("notation-compact", [
+    ["tight", "Kompakt"],
+    ["wide", "Standard"],
+    ["false", "Breit"],
+  ]);
+  const picker = input("notation-show-duration-picker", "checkbox");
+  const hints = input("notation-show-hints", "checkbox");
+  const pitches = input(
+    "notation-expected-pitches",
+    "text",
+    "z. B. C4, E4, G4",
+  );
+  const durations = input(
+    "notation-expected-durations",
+    "text",
+    "z. B. quarter, half",
+  );
+  const grid = document.createElement("div");
+  grid.className = "module-field-grid";
+  grid.append(
+    createLabeledField("Notenschlüssel", clef),
+    createLabeledField("Taktart (optional)", time),
+    createLabeledField("Notenanzahl", maxNotes),
+    createLabeledField("Notenwert sperren", lock),
+    createLabeledField("Darstellung", compact),
+  );
+  const toggles = document.createElement("div");
+  toggles.className = "module-field-grid";
+  for (const [control, text] of [
+    [picker, "Notenwert-Leiste anzeigen"],
+    [hints, "Tastatur-Hinweise anzeigen"],
+  ] as const) {
+    const label = createLabeledField(text, control);
+    label.className = "module-checkbox-label";
+    label.prepend(control);
+    toggles.append(label);
+  }
+  const previewWrapper = document.createElement("div");
+  previewWrapper.className = "notation-live-preview-wrapper";
+  const previewLabel = document.createElement("span");
+  previewLabel.textContent = "Live-Vorschau";
+  const preview = identify(
+    document.createElement("div"),
+    "notation-live-preview",
+  );
+  preview.className = "notation-live-preview-box";
+  previewWrapper.append(previewLabel, preview);
+  notation.append(
+    grid,
+    toggles,
+    createLabeledField("Erwartete Tonhöhen (kommagetrennt)", pitches),
+    createLabeledField("Erwartete Notenwerte (kommagetrennt)", durations),
+    previewWrapper,
+  );
+  element.append(
+    createLabeledField("Aufgabentyp", type),
+    choices,
+    numeric,
+    notation,
+  );
+
+  let accidentals: NotationBuilderTaskConfig["accidentals"];
+  const csv = (text: string) =>
+    text
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean);
+
+  function addChoice(text = "", checked = false) {
+    const row = document.createElement("div");
+    row.className = "exercise-choice-row";
+    const correct = document.createElement("input");
+    correct.className = "exercise-choice-correct";
+    correct.type = type.value === "multi_select" ? "checkbox" : "radio";
+    correct.name = radioName;
+    correct.checked = checked;
+    correct.setAttribute("aria-label", "Als richtige Lösung markieren");
+    const value = document.createElement("input");
+    value.type = "text";
+    value.className = "exercise-choice-text";
+    value.placeholder = "Antwortoption";
+    value.setAttribute("aria-label", "Antwortoption");
+    value.value = text;
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "checklist-remove";
+    remove.textContent = "×";
+    remove.setAttribute("aria-label", "Antwortoption entfernen");
+    remove.addEventListener("click", () => row.remove());
+    row.append(correct, value, remove);
+    rows.append(row);
+    return value;
+  }
+
+  function readTimeSignature(): NotationBuilderTaskConfig["timeSignature"] {
+    const match = /^([1-9]\d*)\s*\/\s*([1-9]\d*)$/.exec(time.value.trim());
+    if (!match) return undefined;
+    const [numerator, denominator] = [Number(match[1]), Number(match[2])];
+    if (!Number.isSafeInteger(numerator) || !Number.isSafeInteger(denominator))
+      return undefined;
+    return { numerator, denominator };
+  }
+
+  function readNotation(): NotationBuilderTaskConfig {
+    const timeSignature = readTimeSignature();
+    const lockDuration =
+      lock.value === "default" ? true : parseNotationDuration(lock.value);
+    const noteCount = Number(maxNotes.value);
+    return {
+      clef: clef.value === "bass" ? "bass" : "treble",
+      ...(timeSignature ? { timeSignature } : {}),
+      ...(accidentals ? { accidentals } : {}),
+      maxNotes: Math.max(1, Math.min(8, Math.round(noteCount || 1))),
+      ...(lockDuration !== undefined ? { lockDuration } : {}),
+      compact:
+        compact.value === "tight" || compact.value === "wide"
+          ? compact.value
+          : false,
+      showDurationPicker: picker.checked,
+      showHints: hints.checked,
+      expectedPitches: csv(pitches.value),
+      expectedDurations: csv(durations.value),
+    };
+  }
+
+  function refreshNotationPreview(): void {
+    if (notation.hidden) return;
+    const { expectedPitches, expectedDurations, showHints, ...config } =
+      readNotation();
+    const signature = JSON.stringify({ config, showHints });
+    if (preview.dataset.previewSignature === signature) return;
+    preview.replaceChildren(
+      buildLivePreviewElement(config, showHints ?? false),
+    );
+    preview.dataset.previewSignature = signature;
+  }
+
+  function syncSections(): void {
+    const multi = type.value === "multi_select";
+    choices.hidden = !multi && type.value !== "single_choice";
+    numeric.hidden = type.value !== "numeric_input";
+    notation.hidden = type.value !== "interactive_notation";
+    maxNotes.disabled = notation.hidden;
+    if (!choices.hidden) {
+      let foundCorrect = false;
+      for (const correct of rows.querySelectorAll<HTMLInputElement>(
+        ".exercise-choice-correct",
+      )) {
+        if (!multi && correct.checked && foundCorrect) correct.checked = false;
+        if (correct.checked) foundCorrect = true;
+        correct.type = multi ? "checkbox" : "radio";
+      }
+      if (rows.childElementCount === 0) {
+        addChoice("", true);
+        addChoice();
+      }
+    }
+    refreshNotationPreview();
+  }
+
+  function load(question?: ModuleQuestion): void {
+    type.value = question?.questionType ?? "single_choice";
+    rows.replaceChildren();
+    for (const option of question?.options ?? []) {
+      addChoice(option, question?.correctAnswers.includes(option));
+    }
+    answer.value =
+      question?.questionType === "numeric_input"
+        ? (question.correctAnswers[0] ?? "")
+        : "";
+    const task = question?.notationTask;
+    accidentals = task?.accidentals;
+    clef.value = task?.clef ?? "treble";
+    time.value = task?.timeSignature
+      ? `${task.timeSignature.numerator}/${task.timeSignature.denominator}`
+      : "";
+    maxNotes.value = String(task?.maxNotes ?? 1);
+    lock.value =
+      task?.lockDuration === true ? "default" : task?.lockDuration || "none";
+    compact.value =
+      task?.compact === true
+        ? "tight"
+        : String(task ? (task.compact ?? false) : "wide");
+    picker.checked = task?.showDurationPicker ?? false;
+    hints.checked = task?.showHints ?? !task;
+    pitches.value = (task?.expectedPitches ?? []).join(", ");
+    durations.value = (task?.expectedDurations ?? []).join(", ");
+    delete preview.dataset.previewSignature;
+    syncSections();
+  }
+
+  function read(): Pick<
+    ModuleQuestion,
+    "questionType" | "options" | "correctAnswers" | "notationTask"
+  > {
+    const questionType = isQuestionType(type.value)
+      ? type.value
+      : "single_choice";
+    const options: string[] = [];
+    const correctAnswers: string[] = [];
+    if (questionType === "single_choice" || questionType === "multi_select") {
+      for (const row of rows.querySelectorAll(".exercise-choice-row")) {
+        const value = row
+          .querySelector<HTMLInputElement>(".exercise-choice-text")
+          ?.value.trim();
+        if (!value) continue;
+        options.push(value);
+        if (
+          row.querySelector<HTMLInputElement>(".exercise-choice-correct")
+            ?.checked
+        )
+          correctAnswers.push(value);
+      }
+    } else if (questionType === "numeric_input" && answer.value.trim()) {
+      correctAnswers.push(answer.value.trim());
+    } else if (questionType === "interactive_notation") {
+      const notationTask = readNotation();
+      if (time.value.trim() && !notationTask.timeSignature) {
+        throw new Error(
+          "Bitte gib die Taktart als zwei positive ganze Zahlen ein, z. B. 4/4.",
+        );
+      }
+      const invalidDurations = notationTask.expectedDurations?.filter(
+        (duration) => parseNotationDuration(duration) === undefined,
+      );
+      if (invalidDurations?.length) {
+        throw new Error(
+          `Ungültige Notenwerte: ${invalidDurations.join(", ")}.`,
+        );
+      }
+      return { questionType, options, correctAnswers, notationTask };
+    }
+    return { questionType, options, correctAnswers };
+  }
+
+  add.addEventListener("click", () => addChoice().focus());
+  type.addEventListener("change", syncSections);
+  notation.addEventListener("input", refreshNotationPreview);
+  notation.addEventListener("change", refreshNotationPreview);
+  load();
+  return { element, load, read, refreshNotationPreview };
+}
+
 /** Initialisiert die Logik für das Aufgaben- & Quiz-Builder-Formular. */
 export function attachExerciseBuilderForm(
   form: HTMLFormElement,
@@ -2217,89 +2422,16 @@ export function attachExerciseBuilderForm(
     "#exercise-target-lane",
     msg,
   );
-  const typeSelect = requireElement<HTMLSelectElement>(
+  const typeFieldsHost = requireElement<HTMLElement>(
     form,
-    "#exercise-question-type",
+    "#exercise-type-fields",
     msg,
   );
+  const typeEditor = createQuestionTypeEditor();
+  typeFieldsHost.append(typeEditor.element);
   const promptInput = requireElement<HTMLTextAreaElement>(
     form,
     "#exercise-prompt",
-    msg,
-  );
-  const choiceSection = requireElement<HTMLElement>(
-    form,
-    "#exercise-choice-section",
-    msg,
-  );
-  const choiceRows = requireElement<HTMLDivElement>(
-    form,
-    "#exercise-choice-rows",
-    msg,
-  );
-  const choiceAddButton = requireElement<HTMLButtonElement>(
-    form,
-    "#exercise-choice-add",
-    msg,
-  );
-  const numericSection = requireElement<HTMLElement>(
-    form,
-    "#exercise-numeric-section",
-    msg,
-  );
-  const numericAnswerInput = requireElement<HTMLInputElement>(
-    form,
-    "#exercise-numeric-answer",
-    msg,
-  );
-  const notationSection = requireElement<HTMLElement>(
-    form,
-    "#exercise-notation-section",
-    msg,
-  );
-  const notationClefSelect = requireElement<HTMLSelectElement>(
-    form,
-    "#notation-clef",
-    msg,
-  );
-  const notationMaxNotesInput = requireElement<HTMLInputElement>(
-    form,
-    "#notation-max-notes",
-    msg,
-  );
-  const notationLockDurationSelect = requireElement<HTMLSelectElement>(
-    form,
-    "#notation-lock-duration",
-    msg,
-  );
-  const notationCompactSelect = requireElement<HTMLSelectElement>(
-    form,
-    "#notation-compact",
-    msg,
-  );
-  const notationShowDurationPicker = requireElement<HTMLInputElement>(
-    form,
-    "#notation-show-duration-picker",
-    msg,
-  );
-  const notationShowHints = requireElement<HTMLInputElement>(
-    form,
-    "#notation-show-hints",
-    msg,
-  );
-  const notationExpectedPitchesInput = requireElement<HTMLInputElement>(
-    form,
-    "#notation-expected-pitches",
-    msg,
-  );
-  const notationExpectedDurationsInput = requireElement<HTMLInputElement>(
-    form,
-    "#notation-expected-durations",
-    msg,
-  );
-  const notationPreviewHost = requireElement<HTMLDivElement>(
-    form,
-    "#notation-live-preview",
     msg,
   );
   const explanationInput = requireElement<HTMLTextAreaElement>(
@@ -2356,141 +2488,6 @@ export function attachExerciseBuilderForm(
   });
   tagsContainer.append(tagPicker.element);
 
-  function addChoiceRow(text = "", checked = false): void {
-    const row = document.createElement("div");
-    row.className = "checklist-row exercise-choice-row";
-
-    const selector = document.createElement("input");
-    selector.className = "exercise-choice-correct";
-    selector.type = typeSelect.value === "multi_select" ? "checkbox" : "radio";
-    selector.name = "exerciseChoiceCorrect";
-    selector.checked = checked;
-    selector.setAttribute("aria-label", "Als richtige Lösung markieren");
-
-    const textInput = document.createElement("input");
-    textInput.type = "text";
-    textInput.className = "exercise-choice-text";
-    textInput.placeholder = "Antwortoption eingeben";
-    textInput.value = text;
-
-    const removeBtn = document.createElement("button");
-    removeBtn.type = "button";
-    removeBtn.className = "checklist-remove exercise-choice-remove";
-    removeBtn.textContent = "×";
-    removeBtn.title = "Option entfernen";
-    removeBtn.setAttribute("aria-label", "Antwortoption entfernen");
-    removeBtn.addEventListener("click", () => {
-      row.remove();
-    });
-
-    row.append(selector, textInput, removeBtn);
-    choiceRows.append(row);
-  }
-
-  function syncChoiceInputModes(): void {
-    const isMulti = typeSelect.value === "multi_select";
-    const inputs = choiceRows.querySelectorAll<HTMLInputElement>(
-      ".exercise-choice-correct",
-    );
-    let foundFirstChecked = false;
-    inputs.forEach((input) => {
-      input.type = isMulti ? "checkbox" : "radio";
-      if (!isMulti && input.checked) {
-        if (foundFirstChecked) {
-          input.checked = false;
-        } else {
-          foundFirstChecked = true;
-        }
-      }
-    });
-  }
-
-  function syncQuestionTypeSections(): void {
-    const qType = typeSelect.value;
-    const isChoice = qType === "single_choice" || qType === "multi_select";
-    const isNumeric = qType === "numeric_input";
-    const isNotation = qType === "interactive_notation";
-
-    choiceSection.hidden = !isChoice;
-    numericSection.hidden = !isNumeric;
-    notationSection.hidden = !isNotation;
-
-    if (isChoice) {
-      syncChoiceInputModes();
-      if (choiceRows.childElementCount === 0) {
-        addChoiceRow("", true);
-        addChoiceRow("", false);
-      }
-    }
-    if (isNotation) {
-      refreshNotationPreview();
-    }
-  }
-
-  function readNotationConfigFromFields(): NotationBuilderTaskConfig {
-    const clef = notationClefSelect.value === "bass" ? "bass" : "treble";
-    const maxNotesRaw = Number(notationMaxNotesInput.value);
-    const maxNotes = Number.isFinite(maxNotesRaw)
-      ? Math.max(1, Math.min(8, Math.round(maxNotesRaw)))
-      : 1;
-    const lockDurationRaw = notationLockDurationSelect.value;
-    const lockDuration =
-      lockDurationRaw === "none"
-        ? undefined
-        : parseNotationDuration(lockDurationRaw);
-    const compactRaw = notationCompactSelect.value;
-    const compact: NotationBuilderTaskConfig["compact"] =
-      compactRaw === "tight" || compactRaw === "wide" ? compactRaw : false;
-    const expectedPitches = notationExpectedPitchesInput.value
-      .split(",")
-      .map((item) => item.trim())
-      .filter((item) => item.length > 0);
-    const expectedDurations = notationExpectedDurationsInput.value
-      .split(",")
-      .map((item) => item.trim())
-      .filter((item) => item.length > 0);
-
-    return {
-      clef,
-      maxNotes,
-      ...(lockDuration !== undefined ? { lockDuration } : {}),
-      showDurationPicker: notationShowDurationPicker.checked,
-      compact,
-      showHints: notationShowHints.checked,
-      ...(expectedPitches.length > 0 ? { expectedPitches } : {}),
-      ...(expectedDurations.length > 0 ? { expectedDurations } : {}),
-    };
-  }
-
-  function refreshNotationPreview(): void {
-    const taskConfig = readNotationConfigFromFields();
-    const previewConfig: NotationBuilderConfig = {
-      clef: taskConfig.clef,
-      maxNotes: taskConfig.maxNotes ?? 1,
-      ...(taskConfig.lockDuration !== undefined
-        ? { lockDuration: taskConfig.lockDuration }
-        : {}),
-      showDurationPicker: taskConfig.showDurationPicker ?? false,
-      compact: taskConfig.compact ?? false,
-    };
-    const signature = JSON.stringify({
-      ...previewConfig,
-      showHints: taskConfig.showHints ?? false,
-    });
-    if (
-      notationPreviewHost.childElementCount > 0 &&
-      notationPreviewHost.dataset.previewSignature === signature
-    ) {
-      return;
-    }
-    notationPreviewHost.dataset.previewSignature = signature;
-    const previewEl = buildLivePreviewElement(
-      previewConfig,
-      taskConfig.showHints ?? false,
-    );
-    notationPreviewHost.replaceChildren(previewEl);
-  }
-
   function refreshCalculatedXp(): number {
     const rawBase = Number(baseXpInput.value);
     const baseXp = Number.isFinite(rawBase) && rawBase >= 0 ? rawBase : 0;
@@ -2539,18 +2536,8 @@ export function attachExerciseBuilderForm(
     const controls = [
       moduleList,
       laneSelect,
-      typeSelect,
+      typeEditor.element,
       promptInput,
-      choiceAddButton,
-      numericAnswerInput,
-      notationClefSelect,
-      notationMaxNotesInput,
-      notationLockDurationSelect,
-      notationCompactSelect,
-      notationShowDurationPicker,
-      notationShowHints,
-      notationExpectedPitchesInput,
-      notationExpectedDurationsInput,
       explanationInput,
       baseXpInput,
       submitButton,
@@ -2565,25 +2552,19 @@ export function attachExerciseBuilderForm(
   function resetForm(): void {
     editingQuestionId = null;
     baseXpManuallyEdited = false;
-    delete notationPreviewHost.dataset.previewSignature;
     form.reset();
     laneSelect.value = "mittel";
-    typeSelect.value = "single_choice";
+    typeEditor.load();
     baseXpInput.value = String(BASE_XP_DEFAULTS.mittel);
-    choiceRows.replaceChildren();
-    addChoiceRow("", true);
-    addChoiceRow("", false);
     tagPicker.clear();
     submitButton.textContent = "Aufgabe speichern";
     cancelButton.hidden = true;
-    syncQuestionTypeSections();
     refreshCalculatedXp();
   }
 
   function loadQuestion(question: ModuleQuestion): void {
     editingQuestionId = question.id;
     baseXpManuallyEdited = true;
-    delete notationPreviewHost.dataset.previewSignature;
     const selected = new Set(question.moduleIds);
     for (const checkbox of moduleOptions.querySelectorAll<HTMLInputElement>(
       "input[type=checkbox]",
@@ -2591,63 +2572,18 @@ export function attachExerciseBuilderForm(
       checkbox.checked = selected.has(checkbox.value);
     }
     laneSelect.value = question.targetLane;
-    typeSelect.value = question.questionType;
+    typeEditor.load(question);
     promptInput.value = question.prompt;
     explanationInput.value = question.explanation;
     baseXpInput.value = String(question.baseXp);
     tagPicker.setSelectedTags(question.tags);
 
-    choiceRows.replaceChildren();
-    if (
-      question.questionType === "single_choice" ||
-      question.questionType === "multi_select"
-    ) {
-      const correctSet = new Set(question.correctAnswers);
-      for (const optionText of question.options ?? []) {
-        addChoiceRow(optionText, correctSet.has(optionText));
-      }
-    } else if (question.questionType === "numeric_input") {
-      numericAnswerInput.value = question.correctAnswers[0] ?? "";
-    } else if (
-      question.questionType === "interactive_notation" &&
-      question.notationTask
-    ) {
-      const task = question.notationTask;
-      notationClefSelect.value = task.clef;
-      notationMaxNotesInput.value = String(task.maxNotes ?? 1);
-      notationLockDurationSelect.value =
-        typeof task.lockDuration === "string" ? task.lockDuration : "none";
-      notationCompactSelect.value =
-        task.compact === true || task.compact === "tight"
-          ? "tight"
-          : task.compact === "wide"
-            ? "wide"
-            : "false";
-      notationShowDurationPicker.checked = Boolean(task.showDurationPicker);
-      notationShowHints.checked = Boolean(task.showHints);
-      notationExpectedPitchesInput.value = (task.expectedPitches ?? []).join(
-        ", ",
-      );
-      notationExpectedDurationsInput.value = (
-        task.expectedDurations ?? []
-      ).join(", ");
-    }
-
     submitButton.textContent = "Aufgaben-Änderungen speichern";
     cancelButton.hidden = false;
-    syncQuestionTypeSections();
     refreshCalculatedXp();
     status.textContent = `Bearbeitungsmodus: Aufgabe „${question.prompt.slice(0, 48)}“ geladen.`;
     promptInput.focus();
   }
-
-  choiceAddButton.addEventListener("click", () => {
-    addChoiceRow("", false);
-    const lastInput = choiceRows.querySelector<HTMLInputElement>(
-      ".exercise-choice-row:last-child .exercise-choice-text",
-    );
-    lastInput?.focus();
-  });
 
   laneSelect.addEventListener("change", () => {
     if (!baseXpManuallyEdited && isTargetLane(laneSelect.value)) {
@@ -2660,22 +2596,6 @@ export function attachExerciseBuilderForm(
     baseXpManuallyEdited = true;
     refreshCalculatedXp();
   });
-
-  typeSelect.addEventListener("change", () => {
-    syncQuestionTypeSections();
-  });
-
-  for (const control of [
-    notationClefSelect,
-    notationMaxNotesInput,
-    notationLockDurationSelect,
-    notationCompactSelect,
-    notationShowDurationPicker,
-    notationShowHints,
-  ]) {
-    control.addEventListener("change", refreshNotationPreview);
-    control.addEventListener("input", refreshNotationPreview);
-  }
 
   cancelButton.addEventListener("click", () => {
     resetForm();
@@ -2731,38 +2651,13 @@ export function attachExerciseBuilderForm(
     const targetLane: TargetLane = isTargetLane(laneSelect.value)
       ? laneSelect.value
       : "mittel";
-    const questionType: QuestionType = isQuestionType(typeSelect.value)
-      ? typeSelect.value
-      : "single_choice";
-
-    let options: string[] | undefined;
-    let correctAnswers: string[] = [];
-    let notationTask: NotationBuilderTaskConfig | undefined;
-
-    if (questionType === "single_choice" || questionType === "multi_select") {
-      const rows = Array.from(
-        choiceRows.querySelectorAll<HTMLDivElement>(".exercise-choice-row"),
-      );
-      options = [];
-      for (const row of rows) {
-        const textEl = row.querySelector<HTMLInputElement>(
-          ".exercise-choice-text",
-        );
-        const checkEl = row.querySelector<HTMLInputElement>(
-          ".exercise-choice-correct",
-        );
-        const text = textEl?.value.trim() ?? "";
-        if (!text) continue;
-        options.push(text);
-        if (checkEl?.checked) {
-          correctAnswers.push(text);
-        }
-      }
-    } else if (questionType === "numeric_input") {
-      const ans = numericAnswerInput.value.trim();
-      correctAnswers = ans ? [ans] : [];
-    } else if (questionType === "interactive_notation") {
-      notationTask = readNotationConfigFromFields();
+    let typeFields: ReturnType<typeof typeEditor.read>;
+    try {
+      typeFields = typeEditor.read();
+    } catch (error) {
+      status.textContent =
+        error instanceof Error ? error.message : String(error);
+      return;
     }
 
     const questionId =
@@ -2777,11 +2672,8 @@ export function attachExerciseBuilderForm(
         (input) => input.value,
       ),
       targetLane,
-      questionType,
+      ...typeFields,
       prompt: promptInput.value.trim(),
-      ...(options !== undefined ? { options } : {}),
-      correctAnswers,
-      ...(notationTask !== undefined ? { notationTask } : {}),
       explanation: explanationInput.value.trim(),
       baseXp: Number(baseXpInput.value),
       tags: tagPicker.selectedTags(),
@@ -2822,7 +2714,6 @@ export function attachExerciseBuilderForm(
     }
   });
 
-  syncQuestionTypeSections();
   refreshCalculatedXp();
   void loadAvailableModules();
 
@@ -2831,7 +2722,7 @@ export function attachExerciseBuilderForm(
     loadQuestion,
     resetForm,
     refreshCalculatedXp,
-    refreshNotationPreview,
+    refreshNotationPreview: typeEditor.refreshNotationPreview,
     tagPicker,
   };
 }

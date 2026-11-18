@@ -1,11 +1,5 @@
 ---
-import {
-  BASE_XP_DEFAULTS,
-  NOTATION_DURATIONS,
-  QUESTION_TYPES,
-  TARGET_LANES,
-} from "../../lib/module-schema.ts";
-import { durationLabels } from "../../lib/rhythm.ts";
+import { BASE_XP_DEFAULTS, TARGET_LANES } from "../../lib/module-schema.ts";
 import "../../styles/contribution-tags.css";
 import "../../styles/contribution-checklist.css";
 import "../../styles/notation.css";
@@ -16,13 +10,6 @@ const laneLabels: Record<(typeof TARGET_LANES)[number], string> = {
   leicht: "Leicht",
   mittel: "Mittel (Quiz)",
   schwer: "Schwer (Fastlane)",
-};
-
-const questionTypeLabels: Record<(typeof QUESTION_TYPES)[number], string> = {
-  single_choice: "Eine richtige Antwort",
-  multi_select: "Mehrere richtige Antworten",
-  numeric_input: "Zahleneingabe / Wert",
-  interactive_notation: "Interaktive Notation",
 };
 ---
 
@@ -47,15 +34,6 @@ const questionTypeLabels: Record<(typeof QUESTION_TYPES)[number], string> = {
   </div>
 
   <div class="field">
-    <label for="exercise-question-type">Aufgabentyp</label>
-    <select id="exercise-question-type" name="questionType">
-      {QUESTION_TYPES.map((qType) => (
-        <option value={qType}>{questionTypeLabels[qType]}</option>
-      ))}
-    </select>
-  </div>
-
-  <div class="field">
     <label for="exercise-prompt">Aufgabenstellung</label>
     <textarea
       id="exercise-prompt"
@@ -67,130 +45,7 @@ const questionTypeLabels: Record<(typeof QUESTION_TYPES)[number], string> = {
     ></textarea>
   </div>
 
-  <section
-    id="exercise-choice-section"
-    class="exercise-dynamic-section"
-    aria-label="Antwortoptionen"
-  >
-    <h3>Antwortoptionen &amp; Lösung(en)</h3>
-    <div id="exercise-choice-rows" class="checklist-rows"></div>
-    <button id="exercise-choice-add" type="button">
-      + Antwortoption hinzufügen
-    </button>
-  </section>
-
-  <section
-    id="exercise-numeric-section"
-    class="exercise-dynamic-section"
-    aria-label="Exakte Lösung"
-    hidden
-  >
-    <h3>Exakte Lösung</h3>
-    <div class="field">
-      <label for="exercise-numeric-answer">Erwarteter Zahlenwert / Text</label>
-      <input
-        id="exercise-numeric-answer"
-        name="numericAnswer"
-        type="text"
-        placeholder="z. B. 880 oder 880 Hz"
-      />
-    </div>
-  </section>
-
-  <section
-    id="exercise-notation-section"
-    class="exercise-dynamic-section"
-    aria-label="Einstellungen für die Notationsaufgabe"
-    hidden
-  >
-    <h3>Interaktive Notationsaufgabe</h3>
-    <div class="module-field-grid">
-      <div class="field">
-        <label for="notation-clef">Notenschlüssel</label>
-        <select id="notation-clef" name="clef">
-          <option value="treble">Violinschlüssel</option>
-          <option value="bass">Bassschlüssel</option>
-        </select>
-      </div>
-
-      <div class="field">
-        <label for="notation-max-notes">Notenanzahl</label>
-        <input
-          id="notation-max-notes"
-          name="maxNotes"
-          type="number"
-          min="1"
-          max="8"
-          step="1"
-          value="1"
-        />
-      </div>
-
-      <div class="field">
-        <label for="notation-lock-duration">Notenwert sperren</label>
-        <select id="notation-lock-duration" name="lockDuration">
-          <option value="none">Keine Sperre</option>
-          {NOTATION_DURATIONS.map((dur) => (
-            <option value={dur}>{durationLabels[dur]}</option>
-          ))}
-        </select>
-      </div>
-
-      <div class="field">
-        <label for="notation-compact">Darstellung</label>
-        <select id="notation-compact" name="compact">
-          <option value="tight">Kompakt</option>
-          <option value="wide" selected>Standard</option>
-          <option value="false">Breit</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="module-field-grid">
-      <label class="module-checkbox-label" for="notation-show-duration-picker">
-        <input
-          id="notation-show-duration-picker"
-          name="showDurationPicker"
-          type="checkbox"
-        />
-        <span>Notenwert-Leiste anzeigen</span>
-      </label>
-
-      <label class="module-checkbox-label" for="notation-show-hints">
-        <input id="notation-show-hints" name="showHints" type="checkbox" checked />
-        <span>Tastatur-Hinweise anzeigen</span>
-      </label>
-    </div>
-
-    <div class="field">
-      <label for="notation-expected-pitches">
-        Erwartete Tonhöhen (kommagetrennt)
-      </label>
-      <input
-        id="notation-expected-pitches"
-        name="expectedPitches"
-        type="text"
-        placeholder="z. B. E4, G4, B4, D5 oder oktavunabhängig E"
-      />
-    </div>
-
-    <div class="field">
-      <label for="notation-expected-durations">
-        Erwartete Notenwerte (optional, kommagetrennt)
-      </label>
-      <input
-        id="notation-expected-durations"
-        name="expectedDurations"
-        type="text"
-        placeholder="z. B. quarter, half"
-      />
-    </div>
-
-    <div class="notation-live-preview-wrapper">
-      <span>Live-Vorschau</span>
-      <div id="notation-live-preview" class="notation-live-preview-box"></div>
-    </div>
-  </section>
+  <div id="exercise-type-fields"></div>
 
   <div class="field">
     <label for="exercise-explanation">Erklärung bei falscher Antwort</label>

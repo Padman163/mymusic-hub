@@ -472,14 +472,16 @@ export function validateModuleInput(input: unknown): ValidationResult {
 /** Validiert eine Modul-Aufgabe inklusive Prüfung der Modul-Referenz. */
 export function validateQuestionInput(
   input: unknown,
-  existingModules: readonly LearningModule[] | ModulesDatabase,
+  existingModules: readonly Pick<LearningModule, "id">[] | ModulesDatabase,
 ): ValidationResult {
   if (!isRecord(input)) {
     return { valid: false, errors: ["Aufgabendaten müssen ein Objekt sein."] };
   }
 
   const errors: string[] = [];
-  const moduleList: readonly LearningModule[] = Array.isArray(existingModules)
+  const moduleList: readonly Pick<LearningModule, "id">[] = Array.isArray(
+    existingModules,
+  )
     ? existingModules
     : "modules" in existingModules
       ? existingModules.modules
