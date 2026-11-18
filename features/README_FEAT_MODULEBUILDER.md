@@ -152,6 +152,8 @@ Schreibe Formeln in LaTeX-Schreibweise direkt in den Markdown-Text eines Theorie
 Die Code-Markierungen in diesen Beispielen dienen nur der Dokumentation: Im Builder schreibst du die Formeln **ohne Backticks und ohne Codeblock**. Wenn eine Formel als Text erscheint, prüfe zuerst die Dollarzeichen und die Klammern. KaTeX unterstützt viele, aber nicht alle LaTeX-Befehle; prüfe die Darstellung nach dem Speichern im Lektions-Player.
 
 #### Modulblöcke & Gruppenverwaltung
+
+- **Erreichbare XP:** Eingeklappte Theorieblöcke, Praxisblöcke und Lernpfad-Aufgaben zeigen ein XP-Badge wie im Lektions-Player. Bei einer eingeklappten Gruppe zeigt das Badge die Summe ihrer Einträge. Änderungen an Basis-XP und Tags werden direkt berücksichtigt.
 - **Hinweise für Lernpfad-Aufgaben:** In der aufgeklappten Aufgabe kannst du einen einfachen und einen stärkeren Hinweis hinterlegen. Beide sind optional und sollten helfen, ohne die Lösung zu verraten. Die separate Erklärung ist für die Auflösung nach drei Fehlversuchen gedacht. Wenn du Hinweise änderst, speichert der Modul-Button die betroffene Aufgabe mit. Du kannst sie auch weiterhin direkt in ihrer Blockkarte speichern.
 - **Lektionsgruppen erstellen:** Markiere mehrere ungruppierte Theorieblöcke und Lernpfad-Aufgaben über ihre Auswahlfelder und wähle **„Auswahl gruppieren“**. Die Einträge werden zu einer benannten Gruppe zusammengefasst; der Titel lässt sich im Gruppen-Header ändern.
 - **Einzelne Einträge lösen:** Mit dem **`−`-Button („Aus Gruppe lösen“)** wird ein einzelner Theorieblock oder eine Lernpfad-Aufgabe aus der Gruppe genommen, ohne das Element zu löschen. Es erscheint direkt nach der Gruppe wieder als eigenständiger Eintrag. Bleibt nur ein Gruppeneintrag übrig, wird auch dieser automatisch ungruppiert.

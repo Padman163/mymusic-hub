@@ -67,6 +67,7 @@ import {
 } from "./notation-renderer.ts";
 import { type Duration, durationLabels } from "./rhythm.ts";
 import { layoutNotationSystems, type NotationProps } from "./system-layout.ts";
+import { createXpBadge } from "./xp-badge.ts";
 import {
   calculateQuestionXp,
   calculateTheoryBlockXp,
@@ -2809,13 +2810,6 @@ export function attachModuleStepper(
         blocksHost.className = grouped
           ? "learning-theory-group-blocks"
           : "learning-theory-blocks";
-        const getXpBadge = (xp: number) => {
-          const badge = document.createElement("span");
-          badge.className = "contribution-tag learning-xp-badge";
-          if (xp > 0) badge.classList.add("has-xp");
-          badge.textContent = `${xp} XP`;
-          return badge;
-        };
         if (grouped) {
           const headingRow = document.createElement("div");
           headingRow.className = "learning-theory-heading";
@@ -2836,7 +2830,7 @@ export function attachModuleStepper(
                 calculateTheoryBlockXp(block, BASE_XP_DEFAULTS.practice),
               0,
             );
-          headingRow.append(heading, getXpBadge(groupXp));
+          headingRow.append(heading, createXpBadge(groupXp));
           wrap.append(headingRow);
         }
         for (const item of contentItems) {
@@ -2854,7 +2848,7 @@ export function attachModuleStepper(
               headingRow.className = "learning-theory-heading";
               headingRow.append(
                 heading,
-                getXpBadge(calculateTheoryBlockXp(block, mod.theoryBaseXp)),
+                createXpBadge(calculateTheoryBlockXp(block, mod.theoryBaseXp)),
               );
               blockEl.append(headingRow);
             }
@@ -2879,7 +2873,7 @@ export function attachModuleStepper(
             headingRow.className = "learning-theory-heading";
             headingRow.append(
               blockTitle,
-              getXpBadge(
+              createXpBadge(
                 calculateTheoryBlockXp(block, BASE_XP_DEFAULTS.practice),
               ),
             );

@@ -45,6 +45,7 @@ import {
   renderNotationBuilderSvg,
 } from "./notation-builder.ts";
 import { type Duration, durationLabels } from "./rhythm.ts";
+import { createXpBadge, updateXpBadge } from "./xp-badge.ts";
 import {
   BASE_XP_DEFAULTS,
   calculateQuestionXp,
@@ -406,6 +407,7 @@ export function createTheoryBlockEditor(
   >();
   const legacyVisuals = new WeakMap<HTMLDivElement, Partial<TheoryBlock>>();
   const blockTags = new WeakMap<HTMLDivElement, XpTagPickerController>();
+  const xpByRow = new WeakMap<Element, number>();
   let exerciseQuestions: ModuleQuestion[] = [];
   const draftExerciseIds = new Set<string>();
   const expandedGroups = new Set<string>();
@@ -462,6 +464,18 @@ export function createTheoryBlockEditor(
     return row.closest<HTMLDivElement>(".theory-block-group") ?? row;
   }
 
+  function refreshGroupXp(group: HTMLElement): void {
+    const badge = group.querySelector<HTMLElement>(
+      ".theory-group-summary > .learning-xp-badge",
+    );
+    if (!badge) return;
+    const xp = Array.from(group.children).reduce(
+      (total, child) => total + (xpByRow.get(child) ?? 0),
+      0,
+    );
+    updateXpBadge(badge, xp);
+  }
+
   function renderGroupHeaders(): void {
     const rowElements = allRows();
     rows.replaceChildren();
@@ -502,7 +516,7 @@ export function createTheoryBlockEditor(
       const groupTitleText = document.createElement("span");
       groupTitleText.className = "theory-group-summary-title";
       groupTitleText.textContent = `Abschnitt · ${row.dataset.groupTitle ?? ""}`;
-      groupSummary.append(groupTitleText);
+      groupSummary.append(groupTitleText, " ", createXpBadge());
       groupDetails.append(groupSummary);
 
       const label = document.createElement("label");
@@ -578,6 +592,7 @@ export function createTheoryBlockEditor(
         else delete member.dataset.groupCollapsed;
       }
       group.append(header, ...members);
+      refreshGroupXp(group);
       rows.append(group);
     }
     for (const groupId of expandedGroups) {
@@ -738,7 +753,7 @@ export function createTheoryBlockEditor(
 
   function refreshCalculatedXp(): void {
     for (const row of rows.querySelectorAll<HTMLDivElement>(
-      ".theory-block-row, .module-exercise-row, .module-practice-row",
+      ".theory-block-row, .module-practice-row",
     )) {
       const input = row.querySelector<HTMLInputElement>(".theory-block-xp");
       const result = row.querySelector<HTMLElement>(
@@ -750,7 +765,21 @@ export function createTheoryBlockEditor(
         ? BASE_XP_DEFAULTS.practice
         : getDefaultBaseXp();
       const baseXp = input.value.trim() ? Number(input.value) : defaultXp;
-      result.textContent = `Berechnete XP: ${calculateTheoryBlockXp({ baseXp, tags: picker.selectedTags() }, defaultXp)}`;
+      const xp = calculateTheoryBlockXp(
+        { baseXp, tags: picker.selectedTags() },
+        defaultXp,
+      );
+      xpByRow.set(row, xp);
+      result.textContent = `Berechnete XP: ${xp}`;
+      const badge = row.querySelector<HTMLElement>(
+        "summary > .learning-xp-badge",
+      );
+      if (badge) updateXpBadge(badge, xp);
+    }
+    for (const group of rows.querySelectorAll<HTMLElement>(
+      ".theory-block-group",
+    )) {
+      refreshGroupXp(group);
     }
   }
 
@@ -841,7 +870,7 @@ export function createTheoryBlockEditor(
       createUngroupItemButton(row),
       removeButton,
     );
-    summary.append(orderLabel);
+    summary.append(orderLabel, " ", createXpBadge());
 
     const titleLabel = document.createElement("label");
     titleLabel.className = "field";
@@ -1222,7 +1251,8 @@ export function createTheoryBlockEditor(
       const summary = document.createElement("summary");
       const label = document.createElement("span");
       label.className = "theory-block-order-label";
-      summary.append(label);
+      const badge = createXpBadge();
+      summary.append(label, " ", badge);
       const editor = document.createElement("div");
       editor.className = "module-exercise-editor";
       const prompt = document.createElement("textarea");
@@ -1275,9 +1305,15 @@ export function createTheoryBlockEditor(
         onChange: updateXp,
       });
       function updateXp(): void {
-        const rawXp = Number(baseXp.value);
-        const validXp = Number.isFinite(rawXp) && rawXp >= 0 ? rawXp : 0;
-        xpOutput.textContent = `Berechnete XP: ${calculateQuestionXp(validXp, tagPicker.selectedTags())}`;
+        const xp = calculateQuestionXp(
+          Number(baseXp.value),
+          tagPicker.selectedTags(),
+        );
+        xpByRow.set(row, xp);
+        updateXpBadge(badge, xp);
+        xpOutput.textContent = `Berechnete XP: ${xp}`;
+        const group = row.closest<HTMLElement>(".theory-block-group");
+        if (group) refreshGroupXp(group);
       }
       baseXp.addEventListener("input", updateXp);
       updateXp();

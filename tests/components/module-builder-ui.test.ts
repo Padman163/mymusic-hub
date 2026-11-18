@@ -526,7 +526,7 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     expect(groupCard?.querySelectorAll(".theory-block-row, .module-exercise-row"))
       .toHaveLength(2);
     expect(exerciseRow?.querySelector(".theory-group-editor-heading")).toBeNull();
-    expect(groupCard?.querySelector(".theory-group-summary")?.textContent).toBe(
+    expect(groupCard?.querySelector(".theory-group-summary-title")?.textContent).toBe(
       `Abschnitt · ${groupTitle}`,
     );
     expect(groupCard?.querySelector(".theory-group-editor-actions")?.textContent)
@@ -600,7 +600,8 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     details.open = true;
     title.value = "Neuer Titel";
     title.dispatchEvent(new Event("input", { bubbles: true }));
-    expect(details.querySelector("summary")?.textContent).toBe("Theorie 1 · Neuer Titel");
+    expect(details.querySelector(".theory-block-order-label")?.textContent)
+      .toBe("Theorie 1 · Neuer Titel");
     expect(controller.theoryBlockEditor.items()?.[0].title).toBe("Neuer Titel");
   });
 
@@ -668,17 +669,61 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     const xp = row.querySelector<HTMLInputElement>(".theory-block-xp");
     const tag = row.querySelector<HTMLInputElement>('input[value="Notensystem"]');
     const result = row.querySelector(".theory-block-calculated-xp");
+    const badge = row.querySelector("summary > .learning-xp-badge");
     if (!xp || !tag) throw new Error("Block-XP-Felder fehlen");
     tag.checked = true;
     tag.dispatchEvent(new Event("change"));
     expect(result?.textContent).toBe("Berechnete XP: 45");
+    expect(badge?.textContent).toBe("45 XP");
     xp.value = "20";
     xp.dispatchEvent(new Event("input"));
     expect(result?.textContent).toBe("Berechnete XP: 30");
+    expect(badge?.textContent).toBe("30 XP");
     expect(controller.theoryBlockEditor.items()?.[0]).toMatchObject({
       baseXp: 20,
       tags: ["Notensystem"],
     });
+  });
+
+  it("zeigt erreichbare XP für Praxis, Übungen und gemischte Gruppen", () => {
+    const db = seedDb as unknown as ModulesDatabase;
+    const question = db.questions.find(({ id }) => id === "q-101-ex-1");
+    if (!question) throw new Error("Testübung fehlt");
+    const exercise = { ...question, baseXp: 10, tags: [] };
+    const group = { groupId: "g", groupTitle: "Abschnitt" };
+    const form = mountModuleForm();
+    const { theoryBlockEditor: editor } = attachModuleBuilderForm(form);
+    editor.addBlock({ id: "tb", title: "Theorie", ...group });
+    editor.addPracticeBlock({ title: "Praxis" });
+    editor.setExercises([exercise], [
+      { kind: "theory", id: "tb", ...group },
+      { kind: "exercise", id: exercise.id, ...group },
+    ]);
+
+    const groupDetails = form.querySelector<HTMLDetailsElement>(".theory-group-details");
+    const groupBadge = groupDetails?.querySelector("summary > .learning-xp-badge");
+    const practiceBadge = form.querySelector(".module-practice-row summary > .learning-xp-badge");
+    const exerciseRow = form.querySelector(".module-exercise-row");
+    const exerciseBadge = exerciseRow?.querySelector("summary > .learning-xp-badge");
+    const exerciseXp = exerciseRow?.querySelector<HTMLInputElement>('input[aria-label="Basis-XP"]');
+    const moduleXp = form.querySelector<HTMLInputElement>("#module-theory-base-xp");
+    if (!exerciseXp || !moduleXp) throw new Error("Basis-XP-Felder fehlen");
+
+    expect(groupDetails?.open).toBe(false);
+    expect(groupBadge?.textContent).toBe("40 XP");
+    expect(practiceBadge?.textContent).toBe("20 XP");
+    expect(exerciseBadge?.textContent).toBe("10 XP");
+
+    exerciseXp.value = "0";
+    exerciseXp.dispatchEvent(new Event("input"));
+    expect(exerciseBadge?.textContent).toBe("0 XP");
+    expect(exerciseBadge?.classList.contains("has-xp")).toBe(false);
+    expect(groupBadge?.textContent).toBe("30 XP");
+
+    moduleXp.value = "40";
+    moduleXp.dispatchEvent(new Event("input"));
+    expect(groupBadge?.textContent).toBe("40 XP");
+    expect(practiceBadge?.textContent).toBe("20 XP");
   });
 
   it("sortiert Übungen zwischen Theorieblöcke und lädt die gespeicherte Reihenfolge", async () => {
