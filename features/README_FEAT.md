@@ -74,6 +74,7 @@ Nach dem Ablegen von `kick.wav` ist dieses MDX-Beispiel direkt verwendbar:
 import DrumPattern from '../../../../components/DrumPattern.astro';
 
 <DrumPattern
+  bpm={120}
   interactive={false}
   patternData={[
     {
@@ -90,10 +91,38 @@ Der Importpfad gilt für die Feature-Seite unter
 
 Aktive Zellen spielen ihren Step-Anschlag (`0–127` linear auf `0–1`) ab;
 ohne expliziten Wert gilt volle Lautstärke. Spur-Header spielen immer in voller
-Lautstärke. Enter/Leertaste und Tab sind unterstützt; erfolgreich gestartete
+Lautstärke. Enter und Tab sind unterstützt; erfolgreich gestartete
 Schläge leuchten etwa 150 ms auf. Bei `interactive={true}` bleibt das bisherige
 Umschalten der Steps erhalten: Ein zuvor aktiver Step erklingt vor dem Ausschalten.
 Änderungen in der Anschlagzeile wirken auch auf Audio.
+
+**Haltewiedergabe:** `bpm?: number` setzt das anfängliche Tempo (Standard `120`,
+endliche Zahl größer `0`). Ein beschriftetes BPM-Feld erlaubt lokale Änderungen;
+diese werden nicht gespeichert und gelten beim nächsten Start. Hält der Nutzer
+die Leertaste im fokussierten Pattern oder einer seiner Zellen, laufen alle
+Spuren gemeinsam in einer Schleife ab Step 1. Tastenwiederholungen starten keinen
+zweiten Lauf und ändern keine Steps. Eingabefelder und Links bleiben ausgenommen.
+Loslassen, Fokusverlust aus dem Raster, Fenster-/Tabwechsel, Navigation oder
+Entfernen des Patterns stoppen den Lauf einschließlich klingender und
+vorgeplanter Sounds. Erneutes Drücken startet wieder bei Step 1.
+
+`src/lib/drum-playback.ts` kapselt Tempo-Bedienung, Tastatursteuerung und den
+Scheduler. Er plant alle 25 ms bis zu 100 ms auf der Web-Audio-Uhr voraus,
+statt den hörbaren Start an ungenaue DOM-Timer zu binden.
+`DrumAudioEngine.playSound` unterstützt dazu eine absolute Audio-Startzeit
+(`when`) und ein `AbortSignal` je Wiedergabe. Abbruch verhindert auch verspätete
+Starts nach noch laufendem Laden oder einer Audiofreigabe. Andere Wiedergaben
+bleiben davon unberührt.
+
+BPM zählt ausdrücklich Viertelnoten, auch bei 6/8. Für eine Auflösung `n/d`
+gilt `Step-Dauer = 60 / bpm × 4 × n / d` Sekunden; ein Loop umfasst genau
+`steps` Step-Dauern. Bei 4/4 und `1/8` ergeben acht Steps einen Takt; abweichende
+Step-Zahlen werden nicht auf einen Takt gestaucht oder gestreckt. Die Taktart
+bestimmt die Takteinteilung, nicht die hier festgelegte BPM-Einheit.
+Für Audio-Läufe sind positive Brüche als Auflösung erforderlich; rein visuelle
+Beschreibungen wie `1/16 + Achteltriole` bleiben darstellbar, starten aber keinen
+Loop und zeigen stattdessen einen Hinweis. Nach längeren Hauptthread-Blockaden
+werden verpasste Steps übersprungen statt als hörbarer Schlagstau nachgeholt.
 
 `src/lib/drum-pattern.ts` verbindet Audio mit dem DOM-Controller
 `initializeDrumPatterns` und dem dynamischen Modul-Player; Props und Validierung
@@ -105,7 +134,10 @@ Rasterbedienung zu blockieren. Ein erneuter Versuch ist möglich.
 
 Bedienung: [Wiki: Drum-Pattern anhören](../src/content/docs/wiki/drum-pattern.mdx).
 `tests/drum-audio.test.ts` prüft Cache, paralleles Laden, synchronen Cache-Start,
-Polyphonie, Velocity, Fehler, SSR und DOM-/Tastaturinteraktionen mit Audio-Mocks.
+Polyphonie, Velocity, Fehler, SSR und DOM-/Tastaturinteraktionen mit Audio-Mocks
+sowie BPM-/Auflösungs-Timing, Loops, sofortiges Stoppen und Neustarts. Abbruch
+während des Ladens oder der Audiofreigabe und unabhängige Wiedergaben sind
+ebenfalls abgedeckt.
 Echte Audiogeräte-Latenz und Browser-Audiofreigaben werden damit nicht gemessen.
 
 ### 2.4 Die Songwriting-Gesamtpartitur (`ScorePattern.astro`)

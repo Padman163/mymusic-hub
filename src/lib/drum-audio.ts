@@ -1,7 +1,16 @@
+export interface DrumSoundOptions {
+  when?: number;
+  signal?: AbortSignal;
+}
+
 export class DrumAudioEngine {
   private context?: AudioContext;
   private readonly buffers = new Map<string, AudioBuffer>();
   private readonly loading = new Map<string, Promise<AudioBuffer>>();
+
+  get currentTime(): number {
+    return this.getContext().currentTime;
+  }
 
   private getContext(): AudioContext {
     if (typeof window === "undefined" || !window.AudioContext) {
@@ -66,15 +75,29 @@ export class DrumAudioEngine {
     }
   }
 
-  async playSound(url: string, velocity?: number): Promise<boolean> {
+  async playSound(
+    url: string,
+    velocity?: number,
+    options: DrumSoundOptions = {},
+  ): Promise<boolean> {
     try {
+      if (options.signal?.aborted) return false;
       if (velocity !== undefined && !Number.isFinite(velocity)) {
         throw new Error("Velocity muss eine endliche Zahl sein.");
+      }
+      if (
+        options.when !== undefined &&
+        (!Number.isFinite(options.when) || options.when < 0)
+      ) {
+        throw new Error(
+          "Die Audio-Startzeit muss eine nicht-negative Zahl sein.",
+        );
       }
       const context = this.getContext();
       // resume() muss vor dem ersten await innerhalb der Nutzerinteraktion starten.
       if (context.state !== "running" && !(await this.unlock())) return false;
       const buffer = this.buffers.get(url) ?? (await this.loadSound(url));
+      if (options.signal?.aborted) return false;
       const source = context.createBufferSource();
       const gain = context.createGain();
       gain.gain.value =
@@ -82,11 +105,18 @@ export class DrumAudioEngine {
       source.buffer = buffer;
       source.connect(gain);
       gain.connect(context.destination);
-      source.onended = () => {
+      const cleanup = () => {
+        options.signal?.removeEventListener("abort", stop);
         source.disconnect();
         gain.disconnect();
       };
-      source.start();
+      const stop = () => {
+        source.stop();
+        cleanup();
+      };
+      source.onended = cleanup;
+      source.start(options.when ?? 0);
+      options.signal?.addEventListener("abort", stop, { once: true });
       return true;
     } catch (error) {
       console.warn(

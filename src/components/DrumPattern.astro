@@ -10,6 +10,7 @@ export type Props = DrumPatternProps;
 
 const {
   steps = DEFAULT_DRUM_PATTERN_PROPS.steps,
+  bpm = DEFAULT_DRUM_PATTERN_PROPS.bpm,
   timeSignature = DEFAULT_DRUM_PATTERN_PROPS.timeSignature,
   resolution = DEFAULT_DRUM_PATTERN_PROPS.resolution,
   highlightTrack = DEFAULT_DRUM_PATTERN_PROPS.highlightTrack,
@@ -92,6 +93,9 @@ const stepLabels = Array.from(
   data-show-track-note={showTrackNote}
   data-continuous={continuous}
   data-enable-audio={enableAudio ? "true" : undefined}
+  data-bpm={enableAudio ? bpm : undefined}
+  data-time-signature={enableAudio ? timeSignature : undefined}
+  data-resolution={enableAudio ? resolution : undefined}
 >
   <div class="pattern-header" style={`--steps: ${steps};`}>
     <div class="header-spacer" aria-hidden="true"></div>
@@ -582,6 +586,45 @@ const stepLabels = Array.from(
 
   .studio-one-pattern :global(.drum-audio-status[hidden]) {
     display: none;
+  }
+
+  .studio-one-pattern[data-enable-audio="true"]:focus-visible {
+    outline: 2px solid #d4d4d8;
+    outline-offset: 2px;
+  }
+
+  .studio-one-pattern :global(.drum-playback-controls) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    font-size: 12px;
+  }
+
+  .studio-one-pattern :global(.drum-playback-tempo) {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .studio-one-pattern :global(.drum-playback-tempo input) {
+    width: 80px;
+    padding: 4px;
+    border: 1px solid #52525b;
+    border-radius: 4px;
+    background: #18181b;
+    color: #d1d5db;
+    font: inherit;
+  }
+
+  .studio-one-pattern :global(.drum-playback-tempo input:invalid) {
+    border-color: #f87171;
+  }
+
+  .studio-one-pattern :global(.step-cell.is-current-step),
+  .studio-one-pattern :global(.step-number.is-current-step) {
+    box-shadow: inset 0 0 0 2px #fff;
   }
 </style>
 

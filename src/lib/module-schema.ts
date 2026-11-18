@@ -52,6 +52,7 @@ export interface DrumPatternTrack {
 
 export interface DrumPatternProps {
   steps?: number;
+  bpm?: number;
   timeSignature?: string;
   resolution?: string;
   highlightTrack?: string;
@@ -110,6 +111,7 @@ export const DEFAULT_DRUM_PATTERN_PROPS: Required<
   Omit<DrumPatternProps, "stepLabels" | "enableAudio">
 > = {
   steps: 8,
+  bpm: 120,
   timeSignature: "4/4",
   resolution: "1/8",
   highlightTrack: "",
@@ -149,6 +151,7 @@ export function getDrumPatternPropsErrors(value: unknown): string[] {
   const errors: string[] = [];
   const propNames = new Set([
     "steps",
+    "bpm",
     "timeSignature",
     "resolution",
     "highlightTrack",
@@ -177,6 +180,14 @@ export function getDrumPatternPropsErrors(value: unknown): string[] {
     value.steps <= 64
       ? value.steps
       : DEFAULT_DRUM_PATTERN_PROPS.steps;
+  if (
+    value.bpm !== undefined &&
+    (typeof value.bpm !== "number" ||
+      !Number.isFinite(value.bpm) ||
+      value.bpm <= 0)
+  ) {
+    errors.push("bpm muss eine endliche Zahl größer 0 sein.");
+  }
   if (
     value.steps !== undefined &&
     (typeof value.steps !== "number" ||

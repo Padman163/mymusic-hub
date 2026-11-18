@@ -1,4 +1,5 @@
 import { drumAudioEngine } from "./drum-audio.ts";
+import { attachDrumPatternPlayback } from "./drum-playback.ts";
 import {
   DEFAULT_DRUM_PATTERN_PROPS,
   type DrumPatternTrack,
@@ -67,6 +68,7 @@ export function createDrumPatternElement(
   );
   const {
     steps = DEFAULT_DRUM_PATTERN_PROPS.steps,
+    bpm = DEFAULT_DRUM_PATTERN_PROPS.bpm,
     timeSignature = DEFAULT_DRUM_PATTERN_PROPS.timeSignature,
     resolution = DEFAULT_DRUM_PATTERN_PROPS.resolution,
     highlightTrack = DEFAULT_DRUM_PATTERN_PROPS.highlightTrack,
@@ -116,7 +118,12 @@ export function createDrumPatternElement(
   pattern.dataset.showVelocity = String(showVelocity);
   pattern.dataset.showTrackNote = String(showTrackNote);
   pattern.dataset.continuous = String(continuous);
-  if (enableAudio) pattern.dataset.enableAudio = "true";
+  if (enableAudio) {
+    pattern.dataset.enableAudio = "true";
+    pattern.dataset.bpm = String(bpm);
+    pattern.dataset.timeSignature = timeSignature;
+    pattern.dataset.resolution = resolution;
+  }
 
   const header = createScopedElement(
     document,
@@ -471,6 +478,10 @@ function initializeDrumPatternAudio(pattern: HTMLElement): void {
   help.href = "/wiki/drum-pattern/";
   help.textContent = "Hilfe zur Drum-Audiowiedergabe";
   pattern.append(status, help);
+  attachDrumPatternPlayback(pattern, (message) => {
+    status.hidden = !message;
+    status.textContent = message;
+  });
   const timers = new WeakMap<HTMLElement, ReturnType<typeof setTimeout>>();
 
   rows.forEach((row) => {
@@ -510,7 +521,7 @@ function initializeDrumPatternAudio(pattern: HTMLElement): void {
     "keydown",
     (event) => {
       const trigger = getTrigger(event);
-      if (!trigger || (event.key !== "Enter" && event.key !== " ")) return;
+      if (!trigger || event.key !== "Enter") return;
       event.preventDefault();
       event.stopPropagation();
       if (!event.repeat) trigger.click();

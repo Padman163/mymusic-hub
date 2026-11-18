@@ -191,8 +191,11 @@ Das Raster zeigt einen Takt im 4/4-Takt mit acht Steps, also Achtel-Auflösung. 
 ### Drum-Pattern mit Soundfiles
 
 Mit hinterlegten Sounds kannst du aktive Zellen und Instrumentennamen anklicken
-oder mit **Tab** und **Enter/Leertaste** anhören. Ein aktiver Step verwendet seine
+oder mit **Tab** und **Enter** anhören. Ein aktiver Step verwendet seine
 Velocity; der Instrumentenname spielt in voller Lautstärke.
+Stelle das gewünschte Tempo im BPM-Feld ein, verlasse das Feld mit **Tab** und
+halte im fokussierten Raster die **Leertaste**: Das Pattern läuft in einer Schleife.
+Loslassen stoppt sofort; erneutes Drücken startet wieder bei Step 1.
 Die [Wiki-Anleitung](/wiki/drum-pattern/) erklärt Bedienung und Audiofreigabe.
 
 Lege zuerst eine eigene oder passend lizenzierte `kick.wav` unter
@@ -203,6 +206,7 @@ Kopiere anschließend dieses Beispiel in eine MDX-Seite gleicher Verzeichnistief
 import DrumPattern from '../../../../components/DrumPattern.astro';
 
 <DrumPattern
+  bpm={120}
   interactive={false}
   patternData={[
     {
@@ -216,15 +220,23 @@ import DrumPattern from '../../../../components/DrumPattern.astro';
 
 
 <DrumPattern
+  bpm={120}
   interactive={false}
   patternData={[
     {
       name: "Kick", note: "C1", color: "#ef4444",
-      activeSteps: [0, 4], velocities: [127, 0, 0, 0, 127],
+      activeSteps: [0, 4], velocities: [127, 0, 0, 0, 64 ],
       soundUrl: "/sounds/drums/Kick.wav",
     },
   ]}
 />
+
+Bei `120 BPM` dauert eine Viertelnote eine halbe Sekunde. Die acht Achtel-Steps
+einschließlich der Pausen ergeben einen zwei Sekunden langen 4/4-Takt.
+Die Kick im Beispiel liegt auf **1 und 3**. Für Schläge auf **1, 2, 3 und 4**
+verwende `activeSteps: [0, 2, 4, 6]`.
+BPM zählt hier immer Viertelnoten; die Auflösung bestimmt den Abstand der Steps,
+die Step-Anzahl die Länge des Loops.
 
 Audio ist mit `soundUrl` automatisch aktiv; `enableAudio={false}` schaltet es
 aus. Ohne explizite Velocity gilt volle Lautstärke, `0` bleibt stumm.
