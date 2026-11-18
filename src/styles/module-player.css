@@ -109,6 +109,7 @@
 
 .learning-breakdown-group[hidden],
 .learning-reset-area[hidden],
+.learning-btn[data-action="request-reset"][hidden],
 .learning-reset-confirm[hidden] {
   display: none;
 }

@@ -145,6 +145,112 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     expect(loadLearningProgress(db.modules).totalXp).toBe(10);
   });
 
+  it.each([
+    { answer: "880", attempts: 1 },
+    { answer: "440", attempts: 3 },
+  ])(
+    "sperrt den Rücksprung bis zum Aufgabenabschluss ($attempts Versuch(e))",
+    ({ answer, attempts }) => {
+      const db = structuredClone(seedDb);
+      const mod = db.modules[0];
+      mod.theoryBlocks = [mod.theoryBlocks[0]];
+      db.questions = db.questions.filter(
+        (question) => question.id === "q-101-ex-1",
+      );
+      mod.contentOrder = [
+        { kind: "theory", id: mod.theoryBlocks[0].id },
+        { kind: "exercise", id: "q-101-ex-1" },
+      ];
+      const root = document.createElement("section");
+      root.dataset.moduleId = mod.id;
+      document.body.append(root);
+      attachModuleStepper(root, { initialDb: db, autoFetch: false });
+
+      const markRead = root.querySelector<HTMLButtonElement>(
+        '[data-action="complete-theory-block"]',
+      );
+      if (!markRead) throw new Error("Theorieabschnitt fehlt");
+      markRead.click();
+      const next = root.querySelector<HTMLButtonElement>(
+        '[data-action="next-lesson-section"]',
+      );
+      if (!next || next.disabled) throw new Error("Aufgabenabschnitt fehlt");
+      next.click();
+
+      const previous = root.querySelector<HTMLButtonElement>(
+        '[data-action="previous-lesson-section"]',
+      );
+      const getPreviousStep = () =>
+        root.querySelector<HTMLButtonElement>(
+          '.learning-lesson-step[data-step-index="0"]',
+        );
+      const input = root.querySelector<HTMLInputElement>(
+        ".learning-numeric-input",
+      );
+      const check = root.querySelector<HTMLButtonElement>(
+        '[data-action="check-exercise"]',
+      );
+      if (!previous || !getPreviousStep() || !input || !check) {
+        throw new Error("Aufgabennavigation fehlt");
+      }
+      expect(previous.disabled).toBe(true);
+      expect(getPreviousStep()?.disabled).toBe(true);
+
+      for (let attempt = 0; attempt < attempts; attempt += 1) {
+        input.value = answer;
+        check.click();
+        if (attempt < attempts - 1) {
+          expect(previous.disabled).toBe(true);
+          expect(getPreviousStep()?.disabled).toBe(true);
+        }
+      }
+
+      expect(previous.disabled).toBe(false);
+      const previousStep = getPreviousStep();
+      if (!previousStep) throw new Error("Schritt-Navigation fehlt");
+      expect(previousStep.disabled).toBe(false);
+      previousStep.click();
+      expect(root.querySelector('[data-step="theory"]')).not.toBeNull();
+    },
+  );
+
+  it("sperrt den Rücksprung bis eine Praxisaufgabe als erledigt markiert ist", () => {
+    const db = structuredClone(seedDb);
+    const mod = db.modules[0];
+    mod.theoryBlocks = [mod.theoryBlocks[0]];
+    mod.practiceBlocks = [
+      { id: "practice-1", title: "Praxis", markdownContent: "Übung." },
+    ];
+    db.questions = [];
+    mod.contentOrder = [
+      { kind: "theory", id: mod.theoryBlocks[0].id },
+      { kind: "practice", id: "practice-1" },
+    ];
+    const root = document.createElement("section");
+    root.dataset.moduleId = mod.id;
+    document.body.append(root);
+    attachModuleStepper(root, { initialDb: db, autoFetch: false });
+
+    root
+      .querySelector<HTMLButtonElement>('[data-action="complete-theory-block"]')
+      ?.click();
+    root
+      .querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]')
+      ?.click();
+    const previous = root.querySelector<HTMLButtonElement>(
+      '[data-action="previous-lesson-section"]',
+    );
+    const completePractice = root.querySelector<HTMLButtonElement>(
+      '[data-action="complete-practice"]',
+    );
+    if (!previous || !completePractice) {
+      throw new Error("Praxisaufgabe fehlt");
+    }
+    expect(previous.disabled).toBe(true);
+    completePractice.click();
+    expect(previous.disabled).toBe(false);
+  });
+
   it("merkt sich richtig gelöste Aufgaben bis zum Lernfortschritts-Reset", () => {
     const db = structuredClone(seedDb);
     const mod = db.modules[0];
@@ -1088,13 +1194,33 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
         ?.disabled,
     ).toBe(true);
 
-    // Geschützter Reset setzt XP und Modul-2-Sperre zurück
-    dashboardEl
-      .querySelector<HTMLButtonElement>('[data-action="request-reset"]')
-      ?.click();
-    dashboardEl
-      .querySelector<HTMLButtonElement>('[data-action="confirm-reset"]')
-      ?.click();
+    const reset = mod1After?.querySelector<HTMLButtonElement>(
+      '.learning-start-quiz + [data-action="request-reset"]',
+    );
+    const confirmation = mod1After?.querySelector<HTMLElement>(
+      ".learning-reset-confirm",
+    );
+    const cancel = confirmation?.querySelector<HTMLButtonElement>(
+      '[data-action="cancel-reset"]',
+    );
+    const confirm = confirmation?.querySelector<HTMLButtonElement>(
+      '[data-action="confirm-reset"]',
+    );
+    if (!reset || !confirmation || !cancel || !confirm) {
+      throw new Error("Reset neben der Quizaktion fehlt");
+    }
+
+    expect(confirmation.hidden).toBe(true);
+    reset.click();
+    expect(confirmation.hidden).toBe(false);
+    expect(loadLearningProgress(db.modules).totalXp).toBe(expectedXp);
+    cancel.click();
+    expect(confirmation.hidden).toBe(true);
+    expect(loadLearningProgress(db.modules).totalXp).toBe(expectedXp);
+
+    reset.click();
+    confirm.click();
+    expect(loadLearningProgress(db.modules).totalXp).toBe(0);
     expect(
       dashboardEl.querySelector<HTMLElement>("[data-dashboard-xp]")?.dataset
         .dashboardXp,

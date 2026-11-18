@@ -1158,6 +1158,56 @@ function formatExerciseSolution(question: ModuleQuestion): string {
   return parts.join("; ");
 }
 
+function createProgressResetControls(getDatabase: () => ModulesDatabase) {
+  const resetBtn = document.createElement("button");
+  resetBtn.type = "button";
+  resetBtn.className = "learning-btn learning-btn-danger";
+  resetBtn.dataset.action = "request-reset";
+  resetBtn.textContent = "Lernfortschritt zurücksetzen";
+
+  const confirmBox = document.createElement("div");
+  confirmBox.className = "learning-reset-confirm";
+  confirmBox.hidden = true;
+  const confirmLabel = document.createElement("span");
+  confirmLabel.textContent =
+    "Den gesamten Lernfortschritt zurücksetzen? Alle XP gehen verloren.";
+  const confirmYes = document.createElement("button");
+  confirmYes.type = "button";
+  confirmYes.className = "learning-btn learning-btn-danger";
+  confirmYes.dataset.action = "confirm-reset";
+  confirmYes.textContent = "Ja, zurücksetzen";
+  const confirmCancel = document.createElement("button");
+  confirmCancel.type = "button";
+  confirmCancel.className = "learning-btn";
+  confirmCancel.dataset.action = "cancel-reset";
+  confirmCancel.textContent = "Abbrechen";
+  confirmBox.append(confirmLabel, confirmYes, confirmCancel);
+
+  resetBtn.addEventListener("click", () => {
+    confirmBox.hidden = false;
+    resetBtn.hidden = true;
+    confirmCancel.focus();
+  });
+  confirmCancel.addEventListener("click", () => {
+    confirmBox.hidden = true;
+    resetBtn.hidden = false;
+    resetBtn.focus();
+  });
+  confirmYes.addEventListener("click", () => {
+    const db = getDatabase();
+    clearLearningProgress();
+    commitProgressChange(
+      createInitialProgress(db.modules, db.quizSettings),
+      db,
+      "reset",
+    );
+  });
+
+  const controls = document.createDocumentFragment();
+  controls.append(resetBtn, confirmBox);
+  return controls;
+}
+
 export interface ProgressDashboardController {
   refresh(): void;
   setDatabase(db: ModulesDatabase): void;
@@ -1352,48 +1402,7 @@ export function attachProgressDashboard(
     resetArea.className = "learning-reset-area";
     resetArea.hidden = !showDetails;
 
-    const resetBtn = document.createElement("button");
-    resetBtn.type = "button";
-    resetBtn.className = "learning-btn learning-btn-danger";
-    resetBtn.dataset.action = "request-reset";
-    resetBtn.textContent = "Lernfortschritt zurücksetzen";
-
-    const confirmBox = document.createElement("div");
-    confirmBox.className = "learning-reset-confirm";
-    confirmBox.hidden = true;
-    const confirmLabel = document.createElement("span");
-    confirmLabel.textContent =
-      "Wirklich alle XP und freigeschalteten Module zurücksetzen?";
-    const confirmYes = document.createElement("button");
-    confirmYes.type = "button";
-    confirmYes.className = "learning-btn learning-btn-danger";
-    confirmYes.dataset.action = "confirm-reset";
-    confirmYes.textContent = "Ja, zurücksetzen";
-    const confirmCancel = document.createElement("button");
-    confirmCancel.type = "button";
-    confirmCancel.className = "learning-btn";
-    confirmCancel.dataset.action = "cancel-reset";
-    confirmCancel.textContent = "Abbrechen";
-    confirmBox.append(confirmLabel, confirmYes, confirmCancel);
-
-    resetBtn.addEventListener("click", () => {
-      confirmBox.hidden = false;
-      resetBtn.hidden = true;
-    });
-    confirmCancel.addEventListener("click", () => {
-      confirmBox.hidden = true;
-      resetBtn.hidden = false;
-    });
-    confirmYes.addEventListener("click", () => {
-      clearLearningProgress();
-      const fresh = createInitialProgress(
-        currentDb.modules,
-        currentDb.quizSettings,
-      );
-      commitProgressChange(fresh, currentDb, "reset");
-    });
-
-    resetArea.append(resetBtn, confirmBox);
+    resetArea.append(createProgressResetControls(() => currentDb));
     card.append(
       header,
       metrics,
@@ -1457,7 +1466,7 @@ export interface ModuleRoadmapController {
 /**
  * Rendert die nach `order` sortierten Modul-Karten inklusive Fortschritts-Kennzahlen
  * (Theorieteile, offene Aufgaben, Quiz) sowie den Aktionen
- * („Lektion öffnen“ und „Quiz starten“).
+ * („Lektion öffnen“, „Quiz starten“ und „Lernfortschritt zurücksetzen“).
  */
 export function attachModuleRoadmap(
   root: HTMLElement,
@@ -1641,6 +1650,8 @@ export function attachModuleRoadmap(
         quizDisabledBtn.textContent = "Quiz starten";
         actions.append(quizDisabledBtn);
       }
+
+      actions.append(createProgressResetControls(() => currentDb));
 
       const fastlaneLink = document.createElement("a");
       fastlaneLink.className =
@@ -2373,6 +2384,9 @@ function isLessonSectionComplete(
   section: LessonSection,
   progress: ModuleProgress,
 ): boolean {
+  const isExerciseComplete = (question: ModuleQuestion) =>
+    progress.steps.leicht === "completed" ||
+    progress.solvedQuestionIds.includes(question.id);
   const practiceDone = (block: PracticeBlock) =>
     progress.completedPracticeBlockIds.includes(block.id);
   switch (section.kind) {
@@ -2384,10 +2398,7 @@ function isLessonSectionComplete(
         )
       );
     case "exercise":
-      return (
-        progress.steps.leicht === "completed" ||
-        progress.solvedQuestionIds.includes(section.question.id)
-      );
+      return isExerciseComplete(section.question);
     case "group": {
       const blocks = section.items
         .filter((item) => item.kind === "theory")
@@ -2404,11 +2415,7 @@ function isLessonSectionComplete(
           blocks.every((block) =>
             progress.completedTheoryBlockIds.includes(block.id),
           )) &&
-        (questions.length === 0 ||
-          progress.steps.leicht === "completed" ||
-          questions.every((question) =>
-            progress.solvedQuestionIds.includes(question.id),
-          )) &&
+        (questions.length === 0 || questions.every(isExerciseComplete)) &&
         practices.every(practiceDone)
       );
     }
@@ -2416,6 +2423,32 @@ function isLessonSectionComplete(
       return practiceDone(section.block);
     case "quiz":
       return progress.steps.mittel === "completed";
+  }
+}
+
+function hasIncompleteLessonTask(
+  section: LessonSection,
+  progress: ModuleProgress,
+): boolean {
+  const exercisePending = (question: ModuleQuestion) =>
+    progress.steps.leicht !== "completed" &&
+    !progress.solvedQuestionIds.includes(question.id);
+  const practicePending = (block: PracticeBlock) =>
+    !progress.completedPracticeBlockIds.includes(block.id);
+
+  switch (section.kind) {
+    case "exercise":
+      return exercisePending(section.question);
+    case "practice":
+      return practicePending(section.block);
+    case "group":
+      return section.items.some(
+        (item) =>
+          (item.kind === "exercise" && exercisePending(item.question)) ||
+          (item.kind === "practice" && practicePending(item.block)),
+      );
+    default:
+      return false;
   }
 }
 
@@ -2599,18 +2632,37 @@ export function attachModuleStepper(
         button.className = "learning-lesson-step";
         button.dataset.stepIndex = String(stepIndex);
         button.dataset.stepCompleted = String(completed);
-        button.disabled = !completed;
+        const backLocked =
+          stepIndex < index &&
+          hasIncompleteLessonTask(sections[index], progress);
+        button.disabled = !completed || backLocked;
         if (stepIndex === index) {
           button.classList.add("is-current");
           button.setAttribute("aria-current", "step");
         }
         button.setAttribute(
           "aria-label",
-          `${label} (${completed ? "abgeschlossen" : "nicht abgeschlossen"})`,
+          `${label} (${completed ? "abgeschlossen" : "nicht abgeschlossen"}${backLocked ? ", Rücksprung wegen offener Aufgabe gesperrt" : ""})`,
         );
+        if (backLocked) {
+          button.title =
+            "Erledige die aktuelle Aufgabe, bevor du zurückspringst.";
+        }
         button.textContent = label;
         button.addEventListener("click", () => {
-          if (!completed) return;
+          const latest = loadLearningProgress(
+            currentDb.modules,
+            undefined,
+            currentDb.quizSettings,
+          ).modules[mod.id];
+          if (
+            !latest ||
+            !isLessonSectionComplete(section, latest) ||
+            (stepIndex < index &&
+              hasIncompleteLessonTask(sections[index], latest))
+          ) {
+            return;
+          }
           index = stepIndex;
           renderCurrent(true);
         });
@@ -2869,6 +2921,7 @@ export function attachModuleStepper(
       previous.textContent = "← Zurück";
       previous.disabled = index === 0;
       previous.addEventListener("click", () => {
+        if (previous.disabled) return;
         index -= 1;
         renderCurrent(true);
       });
@@ -2893,6 +2946,11 @@ export function attachModuleStepper(
         ).modules[mod.id];
         if (!latest) return;
         const completed = isLessonSectionComplete(section, latest);
+        const backLocked = hasIncompleteLessonTask(section, latest);
+        previous.disabled = index === 0 || backLocked;
+        previous.title = backLocked
+          ? "Erledige die aktuelle Aufgabe, bevor du zurückspringst."
+          : "";
         next.disabled = !completed;
         card.dataset.stepState = completed ? "completed" : "unlocked";
         renderSidebar(latest);
