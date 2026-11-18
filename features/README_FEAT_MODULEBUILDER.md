@@ -266,4 +266,4 @@ Die fachlichen Regeln und die Builder-/Player-Interaktionen werden in den vier o
 npx vitest run tests/learning-progress.test.mjs tests/module-builder.test.mjs tests/components/module-builder-ui.test.ts tests/components/module-player-ui.test.ts
 ```
 
-`npm test` führt alle Vitest-Tests aus; das vollständige Projekt-Quality-Gate ist `npm run preflight`.
+Während der Entwicklung gezielt passende Unit- und bei Bedarf Komponententests ausführen. `npm test` führt alle Vitest-Tests aus; die vollständigen Prüfungen sind dem [Branch-Abschluss](../README_TESTING.md) vorbehalten.

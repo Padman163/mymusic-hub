@@ -1706,6 +1706,11 @@ export function attachModuleBuilderForm(
     "#module-d-stage",
     msg,
   );
+  const archivedInput = requireElement<HTMLInputElement>(
+    form,
+    "#module-archived",
+    msg,
+  );
   const tagsContainer = requireElement<HTMLDivElement>(
     form,
     "#module-tags-field",
@@ -1800,6 +1805,7 @@ export function attachModuleBuilderForm(
       scopeSelect,
       levelSelect,
       dStageSelect,
+      archivedInput,
       theoryBaseXpInput,
       submitButton,
       cancelButton,
@@ -1874,6 +1880,7 @@ export function attachModuleBuilderForm(
     scopeSelect.value = mod.scope;
     levelSelect.value = String(mod.level);
     dStageSelect.value = mod.dStage ?? "";
+    archivedInput.checked = mod.archived === true;
     theoryBaseXpInput.value = String(mod.theoryBaseXp);
     tagPicker.setSelectedTags(mod.tags);
     theoryBlockEditor.setItems(mod.theoryBlocks);
@@ -1976,6 +1983,7 @@ export function attachModuleBuilderForm(
       scope: isModuleScope(scopeValue) ? scopeValue : "theory",
       level: Number(levelSelect.value),
       ...(isDStage(dStageValue) ? { dStage: dStageValue } : {}),
+      archived: archivedInput.checked,
       tags: tagPicker.selectedTags(),
       theoryBaseXp: Number(theoryBaseXpInput.value),
       theoryBlocks,

@@ -73,10 +73,11 @@ Eine Tabelle mit Pfad, Fundstellen und Empfehlung **Behalten**, **Prüfen** oder
 ## 5. Tests und Abschluss
 
 1. [README_TESTING.md](README_TESTING.md), `vitest.config.ts`, Testdateien und `package.json` mit dem tatsächlichen Stand vergleichen. Testauswahl und Skripte prüfen; keine Umbenennung nur um der Einheitlichkeit willen.
-2. Gezielte Tests für geändertes Verhalten ausführen. Anschließend:
+2. Während der Entwicklung Stufen 0 und 1 gezielt ausführen, bei Bedarf Stufe 2 ergänzen. Erst am Branch-Abschluss die umfassenden Prüfungen starten:
 
    ```bash
    npm run preflight
+   npm run audit
    git status --short
    git diff --check
    ```

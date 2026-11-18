@@ -114,8 +114,8 @@ npx @biomejs/biome check --write .
   `test:integration` wählt ausschließlich `tests/integration/` und erfasst die Modul-API-Tests nicht. Über `npm test` laufen beide Testgruppen zusammen mit den übrigen Vitest-Tests.
 
 * **Wann nutzen:**
-  * **Nach Änderungen an Netlify Functions:** Wenn Backend-Logik, Middleware oder Serverless-Routen editiert werden.
-  * **Bei Schema- oder Payload-Updates:** Wenn sich die Datenstruktur von Frontend-Formularen oder API-Schnittstellen ändert.
+  * **Beim Branch-Abschluss:** Insbesondere wenn Backend-Logik, Middleware oder Serverless-Routen geändert wurden.
+  * **Bei Schema- oder Payload-Updates im Abschlusslauf:** Wenn sich die Datenstruktur von Frontend-Formularen oder API-Schnittstellen geändert hat.
   * **Bei Validierungs- und Fehlerbehandlungsprüfungen:** Fehlenden Blob-Kontext, ungültige Eingaben und Konfliktfälle ohne Zugriff auf Netlify absichern. Neue Fehlerpfade benötigen eigene Assertions; die vorhandene Suite ist kein vollständiger Sicherheits-Audit.
 
 
@@ -143,7 +143,7 @@ npx @biomejs/biome check --write .
   * **`npm run test:e2e` (Smoke-Tests & kritische User-Flows):**
     * Vor jedem Release und Produktiv-Deployment.
     * Vor dem Mergen eines Pull Requests in den Hauptzweig (`main`).
-    * Nach Versions-Upgrades von Astro, Starlight, Routing- oder Styling-Anpassungen, um die abgedeckten Seiten, Klickpfade und Layoutregeln zu prüfen. Nicht abgedeckte Bereiche zusätzlich gezielt testen.
+    * Beim Branch-Abschluss nach Versions-Upgrades von Astro, Starlight, Routing- oder Styling-Anpassungen, um die abgedeckten Seiten, Klickpfade und Layoutregeln zu prüfen. Nicht abgedeckte Bereiche zusätzlich gezielt testen.
   * **`npm run test:visual` (derzeit kein separater visueller Test):**
     * Führt aktuell dieselben Prüfungen wie `test:e2e` aus; `--update-snapshots` hat ohne Snapshot-Assertions keine zusätzliche Wirkung.
     * Falls künftig Screenshot-/Snapshot-Tests hinzukommen, Referenzen nur bei beabsichtigten Änderungen und nach Sichtprüfung aktualisieren. Der Befehl ersetzt keine manuelle Prüfung globaler Styling-, AlphaTab- oder KaTeX-Änderungen.
@@ -183,7 +183,7 @@ Externe Links, fachliche Aktualität, dynamische Asset-Pfade und Git-Hygiene wer
   Leere Git-Ausgaben sind kein Beweis für Geheimnisfreiheit; beispielsweise können `.env.example`-Vorlagen harmlose Treffer liefern und andere Geheimnisnamen unentdeckt bleiben. `git grep` liefert bei fehlenden Treffern Exit-Code 1. Befunde einzeln bewerten; Paketkorrekturen nur nach Prüfung des Diffs und mit erneuten Tests anwenden. `npm audit fix` kann Abhängigkeiten ändern, `--force` zusätzlich inkompatible Versionswechsel erlauben und ist kein routinemäßiger Prüfschritt.
 * **Wann nutzen:**
   * **Nach Paketoperationen:** Direkt nach jeder Installation (`npm install <paket>`) oder Aktualisierung von Abhängigkeiten (`npm update`).
-  * **Vor einem Production-Release:** Separat mit `npm run audit`; das Dependency-Audit ist bewusst nicht Teil des `preflight`-Laufs.
+  * **Beim Branch-Abschluss und vor einem Production-Release:** Separat mit `npm run audit`; das Dependency-Audit ist bewusst nicht Teil des `preflight`-Laufs.
   * **Bei Backend- & Serverless-Änderungen:** Sobald neue Netlify Functions, Umgebungsvariablen oder externe Schnittstellen eingerichtet werden.
 
 ---
@@ -207,7 +207,7 @@ Externe Links, fachliche Aktualität, dynamische Asset-Pfade und Git-Hygiene wer
 * **Wann nutzen:**
   * **Nach Bibliotheks- und Build-Änderungen:** Wenn etwa AlphaTab, KaTeX oder die Bildoptimierung mit `sharp` aktualisiert werden. Betroffene Seiten gezielt in die Messung aufnehmen; serverseitige Bibliotheken erhöhen nicht automatisch das Client-Bundle.
   * **Nach Asset- & Schriftartänderungen:** Sobald Webfonts, globale Stylesheets oder umfangreiche SVG-Grafiken angepasst wurden.
-  * **Vor Releases:** Als Teil des lokalen `preflight`-Gates. Eine Einbindung in CI/CD ist eine Empfehlung; ein entsprechender GitHub-Actions-Workflow ist derzeit nicht hinterlegt.
+  * **Beim Branch-Abschluss und vor Releases:** Separat oder als Teil des lokalen `preflight`-Gates. Eine Einbindung in CI/CD ist eine Empfehlung; ein entsprechender GitHub-Actions-Workflow ist derzeit nicht hinterlegt.
 
 ---
 
@@ -240,33 +240,21 @@ Externe Links, fachliche Aktualität, dynamische Asset-Pfade und Git-Hygiene wer
 
 ## 4. Das verbindliche „Doing“ im Entwicklungsprozess
 
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ 1. Vor dem Git-Commit:             Lokale Hygiene & Formatierung            │
-│ 2. Vor dem Git-Push / Pull Request: Zentrales Pre-Flight Quality Gate       │
-│ 3. Vor dem Produktions-Release:    5-Phasen Release-Audit & DoD             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+### 4.1 Während der Entwicklung: Stufe 0 und 1, bei Bedarf Stufe 2
 
-### 4.1 Vor jedem lokalen Commit
-
-Führe vor dem Stagen folgende Schritte aus:
+Für einzelne Arbeitsschritte, Zwischen-Commits und Zwischen-Pushes reichen statische Prüfungen und zur Änderung passende Unit-Tests. Komponententests kommen nur bei betroffener Oberfläche hinzu. Für reine Dokumentationsänderungen genügt der Dokumentationstest (`npx vitest run tests/documentation.test.ts`).
 
 ```bash
-npm run format          # Formatiert Code automatisch
-npm run lint            # Prüft Linter-Regeln
-npm run check           # Validiert Astro-Templates
-npm test                # Führt die Vitest-Suite aus
-git diff --check        # Verhindert Whitespace-Fehler
+npm run validate        # Stufe 0
+npm run test:unit       # Beispiel für Stufe 1: Notationslogik
+git diff --check
 ```
 
-### 4.2 Vor jedem Git-Push oder Pull Request
+Wähle passende Testdateien oder Testgruppen gezielt aus. Bei gemischten Dateien schränkt `-t` den Lauf auf passende Tests ein, z. B. `npx vitest run tests/module-builder.test.mjs -t "xp-tags|module-store"`. `npm test` enthält auch Integrationstests und ist daher kein Routinekommando für Stufe 1.
 
-Vor jedem Push auf GitHub muss das einzeilige Pre-Flight Quality Gate fehlerfrei durchlaufen:
+### 4.2 Erst am Branch-Ende: Stufen 2, 3 und 4, Audit und Lighthouse
 
-```bash
-npm run preflight
-```
+Der Nutzer führt die Abschlussprüfung am fertigen Branch durch, nicht bei jedem Push oder beim Öffnen eines Draft-PRs. Copilot startet sie nur auf ausdrücklichen Auftrag. `npm run preflight` bündelt die Abschlussprüfung als Option; `npm run audit` muss separat laufen. Wer die Schritte einzeln ausführt, kann `npm test` für die vollständigen Komponenten- und Integrationstests verwenden und danach `npm run build`, `npm run test:e2e`, `npm run audit` und `npm run audit:lhci` ausführen.
 
 `preflight` führt Validierung, Vitest, Build, Playwright, Lighthouse CI und `git diff --check` einzeln aus und gibt für jeden Schritt einen Ergebnisbericht mit Hinweisen zur Fehlerbehebung aus. Ein fehlgeschlagener unabhängiger Schritt verhindert nicht die Auswertung der übrigen Schritte. Playwright und Lighthouse CI werden übersprungen, wenn der Build fehlschlägt. Der Prozess endet mit Exit-Code 1, sobald mindestens ein ausgeführter Schritt fehlschlägt. `npm audit` ist separat mit `npm run audit` aufzurufen.
 
@@ -323,7 +311,7 @@ Vor einem Release auf `main` wird diese Checkliste vollständig abgearbeitet:
 
 Ein Release gilt erst dann als **vollständig fertiggestellt und freigegeben**, wenn:
 
-1. Das Pre-Flight-Kommando `npm run preflight` mit **Exit-Code 0** durchläuft.
+1. Die Abschlussprüfungen erfolgreich sind (`npm run preflight` und `npm run audit` oder die entsprechenden Einzelbefehle).
 2. Ein vollständiger manueller Testlauf auf einem mobilen Touch-Endgerät erfolgreich protokolliert wurde.
 3. Impressum, Datenschutzerklärung und 404-Seite funktionstüchtig live geschaltet sind.
 4. Alle E2E-Browsertests bestehen und relevante visuelle Änderungen geprüft sind; vorhandene Snapshots bestehen ohne unbeabsichtigte Abweichung.

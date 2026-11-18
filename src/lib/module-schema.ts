@@ -424,6 +424,7 @@ export interface LearningModule {
   level: number;
   dStage?: DStage;
   tags: string[];
+  archived?: boolean;
   prerequisiteModuleIds?: string[];
   theoryBaseXp: number;
   quizEasyMinScore: number;
@@ -439,6 +440,25 @@ export interface ModulesDatabase {
   modules: LearningModule[];
   questions: ModuleQuestion[];
   quizSettings?: QuizSettings;
+}
+
+/** Das Blocklager bleibt im Builder verfügbar, gehört aber nicht zum Lernangebot. */
+export function getLearningCatalog(db: ModulesDatabase): ModulesDatabase {
+  const archivedIds = new Set(
+    db.modules.filter((mod) => mod.archived).map((mod) => mod.id),
+  );
+  if (archivedIds.size === 0) return db;
+  return {
+    ...db,
+    modules: db.modules.filter((mod) => !archivedIds.has(mod.id)),
+    questions: db.questions.flatMap((question) => {
+      if (!question.moduleIds.some((id) => archivedIds.has(id))) {
+        return [question];
+      }
+      const moduleIds = question.moduleIds.filter((id) => !archivedIds.has(id));
+      return moduleIds.length > 0 ? [{ ...question, moduleIds }] : [];
+    }),
+  };
 }
 
 const LEGACY_LANES: Record<string, TargetLane> = {

@@ -6,6 +6,7 @@ import { mockBlobStore } from "./fixtures/blob-store.ts";
 import {
   DEFAULT_FASTLANE_MIN_SCORE,
   DEFAULT_QUIZ_EASY_MIN_SCORE,
+  getLearningCatalog,
 } from "../src/lib/module-schema.ts";
 import {
   createEmptyModulesDatabase,
@@ -70,6 +71,34 @@ describe("xp-tags Konfiguration & Berechnung", () => {
 });
 
 describe("module-store Validierung & Store-Operationen", () => {
+  it("behält das Blocklager beim Speichern und trennt es vom Lern- und Quizangebot", () => {
+    let db = upsertModule(createEmptyModulesDatabase(), { id: "basics", title: "Basics" });
+    db = upsertModule(db, { id: "lager", title: "Blocklager", archived: true });
+    db = upsertModule(db, { id: "lager", title: "Blocklager bearbeitet" });
+    const question = {
+      targetLane: "mittel",
+      questionType: "single_choice",
+      prompt: "Eine Frage?",
+      options: ["Ja", "Nein"],
+      correctAnswers: ["Ja"],
+    };
+    for (const [id, moduleIds] of [
+      ["lagerfrage", ["lager"]],
+      ["geteilt", ["basics", "lager"]],
+      ["pool", []],
+    ]) {
+      db = upsertQuestion(db, { ...question, id, moduleIds });
+    }
+
+    expect(db.modules[1].archived).toBe(true);
+    const learning = getLearningCatalog(db);
+    expect(learning.modules.map(({ id }) => id)).toEqual(["basics"]);
+    expect(learning.questions.map(({ id, moduleIds }) => [id, moduleIds]))
+      .toEqual([["geteilt", ["basics"]], ["pool", []]]);
+    expect(db.questions).toHaveLength(3);
+    expect(getLearningCatalog(upsertModule(db, { id: "lager", title: "Lager", archived: false })).modules)
+      .toHaveLength(2);
+  });
   const sourceMarker = (number) => `[${"cite"}: ${number}]`;
 
   it("speichert Aufgabentitel getrennt von der Frage und erlaubt ihr Entfernen", () => {

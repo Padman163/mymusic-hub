@@ -386,6 +386,9 @@ export function validateModuleInput(input: unknown): ValidationResult {
   if (input.tags !== undefined && !isStringArray(input.tags, true)) {
     errors.push("tags muss ein Array aus nicht-leeren Strings sein.");
   }
+  if (input.archived !== undefined && typeof input.archived !== "boolean") {
+    errors.push("archived muss ein Boolean sein.");
+  }
   if (input.prerequisiteModuleIds !== undefined) {
     if (!isStringArray(input.prerequisiteModuleIds, true)) {
       errors.push(
@@ -652,6 +655,7 @@ export function upsertModule(
   const now = new Date().toISOString();
   const scope = moduleData.scope ?? existing?.scope ?? "theory";
   const dStage = moduleData.dStage ?? existing?.dStage;
+  const archived = moduleData.archived ?? existing?.archived;
   const prerequisiteModuleIds =
     moduleData.prerequisiteModuleIds ?? existing?.prerequisiteModuleIds;
 
@@ -668,6 +672,7 @@ export function upsertModule(
     scope,
     level: moduleData.level ?? existing?.level ?? 100,
     ...(dStage !== undefined ? { dStage } : {}),
+    ...(archived !== undefined ? { archived } : {}),
     tags: (moduleData.tags ?? existing?.tags ?? []).map((tag) =>
       removeCitationMarkers(tag).trim(),
     ),

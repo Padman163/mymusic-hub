@@ -36,6 +36,7 @@ function mountModuleForm(): HTMLFormElement {
       <option value="D1">D1</option>
     </select>
     <div id="module-tags-field"></div>
+    <input id="module-archived" name="archived" type="checkbox" />
     <input id="module-has-practice" name="hasPractice" type="checkbox" />
     <input id="module-theory-base-xp" name="theoryBaseXp" type="number" value="30" />
     </details>

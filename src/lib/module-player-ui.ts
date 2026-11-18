@@ -30,6 +30,7 @@ import {
 import {
   BASE_XP_DEFAULTS,
   formatExerciseTitle,
+  getLearningCatalog,
   isQuestionInModule,
   isQuizSettings,
   type LearningModule,
@@ -217,7 +218,7 @@ function parseInitialDatabaseFromRoot(
   override?: ModulesDatabase,
 ): ModulesDatabase {
   if (override) {
-    return override;
+    return getLearningCatalog(override);
   }
   const raw = root.dataset.initialDb;
   if (!raw) {
@@ -231,13 +232,15 @@ function parseInitialDatabaseFromRoot(
       Array.isArray(parsed.questions) &&
       (parsed.quizSettings === undefined || isQuizSettings(parsed.quizSettings))
     ) {
-      return normalizeLegacyDatabase({
-        modules: parsed.modules as LearningModule[],
-        questions: parsed.questions as ModuleQuestion[],
-        ...(parsed.quizSettings !== undefined
-          ? { quizSettings: parsed.quizSettings }
-          : {}),
-      });
+      return getLearningCatalog(
+        normalizeLegacyDatabase({
+          modules: parsed.modules as LearningModule[],
+          questions: parsed.questions as ModuleQuestion[],
+          ...(parsed.quizSettings !== undefined
+            ? { quizSettings: parsed.quizSettings }
+            : {}),
+        }),
+      );
     }
   } catch {
     // Ungültiges initial-db JSON fällt auf leere Datenbank zurück
@@ -267,13 +270,15 @@ async function tryFetchModulesDbFromUrl(
       Array.isArray(parsed.questions) &&
       (parsed.quizSettings === undefined || isQuizSettings(parsed.quizSettings))
     ) {
-      return normalizeLegacyDatabase({
-        modules: parsed.modules as LearningModule[],
-        questions: parsed.questions as ModuleQuestion[],
-        ...(parsed.quizSettings !== undefined
-          ? { quizSettings: parsed.quizSettings }
-          : {}),
-      });
+      return getLearningCatalog(
+        normalizeLegacyDatabase({
+          modules: parsed.modules as LearningModule[],
+          questions: parsed.questions as ModuleQuestion[],
+          ...(parsed.quizSettings !== undefined
+            ? { quizSettings: parsed.quizSettings }
+            : {}),
+        }),
+      );
     }
   } catch {
     // Netzwerk- oder JSON-Fehler ignorieren, Fallback-Daten bleiben aktiv
@@ -1484,7 +1489,9 @@ export function attachProgressDashboard(
       isRecord(event.detail.db) &&
       Array.isArray(event.detail.db.modules)
     ) {
-      currentDb = event.detail.db as unknown as ModulesDatabase;
+      currentDb = getLearningCatalog(
+        event.detail.db as unknown as ModulesDatabase,
+      );
     }
     render();
   };
@@ -1737,7 +1744,9 @@ export function attachModuleRoadmap(
       isRecord(event.detail.db) &&
       Array.isArray(event.detail.db.modules)
     ) {
-      currentDb = event.detail.db as unknown as ModulesDatabase;
+      currentDb = getLearningCatalog(
+        event.detail.db as unknown as ModulesDatabase,
+      );
     }
     render();
   };
@@ -3081,7 +3090,9 @@ export function attachModuleStepper(
         reason = event.detail.reason;
       }
       if (isRecord(event.detail.db) && Array.isArray(event.detail.db.modules)) {
-        currentDb = event.detail.db as unknown as ModulesDatabase;
+        currentDb = getLearningCatalog(
+          event.detail.db as unknown as ModulesDatabase,
+        );
       }
     }
     if (reason === "reset") fullRender();

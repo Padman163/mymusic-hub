@@ -24,15 +24,11 @@ Für die Speicherumstellung mit `git switch feat/netlify-blobs` auf den vorhande
 
 ## 3. Automatisch testen
 
-```bash
-npm run preflight
-```
-
-Das Gate wertet Validierung, Vitest, Build, Playwright und Lighthouse CI einzeln aus und zeigt bestandene, fehlgeschlagene sowie übersprungene Schritte samt nächsten Korrekturen. `npm audit` läuft separat mit `npm run audit`. Lighthouse lädt Berichte standardmäßig temporär öffentlich hoch; eine rein lokale Ablage ist über Umgebungsvariablen möglich. Fehler beheben und erneut ausführen. Details und Voraussetzungen: [Testing](README_TESTING.md).
+Während der Entwicklung `npm run validate` (Stufe 0) und passende Unit-Tests (Stufe 1) ausführen. Bei UI-Änderungen kommen gezielte Komponententests (Stufe 2) hinzu. Zwischen-Commits und Zwischen-Pushes benötigen keinen vollständigen Preflight. Details und Befehle: [Testing](README_TESTING.md).
 
 ## 4. Cleanup und Abschlussprüfung
 
-Die fünf Schritte der [Cleanup-Anleitung](README_CLEANUP.md) durchgehen. Löschungen und Migrationen erst nach Prüfung und Freigabe durchführen. Nach Änderungen relevante Tests und vor dem Abschluss erneut `npm run preflight` ausführen. Anschließend den endgültigen Stand committen.
+Die fünf Schritte der [Cleanup-Anleitung](README_CLEANUP.md) durchgehen. Löschungen und Migrationen erst nach Prüfung und Freigabe durchführen. Am fertigen Branch führt der Nutzer Stufen 2, 3 und 4 sowie Dependency-Audit und Lighthouse aus. `npm run preflight` bündelt die Abschlussprüfungen bis auf `npm run audit`. Copilot startet die Abschlussprüfung nur auf ausdrücklichen Auftrag. Anschließend den endgültigen Stand committen.
 
 
 ## 5. Manuelle Featureprüfung und Dokumentationsanpassung

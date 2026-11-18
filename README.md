@@ -36,12 +36,7 @@ Die Oberfläche läuft unter `http://localhost:4321`. Erst-Setup und Start mit N
 
 ## Qualitätssicherung (Pre-Flight)
 
-Vor einem Push oder Pull Request das lokale Quality Gate ausführen:
-
-```bash
-npm run preflight
-```
-Details stehen im [Testing-Leitfaden](README_TESTING.md).
+Während der Entwicklung: `npm run validate` und gezielte Unit-Tests, bei UI-Änderungen zusätzlich passende Komponententests. Die vollständige Abschlussprüfung mit E2E, Audit und Lighthouse ist erst am Branch-Ende fällig. Details und Befehle stehen im [Testing-Leitfaden](README_TESTING.md).
 
 ---
 

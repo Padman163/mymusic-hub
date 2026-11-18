@@ -35,7 +35,7 @@ Legacy-Komponenten (`NotationOverview.astro`, `NotationSystem.astro`, `DynamicsM
 ## 4. Dokumentation & Qualitätsstand
 * **API-Referenz / Cheat Sheet:** [README_FEAT_NOTATION.md](README_FEAT_NOTATION.md)
 * **Live-Dokumentation im Wiki (`Features` → `Notation.astro`):** `src/content/docs/audio/referenzen-werkzeuge/visualisierungen-erklaert/notensystem.mdx` (inkl. 18-Takt-Beispiel und Code-Erklärungen)
-* **Qualitätssicherung:** `tests/music-notation.test.mjs` und `tests/e2e/smoke.spec.ts`. Aktuelle Prüfungen und Voraussetzungen: [Testing-Leitfaden](../README_TESTING.md); vor Feature-Abschluss `npm run preflight` ausführen.
+* **Qualitätssicherung:** Während der Entwicklung gezielt `tests/music-notation.test.mjs` verwenden. `tests/e2e/smoke.spec.ts` gehört zur Abschlussprüfung am fertigen Branch. Prüfungen und Voraussetzungen: [Testing-Leitfaden](../README_TESTING.md).
 
 ## 5. Offene Punkte / Mögliche nächste Schritte
 * Das 18-Takt-Gesamtbeispiel in `notensystem.mdx` deckt noch nicht alle Features der Engine ab (z. B. `title`/`subtitle` auf Stück-Ebene, Auftakt `pickup`, taktübergreifendes `hairpinStart`/`hairpinEnd`, `sixteenth`-Pause, Tonartwechsel-Auflösung mit `accidentals: []` sowie Bassschlüssel).

@@ -38,9 +38,10 @@ npm run test:e2e:ui          # Öffnet das grafische Playwright Test-Dashboard
 npm run test:visual          # E2E mit --update-snapshots; derzeit keine Snapshot-Assertions
 ```
 
-### 1.4 Das zentrale Pre-Flight Quality Gate
+### 1.4 Prüfungen im Alltag und am Branch-Ende
 ```bash
-npm run preflight            # Kombinierte Kette vor jedem Push / Pull Request:
+npm run validate             # Alltag: Stufe 0, plus gezielte Unit-Tests und bei Bedarf Stufe 2
+npm run preflight            # Nur zum Branch-Abschluss:
                              # Ergebnisbericht zu Validierung, Vitest, Build, E2E, Lighthouse und Git-Diff
 npm run audit                # Separates Dependency-Audit; nicht Teil des Preflights
 npm run cleanup:check        # Nicht-destruktiver Bericht zu den fünf Cleanup-Schritten
