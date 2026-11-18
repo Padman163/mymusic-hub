@@ -75,6 +75,7 @@ Der Auszug zeigt nicht alle Projektfelder; verbindlich ist `src/content.config.t
 | `template: doc` (Standard) | Dokumentationsseite mit Sidebar und Inhaltsverzeichnis. |
 | `template: splash` | Seite ohne Sidebar, breitere Spalte, z. B. für Startseiten; kombinierbar mit `hero`. |
 | `template: wide-content` | Projekteigen: wie `doc`, aber breitere Inhaltsspalte (siehe unten). |
+| `template: extra-wide-content` | Projekteigen: wie `doc`, mit besonders breiter Inhaltsspalte (siehe unten). |
 | `tableOfContents: false` | Blendet das Inhaltsverzeichnis aus. |
 | `tableOfContents: { minHeadingLevel, maxHeadingLevel }` | Steuert die Überschriftenebenen (Standard 2–3). |
 | `sidebar: { order, label, hidden, badge, attrs }` | Position, Beschriftung, Sichtbarkeit und Badge des Sidebar-Eintrags. |
@@ -87,10 +88,10 @@ Der Auszug zeigt nicht alle Projektfelder; verbindlich ist `src/content.config.t
 | `draft: true` | Seite wird im Produktions-Build nicht veröffentlicht. |
 | `head`, `title`, `description` | Meta-Tags, Seitentitel und Beschreibung. |
 
-**Template `wide-content`:** Mit `template: wide-content` im Frontmatter erhält eine Seite eine breitere Inhaltsspalte (`--sl-content-width: 75rem`); sonst verhält sie sich wie `doc`. Das Inhaltsverzeichnis lässt sich weiterhin separat mit `tableOfContents: false` ausblenden. Beteiligt sind:
+**Templates `wide-content` und `extra-wide-content`:** Beide verhalten sich wie `doc`; das Inhaltsverzeichnis lässt sich weiterhin separat mit `tableOfContents: false` ausblenden. `wide-content` setzt `--sl-content-width: 75rem`, `extra-wide-content` erweitert auf `90rem`. Das extra-breite Template setzt zusätzlich den Wide-Content-Hook, damit bestehende Layoutanpassungen wie die volle Formularbreite erhalten bleiben. Beteiligt sind:
 
-- `src/content.config.ts`: erweitert das `template`-Feld um den Wert `wide-content`.
-- `src/components/starlight/MarkdownContent.astro`: überschreibt Starlights `MarkdownContent` und setzt `data-wide-content` als CSS-Hook.
+- `src/content.config.ts`: erweitert das `template`-Feld um beide Werte.
+- `src/components/starlight/MarkdownContent.astro`: überschreibt Starlights `MarkdownContent` und setzt die CSS-Hooks `data-wide-content` und `data-extra-wide-content`.
 - `src/styles/wide-content.css`: setzt die Breite; über `customCss` in `astro.config.mjs` eingebunden.
 - `astro.config.mjs`: registriert den Komponenten-Override unter `components`.
 

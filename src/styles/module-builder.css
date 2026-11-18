@@ -526,3 +526,81 @@
   color: var(--sl-color-gray-2);
   font-size: 0.875rem;
 }
+
+.module-preview-resources {
+  display: none;
+}
+
+.theory-block-row[data-preview-open="true"],
+.module-practice-row[data-preview-open="true"],
+.module-exercise-row[data-preview-open="true"] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 0.85rem;
+}
+
+.theory-block-row[data-preview-open="true"] > .theory-block-details,
+.module-practice-row[data-preview-open="true"] > .theory-block-details,
+.module-exercise-row[data-preview-open="true"] > .theory-block-details {
+  grid-column: 1;
+  min-width: 0;
+}
+
+.theory-block-group[data-preview-open="true"] {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.theory-block-group[data-preview-open="true"] > .theory-group-editor-heading,
+.theory-block-group[data-preview-open="true"] > .theory-block-row,
+.theory-block-group[data-preview-open="true"] > .module-practice-row,
+.theory-block-group[data-preview-open="true"] > .module-exercise-row {
+  grid-column: 1;
+}
+
+.module-content-preview {
+  box-sizing: border-box;
+  grid-column: 2;
+  grid-row: 1 / span var(--module-preview-row-span, 1);
+  min-width: 0;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 0.4rem;
+  padding: 0.85rem;
+  background: var(--sl-color-bg-nav);
+}
+
+.module-content-preview[hidden] {
+  display: none;
+}
+
+.module-content-preview-label {
+  display: block;
+  margin-bottom: 0.65rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--sl-color-gray-2);
+}
+
+.module-content-preview-body {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.module-content-preview-body .learning-theory-group,
+.module-content-preview-body .learning-theory-blocks {
+  margin: 0;
+}
+
+@media (max-width: 58rem) {
+  .theory-block-row[data-preview-open="true"],
+  .module-practice-row[data-preview-open="true"],
+  .module-exercise-row[data-preview-open="true"],
+  .theory-block-group[data-preview-open="true"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .module-content-preview {
+    grid-column: 1;
+    grid-row: auto;
+  }
+}

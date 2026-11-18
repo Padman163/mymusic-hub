@@ -295,6 +295,79 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     expect(editor.element.querySelector<HTMLInputElement>(".theory-group-title")?.value).toBe("Mein Abschnitt");
   });
 
+  it("zeigt beim Aufklappen eines Blocks eine formatierte und live aktualisierte Vorschau", async () => {
+    const editor = createTheoryBlockEditor([
+      { id: "a", order: 1, title: "Tonhöhe", markdownContent: "Vorher" },
+    ]);
+    document.body.append(editor.element);
+
+    const row = editor.element.querySelector<HTMLDivElement>(
+      ".theory-block-row",
+    );
+    const details = row?.querySelector<HTMLDetailsElement>(
+      ".theory-block-details",
+    );
+    const markdown = row?.querySelector<HTMLTextAreaElement>(
+      ".theory-block-markdown",
+    );
+    if (!row || !details || !markdown) throw new Error("Theorieblock fehlt");
+
+    details.open = true;
+    details.dispatchEvent(new Event("toggle"));
+    await vi.waitFor(() =>
+      expect(
+        row.querySelector(".module-content-preview-body")?.textContent,
+      ).toContain("Vorher"),
+    );
+
+    markdown.value = "**Nachher**";
+    markdown.dispatchEvent(new Event("input"));
+    await vi.waitFor(() =>
+      expect(
+        row.querySelector(".module-content-preview-body strong")?.textContent,
+      ).toBe("Nachher"),
+    );
+  });
+
+  it("zeigt beim Aufklappen einer Gruppe die Vorschau aller Gruppeneinträge", async () => {
+    const editor = createTheoryBlockEditor([
+      {
+        id: "a",
+        order: 1,
+        title: "Eins",
+        markdownContent: "Erster Inhalt",
+        groupId: "g",
+        groupTitle: "Grundlagen",
+      },
+      {
+        id: "b",
+        order: 2,
+        title: "Zwei",
+        markdownContent: "Zweiter Inhalt",
+        groupId: "g",
+        groupTitle: "Grundlagen",
+      },
+    ]);
+    document.body.append(editor.element);
+
+    const group = editor.element.querySelector<HTMLDivElement>(
+      ".theory-block-group",
+    );
+    const details = group?.querySelector<HTMLDetailsElement>(
+      ".theory-group-details",
+    );
+    if (!group || !details) throw new Error("Gruppe fehlt");
+
+    details.open = true;
+    details.dispatchEvent(new Event("toggle"));
+    await vi.waitFor(() => {
+      const preview = group.querySelector(".module-content-preview-body");
+      expect(preview?.textContent).toContain("Grundlagen");
+      expect(preview?.textContent).toContain("Erster Inhalt");
+      expect(preview?.textContent).toContain("Zweiter Inhalt");
+    });
+  });
+
   it("löst einen einzelnen Theorieblock aus einer Dreiergruppe und erhält Gruppe und Eingaben", () => {
     const groupId = "group-three";
     const groupTitle = "Grundlagen";
