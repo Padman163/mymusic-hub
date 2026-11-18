@@ -1,0 +1,72 @@
+{
+  "modules": [
+    {
+      "id": "mod-puls-tempo-rhythmus",
+      "directory": "mod-puls-tempo-rhythmus",
+      "title": "Puls, Tempo und Rhythmus",
+      "description": "Drei Grundbegriffe anhand eines stummen Rhythmusrasters unterscheiden.",
+      "archived": false,
+      "present": true,
+      "lessons": [
+        {
+          "slug": "01-theorie",
+          "title": "101: Puls, Tempo und Rhythmus unterscheiden",
+          "source": "mod-puls-tempo-rhythmus/01-theorie.mdx",
+          "visuals": []
+        },
+        {
+          "slug": "02-aufgaben",
+          "title": "102: Drei Muster vergleichen",
+          "source": "mod-puls-tempo-rhythmus/02-aufgaben.mdx",
+          "visuals": []
+        }
+      ]
+    },
+    {
+      "id": "mod-88e25b79-1c72-4369-8e0f-f7b815304e8a",
+      "directory": "mod-88e25b79-1c72-4369-8e0f-f7b815304e8a",
+      "title": "Blocklager: Allgemeine Elementarlehre",
+      "description": "Originalmaterial für spätere Skills. Oktavräume: Frequenzverhältnis und Grafik zusätzlich für Akustik verwenden. Vorzeichen können von Notation referenziert werden. Nicht Teil des aktiven Lernpfads.",
+      "archived": true,
+      "present": true,
+      "lessons": [
+        {
+          "slug": "01-aufgaben",
+          "title": "101: Akustik",
+          "source": "mod-88e25b79-1c72-4369-8e0f-f7b815304e8a/01-aufgaben.mdx",
+          "visuals": []
+        },
+        {
+          "slug": "02-theorie",
+          "title": "102: Tonsystem",
+          "source": "mod-88e25b79-1c72-4369-8e0f-f7b815304e8a/02-theorie.mdx",
+          "visuals": []
+        },
+        {
+          "slug": "03-aufgaben",
+          "title": "103: Musikalischer Ausdruck",
+          "source": "mod-88e25b79-1c72-4369-8e0f-f7b815304e8a/03-aufgaben.mdx",
+          "visuals": []
+        },
+        {
+          "slug": "04-aufgaben",
+          "title": "104: Rhythmus & Notation",
+          "source": "mod-88e25b79-1c72-4369-8e0f-f7b815304e8a/04-aufgaben.mdx",
+          "visuals": []
+        },
+        {
+          "slug": "05-theorie",
+          "title": "105: Notation",
+          "source": "mod-88e25b79-1c72-4369-8e0f-f7b815304e8a/05-theorie.mdx",
+          "visuals": []
+        },
+        {
+          "slug": "06-aufgaben",
+          "title": "106: Harmonie",
+          "source": "mod-88e25b79-1c72-4369-8e0f-f7b815304e8a/06-aufgaben.mdx",
+          "visuals": []
+        }
+      ]
+    }
+  ]
+}

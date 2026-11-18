@@ -3,9 +3,9 @@ import {
   DEFAULT_FASTLANE_MIN_SCORE,
   DEFAULT_QUIZ_EASY_MIN_SCORE,
   DEFAULT_QUIZ_SETTINGS,
-  getDefaultBaseXpForLane,
   isDStage,
   isModuleScope,
+  isQuestionDifficulty,
   isQuestionInModule,
   isQuestionType,
   isTargetLane,
@@ -20,7 +20,12 @@ import {
   type TargetLane,
   type TheoryBlock,
 } from "./module-schema.ts";
-import { calculateQuestionXp, calculateTheoryBlockXp } from "./xp-tags.ts";
+import { getTheoryDrumPatternError } from "./module-theory-notation.ts";
+import {
+  calculateModuleQuestionXp,
+  calculateTheoryBlockXp,
+  QUESTION_BASE_XP,
+} from "./xp-tags.ts";
 
 export interface ValidationResult {
   valid: boolean;
@@ -51,6 +56,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
+}
+
+const citationMarkerPattern = String.raw`[ \t]*\[${"cite"}\b[^\]]*\][ \t]*`;
+
+function removeCitationMarkers(value: string): string {
+  return value.replace(new RegExp(citationMarkerPattern, "gi"), " ");
 }
 
 function isStringArray(
@@ -158,8 +169,20 @@ function validateTheoryBlocks(blocks: unknown, errors: string[]): void {
     if (!isNonEmptyString(block.title)) {
       errors.push(`${prefix}.title darf nicht leer sein.`);
     }
+    if (
+      block.role !== undefined &&
+      block.role !== "theory" &&
+      block.role !== "exercise_intro"
+    ) {
+      errors.push(`${prefix}.role muss theory oder exercise_intro sein.`);
+    }
     if (typeof block.markdownContent !== "string") {
       errors.push(`${prefix}.markdownContent muss ein String sein.`);
+    } else {
+      const drumPatternError = getTheoryDrumPatternError(block.markdownContent);
+      if (drumPatternError) {
+        errors.push(`${prefix}.markdownContent: ${drumPatternError}`);
+      }
     }
     if (
       (block.groupId === undefined) !== (block.groupTitle === undefined) ||
@@ -374,6 +397,24 @@ export function validateModuleInput(input: unknown): ValidationResult {
   if (input.tags !== undefined && !isStringArray(input.tags, true)) {
     errors.push("tags muss ein Array aus nicht-leeren Strings sein.");
   }
+  if (input.archived !== undefined && typeof input.archived !== "boolean") {
+    errors.push("archived muss ein Boolean sein.");
+  }
+  if (input.prerequisiteModuleIds !== undefined) {
+    if (!isStringArray(input.prerequisiteModuleIds, true)) {
+      errors.push(
+        "prerequisiteModuleIds muss ein Array aus nicht-leeren Strings sein.",
+      );
+    } else {
+      const ids = input.prerequisiteModuleIds.map((id) => id.trim());
+      if (new Set(ids).size !== ids.length) {
+        errors.push("Modul-Voraussetzungen dürfen nicht doppelt vorkommen.");
+      }
+      if (typeof input.id === "string" && ids.includes(input.id.trim())) {
+        errors.push("Ein Modul darf nicht seine eigene Voraussetzung sein.");
+      }
+    }
+  }
   if (
     input.theoryBaseXp !== undefined &&
     (typeof input.theoryBaseXp !== "number" ||
@@ -457,14 +498,16 @@ export function validateModuleInput(input: unknown): ValidationResult {
 /** Validiert eine Modul-Aufgabe inklusive Prüfung der Modul-Referenz. */
 export function validateQuestionInput(
   input: unknown,
-  existingModules: readonly LearningModule[] | ModulesDatabase,
+  existingModules: readonly Pick<LearningModule, "id">[] | ModulesDatabase,
 ): ValidationResult {
   if (!isRecord(input)) {
     return { valid: false, errors: ["Aufgabendaten müssen ein Objekt sein."] };
   }
 
   const errors: string[] = [];
-  const moduleList: readonly LearningModule[] = Array.isArray(existingModules)
+  const moduleList: readonly Pick<LearningModule, "id">[] = Array.isArray(
+    existingModules,
+  )
     ? existingModules
     : "modules" in existingModules
       ? existingModules.modules
@@ -499,9 +542,19 @@ export function validateQuestionInput(
   if (!isNonEmptyString(input.prompt)) {
     errors.push("Aufgabenstellung (prompt) ist erforderlich.");
   }
+  if (input.title !== undefined && typeof input.title !== "string") {
+    errors.push("Aufgabentitel muss ein Text sein.");
+  }
 
   if (input.targetLane !== undefined && !isTargetLane(input.targetLane)) {
     errors.push("targetLane ist ungültig.");
+  }
+
+  if (
+    input.difficulty !== undefined &&
+    !isQuestionDifficulty(input.difficulty)
+  ) {
+    errors.push("Schwierigkeit muss einfach, mittel oder schwer sein.");
   }
 
   if (!isQuestionType(input.questionType)) {
@@ -526,6 +579,15 @@ export function validateQuestionInput(
   ) {
     errors.push("explanation muss ein String sein.");
   }
+  for (const [field, label] of [
+    ["simpleHint", "Einfacher Hinweis"],
+    ["strongHint", "Stärkerer Hinweis"],
+  ] as const) {
+    const hint = input[field];
+    if (hint !== undefined && typeof hint !== "string") {
+      errors.push(`${label} muss ein Text sein.`);
+    }
+  }
   if (
     input.baseXp !== undefined &&
     (typeof input.baseXp !== "number" ||
@@ -544,10 +606,12 @@ export function validateQuestionInput(
 function clonePracticeBlock(block: PracticeBlock): PracticeBlock {
   return {
     id: block.id.trim(),
-    title: block.title.trim(),
-    markdownContent: block.markdownContent,
+    title: removeCitationMarkers(block.title).trim(),
+    markdownContent: removeCitationMarkers(block.markdownContent),
     ...(block.baseXp !== undefined ? { baseXp: block.baseXp } : {}),
-    ...(block.tags !== undefined ? { tags: [...block.tags] } : {}),
+    ...(block.tags !== undefined
+      ? { tags: block.tags.map((tag) => removeCitationMarkers(tag).trim()) }
+      : {}),
   };
 }
 
@@ -555,19 +619,22 @@ function cloneTheoryBlock(block: TheoryBlock): TheoryBlock {
   return {
     id: block.id.trim(),
     order: block.order,
-    title: block.title.trim(),
-    markdownContent: block.markdownContent,
+    title: removeCitationMarkers(block.title).trim(),
+    markdownContent: removeCitationMarkers(block.markdownContent),
+    ...(block.role !== undefined ? { role: block.role } : {}),
     ...(block.groupId !== undefined ? { groupId: block.groupId.trim() } : {}),
     ...(block.groupTitle !== undefined
-      ? { groupTitle: block.groupTitle.trim() }
+      ? { groupTitle: removeCitationMarkers(block.groupTitle).trim() }
       : {}),
     ...(block.baseXp !== undefined ? { baseXp: block.baseXp } : {}),
-    ...(block.tags !== undefined ? { tags: [...block.tags] } : {}),
+    ...(block.tags !== undefined
+      ? { tags: block.tags.map((tag) => removeCitationMarkers(tag).trim()) }
+      : {}),
     ...(block.visualComponent !== undefined
       ? { visualComponent: block.visualComponent }
       : {}),
     ...(block.visualPropsJson !== undefined
-      ? { visualPropsJson: block.visualPropsJson }
+      ? { visualPropsJson: removeCitationMarkers(block.visualPropsJson) }
       : {}),
   };
 }
@@ -607,6 +674,9 @@ export function upsertModule(
   const now = new Date().toISOString();
   const scope = moduleData.scope ?? existing?.scope ?? "theory";
   const dStage = moduleData.dStage ?? existing?.dStage;
+  const archived = moduleData.archived ?? existing?.archived;
+  const prerequisiteModuleIds =
+    moduleData.prerequisiteModuleIds ?? existing?.prerequisiteModuleIds;
 
   const normalizedModule: LearningModule = {
     id,
@@ -614,12 +684,20 @@ export function upsertModule(
       moduleData.order ??
       existing?.order ??
       db.modules.reduce((highest, mod) => Math.max(highest, mod.order), 0) + 1,
-    title: moduleData.title.trim(),
-    description: moduleData.description ?? existing?.description ?? "",
+    title: removeCitationMarkers(moduleData.title).trim(),
+    description: removeCitationMarkers(
+      moduleData.description ?? existing?.description ?? "",
+    ).trim(),
     scope,
     level: moduleData.level ?? existing?.level ?? 100,
     ...(dStage !== undefined ? { dStage } : {}),
-    tags: [...(moduleData.tags ?? existing?.tags ?? [])],
+    ...(archived !== undefined ? { archived } : {}),
+    tags: (moduleData.tags ?? existing?.tags ?? []).map((tag) =>
+      removeCitationMarkers(tag).trim(),
+    ),
+    ...(prerequisiteModuleIds !== undefined
+      ? { prerequisiteModuleIds: prerequisiteModuleIds.map((id) => id.trim()) }
+      : {}),
     theoryBaseXp:
       moduleData.theoryBaseXp ??
       existing?.theoryBaseXp ??
@@ -653,7 +731,9 @@ export function upsertModule(
               ? { groupId: entry.groupId.trim() }
               : {}),
             ...(entry.groupTitle !== undefined
-              ? { groupTitle: entry.groupTitle.trim() }
+              ? {
+                  groupTitle: removeCitationMarkers(entry.groupTitle).trim(),
+                }
               : {}),
           })),
         }
@@ -661,6 +741,11 @@ export function upsertModule(
     createdAt: moduleData.createdAt ?? existing?.createdAt ?? now,
     updatedAt: moduleData.updatedAt ?? now,
   };
+
+  const normalizedValidation = validateModuleInput(normalizedModule);
+  if (!normalizedValidation.valid) {
+    throw new Error(normalizedValidation.errors.join(" "));
+  }
 
   const modules =
     existingIndex >= 0
@@ -670,6 +755,111 @@ export function upsertModule(
       : [...db.modules, normalizedModule];
 
   return { ...db, modules, questions: [...db.questions] };
+}
+
+export class ModuleExerciseSaveError extends Error {}
+
+export interface ModuleExerciseRoleChange {
+  id: string;
+  kind: "theory" | "practice";
+}
+
+/** Bereitet Modul, Lernpfad-Aufgaben und Rollenwechsel für einen gemeinsamen Schreibvorgang vor. */
+export function upsertModuleWithExercises(
+  db: ModulesDatabase,
+  moduleData: UpsertModuleInput,
+  exercises: unknown,
+  exerciseRoleChanges?: unknown,
+): ModulesDatabase {
+  let nextDb = upsertModule(db, moduleData);
+  const pendingExercises = exercises === undefined ? [] : exercises;
+  if (!Array.isArray(pendingExercises)) {
+    throw new ModuleExerciseSaveError(
+      "Lernpfad-Aufgaben müssen als Liste übergeben werden.",
+    );
+  }
+  const moduleId = moduleData.id.trim();
+  const seenIds = new Set<string>();
+  for (const exercise of pendingExercises) {
+    if (
+      !isRecord(exercise) ||
+      !isNonEmptyString(exercise.id) ||
+      exercise.targetLane !== "leicht"
+    ) {
+      throw new ModuleExerciseSaveError(
+        "Nur Lernpfad-Aufgaben mit gültiger ID können zusammen mit dem Modul gespeichert werden.",
+      );
+    }
+    const validation = validateQuestionInput(exercise, [{ id: moduleId }]);
+    if (!validation.valid) {
+      throw new ModuleExerciseSaveError(validation.errors.join(" "));
+    }
+    const id = exercise.id.trim();
+    const existing = db.questions.find((question) => question.id === id);
+    if (
+      seenIds.has(id) ||
+      (existing &&
+        (existing.targetLane !== "leicht" ||
+          !isQuestionInModule(existing, moduleId)))
+    ) {
+      throw new ModuleExerciseSaveError(
+        "Eine Aufgaben-ID ist doppelt oder gehört nicht zu diesem Lernpfad.",
+      );
+    }
+    seenIds.add(id);
+    try {
+      nextDb = upsertQuestion(nextDb, exercise as UpsertQuestionInput);
+    } catch (error) {
+      if (!(error instanceof Error)) throw error;
+      throw new ModuleExerciseSaveError(error.message, { cause: error });
+    }
+  }
+  if (exerciseRoleChanges === undefined) return nextDb;
+  if (!Array.isArray(exerciseRoleChanges)) {
+    throw new ModuleExerciseSaveError(
+      "Rollenwechsel müssen als Liste übergeben werden.",
+    );
+  }
+  const mod = nextDb.modules.find((item) => item.id === moduleId);
+  for (const change of exerciseRoleChanges) {
+    if (
+      !isRecord(change) ||
+      !isNonEmptyString(change.id) ||
+      (change.kind !== "theory" && change.kind !== "practice")
+    ) {
+      throw new ModuleExerciseSaveError(
+        "Der Rollenwechsel enthält keinen gültigen Zielblock.",
+      );
+    }
+    const id = change.id.trim();
+    const existing = db.questions.find((question) => question.id === id);
+    const replacement =
+      change.kind === "theory" ? mod?.theoryBlocks : mod?.practiceBlocks;
+    if (
+      seenIds.has(id) ||
+      !existing ||
+      existing.targetLane !== "leicht" ||
+      existing.moduleIds.length !== 1 ||
+      existing.moduleIds[0] !== moduleId ||
+      !replacement?.some((block) => block.id === id) ||
+      !mod?.contentOrder?.some(
+        (entry) => entry.id === id && entry.kind === change.kind,
+      ) ||
+      mod.contentOrder.some(
+        (entry) => entry.id === id && entry.kind === "exercise",
+      )
+    ) {
+      throw new ModuleExerciseSaveError(
+        "Nur eine Lernpfad-Aufgabe dieses Moduls kann durch einen eindeutig zugeordneten Block ersetzt werden.",
+      );
+    }
+    seenIds.add(id);
+    nextDb = {
+      ...nextDb,
+      questions: nextDb.questions.filter((question) => question.id !== id),
+    };
+  }
+  return nextDb;
 }
 
 /** Verschiebt ein Modul relativ zu seinem erwarteten Nachbarn. */
@@ -743,32 +933,62 @@ export function upsertQuestion(
   const existing = existingIndex >= 0 ? db.questions[existingIndex] : undefined;
   const targetLane =
     questionData.targetLane ?? existing?.targetLane ?? "leicht";
+  const title = removeCitationMarkers(
+    questionData.title ?? existing?.title ?? "",
+  ).trim();
   const options = questionData.options ?? existing?.options;
   const notationTask =
     questionData.questionType === "interactive_notation"
       ? (questionData.notationTask ?? existing?.notationTask)
       : undefined;
+  const simpleHint = removeCitationMarkers(
+    questionData.simpleHint ?? existing?.simpleHint ?? "",
+  ).trim();
+  const strongHint = removeCitationMarkers(
+    questionData.strongHint ?? existing?.strongHint ?? "",
+  ).trim();
 
   const normalizedQuestion: ModuleQuestion = {
     id,
     moduleIds,
     targetLane,
+    difficulty: questionData.difficulty ?? existing?.difficulty ?? "einfach",
     questionType: questionData.questionType,
-    prompt: questionData.prompt.trim(),
-    ...(options !== undefined ? { options: [...options] } : {}),
+    ...(title ? { title } : {}),
+    prompt: removeCitationMarkers(questionData.prompt).trim(),
+    ...(options !== undefined
+      ? {
+          options: options.map((option) =>
+            removeCitationMarkers(option).trim(),
+          ),
+        }
+      : {}),
     correctAnswers: [
-      ...(questionData.correctAnswers ?? existing?.correctAnswers ?? []),
+      ...(questionData.correctAnswers ?? existing?.correctAnswers ?? []).map(
+        (answer) => removeCitationMarkers(answer).trim(),
+      ),
     ],
     ...(notationTask !== undefined
       ? { notationTask: cloneNotationTask(notationTask) }
       : {}),
-    explanation: questionData.explanation ?? existing?.explanation ?? "",
-    baseXp:
-      questionData.baseXp ??
-      existing?.baseXp ??
-      getDefaultBaseXpForLane(targetLane),
-    tags: [...(questionData.tags ?? existing?.tags ?? [])],
+    ...(simpleHint ? { simpleHint } : {}),
+    ...(strongHint ? { strongHint } : {}),
+    explanation: removeCitationMarkers(
+      questionData.explanation ?? existing?.explanation ?? "",
+    ).trim(),
+    baseXp: QUESTION_BASE_XP,
+    tags: (questionData.tags ?? existing?.tags ?? []).map((tag) =>
+      removeCitationMarkers(tag).trim(),
+    ),
   };
+
+  const normalizedValidation = validateQuestionInput(
+    normalizedQuestion,
+    db.modules,
+  );
+  if (!normalizedValidation.valid) {
+    throw new Error(normalizedValidation.errors.join(" "));
+  }
 
   const questions =
     existingIndex >= 0
@@ -822,7 +1042,9 @@ export function getModuleSummary(
     return null;
   }
 
-  const theoryBlockCount = mod.theoryBlocks.length;
+  const theoryBlockCount = mod.theoryBlocks.filter(
+    (block) => block.role !== "exercise_intro",
+  ).length;
   const theoryXp = mod.theoryBlocks.reduce(
     (total, block) => total + calculateTheoryBlockXp(block, mod.theoryBaseXp),
     0,
@@ -847,7 +1069,7 @@ export function getModuleSummary(
   let questionsXp = 0;
   for (const question of db.questions) {
     if (!isQuestionInModule(question, moduleId)) continue;
-    const xp = calculateQuestionXp(question.baseXp, question.tags);
+    const xp = calculateModuleQuestionXp(question);
     questionCounts[question.targetLane] += 1;
     questionCounts.total += 1;
     laneXp[question.targetLane] += xp;

@@ -6,7 +6,10 @@ import {
 } from "../../lib/module-schema.ts";
 import "../../styles/contribution-tags.css";
 import "../../styles/contribution-checklist.css";
+import "../../styles/notation.css";
 import "../../styles/module-builder.css";
+import "../../styles/module-player.css";
+import ModuleVisualTemplates from "../learning/ModuleVisualTemplates.astro";
 
 interface Props {
   detail?: boolean;
@@ -26,6 +29,9 @@ const scopeLabels: Record<(typeof MODULE_SCOPES)[number], string> = {
   class="issue-tracker-form module-builder-form"
   data-module-detail={detail ? "true" : undefined}
 >
+  <div class="module-preview-resources" hidden inert aria-hidden="true">
+    <ModuleVisualTemplates />
+  </div>
   <details id="module-general-info" class="module-general-info">
     <summary>Allgemeine Informationen</summary>
     <div class="module-general-info-fields">
@@ -36,7 +42,6 @@ const scopeLabels: Record<(typeof MODULE_SCOPES)[number], string> = {
           name="title"
           type="text"
           maxlength="140"
-          placeholder="z. B. Schall, Frequenz & Tonsystem"
           required
         />
       </div>
@@ -48,7 +53,6 @@ const scopeLabels: Record<(typeof MODULE_SCOPES)[number], string> = {
           name="description"
           rows="3"
           maxlength="2000"
-          placeholder="Worum geht es in diesem Lernmodul?"
         ></textarea>
       </div>
 
@@ -81,8 +85,12 @@ const scopeLabels: Record<(typeof MODULE_SCOPES)[number], string> = {
       </div>
 
       <div id="module-tags-field"></div>
+      <label for="module-archived">
+        <input id="module-archived" name="archived" type="checkbox" />
+        Blocklager – nur im Modul-Builder anzeigen
+      </label>
 
-      <div class="module-field-grid">
+      <div class="module-field-grid" hidden>
         <div class="field">
           <label for="module-theory-base-xp">Basis-XP je Theorie-Block</label>
           <input

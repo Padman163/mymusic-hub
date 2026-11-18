@@ -1,0 +1,78 @@
+import DrumPattern from "../../src/components/DrumPattern.astro";
+
+import Notation from "../../src/components/notation/Notation.astro";
+
+import NotationKeyboard from "../../src/components/notation/NotationKeyboard.astro";
+
+
+
+# 105: Notation
+
+## Ablauf- & Wiederholungszeichen
+
+Damit Musikstücke übersichtlich bleiben und nicht jeder wiederholte Abschnitt neu gedruckt werden muss, steuern **Ablaufzeichen** die Leserichtung in einer Partitur:
+
+* **Wiederholungszeichen ($\parallel:$ und $:\parallel$):** Der Abschnitt zwischen beiden Zeichen wird zweimal gespielt. Steht kein öffnendes Zeichen, wird ab dem Stückanfang wiederholt.
+* **Prima & Seconda Volta (Klammer 1. und 2.):** Beim ersten Durchgang wird Klammer `1.` gespielt; bei der Wiederholung wird Klammer `1.` übersprungen und direkt in Klammer `2.` gesprungen.
+* ***Da Capo* ($D.C.$):** Rücksprung ganz an den **Anfang** des Stücks.
+* ***Dal Segno* ($D.S.$):** Rücksprung zum **Segno-Zeichen** ($\mathcal{S}$).
+* ***al Fine*:** Nach dem Rücksprung ($D.C.$ oder $D.S.$) wird bis zum Wort ***Fine*** (Ende) gespielt.
+* ***al Coda* ($\oplus$):** Nach dem Rücksprung wird bis zum Zeichen *To Coda* gespielt und von dort in den angehängten Schlussteil (**Coda**) gesprungen.
+* **Fermate ($\fermata$):** Ruhezeichen über oder unter einer Note bzw. Pause – der Ton wird nach Ermessen über seinen notierten Wert hinaus ausgehalten.
+
+## Das 5-Linien-System: Violin- & Bassschlüssel
+
+Noten werden in einem System aus **5 waagerechten Notenlinien** und **4 Zwischenräumen** (von unten nach oben gezählt) notiert . Reicht der Platz für sehr tiefe oder hohe Töne nicht aus, werden kurze **Hilfslinien** über oder unter dem System ergänzt . Der **Notenschlüssel** am Zeilenanfang legt fest, welcher Ton auf welcher Linie liegt :
+
+* **Violinschlüssel (G-Schlüssel):** Umschließt mit seiner Schnecke die **2. Linie** von unten und definiert sie als das eingestrichene **$g'$ ($G_4$)** . Er wird für hohe bis mittlere Lagen verwendet (z. B. Gesang, Violine, Klavier rechte Hand, Gitarre).
+* **Bassschlüssel (F-Schlüssel):** Markiert mit seinen beiden Punkten die **4. Linie** von unten als das kleine **$f$ ($F_3$)** . Er wird für tiefe Lagen genutzt (z. B. E-Bass, Cello, Posaune, Klavier linke Hand).
+* **Das Schloss-C ($c'$ / $C_4$):** Liegt exakt in der Mitte zwischen beiden Systemen – im Violinschlüssel auf der **1. Hilfslinie unter** dem System, im Bassschlüssel auf der **1. Hilfslinie über** dem System .
+
+**Stammtöne im Violinschlüssel ($c'$ bis $f''$):**
+<Notation
+  clef="treble"
+  measureWidth="equal"
+  measures={[
+    {
+      rightBarStyle: "final",
+      notes: [
+        { duration: "whole", step: -2 },
+        { duration: "whole", step: -1 },
+        { duration: "whole", step: 0 },
+        { duration: "whole", step: 1 },
+        { duration: "whole", step: 2 },
+        { duration: "whole", step: 3 },
+        { duration: "whole", step: 4 },
+        { duration: "whole", step: 5 },
+        { duration: "whole", step: 6 },
+        { duration: "whole", step: 7 },
+        { duration: "whole", step: 8 }
+      ]
+    }
+  ]}
+/>
+
+**Stammtöne im Bassschlüssel ($G$ bis $c'$):**
+<Notation
+  clef="bass"
+  measureWidth="equal"
+  measures={[
+    {
+      rightBarStyle: "final",
+      notes: [
+        { duration: "whole", step: 0 },
+        { duration: "whole", step: 1 },
+        { duration: "whole", step: 2 },
+        { duration: "whole", step: 3 },
+        { duration: "whole", step: 4 },
+        { duration: "whole", step: 5 },
+        { duration: "whole", step: 6 },
+        { duration: "whole", step: 7 },
+        { duration: "whole", step: 8 },
+        { duration: "whole", step: 9 },
+        { duration: "whole", step: 10 }
+      ]
+    }
+  ]}
+/>
+

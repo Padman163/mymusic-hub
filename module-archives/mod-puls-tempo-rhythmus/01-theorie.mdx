@@ -1,0 +1,33 @@
+import DrumPattern from "../../src/components/DrumPattern.astro";
+
+import Notation from "../../src/components/notation/Notation.astro";
+
+import NotationKeyboard from "../../src/components/notation/NotationKeyboard.astro";
+
+
+
+# 101: Puls, Tempo und Rhythmus unterscheiden
+
+Der **Puls** besteht aus gleichmäßig aufeinanderfolgenden Schlägen. Im Raster stehen die Zahlen 1 bis 4 für vier Schläge.
+
+Das **Tempo** sagt, wie schnell die Schläge aufeinanderfolgen. Liest du das Raster gedanklich schneller von links nach rechts, steigt das Tempo; die markierten Felder bleiben an derselben Stelle.
+
+Der **Rhythmus** beschreibt, wann Klänge einsetzen und wie lange sie dauern. Hier sind alle Klänge gleich kurz. Jedes farbige Feld steht für einen Klang; ein leeres Feld bedeutet, dass an dieser Stelle keiner einsetzt.
+
+<DrumPattern
+  steps={4}
+  stepLabels={["1", "2", "3", "4"]}
+  interactive={false}
+showFooter={true}
+showFooterInfo={false}
+  showVelocity={false}
+  showTrackNote={false}
+  useTrackColors={true}
+  patternData={[
+    { name: "Muster A", note: "C1", color: "#3b82f6", activeSteps: [0, 2] },
+    { name: "Muster B", note: "C1", color: "#3b82f6", activeSteps: [0, 1] }
+  ]}
+/>
+
+In **Muster A** beginnt der zweite Klang auf Schlag **3**, in **Muster B** schon auf Schlag **2**. Wenn der Puls in beiden Mustern gleich schnell ist, ändert sich nur der Rhythmus.
+

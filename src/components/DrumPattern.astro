@@ -1,76 +1,36 @@
 ---
 // src/components/DrumPattern.astro
-export interface Props {
-  steps?: number;
-  timeSignature?: string;
-  resolution?: string;
-  interactive?: boolean;
-  showVelocity?: boolean;
-  showTrackNote?: boolean;
-  useTrackColors?: boolean;
-  continuous?: boolean;
-  keepEmptyTracks?: boolean;
-  stepSize?: number;
-  stepLabels?: string[];
-  patternData?: {
-    name: string;
-    note: string;
-    color: string;
-    activeSteps: number[];
-    cellLabels?: string[];
-    eventPositions?: number[];
-    eventLabels?: string[];
-    velocities?: number[];
-  }[];
-}
+import {
+  DEFAULT_DRUM_PATTERN_DATA,
+  DEFAULT_DRUM_PATTERN_PROPS,
+  type DrumPatternProps,
+} from "../lib/module-schema.ts";
+
+export type Props = DrumPatternProps;
 
 const {
-  steps = 8,
-  timeSignature = "4/4",
-  resolution = "1/8",
-  interactive = true,
-  showVelocity = false,
-  showTrackNote = true,
-  useTrackColors = false,
-  continuous = false,
-  keepEmptyTracks = false,
-  stepSize = 32.5,
+  steps = DEFAULT_DRUM_PATTERN_PROPS.steps,
+  bpm = DEFAULT_DRUM_PATTERN_PROPS.bpm,
+  showPlaybackButton = DEFAULT_DRUM_PATTERN_PROPS.showPlaybackButton,
+  showTempo = DEFAULT_DRUM_PATTERN_PROPS.showTempo,
+  showPlaybackHint = DEFAULT_DRUM_PATTERN_PROPS.showPlaybackHint,
+  showAudioHelp = DEFAULT_DRUM_PATTERN_PROPS.showAudioHelp,
+  timeSignature = DEFAULT_DRUM_PATTERN_PROPS.timeSignature,
+  resolution = DEFAULT_DRUM_PATTERN_PROPS.resolution,
+  highlightTrack = DEFAULT_DRUM_PATTERN_PROPS.highlightTrack,
+  highlightTracks = DEFAULT_DRUM_PATTERN_PROPS.highlightTracks,
+  interactive = DEFAULT_DRUM_PATTERN_PROPS.interactive,
+  showVelocity = DEFAULT_DRUM_PATTERN_PROPS.showVelocity,
+  showTrackNote = DEFAULT_DRUM_PATTERN_PROPS.showTrackNote,
+  showFooter = DEFAULT_DRUM_PATTERN_PROPS.showFooter,
+  showFooterInfo = DEFAULT_DRUM_PATTERN_PROPS.showFooterInfo,
+  useTrackColors = DEFAULT_DRUM_PATTERN_PROPS.useTrackColors,
+  continuous = DEFAULT_DRUM_PATTERN_PROPS.continuous,
+  keepEmptyTracks = DEFAULT_DRUM_PATTERN_PROPS.keepEmptyTracks,
+  stepSize = DEFAULT_DRUM_PATTERN_PROPS.stepSize,
   stepLabels: customStepLabels,
-  patternData = [
-    { name: "Kick - Hit", note: "C1", color: "#ef4444", activeSteps: [0, 4] },
-    {
-      name: "Snare - Center",
-      note: "D1",
-      color: "#f97316",
-      activeSteps: [2, 6],
-    },
-    { name: "Snare - Edge", note: "A0", color: "#f97316", activeSteps: [] },
-    {
-      name: "Floortom 2 - Center",
-      note: "F1",
-      color: "#eab308",
-      activeSteps: [],
-    },
-    {
-      name: "Hi-Hat - Closed Edge",
-      note: "A#-1",
-      color: "#22c55e",
-      activeSteps: [0, 1, 2, 3, 4, 5, 6, 7],
-    },
-    {
-      name: "Hi-Hat - Open Edge 0",
-      note: "E3",
-      color: "#22c55e",
-      activeSteps: [],
-    },
-    {
-      name: "Hi-Hat - Open Edge 3",
-      note: "D0",
-      color: "#22c55e",
-      activeSteps: [],
-    },
-    { name: "Crash 1 - Crash", note: "D5", color: "#0ea5e9", activeSteps: [] },
-  ],
+  patternData = DEFAULT_DRUM_PATTERN_DATA,
+  enableAudio = patternData.some((track) => Boolean(track.soundUrl)),
 } = Astro.props;
 
 const noteColors: Record<string, string> = {
@@ -97,6 +57,7 @@ const visiblePatternData = patternData
   )
   .map((track) => ({
     ...track,
+    soundVelocities: track.velocities ?? [],
     color: useTrackColors
       ? track.color
       : (noteColors[track.note.match(/^[A-G]#?/)?.[0] ?? ""] ?? track.color),
@@ -108,6 +69,18 @@ const visiblePatternData = patternData
   }));
 
 const initialTrack = visiblePatternData[0];
+const highlightedTracks = new Set([
+  ...highlightTracks.map((track) => track.trim()),
+  ...(highlightTrack.trim() ? [highlightTrack.trim()] : []),
+]);
+const selectedTrackIndex =
+  interactive || showVelocity
+    ? highlightedTracks.size > 0
+      ? visiblePatternData.findIndex((track) =>
+          highlightedTracks.has(track.name),
+        )
+      : 0
+    : -1;
 const stepLabels = Array.from(
   { length: steps },
   (_, index) =>
@@ -123,6 +96,14 @@ const stepLabels = Array.from(
   data-show-velocity={showVelocity}
   data-show-track-note={showTrackNote}
   data-continuous={continuous}
+  data-enable-audio={enableAudio ? "true" : undefined}
+  data-bpm={enableAudio ? bpm : undefined}
+  data-show-playback-button={enableAudio ? showPlaybackButton : undefined}
+  data-show-tempo={enableAudio ? showTempo : undefined}
+  data-show-playback-hint={enableAudio ? showPlaybackHint : undefined}
+  data-show-audio-help={enableAudio ? showAudioHelp : undefined}
+  data-time-signature={enableAudio ? timeSignature : undefined}
+  data-resolution={enableAudio ? resolution : undefined}
 >
   <div class="pattern-header" style={`--steps: ${steps};`}>
     <div class="header-spacer" aria-hidden="true"></div>
@@ -134,9 +115,15 @@ const stepLabels = Array.from(
   <div class="pattern-grid">
     {visiblePatternData.map((track, trackIndex) => (
       <div
-        class={`track-row ${(interactive || showVelocity) && trackIndex === 0 ? 'selected' : ''}`}
+        class={`track-row ${
+          highlightedTracks.has(track.name) ? 'highlighted' : ''
+        } ${trackIndex === selectedTrackIndex ? 'selected' : ''}`}
         data-color={track.color}
         data-velocities={JSON.stringify(track.velocities)}
+        data-sound-url={enableAudio ? track.soundUrl : undefined}
+        data-sound-velocities={enableAudio && track.soundUrl
+          ? JSON.stringify(track.soundVelocities)
+          : undefined}
         aria-label={`Instrument ${track.name}, Note ${track.note}`}
         role={showVelocity ? 'button' : undefined}
         aria-pressed={showVelocity ? trackIndex === 0 : undefined}
@@ -212,17 +199,22 @@ const stepLabels = Array.from(
       </div>
     )}
   </div>
-  <div
-    class="pattern-footer"
-    style={`--steps: ${steps};`}
-    aria-label={`Taktart ${timeSignature}, Auflösung ${resolution}, ${steps} Steps`}
-  >
-    <div class="footer-info">
-      <span>Taktart: <strong>{timeSignature}</strong></span>
-      <span>Auflösung: <strong>{resolution}</strong></span>
-      <span>Steps: <strong>{steps}</strong></span>
+  {showFooter && (
+    <div
+      class="pattern-footer"
+      style={`--steps: ${steps};`}
+      aria-hidden={showFooterInfo ? undefined : "true"}
+      aria-label={showFooterInfo ? `Taktart ${timeSignature}, Auflösung ${resolution}, ${steps} Steps` : undefined}
+    >
+      {showFooterInfo && (
+        <div class="footer-info">
+          <span>Taktart: <strong>{timeSignature}</strong></span>
+          <span>Auflösung: <strong>{resolution}</strong></span>
+          <span>Steps: <strong>{steps}</strong></span>
+        </div>
+      )}
     </div>
-  </div>
+  )}
 </div>
 
 <style>
@@ -237,12 +229,16 @@ const stepLabels = Array.from(
     width: fit-content;
     max-width: 100%;
     min-width: min-content;
-    margin: 1rem 0;
+    margin: 1rem auto;
     border: 1px solid #27272a;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
     user-select: none;
     overflow: auto hidden;
     box-sizing: border-box;
+  }
+
+  .studio-one-pattern:not(:has(.pattern-footer)) {
+    padding-bottom: 8px;
   }
 
   .pattern-header,
@@ -381,9 +377,22 @@ const stepLabels = Array.from(
     cursor: pointer;
   }
 
-  .track-row.selected .track-info,
-  .track-row.selected .step-row {
-    background-color: #1c1c20;
+  .track-row:not(.velocity-row):focus-visible {
+    outline: 2px solid #d4d4d8;
+    outline-offset: 2px;
+  }
+
+  .studio-one-pattern:not([data-enable-audio="true"]) .track-row.selected .track-info,
+  .studio-one-pattern:not([data-enable-audio="true"]) .track-row.selected .step-row,
+  .track-row.highlighted .track-info,
+  .track-row.highlighted .step-row {
+    background-color: #27272a;
+  }
+
+  .studio-one-pattern:not([data-enable-audio="true"]) .track-row.selected,
+  .track-row.highlighted {
+    outline: 1px solid #52525b;
+    outline-offset: -1px;
   }
   
   .track-info {
@@ -564,157 +573,131 @@ const stepLabels = Array.from(
   .velocity-label[data-in-bar="true"] {
     bottom: 2px;
   }
+
+  .studio-one-pattern :global([data-audio-trigger]) {
+    cursor: pointer;
+  }
+
+  .studio-one-pattern :global([data-audio-trigger]:focus-visible) {
+    outline: 2px solid #d4d4d8;
+    outline-offset: -2px;
+  }
+
+  .studio-one-pattern[data-enable-audio="true"] :global(.step-cell.is-playing),
+  .studio-one-pattern[data-enable-audio="true"] :global(.track-info.is-playing) {
+    filter: brightness(1.7);
+    box-shadow: inset 0 0 0 2px #fff;
+  }
+
+  .studio-one-pattern :global(.drum-audio-help),
+  .studio-one-pattern :global(.drum-audio-status) {
+    display: block;
+    margin: 8px;
+    font-size: 12px;
+  }
+
+  .studio-one-pattern :global(.drum-audio-status[hidden]) {
+    display: none;
+  }
+
+  .studio-one-pattern[data-enable-audio="true"]:focus-visible {
+    outline: 2px solid #d4d4d8;
+    outline-offset: 2px;
+  }
+
+  .studio-one-pattern :global(.drum-playback-controls) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    font-size: 12px;
+  }
+
+  .studio-one-pattern :global(.drum-playback-tempo) {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .studio-one-pattern :global(.drum-playback-tempo input) {
+    width: 80px;
+    padding: 4px;
+    border: 1px solid #52525b;
+    border-radius: 4px;
+    background: #18181b;
+    color: #d1d5db;
+    font: inherit;
+  }
+
+  .studio-one-pattern :global(.drum-playback-tempo input:invalid) {
+    border-color: #f87171;
+  }
+
+  .studio-one-pattern :global(.step-cell.is-current-step),
+  .studio-one-pattern :global(.step-number.is-current-step) {
+    box-shadow: inset 0 0 0 2px #fff;
+  }
+
+  .studio-one-pattern :global(.header-spacer.has-playback-controls) {
+    display: flex;
+    align-items: center;
+  }
+
+  .studio-one-pattern :global(.drum-playback-toggle) {
+    display: grid;
+    place-items: center;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    width: calc(var(--step-size) * 1.125);
+    height: var(--step-size);
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    border: 1px solid #52525b;
+    border-radius: 4px;
+    background: #27272a;
+    color: #fff;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  .studio-one-pattern :global(.drum-playback-toggle svg) {
+    width: 50%;
+    height: 50%;
+  }
+
+  .studio-one-pattern :global(.drum-playback-toggle[aria-pressed="true"]) {
+    background: #3f3f46;
+  }
+
+  .studio-one-pattern :global(.drum-playback-toggle:focus-visible) {
+    outline: 2px solid #d4d4d8;
+    outline-offset: 2px;
+  }
+
+  .studio-one-pattern :global(.drum-track-toggle) {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    margin: 0;
+    cursor: pointer;
+  }
+
+  .studio-one-pattern[data-enable-audio="true"][data-show-velocity="true"] .track-row.selected .track-name {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
 </style>
 
 <script>
-  function updateVelocityCell(cell: HTMLDivElement, velocity: number) {
-    const value = Math.max(0, Math.min(127, Math.round(velocity)));
-    const bar = cell.querySelector<HTMLSpanElement>('.velocity-bar');
-    const label = cell.querySelector<HTMLSpanElement>('.velocity-label');
-    if (!bar || !label) return;
+  import { initializeDrumPatterns } from "../lib/drum-pattern.ts";
 
-    cell.dataset.velocity = String(value);
-    cell.setAttribute('aria-valuenow', String(value));
-    cell.style.setProperty('--velocity-percent', `${(value / 127) * 100}%`);
-    bar.style.height = `${(value / 127) * 100}%`;
-    label.textContent = cell.dataset.active === 'true' ? String(value) : '';
-    label.dataset.inBar = value >= 40 ? 'true' : 'false';
+  function initialize() {
+    initializeDrumPatterns(document);
   }
 
-  function setupDrumPatterns() {
-    const patterns = document.querySelectorAll<HTMLElement>('.studio-one-pattern');
-    
-    patterns.forEach(pattern => {
-      const rows = pattern.querySelectorAll<HTMLDivElement>('.track-row:not(.velocity-row)');
-      const velocityRow = pattern.querySelector<HTMLDivElement>('.velocity-row');
-      const velocityCells = pattern.querySelectorAll<HTMLDivElement>('.velocity-cell');
-      const isInteractive = pattern.dataset.interactive === 'true';
-      const hasVelocity = pattern.dataset.showVelocity === 'true';
-      let selectedTrack = pattern.querySelector<HTMLDivElement>('.track-row.selected') || rows[0];
-
-      if (!isInteractive && !hasVelocity) return;
-
-      function renderVelocity(row: HTMLDivElement) {
-        const values = JSON.parse(row.dataset.velocities ?? '[]') as number[];
-        const stepCells = row.querySelectorAll<HTMLDivElement>('.step-cell');
-
-        velocityCells.forEach((velocityCell, stepIndex) => {
-          const isActive = stepCells[stepIndex].classList.contains('active');
-          const value = isActive ? values[stepIndex] : 0;
-          velocityCell.dataset.active = String(isActive);
-          velocityCell.dataset.velocity = String(value);
-          if (isInteractive) {
-            velocityCell.setAttribute('aria-valuenow', String(value));
-            velocityCell.setAttribute('aria-disabled', String(!isActive));
-          }
-          velocityCell.setAttribute(
-            'aria-label',
-            `${row.querySelector<HTMLElement>('.track-name')?.textContent ?? ''}, Step ${stepIndex + 1}, Anschlag`
-          );
-          velocityCell.tabIndex = isInteractive && isActive ? 0 : -1;
-          updateVelocityCell(velocityCell, value);
-        });
-      }
-
-      function selectRow(row: HTMLDivElement) {
-        selectedTrack = row;
-        rows.forEach(candidate => candidate.classList.toggle('selected', candidate === row));
-        if (hasVelocity) {
-          rows.forEach(candidate => candidate.setAttribute('aria-pressed', String(candidate === row)));
-        }
-        velocityRow?.classList.remove('selected');
-        if (hasVelocity) renderVelocity(row);
-      }
-
-      rows.forEach(row => {
-        const color = row.dataset.color ?? '#18181b';
-        const cells = row.querySelectorAll<HTMLDivElement>('.step-cell');
-        if (row.dataset.bound !== 'true') {
-          row.dataset.bound = 'true';
-          row.addEventListener('click', () => selectRow(row));
-          row.addEventListener('keydown', event => {
-            if (event.key !== 'Enter' && event.key !== ' ') return;
-            event.preventDefault();
-            selectRow(row);
-          });
-        }
-        
-        cells.forEach(cell => {
-          if (!isInteractive) return;
-          if (cell.dataset.bound === 'true') return;
-          cell.dataset.bound = 'true';
-
-          cell.addEventListener('click', () => {
-            selectRow(row);
-            const isActive = cell.classList.toggle('active');
-            cell.style.backgroundColor = isActive ? color : '#18181b';
-
-            const values = JSON.parse(row.dataset.velocities ?? '[]') as number[];
-            const stepIndex = Number(cell.dataset.step);
-            values[stepIndex] = isActive ? (values[stepIndex] || 90) : 0;
-            row.dataset.velocities = JSON.stringify(values);
-            renderVelocity(row);
-          });
-        });
-      });
-
-      const selectedRow = pattern.querySelector<HTMLDivElement>('.track-row.selected') || rows[0];
-      if (selectedRow) selectRow(selectedRow);
-
-      velocityCells.forEach(cell => {
-        if (!isInteractive) return;
-        if (cell.dataset.bound === 'true') return;
-        cell.dataset.bound = 'true';
-
-        const setFromPointer = (event: PointerEvent) => {
-          const bounds = cell.getBoundingClientRect();
-          const ratio = 1 - (event.clientY - bounds.top) / bounds.height;
-          updateVelocityCell(cell, ratio * 127);
-
-          if (selectedTrack) {
-            const values = JSON.parse(selectedTrack.dataset.velocities ?? '[]') as number[];
-            values[Number(cell.dataset.step)] = Number(cell.dataset.velocity);
-            selectedTrack.dataset.velocities = JSON.stringify(values);
-          }
-        };
-
-        cell.addEventListener('pointerdown', event => {
-          if (cell.dataset.active !== 'true') return;
-          event.preventDefault();
-          cell.setPointerCapture(event.pointerId);
-          setFromPointer(event);
-        });
-        cell.addEventListener('pointermove', event => {
-          if (cell.hasPointerCapture(event.pointerId)) setFromPointer(event);
-        });
-        cell.addEventListener('keydown', event => {
-          if (cell.dataset.active !== 'true') return;
-
-          const current = Number(cell.dataset.velocity);
-          const changes: Record<string, number> = {
-            ArrowUp: 1,
-            ArrowRight: 1,
-            ArrowDown: -1,
-            ArrowLeft: -1,
-            PageUp: 10,
-            PageDown: -10,
-            Home: -current,
-            End: 127 - current
-          };
-          if (!(event.key in changes)) return;
-          event.preventDefault();
-          updateVelocityCell(cell, current + changes[event.key]);
-
-          if (selectedTrack) {
-            const values = JSON.parse(selectedTrack.dataset.velocities ?? '[]') as number[];
-            values[Number(cell.dataset.step)] = Number(cell.dataset.velocity);
-            selectedTrack.dataset.velocities = JSON.stringify(values);
-          }
-        });
-      });
-    });
-  }
-
-  document.addEventListener('DOMContentLoaded', setupDrumPatterns);
-  document.addEventListener('astro:page-load', setupDrumPatterns);
+  initialize();
+  document.addEventListener("DOMContentLoaded", initialize);
+  document.addEventListener("astro:page-load", initialize);
 </script>

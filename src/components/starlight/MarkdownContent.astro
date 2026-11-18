@@ -2,12 +2,16 @@
 import "@astrojs/starlight/style/markdown.css";
 
 const isWideContent =
-  Astro.locals.starlightRoute.entry.data.template === "wide-content";
+  Astro.locals.starlightRoute.entry.data.template === "wide-content" ||
+  Astro.locals.starlightRoute.entry.data.template === "extra-wide-content";
+const isExtraWideContent =
+  Astro.locals.starlightRoute.entry.data.template === "extra-wide-content";
 ---
 
 <div
   class="sl-markdown-content"
   data-wide-content={isWideContent ? "" : undefined}
+  data-extra-wide-content={isExtraWideContent ? "" : undefined}
 >
   <slot />
 </div>

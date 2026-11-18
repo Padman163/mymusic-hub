@@ -1,4 +1,15 @@
-import katex from "katex";
+import rehypeKatex from "rehype-katex";
+import rehypeRaw from "rehype-raw";
+import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
+import rehypeStringify from "rehype-stringify";
+import remarkMath from "remark-math";
+import remarkParse from "remark-parse";
+import remarkRehype from "remark-rehype";
+import { unified } from "unified";
+import {
+  createDrumPatternElement,
+  initializeDrumPatterns,
+} from "./drum-pattern.ts";
 import {
   clearLearningProgress,
   completePracticeBlock,
@@ -17,12 +28,20 @@ import {
   syncProgressWithCurriculum,
 } from "./learning-progress.ts";
 import {
+  buildLessonSections,
+  cleanLessonTitle,
+  getLessonSectionTitle,
+  type LessonItem,
+  type LessonSection,
+} from "./module-lessons.ts";
+import {
   BASE_XP_DEFAULTS,
+  formatExerciseTitle,
+  getLearningCatalog,
   isQuestionInModule,
   isQuizSettings,
   type LearningModule,
   MODULE_SCOPES,
-  type ModuleContentReference,
   type ModuleQuestion,
   type ModuleScope,
   type ModulesDatabase,
@@ -35,6 +54,7 @@ import {
 import { createEmptyModulesDatabase } from "./module-store.ts";
 import {
   hasEquivalentNotation,
+  parseTheoryDrumPattern,
   parseTheoryNotation,
 } from "./module-theory-notation.ts";
 import {
@@ -55,8 +75,9 @@ import {
 } from "./notation-renderer.ts";
 import { type Duration, durationLabels } from "./rhythm.ts";
 import { layoutNotationSystems, type NotationProps } from "./system-layout.ts";
+import { createXpBadge } from "./xp-badge.ts";
 import {
-  calculateQuestionXp,
+  calculateModuleQuestionXp,
   calculateTheoryBlockXp,
   getAvailableTags,
   TAG_DEFINITIONS,
@@ -138,12 +159,15 @@ function computeModuleStats(
   quizReady: boolean;
   overallPercent: number;
 } {
-  const totalTheory = mod.theoryBlocks.length;
+  const theoryBlocks = mod.theoryBlocks.filter(
+    (block) => block.role !== "exercise_intro",
+  );
+  const totalTheory = theoryBlocks.length;
   const theoryDone = modProgress?.steps.theory === "completed";
   const completedIds = new Set(modProgress?.completedTheoryBlockIds ?? []);
   const completedTheory = theoryDone
     ? totalTheory
-    : mod.theoryBlocks.filter((block) => completedIds.has(block.id)).length;
+    : theoryBlocks.filter((block) => completedIds.has(block.id)).length;
 
   const exerciseQuestions = modQuestions.filter(
     (q) => q.targetLane === "leicht",
@@ -203,7 +227,7 @@ function parseInitialDatabaseFromRoot(
   override?: ModulesDatabase,
 ): ModulesDatabase {
   if (override) {
-    return override;
+    return getLearningCatalog(override);
   }
   const raw = root.dataset.initialDb;
   if (!raw) {
@@ -217,13 +241,15 @@ function parseInitialDatabaseFromRoot(
       Array.isArray(parsed.questions) &&
       (parsed.quizSettings === undefined || isQuizSettings(parsed.quizSettings))
     ) {
-      return normalizeLegacyDatabase({
-        modules: parsed.modules as LearningModule[],
-        questions: parsed.questions as ModuleQuestion[],
-        ...(parsed.quizSettings !== undefined
-          ? { quizSettings: parsed.quizSettings }
-          : {}),
-      });
+      return getLearningCatalog(
+        normalizeLegacyDatabase({
+          modules: parsed.modules as LearningModule[],
+          questions: parsed.questions as ModuleQuestion[],
+          ...(parsed.quizSettings !== undefined
+            ? { quizSettings: parsed.quizSettings }
+            : {}),
+        }),
+      );
     }
   } catch {
     // Ungültiges initial-db JSON fällt auf leere Datenbank zurück
@@ -253,13 +279,15 @@ async function tryFetchModulesDbFromUrl(
       Array.isArray(parsed.questions) &&
       (parsed.quizSettings === undefined || isQuizSettings(parsed.quizSettings))
     ) {
-      return normalizeLegacyDatabase({
-        modules: parsed.modules as LearningModule[],
-        questions: parsed.questions as ModuleQuestion[],
-        ...(parsed.quizSettings !== undefined
-          ? { quizSettings: parsed.quizSettings }
-          : {}),
-      });
+      return getLearningCatalog(
+        normalizeLegacyDatabase({
+          modules: parsed.modules as LearningModule[],
+          questions: parsed.questions as ModuleQuestion[],
+          ...(parsed.quizSettings !== undefined
+            ? { quizSettings: parsed.quizSettings }
+            : {}),
+        }),
+      );
     }
   } catch {
     // Netzwerk- oder JSON-Fehler ignorieren, Fallback-Daten bleiben aktiv
@@ -271,6 +299,27 @@ async function fetchLiveModulesDatabase(): Promise<ModulesDatabase | null> {
   return (
     (await tryFetchModulesDbFromUrl(PLAYER_API_ENDPOINT)) ??
     (await tryFetchModulesDbFromUrl(PLAYER_API_FALLBACK))
+  );
+}
+
+function showCatalogStatus(root: HTMLElement, message: string): void {
+  const status = document.createElement("p");
+  status.className = "learning-muted";
+  status.setAttribute("role", "status");
+  status.textContent = message;
+  (root.querySelector("[data-stepper-content]") ?? root).replaceChildren(
+    status,
+  );
+}
+
+const catalogLoadError = "Der Modulkatalog konnte nicht geladen werden.";
+
+function canRenderInitialCatalog(
+  root: HTMLElement,
+  options: PlayerAttachmentOptions,
+): boolean {
+  return Boolean(
+    options.autoFetch === false || options.initialDb || root.dataset.initialDb,
   );
 }
 
@@ -295,20 +344,40 @@ function normalizeText(value: string): string {
 
 function parseNumericAndUnit(raw: string): {
   num: number | null;
+  numericText: string;
   unit: string;
   normalized: string;
 } {
-  const normalized = normalizeText(raw);
-  const match = /^([+-]?\d+(?:[.,]\d+)?)\s*(.*)$/.exec(normalized);
+  const text = raw.trim().replace(/\s+/g, " ");
+  const normalized = text.toLowerCase();
+  const match = /^([+-]?\d+(?:[.,]\d+)?)\s*(.*)$/.exec(text);
   if (!match) {
-    return { num: null, unit: normalized, normalized };
+    return { num: null, numericText: "", unit: normalized, normalized };
   }
   const num = Number(match[1].replace(",", "."));
   return {
     num: Number.isFinite(num) ? num : null,
+    numericText: match[1],
     unit: match[2].trim(),
     normalized,
   };
+}
+
+function getNumericQuestionUnit(question: ModuleQuestion): string {
+  const explicitUnit = /\(in\s+([^()]+)\)/i.exec(question.prompt)?.[1].trim();
+  const isUnit = (value: string) =>
+    /^[\p{L}%°µ€$][\p{L}%°µ€$²³/·^0-9-]*$/u.test(value);
+  if (explicitUnit && isUnit(explicitUnit)) return explicitUnit;
+
+  const units = new Map<string, string>();
+  for (const answer of question.correctAnswers) {
+    const { num, unit } = parseNumericAndUnit(answer);
+    if (num === null || (unit && !isUnit(unit))) return "";
+    if (unit && !units.has(normalizeText(unit))) {
+      units.set(normalizeText(unit), unit);
+    }
+  }
+  return units.size === 1 ? (units.values().next().value ?? "") : "";
 }
 
 function matchesExpectedPitch(actualRaw: string, expectedRaw: string): boolean {
@@ -355,9 +424,18 @@ export function evaluateQuestionAnswer(
   } else if (question.questionType === "numeric_input") {
     if (answer.kind === "numeric") {
       const actual = parseNumericAndUnit(answer.value);
-      if (actual.normalized.length > 0) {
+      const actualUnit = normalizeText(actual.unit);
+      const fixedUnit = normalizeText(getNumericQuestionUnit(question));
+      if (
+        actual.normalized &&
+        (!fixedUnit || !actualUnit || actualUnit === fixedUnit)
+      ) {
         correct = question.correctAnswers.some((expectedRaw) => {
           const expected = parseNumericAndUnit(expectedRaw);
+          const expectedUnit = normalizeText(expected.unit);
+          if (fixedUnit && expectedUnit && expectedUnit !== fixedUnit) {
+            return false;
+          }
           if (actual.normalized === expected.normalized) {
             return true;
           }
@@ -366,11 +444,7 @@ export function evaluateQuestionAnswer(
             expected.num !== null &&
             Math.abs(actual.num - expected.num) < 1e-6
           ) {
-            return (
-              actual.unit === expected.unit ||
-              actual.unit === "" ||
-              expected.unit === ""
-            );
+            return actualUnit === expectedUnit || !actualUnit || !expectedUnit;
           }
           return false;
         });
@@ -411,103 +485,199 @@ export function evaluateQuestionAnswer(
   };
 }
 
-function renderInlineMarkdown(text: string): DocumentFragment {
-  const frag = document.createDocumentFragment();
-  const tokenPattern = /(\$[^$\n]+\$|\*\*[^*\n]+\*\*|`[^`\n]+`)/g;
-  let lastIndex = 0;
+const safeSvgPaint =
+  /^(?:#[\da-f]{3,8}|[a-z]+|currentColor|none|transparent)$/i;
 
-  for (const match of text.matchAll(tokenPattern)) {
-    const idx = match.index ?? 0;
-    if (idx > lastIndex) {
-      frag.append(document.createTextNode(text.slice(lastIndex, idx)));
+const FERMATA_SVG_MARKUP =
+  '<svg class="learning-fermata-symbol" viewBox="0 0 24 18" role="img" aria-label="Fermate"><path d="M3 9 C5 1 19 1 21 9" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="13" r="2" fill="currentColor"/></svg>';
+
+const theoryMarkdown = unified()
+  .use(remarkParse)
+  .use(remarkMath)
+  .use(remarkRehype, { allowDangerousHtml: true })
+  .use(rehypeRaw)
+  .use(rehypeSanitize, {
+    ...defaultSchema,
+    tagNames: [
+      ...(defaultSchema.tagNames ?? []),
+      "figure",
+      "figcaption",
+      "svg",
+      "title",
+      "desc",
+      "g",
+      "path",
+      "line",
+      "polyline",
+      "polygon",
+      "rect",
+      "circle",
+      "ellipse",
+      "text",
+      "tspan",
+    ],
+    attributes: {
+      ...defaultSchema.attributes,
+      code: [["className", /^language-/, "math-inline", "math-display"]],
+      figure: ["ariaDescribedBy", "ariaLabel", "ariaLabelledBy"],
+      svg: [
+        "className",
+        "viewBox",
+        "role",
+        "ariaLabel",
+        "ariaLabelledBy",
+        "ariaDescribedBy",
+        "preserveAspectRatio",
+      ],
+      line: [
+        "x1",
+        "y1",
+        "x2",
+        "y2",
+        ["stroke", safeSvgPaint],
+        "strokeWidth",
+        "strokeDashArray",
+      ],
+      path: [
+        "d",
+        ["fill", safeSvgPaint],
+        ["stroke", safeSvgPaint],
+        "strokeWidth",
+        "strokeDashArray",
+      ],
+      polyline: [
+        "points",
+        ["fill", safeSvgPaint],
+        ["stroke", safeSvgPaint],
+        "strokeWidth",
+      ],
+      polygon: [
+        "points",
+        ["fill", safeSvgPaint],
+        ["stroke", safeSvgPaint],
+        "strokeWidth",
+      ],
+      rect: [
+        "x",
+        "y",
+        "width",
+        "height",
+        "rx",
+        "ry",
+        ["fill", safeSvgPaint],
+        ["stroke", safeSvgPaint],
+        "strokeWidth",
+      ],
+      circle: [
+        "cx",
+        "cy",
+        "r",
+        ["fill", safeSvgPaint],
+        ["stroke", safeSvgPaint],
+        "strokeWidth",
+      ],
+      ellipse: [
+        "cx",
+        "cy",
+        "rx",
+        "ry",
+        ["fill", safeSvgPaint],
+        ["stroke", safeSvgPaint],
+        "strokeWidth",
+      ],
+      g: [
+        ["fill", safeSvgPaint],
+        ["stroke", safeSvgPaint],
+        "strokeWidth",
+        "opacity",
+      ],
+      text: [
+        "x",
+        "y",
+        ["fill", safeSvgPaint],
+        "fontSize",
+        "fontWeight",
+        "textAnchor",
+      ],
+      tspan: ["x", "y", "dx", "dy"],
+    },
+  })
+  .use(rehypeKatex)
+  .use(rehypeStringify);
+
+function replaceFermataMath(node: unknown): void {
+  if (!isRecord(node) || !Array.isArray(node.children)) return;
+  for (let index = 0; index < node.children.length; index += 1) {
+    const child = node.children[index];
+    if (!isRecord(child)) continue;
+    if (
+      child.type === "inlineMath" &&
+      typeof child.value === "string" &&
+      child.value.trim() === "\\fermata"
+    ) {
+      node.children[index] = { type: "html", value: FERMATA_SVG_MARKUP };
+    } else {
+      replaceFermataMath(child);
     }
-    const token = match[0];
-    if (token.startsWith("$") && token.endsWith("$")) {
-      const expr = token.slice(1, -1);
-      const span = document.createElement("span");
-      span.className = "learning-inline-math";
-      span.innerHTML = katex.renderToString(expr, {
-        displayMode: false,
-        throwOnError: false,
-      });
-      frag.append(span);
-    } else if (token.startsWith("**") && token.endsWith("**")) {
-      const strong = document.createElement("strong");
-      strong.textContent = token.slice(2, -2);
-      frag.append(strong);
-    } else if (token.startsWith("`") && token.endsWith("`")) {
-      const code = document.createElement("code");
-      code.textContent = token.slice(1, -1);
-      frag.append(code);
-    }
-    lastIndex = idx + token.length;
   }
-
-  if (lastIndex < text.length) {
-    frag.append(document.createTextNode(text.slice(lastIndex)));
-  }
-
-  return frag;
 }
 
 function renderMarkdownText(markdown: string): DocumentFragment {
-  const frag = document.createDocumentFragment();
-  const normalized = markdown.replace(/\r\n/g, "\n").trim();
-  if (!normalized) {
-    return frag;
+  const tree = theoryMarkdown.parse(markdown);
+  replaceFermataMath(tree);
+  for (const node of tree.children) {
+    if (node.type !== "paragraph" || node.children.length !== 1) continue;
+    const [math] = node.children;
+    const start = math.position?.start.offset;
+    // remark-math treats a same-line $$…$$ paragraph as inline math.
+    if (
+      math.type === "inlineMath" &&
+      start !== undefined &&
+      markdown.startsWith("$$", start)
+    ) {
+      math.data = {
+        ...math.data,
+        hProperties: { className: ["language-math", "math-display"] },
+      };
+    }
   }
-
-  const chunks = normalized.split(/\n{2,}/);
-  for (const chunk of chunks) {
-    const trimmed = chunk.trim();
-    if (!trimmed) continue;
-
-    if (trimmed.startsWith("$$") && trimmed.endsWith("$$")) {
-      const expr = trimmed.slice(2, -2).trim();
-      const mathDiv = document.createElement("div");
-      mathDiv.className = "learning-math-block";
-      mathDiv.innerHTML = katex.renderToString(expr, {
-        displayMode: true,
-        throwOnError: false,
-      });
-      frag.append(mathDiv);
-      continue;
-    }
-
-    const lines = trimmed.split("\n");
-    if (lines.every((line) => line.trim().startsWith("- "))) {
-      const ul = document.createElement("ul");
-      for (const line of lines) {
-        const li = document.createElement("li");
-        li.append(renderInlineMarkdown(line.trim().slice(2)));
-        ul.append(li);
-      }
-      frag.append(ul);
-      continue;
-    }
-
-    if (lines.length === 1 && /^#{1,4}\s+/.test(trimmed)) {
-      const heading = document.createElement("h5");
-      heading.append(renderInlineMarkdown(trimmed.replace(/^#{1,4}\s+/, "")));
-      frag.append(heading);
-      continue;
-    }
-
-    const p = document.createElement("p");
-    lines.forEach((line, index) => {
-      if (index > 0) p.append(document.createElement("br"));
-      p.append(renderInlineMarkdown(line));
-    });
-    frag.append(p);
-  }
-
-  return frag;
+  const template = document.createElement("template");
+  template.innerHTML = theoryMarkdown.stringify(theoryMarkdown.runSync(tree));
+  return template.content;
 }
 
-/** Wandelt Markdown, KaTeX und sichere Notationselemente in DOM-Elemente um. */
-export function renderTheoryMarkdown(markdown: string): DocumentFragment {
+function renderTheoryKeyboard(
+  props: Record<string, unknown>,
+  templateRoot?: ParentNode,
+): DocumentFragment {
+  const { showBrace = true, rightBarStyle = "final" } = props;
+  if (
+    Object.keys(props).some(
+      (key) => key !== "showBrace" && key !== "rightBarStyle",
+    ) ||
+    typeof showBrace !== "boolean" ||
+    (rightBarStyle !== "single" && rightBarStyle !== "final")
+  ) {
+    throw new Error(
+      "NotationKeyboard erwartet showBrace (boolean) und rightBarStyle (single oder final).",
+    );
+  }
+  const selector = `template[data-visual-template="NotationKeyboard"][data-show-brace="${showBrace}"][data-right-bar-style="${rightBarStyle}"]`;
+  const template =
+    templateRoot?.querySelector<HTMLTemplateElement>(selector) ??
+    document.querySelector<HTMLTemplateElement>(selector);
+  if (!template) throw new Error("Die Keyboard-Vorlage fehlt.");
+  return document.importNode(template.content, true);
+}
+
+/** Wandelt Markdown, KaTeX und sichere Visual-Elemente in DOM-Elemente um. */
+export function renderTheoryMarkdown(
+  markdown: string,
+  templateRoot?: ParentNode,
+): DocumentFragment {
   const frag = document.createDocumentFragment();
-  const tokens = /(`+|\$\$|\$|<Notation(?=[\s/>]))/g;
+  const tokens =
+    /(<!--|`+|~{3,}|\$+|<Notation(?:Keyboard)?(?=[\s/>])|<DrumPattern(?=[\s/>]))/g;
   let textStart = 0;
   for (
     let match = tokens.exec(markdown);
@@ -515,22 +685,47 @@ export function renderTheoryMarkdown(markdown: string): DocumentFragment {
     match = tokens.exec(markdown)
   ) {
     const token = match[0];
-    if (token !== "<Notation") {
+    let before = match.index;
+    while (before > 0 && markdown[before - 1] === "\\") before -= 1;
+    const escapes = match.index - before;
+    if (escapes % 2 === 1) continue;
+    if (token === "<!--") {
+      const end = markdown.indexOf("-->", tokens.lastIndex);
+      tokens.lastIndex = end === -1 ? markdown.length : end + 3;
+      continue;
+    }
+    if (!token.startsWith("<")) {
       const end = markdown.indexOf(token, tokens.lastIndex);
       if (end !== -1) tokens.lastIndex = end + token.length;
       continue;
     }
-    if (match.index > 0 && markdown[match.index - 1] === "\\") continue;
     frag.append(renderMarkdownText(markdown.slice(textStart, match.index)));
     try {
-      const parsed = parseTheoryNotation(markdown, match.index);
-      frag.append(buildNotationVisualElement(parsed.props));
-      tokens.lastIndex = parsed.end;
+      if (token === "<DrumPattern") {
+        const drumPattern = parseTheoryDrumPattern(
+          markdown,
+          match.index,
+          token,
+        );
+        frag.append(createDrumPatternElement(drumPattern.props, templateRoot));
+        tokens.lastIndex = drumPattern.end;
+      } else {
+        const parsed = parseTheoryNotation(markdown, match.index, token);
+        frag.append(
+          token === "<NotationKeyboard"
+            ? renderTheoryKeyboard(parsed.props, templateRoot)
+            : buildNotationVisualElement(parsed.props),
+        );
+        tokens.lastIndex = parsed.end;
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       const warning = document.createElement("p");
       warning.className = "learning-notation-error";
-      warning.textContent = `Notation konnte nicht dargestellt werden: ${message}`;
+      warning.textContent =
+        token === "<DrumPattern"
+          ? `DrumPattern konnte nicht dargestellt werden: ${message}`
+          : `Notation konnte nicht dargestellt werden: ${message}`;
       frag.append(warning);
       const end = markdown.indexOf("/>", match.index);
       tokens.lastIndex = end === -1 ? markdown.length : end + 2;
@@ -538,7 +733,18 @@ export function renderTheoryMarkdown(markdown: string): DocumentFragment {
     textStart = tokens.lastIndex;
   }
   frag.append(renderMarkdownText(markdown.slice(textStart)));
+  initializeDrumPatterns(frag);
   return frag;
+}
+
+export function renderQuestionPrompt(
+  prompt: string,
+  templateRoot?: ParentNode,
+): HTMLElement {
+  const content = document.createElement("div");
+  content.className = "learning-quiz-question";
+  content.append(renderTheoryMarkdown(prompt, templateRoot));
+  return content;
 }
 
 function buildNotationVisualElement(
@@ -647,7 +853,7 @@ function buildNotationVisualElement(
   return wrapper;
 }
 
-function renderTheoryVisualElement(
+export function renderTheoryVisualElement(
   block: TheoryBlock,
   templateRoot?: ParentNode,
 ): HTMLElement | null {
@@ -759,7 +965,7 @@ function buildNotationTaskElement(
       ? config.lockDuration
       : (config.initialDuration ?? "quarter");
   const isCompact = Boolean(config.compact);
-  const showHints = Boolean(task.showHints);
+  const showHints = task.showHints ?? true;
 
   const root = document.createElement("div");
   root.className = "notation-component notation-builder not-content";
@@ -961,10 +1167,35 @@ function renderQuestionInputBlock(
     const input = document.createElement("input");
     input.type = "text";
     input.className = "learning-numeric-input";
-    input.placeholder = "Antwort eingeben (z. B. 880 oder 880 Hz)";
-    input.setAttribute("aria-label", question.prompt);
-    if (showSolution) input.value = question.correctAnswers[0] ?? "";
-    container.append(input);
+    const unit = getNumericQuestionUnit(question);
+    if (unit) {
+      const field = document.createElement("label");
+      field.className = "learning-numeric-field";
+      const suffix = document.createElement("span");
+      suffix.className = "learning-numeric-unit";
+      suffix.textContent = unit;
+      suffix.setAttribute("aria-hidden", "true");
+      input.inputMode = "decimal";
+      input.setAttribute("aria-label", `${question.prompt} Einheit: ${unit}`);
+      if (showSolution) {
+        const numericSolution = question.correctAnswers
+          .map(parseNumericAndUnit)
+          .find(
+            (parsed) =>
+              parsed.num !== null &&
+              (!parsed.unit ||
+                normalizeText(parsed.unit) === normalizeText(unit)),
+          );
+        input.value = numericSolution?.numericText ?? "";
+      }
+      field.append(input, suffix);
+      container.append(field);
+    } else {
+      input.placeholder = "Antwort eingeben";
+      input.setAttribute("aria-label", question.prompt);
+      if (showSolution) input.value = question.correctAnswers[0] ?? "";
+      container.append(input);
+    }
     return container;
   }
 
@@ -1001,6 +1232,56 @@ function formatExerciseSolution(question: ModuleQuestion): string {
     parts.push(`Notenwerte: ${task.expectedDurations.join(", ")}`);
   }
   return parts.join("; ");
+}
+
+function createProgressResetControls(getDatabase: () => ModulesDatabase) {
+  const resetBtn = document.createElement("button");
+  resetBtn.type = "button";
+  resetBtn.className = "learning-btn learning-btn-danger";
+  resetBtn.dataset.action = "request-reset";
+  resetBtn.textContent = "Lernfortschritt zurücksetzen";
+
+  const confirmBox = document.createElement("div");
+  confirmBox.className = "learning-reset-confirm";
+  confirmBox.hidden = true;
+  const confirmLabel = document.createElement("span");
+  confirmLabel.textContent =
+    "Den gesamten Lernfortschritt zurücksetzen? Alle XP gehen verloren.";
+  const confirmYes = document.createElement("button");
+  confirmYes.type = "button";
+  confirmYes.className = "learning-btn learning-btn-danger";
+  confirmYes.dataset.action = "confirm-reset";
+  confirmYes.textContent = "Ja, zurücksetzen";
+  const confirmCancel = document.createElement("button");
+  confirmCancel.type = "button";
+  confirmCancel.className = "learning-btn";
+  confirmCancel.dataset.action = "cancel-reset";
+  confirmCancel.textContent = "Abbrechen";
+  confirmBox.append(confirmLabel, confirmYes, confirmCancel);
+
+  resetBtn.addEventListener("click", () => {
+    confirmBox.hidden = false;
+    resetBtn.hidden = true;
+    confirmCancel.focus();
+  });
+  confirmCancel.addEventListener("click", () => {
+    confirmBox.hidden = true;
+    resetBtn.hidden = false;
+    resetBtn.focus();
+  });
+  confirmYes.addEventListener("click", () => {
+    const db = getDatabase();
+    clearLearningProgress();
+    commitProgressChange(
+      createInitialProgress(db.modules, db.quizSettings),
+      db,
+      "reset",
+    );
+  });
+
+  const controls = document.createDocumentFragment();
+  controls.append(resetBtn, confirmBox);
+  return controls;
 }
 
 export interface ProgressDashboardController {
@@ -1197,48 +1478,7 @@ export function attachProgressDashboard(
     resetArea.className = "learning-reset-area";
     resetArea.hidden = !showDetails;
 
-    const resetBtn = document.createElement("button");
-    resetBtn.type = "button";
-    resetBtn.className = "learning-btn learning-btn-danger";
-    resetBtn.dataset.action = "request-reset";
-    resetBtn.textContent = "Lernfortschritt zurücksetzen";
-
-    const confirmBox = document.createElement("div");
-    confirmBox.className = "learning-reset-confirm";
-    confirmBox.hidden = true;
-    const confirmLabel = document.createElement("span");
-    confirmLabel.textContent =
-      "Wirklich alle XP und freigeschalteten Module zurücksetzen?";
-    const confirmYes = document.createElement("button");
-    confirmYes.type = "button";
-    confirmYes.className = "learning-btn learning-btn-danger";
-    confirmYes.dataset.action = "confirm-reset";
-    confirmYes.textContent = "Ja, zurücksetzen";
-    const confirmCancel = document.createElement("button");
-    confirmCancel.type = "button";
-    confirmCancel.className = "learning-btn";
-    confirmCancel.dataset.action = "cancel-reset";
-    confirmCancel.textContent = "Abbrechen";
-    confirmBox.append(confirmLabel, confirmYes, confirmCancel);
-
-    resetBtn.addEventListener("click", () => {
-      confirmBox.hidden = false;
-      resetBtn.hidden = true;
-    });
-    confirmCancel.addEventListener("click", () => {
-      confirmBox.hidden = true;
-      resetBtn.hidden = false;
-    });
-    confirmYes.addEventListener("click", () => {
-      clearLearningProgress();
-      const fresh = createInitialProgress(
-        currentDb.modules,
-        currentDb.quizSettings,
-      );
-      commitProgressChange(fresh, currentDb, "reset");
-    });
-
-    resetArea.append(resetBtn, confirmBox);
+    resetArea.append(createProgressResetControls(() => currentDb));
     card.append(
       header,
       metrics,
@@ -1251,7 +1491,8 @@ export function attachProgressDashboard(
     root.append(card);
   };
 
-  render();
+  const renderInitialCatalog = canRenderInitialCatalog(root, options);
+  if (renderInitialCatalog) render();
 
   const onProgressUpdated = (event: Event) => {
     if (!root.isConnected) {
@@ -1267,7 +1508,9 @@ export function attachProgressDashboard(
       isRecord(event.detail.db) &&
       Array.isArray(event.detail.db.modules)
     ) {
-      currentDb = event.detail.db as unknown as ModulesDatabase;
+      currentDb = getLearningCatalog(
+        event.detail.db as unknown as ModulesDatabase,
+      );
     }
     render();
   };
@@ -1278,6 +1521,8 @@ export function attachProgressDashboard(
       if (liveDb) {
         currentDb = liveDb;
         render();
+      } else if (!renderInitialCatalog) {
+        showCatalogStatus(root, catalogLoadError);
       }
     });
   }
@@ -1299,7 +1544,7 @@ export interface ModuleRoadmapController {
 /**
  * Rendert die nach `order` sortierten Modul-Karten inklusive Fortschritts-Kennzahlen
  * (Theorieteile, offene Aufgaben, Quiz) sowie den Aktionen
- * („Lektion öffnen“ und „Quiz starten“).
+ * („Lektion öffnen“, „Quiz starten“ und „Lernfortschritt zurücksetzen“).
  */
 export function attachModuleRoadmap(
   root: HTMLElement,
@@ -1484,6 +1729,8 @@ export function attachModuleRoadmap(
         actions.append(quizDisabledBtn);
       }
 
+      actions.append(createProgressResetControls(() => currentDb));
+
       const fastlaneLink = document.createElement("a");
       fastlaneLink.className =
         "learning-link-btn learning-link-btn-fastlane learning-open-fastlane";
@@ -1499,7 +1746,8 @@ export function attachModuleRoadmap(
     root.append(list);
   };
 
-  render();
+  const renderInitialCatalog = canRenderInitialCatalog(root, options);
+  if (renderInitialCatalog) render();
 
   const onProgressUpdated = (event: Event) => {
     if (!root.isConnected) {
@@ -1515,7 +1763,9 @@ export function attachModuleRoadmap(
       isRecord(event.detail.db) &&
       Array.isArray(event.detail.db.modules)
     ) {
-      currentDb = event.detail.db as unknown as ModulesDatabase;
+      currentDb = getLearningCatalog(
+        event.detail.db as unknown as ModulesDatabase,
+      );
     }
     render();
   };
@@ -1526,6 +1776,8 @@ export function attachModuleRoadmap(
       if (liveDb) {
         currentDb = liveDb;
         render();
+      } else if (!renderInitialCatalog) {
+        showCatalogStatus(root, catalogLoadError);
       }
     });
   }
@@ -1544,6 +1796,7 @@ export interface QuizRunnerMountConfig {
   db: ModulesDatabase;
   mode: TargetLane;
   exerciseId?: string;
+  exerciseTitleInSection?: boolean;
   templateRoot?: ParentNode;
   lessonBaseUrl?: string;
 }
@@ -1565,7 +1818,7 @@ function computeRemainingModuleXp(
           q.targetLane === "mittel" &&
           !solvedSet.has(q.id),
       )
-      .reduce((sum, q) => sum + calculateQuestionXp(q.baseXp, q.tags), 0);
+      .reduce((sum, q) => sum + calculateModuleQuestionXp(q), 0);
   }
 
   let openXp = 0;
@@ -1587,7 +1840,7 @@ function computeRemainingModuleXp(
   }
   for (const q of db.questions) {
     if (isQuestionInModule(q, mod.id) && !solvedSet.has(q.id)) {
-      openXp += calculateQuestionXp(q.baseXp, q.tags);
+      openXp += calculateModuleQuestionXp(q);
     }
   }
   return openXp;
@@ -1597,6 +1850,29 @@ function computeRemainingModuleXp(
  * Bindet den interaktiven Aufgaben- & Prüfungs-Runner (`leicht`, `mittel`, `schwer`)
  * an ein Container-Element.
  */
+export async function attachStandaloneModuleQuizRunner(
+  root: HTMLElement,
+): Promise<void> {
+  if (root.dataset.quizRunnerAttached === "true") return;
+  root.dataset.quizRunnerAttached = "true";
+
+  const db = await fetchLiveModulesDatabase();
+  if (!db) {
+    showCatalogStatus(root, catalogLoadError);
+    return;
+  }
+  const mod = db.modules.find((item) => item.id === root.dataset.moduleId);
+  if (!mod) {
+    showCatalogStatus(root, "Das Lernmodul wurde nicht gefunden.");
+    return;
+  }
+
+  const rawMode = root.dataset.mode;
+  const mode =
+    rawMode === "leicht" || rawMode === "schwer" ? rawMode : "mittel";
+  attachModuleQuizRunner(root, { module: mod, db, mode });
+}
+
 export function attachModuleQuizRunner(
   container: HTMLElement,
   config: QuizRunnerMountConfig,
@@ -1680,12 +1956,18 @@ export function attachModuleQuizRunner(
       const qHeader = document.createElement("div");
       qHeader.className = "learning-card-header";
       const qTitle = document.createElement("strong");
+      const showExerciseTitle =
+        config.exerciseId && !config.exerciseTitleInSection;
       qTitle.textContent = config.exerciseId
-        ? question.prompt
-        : `Aufgabe ${index + 1} / ${questions.length}: ${question.prompt}`;
+        ? showExerciseTitle
+          ? question.title?.trim()
+            ? formatExerciseTitle(question.title)
+            : "Aufgabe"
+          : "Aufgabenstellung"
+        : `Aufgabe ${index + 1} / ${questions.length}`;
       const qXp = document.createElement("span");
       qXp.className = "contribution-tag learning-xp-badge";
-      const questionXp = calculateQuestionXp(question.baseXp, question.tags);
+      const questionXp = calculateModuleQuestionXp(question);
       if (solvedSet.has(question.id)) qXp.classList.add("has-xp");
       qXp.textContent = solvedSet.has(question.id)
         ? `${questionXp} XP`
@@ -1710,6 +1992,8 @@ export function attachModuleQuizRunner(
       feedback.className = "learning-feedback";
       feedback.hidden = !alreadyCompleted;
       feedback.setAttribute("aria-live", "polite");
+      const missingAnswer = document.createElement("p");
+      missingAnswer.textContent = "Bitte gib zuerst eine Antwort ein.";
       if (alreadyCompleted) {
         inputsEl.inert = true;
         inputsEl
@@ -1744,7 +2028,7 @@ export function attachModuleQuizRunner(
         if (!hasAnswer) {
           feedback.hidden = false;
           feedback.dataset.outcome = "wrong";
-          feedback.textContent = "Bitte gib zuerst eine Antwort ein.";
+          feedback.append(missingAnswer);
           return;
         }
         attempts += 1;
@@ -1800,16 +2084,28 @@ export function attachModuleQuizRunner(
           feedback.dataset.outcome = "wrong";
           titleEl.textContent = `✗ Noch nicht richtig – ${3 - attempts} ${attempts === 2 ? "Versuch" : "Versuche"} übrig.`;
           feedback.append(titleEl);
-          if (result.explanation) {
-            const expEl = document.createElement("p");
-            expEl.className = "learning-feedback-explanation";
-            expEl.textContent = result.explanation;
-            feedback.append(expEl);
+          if (attempts === 2) {
+            if (question.simpleHint?.trim()) {
+              const hint = document.createElement("p");
+              hint.textContent = `Hinweis: ${question.simpleHint}`;
+              feedback.append(hint);
+            }
+            if (question.strongHint?.trim()) {
+              const details = document.createElement("details");
+              const summary = document.createElement("summary");
+              summary.textContent = "Stärkeren Hinweis anzeigen";
+              const hint = document.createElement("p");
+              hint.textContent = question.strongHint;
+              details.append(summary, hint);
+              feedback.append(details);
+            }
           }
         }
       });
 
-      qCard.append(qHeader, inputsEl, checkBtn, feedback);
+      qCard.append(qHeader);
+      qCard.append(renderQuestionPrompt(question.prompt, templateRoot));
+      qCard.append(inputsEl, checkBtn, feedback);
       container.append(qCard);
     });
     return;
@@ -1880,10 +2176,11 @@ export function attachModuleQuizRunner(
     bar.append(fill);
 
     const question = questions[currentIndex];
-    const promptEl = document.createElement("p");
+    const promptEl = document.createElement("div");
+    promptEl.className = "learning-quiz-question";
     promptEl.style.fontWeight = "600";
     promptEl.style.margin = "0";
-    promptEl.textContent = question.prompt;
+    promptEl.append(renderTheoryMarkdown(question.prompt, templateRoot));
 
     const inputsEl = renderQuestionInputBlock(
       question,
@@ -2049,138 +2346,32 @@ export interface ModuleStepperController {
   setDatabase(db: ModulesDatabase): void;
 }
 
-type LessonItem =
-  | { kind: "theory"; block: TheoryBlock }
-  | { kind: "exercise"; question: ModuleQuestion }
-  | { kind: "practice"; block: PracticeBlock };
-
-type LessonSection =
-  | { kind: "theory"; blocks: TheoryBlock[] }
-  | { kind: "exercise"; question: ModuleQuestion }
-  | { kind: "practice"; block: PracticeBlock }
-  | { kind: "group"; groupTitle: string; items: LessonItem[] }
-  | { kind: "quiz" };
-
-function buildLessonSections(
-  mod: LearningModule,
-  questions: readonly ModuleQuestion[],
-): LessonSection[] {
-  const blocks = [...mod.theoryBlocks].sort((a, b) => a.order - b.order);
-  const exercises = questions.filter(
-    (question) =>
-      isQuestionInModule(question, mod.id) && question.targetLane === "leicht",
-  );
-  const blocksById = new Map(blocks.map((block) => [block.id, block]));
-  const practiceById = new Map(
-    mod.practiceBlocks.map((block) => [block.id, block]),
-  );
-  const exercisesById = new Map(
-    exercises.map((question) => [question.id, question]),
-  );
-  const seen = new Set<string>();
-  const ordered: Array<{
-    groupId?: string;
-    groupTitle?: string;
-    item: LessonItem;
-  }> = [];
-  function addReference(reference: ModuleContentReference): void {
-    const key = `${reference.kind}:${reference.id}`;
-    if (seen.has(key)) return;
-    const block =
-      reference.kind === "theory" ? blocksById.get(reference.id) : undefined;
-    const question =
-      reference.kind === "exercise"
-        ? exercisesById.get(reference.id)
-        : undefined;
-    const practice =
-      reference.kind === "practice"
-        ? practiceById.get(reference.id)
-        : undefined;
-    if (block) {
-      seen.add(key);
-      ordered.push({
-        groupId: reference.groupId ?? block.groupId,
-        groupTitle: reference.groupTitle ?? block.groupTitle,
-        item: { kind: "theory", block },
-      });
-      return;
-    }
-    const item: LessonItem | undefined = question
-      ? { kind: "exercise", question }
-      : practice
-        ? { kind: "practice", block: practice }
-        : undefined;
-    if (!item) return;
-    seen.add(key);
-    ordered.push({
-      groupId: reference.groupId,
-      groupTitle: reference.groupTitle,
-      item,
-    });
-  }
-  for (const reference of mod.contentOrder ?? []) addReference(reference);
-  for (const block of blocks) {
-    addReference({ kind: "theory", id: block.id });
-  }
-  for (const question of exercises) {
-    addReference({ kind: "exercise", id: question.id });
-  }
-  for (const block of mod.practiceBlocks) {
-    addReference({ kind: "practice", id: block.id });
-  }
-
-  const sections: LessonSection[] = [];
-  const addedGroups = new Set<string>();
-  for (const current of ordered) {
-    if (current.groupId) {
-      if (addedGroups.has(current.groupId)) continue;
-      addedGroups.add(current.groupId);
-      const members = ordered.filter(
-        (item) => item.groupId === current.groupId,
-      );
-      sections.push({
-        kind: "group",
-        groupTitle: current.groupTitle ?? "Abschnitt",
-        items: members.map(({ item }) => item),
-      });
-      continue;
-    }
-
-    sections.push(
-      current.item.kind === "theory"
-        ? { kind: "theory", blocks: [current.item.block] }
-        : current.item.kind === "practice"
-          ? { kind: "practice", block: current.item.block }
-          : { kind: "exercise", question: current.item.question },
-    );
-  }
-  sections.push({ kind: "quiz" });
-  return sections;
-}
-
 function isLessonSectionComplete(
   section: LessonSection,
   progress: ModuleProgress,
 ): boolean {
+  const isExerciseComplete = (question: ModuleQuestion) =>
+    progress.steps.leicht === "completed" ||
+    progress.solvedQuestionIds.includes(question.id);
   const practiceDone = (block: PracticeBlock) =>
     progress.completedPracticeBlockIds.includes(block.id);
   switch (section.kind) {
     case "theory":
       return (
         progress.steps.theory === "completed" ||
-        section.blocks.every((block) =>
-          progress.completedTheoryBlockIds.includes(block.id),
+        section.blocks.every(
+          (block) =>
+            block.role === "exercise_intro" ||
+            progress.completedTheoryBlockIds.includes(block.id),
         )
       );
     case "exercise":
-      return (
-        progress.steps.leicht === "completed" ||
-        progress.solvedQuestionIds.includes(section.question.id)
-      );
+      return isExerciseComplete(section.question);
     case "group": {
       const blocks = section.items
         .filter((item) => item.kind === "theory")
-        .map((item) => item.block);
+        .map((item) => item.block)
+        .filter((block) => block.role !== "exercise_intro");
       const questions = section.items
         .filter((item) => item.kind === "exercise")
         .map((item) => item.question);
@@ -2193,11 +2384,7 @@ function isLessonSectionComplete(
           blocks.every((block) =>
             progress.completedTheoryBlockIds.includes(block.id),
           )) &&
-        (questions.length === 0 ||
-          progress.steps.leicht === "completed" ||
-          questions.every((question) =>
-            progress.solvedQuestionIds.includes(question.id),
-          )) &&
+        (questions.length === 0 || questions.every(isExerciseComplete)) &&
         practices.every(practiceDone)
       );
     }
@@ -2205,6 +2392,32 @@ function isLessonSectionComplete(
       return practiceDone(section.block);
     case "quiz":
       return progress.steps.mittel === "completed";
+  }
+}
+
+function hasIncompleteLessonTask(
+  section: LessonSection,
+  progress: ModuleProgress,
+): boolean {
+  const exercisePending = (question: ModuleQuestion) =>
+    progress.steps.leicht !== "completed" &&
+    !progress.solvedQuestionIds.includes(question.id);
+  const practicePending = (block: PracticeBlock) =>
+    !progress.completedPracticeBlockIds.includes(block.id);
+
+  switch (section.kind) {
+    case "exercise":
+      return exercisePending(section.question);
+    case "practice":
+      return practicePending(section.block);
+    case "group":
+      return section.items.some(
+        (item) =>
+          (item.kind === "exercise" && exercisePending(item.question)) ||
+          (item.kind === "practice" && practicePending(item.block)),
+      );
+    default:
+      return false;
   }
 }
 
@@ -2279,13 +2492,11 @@ export function attachModuleStepper(
     }
     const modProgress = state.modules[mod.id];
 
-    const headerCard = document.createElement("div");
-    headerCard.className = "learning-card";
-    const headerTop = document.createElement("div");
-    headerTop.className = "learning-card-header";
+    const headerTop = document.createElement("header");
+    headerTop.className = "learning-lesson-header";
     const title = document.createElement("h2");
     title.className = "learning-card-title";
-    title.textContent = `${mod.order}. ${mod.title}`;
+    title.textContent = mod.title;
     const modeActions = document.createElement("div");
     modeActions.className = "learning-stepper-header-actions";
 
@@ -2306,12 +2517,7 @@ export function attachModuleStepper(
     }
 
     headerTop.append(title, modeActions);
-    const desc = document.createElement("p");
-    desc.className = "learning-muted";
-    desc.textContent = mod.description || "";
-    headerCard.append(headerTop);
-    if (mod.description) headerCard.append(desc);
-    contentHost.append(headerCard);
+    contentHost.append(headerTop);
 
     if (mode === "fastlane") {
       const runnerContainer = document.createElement("div");
@@ -2352,6 +2558,18 @@ export function attachModuleStepper(
     initialProgress: ModuleProgress,
   ): void {
     const sections = buildLessonSections(mod, currentDb.questions);
+    if (sections.length === 0) {
+      const empty = document.createElement("p");
+      empty.className = "learning-muted";
+      empty.textContent =
+        "Für dieses Modul sind noch keine Lerninhalte vorhanden.";
+      host.append(empty);
+      return;
+    }
+    const sectionTitles = sections.map(
+      (section, position) =>
+        `${mod.level + position + 1}: ${getLessonSectionTitle(section)}`,
+    );
     const firstIncomplete = sections.findIndex(
       (section) => !isLessonSectionComplete(section, initialProgress),
     );
@@ -2359,6 +2577,7 @@ export function attachModuleStepper(
     if (
       typeof window !== "undefined" &&
       window.location.hash === "#quiz-step" &&
+      sections.some((section) => section.kind === "quiz") &&
       initialProgress.steps.mittel !== "locked"
     ) {
       index = sections.length - 1;
@@ -2383,16 +2602,7 @@ export function attachModuleStepper(
     const renderSidebar = (progress: ModuleProgress) => {
       stepList.replaceChildren();
       sections.forEach((section, stepIndex) => {
-        const label =
-          section.kind === "group"
-            ? section.groupTitle
-            : section.kind === "theory"
-              ? (section.blocks[0].groupTitle ?? section.blocks[0].title)
-              : section.kind === "exercise"
-                ? section.question.prompt
-                : section.kind === "practice"
-                  ? section.block.title
-                  : "Quiz";
+        const label = sectionTitles[stepIndex];
         const completed = isLessonSectionComplete(section, progress);
         const item = document.createElement("li");
         const button = document.createElement("button");
@@ -2400,24 +2610,37 @@ export function attachModuleStepper(
         button.className = "learning-lesson-step";
         button.dataset.stepIndex = String(stepIndex);
         button.dataset.stepCompleted = String(completed);
-        button.disabled = !completed;
+        const backLocked =
+          stepIndex < index &&
+          hasIncompleteLessonTask(sections[index], progress);
+        button.disabled = !completed || backLocked;
         if (stepIndex === index) {
           button.classList.add("is-current");
           button.setAttribute("aria-current", "step");
         }
         button.setAttribute(
           "aria-label",
-          `Abschnitt ${stepIndex + 1}: ${label} (${completed ? "abgeschlossen" : "nicht abgeschlossen"})`,
+          `${label} (${completed ? "abgeschlossen" : "nicht abgeschlossen"}${backLocked ? ", Rücksprung wegen offener Aufgabe gesperrt" : ""})`,
         );
-        const number = document.createElement("span");
-        number.className = "learning-lesson-step-number";
-        number.textContent = String(stepIndex + 1);
-        const title = document.createElement("span");
-        title.className = "learning-lesson-step-title";
-        title.textContent = label;
-        button.append(number, title);
+        if (backLocked) {
+          button.title =
+            "Erledige die aktuelle Aufgabe, bevor du zurückspringst.";
+        }
+        button.textContent = label;
         button.addEventListener("click", () => {
-          if (!completed) return;
+          const latest = loadLearningProgress(
+            currentDb.modules,
+            undefined,
+            currentDb.quizSettings,
+          ).modules[mod.id];
+          if (
+            !latest ||
+            !isLessonSectionComplete(section, latest) ||
+            (stepIndex < index &&
+              hasIncompleteLessonTask(sections[index], latest))
+          ) {
+            return;
+          }
           index = stepIndex;
           renderCurrent(true);
         });
@@ -2460,15 +2683,9 @@ export function attachModuleStepper(
       heading.className = "learning-lesson-heading";
       heading.tabIndex = -1;
       heading.textContent =
-        section.kind === "group"
-          ? "Abschnitt"
-          : section.kind === "theory"
-            ? "Theorie"
-            : section.kind === "exercise"
-              ? "Übung"
-              : section.kind === "practice"
-                ? "Praxisaufgabe"
-                : "Quiz";
+        section.kind === "exercise"
+          ? getLessonSectionTitle(section)
+          : sectionTitles[index];
       card.append(heading);
 
       let completeButton: HTMLButtonElement | null = null;
@@ -2491,6 +2708,9 @@ export function attachModuleStepper(
         const blocks = contentItems.flatMap((item) =>
           item.kind === "theory" ? [item.block] : [],
         );
+        const completableBlocks = blocks.filter(
+          (block) => block.role !== "exercise_intro",
+        );
         const questions = contentItems.flatMap((item) =>
           item.kind === "exercise" ? [item.question] : [],
         );
@@ -2511,19 +2731,9 @@ export function attachModuleStepper(
         blocksHost.className = grouped
           ? "learning-theory-group-blocks"
           : "learning-theory-blocks";
-        const getXpBadge = (xp: number) => {
-          const badge = document.createElement("span");
-          badge.className = "contribution-tag learning-xp-badge";
-          if (xp > 0) badge.classList.add("has-xp");
-          badge.textContent = `${xp} XP`;
-          return badge;
-        };
         if (grouped) {
-          const groupHeading = document.createElement("h4");
-          groupHeading.textContent =
-            section.kind === "group" ? section.groupTitle : "";
-          const heading = document.createElement("div");
-          heading.className = "learning-theory-heading";
+          const headingRow = document.createElement("div");
+          headingRow.className = "learning-theory-heading";
           const groupXp =
             blocks.reduce(
               (total, block) =>
@@ -2531,8 +2741,7 @@ export function attachModuleStepper(
               0,
             ) +
             questions.reduce(
-              (total, question) =>
-                total + calculateQuestionXp(question.baseXp, question.tags),
+              (total, question) => total + calculateModuleQuestionXp(question),
               0,
             ) +
             practices.reduce(
@@ -2541,29 +2750,35 @@ export function attachModuleStepper(
                 calculateTheoryBlockXp(block, BASE_XP_DEFAULTS.practice),
               0,
             );
-          heading.append(groupHeading, getXpBadge(groupXp));
-          wrap.append(heading);
+          headingRow.append(heading, createXpBadge(groupXp));
+          wrap.append(headingRow);
         }
         for (const item of contentItems) {
           if (item.kind === "theory") {
             const block = item.block;
             const blockEl = document.createElement("article");
             blockEl.className = "learning-theory-block";
-            const blockTitle = document.createElement(grouped ? "h5" : "h4");
-            blockTitle.textContent = `${block.order}. ${block.title}`;
-            if (!grouped) {
-              const heading = document.createElement("div");
-              heading.className = "learning-theory-heading";
-              heading.append(
-                blockTitle,
-                getXpBadge(calculateTheoryBlockXp(block, mod.theoryBaseXp)),
-              );
-              blockEl.append(heading);
+            if (grouped) {
+              const blockTitle = document.createElement("h4");
+              blockTitle.className = "learning-theory-block-title";
+              blockTitle.textContent = cleanLessonTitle(block.title);
+              blockEl.append(blockTitle);
+            } else {
+              const headingRow = document.createElement("div");
+              headingRow.className = "learning-theory-heading";
+              headingRow.append(heading);
+              if (block.role !== "exercise_intro") {
+                headingRow.append(
+                  createXpBadge(
+                    calculateTheoryBlockXp(block, mod.theoryBaseXp),
+                  ),
+                );
+              }
+              blockEl.append(headingRow);
             }
             const markdown = document.createElement("div");
             markdown.className = "learning-theory-markdown";
-            markdown.append(renderTheoryMarkdown(block.markdownContent));
-            if (grouped) blockEl.append(blockTitle);
+            markdown.append(renderTheoryMarkdown(block.markdownContent, root));
             blockEl.append(markdown);
             const visual = renderTheoryVisualElement(block, root);
             if (visual) blockEl.append(visual);
@@ -2573,19 +2788,22 @@ export function attachModuleStepper(
             const blockEl = document.createElement("article");
             blockEl.className = "learning-theory-block learning-practice-block";
             blockEl.dataset.practiceBlock = block.id;
-            const blockTitle = document.createElement(grouped ? "h5" : "h4");
-            blockTitle.textContent = block.title;
-            const heading = document.createElement("div");
-            heading.className = "learning-theory-heading";
-            heading.append(
+            const blockTitle = grouped ? document.createElement("h4") : heading;
+            if (grouped) {
+              blockTitle.className = "learning-theory-block-title";
+              blockTitle.textContent = cleanLessonTitle(block.title);
+            }
+            const headingRow = document.createElement("div");
+            headingRow.className = "learning-theory-heading";
+            headingRow.append(
               blockTitle,
-              getXpBadge(
+              createXpBadge(
                 calculateTheoryBlockXp(block, BASE_XP_DEFAULTS.practice),
               ),
             );
             const markdown = document.createElement("div");
             markdown.className = "learning-theory-markdown";
-            markdown.append(renderTheoryMarkdown(block.markdownContent));
+            markdown.append(renderTheoryMarkdown(block.markdownContent, root));
             const practiceButton = document.createElement("button");
             practiceButton.type = "button";
             practiceButton.className = "learning-btn learning-btn-primary";
@@ -2602,7 +2820,7 @@ export function attachModuleStepper(
               );
             });
             practiceButtons.push({ block, button: practiceButton });
-            blockEl.append(heading, markdown, practiceButton);
+            blockEl.append(headingRow, markdown, practiceButton);
             blocksHost.append(blockEl);
           } else {
             const exercise = document.createElement("div");
@@ -2621,7 +2839,7 @@ export function attachModuleStepper(
         wrap.append(blocksHost);
         card.append(wrap);
 
-        if (blocks.length > 0) {
+        if (completableBlocks.length > 0) {
           completeButton = document.createElement("button");
           completeButton.type = "button";
           completeButton.className = "learning-btn learning-btn-primary";
@@ -2632,7 +2850,7 @@ export function attachModuleStepper(
               undefined,
               currentDb.quizSettings,
             );
-            for (const block of blocks) {
+            for (const block of completableBlocks) {
               latest = completeTheoryBlock(
                 latest,
                 mod,
@@ -2651,6 +2869,7 @@ export function attachModuleStepper(
           db: currentDb,
           mode: "leicht",
           exerciseId: section.question.id,
+          exerciseTitleInSection: true,
           templateRoot: root,
           lessonBaseUrl,
         });
@@ -2683,6 +2902,7 @@ export function attachModuleStepper(
       previous.textContent = "← Zurück";
       previous.disabled = index === 0;
       previous.addEventListener("click", () => {
+        if (previous.disabled) return;
         index -= 1;
         renderCurrent(true);
       });
@@ -2707,6 +2927,11 @@ export function attachModuleStepper(
         ).modules[mod.id];
         if (!latest) return;
         const completed = isLessonSectionComplete(section, latest);
+        const backLocked = hasIncompleteLessonTask(section, latest);
+        previous.disabled = index === 0 || backLocked;
+        previous.title = backLocked
+          ? "Erledige die aktuelle Aufgabe, bevor du zurückspringst."
+          : "";
         next.disabled = !completed;
         card.dataset.stepState = completed ? "completed" : "unlocked";
         renderSidebar(latest);
@@ -2721,29 +2946,10 @@ export function attachModuleStepper(
           completeButton &&
           (section.kind === "theory" || section.kind === "group")
         ) {
-          const blocks =
-            section.kind === "theory"
-              ? section.blocks
-              : section.items.flatMap((item) =>
-                  item.kind === "theory" ? [item.block] : [],
-                );
-          const remainingXp =
-            latest.steps.theory === "completed"
-              ? 0
-              : blocks
-                  .filter(
-                    (block) =>
-                      !latest.completedTheoryBlockIds.includes(block.id),
-                  )
-                  .reduce(
-                    (sum, block) =>
-                      sum + calculateTheoryBlockXp(block, mod.theoryBaseXp),
-                    0,
-                  );
           completeButton.disabled = completed;
           completeButton.textContent = completed
             ? "✓ Abschnitt gelesen"
-            : `Abschnitt gelesen (+${remainingXp} XP)`;
+            : "Abschnitt gelesen";
         }
         const percent =
           (sections.filter((item) => isLessonSectionComplete(item, latest))
@@ -2764,7 +2970,8 @@ export function attachModuleStepper(
     renderCurrent();
   }
 
-  fullRender();
+  const renderInitialCatalog = canRenderInitialCatalog(root, options);
+  if (renderInitialCatalog) fullRender();
 
   const onProgressUpdated = (event: Event) => {
     if (!root.isConnected) {
@@ -2780,7 +2987,9 @@ export function attachModuleStepper(
         reason = event.detail.reason;
       }
       if (isRecord(event.detail.db) && Array.isArray(event.detail.db.modules)) {
-        currentDb = event.detail.db as unknown as ModulesDatabase;
+        currentDb = getLearningCatalog(
+          event.detail.db as unknown as ModulesDatabase,
+        );
       }
     }
     if (reason === "reset") fullRender();
@@ -2793,6 +3002,8 @@ export function attachModuleStepper(
       if (liveDb) {
         currentDb = liveDb;
         fullRender();
+      } else if (!renderInitialCatalog) {
+        showCatalogStatus(root, catalogLoadError);
       }
     });
   }

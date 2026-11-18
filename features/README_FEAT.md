@@ -1,8 +1,6 @@
 # Features & Architektur des Gitarrenlernpfads
 
-Dieses Dokument gibt einen Überblick über die wichtigsten Komponenten und Subsysteme des Musik-Hubs. Details zum [Modul-Builder und Lernpfad](README_FEAT_MODULEBUILDER.md), zur [Notation](README_FEAT_NOTATION.md) und zu [Tests](../README_TESTING.md) stehen in den jeweiligen Leitfäden.
-
-Für Übergaben gibt es separate Handoffs zur [Notation](README_FEAT_NOTATION_HANDOFF.md) und zum [NotationBuilder](README_FEAT_NOTATIONBUILDER_HANDOFF.md). Sie ergänzen die Fachreferenzen, ersetzen sie aber nicht.
+Dieses Dokument gibt einen Überblick über die wichtigsten Komponenten und Subsysteme des Musik-Hubs. Details zum [Audioplayer für Drum-Patterns](README_FEAT_AUDIOPLAYER.md), zum [Beitragssystem](README_FEAT_CONTRIBUTIONS.md), zum [Modul-Builder und Lernpfad](README_FEAT_MODULEBUILDER.md), zur [Notation und zum NotationBuilder](README_FEAT_NOTATION.md), zu den [Anforderungen für den Neuaufbau des Level-100-Quiz](README_FEAT_LEVEL100QUIZ.md), zu [Netlify Blobs](README_FEAT_NETLIFYBLOB.md) und zu [Tests](../README_TESTING.md) stehen in den jeweiligen Leitfäden.
 
 ---
 
@@ -19,7 +17,7 @@ Die Plattform verbindet musiktheoretische Didaktik mit interaktiven Web-Technolo
 │ │  renderer (Bravura) │ ├─ Pattern-Sequencer        │ ├─ XP-Lernpfad-Player  │
 │ ├─ NotationBuilder    │ ├─ ChordSlider & TierList   │ ├─ IssueTracker        │
 │ ├─ AlphaTab Player    │ ├─ ScorePattern (Partitur)  │ ├─ Serverless Func     │
-│ └─ KaTeX Harmonielehre│ └─ ScalePattern (Griffbrett)│ └─ GitHub REST Store   │
+│ └─ KaTeX Harmonielehre│ └─ ScalePattern (Griffbrett)│ └─ Netlify Blobs      │
 └───────────────────────┴─────────────────────────────┴───────────────────────┘
 ```
 
@@ -51,6 +49,19 @@ Die Plattform verbindet musiktheoretische Didaktik mit interaktiven Web-Technolo
   * `VocalPattern.astro`: Melodische Verläufe und Silbenrhythmik.
 * **Architektur:** Die Komponenten erhalten deklarative Daten über ihre jeweiligen Props und generieren daraus HTML-/SVG-Gitter. `DrumPattern` verwendet beispielsweise `patternData` mit `activeSteps`.
 
+#### DrumPattern mit Soundfiles
+
+Der native Web-Audio-Player ergänzt Vorhören mit Velocity, Play/Stop und
+Leertasten-Loops bei einstellbaren Viertel-BPM. Die Wiedergabe berücksichtigt
+die Spurauswahl und lässt sich unabhängig von den übrigen Bedienelementen
+konfigurieren. Ohne Sound-URLs bleibt das Raster rein visuell.
+
+Architektur, Props, Timing, Abbruch, Fehlerfälle und Tests stehen zentral in der
+[Audioplayer-Referenz](README_FEAT_AUDIOPLAYER.md). Die
+[Wiki-Anleitung](../src/content/docs/wiki/drum-pattern.mdx) erklärt die Bedienung;
+die [Asset-Referenz](../public/sounds/drums/README.md) nennt die vorhandenen
+Dateien und noch fehlenden Lizenzangaben.
+
 ### 2.4 Die Songwriting-Gesamtpartitur (`ScorePattern.astro`)
 * **Datei:** `src/components/ScorePattern.astro`
 * **Funktionsweise:**
@@ -72,28 +83,26 @@ Die Plattform verbindet musiktheoretische Didaktik mit interaktiven Web-Technolo
   * Aktiviert die Audiowiedergabe nur, wenn zusätzlich eine SoundFont über `soundFontUrl` angegeben wird.
 
 ### 2.7 Das Serverless Beitragssystem & IssueTracker
-* **Dateien:** `netlify/functions/contributions.ts`, `netlify/functions/lib/github-contribution-store.ts`, `src/lib/checklist-editor.ts`, `src/content/docs/projektierung/beitraege.mdx`.
+* **Dateien:** `src/components/ContributionList.astro`, `src/components/IssueTrackerForm.astro`, `netlify/functions/contributions.ts`, `netlify/functions/lib/contribution-store.ts`, `src/lib/checklist-editor.ts`, `src/content/docs/projektierung/beitraege.mdx`.
 * **Funktionsweise:**
-  * **Architektur:** Serverless Endpunkt auf Netlify, der Daten entgegennimmt und via GitHub REST API in `data/contributions.json` ablegt.
-  * **Ziel-Branch:** `GITHUB_BRANCH` steuert den GitHub-Branch für Beiträge und Module gemeinsam; ohne Angabe gilt `main`. Einrichtung und lokale Besonderheiten stehen im [Workspace-Setup](../README_WORKSPACE_SETUP.md#schritt-5-netlify-cli-verknüpfen-umgebungsvariablen-für-das-backend-einrichten--fullstack-starten).
+  * **Architektur:** Serverless-Endpunkt mit dem JSON-Key `contributions` in [Netlify Blobs](README_FEAT_NETLIFYBLOB.md).
   * **Kategorisierung:** Typen (`Feature`, `Bug`, `Decision`), Bereiche (`Theorie`, `Praxis`, `Komponente`), Prioritäten (`Niedrig`, `Mittel`, `Hoch`) und Status (`New`, `Active`, `Resolved`).
   * **Checklisten:** Bis zu 100 interaktive Checklistenpunkte pro Beitrag mit je maximal 200 Zeichen.
-  * **Konfliktresistenz:** Automatische Wiederholungslogik (Retry-Loop) bei gleichzeitigem Schreibzugriff (HTTP 409 Conflict) unter Verwendung von GitHub Blob-SHAs.
-  * **Schutz vor Build-Schleifen:** In `netlify.toml` ist ein Filter hinterlegt, der Commits auf `data/contributions.json` (inzwischen erweitert auf `data/**`) von automatischen Re-Builds ausschließt.
+  * **Konfliktresistenz:** Bedingte Blob-Schreibzugriffe und Prüfung des erwarteten Beitragsstands schützen gleichzeitig bearbeitete Beiträge.
+  * **Detailreferenz:** Die [Beitrags-Feature-Referenz](README_FEAT_CONTRIBUTIONS.md) dokumentiert Erstellen, Anzeigen, Filtern, Sortieren, Checklisten, Bearbeiten, Löschen, API und Persistenz.
 
 ### 2.8 Admin Modul- & Aufgaben-Builder (Autorenwerkbank)
 * **Dateien:** `src/lib/xp-tags.ts`, `src/lib/module-schema.ts`, `src/lib/module-store.ts`, `src/lib/module-builder-ui.ts`, `src/components/project/ModuleBuilderForm.astro`, `src/components/project/ExerciseBuilderForm.astro`, `src/components/project/ModuleCatalogList.astro`, `src/content/docs/projektierung/modul-builder.mdx`, `netlify/functions/modules.ts`, `astro.config.mjs`, `data/modules.json`.
 * **Funktionsweise:**
   * **Single Source of Truth für XP & Tags:** Zentrale Konfiguration (`TAG_DEFINITIONS`, `BASE_XP_DEFAULTS`, `calculateQuestionXp`) mit Tag-Multiplikatoren (z. B. `Notensystem` 1,5x, `Gitarre` 1,2x, `Allgemein` 1,0x).
   * **Vier Autoren-Tabs (`Übersicht`, `Modul erstellen`, `Quizfragen`, `Einstellungen`):** Katalog-Verwaltung (`ModuleCatalogList`), Modul- und Block-Editor (`ModuleBuilderForm`), wiederverwendbare Quizfragen für `mittel` und `schwer` (`ExerciseBuilderForm` mit Notationsvorschau) sowie globale Bestehensgrenzen (`QuizSettingsForm`). Lernpfad-Aufgaben (`leicht`) und Praxisaufgaben entstehen in der Modul-Blockliste. Datenmodell, Löschverhalten und Bedienung stehen in der [Modul-Referenz](README_FEAT_MODULEBUILDER.md).
-  * **Persistenz & Dev-Fallback:** Speichert produktiv über `/api/modules` in `data/modules.json` via GitHub Contents API (optimistic locking mit 3 Retries bei HTTP 409) und lokal unter `npm run dev` über ein Vite-Dev-Plugin in `astro.config.mjs` direkt in `data/modules.json`.
-  * **Ziel-Branch:** Die Netlify Function verwendet denselben `GITHUB_BRANCH` wie das Beitragssystem; der lokale Dev-Endpunkt verwendet stattdessen die Workspace-Datei.
+  * **Persistenz & Dev-Fallback:** `/api/modules` speichert den Katalog und die Quiz-Einstellungen im Key `modules` in [Netlify Blobs](README_FEAT_NETLIFYBLOB.md). Nur `npm run dev` verwendet über das Vite-Plugin direkt `data/modules.json`.
 
 ### 2.9 Interaktiver Lernpfad, XP-Engine & Modul-Player
 * **Dateien:** `src/lib/learning-progress.ts`, `src/lib/module-player-ui.ts`, `src/styles/module-player.css`, `src/components/learning/ProgressDashboard.astro`, `src/components/learning/ModuleRoadmap.astro`, `src/components/learning/ModuleStepper.astro`, `src/components/learning/ModuleQuizRunner.astro`, `src/content/docs/audio/theory/lernpfad.mdx`, `src/content/docs/audio/theory/modul.mdx`.
 * **Funktionsweise:**
   * **Client-State & XP-Engine:** SSR-sichere `localStorage`-Persistenz (`mymusic_learning_progress_v1`) mit automatischem Curriculum-Sync, Duplikat-XP-Schutz (`solvedQuestionIds`), Level-Berechnung (500 XP pro Level) sowie Aufschlüsselung nach `scope` und `tags`.
-  * **Geführter Lektions-Stepper & Fastlane:** Theorie, Lernpfad-Aufgaben und Praxisblöcke folgen der gespeicherten Inhaltsreihenfolge, danach folgt das Quiz (`mittel`). Die globalen Bestehensgrenzen verwenden standardmäßig 80 % für das Quiz und 85 % für Fastlane (`schwer`); gespeicherte Einstellungen können abweichen. Änderungen der Grenzen setzen den lokalen Lernfortschritt zurück. Fastlane vergütet noch offene Inhalte und entsperrt das Folgemodul; Details stehen in der [Modul-Referenz](README_FEAT_MODULEBUILDER.md).
+  * **Geführter Lektions-Stepper & Fastlane:** Theorie, Lernpfad-Aufgaben und Praxisblöcke folgen der gespeicherten Inhaltsreihenfolge, danach folgt das Quiz (`mittel`). Die globalen Bestehensgrenzen verwenden standardmäßig 80 % für das Quiz und 85 % für Fastlane (`schwer`); gespeicherte Einstellungen können abweichen. Änderungen der Grenzen setzen den lokalen Lernfortschritt zurück. Fastlane vergütet noch offene Inhalte und entsperrt das Folgemodul; die Links sind derzeit ausgeblendet. Details stehen in der [Modul-Referenz](README_FEAT_MODULEBUILDER.md).
   * **Aufgaben-Auswertung:** Live-Synchronisation zwischen Dashboard, Roadmap und Stepper via CustomEvent `learning-progress:updated`; unterstützt u. a. Zahlen/Einheiten-Abgleich (`880` / `880 Hz`) sowie die `NotationBuilder.astro`-Tonhöhenprüfung (`expectedPitches` exakt und oktavunabhängig).
 
 ---

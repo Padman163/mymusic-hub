@@ -1,5 +1,10 @@
-import { type Expression, parseExpressionAt } from "acorn";
-import type { TheoryBlock } from "./module-schema.ts";
+import { type Expression, parseExpressionAt, tokenizer } from "acorn";
+import {
+  type DrumPatternProps,
+  getDrumPatternPropsErrors,
+  isDrumPatternProps,
+  type TheoryBlock,
+} from "./module-schema.ts";
 
 function literalValue(node: Expression): unknown {
   if (node.type === "Literal") {
@@ -47,16 +52,39 @@ function literalValue(node: Expression): unknown {
     const value = literalValue(node.argument);
     if (typeof value === "number")
       return node.operator === "-" ? -value : value;
+  } else if (
+    node.type === "BinaryExpression" &&
+    (node.operator === "+" ||
+      node.operator === "-" ||
+      node.operator === "*" ||
+      node.operator === "/")
+  ) {
+    if (node.left.type !== "PrivateIdentifier") {
+      const left = literalValue(node.left);
+      const right = literalValue(node.right);
+      if (typeof left === "number" && typeof right === "number") {
+        const result =
+          node.operator === "+"
+            ? left + right
+            : node.operator === "-"
+              ? left - right
+              : node.operator === "*"
+                ? left * right
+                : left / right;
+        if (Number.isFinite(result)) return result;
+      }
+    }
   }
   throw new Error("Nur feste Werte, Arrays und Objekte sind erlaubt.");
 }
 
-/** Liest ein selbstschließendes Notation-Element, ohne JavaScript auszuführen. */
+/** Liest ein selbstschließendes Visual-Element, ohne JavaScript auszuführen. */
 export function parseTheoryNotation(
   input: string,
   start: number,
+  openingTag = "<Notation",
 ): { props: Record<string, unknown>; end: number } {
-  let position = start + "<Notation".length;
+  let position = start + openingTag.length;
   const props: Record<string, unknown> = Object.create(null);
   while (position < input.length) {
     while (/\s/.test(input[position] ?? "")) position += 1;
@@ -84,24 +112,75 @@ export function parseTheoryNotation(
       if (input[position] !== "}") throw new Error("Schließende } fehlt.");
       position += 1;
     } else if (input[position] === '"' || input[position] === "'") {
-      const expression = parseExpressionAt(input, position, {
+      const token = tokenizer(input.slice(position), {
         ecmaVersion: "latest",
-      });
+      }).getToken();
       if (
-        expression.type !== "Literal" ||
-        typeof expression.value !== "string"
+        token.type.label !== "string" ||
+        !("value" in token) ||
+        typeof token.value !== "string"
       ) {
         throw new Error("Ein Textwert wird erwartet.");
       }
-      props[name] = expression.value;
-      position = expression.end;
+      props[name] = token.value;
+      position += token.end;
     } else {
       throw new Error(
         "Prop-Werte müssen in Anführungszeichen oder {...} stehen.",
       );
     }
   }
-  throw new Error("Das Notation-Element muss mit /> enden.");
+  throw new Error(`Das ${openingTag.slice(1)}-Element muss mit /> enden.`);
+}
+
+export function parseTheoryDrumPattern(
+  input: string,
+  start: number,
+  openingTag = "<DrumPattern",
+): { props: DrumPatternProps; end: number } {
+  const parsed = parseTheoryNotation(input, start, openingTag);
+  const errors = getDrumPatternPropsErrors(parsed.props);
+  if (errors.length > 0) {
+    throw new Error(errors.join(" "));
+  }
+  if (!isDrumPatternProps(parsed.props)) {
+    throw new Error("Die DrumPattern-Props sind ungültig.");
+  }
+  return { props: parsed.props, end: parsed.end };
+}
+
+export function getTheoryDrumPatternError(markdown: string): string | null {
+  const tokens = /(<!--|`+|~{3,}|\$+|<DrumPattern(?=[\s/>]))/g;
+  for (
+    let match = tokens.exec(markdown);
+    match;
+    match = tokens.exec(markdown)
+  ) {
+    const token = match[0];
+    let before = match.index;
+    while (before > 0 && markdown[before - 1] === "\\") before -= 1;
+    if ((match.index - before) % 2 === 1) continue;
+
+    if (token === "<!--") {
+      const end = markdown.indexOf("-->", tokens.lastIndex);
+      tokens.lastIndex = end === -1 ? markdown.length : end + 3;
+      continue;
+    }
+    if (!token.startsWith("<")) {
+      const end = markdown.indexOf(token, tokens.lastIndex);
+      if (end !== -1) tokens.lastIndex = end + token.length;
+      continue;
+    }
+
+    try {
+      const parsed = parseTheoryDrumPattern(markdown, match.index, token);
+      tokens.lastIndex = parsed.end;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return `DrumPattern konnte nicht dargestellt werden: ${message}`;
+    }
+  }
+  return null;
 }
 
 function canonicalValue(value: unknown): string {

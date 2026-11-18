@@ -188,6 +188,93 @@ Das Raster zeigt einen Takt im 4/4-Takt mit acht Steps, also Achtel-Auflösung. 
 
 <DrumPattern showVelocity={true} />
 
+### Drum-Pattern mit Soundfiles
+
+Mit hinterlegten Sounds kannst du aktive Zellen und Instrumentennamen anklicken
+oder mit **Tab** und **Enter** anhören. Ein aktiver Step verwendet seine
+Velocity; der Instrumentenname spielt in voller Lautstärke.
+Stelle, falls angezeigt, das gewünschte Tempo im BPM-Feld ein, verlasse das Feld mit **Tab** und
+halte im fokussierten Raster die **Leertaste**: Das Pattern läuft in einer Schleife.
+Loslassen stoppt sofort; erneutes Drücken startet wieder bei Step 1.
+Ohne Tastatur tippst du links im Header auf das **Play-Dreieck**. Das Symbol wechselt
+zum **Stop-Quadrat**, und das Pattern läuft bis zum Stoppen weiter. Ein neuer Start beginnt
+immer wieder bei Step 1.
+Hervorgehobene Spuren begrenzen beide Wiedergabearten; ohne Markierung werden
+alle Spuren abgespielt. Bei `interactive={true}` wählst du per Spurklick eine Spur,
+mit **Shift+Klick** mehrere oder nutzt die Auswahlkästchen für Touch und Tastatur.
+Die Auswahl wird beim nächsten Start übernommen. `highlightTrack` beziehungsweise
+`highlightTracks` gibt die Startauswahl vor; die Anschlag-Anzeige allein ist kein Filter.
+Die [Wiki-Anleitung](/wiki/drum-pattern/) erklärt Bedienung und Audiofreigabe.
+
+Das Beispiel verwendet die bereits vorhandene `Kick.wav` unter
+`public/sounds/drums/`. Übernimm die Groß-/Kleinschreibung der URL exakt.
+Quelle und Lizenz der eingecheckten Samples sind noch nicht dokumentiert und
+müssen vor einer Veröffentlichung geklärt werden; ihre bloße Verfügbarkeit
+ist keine Nutzungsfreigabe. Kopiere dieses Beispiel in eine MDX-Seite gleicher
+Verzeichnistiefe oder ersetze die URL durch einen eigenen, freigegebenen Sound:
+
+```mdx
+import DrumPattern from '../../../../components/DrumPattern.astro';
+
+<DrumPattern
+  bpm={120}
+  showTempo={false}
+  showPlaybackHint={false}
+  showAudioHelp={false}
+  showFooter={false}
+  interactive={false}
+  patternData={[
+    {
+      name: "Kick", note: "C1", color: "#ef4444",
+      activeSteps: [0, 4], velocities: [127, 0, 0, 0, 64],
+      soundUrl: "/sounds/drums/Kick.wav",
+    },
+  ]}
+/>
+```
+
+
+<DrumPattern
+  bpm={120}
+  showTempo={false}
+  showPlaybackHint={false}
+  showAudioHelp={false}
+  showFooter={false}
+  interactive={false}
+  patternData={[
+    {
+      name: "Kick", note: "C1", color: "#ef4444",
+      activeSteps: [0, 4], velocities: [127, 0, 0, 0, 64 ],
+      soundUrl: "/sounds/drums/Kick.wav",
+    },
+  ]}
+/>
+
+Das kompakte Beispiel blendet mit `showTempo`, `showPlaybackHint` und
+`showAudioHelp` Tempo-Feld, Bedienhinweis und Hilfe-Link aus. `bpm={120}` legt
+weiterhin das Tempo fest. `showFooter={false}` blendet den gesamten Footer aus;
+der Play/Stop-Button bleibt im Header sichtbar. Mit `showPlaybackButton={false}`
+kannst du ihn unabhängig davon ausblenden; die Leertaste funktioniert weiterhin.
+Lasse diese Props weg oder setze sie auf `true`, um die jeweiligen Elemente
+wieder anzuzeigen.
+
+Bei `120 BPM` dauert eine Viertelnote eine halbe Sekunde. Die acht Achtel-Steps
+einschließlich der Pausen ergeben einen zwei Sekunden langen 4/4-Takt.
+Die Kick im Beispiel liegt auf **1 und 3**. Für Schläge auf **1, 2, 3 und 4**
+verwende `activeSteps: [0, 2, 4, 6]`.
+BPM zählt hier immer Viertelnoten; die Auflösung bestimmt den Abstand der Steps,
+die Step-Anzahl die Länge des Loops.
+
+Audio ist mit `soundUrl` automatisch aktiv; `enableAudio={false}` schaltet es
+aus. Ohne explizite Velocity gilt volle Lautstärke, `0` bleibt stumm.
+`interactive={false}` macht das Beispiel zu einem reinen Hörraster. Bei
+editierbaren Patterns schaltet der Zellklick weiterhin den Step um und spielt
+einen zuvor aktiven Schlag ab. Fehlende oder blockierte Sounds zeigen beim
+Abspielversuch einen Hinweis; das Raster bleibt nutzbar.
+Nach dem Vorladen und der Browserfreigabe erfolgt der Start ohne erneuten
+Download oder Decodierung; eine absolute Latenzfreiheit des Audiogeräts ist
+nicht garantiert.
+
 ## Akkordfolge
 
 Das Visual zeigt die Akkorde eines Taktes nebeneinander und ordnet sie der Tonart E-Moll zu. Es stellt weder einzelne Noten noch Rhythmus dar.

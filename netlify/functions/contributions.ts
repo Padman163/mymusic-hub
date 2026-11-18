@@ -11,7 +11,8 @@ import {
 	saveContribution,
 	type Contribution,
 	type ContributionFields,
-} from './lib/github-contribution-store';
+} from './lib/contribution-store';
+import { isBlobStoreUnavailable } from './lib/blob-store';
 
 const allowedTypes = ['Bug', 'Feature', 'Decision'] as const;
 const maxRequestBytes = 500_000;
@@ -68,15 +69,14 @@ export default async (request: Request): Promise<Response> => {
 		return jsonResponse(405, { error: 'Diese Methode wird nicht unterstützt.' });
 	}
 
-	if (!process.env.GITHUB_TOKEN || !process.env.GITHUB_REPOSITORY) {
-		return jsonResponse(503, { error: 'Der IssueTracker ist noch nicht konfiguriert.' });
-	}
-
 	if (request.method === 'GET') {
 		try {
 			return jsonResponse(200, { contributions: await listContributions() });
 		} catch (error) {
-			console.error('Die Beiträge konnten nicht von GitHub geladen werden.', error);
+			if (isBlobStoreUnavailable(error)) {
+				return jsonResponse(503, { error: 'Der IssueTracker ist noch nicht konfiguriert.' });
+			}
+			console.error('Die Beiträge konnten nicht aus Netlify Blobs geladen werden.', error);
 			return jsonResponse(502, { error: 'Die Beiträge konnten derzeit nicht geladen werden.' });
 		}
 	}
@@ -109,6 +109,9 @@ export default async (request: Request): Promise<Response> => {
 			await modifyContribution(body.expected, fields);
 			return jsonResponse(200, { message: fields ? 'Beitrag wurde aktualisiert.' : 'Beitrag wurde gelöscht.' });
 		} catch (error) {
+			if (isBlobStoreUnavailable(error)) {
+				return jsonResponse(503, { error: 'Der IssueTracker ist noch nicht konfiguriert.' });
+			}
 			if (error instanceof ContributionNotFoundError) {
 				return jsonResponse(404, { error: 'Der Beitrag wurde bereits gelöscht. Bitte lade die Seite neu.' });
 			}
@@ -131,7 +134,10 @@ export default async (request: Request): Promise<Response> => {
 		await saveContribution(contribution);
 		return jsonResponse(201, { message: 'Beitrag wurde gespeichert.', contribution });
 	} catch (error) {
-		console.error('Der Beitrag konnte nicht auf GitHub gespeichert werden.', error);
+		if (isBlobStoreUnavailable(error)) {
+			return jsonResponse(503, { error: 'Der IssueTracker ist noch nicht konfiguriert.' });
+		}
+		console.error('Der Beitrag konnte nicht in Netlify Blobs gespeichert werden.', error);
 		return jsonResponse(502, { error: 'Der Beitrag konnte derzeit nicht gespeichert werden.' });
 	}
 };

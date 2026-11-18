@@ -1,0 +1,33 @@
+---
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import { adminWikiDocuments } from "../../lib/admin-wiki";
+
+const groups = [
+  {
+    title: "Entwickler-Leitfäden",
+    documents: adminWikiDocuments.filter(
+      (item) => !item.sourcePath.startsWith("features/"),
+    ),
+  },
+  {
+    title: "Feature-Referenzen",
+    documents: adminWikiDocuments.filter((item) =>
+      item.sourcePath.startsWith("features/"),
+    ),
+  },
+];
+---
+
+<StarlightPage frontmatter={{ title: "Admin-Wiki", description: "Entwickler-Leitfäden und alle Feature-READMEs.", tableOfContents: false, editUrl: false }}>
+  <p>Hier findest du die Dokumentation zum Programmieren und Pflegen des Musik-Hubs. Die Seiten werden direkt aus den READMEs im Repository erzeugt.</p>
+  {groups.map((group) => (
+    <section>
+      <h2>{group.title}</h2>
+      <ul>
+        {group.documents.map((document) => (
+          <li><a href={document.href}>{document.title}</a> <small>({document.sourcePath})</small></li>
+        ))}
+      </ul>
+    </section>
+  ))}
+</StarlightPage>

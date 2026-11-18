@@ -1,0 +1,66 @@
+import DrumPattern from "../../src/components/DrumPattern.astro";
+
+import Notation from "../../src/components/notation/Notation.astro";
+
+import NotationKeyboard from "../../src/components/notation/NotationKeyboard.astro";
+
+
+
+# 102: Tonsystem
+
+## Oktavräume & Das 12-Ton-System
+
+Verdoppelt oder halbiert man eine Frequenz, entsteht derselbe Ton auf einer höheren oder tieferen Stufe – dieses Intervall heißt **Oktave** (Verhältnis $2:1$):
+
+* $A_3 = 220\text{ Hz}$ (kleine Oktave)
+* $A_4 = 440\text{ Hz}$ (eingestrichene Oktave $a'$)
+* $A_5 = 880\text{ Hz}$ (zweigestrichene Oktave $a''$)
+
+**Oktav-Bezeichnungen im Vergleich:**
+* **Wissenschaftliche Notation (international):** Nutzt Großbuchstaben und Ziffern von tief nach hoch (z. B. $E_2$, $E_3$, $E_4$ bis $C_4$ als mittleres C).
+* **Klassische Notation (D1-Standard):** Nutzt Groß- und Kleinbuchstaben sowie Striche – Große Oktave ($C\text{–}H$), kleine Oktave ($c\text{–}h$), eingestrichene Oktave ($c'\text{–}h'$), zweigestrichene Oktave ($c''\text{–}h''$).
+
+**Das gleichstufige 12-Ton-System:**
+In der westlichen Musik wird der Raum einer Oktave in **12 exakt gleich große Halbtonschritte** unterteilt. Der Halbtonschritt ist das kleinste reguläre Intervall unseres Tonsystems.
+
+<figure>
+  <svg viewBox="0 0 760 240" role="img" aria-labelledby="octave-title octave-description" style="max-width: 100%; height: auto;">
+    <title id="octave-title">Eine Oktave verdoppelt die Frequenz</title>
+    <desc id="octave-description">Im selben Zeitraum schwingt E2 mit 82,4 Hertz einmal, während E3 mit 164,8 Hertz zweimal schwingt. E3 hat damit die doppelte Frequenz und klingt eine Oktave höher.</desc>
+    <line x1="205" y1="70" x2="650" y2="70" stroke="#64748b" stroke-dasharray="4 5" />
+    <line x1="205" y1="145" x2="650" y2="145" stroke="#64748b" stroke-dasharray="4 5" />
+    <text x="12" y="75" fill="currentColor" font-size="16">E2 · 82,4 Hz</text>
+    <text x="12" y="150" fill="currentColor" font-size="16">E3 · 164,8 Hz</text>
+    <path d="M205 70 Q316.25 30 427.5 70 T650 70" fill="none" stroke="#38bdf8" stroke-width="4" />
+    <path d="M205 145 Q260.625 105 316.25 145 T427.5 145 T538.75 145 T650 145" fill="none" stroke="#a78bfa" stroke-width="4" />
+    <line x1="205" y1="195" x2="650" y2="195" stroke="currentColor" stroke-width="1.5" />
+    <path d="M650 195 l-9 -5 v10 z" fill="currentColor" />
+    <text x="427" y="220" fill="currentColor" font-size="14" text-anchor="middle">gleicher Zeitraum</text>
+  </svg>
+  <figcaption>E3 schwingt im gleichen Zeitraum doppelt so oft wie E2: eine Oktave höher und mit doppelter Frequenz.</figcaption>
+</figure>
+
+## Stammtöne, Ganz- & Halbtonschritte
+
+Von den 12 Tönen einer Oktave bilden **7 Stammtöne** das Grundgerüst (auf einer Klaviatur entsprechen sie den weißen Tasten):
+
+$$C - D - E - F - G - A - H \quad (\text{international: } B)$$
+
+* **Deutscher vs. Internationaler Notenname:** Im deutschsprachigen Raum heißt der 7. Stammton **$H$** (und der um einen Halbton erniedrigte Ton **$B$**). Im internationalen/englischen System heißt der 7. Stammton **$B$** (und der erniedrigte Ton **$B\flat$**).
+* **Natürliche Halbtonschritte (1 Halbton):** Zwischen **$E \leftrightarrow F$** und **$H \leftrightarrow C$** (bzw. $B \leftrightarrow C$) liegt **kein** Zwischenton. Diese beiden Paare bilden von Natur aus einen Halbtonschritt.
+* **Ganztonschritte (2 Halbtöne):** Zwischen allen anderen benachbarten Stammtönen ($C\text{–}D$, $D\text{–}E$, $F\text{–}G$, $G\text{–}A$, $A\text{–}H$) liegt jeweils ein Zwischenton. Sie haben einen Abstand von **2 Halbtonschritten = 1 Ganztonschritt**.
+
+## Vorzeichen & Enharmonische Verwechslung
+
+Um die 5 Zwischentöne der insgesamt 12 Halbtöne zu benennen, werden Stammtöne mithilfe von **Versetzungszeichen** verändert:
+
+* **Kreuz ($\sharp$):** Erhöht den Stammton um einen Halbtonschritt. An den Notennamen wird die Silbe **-is** angehängt (z. B. $C \rightarrow Cis / C\sharp$, $F \rightarrow Fis / F\sharp$).
+* **Be ($\flat$):** Erniedrigt den Stammton um einen Halbtonschritt. An den Notennamen wird die Silbe **-es** angehängt (z. B. $D \rightarrow Des / D\flat$, $G \rightarrow Ges / G\flat$). *Ausnahmen im Deutschen:* $E \rightarrow Es$, $A \rightarrow As$, $H \rightarrow B$.
+* **Auflösungszeichen ($\natural$):** Hebt ein vorheriges $\sharp$ oder $\flat$ wieder auf und stellt den ursprünglichen Stammton her.
+
+**Enharmonische Verwechslung:**
+Da zwischen zwei Ganzton-Stammtönen nur ein Zwischenton liegt, hat diese Tonhöhe zwei verschiedene Namen – je nachdem, ob man sie von unten erhöht oder von oben erniedrigt:
+* $Cis = Des$ ($C\sharp = D\flat$)
+* $Fis = Ges$ ($F\sharp = G\flat$)
+* $Gis = As$ ($G\sharp = A\flat$)
+

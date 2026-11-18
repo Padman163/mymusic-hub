@@ -11,10 +11,12 @@ Die folgenden Befehle sind als schnelle Referenz gedacht.
 ### 1.1 Lokale Entwicklungsserver
 ```bash
 npm run dev                  # Startet Astro isoliert (Frontend/Doku) auf http://localhost:4321
-npx netlify-cli dev          # Startet Fullstack-Umgebung (Astro + Functions) auf http://localhost:8888
+npx netlify-cli dev          # Astro + Functions + lokale Blobs auf http://localhost:8888
 npm run build                # Erzeugt einen produktionsreifen Static-Build im Ordner dist/
 npm run preview              # Startet einen lokalen Webserver zur Vorschau des dist/-Builds
 ```
+
+`git switch feat/netlify-blobs`: `.env` und Dashboard gemäß [Workspace-Setup](README_WORKSPACE_SETUP.md) separat anpassen. Den [Blob-Reset](features/README_FEAT_NETLIFYBLOB.md#architektur-und-datenfluss) nur für lokale Testdaten verwenden.
 
 ### 1.2 Statische Code-Hygiene & Typenprüfung
 ```bash
@@ -36,10 +38,15 @@ npm run test:e2e:ui          # Öffnet das grafische Playwright Test-Dashboard
 npm run test:visual          # E2E mit --update-snapshots; derzeit keine Snapshot-Assertions
 ```
 
-### 1.4 Das zentrale Pre-Flight Quality Gate
+### 1.4 Prüfungen im Alltag und am Branch-Ende
 ```bash
-npm run preflight            # Kombinierte Kette vor jedem Push / Pull Request:
-                             # validate -> audit -> test:all (Vitest, Build, E2E) -> audit:lhci -> Git-Diff
+# Copilot fragt nach jeweils zehn Nutzer-Prompts; Tests nur nach Zustimmung oder ausdrücklichem Auftrag:
+npm run test:unit            # Stufe 1: Notationslogik; andere Unit-Tests passend zur Änderung wählen
+npm run test:component       # Stufe 2: Komponenten; bevorzugt gezielt
+npm run preflight            # Nur manuell durch den Nutzer am Branch-Ende (u. a. Stufen 0, 3 und 4):
+                             # Ergebnisbericht zu Validierung, Vitest, Build, E2E, Lighthouse und Git-Diff
+npm run audit                # Separates Dependency-Audit; nicht Teil des Preflights
+npm run cleanup:check        # Nicht-destruktiver Bericht zu den fünf Cleanup-Schritten
 ```
 
 Lighthouse lädt Berichte standardmäßig temporär öffentlich hoch. Lokale Ablage und Testgrenzen stehen im [Testing-Leitfaden](README_TESTING.md).

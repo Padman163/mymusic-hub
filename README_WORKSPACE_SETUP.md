@@ -32,6 +32,7 @@ npm install
 
 ```
 * **Warum dieser Schritt nötig ist:** Ein frisch geklonter Workspace enthält keinen Ordner `node_modules/`. Der Befehl installiert die Abhängigkeiten anhand von `package.json` und `package-lock.json`.
+* **Netlify Blobs:** `@netlify/blobs` wurde mit `npm install @netlify/blobs` ins Projekt aufgenommen und wird beim normalen Setup mitinstalliert.
 
 ### Schritt 3: Basis-Frontend starten & prüfen (Isolierter Modus)
 ```bash
@@ -40,20 +41,10 @@ npm run dev
 ```
 * **URL:** Öffne `http://localhost:4321` im Browser.
 * **Was geprüft wird:** Lädt das Astro-Frontend? Werden Styles, die Starlight-Sidebar und statische Komponenten gerendert?
-* **Warum dieser Schritt nötig ist:** Netlify Functions bleiben inaktiv. Die lokale Modul-API liest und schreibt `data/modules.json` direkt im Workspace, ohne GitHub-Token oder `GITHUB_BRANCH`.
+* **Warum dieser Schritt nötig ist:** Netlify Functions bleiben inaktiv. Die lokale Modul-API startet ohne Katalogdatei leer und erzeugt `data/modules.json` beim ersten Speichern. Die Datei bleibt lokal und wird nicht eingecheckt.
 
-### Schritt 4: Statische Hygiene & Code-Validierung prüfen und anpassen
-Stelle sicher, dass im geklonten Branch keine Typen- oder Syntaxkonflikte vorliegen:
-```bash
-npm run validate
-```
-**Was geprüft wird:** 
-
-```biome check .```: Prüft Code-Style, Formatting und Linter-Regeln. Enthält: ```biome lint .```
-
-```astro check```: Validiert Astro-Templates, Props und TypeScript-Typen über das gesamte Projekt hinweg.
-
-```tsc --noEmit```: Führt die echte Typüberprüfung über dein gesamtes Projekt hinweg durch. Das Flag --noEmit sorgt dafür, dass nur Fehler gemeldet werden, ohne kompilierte .js-Dateien auf die Festplatte zu schreiben.
+### Schritt 4: Prüfablauf beachten
+Nach Änderungen im Workspace gelten die kurzen Prüfungen aus dem [Testing-Leitfaden](README_TESTING.md). Die statische Projektprüfung mit Biome, Astro und TypeScript (Stufe 0) läuft erst im manuell vom Nutzer gestarteten Preflight am Branch-Ende, nicht beim Workspace-Setup.
 
 ```bash
 npm run fix
@@ -64,7 +55,7 @@ npm run fix
 
 Verwende ```npm run fix``` im Alltag, um alles Automatische (Formatierung + sichere Lint-Korrekturen) auf einmal schreiben zu lassen.
 
-Typfehler, die danach noch bei npm run validate durch astro check oder tsc gemeldet werden, müssen manuell behoben werden.
+Typfehler, die Astro oder TypeScript im Preflight meldet, müssen manuell behoben werden.
 
 ### Schritt 5: Netlify CLI verknüpfen, Umgebungsvariablen für das Backend einrichten & Fullstack starten
 ```bash
@@ -75,35 +66,21 @@ npx netlify-cli login
 npx netlify-cli link
 ```
 
-Trage die GitHub-Konfiguration in die lokale `.env` ein oder passe sie dort an:
-```dotenv
-GITHUB_REPOSITORY=Padman163/mymusic-hub
-GITHUB_TOKEN=<github-token>
-GITHUB_BRANCH=<aktuellen Branch>
-GITHUB_DATA_PATH=data/contributions.json
-GITHUB_MODULES_PATH=data/modules.json
-```
-* **Branch:** `GITHUB_BRANCH` bestimmt für beide Netlify Functions den GitHub-Branch zum Lesen und Schreiben von Beiträgen **und** Modulen. Er folgt nicht automatisch dem ausgecheckten Git-Branch. Für die Arbeit auf `<aktuellen Branch>` diesen Wert setzen; für einen anderen Ziel-Branch entsprechend ändern. Ohne Wert verwenden beide Functions `main`.
-* **Dateien:** `GITHUB_DATA_PATH` und `GITHUB_MODULES_PATH` sind optional; die oben gezeigten Pfade sind die Standardwerte. Der Ziel-Branch muss die gewünschten Daten enthalten. API-Änderungen werden auf GitHub im konfigurierten Branch gespeichert und nicht automatisch in die lokale Arbeitsdatei übernommen.
-* **Token:** Der GitHub-Token braucht Zugriff auf das Repository und Contents-Lese- und Schreibrechte. `.env` und Token nicht committen oder öffentlich teilen.
-* **Netlify:** Die lokale `.env` konfiguriert nicht automatisch die veröffentlichte Website. Für das jeweilige Netlify-Deploy die entsprechenden Umgebungsvariablen dort separat setzen und danach neu deployen. Ein Branch-Wechsel betrifft beide Datenspeicher, auch auf der veröffentlichten Website.
+Beim Wechsel auf `feat/netlify-blobs` **die lokale `.env` und das Netlify Dashboard separat anpassen**:
+
+* **Workspace:** Nur für den alten Backendstand bei Bedarf `GITHUB_BRANCH=feat/netlify-blobs` setzen. Auf dem Blob-Stand die alten `GITHUB_*`-Variablen für die Datenspeicherung entfernen oder auskommentieren; Netlify Blobs braucht sie nicht. `.env` niemals committen.
+* **Dashboard:** Unter **Site configuration → Build & deploy → Continuous deployment → Branches and deploy contexts** den Branch freigeben bzw. bewusst als Production Branch setzen. Die abgelösten Variablen unter **Environment variables** separat bereinigen. Die Details zum Datenumzug und zu gemeinsam genutzten Cloud-Daten stehen in der [Blob-Referenz](features/README_FEAT_NETLIFYBLOB.md).
 
 ```bash
-# Verknüpfung und den im lokalen Netlify-Kontext wirksamen Branch prüfen
+# Projektverknüpfung prüfen
 npx netlify-cli status
-# Erstellung von .env im Projekt
-npx netlify-cli env:list --plain > .env
-# .env anpassen, damit Posts auf aktuellen Branch geladen werden und gezogen
-GITHUB_BRANCH=<aktuellen Branch>
-# Variablen auf Netlify anpassen
-
 
 # Fullstack-Entwicklungsserver starten
 npx netlify-cli dev
 ```
 * **URL:** Öffne `http://localhost:8888`.
-* **Warum dieser Schritt nötig ist:** Dieser Befehl führt das Astro-Frontend und die Netlify Functions zusammen. So lassen sich IssueTracker und Modul-API mit GitHub-Persistenz verwenden.
-* **Prüfen:** `/api/modules` im Browser öffnen und die Modultitel mit der Datei im konfigurierten GitHub-Branch vergleichen. Fehlen `GITHUB_TOKEN` oder `GITHUB_REPOSITORY`, antworten die Functions mit HTTP 503.
+* **Lokaler Blob-Speicher:** Die CLI startet Astro, die Functions und einen lokalen Blob-Server. Dessen Daten bleiben unter `.netlify/` erhalten; konkrete Verzeichnisse und Reset-Hinweise stehen in der [Blob-Referenz](features/README_FEAT_NETLIFYBLOB.md#architektur-und-datenfluss).
+* **Prüfen:** `/api/modules` und `/api/contributions` auf Port 8888 aufrufen. Ein neuer lokaler Store startet mit leerem Modulkatalog und leerer Beitragsliste. Änderungen laufen über Blobs, nicht über den Astro-Datei-Fallback.
 
 ### Schritt 6: E2E-Testbrowser & Lighthouse CI einrichten (Optional)
 

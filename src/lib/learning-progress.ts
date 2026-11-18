@@ -11,7 +11,10 @@ import {
   type ModulesDatabase,
   type QuizSettings,
 } from "./module-schema.ts";
-import { calculateQuestionXp, calculateTheoryBlockXp } from "./xp-tags.ts";
+import {
+  calculateModuleQuestionXp,
+  calculateTheoryBlockXp,
+} from "./xp-tags.ts";
 
 export const LEARNING_PROGRESS_STORAGE_KEY = "mymusic_learning_progress_v2";
 export const XP_PER_LEVEL = 500;
@@ -332,7 +335,9 @@ export function completeTheoryStep(
     existing.steps.theory === "locked" ||
     (existing.steps.theory !== "completed" &&
       module.theoryBlocks.some(
-        (block) => !existing.completedTheoryBlockIds?.includes(block.id),
+        (block) =>
+          block.role !== "exercise_intro" &&
+          !existing.completedTheoryBlockIds?.includes(block.id),
       ))
   ) {
     return state;
@@ -387,6 +392,7 @@ export function completeTheoryBlock(
   if (
     !existing ||
     !block ||
+    block.role === "exercise_intro" ||
     existing.status === "locked" ||
     existing.steps.theory !== "unlocked" ||
     existing.completedTheoryBlockIds?.includes(blockId)
@@ -402,8 +408,10 @@ export function completeTheoryBlock(
     block.tags ?? [],
   );
   next.updatedAt = nowIso();
-  return module.theoryBlocks.every((item) =>
-    next.modules[module.id].completedTheoryBlockIds.includes(item.id),
+  return module.theoryBlocks.every(
+    (item) =>
+      item.role === "exercise_intro" ||
+      next.modules[module.id].completedTheoryBlockIds.includes(item.id),
   )
     ? completeTheoryStep(next, module, moduleQuestions)
     : next;
@@ -445,7 +453,7 @@ export function recordExerciseAnswer(
   if (!solvedSet.has(question.id)) {
     solvedSet.add(question.id);
     target.solvedQuestionIds.push(question.id);
-    const questionXp = calculateQuestionXp(question.baseXp, question.tags);
+    const questionXp = calculateModuleQuestionXp(question);
     creditXp(next, questionXp, module.scope, question.tags);
   }
 
@@ -563,7 +571,7 @@ export function submitQuizAttempt(
           target.solvedQuestionIds.push(question.id);
           creditXp(
             next,
-            calculateQuestionXp(question.baseXp, question.tags),
+            calculateModuleQuestionXp(question),
             mod.scope,
             question.tags,
           );
@@ -592,7 +600,8 @@ export function submitQuizAttempt(
     if (target.steps.theory !== "completed") {
       const completedBlocks = new Set(target.completedTheoryBlockIds);
       for (const block of mod.theoryBlocks) {
-        if (completedBlocks.has(block.id)) continue;
+        if (block.role === "exercise_intro" || completedBlocks.has(block.id))
+          continue;
         completedBlocks.add(block.id);
         target.completedTheoryBlockIds.push(block.id);
         creditXp(
@@ -627,7 +636,7 @@ export function submitQuizAttempt(
         target.solvedQuestionIds.push(question.id);
         creditXp(
           next,
-          calculateQuestionXp(question.baseXp, question.tags),
+          calculateModuleQuestionXp(question),
           mod.scope,
           question.tags,
         );

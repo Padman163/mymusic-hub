@@ -1,0 +1,35 @@
+---
+title: NotationBuilder bedienen
+description: Noten in interaktiven Aufgaben eingeben und bearbeiten.
+---
+
+import NotationBuilder from "../../../components/notation/NotationBuilder.astro";
+
+Mit dem NotationBuilder gibst du Noten in interaktiven Aufgaben ein. Je nach Aufgabe sind eine oder mehrere Notenplätze, bestimmte Notenwerte oder ein fester Notenwert vorgegeben. Im [Modul-Builder](/projektierung/modul-builder/) kannst du eine Notationsaufgabe konfigurieren und ihre Vorschau ausprobieren.
+
+## Noten eingeben
+
+1. Klicke ins Notensystem oder wähle den Editor mit der Tabulatortaste aus, damit er den Tastaturfokus erhält. Die orange Markierung zeigt die aktuelle Auswahl.
+2. Bewege die Auswahl mit **↑** und **↓** auf die gewünschte Notenlinie oder den Zwischenraum. Ein Klick ins Notensystem wählt ebenfalls eine Position; bei mehreren Notenplätzen wird der nächstgelegene Platz ausgewählt.
+3. Drücke die **Leertaste**, um eine Note zu setzen. Bei mehreren Plätzen springt die Auswahl zum nächsten Platz. Mit **←** und **→** wechselst du zwischen den Plätzen.
+4. Wähle bei Bedarf einen anderen Platz und drücke **Entf** oder **Rücktaste**, um seine Note zu löschen. Mit der Leertaste kannst du eine Note an der aktuellen Auswahl erneut setzen.
+
+Ein Klick ins Notensystem allein setzt keine Note. Wenn bereits eine Note am angeklickten Platz steht, wird dieser Platz mit seiner bisherigen Tonhöhe ausgewählt.
+
+## Notenwert auswählen
+
+Wenn eine Leiste für Notenwerte angezeigt wird, kannst du dort einen Wert anklicken. Ein Klick ändert die vorhandene Note am aktiven Platz oder setzt dort eine neue Note. Mit der Taste **1** beziehungsweise **Num 1** wechselst du durch die erlaubten Werte; bei einer vorhandenen Note wird ihr Wert geändert.
+
+Manche Aufgaben geben den Notenwert fest vor oder erlauben nur bestimmte Werte. Dann ist die Auswahl entsprechend eingeschränkt.
+
+## Hier ausprobieren
+
+Klicke in das Notensystem und setze bis zu vier Noten. Das Beispiel dient nur zum Ausprobieren und speichert oder bewertet keine Antwort.
+
+<NotationBuilder compact="wide" maxNotes={4} showDurationPicker showHints />
+
+## Eine Aufgabe beantworten
+
+Gib die geforderten Noten im Notensystem der Aufgabe ein und wähle **Antwort prüfen**. Die Aufgabe entscheidet, welche Tonhöhen oder Notenwerte richtig sind. Bei Lernpfad-Aufgaben werden nach Fehlversuchen gegebenenfalls Hinweise angezeigt; nach dem dritten Fehlversuch erscheinen Lösung und Erklärung. Leere Antworten verbrauchen keinen Versuch.
+
+Die Anzeige und verfügbaren Aktionen können je nach Aufgabe abweichen. Die [technische NotationBuilder-Referenz](/audio/referenzen-werkzeuge/visualisierungen-erklaert/notationbuilder/) enthält weitere interaktive Beispiele.

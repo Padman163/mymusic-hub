@@ -12,9 +12,17 @@ import {
   createXpTagPicker,
 } from "../../src/lib/module-builder-ui";
 import type { ModulesDatabase } from "../../src/lib/module-schema";
+import { upsertModuleWithExercises } from "../../src/lib/module-store";
 import { createModulesTestDatabase } from "../fixtures/modules";
 
 const seedDb = createModulesTestDatabase();
+
+function addBlockWithRole(container: HTMLElement, role: string): void {
+  container.querySelector<HTMLButtonElement>(".theory-block-add")!.click();
+  container.querySelector<HTMLInputElement>(
+    `.module-block-pending .theory-block-role[value="${role}"]`,
+  )!.click();
+}
 
 function mountModuleForm(): HTMLFormElement {
   const form = document.createElement("form");
@@ -35,6 +43,7 @@ function mountModuleForm(): HTMLFormElement {
       <option value="D1">D1</option>
     </select>
     <div id="module-tags-field"></div>
+    <input id="module-archived" name="archived" type="checkbox" />
     <input id="module-has-practice" name="hasPractice" type="checkbox" />
     <input id="module-theory-base-xp" name="theoryBaseXp" type="number" value="30" />
     </details>
@@ -58,41 +67,8 @@ function mountExerciseForm(): HTMLFormElement {
       <option value="mittel">mittel</option>
       <option value="schwer">schwer</option>
     </select>
-    <select id="exercise-question-type" name="questionType">
-      <option value="single_choice">single_choice</option>
-      <option value="multi_select">multi_select</option>
-      <option value="numeric_input">numeric_input</option>
-      <option value="interactive_notation">interactive_notation</option>
-    </select>
     <textarea id="exercise-prompt" name="prompt"></textarea>
-    <section id="exercise-choice-section">
-      <div id="exercise-choice-rows"></div>
-      <button id="exercise-choice-add" type="button">+ Antwortoption</button>
-    </section>
-    <section id="exercise-numeric-section" hidden>
-      <input id="exercise-numeric-answer" name="numericAnswer" type="text" />
-    </section>
-    <section id="exercise-notation-section" hidden>
-      <select id="notation-clef" name="clef">
-        <option value="treble">treble</option>
-        <option value="bass">bass</option>
-      </select>
-      <input id="notation-max-notes" name="maxNotes" type="number" value="1" />
-      <select id="notation-lock-duration" name="lockDuration">
-        <option value="none">none</option>
-        <option value="quarter">quarter</option>
-      </select>
-      <select id="notation-compact" name="compact">
-        <option value="tight">Kompakt</option>
-        <option value="wide" selected>Standard</option>
-        <option value="false">Breit</option>
-      </select>
-      <input id="notation-show-duration-picker" name="showDurationPicker" type="checkbox" />
-      <input id="notation-show-hints" name="showHints" type="checkbox" checked />
-      <input id="notation-expected-pitches" name="expectedPitches" type="text" />
-      <input id="notation-expected-durations" name="expectedDurations" type="text" />
-      <div id="notation-live-preview"></div>
-    </section>
+    <div id="exercise-type-fields"></div>
     <textarea id="exercise-explanation" name="explanation"></textarea>
     <input id="exercise-base-xp" name="baseXp" type="number" value="10" />
     <div id="exercise-tags-field"></div>
@@ -170,12 +146,12 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
 
     const addBtn = form.querySelector<HTMLButtonElement>(".theory-block-add");
     expect(addBtn).not.toBeNull();
-    addBtn?.click();
-    addBtn?.click();
+    addBlockWithRole(form, "theory");
+    addBlockWithRole(form, "theory");
 
     const rows = form.querySelectorAll<HTMLDivElement>(".theory-block-row");
     expect(rows).toHaveLength(2);
-    expect(Array.from(rows).every((row) => !row.querySelector("details")?.open)).toBe(true);
+    expect(Array.from(rows).every((row) => row.querySelector("details")?.open)).toBe(true);
 
     const titles = form.querySelectorAll<HTMLInputElement>(
       ".theory-block-title",
@@ -326,6 +302,282 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     expect(editor.element.querySelector<HTMLInputElement>(".theory-group-title")?.value).toBe("Mein Abschnitt");
   });
 
+  it("zeigt beim Aufklappen eines Blocks eine formatierte und live aktualisierte Vorschau", async () => {
+    const editor = createTheoryBlockEditor([
+      { id: "a", order: 1, title: "Tonhöhe", markdownContent: "Vorher" },
+    ]);
+    document.body.append(editor.element);
+
+    const row = editor.element.querySelector<HTMLDivElement>(
+      ".theory-block-row",
+    );
+    const details = row?.querySelector<HTMLDetailsElement>(
+      ".theory-block-details",
+    );
+    const markdown = row?.querySelector<HTMLTextAreaElement>(
+      ".theory-block-markdown",
+    );
+    if (!row || !details || !markdown) throw new Error("Theorieblock fehlt");
+
+    details.open = true;
+    details.dispatchEvent(new Event("toggle"));
+    const preview = row.querySelector<HTMLDetailsElement>(
+      ".module-content-preview",
+    );
+    expect(preview?.open).toBe(true);
+    await vi.waitFor(() =>
+      expect(
+        row.querySelector(".module-content-preview-body")?.textContent,
+      ).toContain("Vorher"),
+    );
+
+    markdown.value = "**Nachher**";
+    markdown.dispatchEvent(new Event("input"));
+    await vi.waitFor(() =>
+      expect(
+        row.querySelector(".module-content-preview-body strong")?.textContent,
+      ).toBe("Nachher"),
+    );
+
+    if (!preview) throw new Error("Blockvorschau fehlt");
+    preview.open = false;
+    preview.dispatchEvent(new Event("toggle"));
+    await vi.waitFor(() => expect(details.open).toBe(false));
+  });
+
+  it("spiegelt Gruppe und Blockebene in den zeilenweise zugeordneten Vorschauen", async () => {
+    const editor = createTheoryBlockEditor([
+      {
+        id: "a",
+        order: 1,
+        title: "Eins",
+        markdownContent: "Erster Inhalt",
+        groupId: "g",
+        groupTitle: "Grundlagen",
+      },
+      {
+        id: "b",
+        order: 2,
+        title: "Zwei",
+        markdownContent: "Zweiter Inhalt",
+        groupId: "g",
+        groupTitle: "Grundlagen",
+      },
+    ]);
+    document.body.append(editor.element);
+
+    const group = editor.element.querySelector<HTMLDivElement>(
+      ".theory-block-group",
+    );
+    const details = group?.querySelector<HTMLDetailsElement>(
+      ".theory-group-details",
+    );
+    const groupPreview = group?.querySelector<HTMLDetailsElement>(
+      ":scope > .module-content-preview",
+    );
+    if (!group || !details || !groupPreview)
+      throw new Error("Gruppe oder Gruppenvorschau fehlt");
+
+    details.open = true;
+    details.dispatchEvent(new Event("toggle"));
+    expect(groupPreview.open).toBe(true);
+    await vi.waitFor(() => {
+      const preview = groupPreview.querySelector(
+        ".module-content-preview-body",
+      );
+      expect(preview?.textContent).toContain("Grundlagen");
+      expect(preview?.textContent).toContain("2 Einträge");
+    });
+    const blockPreviewTitles = Array.from(
+      group.querySelectorAll<HTMLDetailsElement>(
+        ".theory-block-row > .module-content-preview",
+      ),
+    ).map((preview) => preview.querySelector("summary")?.textContent);
+    expect(blockPreviewTitles).toEqual([
+      "Vorschau · Theorie · Eins",
+      "Vorschau · Theorie · Zwei",
+    ]);
+
+    const firstRow = group.querySelector<HTMLDivElement>(
+      '.theory-block-row[data-block-id="a"]',
+    );
+    const firstDetails = firstRow?.querySelector<HTMLDetailsElement>(
+      ".theory-block-details",
+    );
+    const firstPreview = firstRow?.querySelector<HTMLDetailsElement>(
+      ".module-content-preview",
+    );
+    if (!firstRow || !firstDetails || !firstPreview)
+      throw new Error("Blockvorschau fehlt");
+
+    firstDetails.open = true;
+    firstDetails.dispatchEvent(new Event("toggle"));
+    expect(firstPreview.open).toBe(true);
+    await vi.waitFor(() =>
+      expect(
+        firstPreview.querySelector(".module-content-preview-body")?.textContent,
+      ).toContain("Erster Inhalt"),
+    );
+
+    firstPreview.open = false;
+    firstPreview.dispatchEvent(new Event("toggle"));
+    await vi.waitFor(() => expect(firstDetails.open).toBe(false));
+
+    groupPreview.open = false;
+    groupPreview.dispatchEvent(new Event("toggle"));
+    await vi.waitFor(() => expect(details.open).toBe(false));
+  });
+
+  it("löst einen einzelnen Theorieblock aus einer Dreiergruppe und erhält Gruppe und Eingaben", () => {
+    const groupId = "group-three";
+    const groupTitle = "Grundlagen";
+    const editor = createTheoryBlockEditor([
+      { id: "a", order: 1, title: "A", markdownContent: "", groupId, groupTitle },
+      { id: "b", order: 2, title: "B", markdownContent: "", groupId, groupTitle },
+      { id: "c", order: 3, title: "C", markdownContent: "", groupId, groupTitle },
+    ]);
+    document.body.append(editor.element);
+
+    const rows = Array.from(
+      editor.element.querySelectorAll<HTMLDivElement>(".theory-block-row"),
+    );
+    const groupDetails = editor.element.querySelector<HTMLDetailsElement>(
+      ".theory-block-group .theory-group-details",
+    );
+    if (!groupDetails) throw new Error("Gruppe fehlt");
+    groupDetails.open = true;
+    groupDetails.dispatchEvent(new Event("toggle"));
+
+    const groupTitleInput = editor.element.querySelector<HTMLInputElement>(
+      ".theory-group-title",
+    );
+    if (!groupTitleInput) throw new Error("Gruppentitel fehlt");
+    groupTitleInput.value = "Ungespeicherte Gruppe";
+    groupTitleInput.dispatchEvent(new Event("input"));
+
+    const markdown = rows[1].querySelector<HTMLTextAreaElement>(
+      ".theory-block-markdown",
+    );
+    if (!markdown) throw new Error("Blockinhalt fehlt");
+    markdown.value = "Ungespeicherter Inhalt";
+    rows[1]
+      .querySelector<HTMLButtonElement>(".theory-block-ungroup-item")
+      ?.click();
+
+    expect(editor.contentOrder()).toEqual([
+      { kind: "theory", id: "a", groupId, groupTitle: "Ungespeicherte Gruppe" },
+      { kind: "theory", id: "c", groupId, groupTitle: "Ungespeicherte Gruppe" },
+      { kind: "theory", id: "b" },
+    ]);
+    expect(editor.items()?.map(({ id, markdownContent }) => [id, markdownContent]))
+      .toEqual([
+        ["a", ""],
+        ["c", ""],
+        ["b", "Ungespeicherter Inhalt"],
+      ]);
+    expect(rows.map((row) => row.dataset.groupPosition)).toEqual([
+      "first",
+      undefined,
+      "last",
+    ]);
+    expect(rows[1].querySelector<HTMLButtonElement>(".theory-block-remove")?.hidden)
+      .toBe(false);
+    expect(rows[1].querySelector<HTMLLabelElement>(".theory-block-select-label")?.hidden)
+      .toBe(false);
+    expect(rows[1].querySelector<HTMLInputElement>(".theory-block-select")?.disabled)
+      .toBe(false);
+    expect(rows[0].querySelector<HTMLButtonElement>(".theory-block-remove")?.hidden)
+      .toBe(true);
+    expect(rows[0].querySelector<HTMLButtonElement>(".theory-block-ungroup-item")?.hidden)
+      .toBe(false);
+  });
+
+  it("löst eine Zweiergruppe beim Herauslösen automatisch vollständig auf", () => {
+    const groupId = "group-two";
+    const groupTitle = "Grundlagen";
+    const editor = createTheoryBlockEditor([
+      { id: "a", order: 1, title: "A", markdownContent: "", groupId, groupTitle },
+      { id: "b", order: 2, title: "B", markdownContent: "", groupId, groupTitle },
+    ]);
+    document.body.append(editor.element);
+
+    const rows = Array.from(
+      editor.element.querySelectorAll<HTMLDivElement>(".theory-block-row"),
+    );
+    rows[0]
+      .querySelector<HTMLButtonElement>(".theory-block-ungroup-item")
+      ?.click();
+
+    expect(editor.element.querySelector(".theory-block-group")).toBeNull();
+    expect(editor.contentOrder()).toEqual([
+      { kind: "theory", id: "a" },
+      { kind: "theory", id: "b" },
+    ]);
+    expect(editor.items()?.every((block) => !block.groupId && !block.groupTitle))
+      .toBe(true);
+    expect(rows.every((row) => row.dataset.groupPosition === undefined)).toBe(true);
+    expect(rows.every((row) =>
+      row.querySelector<HTMLButtonElement>(".theory-block-remove")?.hidden ===
+        false &&
+      row.querySelector<HTMLButtonElement>(".theory-block-ungroup-item")?.hidden ===
+        true &&
+      row.querySelector<HTMLLabelElement>(".theory-block-select-label")?.hidden ===
+        false &&
+      row.querySelector<HTMLInputElement>(".theory-block-select")?.disabled ===
+        false
+    )).toBe(true);
+  });
+
+  it("löst eine gruppierte Lernpfad-Übung mit auf, wenn nur ein Theorieblock verbleibt", () => {
+    const db = seedDb as unknown as ModulesDatabase;
+    const exercise = db.questions.find((question) => question.targetLane === "leicht");
+    if (!exercise) throw new Error("Testübung fehlt");
+    const groupId = "group-exercise";
+    const groupTitle = "Gemischter Abschnitt";
+    const editor = createTheoryBlockEditor(
+      [
+        {
+          id: "theory",
+          order: 1,
+          title: "Theorie",
+          markdownContent: "",
+          groupId,
+          groupTitle,
+        },
+      ],
+      () => 30,
+      () => {},
+    );
+    editor.setExercises(
+      [exercise],
+      [
+        { kind: "theory", id: "theory", groupId, groupTitle },
+        { kind: "exercise", id: exercise.id, groupId, groupTitle },
+      ],
+    );
+    document.body.append(editor.element);
+
+    const exerciseRow = editor.element.querySelector<HTMLDivElement>(
+      ".module-exercise-row",
+    );
+    if (!exerciseRow) throw new Error("Lernpfad-Übung fehlt");
+    exerciseRow
+      .querySelector<HTMLButtonElement>(".theory-block-ungroup-item")
+      ?.click();
+
+    expect(editor.contentOrder()).toEqual([
+      { kind: "theory", id: "theory" },
+      { kind: "exercise", id: exercise.id },
+    ]);
+    expect(exerciseRow.dataset.groupId).toBeUndefined();
+    expect(exerciseRow.querySelector<HTMLButtonElement>(".module-exercise-remove")?.hidden)
+      .toBe(false);
+    expect(exerciseRow.querySelector<HTMLLabelElement>(".theory-block-select-label")?.hidden)
+      .toBe(false);
+    expect(exerciseRow.querySelector<HTMLInputElement>(".theory-block-select")?.disabled)
+      .toBe(false);
+  });
+
   it("gruppiert Theorieblöcke und Übungen gemeinsam und speichert die Gruppe", async () => {
     const db = seedDb as unknown as ModulesDatabase;
     const exercise = db.questions.find((q) => q.id === "q-101-ex-1");
@@ -408,7 +660,7 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     expect(groupCard?.querySelectorAll(".theory-block-row, .module-exercise-row"))
       .toHaveLength(2);
     expect(exerciseRow?.querySelector(".theory-group-editor-heading")).toBeNull();
-    expect(groupCard?.querySelector(".theory-group-summary")?.textContent).toBe(
+    expect(groupCard?.querySelector(".theory-group-summary-title")?.textContent).toBe(
       `Abschnitt · ${groupTitle}`,
     );
     expect(groupCard?.querySelector(".theory-group-editor-actions")?.textContent)
@@ -482,8 +734,178 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     details.open = true;
     title.value = "Neuer Titel";
     title.dispatchEvent(new Event("input", { bubbles: true }));
-    expect(details.querySelector("summary")?.textContent).toBe("Theorie 1 · Neuer Titel");
+    expect(details.querySelector(".theory-block-order-label")?.textContent)
+      .toBe("Theorie 1 · Neuer Titel");
     expect(controller.theoryBlockEditor.items()?.[0].title).toBe("Neuer Titel");
+  });
+
+  it("legt neue Blöcke ohne Rolle oder Vorlage an und verlangt eine Rollenwahl", () => {
+    const form = mountModuleForm();
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    attachModuleBuilderForm(form);
+    form.querySelector<HTMLButtonElement>(".theory-block-add")!.click();
+    const pending = form.querySelector<HTMLElement>(".module-block-pending")!;
+    expect(pending.querySelectorAll(".theory-block-role")).toHaveLength(4);
+    expect(pending.querySelector(".theory-block-role:checked")).toBeNull();
+    expect(pending.querySelector("textarea, .theory-block-title, .module-content-preview")).toBeNull();
+    expect(form.querySelector(".theory-block-add-type")).toBeNull();
+    form.dispatchEvent(new Event("submit", { cancelable: true }));
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(pending.querySelector(".block-role-error")?.textContent).toContain("Bitte wähle eine Blockrolle");
+    pending.querySelector<HTMLInputElement>('.theory-block-role[value="practice"]')!.click();
+    expect(form.querySelector(".module-block-pending")).toBeNull();
+    expect(form.querySelector(".module-practice-row .theory-block-markdown")).not.toBeNull();
+    expect(form.querySelector(".module-exercise-editor, .theory-block-row")).toBeNull();
+  });
+
+  it("lädt aus einem Theorieblock die Aufgabenvorlage mit derselben Modulzuordnung", () => {
+    const form = mountModuleForm();
+    const controller = attachModuleBuilderForm(form);
+    controller.loadModule(seedDb.modules[0]);
+    const source = seedDb.modules[0].theoryBlocks[0];
+    form.querySelector<HTMLInputElement>('.theory-block-role[value="exercise"]')!.click();
+    const row = form.querySelector<HTMLElement>(".module-exercise-row")!;
+    expect(row.querySelector<HTMLInputElement>(".module-exercise-title")!.value).toBe(source.title);
+    expect(row.querySelector<HTMLTextAreaElement>(".module-exercise-prompt")!.value).toBe(source.markdownContent);
+    expect(row.querySelectorAll(".exercise-choice-text")).toHaveLength(2);
+    expect(controller.theoryBlockEditor.exerciseUpdates()[0]).toMatchObject({
+      id: source.id, moduleIds: [seedDb.modules[0].id],
+      targetLane: "leicht", difficulty: "einfach", questionType: "single_choice",
+    });
+    expect(controller.theoryBlockEditor.items()?.some(({ id }) => id === source.id)).toBe(false);
+    expect(controller.theoryBlockEditor.contentOrder()[0]).toEqual({ kind: "exercise", id: source.id });
+  });
+
+  it("erhält Titel, Text, Gruppierung und unvollständige Aufgabenentwürfe beim Rollenwechsel", () => {
+    const exercise = { ...seedDb.questions[0], title: "Oberton" };
+    const editor = createTheoryBlockEditor(seedDb.modules[0].theoryBlocks);
+    document.body.append(editor.element);
+    const group = { groupId: "g", groupTitle: "Abschnitt" };
+    const order = [
+      { kind: "theory" as const, id: seedDb.modules[0].theoryBlocks[0].id, ...group },
+      { kind: "exercise" as const, id: exercise.id, ...group },
+    ];
+    editor.setExercises([exercise], order);
+    const row = editor.element.querySelector<HTMLDivElement>(".module-exercise-row")!;
+    const answer = row.querySelector<HTMLInputElement>('[id$="exercise-numeric-answer"]')!;
+    const hint = row.querySelector<HTMLTextAreaElement>('textarea[aria-label^="Einfacher Hinweis"]')!;
+    answer.value = "";
+    hint.value = "Doppelte Frequenz";
+    row.querySelector<HTMLInputElement>('.question-difficulty-picker input[value="schwer"]')!.click();
+    row.querySelector<HTMLInputElement>('.theory-block-role[value="practice"]')!.click();
+    const practice = editor.element.querySelector<HTMLDivElement>(".module-practice-row")!;
+    expect(practice.dataset.blockId).toBe(exercise.id);
+    expect(practice.querySelector<HTMLInputElement>(".theory-block-title")!.value).toBe("Oberton");
+    expect(practice.querySelector<HTMLTextAreaElement>(".theory-block-markdown")!.value).toBe(exercise.prompt);
+    practice.querySelector<HTMLTextAreaElement>(".theory-block-markdown")!.value = "Neuer gemeinsamer Text";
+    practice.querySelector<HTMLInputElement>('.theory-block-role[value="theory"]')!.click();
+    const theory = editor.element.querySelector<HTMLDivElement>(`.theory-block-row[data-block-id="${exercise.id}"]`)!;
+    theory.querySelector<HTMLInputElement>('.theory-block-role[value="exercise_intro"]')!.click();
+    expect(editor.exerciseUpdates()).toEqual([]);
+    expect(editor.exerciseRoleChanges()).toEqual([{ id: exercise.id, kind: "theory" }]);
+    expect(editor.contentOrder()[1]).toEqual({ ...order[1], kind: "theory" });
+    theory.querySelector<HTMLInputElement>('.theory-block-role[value="exercise"]')!.click();
+    expect(editor.element.querySelector(".module-exercise-row")).toBe(row);
+    expect(answer.value).toBe("");
+    expect(hint.value).toBe("Doppelte Frequenz");
+    expect(row.querySelector<HTMLInputElement>('.question-difficulty-picker input:checked')!.value).toBe("schwer");
+    expect(row.querySelector<HTMLTextAreaElement>(".module-exercise-prompt")!.value).toBe("Neuer gemeinsamer Text");
+    expect(editor.contentOrder()[1]).toEqual(order[1]);
+    expect(editor.exerciseRoleChanges()).toEqual([]);
+    answer.value = "900";
+    expect(editor.exerciseUpdates()[0]).toMatchObject({
+      id: exercise.id, questionType: "numeric_input", difficulty: "schwer",
+      correctAnswers: ["900"], simpleHint: "Doppelte Frequenz",
+    });
+    row.querySelector<HTMLInputElement>('.theory-block-role[value="practice"]')!.click();
+    editor.markRoleChangesSaved();
+    expect(editor.exerciseRoleChanges()).toEqual([]);
+    practice.querySelector<HTMLInputElement>('.theory-block-role[value="exercise"]')!.click();
+    expect(editor.isDraftExercise(exercise.id)).toBe(true);
+    expect(editor.exerciseUpdates()[0].correctAnswers).toEqual(["900"]);
+  });
+
+  it("speichert den Rollenwechsel einer vorhandenen Aufgabe gemeinsam mit dem Ersatzblock", async () => {
+    let db = structuredClone(seedDb);
+    const exercise = db.questions[0];
+    db.questions = [exercise];
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const payload = JSON.parse(String(init?.body));
+      db = upsertModuleWithExercises(db, payload, payload.exercises, payload.exerciseRoleChanges);
+      return Response.json({ questions: db.questions });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const form = mountModuleForm();
+    const controller = attachModuleBuilderForm(form);
+    controller.loadModule(db.modules[0], [exercise]);
+    const row = form.querySelector<HTMLElement>(".module-exercise-row")!;
+    row.querySelector<HTMLInputElement>('.theory-block-role[value="practice"]')!.click();
+    form.querySelector<HTMLInputElement>(".module-practice-row .theory-block-title")!.value = "Oberton spielen";
+    document.dispatchEvent(new CustomEvent("modules:updated", { detail: { questions: [exercise] } }));
+    expect(form.querySelector(".module-exercise-row")).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+    form.dispatchEvent(new Event("submit", { cancelable: true }));
+    await vi.waitFor(() => expect(form.querySelector(".form-status")?.textContent).toBe("Modul wurde aktualisiert."));
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const payload = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
+    expect(payload.exerciseRoleChanges).toEqual([{ id: exercise.id, kind: "practice" }]);
+    expect(db.questions).toEqual([]);
+    expect(db.modules[0].practiceBlocks[0]).toMatchObject({
+      id: exercise.id, title: "Oberton spielen", markdownContent: exercise.prompt,
+    });
+  });
+
+  it("erstellt Aufgabenbeschreibungen und erhält Inhalte beim Wechsel der Blockrolle", () => {
+    const editor = createTheoryBlockEditor();
+    document.body.append(editor.element);
+    addBlockWithRole(editor.element, "exercise_intro");
+    const title = editor.element.querySelector<HTMLInputElement>(".theory-block-title");
+    const markdown = editor.element.querySelector<HTMLTextAreaElement>(".theory-block-markdown");
+    const roleOptions = editor.element.querySelector<HTMLFieldSetElement>(".theory-block-role-options");
+    const theoryRole = editor.element.querySelector<HTMLInputElement>('.theory-block-role[value="theory"]');
+    const introRole = editor.element.querySelector<HTMLInputElement>('.theory-block-role[value="exercise_intro"]');
+    const badge = editor.element.querySelector<HTMLElement>("summary .learning-xp-badge");
+    const xpField = editor.element.querySelector(".theory-block-xp")?.closest("label");
+    const blockTags = editor.element.querySelector<HTMLFieldSetElement>(".xp-tag-picker");
+    if (!title || !markdown || !roleOptions || !theoryRole || !introRole || !badge || !xpField || !blockTags) throw new Error("Einleitung fehlt");
+    expect(roleOptions.querySelector("details")).toBeNull();
+    expect(roleOptions.querySelectorAll("legend")).toHaveLength(1);
+    expect(roleOptions.querySelector("legend")?.textContent).toBe("Blockrolle");
+    expect(editor.element.querySelector(".field-hint")).toBeNull();
+    expect(introRole.nextElementSibling?.classList.contains("contribution-tag")).toBe(true);
+    expect(introRole.checked).toBe(true);
+    expect(introRole.nextElementSibling?.textContent).toBe("Aufgabenbeschreibung");
+    title.value = "Muster vergleichen";
+    markdown.value = "<DrumPattern />";
+    expect(editor.items()?.[0]).toMatchObject({
+      role: "exercise_intro", title: "Muster vergleichen", markdownContent: "<DrumPattern />",
+    });
+    expect(xpField.hidden).toBe(true);
+    expect(blockTags.hidden).toBe(true);
+    expect(badge.hidden).toBe(false);
+    expect(badge.textContent).toBe("berechnet: 0 XP");
+    expect(badge.dataset.xpRole).toBe("exercise");
+
+    theoryRole.nextElementSibling?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    expect(theoryRole.checked).toBe(true);
+    expect(introRole.checked).toBe(false);
+    expect(editor.items()?.[0].role).toBeUndefined();
+    expect(xpField.hidden).toBe(true);
+    expect(blockTags.hidden).toBe(false);
+    expect(badge.dataset.xpRole).toBe("theory");
+    expect(badge.hidden).toBe(false);
+    expect(editor.items()?.[0].markdownContent).toBe("<DrumPattern />");
+
+    introRole.click();
+    expect(xpField.hidden).toBe(true);
+    expect(blockTags.hidden).toBe(true);
+    const saved = editor.items();
+    if (!saved) throw new Error("Einleitung ist ungültig");
+    editor.setItems(saved);
+    expect(editor.element.querySelector<HTMLInputElement>(".theory-block-role:checked")?.value)
+      .toBe("exercise_intro");
+    expect(editor.items()?.[0].markdownContent).toBe("<DrumPattern />");
   });
 
   it("öffnet einen zugeklappten Block mit ungültigem Titel beim Speichern", () => {
@@ -509,7 +931,39 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     expect(details?.open).toBe(true);
   });
 
-  it("berechnet Block-XP aus eigenem Tag und Basiswert und speichert sie", () => {
+  it("zeigt ungültige DrumPattern-Props beim Speichern im Theorieblock an", () => {
+    const editor = createTheoryBlockEditor([
+      { id: "tb-1", order: 1, title: "Rhythmus", markdownContent: "" },
+    ]);
+    document.body.append(editor.element);
+    const details = editor.element.querySelector<HTMLDetailsElement>("details");
+    const markdown = editor.element.querySelector<HTMLTextAreaElement>(
+      ".theory-block-markdown",
+    );
+    if (!markdown) throw new Error("Markdown-Feld fehlt");
+    markdown.value = "<DrumPattern steps={0} />";
+    let validationMessage = "";
+    vi.spyOn(markdown, "reportValidity").mockImplementation(() => {
+      validationMessage = markdown.validationMessage;
+      return false;
+    });
+
+    expect(editor.items()).toBeNull();
+    expect(validationMessage).toContain("steps muss eine ganze Zahl");
+    expect(details?.open).toBe(true);
+  });
+
+  it("akzeptiert sichere statische Divisionen in DrumPattern-Props", () => {
+    const markdownContent =
+      '<DrumPattern steps={4} patternData={[{ name: "Triolen", note: "12×", color: "#facc15", activeSteps: [], eventPositions: [0, 4 / 3] }]} />';
+    const editor = createTheoryBlockEditor([
+      { id: "tb-1", order: 1, title: "Rhythmus", markdownContent },
+    ]);
+
+    expect(editor.items()?.[0].markdownContent).toBe(markdownContent);
+  });
+
+  it("berechnet Block-XP und zeigt sie auch im geöffneten Block oben an", async () => {
     const form = mountModuleForm();
     const controller = attachModuleBuilderForm(form);
     controller.theoryBlockEditor.addBlock({ title: "Töne" });
@@ -517,18 +971,123 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     if (!row) throw new Error("Theorie-Block fehlt");
     const xp = row.querySelector<HTMLInputElement>(".theory-block-xp");
     const tag = row.querySelector<HTMLInputElement>('input[value="Notensystem"]');
-    const result = row.querySelector(".theory-block-calculated-xp");
-    if (!xp || !tag) throw new Error("Block-XP-Felder fehlen");
+    const details = row.querySelector<HTMLDetailsElement>(".theory-block-details");
+    const badge = row.querySelector("summary > .learning-xp-badge");
+    if (!xp || !tag || !details) throw new Error("Block-XP-Felder fehlen");
     tag.checked = true;
     tag.dispatchEvent(new Event("change"));
-    expect(result?.textContent).toBe("Berechnete XP: 45");
+    expect(badge?.textContent).toBe("45 XP");
+    expect(badge?.getAttribute("data-xp-role")).toBe("theory");
+    expect(row.querySelector(".theory-block-calculated-xp")).toBeNull();
+    details.open = true;
+    await vi.waitFor(() => expect(badge?.textContent).toBe("berechnet: 45 XP"));
     xp.value = "20";
     xp.dispatchEvent(new Event("input"));
-    expect(result?.textContent).toBe("Berechnete XP: 30");
+    expect(badge?.textContent).toBe("berechnet: 30 XP");
     expect(controller.theoryBlockEditor.items()?.[0]).toMatchObject({
       baseXp: 20,
       tags: ["Notensystem"],
     });
+    details.open = false;
+    await vi.waitFor(() => expect(badge?.textContent).toBe("30 XP"));
+  });
+
+  it("zeigt erreichbare XP für Praxis, Übungen und gemischte Gruppen", async () => {
+    const db = seedDb as unknown as ModulesDatabase;
+    const question = db.questions.find(({ id }) => id === "q-101-ex-1");
+    if (!question) throw new Error("Testübung fehlt");
+    const exercise = { ...question, baseXp: 10, tags: [] };
+    const group = { groupId: "g", groupTitle: "Abschnitt" };
+    const form = mountModuleForm();
+    const { theoryBlockEditor: editor } = attachModuleBuilderForm(form);
+    editor.addBlock({ id: "tb", title: "Theorie", ...group });
+    editor.addPracticeBlock({ title: "Praxis" });
+    editor.setExercises([exercise], [
+      { kind: "theory", id: "tb", ...group },
+      { kind: "exercise", id: exercise.id, ...group },
+    ]);
+
+    const groupDetails = form.querySelector<HTMLDetailsElement>(".theory-group-details");
+    const groupBadge = groupDetails?.querySelector("summary > .learning-xp-badge");
+    const practiceBadge = form.querySelector(".module-practice-row summary > .learning-xp-badge");
+    const exerciseRow = form.querySelector(".module-exercise-row");
+    const exerciseDetails = exerciseRow?.querySelector<HTMLDetailsElement>(".theory-block-details");
+    const exerciseBadge = exerciseRow?.querySelector("summary > .learning-xp-badge");
+    const exerciseXp = exerciseRow?.querySelector<HTMLInputElement>('input[aria-label="Basis-XP"]');
+    const moduleXp = form.querySelector<HTMLInputElement>("#module-theory-base-xp");
+    if (!exerciseXp || !moduleXp || !groupDetails || !exerciseDetails) throw new Error("Basis-XP-Felder fehlen");
+
+    expect(groupDetails?.open).toBe(false);
+    expect(groupBadge?.textContent).toBe("40 XP");
+    expect(practiceBadge?.textContent).toBe("20 XP");
+    expect(exerciseBadge?.textContent).toBe("10 XP");
+    expect(groupBadge?.getAttribute("data-xp-role")).toBe("mixed");
+    expect(practiceBadge?.getAttribute("data-xp-role")).toBe("practice");
+    expect(exerciseBadge?.getAttribute("data-xp-role")).toBe("exercise");
+    expect(form.querySelector(".module-practice-row .theory-block-xp")?.closest("label")?.hidden)
+      .toBe(true);
+    expect(exerciseXp.closest("label")?.hidden).toBe(true);
+
+    groupDetails.open = true;
+    exerciseDetails.open = true;
+    await vi.waitFor(() => {
+      expect(groupBadge?.textContent).toBe("berechnet: 40 XP");
+      expect(exerciseBadge?.textContent).toBe("berechnet: 10 XP");
+    });
+
+    exerciseXp.value = "999";
+    exerciseXp.dispatchEvent(new Event("input"));
+    const hard = exerciseRow?.querySelector<HTMLInputElement>(
+      '.question-difficulty-picker input[value="schwer"]',
+    );
+    if (!hard) throw new Error("Schwierigkeitsauswahl fehlt");
+    hard.click();
+    expect(exerciseBadge?.textContent).toBe("berechnet: 20 XP");
+    expect(exerciseBadge?.classList.contains("has-xp")).toBe(true);
+    expect(groupBadge?.textContent).toBe("berechnet: 50 XP");
+
+    moduleXp.value = "40";
+    moduleXp.dispatchEvent(new Event("input"));
+    expect(groupBadge?.textContent).toBe("berechnet: 60 XP");
+    expect(practiceBadge?.textContent).toBe("20 XP");
+  });
+
+  it.each([
+    { roles: ["theory", "theory"], colorRole: "theory" },
+    { roles: ["exercise_intro", "exercise_intro"], colorRole: "exercise" },
+    { roles: ["practice", "practice"], colorRole: "practice" },
+    { roles: ["exercise_intro", "exercise"], colorRole: "exercise" },
+    { roles: ["theory", "exercise_intro"], colorRole: "mixed" },
+    { roles: ["practice", "exercise"], colorRole: "mixed" },
+  ])("ordnet Gruppen aus $roles die XP-Farbe $colorRole zu", ({ roles, colorRole }) => {
+    const form = mountModuleForm();
+    const { theoryBlockEditor: editor } = attachModuleBuilderForm(form);
+    for (let index = 0; index < roles.length; index += 1) {
+      editor.addBlock({
+        id: `block-${index}`, title: `Block ${index}`, markdownContent: "Text",
+        groupId: "g", groupTitle: "Abschnitt",
+      });
+    }
+    roles.forEach((role, index) => {
+      form.querySelector<HTMLInputElement>(
+        `[data-block-id="block-${index}"] .theory-block-role[value="${role}"]`,
+      )!.click();
+    });
+    const badge = () => form.querySelector(".theory-group-summary > .learning-xp-badge");
+    expect(badge()?.getAttribute("data-xp-role")).toBe(colorRole);
+    if (roles.every((role) => role === "exercise_intro")) {
+      expect(badge()?.textContent).toBe("0 XP");
+    }
+    if (colorRole === "theory") {
+      form.querySelector<HTMLInputElement>(
+        '[data-block-id="block-0"] .theory-block-role[value="exercise_intro"]',
+      )!.click();
+      expect(badge()?.getAttribute("data-xp-role")).toBe("mixed");
+      form.querySelector<HTMLInputElement>(
+        '[data-block-id="block-1"] .theory-block-role[value="exercise"]',
+      )!.click();
+      expect(badge()?.getAttribute("data-xp-role")).toBe("exercise");
+    }
   });
 
   it("sortiert Übungen zwischen Theorieblöcke und lädt die gespeicherte Reihenfolge", async () => {
@@ -576,13 +1135,11 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
   });
 
   it("bearbeitet aufgeklappte Übungen direkt in der Modul-Blockliste", async () => {
-    const fetchMock = vi.fn(async (
-      _input: RequestInfo | URL,
-      _init?: RequestInit,
-    ) => new Response("{}", {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    }));
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const payload = JSON.parse(String(init?.body));
+      const next = upsertModuleWithExercises(seedDb, payload, payload.exercises);
+      return Response.json({ questions: next.questions });
+    });
     vi.stubGlobal("fetch", fetchMock);
     const form = mountModuleForm();
     const controller = attachModuleBuilderForm(form);
@@ -595,36 +1152,318 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     const editor = row?.querySelector<HTMLElement>(".module-exercise-editor");
     const prompt = editor?.querySelector<HTMLTextAreaElement>("textarea");
     const answer = editor?.querySelector<HTMLInputElement>(
-      ".module-exercise-answers input",
+      '[id$="exercise-numeric-answer"]',
     );
-    const explanation = editor?.querySelectorAll<HTMLTextAreaElement>("textarea")[1];
-    if (!row || !prompt || !answer || !explanation) {
+    const explanation = editor?.querySelector<HTMLTextAreaElement>(
+      'textarea[aria-label="Erklärung nach drei Fehlversuchen"]',
+    );
+    const simpleHint = editor?.querySelector<HTMLTextAreaElement>(
+      'textarea[aria-label^="Einfacher Hinweis"]',
+    );
+    const strongHint = editor?.querySelector<HTMLTextAreaElement>(
+      'textarea[aria-label^="Stärkerer Hinweis"]',
+    );
+    const difficulty = editor?.querySelector<HTMLInputElement>(
+      '.question-difficulty-picker input[value="mittel"]',
+    );
+    if (!row || !editor || !prompt || !answer || !explanation || !simpleHint || !strongHint || !difficulty) {
       throw new Error("Inline-Editor für Übung fehlt");
     }
     row.querySelector<HTMLDetailsElement>("details")!.open = true;
     prompt.value = "Neue Aufgabenstellung";
     answer.value = "900 Hz";
+    simpleHint.value = "Einfacher Tipp";
+    strongHint.value = "Genauerer Tipp";
     explanation.value = "Neue Erklärung";
-    editor.querySelector<HTMLButtonElement>(".module-exercise-save")?.click();
+    difficulty.click();
+    expect(editor.querySelector(".module-exercise-save")).toBeNull();
+    form.dispatchEvent(new Event("submit", { cancelable: true }));
 
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     const saved = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
     expect(fetchMock.mock.calls[0][1]?.method).toBe("PUT");
-    expect(saved).toMatchObject({
-      entity: "question",
+    expect(saved.entity).toBe("module");
+    expect(saved.exercises[0]).toMatchObject({
       id: exercise.id,
       prompt: "Neue Aufgabenstellung",
       correctAnswers: ["900 Hz"],
+      simpleHint: "Einfacher Tipp",
+      strongHint: "Genauerer Tipp",
       explanation: "Neue Erklärung",
+      difficulty: "mittel",
+      targetLane: "leicht",
+      baseXp: 10,
     });
     await vi.waitFor(() =>
-      expect(form.querySelector(".module-exercise-status")?.textContent).toBe(
-        "Lernpfad-Aufgabe wurde gespeichert.",
+      expect(form.querySelector(".form-status")?.textContent).toBe(
+        "Modul wurde aktualisiert.",
       ),
     );
-    expect(form.querySelector(".module-exercise-row")?.textContent).toContain(
-      "Neue Aufgabenstellung",
+  });
+
+  it("zeigt Visuals aus der Aufgabenstellung in der Live-Vorschau", async () => {
+    const db = structuredClone(seedDb);
+    const exercise = db.questions.find(({ id }) => id === "q-101-ex-1");
+    if (!exercise) throw new Error("Testübung fehlt");
+    exercise.title = "Visuelle Aufgabe";
+    exercise.prompt =
+      'Welche Note ist dargestellt?\n\n<Notation clef="treble" notes={[{ step: 2, duration: "quarter" }]} />';
+
+    const form = mountModuleForm();
+    const controller = attachModuleBuilderForm(form);
+    controller.loadModule(db.modules[0], [exercise]);
+    const row = form.querySelector<HTMLDivElement>(".module-exercise-row");
+    const details = row?.querySelector<HTMLDetailsElement>(
+      ".theory-block-details",
     );
+    const preview = row?.querySelector<HTMLDetailsElement>(
+      ".module-content-preview",
+    );
+    if (!row || !details || !preview)
+      throw new Error("Vorschau der Testübung fehlt");
+
+    details.open = true;
+    details.dispatchEvent(new Event("toggle"));
+    await vi.waitFor(() =>
+      expect(
+        preview.querySelector(".learning-quiz-question svg.notation-staff"),
+      ).not.toBeNull(),
+    );
+    expect(preview.textContent).not.toContain("<Notation");
+  });
+
+  it("speichert geänderte Hinweise mit dem Modul und behält sie bei einem Schreibfehler im Entwurf", async () => {
+    let db = structuredClone(seedDb);
+    const mod = db.modules[0];
+    const exercise = db.questions.find(({ id }) => id === "q-101-ex-1")!;
+    let failQuestionSave = true;
+    const writes: string[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (_url: string, init?: RequestInit) => {
+      if (init?.method !== "PUT") return Response.json(db);
+      const payload = JSON.parse(String(init.body));
+      writes.push(payload.entity);
+      if (failQuestionSave) {
+        return Response.json({ error: "Aufgabe konnte nicht gespeichert werden." }, { status: 500 });
+      }
+      db = upsertModuleWithExercises(db, payload, payload.exercises);
+      return Response.json({ module: mod, questions: db.questions });
+    }));
+
+    const form = mountModuleForm();
+    const controller = attachModuleBuilderForm(form);
+    controller.loadModule(mod, db.questions);
+    const hint = (kind: "Einfacher" | "Stärkerer") =>
+      form.querySelector<HTMLTextAreaElement>(
+        `.module-exercise-row[data-block-id="${exercise.id}"] textarea[aria-label^="${kind} Hinweis"]`,
+      )!;
+    const submit = () =>
+      form.dispatchEvent(new Event("submit", { cancelable: true }));
+    hint("Einfacher").value = "Vergleiche die Tonhöhen.";
+    hint("Stärkerer").value = "Denke an das Frequenzverhältnis.";
+
+    submit();
+    await vi.waitFor(() =>
+      expect(form.querySelector(".form-status")?.textContent)
+        .toContain("Aufgabe konnte nicht gespeichert werden"),
+    );
+    expect(hint("Einfacher").value).toBe("Vergleiche die Tonhöhen.");
+    expect(hint("Stärkerer").value).toBe("Denke an das Frequenzverhältnis.");
+
+    failQuestionSave = false;
+    submit();
+    await vi.waitFor(() =>
+      expect(form.querySelector(".form-status")?.textContent).toBe("Modul wurde aktualisiert."),
+    );
+    expect(writes).toEqual(["module", "module"]);
+    const saved = db.questions.find(({ id }) => id === exercise.id);
+    expect(saved).toMatchObject({
+      simpleHint: "Vergleiche die Tonhöhen.",
+      strongHint: "Denke an das Frequenzverhältnis.",
+      correctAnswers: exercise.correctAnswers,
+    });
+    controller.loadModule(mod, db.questions);
+    expect(hint("Einfacher").value).toBe("Vergleiche die Tonhöhen.");
+    expect(hint("Stärkerer").value).toBe("Denke an das Frequenzverhältnis.");
+  });
+
+  it("zeigt den Aufgabentitel sofort an und speichert ihn auch ohne weitere Aufgabenänderungen", async () => {
+    let db = structuredClone(seedDb);
+    const mod = db.modules[0];
+    const exercise = db.questions.find(({ id }) => id === "q-101-ex-1")!;
+    vi.stubGlobal("fetch", vi.fn(async (_url: string, init?: RequestInit) => {
+      if (init?.method !== "PUT") return Response.json(db);
+      const payload = JSON.parse(String(init.body));
+      db = upsertModuleWithExercises(db, payload, payload.exercises);
+      return Response.json({ module: mod, questions: db.questions });
+    }));
+
+    const form = mountModuleForm();
+    const controller = attachModuleBuilderForm(form);
+    controller.loadModule(mod, db.questions);
+    const row = () => form.querySelector(`.module-exercise-row[data-block-id="${exercise.id}"]`)!;
+    const title = () => row().querySelector<HTMLInputElement>(".module-exercise-title")!;
+    const caption = () => row().querySelector(".theory-block-order-label")?.textContent;
+    expect(row().querySelector("details")?.open).toBe(false);
+    expect(caption()).toBe(`Aufgabe: ${exercise.prompt}`);
+    title().value = "Aufgabe: Kammerton";
+    title().dispatchEvent(new Event("input", { bubbles: true }));
+    expect(caption()).toBe("Aufgabe: Kammerton");
+
+    form.dispatchEvent(new Event("submit", { cancelable: true }));
+    await vi.waitFor(() =>
+      expect(form.querySelector(".form-status")?.textContent).toBe("Modul wurde aktualisiert."),
+    );
+    expect(db.questions.find(({ id }) => id === exercise.id)).toMatchObject({
+      title: "Aufgabe: Kammerton",
+      prompt: exercise.prompt,
+      correctAnswers: exercise.correctAnswers,
+    });
+    controller.loadModule(mod, db.questions);
+    expect(caption()).toBe("Aufgabe: Kammerton");
+  });
+
+  it.each(["multi_select", "numeric_input", "interactive_notation"] as const)(
+    "erstellt und bearbeitet %s direkt in der Modul-Blockliste",
+    async (questionType) => {
+      let db = structuredClone(seedDb);
+      const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+        const payload = JSON.parse(String(init?.body));
+        db = upsertModuleWithExercises(db, payload, payload.exercises);
+        return Response.json({ module: db.modules[0], questions: db.questions });
+      });
+      vi.stubGlobal("fetch", fetchMock);
+      const form = mountModuleForm();
+      const controller = attachModuleBuilderForm(form);
+      const mod = (seedDb as unknown as ModulesDatabase).modules[0];
+      controller.loadModule(mod);
+      addBlockWithRole(form, "exercise");
+
+      const row = () => form.querySelector<HTMLElement>(".module-exercise-row")!;
+      const field = <T extends HTMLElement>(id: string) =>
+        row().querySelector<T>(`[id$="${id}"]`)!;
+      const set = (id: string, value: string) => {
+        const control = field<HTMLInputElement | HTMLSelectElement>(id);
+        control.value = value;
+        control.dispatchEvent(new Event("change", { bubbles: true }));
+      };
+      const save = () => form.dispatchEvent(new Event("submit", { cancelable: true }));
+      expect(row().querySelector("details")?.open).toBe(true);
+      row().querySelector<HTMLInputElement>(".module-exercise-title")!.value = "Ton erkennen";
+      const type = field<HTMLSelectElement>("exercise-question-type");
+      expect(Array.from(type.options, (option) => option.textContent)).toEqual([
+        "Eine richtige Antwort", "Mehrere richtige Antworten",
+        "Zahleneingabe / Wert", "Interaktive Notation",
+      ]);
+      expect(row().querySelectorAll(".exercise-choice-correct[type=radio]")).toHaveLength(2);
+      set("exercise-question-type", questionType);
+
+      let expected: Record<string, unknown>;
+      if (questionType === "multi_select") {
+        field<HTMLButtonElement>("exercise-choice-add").click();
+        const choices = row().querySelectorAll<HTMLInputElement>(".exercise-choice-correct[type=checkbox]");
+        expect(choices).toHaveLength(3);
+        choices[1].checked = true;
+        row().querySelectorAll<HTMLInputElement>(".exercise-choice-text")[2].value = "Antwort C";
+        expected = { options: ["Antwort A", "Antwort B", "Antwort C"], correctAnswers: ["Antwort A", "Antwort B"] };
+      } else if (questionType === "numeric_input") {
+        set("exercise-numeric-answer", "880 Hz");
+        expected = { options: [], correctAnswers: ["880 Hz"] };
+      } else {
+        set("notation-clef", "bass");
+        set("notation-time-signature", "3/4");
+        set("notation-max-notes", "3");
+        set("notation-lock-duration", "quarter");
+        set("notation-compact", "tight");
+        set("notation-expected-pitches", "C4, E4, G4");
+        set("notation-expected-durations", "quarter, half");
+        const picker = field<HTMLInputElement>("notation-show-duration-picker");
+        picker.checked = true;
+        picker.dispatchEvent(new Event("change", { bubbles: true }));
+        const preview = field<HTMLElement>("notation-live-preview");
+        expect(preview.querySelector("svg.notation-staff")).not.toBeNull();
+        expect(preview.querySelector(".notation-builder-duration-picker")).not.toBeNull();
+        const builder = preview.querySelector<HTMLElement>("[data-notation-builder]")!;
+        expect(JSON.parse(builder.dataset.builderConfig!)).toMatchObject({
+          clef: "bass", timeSignature: { numerator: 3, denominator: 4 }, maxNotes: 3,
+        });
+        const previousStep = Number(builder.dataset.cursorStep);
+        builder.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
+        expect(Number(builder.dataset.cursorStep)).toBe(previousStep + 1);
+        expected = {
+          options: [], correctAnswers: [],
+          notationTask: {
+            clef: "bass", timeSignature: { numerator: 3, denominator: 4 }, maxNotes: 3,
+            lockDuration: "quarter", compact: "tight", showDurationPicker: true, showHints: true,
+            expectedPitches: ["C4", "E4", "G4"], expectedDurations: ["quarter", "half"],
+          },
+        };
+      }
+
+      save();
+      await vi.waitFor(() => expect(form.querySelector(".form-status")?.textContent).toBe("Modul wurde aktualisiert."));
+      const first = fetchMock.mock.calls[0];
+      const created = JSON.parse(String(first[1]?.body)).exercises[0];
+      expect(first[0]).toBe("/api/modules");
+      expect(first[1]?.method).toBe("PUT");
+      expect(created).toMatchObject({
+        targetLane: "leicht", moduleIds: [mod.id], questionType, title: "Ton erkennen", baseXp: 10, ...expected,
+      });
+
+      controller.loadModule(db.modules[0], db.questions.filter(({ id }) => id === created.id));
+      expect(field<HTMLSelectElement>("exercise-question-type").value).toBe(questionType);
+      if (questionType === "multi_select") {
+        expect(row().querySelectorAll(".exercise-choice-correct:checked")).toHaveLength(2);
+        row().querySelectorAll<HTMLButtonElement>('[aria-label="Antwortoption entfernen"]')[2].click();
+        expected.options = ["Antwort A", "Antwort B"];
+      } else if (questionType === "numeric_input") {
+        expect(field<HTMLInputElement>("exercise-numeric-answer").value).toBe("880 Hz");
+        set("exercise-numeric-answer", "900 Hz");
+        expected.correctAnswers = ["900 Hz"];
+      } else {
+        expect(field<HTMLInputElement>("notation-time-signature").value).toBe("3/4");
+        expect(field<HTMLElement>("notation-live-preview").querySelector("svg")).not.toBeNull();
+        set("notation-compact", "false");
+        expected.notationTask = { ...(expected.notationTask as object), compact: false };
+      }
+      save();
+      await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+      const updated = fetchMock.mock.calls[1][1];
+      expect(updated?.method).toBe("PUT");
+      expect(JSON.parse(String(updated?.body)).exercises[0]).toMatchObject({
+        id: created.id, targetLane: "leicht", moduleIds: [mod.id], questionType, ...expected,
+      });
+    },
+  );
+
+  it("erstellt ein neues Modul und seine Lernpfad-Aufgabe mit einem einzigen Speichervorgang", async () => {
+    let db = structuredClone(seedDb);
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const payload = JSON.parse(String(init?.body));
+      db = upsertModuleWithExercises(db, payload, payload.exercises);
+      return Response.json({ questions: db.questions });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const form = mountModuleForm();
+    attachModuleBuilderForm(form);
+    addBlockWithRole(form, "exercise");
+    const prompt = form.querySelector<HTMLTextAreaElement>(".module-exercise-prompt")!;
+    const validPrompt = prompt.value;
+    prompt.value = "";
+    form.dispatchEvent(new Event("submit", { cancelable: true }));
+    expect(form.querySelector(".form-status")?.textContent).toContain("Aufgabenstellung");
+    expect(fetchMock).not.toHaveBeenCalled();
+    prompt.value = validPrompt;
+    form.dispatchEvent(new Event("submit", { cancelable: true }));
+    await vi.waitFor(() =>
+      expect(form.querySelector(".form-status")?.textContent).toBe("Modul wurde gespeichert."),
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][1]?.method).toBe("POST");
+    const saved = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
+    const exercise = saved.exercises[0];
+    expect(db.modules.find(({ id }) => id === saved.id)?.contentOrder)
+      .toEqual([{ kind: "exercise", id: exercise.id }]);
+    expect(db.questions.find(({ id }) => id === exercise.id)?.moduleIds).toEqual([saved.id]);
   });
 
   it("löscht Übungen nur nach Bestätigung und zeigt Fehler an", async () => {
@@ -700,7 +1539,8 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     expect(picker.element.querySelector('input[value="Notensystem"]')).not.toBeNull();
     picker.setSelectedTags(["Allgemein", "Altes Thema", "Notensystem"]);
     expect(picker.selectedTags()).toEqual(["Allgemein", "Altes Thema", "Notensystem"]);
-    expect(picker.element.textContent).toContain("Bisherige Tags bleiben erhalten");
+    expect(picker.element.textContent).not.toContain("Allgemein");
+    expect(picker.element.textContent).not.toContain("Altes Thema");
     picker.clear();
     expect(picker.selectedTags()).toEqual([]);
   });
@@ -757,7 +1597,7 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     expect(blocks?.[1].visualPropsJson).toBe('{"readOnly":true}');
     editor.element.querySelectorAll<HTMLButtonElement>("button")
       .forEach((button) => {
-        if (button.textContent === "Bisherige Visualisierung entfernen") button.click();
+        if (button.textContent?.startsWith("Bisherige Visualisierung entfernen")) button.click();
       });
     expect(editor.items()?.[1].visualComponent).toBeUndefined();
   });
@@ -821,7 +1661,7 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     ).not.toBeNull();
   });
 
-  it("berechnet die Aufgaben-XP live anhand von Tag-Multiplikator und Ziel-Lane", () => {
+  it("berechnet Aufgaben-XP anhand von Tags und Schwierigkeit unabhängig von der Lernspur", () => {
     const emptyDb: ModulesDatabase = { modules: [], questions: [] };
     vi.stubGlobal(
       "fetch",
@@ -851,7 +1691,11 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
 
     laneSelect.value = "schwer";
     laneSelect.dispatchEvent(new Event("change", { bubbles: true }));
-    expect(xpOut?.textContent).toBe("38 XP");
+    expect(xpOut?.textContent).toBe("15 XP");
+    form.querySelector<HTMLInputElement>('.question-difficulty-picker input[value="mittel"]')?.click();
+    expect(xpOut?.textContent).toBe("23 XP");
+    form.querySelector<HTMLInputElement>('.question-difficulty-picker input[value="schwer"]')?.click();
+    expect(xpOut?.textContent).toBe("30 XP");
   });
 
   it("stellt im Modul-Katalog die Zusammenfassung, Ansichts-Umschaltung und Lane-Filter bereit", async () => {
@@ -920,7 +1764,7 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
 
     expect(section.textContent).toContain("1. Schall & Frequenz");
     expect(section.textContent).toContain("Theorie-Blöcke: 1");
-    expect(section.textContent).toContain("Gesamt: 78 XP");
+    expect(section.textContent).toContain("Gesamt: 55 XP");
 
     const toggle = section.querySelector<HTMLButtonElement>("#module-view-toggle");
     const list = section.querySelector<HTMLUListElement>("#module-catalog-list");

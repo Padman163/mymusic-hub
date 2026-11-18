@@ -1,3 +1,9 @@
+import type {
+  ModuleQuestion,
+  QuestionDifficulty,
+  TheoryBlock,
+} from "./module-schema.ts";
+
 export interface TagDefinition {
   description: string;
   multiplier: number;
@@ -11,6 +17,18 @@ export const TAG_DEFINITIONS: Record<string, TagDefinition> = {
   Notensystem: {
     description: "Lesen und Platzieren im Notensystem",
     multiplier: 1.5,
+  },
+  Tonsystem: {
+    description: "Töne, Tonhöhen, Oktaven und Tonschritte",
+    multiplier: 1.1,
+  },
+  Vortragslehre: {
+    description: "Tempo, Dynamik, Artikulation und musikalischer Ausdruck",
+    multiplier: 1.1,
+  },
+  Harmonielehre: {
+    description: "Akkorde, harmonische Funktionen und Akkordfolgen",
+    multiplier: 1.2,
   },
   Violinschlüssel: {
     description: "Notation im Violinschlüssel (G-Schlüssel)",
@@ -34,12 +52,23 @@ export const TAG_DEFINITIONS: Record<string, TagDefinition> = {
   },
 };
 
+export const QUESTION_BASE_XP = 10;
+
+export const QUESTION_DIFFICULTY_MULTIPLIERS: Record<
+  QuestionDifficulty,
+  number
+> = {
+  einfach: 1,
+  mittel: 1.5,
+  schwer: 2,
+};
+
 export const BASE_XP_DEFAULTS = {
   theoryBlock: 30,
   practice: 20,
-  leicht: 10,
-  mittel: 15,
-  schwer: 25,
+  leicht: QUESTION_BASE_XP,
+  mittel: QUESTION_BASE_XP,
+  schwer: QUESTION_BASE_XP,
 } as const;
 
 export type MultiTagStrategy = "highest" | "average";
@@ -82,8 +111,23 @@ export function calculateQuestionXp(
 }
 
 export function calculateTheoryBlockXp(
-  block: { baseXp?: number; tags?: readonly string[] },
+  block: {
+    baseXp?: number;
+    tags?: readonly string[];
+    role?: TheoryBlock["role"];
+  },
   defaultBaseXp: number,
 ): number {
+  if (block.role === "exercise_intro") return 0;
   return calculateQuestionXp(block.baseXp ?? defaultBaseXp, block.tags ?? []);
+}
+
+export function calculateModuleQuestionXp(
+  question: Pick<ModuleQuestion, "difficulty" | "tags">,
+): number {
+  return calculateQuestionXp(
+    QUESTION_BASE_XP *
+      QUESTION_DIFFICULTY_MULTIPLIERS[question.difficulty ?? "einfach"],
+    question.tags,
+  );
 }

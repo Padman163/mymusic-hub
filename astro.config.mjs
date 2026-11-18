@@ -8,6 +8,7 @@ import { defineConfig } from "astro/config";
 // @ts-ignore - rehype-katex liefert keine eigenen TS-Deklarationsdateien mit
 import rehypeKatex from "rehype-katex";
 import remarkMath from "remark-math";
+import { ModuleArchiveSyncError, syncModuleArchivesAfterSave } from "./src/lib/module-archive.ts";
 
 const MAX_LOCAL_REQUEST_BYTES = 500_000;
 const LOCAL_MODULES_PATHS = new Set([
@@ -134,11 +135,11 @@ function localModulesApiPlugin() {
               ) {
                 throw new Error("Ungültiges Format in data/modules.json.");
               }
-              return /** @type {import("./src/lib/module-schema.ts").ModulesDatabase} */ ({
+              return schema.normalizeLegacyDatabase(/** @type {import("./src/lib/module-schema.ts").ModulesDatabase} */ ({
                 modules: parsed.modules,
                 questions: parsed.questions,
                 ...(parsed.quizSettings !== undefined ? { quizSettings: parsed.quizSettings } : {}),
-              });
+              }));
             } catch (err) {
               if (
                 isLocalRecord(err) &&
@@ -158,6 +159,7 @@ function localModulesApiPlugin() {
               `${JSON.stringify(nextDb, null, 2)}\n`,
               "utf8",
             );
+            await syncModuleArchivesAfterSave(nextDb);
           };
 
           if (method === "GET") {
@@ -353,7 +355,14 @@ function localModulesApiPlugin() {
                 /** @type {import("./src/lib/module-store.ts").UpsertModuleInput} */ (
                   rawModule
                 );
-              const nextDb = store.upsertModule(db, typedModule);
+              let nextDb;
+              try {
+                nextDb = store.upsertModuleWithExercises(db, typedModule, body.exercises, body.exerciseRoleChanges);
+              } catch (error) {
+                if (!(error instanceof store.ModuleExerciseSaveError)) throw error;
+                sendLocalJson(res, 400, { error: error.message });
+                return;
+              }
               await writeDb(nextDb);
               const savedModule = nextDb.modules.find(
                 (item) => item.id === String(rawModule.id).trim(),
@@ -363,13 +372,16 @@ function localModulesApiPlugin() {
                   ? "Modul wurde gespeichert."
                   : "Modul wurde aktualisiert.",
                 module: savedModule,
+                ...(body.exercises !== undefined || body.exerciseRoleChanges !== undefined ? { questions: nextDb.questions } : {}),
               });
             }).then(resolve, reject);
           });
         } catch (error) {
           console.error("Fehler im lokalen Modul-API-Endpunkt:", error);
           sendLocalJson(res, 500, {
-            error: "Die Moduldaten konnten lokal nicht verarbeitet werden.",
+            error: error instanceof ModuleArchiveSyncError
+              ? error.message
+              : "Die Moduldaten konnten lokal nicht verarbeitet werden.",
           });
         }
       });
@@ -390,7 +402,7 @@ export default defineConfig({
     }),
   },
   vite: {
-    plugins: [localModulesApiPlugin()],
+    plugins: process.env.NETLIFY_DEV === "true" ? [] : [localModulesApiPlugin()],
     build: {
       chunkSizeWarningLimit: 1500, // Erhöht das Warnlimit von 500 kB auf 1500 kB
     },
@@ -416,23 +428,44 @@ export default defineConfig({
       },
       sidebar: [
         {
-          label: "Projektierung",
+          label: "Admin",
           items: [
-            { label: "Beiträge", slug: "projektierung/beitraege" },
-            { label: "Modul-Builder", slug: "projektierung/modul-builder" },
+            {
+              label: "Projektierung",
+              items: [
+                { label: "Beiträge", slug: "projektierung/beitraege" },
+                { label: "Modul-Builder", slug: "projektierung/modul-builder" },
+                { label: "Modularchiv", link: "/module-archives/" },
+              ],
+            },
+            { label: "Admin-Wiki", link: "/admin-wiki/" },
           ],
         },
         {
-          label: "Audio & Musik",
+          label: "Bediener",
           items: [
             {
-              label: "Musiktheorie",
-              collapsed: false,
+              label: "Dashboard",
+              slug: "audio/theory/lernpfad",
+            },
+          ],
+        },
+        {
+          label: "Sonstiges",
+          items: [
+            {
+              label: "Wiki",
               items: [
-                {
-                  label: "Interaktiver Lernpfad & Dashboard",
-                  slug: "audio/theory/lernpfad",
-                },
+                { label: "Beiträge verwalten", slug: "wiki/beitraege" },
+                { label: "Modul-Builder bedienen", slug: "wiki/modul-builder" },
+                { label: "NotationBuilder bedienen", slug: "wiki/notation-builder" },
+                { label: "Drum-Pattern anhören", slug: "wiki/drum-pattern" },
+              ],
+            },
+            {
+              label: "Lehrgänge (Level 100-500)",
+              collapsed: true,
+              items: [
                 {
                   label: "Level 100: Elementarlehre",
                   collapsed: false,

@@ -2,6 +2,16 @@
 
 Diese Anleitung ist bei Bedarf wiederholbar. Ausgangspunkt ist das Repository-Root. Erst prüfen, dann Änderungen gezielt und nach Freigabe durchführen; fremde oder ungesicherte Änderungen nicht überschreiben.
 
+## Automatischer, nicht-destruktiver Bericht
+
+Vom Repository-Root aus:
+
+```bash
+npm run cleanup:check
+```
+
+Der Bericht geht die fünf Schritte durch und fasst Git-Status, Ignore-Regeln, getrackte Artefakte, Dokumentations- und Linktest, statische Dateiverweise, alte Storage-Bezeichner, Notations-Wrapper und Handoffs zusammen. Mögliche ungenutzte Dateien werden ausschließlich als **Prüfkandidaten** markiert: Eine statische Namenssuche erkennt keine dynamischen Imports oder externen Nutzungen. Es wird nichts gelöscht, verschoben oder aus dem Git-Index entfernt. Der Dokumentationscheck wird ausgeführt; das vollständige `npm run preflight` und manuelle Funktions-, Daten- und Sichtprüfungen bleiben separate Schritte.
+
 ## Vorbereitung
 
 ```bash
@@ -30,6 +40,7 @@ Arbeitsstand und offene Änderungen prüfen und die Bereinigung möglichst auf e
 
   Nur für tatsächlich getrackte Ordner ausführen. Die Entfernung wird für den nächsten Commit vorgemerkt und entfernt die Dateien dort aus dem Repository; sie kann andere Checkouts betreffen. `.env` und Zugangsdaten nicht veröffentlichen.
 - Beim Cleanup vom 17.11.2026 wurden die Berichtsdateien in `test-results/` und `.lighthouseci/` nach Freigabe aus dem Index entfernt; lokale Dateien blieben erhalten. Aktuellen Stand vor jedem weiteren Cleanup erneut prüfen.
+- Lokale Blob-Artefakte unter `.netlify/blobs/` bzw. `.netlify/blobs-serve/` nicht einchecken und nur nach Sicherung oder Freigabe entfernen; siehe [lokaler Blob-Speicher](features/README_FEAT_NETLIFYBLOB.md#architektur-und-datenfluss).
 
 ## 2. Dokumentation konsolidieren
 
@@ -52,6 +63,8 @@ Eine Tabelle mit Pfad, Fundstellen und Empfehlung **Behalten**, **Prüfen** oder
 
 ## 4. Abgelöste Features und Wrapper prüfen
 
+- Nach der Blob-Umstellung auf alte Speicherreste prüfen: `GITHUB_TOKEN` und weitere `GITHUB_*`-Zugriffe im Function-Code, `github-contribution-store.ts`, alte `data/**`-Ignore-Regeln in `netlify.toml` und nicht mehr benötigte `GITHUB_*`-Variablen im Netlify Dashboard. Vor dem Löschen Dashboard-Variablen auf andere Verbraucher und Rollback-Abhängigkeiten prüfen.
+
 - Dateien in `src/components/notation/` und ihre direkten und indirekten Aufrufer untersuchen. Gemeinsamen Renderer und wiederverwendbare Komponenten erhalten.
 - Zwischen intern benötigten Bausteinen, interaktiven Features und tatsächlich obsoleten Wrappern unterscheiden. `NotationVisual` ist beispielsweise ein interner Baustein von `Notation`; `NotationKeyboard` ergänzt ein verbundenes Klaviersystem.
 - Für jeden möglichen Ersatz Props, Layout, Interaktion, gespeicherte Daten und visuelles Ergebnis vergleichen. Eine 1:1-Migration nicht behaupten, wenn die Ziel-API sie nicht unterstützt.
@@ -60,13 +73,14 @@ Eine Tabelle mit Pfad, Fundstellen und Empfehlung **Behalten**, **Prüfen** oder
 ## 5. Tests und Abschluss
 
 1. [README_TESTING.md](README_TESTING.md), `vitest.config.ts`, Testdateien und `package.json` mit dem tatsächlichen Stand vergleichen. Testauswahl und Skripte prüfen; keine Umbenennung nur um der Einheitlichkeit willen.
-2. Gezielte Tests für geändertes Verhalten ausführen. Anschließend:
+2. Keine Tests automatisch nach einzelnen Änderungen starten. Copilot fragt nach jeweils zehn Nutzer-Prompts, ob Stufen 1 und 2 ausgeführt werden sollen; Tests laufen nur nach Zustimmung oder ausdrücklichem Testauftrag. Erst am Branch-Abschluss startet der Nutzer den Preflight (einschließlich Stufen 0, 3 und 4) und das separate Audit manuell:
 
    ```bash
    npm run preflight
+   npm run audit
    git status --short
    git diff --check
    ```
 
-3. Fehler und Warnungen untersuchen und das Gate nach Korrekturen erneut ausführen. `npm run audit` scheitert erst ab `high`; niedrigere gemeldete Schwachstellen separat bewerten.
+3. Fehler und Warnungen untersuchen. Nach Korrekturen startet der Nutzer das Gate erneut manuell. `npm run audit` scheitert erst ab `high`; niedrigere gemeldete Schwachstellen separat bewerten.
 4. Änderungen und verbleibende Risiken zusammenfassen. Lighthouse läuft gemäß `package.json` im Preflight mit; Messumfang und öffentlicher Standard-Upload sind im Testing-Leitfaden beschrieben. Manuelle Release-Prüfungen und externe Asset-Verwendungen sind nicht automatisch durch Preflight abgedeckt.

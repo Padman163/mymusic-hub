@@ -33,6 +33,11 @@ Um maximale Stabilität bei minimaler Testlaufzeit zu gewährleisten, gliedert s
 - **Zweck:** Prüft Formatierung, Lint-Regeln und Typen sowie beispielsweise unauflösbare Imports und Schemafehler in Inhaltsdaten. Die Prüfungen ersetzen keine Laufzeittests und erkennen weder beliebige Tippfehler noch fachlich falsche Inhalte. Insbesondere Astro- und TypeScript-Prüfungen benötigen mehr als Sekundenbruchteile.
 - **Umfang:** Biome prüft gemäß `biome.json` unterstützte Dateien unter `src/` und berücksichtigt Git-Ignore-Regeln; einzelne Regeln sind für Astro-Dateien deaktiviert. Astro und TypeScript prüfen anhand der Projektkonfiguration. Ein erfolgreicher Lauf garantiert daher nicht, dass jede Datei vollständig geprüft wurde.
 - **Befehle:**
+```bash
+npm run fix
+# oder einzeln:
+npx @biomejs/biome check --write .
+```
 
 ```bash
 npm run validate
@@ -42,37 +47,30 @@ npx astro check
 npx tsc --noEmit
 ```
 - **Wann nutzen:**
-  * **Vor jedem Commit:** Als Standard-Prüfung vor dem Einchecken (ideal als Git Pre-Commit Hook), damit fehlerhafter Code gar nicht erst im Repository landet.
-  * **Nach Refactorings & Umbenennungen:** Sobald Dateien verschoben, Markdown/MDX-Frontmatter-Felder angepasst oder TypeScript-Interfaces modifiziert wurden.
-  * **Nach Dependency-Updates:** Um inkompatible Typdefinitionen oder veraltete Imports unmittelbar aufzudecken.
-  * **Als erstes CI-Gate (Empfehlung):** Vor Build und Laufzeittests ausführen, um statisch erkennbare Fehler früh abzufangen. Ein GitHub-Actions-Workflow ist derzeit nicht im Repository hinterlegt.
+  * Ausschließlich im manuellen Preflight am Branch-Ende. Die Einzelbefehle erklären den Prüfumfang und sind keine Routinechecks.
 
-```bash
-npm run fix
-# oder einzeln:
-npx @biomejs/biome check --write .
-```
 
 ### Stufe 1: Unit-Tests (Reine Logik & Mathematik)
 
 - **Werkzeuge:** Vitest.
 - **Konfiguration:** `vitest.config.ts` erfasst `.test`- und `.spec`-Dateien in TypeScript, JavaScript und MJS unter `tests/`, ausgenommen `tests/e2e/`. Standardumgebung ist `happy-dom`; einzelne Dateien können Node wählen.
+- **Admin-Wiki:** `tests/admin-wiki.test.ts` nutzt Node für den serverseitigen Markdown-Renderer samt Shiki und nativen Web-APIs. Nur zur Prüfung des erzeugten HTML wird ein isoliertes Happy-DOM-Fenster angelegt; dessen unvollständige `Response`-Implementierung ersetzt dadurch nicht die Node-API.
 - **Testdateien:** `tests/music-notation.test.mjs`, `tests/module-builder.test.mjs`, `tests/learning-progress.test.mjs`.
 - **Gegenstand:** Notationsgeometrie, rhythmische Positionierung, Systemumbrüche, SVG-Ausgabe und Notations-Builder-Zuordnungen sowie Tag-/XP-Berechnungen, Modul-/Aufgaben-Validierung und Store-Operationen. Die Lernfortschrittstests prüfen Zustandsübergänge, Freischaltungen, XP-Vergabe und Speicherung/Wiederherstellung. Eine Testabdeckung für Frequenzformeln oder allgemeine Transponierungslogik wird damit nicht zugesichert.
 - **Abgrenzung:** `tests/module-builder.test.mjs` enthält zusätzlich Serverless-API-Tests (Stufe 3); `tests/learning-progress.test.mjs` prüft neben Logik auch Browser-Persistenz. Die Dateigrenzen entsprechen somit nicht strikt den Stufen der Testpyramide.
+- **Drum-Audio:** `tests/drum-audio.test.ts` kombiniert Engine- und DOM-Tests mit gemocktem `fetch` und `AudioContext`: Cache/Preloading, unmittelbarer Cache-Start, Polyphonie, Velocity, Lade-/Audiofehler, SSR, Klicks und Tastatur sowie unveränderte Patterns ohne Sounds. Fake-Timer prüfen Viertel-BPM, Auflösung, synchrone Spuren, Pausen, Loop-Neustart und Stoppen per Leertaste/Fokus-/Seitenwechsel. Play/Stop-Tests sichern die Header-Position, unabhängig ausblendbare Buttons und Footer, Haltewiedergabe ohne Button, fortlaufende Button-Wiedergabe, barrierefrei benannte Symbole, Neustart und Abbruch während der Audiofreigabe. Auswahltests prüfen Highlight-Filter, Shift-/Touch-Mehrfachauswahl, keine Markierung als „alle“ sowie die unabhängige Anschlagspur. Ausblendbare Tempo-/Hilfselemente werden einzeln und gemeinsam geprüft; BPM-Prop und Fehlermeldungen bleiben dabei wirksam. Audio-Abbrüche verhindern auch nachträgliche Starts während des Ladens oder Entsperrens. Die Tests messen keine reale Audiolatenz und ersetzen keine Browserprüfung der Audiofreigabe.
 * **Befehle:**
   ```bash
   # alle Vitest-Tests, inklusive Komponenten, Integration und Dokumentation:
   npm test
-  # ausschließlich tests/music-notation.test.mjs:
-  npm run test:unit
   # alle drei oben genannten Testdateien, inklusive ihrer gemischten Testarten:
-  npx vitest run tests/music-notation.test.mjs tests/module-builder.test.mjs tests/learning-progress.test.mjs
-  # alle Vitest-Tests im Watch-Modus:
-  npm run test:watch
+  npx vitest run tests/music-notation.test.mjs 
+  npx vitest run tests/module-builder.test.mjs 
+  npx vitest run tests/learning-progress.test.mjs
+
   ```
 * **Wann nutzen:**
-  * **Während der aktiven Feature-Entwicklung (TDD / Watch-Modus):** Beim Implementieren von Notationslayout, XP-Berechnungen oder Freischaltregeln für schnelles Feedback nach jedem Speichern.
+  * **Nach Zustimmung oder ausdrücklichem Testauftrag:** Copilot fragt nach jeweils zehn Nutzer-Prompts, ob Stufen 1 und 2 ausgeführt werden sollen. Keine automatischen Tests nach einzelnen Änderungen. Wenn kein passenderer Unit-Test vorliegt, `npm run test:unit` als Kurzcheck verwenden.
   * **Bei Performance-Optimierungen:** Wenn Rechenoperationen refaktoriert werden und sichergestellt werden muss, dass etwa Notenabstände, Pausenpositionen und XP-Ergebnisse korrekt bleiben. Die Tests messen dabei nicht automatisch die Laufzeit.
   * **Beim Debuggen:** Wenn ein Notationsfehler gemeldet wird; den Fall zunächst als fehlschlagenden Unit-Test isolieren (`red`), dann den Bug beheben (`green`).
 
@@ -88,34 +86,33 @@ npx @biomejs/biome check --write .
   npm run test:component
   ```
 
-* **Wann nutzen:**
-  * **Beim Bau interaktiver UI-Elemente:** Nach Änderungen an Widgets, Formularen, interaktiven Musik-Tools oder Editoren.
+* **Wann nutzen:** Gemeinsam mit Stufe 1 nach Zustimmung zur Rückfrage nach jeweils zehn Nutzer-Prompts oder auf ausdrücklichen Testauftrag. Auch größere Komponentenänderungen lösen keine automatischen Tests aus. Passende Tests anhand der folgenden Fälle wählen:
+  * **Beim Bau interaktiver UI-Elemente:** Passende Tests für Widgets, Formulare, interaktive Musik-Tools oder Editoren auswählen.
   * **Bei Accessibility- & Event-Anpassungen:** Geänderte Tastaturaktionen, Fokus-Steuerung oder ARIA-Attribute gezielt mit passenden Assertions absichern. Bestehende Tests prüfen unter anderem `Enter` im Checklisten-Editor sowie Pfeiltasten, Notenwertauswahl, Leertaste und Löschen im Notations-Builder; sie sind kein vollständiger Accessibility-Audit.
   * **Vor strukturellen UI-Refactorings:** Für schnelles Feedback zu Event-Handlern und Zustandsänderungen. Bei Änderungen am Astro-Markup zusätzlich echte Seiten im Browser prüfen, da manuell erzeugte Test-DOMs von den Komponenten abweichen können.
 
 
 ### Stufe 3: Integration – HTTP- & Serverless-Verhalten
 
-- **Werkzeuge:** Vitest mit direkt aufgerufenen Function-Handlern und erzeugten `Request`-/`Response`-Objekten. Umgebungsvariablen werden für die Tests gesetzt; die Modul-API-Tests simulieren GitHub-Antworten über einen `fetch`-Mock.
+- **Werkzeuge:** Vitest mit direkt aufgerufenen Function-Handlern und `Request`-/`Response`-Objekten. Ein Mock für `@netlify/blobs` simuliert JSON-Lesezugriffe und bedingte Schreibzugriffe mit ETags.
 - **Testdateien:** `tests/integration/contributions.test.ts`, `tests/module-builder.test.mjs` (`/api/modules`).
 - **Gegenstand:**
-  * **Beiträge:** Prüft die Ablehnung von `PUT` (405), fehlende GitHub-Konfiguration (503), ungültiges JSON (400) und ungültige Beitragsdaten (400).
-  * **Module:** Prüft die Ablehnung von `PATCH` (405), fehlende GitHub-Konfiguration (503), Lesen, Speichern und Löschen von Modulen und Aufgaben sowie einen erneuten Schreibversuch nach simuliertem GitHub-409-Konflikt. Zusätzlich werden Modulreihenfolge, Ablehnung veralteter Verschiebevorgänge und globale Bestehensgrenzen mit Validierung und Revisionskonflikten geprüft.
-- **Grenzen:** Es läuft weder ein HTTP-Server noch eine Netlify-Laufzeit. Routing, Deployment, echte GitHub-Zugriffe und abgelaufene Tokens werden damit nicht verifiziert. Die Beitragstests decken derzeit keine erfolgreichen GitHub-Lese-/Schreibvorgänge ab; der getestete GitHub-Konflikt-Retry gehört zur Modul-API. Nicht jeder Fehlerpfad oder jede erlaubte/verbotene Methode wird für beide APIs geprüft.
+  * **Beiträge:** Prüft HTTP-Methoden, fehlenden Blob-Kontext (503), ungültige Eingaben, Defaults und Mutationen einschließlich Versionskonflikt und Löschung.
+  * **Module:** Prüft HTTP-Methoden, fehlenden Blob-Kontext, Lesen und Ändern des Katalogs, einen erneuten Schreibversuch nach simuliertem ETag-Konflikt sowie Modulreihenfolge und Quiz-Grenzen mit Revisionsprüfung.
+  * **Blob-Adapter (Unit):** `tests/blob-store.test.ts` prüft die leere Initialisierung fehlender Keys, den Erhalt gespeicherter Daten, ungültige Blob-Daten und konkurrierende Zugriffe.
+- **Grenzen:** Routing, Netlify CLI und Cloud-Deploys laufen nicht im Vitest-Mock. Hinweise zur lokalen und isolierten Online-Umgebung stehen in der [Blob-Referenz](features/README_FEAT_NETLIFYBLOB.md). Dokumentationslinks und Skriptnamen prüft separat `tests/documentation.test.ts`.
 - **Befehle:**
   ```bash
   # Beitragstests unter tests/integration/:
   npm run test:integration
-  # zusätzlich gezielt die Serverless-API-Tests für Module:
-  npx vitest run tests/module-builder.test.mjs -t "Modules Serverless API"
   ```
 
   `test:integration` wählt ausschließlich `tests/integration/` und erfasst die Modul-API-Tests nicht. Über `npm test` laufen beide Testgruppen zusammen mit den übrigen Vitest-Tests.
 
-* **Wann nutzen:**
-  * **Nach Änderungen an Netlify Functions:** Wenn Backend-Logik, Middleware oder Serverless-Routen editiert werden.
-  * **Bei Schema- oder Payload-Updates:** Wenn sich die Datenstruktur von Frontend-Formularen oder API-Schnittstellen ändert.
-  * **Bei Validierungs- und Fehlerbehandlungsprüfungen:** Um fehlende Konfiguration, ungültige Eingaben und Konfliktfälle mit gezielten Tests abzusichern, ohne Netlify oder GitHub anzusprechen. Neue Fehlerpfade benötigen eigene Assertions; die vorhandene Suite ist kein vollständiger Sicherheits-Audit.
+* **Wann nutzen:** Ausschließlich im manuellen Preflight am Branch-Ende.
+  * **Bei Änderungen an Backend-Logik, Middleware oder Serverless-Routen:** Die zugehörigen Prüfungen decken diese Änderungen im Abschlusslauf ab.
+  * **Bei Schema- oder Payload-Updates im Abschlusslauf:** Wenn sich die Datenstruktur von Frontend-Formularen oder API-Schnittstellen geändert hat.
+  * **Bei Validierungs- und Fehlerbehandlungsprüfungen:** Fehlenden Blob-Kontext, ungültige Eingaben und Konfliktfälle ohne Zugriff auf Netlify absichern. Neue Fehlerpfade benötigen eigene Assertions; die vorhandene Suite ist kein vollständiger Sicherheits-Audit.
 
 
 ### Stufe 4: End-to-End (E2E) & Visuelle Regression
@@ -125,8 +122,9 @@ npx @biomejs/biome check --write .
 * **Testumgebung:** `playwright.config.ts` verwendet Chromium mit dem Geräteprofil „Desktop Chrome“ und WebKit mit dem Profil „iPhone 14“ unter dem Projektnamen „Mobile Safari“. Das ist Browser-/Geräteemulation, kein Test auf einem echten iPhone oder mit installiertem Google Chrome.
 * **Server und Voraussetzung:** Die Tests benötigen einen aktuellen Produktionsbuild. Playwright startet dafür `npm run preview` unter `http://localhost:4321`; außerhalb von CI darf ein bereits erreichbarer Server wiederverwendet werden. Für reproduzierbare Produktionsprüfungen dort keinen abweichenden Dev-Server laufen lassen. `test:e2e` baut das Projekt nicht selbst.
 * **Gegenstand:** Drei festgelegte Seiten werden auf HTTP 200, eine sichtbare Hauptüberschrift und bis zum Prüfzeitpunkt aufgetretene JavaScript-`pageerror`-Ereignisse geprüft. Weitere Tests prüfen Builder-Klickpfade sowie Notationsgeometrie, rhythmische Abstände, Schlüssel-/Taktartdarstellung, Größenanpassung und horizontales Scrollen an ausgewählten Beispielen. Ein eigener Test prüft den scrollbaren Fallback ohne JavaScript.
+* **Navigation:** Der Navigationstest prüft Reihenfolge und Zuordnung von Admin, Bediener und Sonstiges innerhalb der Hauptnavigation, unabhängig von Starlights Sidebar-Zwischenelementen. Auf Mobilgeräten wird auch die zunächst eingeklappte Navigation geprüft. Ein weiterer Test öffnet Entwickler-READMEs im Admin-Wiki und folgt ihren Querverweisen.
 * **Visuelle Prüfung und Grenzen:** Die Suite wertet DOM, SVG, berechnete Styles und Geometrie im Browser aus; sie enthält keine Screenshot-Vergleiche. Sie prüft weder alle Seiten noch alle Klickpfade, Konsolenmeldungen, Netzwerkfehler oder Darstellungsvarianten. Erfolgreiches Speichern über die produktive API, AlphaTab-/Audiowiedergabe und vollständige Barrierefreiheit sind damit nicht abgesichert.
-* **Builder-Smoke-Tests:** Prüfen Gruppieren/Auflösen, sichtbare Aktionsbuttons mit mindestens 44 px Höhe und überlappungsfreie Gruppenkarten statt exakter CSS-Abstände. Der Bearbeitungstest öffnet ein Modul über den Katalog und kehrt über den echten Zurück-Button zur Übersicht zurück; die API liefert dabei feste Testdaten ohne Schreibzugriffe. Die Cursor-Ausrichtung der Notationsvorschau wird separat geprüft.
+* **Builder-Smoke-Tests:** Prüfen Gruppieren/Auflösen, sichtbare Aktionsbuttons mit mindestens 44 px Höhe und überlappungsfreie Gruppenkarten statt exakter CSS-Abstände. Der Bearbeitungstest öffnet ein Modul über den Katalog und kehrt über den echten Zurück-Button zur Übersicht zurück; die API liefert dabei feste Testdaten ohne Schreibzugriffe. Die Cursor-Ausrichtung der Notationsvorschau wird separat mit gleichzeitig gemessenen Noten- und Cursorpositionen und weniger als einem Pixel Abweichung je Achse geprüft.
 * **Befehle:**
   ```bash
   # vor dem Testen einen aktuellen Produktionsbuild erzeugen:
@@ -138,11 +136,11 @@ npx @biomejs/biome check --write .
   npm run test:e2e:ui
   ```
 * **Fehlerdiagnose:** Playwright speichert Screenshots nur bei Fehlern und Traces beim ersten Wiederholungsversuch. In CI sind bis zu zwei Wiederholungen konfiguriert, lokal standardmäßig keine; ein lokaler Fehler erzeugt deshalb nicht automatisch einen Trace.
-* **Wann nutzen:**
+* **Wann nutzen:** Die E2E-Suite läuft ausschließlich im manuellen Preflight am Branch-Ende.
   * **`npm run test:e2e` (Smoke-Tests & kritische User-Flows):**
     * Vor jedem Release und Produktiv-Deployment.
     * Vor dem Mergen eines Pull Requests in den Hauptzweig (`main`).
-    * Nach Versions-Upgrades von Astro, Starlight, Routing- oder Styling-Anpassungen, um die abgedeckten Seiten, Klickpfade und Layoutregeln zu prüfen. Nicht abgedeckte Bereiche zusätzlich gezielt testen.
+    * Beim Branch-Abschluss nach Versions-Upgrades von Astro, Starlight, Routing- oder Styling-Anpassungen, um die abgedeckten Seiten, Klickpfade und Layoutregeln zu prüfen. Nicht abgedeckte Bereiche zusätzlich gezielt testen.
   * **`npm run test:visual` (derzeit kein separater visueller Test):**
     * Führt aktuell dieselben Prüfungen wie `test:e2e` aus; `--update-snapshots` hat ohne Snapshot-Assertions keine zusätzliche Wirkung.
     * Falls künftig Screenshot-/Snapshot-Tests hinzukommen, Referenzen nur bei beabsichtigten Änderungen und nach Sichtprüfung aktualisieren. Der Befehl ersetzt keine manuelle Prüfung globaler Styling-, AlphaTab- oder KaTeX-Änderungen.
@@ -166,6 +164,7 @@ Externe Links, fachliche Aktualität, dynamische Asset-Pfade und Git-Hygiene wer
 
 * **Werkzeuge:** `npm audit`, Git CLI (`git ls-files`, `git grep`).
 * **Zweck & Gegenstand:** `npm audit` gleicht den Abhängigkeitsbaum mit bekannten Advisories der konfigurierten Registry ab, einschließlich transitiver und Entwicklungsabhängigkeiten. `--audit-level=high` setzt die Fehlerschwelle auf `high`/`critical`, blendet niedrigere Schweregrade aber nicht aus. Ein erfolgreicher Lauf bedeutet daher nicht, dass keine bekannten Schwachstellen vorliegen.
+* **Transitive Korrekturen:** Die gezielten Overrides in `package.json` aktualisieren `glob` und `minimatch` in der Netlify-Buildkette. Prüfe bei Updates der betroffenen Elternpakete, ob deren eigene Abhängigkeiten die Korrekturen inzwischen enthalten. Für [GHSA-fc5q-39xc-vjpf (`picomatch`)](https://github.com/advisories/GHSA-fc5q-39xc-vjpf) gibt es derzeit keine veröffentlichte korrigierte Version; bis dahin meldet das Audit den Befund weiterhin als Fehler. Die Fehlerschwelle bleibt unverändert.
 * **Grenzen und Geheimnisschutz:** Das Paket-Audit prüft weder eigene Anwendungslogik noch Geheimnisse, Git-Historie oder die tatsächliche Ausnutzbarkeit jedes Befunds. Die folgenden Git-Befehle sind ergänzende Suchhilfen, keine vollständigen Secret-Scans. `.gitignore` ignoriert `.env` und `.env.*` mit Ausnahme von `.env.example`; bereits getrackte Dateien werden durch Ignore-Regeln nicht entfernt. Auch Vorlagen dürfen keine echten Zugangsdaten enthalten. `PUBLIC_`-Werte können im Client landen und dürfen keine Geheimnisse enthalten.
 * **Befehle:**
   ```bash
@@ -181,7 +180,7 @@ Externe Links, fachliche Aktualität, dynamische Asset-Pfade und Git-Hygiene wer
   Leere Git-Ausgaben sind kein Beweis für Geheimnisfreiheit; beispielsweise können `.env.example`-Vorlagen harmlose Treffer liefern und andere Geheimnisnamen unentdeckt bleiben. `git grep` liefert bei fehlenden Treffern Exit-Code 1. Befunde einzeln bewerten; Paketkorrekturen nur nach Prüfung des Diffs und mit erneuten Tests anwenden. `npm audit fix` kann Abhängigkeiten ändern, `--force` zusätzlich inkompatible Versionswechsel erlauben und ist kein routinemäßiger Prüfschritt.
 * **Wann nutzen:**
   * **Nach Paketoperationen:** Direkt nach jeder Installation (`npm install <paket>`) oder Aktualisierung von Abhängigkeiten (`npm update`).
-  * **Vor jedem Production-Release:** Als unverzichtbarer Bestandteil des `preflight`-Laufs vor Build und Deployment.
+  * **Beim Branch-Abschluss und vor einem Production-Release:** Separat mit `npm run audit`; das Dependency-Audit ist bewusst nicht Teil des `preflight`-Laufs.
   * **Bei Backend- & Serverless-Änderungen:** Sobald neue Netlify Functions, Umgebungsvariablen oder externe Schnittstellen eingerichtet werden.
 
 ---
@@ -201,11 +200,11 @@ Externe Links, fachliche Aktualität, dynamische Asset-Pfade und Git-Hygiene wer
   LHCI_UPLOAD__TARGET=filesystem LHCI_UPLOAD__OUTPUT_DIR=./.lighthouseci/reports npm run audit:lhci
   ```
   `lighthouserc.cjs` erzwingt derzeit Accessibility ≥ 0,9; Performance ≥ 0,8 sowie Best Practices und SEO ≥ 0,9 erzeugen bei Unterschreitung nur Warnungen. FCP und CLS sind dort nicht separat als Grenzwerte konfiguriert. Ohne die obigen Umgebungsvariablen laden `audit:lhci` und damit auch `preflight` Berichte gemäß Konfiguration in einen temporären öffentlichen Speicher hoch. Vor einem Upload prüfen, ob URLs, Seiteninhalte und Diagnosedaten veröffentlicht werden dürfen.
-* **Aussagekraft und Berichte:** HTML-Berichte im Browser öffnen, im Codespace gegebenenfalls zuvor herunterladen; JSON-Dateien enthalten die Rohdaten. Lokale Berichte sind generiert und können bei späteren Läufen ersetzt werden. Einzelmessungen schwanken mit Rechnerlast und Messumgebung und sind keine Felddaten echter Nutzer. FCP ist keine Core-Web-Vitals-Kennzahl; für eine vollständige Web-Vitals-Bewertung sind insbesondere LCP, INP und CLS relevant. Der automatisierte Seitenlade-Lauf ersetzt keine INP-Messung realer Interaktionen und prüft keine produktive Netlify-/GitHub-Infrastruktur.
+* **Aussagekraft und Berichte:** HTML-Berichte im Browser öffnen, im Codespace gegebenenfalls zuvor herunterladen; JSON-Dateien enthalten die Rohdaten. Lokale Berichte sind generiert und können bei späteren Läufen ersetzt werden. Einzelmessungen schwanken mit Rechnerlast und Messumgebung und sind keine Felddaten echter Nutzer. FCP ist keine Core-Web-Vitals-Kennzahl; für eine vollständige Web-Vitals-Bewertung sind insbesondere LCP, INP und CLS relevant. Der automatisierte Seitenlade-Lauf ersetzt keine INP-Messung realer Interaktionen und prüft keine produktive Netlify-Infrastruktur.
 * **Wann nutzen:**
   * **Nach Bibliotheks- und Build-Änderungen:** Wenn etwa AlphaTab, KaTeX oder die Bildoptimierung mit `sharp` aktualisiert werden. Betroffene Seiten gezielt in die Messung aufnehmen; serverseitige Bibliotheken erhöhen nicht automatisch das Client-Bundle.
   * **Nach Asset- & Schriftartänderungen:** Sobald Webfonts, globale Stylesheets oder umfangreiche SVG-Grafiken angepasst wurden.
-  * **Vor Releases:** Als Teil des lokalen `preflight`-Gates. Eine Einbindung in CI/CD ist eine Empfehlung; ein entsprechender GitHub-Actions-Workflow ist derzeit nicht hinterlegt.
+  * **Beim Branch-Abschluss und vor Releases:** Separat oder als Teil des lokalen `preflight`-Gates. Eine Einbindung in CI/CD ist eine Empfehlung; ein entsprechender GitHub-Actions-Workflow ist derzeit nicht hinterlegt.
 
 ---
 
@@ -238,36 +237,26 @@ Externe Links, fachliche Aktualität, dynamische Asset-Pfade und Git-Hygiene wer
 
 ## 4. Das verbindliche „Doing“ im Entwicklungsprozess
 
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ 1. Vor dem Git-Commit:             Lokale Hygiene & Formatierung            │
-│ 2. Vor dem Git-Push / Pull Request: Zentrales Pre-Flight Quality Gate       │
-│ 3. Vor dem Produktions-Release:    5-Phasen Release-Audit & DoD             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+### 4.1 Während der Entwicklung: Rückfrage nach jeweils zehn Prompts
 
-### 4.1 Vor jedem lokalen Commit
+Copilot startet nach einzelnen Änderungen keine Tests automatisch, auch nicht bei größeren Komponenten- oder Doku-Änderungen. Nach jeweils zehn Nutzer-Prompts im laufenden Chat fragt Copilot über das Rückfragewerkzeug, ob Stufen 1 und 2 ausgeführt werden sollen. Toolaufrufe und Systemmeldungen zählen nicht mit. Tests laufen erst nach Zustimmung oder einem ausdrücklichen Testauftrag; bei Ablehnung wird ohne Tests weitergearbeitet. Nach der Entscheidung beginnt der nächste Zehnerblock.
 
-Führe vor dem Stagen folgende Schritte aus:
+Nach Freigabe passende Unit- und Komponententests auswählen. Bei Doku-Änderungen auch den Dokumentationstest berücksichtigen (`npx vitest run tests/documentation.test.ts`). Die folgenden Befehle sind Beispiele, keine automatisch auszuführenden Schritte:
 
 ```bash
-npm run format          # Formatiert Code automatisch
-npm run lint            # Prüft Linter-Regeln
-npm run check           # Validiert Astro-Templates
-npm test                # Führt die Vitest-Suite aus
-git diff --check        # Verhindert Whitespace-Fehler
+npm run test:unit       # Stufe 1: Notationslogik, wenn kein passenderer Unit-Test vorliegt
+npx vitest run tests/components/module-player-ui.test.ts -t "DrumPattern"  # Stufe 2: Modul-Player-Verhalten
 ```
 
-### 4.2 Vor jedem Git-Push oder Pull Request
+Wähle passende Testdateien oder Testgruppen gezielt aus. Bei gemischten Dateien schränkt `-t` den Lauf auf passende Tests ein, z. B. `npx vitest run tests/module-builder.test.mjs -t "xp-tags|module-store"`. `npm test` enthält auch Integrationstests und ist daher kein Routinekommando für Stufe 1.
 
-Vor jedem Push auf GitHub muss das einzeilige Pre-Flight Quality Gate fehlerfrei durchlaufen:
+### 4.2 Erst am Branch-Ende: manueller Preflight mit Stufen 0, 3 und 4
 
-```bash
-npm run preflight
-```
+Stufen 0, 3 und 4 laufen ausschließlich in `npm run preflight`, den der Nutzer am fertigen Branch manuell startet. Copilot startet weder den Preflight noch diese Stufen separat. Es gibt keinen automatischen Abschlusslauf bei Zwischen-Commits, Pushes oder Draft-PRs. Der Preflight enthält auch die vollständigen Prüfungen der Stufen 1 und 2 sowie Lighthouse; der Nutzer startet `npm run audit` separat.
 
-_Befehlskette im Detail:_ `npm run validate && npm run audit && npm run test:all && npm run audit:lhci && git diff --check`. `validate` führt Biome, Astro-Check und TypeScript aus; `test:all` führt Vitest, Build und Playwright aus. Danach misst `audit:lhci` den Build mit Lighthouse CI und lädt den Bericht standardmäßig in den konfigurierten temporären öffentlichen Speicher hoch; lokale Ablage lässt sich wie in Abschnitt 3.2 über Umgebungsvariablen wählen. `test:visual` führt die E2E-Suite mit Snapshot-Aktualisierung aus (derzeit ohne Snapshot-Assertions), `test:e2e:ui` startet den interaktiven Playwright-Modus; beide sind keine zusätzlichen Preflight-Gates.
-Die Kette bricht beim ersten fehlgeschlagenen Befehl ab. Warnungen und Audit-Befunde unterhalb der konfigurierten Fehlerschwelle stoppen sie nicht automatisch.
+`preflight` führt Validierung, Vitest, Build, Playwright, Lighthouse CI und `git diff --check` einzeln aus und gibt für jeden Schritt einen Ergebnisbericht mit Hinweisen zur Fehlerbehebung aus. Ein fehlgeschlagener unabhängiger Schritt verhindert nicht die Auswertung der übrigen Schritte. Playwright und Lighthouse CI werden übersprungen, wenn der Build fehlschlägt. Der Prozess endet mit Exit-Code 1, sobald mindestens ein ausgeführter Schritt fehlschlägt. `npm audit` ist separat mit `npm run audit` aufzurufen.
+
+Lighthouse CI misst den Build und lädt Berichte standardmäßig in den konfigurierten temporären öffentlichen Speicher hoch; lokale Ablage lässt sich wie in Abschnitt 3.2 über Umgebungsvariablen wählen. `test:visual` führt die E2E-Suite mit Snapshot-Aktualisierung aus (derzeit ohne Snapshot-Assertions), `test:e2e:ui` startet den interaktiven Playwright-Modus; beide sind keine zusätzlichen Preflight-Gates.
 
 ---
 
@@ -320,7 +309,7 @@ Vor einem Release auf `main` wird diese Checkliste vollständig abgearbeitet:
 
 Ein Release gilt erst dann als **vollständig fertiggestellt und freigegeben**, wenn:
 
-1. Das Pre-Flight-Kommando `npm run preflight` mit **Exit-Code 0** durchläuft.
+1. Der manuell gestartete Preflight (`npm run preflight`) und das separate Audit (`npm run audit`) erfolgreich sind.
 2. Ein vollständiger manueller Testlauf auf einem mobilen Touch-Endgerät erfolgreich protokolliert wurde.
 3. Impressum, Datenschutzerklärung und 404-Seite funktionstüchtig live geschaltet sind.
 4. Alle E2E-Browsertests bestehen und relevante visuelle Änderungen geprüft sind; vorhandene Snapshots bestehen ohne unbeabsichtigte Abweichung.

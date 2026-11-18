@@ -42,6 +42,12 @@ Dies ist **nicht** die aktuelle Konfiguration dieses Repositories. Hier steht in
 
 Starlight liefert Dokumentationslayout, Navigation und Suche. `astro.config.mjs` konfiguriert die Sidebar; die Inhalte liegen in `src/content/docs/`.
 
+Die Sidebar gliedert sich in dieser Reihenfolge in **Admin** (Projektierung und Admin-Wiki), **Bediener** (Dashboard mit Lernpfad) und **Sonstiges** (Wiki, bisherige Lehrgänge Level 100-500 inklusive Gitarrenlehre, Songwriting, Referenz & Werkzeuge). Bestehende Seiten-URLs bleiben erhalten. Die Bereiche strukturieren die Navigation; sie sind keine rollenbasierte Zugriffskontrolle.
+
+Das **Admin-Wiki** unter `/admin-wiki/` zeigt die Root-READMEs (`README*.md`) und alle Feature-READMEs (`features/README*.md`) direkt als statische Starlight-Seiten. `src/lib/admin-wiki.ts` lädt die Originaldateien beim Build; `src/pages/admin-wiki/` stellt Übersicht und Dokumentseiten bereit. Neue passende READMEs werden beim nächsten Build automatisch aufgenommen. Relative Links zwischen diesen Dokumenten führen zu den Wiki-Seiten, Inhalts- und Asset-Links zur jeweiligen Website-Route; sonstige Repository-Links verweisen auf GitHub (`main`). Das Admin-Wiki ist wie die übrige Website öffentlich und nicht zugriffsgeschützt.
+
+Der Admin-Wiki-Renderer ergänzt zugängliche Namen für Markdown-Checkboxen aus dem jeweiligen Aufgabentext, ohne den schreibgeschützten Zustand zu ändern. Verschachtelte Aufgaben erhalten eigene Namen. Codeblöcke nutzen das kontrastreiche Shiki-Theme `github-dark-high-contrast`, damit auch Kommentare lesbar bleiben.
+
 Die aktuelle `src/content.config.ts` nutzt Starlights `docsLoader()` und `docsSchema()` mit einem Zod-Erweiterungsschema sowie `i18nLoader()` und `i18nSchema()` für Übersetzungen. Auszug:
 
 ```typescript
@@ -75,6 +81,7 @@ Der Auszug zeigt nicht alle Projektfelder; verbindlich ist `src/content.config.t
 | `template: doc` (Standard) | Dokumentationsseite mit Sidebar und Inhaltsverzeichnis. |
 | `template: splash` | Seite ohne Sidebar, breitere Spalte, z. B. für Startseiten; kombinierbar mit `hero`. |
 | `template: wide-content` | Projekteigen: wie `doc`, aber breitere Inhaltsspalte (siehe unten). |
+| `template: extra-wide-content` | Projekteigen: wie `doc`, mit besonders breiter Inhaltsspalte (siehe unten). |
 | `tableOfContents: false` | Blendet das Inhaltsverzeichnis aus. |
 | `tableOfContents: { minHeadingLevel, maxHeadingLevel }` | Steuert die Überschriftenebenen (Standard 2–3). |
 | `sidebar: { order, label, hidden, badge, attrs }` | Position, Beschriftung, Sichtbarkeit und Badge des Sidebar-Eintrags. |
@@ -87,10 +94,10 @@ Der Auszug zeigt nicht alle Projektfelder; verbindlich ist `src/content.config.t
 | `draft: true` | Seite wird im Produktions-Build nicht veröffentlicht. |
 | `head`, `title`, `description` | Meta-Tags, Seitentitel und Beschreibung. |
 
-**Template `wide-content`:** Mit `template: wide-content` im Frontmatter erhält eine Seite eine breitere Inhaltsspalte (`--sl-content-width: 75rem`); sonst verhält sie sich wie `doc`. Das Inhaltsverzeichnis lässt sich weiterhin separat mit `tableOfContents: false` ausblenden. Beteiligt sind:
+**Templates `wide-content` und `extra-wide-content`:** Beide verhalten sich wie `doc`; das Inhaltsverzeichnis lässt sich weiterhin separat mit `tableOfContents: false` ausblenden. `wide-content` setzt `--sl-content-width: 75rem`, `extra-wide-content` erweitert auf `90rem`. Das extra-breite Template setzt zusätzlich den Wide-Content-Hook, damit bestehende Layoutanpassungen wie die volle Formularbreite erhalten bleiben. Beteiligt sind:
 
-- `src/content.config.ts`: erweitert das `template`-Feld um den Wert `wide-content`.
-- `src/components/starlight/MarkdownContent.astro`: überschreibt Starlights `MarkdownContent` und setzt `data-wide-content` als CSS-Hook.
+- `src/content.config.ts`: erweitert das `template`-Feld um beide Werte.
+- `src/components/starlight/MarkdownContent.astro`: überschreibt Starlights `MarkdownContent` und setzt die CSS-Hooks `data-wide-content` und `data-extra-wide-content`.
 - `src/styles/wide-content.css`: setzt die Breite; über `customCss` in `astro.config.mjs` eingebunden.
 - `astro.config.mjs`: registriert den Komponenten-Override unter `components`.
 
@@ -100,11 +107,13 @@ Der Auszug zeigt nicht alle Projektfelder; verbindlich ist `src/content.config.t
 
 `remark-math` und `rehype-katex` verarbeiten mathematische Ausdrücke in den Dokumentationsinhalten. Notations- und Musikstyles liegen unter anderem in `src/styles/notation.css` und `src/styles/music.css`.
 
+`DrumPattern.astro` verwendet unabhängig davon die native Web Audio API für Soundfiles. Die gemeinsame Audio-Engine, der Scheduler und der DOM-Controller liegen unter `src/lib/drum-audio.ts`, `src/lib/drum-playback.ts` und `src/lib/drum-pattern.ts`; statische MDX- und dynamische Moduldarstellungen teilen diese Bausteine. Details: [Audioplayer-Referenz](features/README_FEAT_AUDIOPLAYER.md).
+
 ### 3.3 Backend und Persistenz
 
-`netlify/functions/contributions.ts` und `netlify/functions/modules.ts` stellen die APIs für Beiträge und Lernmodule bereit. Die Functions speichern über die GitHub-API in JSON-Dateien auf dem konfigurierten Branch; `public/_redirects` leitet `/api/*` auf Netlify Functions weiter.
+`netlify/functions/contributions.ts` und `netlify/functions/modules.ts` stellen die APIs für Beiträge und Lernmodule bereit. `netlify/functions/lib/blob-store.ts` kapselt die JSON-Persistenz über Netlify Blobs. `public/_redirects` leitet `/api/*` auf Netlify Functions weiter.
 
-Im reinen Astro-Entwicklungsserver stellt ein Vite-Plugin in `astro.config.mjs` zusätzlich eine lokale Modul-API bereit, die `data/modules.json` im Workspace liest und schreibt. Das ist nicht die GitHub-Persistenz der Netlify Functions. Konfiguration, Umgebungsvariablen und Fullstack-Start stehen im [Workspace-Setup](README_WORKSPACE_SETUP.md).
+Die Netlify Functions benötigen keine Datenbankdateien aus dem Repository. Nur im reinen Astro-Entwicklungsserver liest und schreibt ein Vite-Plugin die lokal erzeugte `data/modules.json`. Details zur Persistenz: [Netlify Blobs](features/README_FEAT_NETLIFYBLOB.md); Fullstack-Start: [Workspace-Setup](README_WORKSPACE_SETUP.md).
 
 ## 4. Projektstruktur
 
@@ -137,8 +146,8 @@ tests/
 ├── components/                 # DOM- und Interaktionstests
 ├── integration/                # Integrationstests
 └── e2e/                        # Playwright-Browsertests
-netlify/functions/              # Serverless Functions und GitHub-Store
-data/                           # JSON-Daten
+netlify/functions/              # Serverless Functions und Blob-Adapter unter lib/
+data/                           # Nur lokal erzeugte Moduldatei (Astro-Dev)
 features/                       # Feature-Übersicht, Fachreferenzen und Handoffs
 astro.config.mjs                # Astro-, Starlight- und Dev-Server-Konfiguration
 biome.json                      # Linter und Formatter

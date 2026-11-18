@@ -1,9 +1,14 @@
 // @vitest-environment node
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { getStore } from "@netlify/blobs";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import modulesHandler from "../netlify/functions/modules.ts";
+import * as moduleArchive from "../src/lib/module-archive.ts";
+import { mockBlobStore } from "./fixtures/blob-store.ts";
 import {
   DEFAULT_FASTLANE_MIN_SCORE,
   DEFAULT_QUIZ_EASY_MIN_SCORE,
+  getLearningCatalog,
+  normalizeLegacyDatabase,
 } from "../src/lib/module-schema.ts";
 import {
   createEmptyModulesDatabase,
@@ -12,6 +17,7 @@ import {
   getModuleSummary,
   moveModule,
   upsertModule,
+  upsertModuleWithExercises,
   upsertQuestion,
   validateModuleInput,
   validateQuestionInput,
@@ -19,6 +25,7 @@ import {
 import {
   BASE_XP_DEFAULTS,
   calculateQuestionXp,
+  calculateModuleQuestionXp,
   getAvailableTags,
   TAG_DEFINITIONS,
 } from "../src/lib/xp-tags.ts";
@@ -29,8 +36,8 @@ describe("xp-tags Konfiguration & Berechnung", () => {
       theoryBlock: 30,
       practice: 20,
       leicht: 10,
-      mittel: 15,
-      schwer: 25,
+      mittel: 10,
+      schwer: 10,
     });
     expect(getAvailableTags()).toEqual(
       expect.arrayContaining([
@@ -56,9 +63,134 @@ describe("xp-tags Konfiguration & Berechnung", () => {
     expect(calculateQuestionXp(15, ["Unbekannt"])).toBe(15);
     expect(calculateQuestionXp(0, ["Notensystem"])).toBe(0);
   });
+
+  it.each([
+    ["Tonsystem", 11],
+    ["Vortragslehre", 11],
+    ["Harmonielehre", 12],
+  ])("liefert für %s bei 10 Basis-XP %i XP", (tag, xp) => {
+    expect(getAvailableTags()).toContain(tag);
+    expect(calculateQuestionXp(10, [tag])).toBe(xp);
+  });
+
+  it.each([
+    [undefined, [], 10],
+    ["einfach", ["Notensystem"], 15],
+    ["mittel", ["Notensystem"], 23],
+    ["schwer", ["Notensystem", "Rhythmus"], 30],
+  ])("berechnet Aufgaben mit Schwierigkeit %s und Tag-Faktor", (difficulty, tags, xp) => {
+    expect(calculateModuleQuestionXp({ baseXp: 99, difficulty, tags })).toBe(xp);
+  });
 });
 
 describe("module-store Validierung & Store-Operationen", () => {
+  it("normalisiert bestehende Aufgaben auf 10 Basis-XP und erhält die Schwierigkeit unabhängig von der Lernspur", () => {
+    const db = upsertModule(createEmptyModulesDatabase(), { id: "mod", title: "Modul" });
+    const question = {
+      id: "q", moduleIds: ["mod"], targetLane: "leicht",
+      questionType: "numeric_input", prompt: "Frage", correctAnswers: ["1"],
+      difficulty: "schwer", baseXp: 99, tags: ["Rhythmus"],
+    };
+    const saved = upsertQuestion(db, question);
+    expect(saved.questions[0]).toMatchObject({ difficulty: "schwer", baseXp: 10, targetLane: "leicht" });
+    expect(getModuleSummary(saved, "mod")?.questionsXp).toBe(24);
+    const { difficulty, ...legacy } = question;
+    const normalized = normalizeLegacyDatabase({ ...db, questions: [legacy] });
+    expect(normalized.questions[0]).toMatchObject({ difficulty: "einfach", baseXp: 10 });
+    expect(upsertQuestion(saved, legacy).questions[0].difficulty).toBe("schwer");
+    expect(validateQuestionInput({ ...question, difficulty: "unbekannt" }, db).valid).toBe(false);
+    expect(() => normalizeLegacyDatabase({ ...db, questions: [{ ...question, difficulty: "unbekannt" }] }))
+      .toThrow("Ungültige Schwierigkeit");
+  });
+  it("behält das Blocklager beim Speichern und trennt es vom Lern- und Quizangebot", () => {
+    let db = upsertModule(createEmptyModulesDatabase(), { id: "basics", title: "Basics" });
+    db = upsertModule(db, { id: "lager", title: "Blocklager", archived: true });
+    db = upsertModule(db, { id: "lager", title: "Blocklager bearbeitet" });
+    const question = {
+      targetLane: "mittel",
+      questionType: "single_choice",
+      prompt: "Eine Frage?",
+      options: ["Ja", "Nein"],
+      correctAnswers: ["Ja"],
+    };
+    for (const [id, moduleIds] of [
+      ["lagerfrage", ["lager"]],
+      ["geteilt", ["basics", "lager"]],
+      ["pool", []],
+    ]) {
+      db = upsertQuestion(db, { ...question, id, moduleIds });
+    }
+
+    expect(db.modules[1].archived).toBe(true);
+    const learning = getLearningCatalog(db);
+    expect(learning.modules.map(({ id }) => id)).toEqual(["basics"]);
+    expect(learning.questions.map(({ id, moduleIds }) => [id, moduleIds]))
+      .toEqual([["geteilt", ["basics"]], ["pool", []]]);
+    expect(db.questions).toHaveLength(3);
+    expect(getLearningCatalog(upsertModule(db, { id: "lager", title: "Lager", archived: false })).modules)
+      .toHaveLength(2);
+  });
+  const sourceMarker = (number) => `[${"cite"}: ${number}]`;
+
+  it("speichert Aufgabentitel getrennt von der Frage und erlaubt ihr Entfernen", () => {
+    const db = upsertModule(createEmptyModulesDatabase(), { id: "mod", title: "Modul" });
+    const question = {
+      id: "q", moduleIds: ["mod"], targetLane: "leicht",
+      questionType: "numeric_input", prompt: "Frage", correctAnswers: ["1"],
+    };
+    expect(validateQuestionInput({ ...question, title: 1 }, db).valid).toBe(false);
+    const titled = upsertQuestion(db, { ...question, title: ` Kammerton ${sourceMarker(1)} ` });
+    expect(titled.questions[0]).toMatchObject({ title: "Kammerton", prompt: "Frage" });
+    expect(upsertQuestion(titled, question).questions[0].title).toBe("Kammerton");
+    expect(upsertQuestion(titled, { ...question, title: "" }).questions[0])
+      .not.toHaveProperty("title");
+  });
+
+  it("speichert optionale Aufgabenhinweise und erlaubt ihr Entfernen", () => {
+    const db = upsertModule(createEmptyModulesDatabase(), { id: "mod", title: "Modul" });
+    const question = {
+      id: "q", moduleIds: ["mod"], targetLane: "leicht",
+      questionType: "numeric_input", prompt: "Frage", correctAnswers: ["1"],
+    };
+    expect(validateQuestionInput({ ...question, simpleHint: 1 }, db).valid).toBe(false);
+    const withHints = upsertQuestion(db, {
+      ...question, simpleHint: " Einfach ", strongHint: "Genauer",
+    });
+    expect(withHints.questions[0]).toMatchObject({ simpleHint: "Einfach", strongHint: "Genauer" });
+    const updated = upsertQuestion(withHints, { ...question, simpleHint: "" });
+    expect(updated.questions[0]).not.toHaveProperty("simpleHint");
+    expect(updated.questions[0].strongHint).toBe("Genauer");
+  });
+
+  it("speichert explizite Voraussetzungen und erhält sie bei Teiländerungen", () => {
+    const empty = createEmptyModulesDatabase();
+    const db = upsertModule(empty, { id: "elementarlehre", title: "Elementarlehre" });
+    expect(db.modules[0]).not.toHaveProperty("prerequisiteModuleIds");
+
+    const guitar = { id: "gitarre", title: "Gitarre" };
+    const withPrerequisite = upsertModule(db, {
+      ...guitar,
+      prerequisiteModuleIds: [" elementarlehre "],
+    });
+    expect(upsertModule(withPrerequisite, guitar).modules[1].prerequisiteModuleIds)
+      .toEqual(["elementarlehre"]);
+    expect(upsertModule(withPrerequisite, { ...guitar, prerequisiteModuleIds: [] })
+      .modules[1].prerequisiteModuleIds).toEqual([]);
+  });
+
+  it.each([
+    { prerequisiteModuleIds: "elementarlehre" },
+    { prerequisiteModuleIds: [" "] },
+    { prerequisiteModuleIds: ["a", " a "] },
+    { prerequisiteModuleIds: [" gitarre "] },
+  ])(
+    "weist ungültige Voraussetzungen ab: $prerequisiteModuleIds",
+    ({ prerequisiteModuleIds }) => {
+      expect(validateModuleInput({ id: "gitarre", title: "Gitarre", prerequisiteModuleIds }).valid)
+        .toBe(false);
+    },
+  );
+
   it("speichert die gemischte Blockreihenfolge und bewahrt sie bei Teiländerungen", () => {
     const order = [{ kind: "theory", id: "tb" }, { kind: "exercise", id: "q" }];
     let db = upsertModule(createEmptyModulesDatabase(), {
@@ -72,6 +204,53 @@ describe("module-store Validierung & Store-Operationen", () => {
     expect(db.modules[0].contentOrder).toHaveLength(2);
     expect(validateModuleInput({ id: "mod", title: "Modul", contentOrder: [{ kind: "theory", id: "x" }, { kind: "theory", id: "x" }] }).valid).toBe(false);
     expect(validateModuleInput({ id: "mod", title: "Modul", contentOrder: [{ kind: "quiz", id: "x" }] }).valid).toBe(false);
+  });
+
+  it("entfernt Quellenmarker aus Modul- und Aufgabentexten beim Speichern", () => {
+    let db = upsertModule(createEmptyModulesDatabase(), {
+      id: "mod",
+      title: `Modul ${sourceMarker(1)}`,
+      description: `Beschreibung ${sourceMarker(2)}`,
+      theoryBlocks: [{
+        id: "tb",
+        order: 1,
+        title: `Theorie ${sourceMarker(3)}`,
+        markdownContent: `Text ${sourceMarker(4)} weiter`,
+      }],
+      practiceBlocks: [{
+        id: "pb",
+        title: `Praxis ${sourceMarker(5)}`,
+        markdownContent: `Übung ${sourceMarker(6)} weiter`,
+      }],
+    });
+
+    expect(db.modules[0]).toMatchObject({
+      title: "Modul",
+      description: "Beschreibung",
+    });
+    expect(db.modules[0].theoryBlocks[0]).toMatchObject({
+      title: "Theorie",
+      markdownContent: "Text weiter",
+    });
+    expect(db.modules[0].practiceBlocks[0]).toMatchObject({
+      title: "Praxis",
+      markdownContent: "Übung weiter",
+    });
+
+    db = upsertQuestion(db, {
+      id: "q",
+      moduleIds: [],
+      targetLane: "mittel",
+      questionType: "numeric_input",
+      prompt: `Frage ${sourceMarker(7)}`,
+      correctAnswers: [`Antwort ${sourceMarker(8)}`],
+      explanation: `Erklärung ${sourceMarker(9)}`,
+    });
+    expect(db.questions[0]).toMatchObject({
+      prompt: "Frage",
+      correctAnswers: ["Antwort"],
+      explanation: "Erklärung",
+    });
   });
 
   it("speichert gruppierte Theorie- und Übungseinträge in der Modulreihenfolge", () => {
@@ -117,6 +296,56 @@ describe("module-store Validierung & Store-Operationen", () => {
     expect(getModuleSummary(db, "mod")?.theoryXp).toBe(60);
     expect(validateModuleInput({ id: "mod", title: "Modul", theoryBlocks: [{ ...blocks[0], baseXp: -1 }] }).valid).toBe(false);
     expect(validateModuleInput({ id: "mod", title: "Modul", theoryBlocks: [blocks[0], blocks[0]] }).valid).toBe(false);
+  });
+
+  it("erhält Aufgabeneinleitungen ohne eigene Theorie-XP und validiert ihre Rolle", () => {
+    const introduction = {
+      id: "intro", order: 2, title: "Einleitung", markdownContent: "Vergleiche die Muster.",
+      role: "exercise_intro", baseXp: 100, tags: ["Notensystem"],
+    };
+    const db = upsertModule(createEmptyModulesDatabase(), {
+      id: "mod", title: "Modul", theoryBaseXp: 30,
+      theoryBlocks: [
+        { id: "theory", order: 1, title: "Theorie", markdownContent: "" },
+        introduction,
+      ],
+    });
+    expect(db.modules[0].theoryBlocks[1]).toEqual(introduction);
+    expect(getModuleSummary(db, "mod")).toMatchObject({
+      theoryBlockCount: 1, theoryXp: 30,
+    });
+    expect(validateModuleInput({
+      id: "mod", title: "Modul",
+      theoryBlocks: [{ ...introduction, role: "unknown" }],
+    }).valid).toBe(false);
+  });
+
+  it("validiert statische DrumPattern-Visualisierungen in Theorieblöcken", () => {
+    const valid = validateModuleInput({
+      id: "drums",
+      title: "Drums",
+      theoryBlocks: [{
+        id: "tb-1",
+        order: 1,
+        title: "Pattern",
+        markdownContent:
+          '<DrumPattern steps={4} continuous={true} patternData={[{ name: "Kick", note: "C1", color: "#ef4444", activeSteps: [0], eventPositions: [0, 4 / 3] }]} />',
+      }],
+    });
+    expect(valid.valid).toBe(true);
+
+    const invalid = validateModuleInput({
+      id: "drums",
+      title: "Drums",
+      theoryBlocks: [{
+        id: "tb-1",
+        order: 1,
+        title: "Pattern",
+        markdownContent: "<DrumPattern steps={0} />",
+      }],
+    });
+    expect(invalid.valid).toBe(false);
+    expect(invalid.errors.join(" ")).toContain("DrumPattern");
   });
 
   it("speichert benannte Theorieblock-Gruppen und lehnt uneinheitliche Gruppen ab", () => {
@@ -490,16 +719,18 @@ describe("module-store Validierung & Store-Operationen", () => {
       id: "q-quiz",
       moduleIds: ["mod-summary"],
       targetLane: "mittel",
+      difficulty: "mittel",
       questionType: "numeric_input",
       prompt: "Quiz 1",
       correctAnswers: ["4"],
       tags: ["Gitarre"],
-    }); // baseXp 15 * 1.2 = 18
+    });
 
     db = upsertQuestion(db, {
       id: "q-fast",
       moduleIds: ["mod-summary"],
       targetLane: "schwer",
+      difficulty: "schwer",
       questionType: "interactive_notation",
       prompt: "Fastlane 1",
       notationTask: {
@@ -507,7 +738,7 @@ describe("module-store Validierung & Store-Operationen", () => {
         expectedPitches: ["E4", "G4"],
       },
       tags: ["Notensystem", "Violinschlüssel"],
-    }); // baseXp 25 * 1.5 = 38 (Math.round(37.5))
+    });
 
     const summary = getModuleSummary(db, "mod-summary");
     expect(summary).toEqual({
@@ -525,114 +756,190 @@ describe("module-store Validierung & Store-Operationen", () => {
       laneXp: {
         leicht: 15,
         mittel: 18,
-        schwer: 38,
+        schwer: 30,
       },
-      questionsXp: 71,
-      totalXp: 131,
+      questionsXp: 63,
+      totalXp: 123,
     });
 
     const afterQuestionDelete = deleteQuestion(db, "q-quiz");
     expect(getModuleSummary(afterQuestionDelete, "mod-summary")?.totalXp).toBe(
-      113,
+      105,
     );
     expect(getModuleSummary(db, "nicht-vorhanden")).toBeNull();
   });
 });
 
+vi.mock("@netlify/blobs", () => ({ getStore: vi.fn() }));
+
 describe("Modules Serverless API (/api/modules)", () => {
-  afterEach(() => {
-    vi.unstubAllEnvs();
-    vi.unstubAllGlobals();
+  let store;
+  const storedDb = () => store.value("modules");
+  beforeEach(() => {
+    vi.stubEnv("NETLIFY_DEV", "false");
+    store = mockBlobStore();
+    store.put("modules", { modules: [], questions: [] });
+    vi.mocked(getStore).mockReset().mockReturnValue(store);
+  });
+  afterEach(() => vi.unstubAllEnvs());
+
+  it.each(["true", "false"])("aktualisiert MDX-Kopien nur lokal (NETLIFY_DEV=%s)", async (local) => {
+    const synchronize = vi.spyOn(moduleArchive, "syncModuleArchivesAfterSave").mockResolvedValue();
+    vi.stubEnv("NETLIFY_DEV", local);
+    try {
+      const response = await modulesHandler(new Request("http://localhost/api/modules", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entity: "module", id: "m", title: "Test" }),
+      }));
+      expect(response.status).toBe(201);
+      if (local === "true") expect(synchronize).toHaveBeenCalledWith(storedDb());
+      else expect(synchronize).not.toHaveBeenCalled();
+    } finally {
+      synchronize.mockRestore();
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it("meldet ausdrücklich, wenn nur die Kopien nach dem Speichern fehlgeschlagen sind", async () => {
+    const message = "Die Moduldaten wurden gespeichert, aber die MDX-Kopien konnten nicht aktualisiert werden.";
+    const synchronize = vi.spyOn(moduleArchive, "syncModuleArchivesAfterSave")
+      .mockRejectedValue(new moduleArchive.ModuleArchiveSyncError(message));
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.stubEnv("NETLIFY_DEV", "true");
+    try {
+      const response = await modulesHandler(new Request("http://localhost/api/modules", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entity: "module", id: "m", title: "Test" }),
+      }));
+      expect(response.status).toBe(500);
+      expect(await response.json()).toEqual({ error: message });
+      expect(storedDb().modules[0].id).toBe("m");
+      expect(log).toHaveBeenCalled();
+    } finally {
+      synchronize.mockRestore();
+      log.mockRestore();
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it("speichert Modul und Lernpfad-Aufgaben gemeinsam oder lehnt den ganzen Schreibvorgang ab", async () => {
+    const request = (body) => modulesHandler(new Request("http://localhost/api/modules", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+    }));
+    const exercise = {
+      id: "q", moduleIds: ["m"], targetLane: "leicht",
+      questionType: "numeric_input", prompt: "Frage", correctAnswers: ["1"],
+    };
+    const payload = {
+      entity: "module", id: "m", title: "Test", contentOrder: [{ kind: "exercise", id: "q" }],
+    };
+    const invalid = await request({
+      ...payload, exercises: [exercise, { ...exercise, id: "invalid", correctAnswers: [] }],
+    });
+    expect(invalid.status).toBe(400);
+    expect(storedDb()).toEqual({ modules: [], questions: [] });
+    const saved = await request({ ...payload, exercises: [exercise] });
+    expect(saved.status).toBe(201);
+    expect(await saved.json()).toMatchObject({
+      module: { id: "m", contentOrder: payload.contentOrder },
+      questions: [exercise],
+    });
+    expect(storedDb().questions).toMatchObject([exercise]);
+  });
+
+  it.each(["theory", "practice"])("wandelt eine Lernpfad-Aufgabe atomar in einen %s-Block um", async (kind) => {
+    const exercise = {
+      id: "q", moduleIds: ["m"], targetLane: "leicht",
+      questionType: "numeric_input", prompt: "Oberton?", correctAnswers: ["880"],
+    };
+    const db = upsertModuleWithExercises(createEmptyModulesDatabase(), { id: "m", title: "Test" }, [exercise]);
+    store.put("modules", db);
+    const block = { id: "q", title: "Oberton", markdownContent: exercise.prompt, order: 1 };
+    const response = await modulesHandler(new Request("http://localhost/api/modules", {
+      method: "PUT", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        entity: "module", id: "m", title: "Test",
+        [kind === "theory" ? "theoryBlocks" : "practiceBlocks"]: [block],
+        contentOrder: [{ kind, id: "q" }],
+        exerciseRoleChanges: [{ kind, id: "q" }],
+      }),
+    }));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ questions: [] });
+    expect(storedDb().questions).toEqual([]);
+    expect(storedDb().modules[0][kind === "theory" ? "theoryBlocks" : "practiceBlocks"][0])
+      .toMatchObject({ id: "q", title: "Oberton" });
+  });
+
+  it.each([
+    { name: "fremde Lernpfad-Aufgabe", moduleIds: ["other"], targetLane: "leicht", replacement: true },
+    { name: "Quizfrage", moduleIds: ["m"], targetLane: "mittel", replacement: true },
+    { name: "fehlender Ersatzblock", moduleIds: ["m"], targetLane: "leicht", replacement: false },
+  ])("lehnt Rollenwechsel für $name ohne Teilspeicherung ab", async ({ moduleIds, targetLane, replacement }) => {
+    let db = upsertModule(createEmptyModulesDatabase(), { id: "m", title: "Unverändert" });
+    db = upsertModule(db, { id: "other", title: "Anderes Modul" });
+    db = upsertQuestion(db, {
+      id: "q", moduleIds, targetLane, questionType: "numeric_input",
+      prompt: "Oberton?", correctAnswers: ["880"],
+    });
+    store.put("modules", db);
+    const before = structuredClone(storedDb());
+    const response = await modulesHandler(new Request("http://localhost/api/modules", {
+      method: "PUT", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        entity: "module", id: "m", title: "Nicht speichern",
+        theoryBlocks: replacement ? [{ id: "q", title: "Ersatz", markdownContent: "Text", order: 1 }] : [],
+        contentOrder: replacement ? [{ kind: "theory", id: "q" }] : [],
+        exercises: [{
+          id: "new", moduleIds: ["m"], targetLane: "leicht",
+          questionType: "numeric_input", prompt: "Neue Aufgabe", correctAnswers: ["1"],
+        }],
+        exerciseRoleChanges: [{ id: "q", kind: "theory" }],
+      }),
+    }));
+    expect(response.status).toBe(400);
+    expect(storedDb()).toEqual(before);
   });
 
   it("speichert globale Grenzen mit Konfliktschutz und erhält sie bei späteren Moduländerungen", async () => {
-    vi.stubEnv("GITHUB_TOKEN", "test-token");
-    vi.stubEnv("GITHUB_REPOSITORY", "owner/repo");
-    let storedDb = { modules: [], questions: [] };
-    vi.stubGlobal("fetch", vi.fn(async (_url, init) => {
-      if (init?.method === "PUT") {
-        const body = JSON.parse(String(init.body));
-        storedDb = JSON.parse(Buffer.from(body.content, "base64").toString("utf8"));
-        return new Response("{}", { status: 200 });
-      }
-      return new Response(JSON.stringify({
-        sha: "sha-1",
-        content: Buffer.from(JSON.stringify(storedDb)).toString("base64"),
-      }), { status: 200 });
-    }));
     const request = (body) => modulesHandler(new Request("http://localhost/api/modules", {
       method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
     }));
     const settings = { quizEasyMinScore: 0.9, fastlaneMinScore: 0.95, revision: 0 };
     expect((await request({ entity: "quiz-settings", settings })).status).toBe(200);
-    expect(storedDb.quizSettings).toEqual({ ...settings, revision: 1 });
+    expect(storedDb().quizSettings).toEqual({ ...settings, revision: 1 });
     expect((await request({ entity: "quiz-settings", settings })).status).toBe(409);
     expect((await request({ entity: "module", id: "m", title: "Test" })).status).toBe(200);
-    expect(storedDb.quizSettings.revision).toBe(1);
+    expect(storedDb().quizSettings.revision).toBe(1);
     const current = { ...settings, revision: 1 };
     expect((await request({ entity: "quiz-settings", settings: current })).status).toBe(200);
-    expect(storedDb.quizSettings.revision).toBe(1);
+    expect(storedDb().quizSettings.revision).toBe(1);
     expect((await request({ entity: "quiz-settings", settings: { ...current, quizEasyMinScore: 2 } })).status).toBe(400);
   });
 
-  it("weist nicht unterstützte Methoden und fehlende Env-Konfiguration ab", async () => {
+  it("weist nicht unterstützte Methoden und fehlenden Blob-Kontext ab", async () => {
     const patchRes = await modulesHandler(
       new Request("http://localhost/api/modules", { method: "PATCH" }),
     );
     expect(patchRes.status).toBe(405);
 
-    vi.stubEnv("GITHUB_TOKEN", "");
-    vi.stubEnv("GITHUB_REPOSITORY", "");
+    vi.mocked(getStore).mockImplementation(() => {
+      throw Object.assign(new Error("Kein Blob-Kontext"), { name: "MissingBlobsEnvironmentError" });
+    });
     const envRes = await modulesHandler(
       new Request("http://localhost/api/modules", { method: "GET" }),
     );
     expect(envRes.status).toBe(503);
   });
 
-  it("liest per GET, speichert per POST mit 409-Retry und löscht per DELETE", async () => {
-    vi.stubEnv("GITHUB_TOKEN", "test-token");
-    vi.stubEnv("GITHUB_REPOSITORY", "owner/repo");
-    vi.stubEnv("GITHUB_MODULES_PATH", "data/modules.json");
-
-    let storedDb = { modules: [], questions: [] };
-    let putAttempts = 0;
-
-    const fetchMock = vi.fn(async (_url, init) => {
-      if (!init || init.method === undefined || init.method === "GET") {
-        return new Response(
-          JSON.stringify({
-            sha: "sha-1",
-            content: Buffer.from(JSON.stringify(storedDb), "utf8").toString(
-              "base64",
-            ),
-          }),
-          { status: 200 },
-        );
-      }
-
-      if (init.method === "PUT") {
-        putAttempts += 1;
-        if (putAttempts === 1) {
-          storedDb.modules.push({
-            id: "concurrent", order: 4, title: "Gleichzeitig hinzugefügt",
-          });
-          return new Response(JSON.stringify({ message: "Conflict" }), {
-            status: 409,
-          });
-        }
-        const body = JSON.parse(String(init.body));
-        storedDb = JSON.parse(
-          Buffer.from(body.content, "base64").toString("utf8"),
-        );
-        return new Response(JSON.stringify({ content: { sha: "sha-2" } }), {
-          status: 200,
-        });
-      }
-
-      return new Response(null, { status: 500 });
+  it("liest per GET, speichert per POST trotz ETag-Konflikt und löscht per DELETE", async () => {
+    store.setJSON.mockImplementationOnce(async () => {
+      store.put("modules", {
+        ...storedDb(),
+        modules: [{ id: "concurrent", order: 4, title: "Gleichzeitig hinzugefügt" }],
+      });
+      return { modified: false };
     });
-
-    vi.stubGlobal("fetch", fetchMock);
 
     const postModRes = await modulesHandler(
       new Request("http://localhost/api/modules", {
@@ -647,9 +954,9 @@ describe("Modules Serverless API (/api/modules)", () => {
       }),
     );
     expect(postModRes.status).toBe(201);
-    expect(putAttempts).toBe(2);
-    expect(storedDb.modules).toHaveLength(2);
-    expect(storedDb.modules.find((mod) => mod.id === "mod-api-1").order).toBe(5);
+    expect(store.setJSON).toHaveBeenCalledTimes(2);
+    expect(storedDb().modules).toHaveLength(2);
+    expect(storedDb().modules.find((mod) => mod.id === "mod-api-1").order).toBe(5);
 
     const postQRes = await modulesHandler(
       new Request("http://localhost/api/modules", {
@@ -669,7 +976,7 @@ describe("Modules Serverless API (/api/modules)", () => {
       }),
     );
     expect(postQRes.status).toBe(201);
-    expect(storedDb.questions).toHaveLength(1);
+    expect(storedDb().questions).toHaveLength(1);
 
     const getRes = await modulesHandler(
       new Request("http://localhost/api/modules", { method: "GET" }),
@@ -692,7 +999,7 @@ describe("Modules Serverless API (/api/modules)", () => {
       }),
     );
     expect(moveRes.status).toBe(200);
-    expect(storedDb.modules.map((mod) => mod.id)).toEqual(["mod-api-1", "concurrent"]);
+    expect(storedDb().modules.map((mod) => mod.id)).toEqual(["mod-api-1", "concurrent"]);
     const staleMove = await modulesHandler(
       new Request("http://localhost/api/modules", {
         method: "PUT",
@@ -715,7 +1022,7 @@ describe("Modules Serverless API (/api/modules)", () => {
       }),
     );
     expect(delRes.status).toBe(200);
-    expect(storedDb.modules.map((mod) => mod.id)).toEqual(["concurrent"]);
-    expect(storedDb.questions).toEqual([]);
+    expect(storedDb().modules.map((mod) => mod.id)).toEqual(["concurrent"]);
+    expect(storedDb().questions).toEqual([]);
   });
 });

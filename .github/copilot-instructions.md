@@ -1,41 +1,24 @@
-# Projektinstruktionen: Mein Musik-Hub
+## Projektinstruktionen: Mein Musik-Hub
 
-## Projekt und Referenzen
+### Projekt und Referenzen
+* Musiklern- und Dokumentationsplattform mit Astro Starlight, MDX und TypeScript. Abhängigkeiten und Skripte stehen in `package.json`.
+* **Architektur & Struktur:** [README_ASTROSTRUCTURE.md](../README_ASTROSTRUCTURE.md).
+* **Features & Subsysteme:** [README_FEAT.md](../features/README_FEAT.md), [Notations-API](../features/README_FEAT_NOTATION.md), [Modul-Builder & Lernpfad](../features/README_FEAT_MODULEBUILDER.md) und [Netlify Blobs](../features/README_FEAT_NETLIFYBLOB.md).
+* **Setup, Tests & Workflow:** [README_WORKSPACE_SETUP.md](../README_WORKSPACE_SETUP.md), [README_TESTING.md](../README_TESTING.md) und [README_WORKFLOW.md](../README_WORKFLOW.md).
 
-- Musiklern- und Dokumentationsplattform mit Astro Starlight, MDX und TypeScript. Abhängigkeiten und Skripte stehen in `package.json`.
-- Architektur und Projektstruktur: [README_ASTROSTRUCTURE.md](../README_ASTROSTRUCTURE.md). Feature-Übersicht und Notationsreferenz: [README_FEAT.md](../features/README_FEAT.md) und [README_FEAT_NOTATION.md](../features/README_FEAT_NOTATION.md).
-- Einrichtung und Teststrategie: [README_WORKSPACE_SETUP.md](../README_WORKSPACE_SETUP.md) und [README_TESTING.md](../README_TESTING.md). Den Entwicklungs- und Abschlussablauf beschreibt [README_WORKFLOW.md](../README_WORKFLOW.md).
+### Architektur und Umsetzung
+* **Wiederverwendung & Kapselung:** Vor Änderungen vorhandene Komponenten, Controller und Stores in `src/lib/` und `src/components/` prüfen und wiederverwenden. Fachlogik und Zustandsverwaltung in `src/lib/` von DOM-Interaktion und Astro-Templates trennen.
+* **Notationssystem:** Notationsdarstellungen ausschließlich über `src/lib/notation-renderer.ts` und Komponenten in `src/components/notation/` umsetzen. Den nativen SVG-Renderer strikt unabhängig von AlphaTab (`SheetMusicPlayer.astro`) und MusicXML halten.
+* **Modul-Builder & Lernpfad:** Schemata (`src/lib/module-schema.ts`), Store (`src/lib/module-store.ts`), XP-Tags (`src/lib/xp-tags.ts`) und UI-Controller (`src/lib/module-builder-ui.ts`, `src/lib/module-player-ui.ts`) als zentrale Quellen nutzen.
+* **Schlanke UI & MDX-Seiten:** Lektionsseiten in `src/content/docs/` deklarativ halten und wiederverwendbare Komponenten einbinden. Admin-Oberflächen (`ModuleBuilderForm`, `IssueTrackerForm`) nicht mit langen Handbuchtexten überladen – nutzerorientierte Bedienungsanleitungen gehören ins Wiki unter `src/content/docs/wiki/`.
+* **Styling & Bundles:** Gemeinsame Styles unter `src/styles/` pflegen; bestehende lokale `<style>`-Blöcke und dynamische CSS-Variablen respektieren. KaTeX läuft über `remark-math` und `rehype-katex`; schwere Bibliotheken (AlphaTab, KaTeX) nur dort laden, wo sie benötigt werden.
+* **Persistenz:** Netlify Functions (`netlify/functions/`) nutzen Netlify Blobs (`@netlify/blobs`); nur der reine Astro-Dev-Server nutzt für Module die lokale Datei-API.
 
-## Architektur und Umsetzung
-
-- Vor Änderungen vorhandene Komponenten, Helfer und Muster prüfen und wiederverwenden. Fachlogik nach Möglichkeit von Darstellung und DOM-Interaktion trennen; `src/lib/` enthält auch Controller und Stores.
-- Notationsdarstellungen über den gemeinsamen Renderer `src/lib/notation-renderer.ts` und wiederverwendbare Komponenten in `src/components/notation/` und `src/components/ui/` umsetzen. Neue gemeinsame Glyphen und Positionierungsregeln zentral ergänzen, nicht in einzelnen Übersichten oder Quizzen duplizieren.
-- Den nativen SVG-Renderer unabhängig von AlphaTab und MusicXML halten. `SheetMusicPlayer.astro` nutzt AlphaTab für Partituren; Audiowiedergabe benötigt eine SoundFont.
-- Lektionsseiten in `src/content/docs/` möglichst übersichtlich halten und wiederverwendbare Darstellungen als Komponenten einbinden. Vorhandene lokale `<style>`-Blöcke und dynamische Inline-Werte sind Teil der bestehenden Architektur; gemeinsame Styles liegen unter `src/styles/`.
-- KaTeX verarbeitet mathematische Ausdrücke über `remark-math` und `rehype-katex`. Große Bibliotheken nur dort einbinden, wo sie benötigt werden.
-- Netlify Functions für Beiträge und Module verwenden die GitHub-API. Der lokale Astro-Dev-Server bietet für Module zusätzlich eine lokale Datei-API; Einzelheiten und Umgebungsvariablen stehen im Workspace-Setup.
-- Änderungen gezielt halten, bestehendes Verhalten erhalten und relevante Dokumentation sowie geeignete Tests aktualisieren. Vor Feature-Abschluss das Quality Gate `npm run preflight` gemäß Workflow ausführen.
-
-## Intervallfarben
-
-Für Intervall-Darstellungen die bestehende Palette verwenden; sie beschreibt Intervallrollen, nicht beliebige Ton- oder UI-Farben.
-
-| Intervall | Farbe |
-| :--- | :--- |
-| Grundton (`1`) | `#F38181` |
-| Kleine Sekunde (`♭2`) | `#FFAAA6` |
-| Große Sekunde (`2`) | `#F4C7AB` |
-| Kleine Terz (`♭3`) | `#EAA0E3` |
-| Große Terz (`3`) | `#D382DC` |
-| Reine Quarte (`4`) | `#B862D3` |
-| Tritonus (`♭5` / `♯4`) | `#7F8BE8` |
-| Reine Quinte (`5`) | `#64C4ED` |
-| Kleine Sexte (`♭6`) | `#52DEE5` |
-| Große Sexte (`6`) | `#6BE4C6` |
-| Kleine Septime (`♭7`) | `#83E8BA` |
-| Große Septime (`7`) | `#CBDD7B` |
-
-## Inhalte und Kommunikation
-
-- Lehrinhalte auf Deutsch prägnant und fachlich korrekt schreiben; Tabellen, Listen und Formeln einsetzen, wenn sie das jeweilige Thema verständlicher machen.
-- In Antworten Änderungen und Prüfergebnisse knapp zusammenfassen; unveränderte Dateien nicht vollständig wiedergeben, außer wenn ausdrücklich angefordert.
+### Testing, Dokumentation & Arbeitsweise
+* **Test-Stack:** Unit- und DOM-Tests laufen über **Vitest + happy-dom** (`tests/`), E2E-Tests über **Playwright**, Link- und Skript-Prüfungen über `tests/documentation.test.ts`. Neue Funktionen und Bugfixes immer mit passenden Tests absichern.
+* **Dokumentation (Single Source of Truth):** Technische Feature-Referenzen in `features/README_FEAT_<NAME>.md` pflegen und in `features/README_FEAT.md` verlinken. Für nutzerseitig bedienbare Features eine Anleitung im Wiki erstellen oder aktualisieren und mit der Oberfläche verknüpfen; keine redundanten Volltexte in `README.md` anlegen.
+* **Keine Quellen-Zitate:** Keine HTML-Zitat-Tags, Fußnoten-Zitate oder generierte Quellenmarker in Code, Markdown-Dateien, Dokumentation oder Antworten ausgeben.
+* **Lesbare Modulkopien:** `module-archives/README.md` listet alle Module auf; pro Lektionsseite liegt eine MDX-Kopie mit Text, Darstellungen, Fragen, Antworten und Erklärungen vor. `/module-archives/` stellt die Seiten im Browser dar. Lokale Builder-Speichervorgänge aktualisieren Kopien und Übersicht automatisch; `npm run archive:modules` liest den laufenden lokalen Netlify-Dev-Katalog erneut ein. Beim reinen Astro-Dev-Server `-- --url http://localhost:4321/api/modules` ergänzen. Die Dateien sind nicht die Datenquelle des Builders. Online-Änderungen können den lokalen Worktree nicht aktualisieren. Unveränderte Dateien nicht neu schreiben; alte Archivdateien nicht automatisch löschen. Nicht angeforderte Live-Inhalte niemals entfernen oder ersetzen; vor Löschungen die betroffenen Inhalte konkret benennen und die Bestätigung des Nutzers einholen.
+* **Prüfungen während der Entwicklung:** Keine Tests automatisch nach einzelnen Änderungen starten, auch nicht bei größeren Komponenten- oder Doku-Änderungen. Nutzer-Prompts im laufenden Chat zählen und nach jedem zehnten Prompt über das Rückfragewerkzeug fragen, ob Stufen 1 und 2 ausgeführt werden sollen. Nur bei Zustimmung oder einem ausdrücklichen Testauftrag testen; bei Ablehnung ohne Tests weiterarbeiten. Anschließend beginnt der nächste Zehnerblock. Toolaufrufe und Systemmeldungen zählen nicht als Prompts. Zur Änderung passende Unit- und Komponententests wählen, bei Doku-Änderungen auch den Dokumentationstest. Kein vollständiges `npm test` als Routineprüfung für Zwischenschritte, Zwischen-Commits oder Zwischen-Pushes.
+* **Branch-Abschluss:** Stufen 0, 3 und 4 laufen ausschließlich im manuell vom Nutzer gestarteten `npm run preflight` am Branch-Ende. Copilot startet weder den Preflight noch diese Stufen separat. Der Preflight enthält auch Stufen 1 und 2 sowie Lighthouse; `npm run audit` bleibt ein separater manueller Abschlusscheck. Siehe [Testing-Leitfaden](../README_TESTING.md).
+* **Token-Sparmodus:** Gezielte Diffs statt kompletter unveränderter Dateien ausgeben und nach Abschluss der angeforderten Aufgabe stoppen.

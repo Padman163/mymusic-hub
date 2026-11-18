@@ -1,0 +1,164 @@
+import DrumPattern from "../../src/components/DrumPattern.astro";
+
+import Notation from "../../src/components/notation/Notation.astro";
+
+import NotationKeyboard from "../../src/components/notation/NotationKeyboard.astro";
+
+
+
+# 102: Drei Muster vergleichen
+
+## Drei Muster vergleichen
+
+Für diese drei Muster bleibt der Puls gleich schnell. Jedes blaue Feld steht für einen Klang.
+
+- **Muster A:** ein Klang auf jedem Schlag.
+- **Muster B:** Klänge auf **1 und 3**.
+- **Muster C:** Klänge auf **2 und 4**.
+
+<DrumPattern
+  steps={4}
+  timeSignature={"4/4"}
+  resolution={"1/4"}
+  stepLabels={["1","2","3","4"]}
+  interactive={false}
+  showFooter={true}
+  showFooterInfo={false}
+  showVelocity={false}
+  showTrackNote={false}
+  useTrackColors={true}
+  patternData={[{"name":"Muster A","note":"C1","color":"#3b82f6","activeSteps":[0,1,2,3]},{"name":"Muster B","note":"C1","color":"#3b82f6","activeSteps":[0,2]},{"name":"Muster C","note":"C1","color":"#3b82f6","activeSteps":[1,3]}]}
+/>
+
+Vergleiche die Muster und beantworte die drei Theoriefragen.
+
+## Aufgabe: Jeder Schlag
+
+Welches Muster setzt auf jedem 2. Schlag ein?
+
+<DrumPattern
+  steps={4}
+  timeSignature={"4/4"}
+  resolution={"1/4"}
+  stepLabels={["1","2","3","4"]}
+  interactive={false} 
+  showFooter={true}
+  showFooterInfo={false}
+  showVelocity={false}
+  showTrackNote={false}
+  useTrackColors={true}
+  patternData={[{"name":"Muster A","note":"C1","color":"#3b82f6","activeSteps":[0,1,2,3]},{"name":"Muster B","note":"C1","color":"#3b82f6","activeSteps":[0,2]},{"name":"Muster C","note":"C1","color":"#3b82f6","activeSteps":[1,3]}]}
+/>
+
+- A
+
+- B
+
+- C
+
+<details>
+
+<summary>Hinweis</summary>
+
+Schau dir die vier Felder von Muster A an.
+
+</details>
+
+<details>
+
+<summary>Lösung und Erklärung</summary>
+
+**Richtige Antwort:** C
+
+Muster A hat auf jedem der vier Schläge einen Klang.
+Muster B hat auf den ersten und dritten Schlag einen Klang.
+Muster C hat auf den zweiten und vierten Schlag einen Klang.
+
+</details>
+
+## Aufgabe: Unterschiedlich viele Klänge
+
+Was unterscheidet Muster B von Muster A, wenn der Puls gleich schnell bleibt?
+
+<DrumPattern
+  steps={4}
+  timeSignature={"4/4"}
+  resolution={"1/4"}
+  stepLabels={["1","2","3","4"]}
+  interactive={false}  
+ highlightTracks={["Muster A", "Muster B"]}
+  showFooter={true}
+  showFooterInfo={false}
+  showVelocity={false}
+  showTrackNote={false}
+  useTrackColors={true}
+  patternData={[{"name":"Muster A","note":"C1","color":"#3b82f6","activeSteps":[0,1,2,3]},{"name":"Muster B","note":"C1","color":"#3b82f6","activeSteps":[0,2]},{"name":"Muster C","note":"C1","color":"#3b82f6","activeSteps":[1,3]}]}
+/>
+
+- B hat doppelt so viele Klänge.
+
+- B hat genauso viele Klänge.
+
+- B hat halb so viele Klänge.
+
+<details>
+
+<summary>Hinweis</summary>
+
+Vergleiche die Anzahl der blauen Felder.
+
+</details>
+
+<details>
+
+<summary>Lösung und Erklärung</summary>
+
+**Richtige Antwort:** B hat halb so viele Klänge.
+
+A hat vier Klänge, B nur zwei: auf 1 und 3. B kann dadurch ruhiger oder langsamer wirken. Das Tempo des Pulses bleibt trotzdem gleich.
+
+</details>
+
+## Aufgabe: Andere Stellen
+
+Warum kann sich Muster C anders anfühlen als Muster B?
+
+<DrumPattern
+  steps={4}
+  timeSignature={"4/4"}
+  resolution={"1/4"}
+  stepLabels={["1","2","3","4"]}
+  interactive={false}  
+ highlightTracks={["Muster B", "Muster C"]}
+  showFooter={true}
+  showFooterInfo={false}
+  showVelocity={false}
+  showTrackNote={false}
+  useTrackColors={true}
+  patternData={[{"name":"Muster A","note":"C1","color":"#3b82f6","activeSteps":[0,1,2,3]},{"name":"Muster B","note":"C1","color":"#3b82f6","activeSteps":[0,2]},{"name":"Muster C","note":"C1","color":"#3b82f6","activeSteps":[1,3]}]}
+/>
+
+- Die Klänge liegen nicht auf der 1
+
+- Muster C hat mehr Klänge.
+
+- Der Puls ist bei Muster C schneller.
+
+<details>
+
+<summary>Hinweis</summary>
+
+Vergleiche die Zahlen über den blauen Feldern bei B und C.
+
+</details>
+
+<details>
+
+<summary>Lösung und Erklärung</summary>
+
+**Richtige Antwort:** Die Klänge liegen nicht auf der 1
+
+Beide Muster haben zwei Klänge. Bei C setzen sie an anderen Stellen ein. Dadurch ändert sich das Gefühl, nicht das Tempo.
+
+</details>
+

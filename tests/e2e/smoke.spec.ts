@@ -18,6 +18,108 @@ for (const path of pages) {
   });
 }
 
+test('gliedert die Navigation in Admin, Bediener und Sonstiges', async ({ page }) => {
+  await page.goto('/');
+
+  const sections = page
+    .getByRole('navigation', { name: 'Hauptnavigation', includeHidden: true })
+    .locator('.top-level > li > details');
+  await expect(sections.locator(':scope > summary')).toHaveText([
+    'Admin',
+    'Bediener',
+    'Sonstiges',
+  ]);
+  await expect(sections.nth(0).locator(':scope > ul > li > details > summary')).toHaveText([
+    'Projektierung',
+  ]);
+  await expect(sections.nth(0).getByRole('link', { name: 'Admin-Wiki', exact: true, includeHidden: true }))
+    .toHaveAttribute('href', '/admin-wiki/');
+  const dashboard = sections.nth(1).getByRole('link', { name: 'Dashboard', includeHidden: true });
+  await expect(dashboard).toHaveAttribute('href', '/audio/theory/lernpfad/');
+  await expect(sections.nth(2).locator(':scope > ul > li > details > summary')).toHaveText([
+    'Wiki',
+    'Lehrgänge (Level 100-500)',
+    'Songwriting',
+    'Referenz & Werkzeuge',
+  ]);
+  await expect(sections.nth(2).locator('a[href="/audio/theory/lernpfad/"]')).toHaveCount(0);
+});
+
+test('zeigt Entwickler-READMEs im Admin-Wiki und verknüpft sie untereinander', async ({ page }) => {
+  await page.goto('/admin-wiki/');
+  await expect(page.getByRole('heading', { level: 1, name: 'Admin-Wiki' })).toBeVisible();
+  await page.locator('main a[href="/admin-wiki/readme-astrostructure/"]').click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Astro-Architektur nach dem Lego-Prinzip' })).toBeVisible();
+  await page.locator('main').getByRole('link', { name: 'Workspace-Setup', exact: true }).first().click();
+  await expect(page).toHaveURL('/admin-wiki/readme-workspace-setup/');
+});
+
+test('filtert Beiträge standardmäßig nach offenen Status', async ({ page }) => {
+  await page.route('**/api/contributions', (route) =>
+    route.fulfill({
+      json: {
+        contributions: [
+          { id: 'new', type: 'Feature', title: 'Neuer Beitrag', description: '', createdAt: '2025-01-03T00:00:00.000Z' },
+          { id: 'active', type: 'Bug', title: 'Aktiver Beitrag', description: '', createdAt: '2025-01-02T00:00:00.000Z', status: 'Active' },
+          { id: 'resolved', type: 'Decision', title: 'Erledigter Beitrag', description: '', createdAt: '2025-01-01T00:00:00.000Z', status: 'Resolved' },
+        ],
+      },
+    }),
+  );
+  await page.goto('/projektierung/beitraege/');
+
+  const resolved = page.locator('[data-contribution-id="resolved"]');
+  await expect(page.locator('[data-contribution-id="new"]')).toBeVisible();
+  await expect(page.locator('[data-contribution-id="active"]')).toBeVisible();
+  await expect(resolved).toBeHidden();
+
+  await page.locator('.contribution-menu').first().locator('summary').click();
+  await page.locator('#filter-status').selectOption('Resolved');
+  await expect(resolved).toBeVisible();
+  await expect(page.locator('[data-contribution-id="new"]')).toBeHidden();
+
+  await page.locator('#filter-status').selectOption('');
+  await expect(page.locator('#contribution-list > li')).toHaveCount(3);
+});
+
+test('verbindet Beiträge mit der Wiki-Anleitung', async ({ page }) => {
+  await page.route('**/api/contributions', (route) =>
+    route.fulfill({ json: { contributions: [] } }),
+  );
+  await page.goto('/projektierung/beitraege/');
+  await page.getByRole('link', { name: 'Anleitung: Beiträge verwalten' }).click();
+  await expect(page).toHaveURL('/wiki/beitraege/');
+  await expect(page.getByRole('heading', { level: 1, name: 'Beiträge verwalten' })).toBeVisible();
+  await page.getByRole('link', { name: 'Projektierung → Beiträge' }).click();
+  await expect(page).toHaveURL('/projektierung/beitraege/');
+});
+
+for (const guide of [
+  { source: '/projektierung/modul-builder/', link: 'Anleitung: Modul-Builder bedienen', target: '/wiki/modul-builder/', title: 'Modul-Builder bedienen' },
+  { source: '/audio/referenzen-werkzeuge/visualisierungen-erklaert/notationbuilder/', link: 'Anleitung: NotationBuilder bedienen', target: '/wiki/notation-builder/', title: 'NotationBuilder bedienen' },
+]) {
+  test(`öffnet die Wiki-Anleitung: ${guide.title}`, async ({ page }) => {
+    await page.route('**/api/modules', (route) =>
+      route.fulfill({ json: createModulesTestDatabase() }),
+    );
+    await page.goto(guide.source);
+    await page.getByRole('link', { name: guide.link }).click();
+    await expect(page).toHaveURL(guide.target);
+    await expect(page.getByRole('heading', { level: 1, name: guide.title })).toBeVisible();
+  });
+}
+
+test('ermöglicht Noteneingabe im Wiki-Beispiel', async ({ page }) => {
+  await page.goto('/wiki/notation-builder/');
+  const builder = page.locator('[data-notation-builder]').first();
+  await builder.focus();
+  await page.keyboard.press('Space');
+  await expect(builder).toHaveAttribute('data-placed-count', '1');
+  await page.keyboard.press('ArrowLeft');
+  await page.keyboard.press('Delete');
+  await expect(builder).toHaveAttribute('data-placed-count', '0');
+});
+
 test('gruppiert Builder-Karten und hält Aktionen bedienbar', async ({ page }) => {
   await page.goto('/projektierung/modul-builder/');
   await expect(page.getByRole('tab')).toHaveText([
@@ -31,17 +133,29 @@ test('gruppiert Builder-Karten und hält Aktionen bedienbar', async ({ page }) =
 
   await page.getByRole('tab', { name: 'Modul erstellen' }).click();
   await page.locator('.theory-block-add').click();
+  await page.locator('.module-block-pending').getByText('Theorieteil', { exact: true }).click();
   await page.locator('.theory-block-add').click();
+  await page.locator('.module-block-pending').getByText('Theorieteil', { exact: true }).click();
   const rows = page.locator('.theory-block-row');
   await expect(rows).toHaveCount(2);
 
   const actionButton = page.locator('.theory-block-group-selected');
+  const addButton = page.locator('.theory-block-add');
+  const groupMargin = await actionButton.evaluate((button) => getComputedStyle(button).marginBottom);
+  const addMargin = await addButton.evaluate((button) => getComputedStyle(button).marginTop);
+  expect(parseFloat(addMargin)).toBeGreaterThan(0);
+  expect(addMargin).toBe(groupMargin);
+  const blocksBox = await page.locator('.theory-block-rows').boundingBox();
+  const addBox = await addButton.boundingBox();
+  expect(blocksBox).not.toBeNull();
+  expect(addBox).not.toBeNull();
+  expect(addBox!.y - (blocksBox!.y + blocksBox!.height)).toBeGreaterThanOrEqual(parseFloat(addMargin) - 1);
   await rows.nth(0).locator('.theory-block-select').check();
   await rows.nth(1).locator('.theory-block-select').check();
   await actionButton.click();
   await page.locator('.theory-group-summary').click();
   await expect(page.locator('.theory-block-row[data-group-position="last"]')).toBeVisible();
-  await expect(page.locator('.theory-block-add-type')).toBeVisible();
+  await expect(page.locator('.theory-block-add-type')).toHaveCount(0);
   for (const button of [actionButton, page.locator('.theory-block-add')]) {
     await expect(button).toBeVisible();
     const box = await button.boundingBox();
@@ -84,6 +198,24 @@ test('öffnet ein Modul zur Bearbeitung und kehrt zur Übersicht zurück', async
   await expect(page.getByRole('link', { name: 'Schall & Frequenz bearbeiten', exact: true })).toBeVisible();
 });
 
+test('lädt den Lernpfad samt Notationsaufgabe ohne eingebettete Moduldaten', async ({ page }) => {
+  const database = createModulesTestDatabase();
+  database.questions = database.questions.filter((question) => question.id === 'q-101-fast-2');
+  await page.route('**/api/modules', (route) => route.fulfill({ json: database }));
+
+  await page.goto('/audio/theory/lernpfad/');
+  const roadmap = page.locator('[data-learning-roadmap]');
+  await expect(roadmap.getByText('1. Schall & Frequenz', { exact: true })).toBeVisible();
+
+  await page.goto('/audio/theory/modul/?id=theory-101&mode=fastlane');
+  const stepper = page.locator('[data-learning-stepper]');
+  await expect(stepper.getByText('Setze C4 im Violinschlüssel.', { exact: true })).toBeVisible();
+  const builder = stepper.locator('[data-notation-builder]');
+  await expect(builder.locator('svg').first()).toBeVisible();
+  await builder.press('Space');
+  await expect(builder).toHaveAttribute('data-placed-count', '1');
+});
+
 test('richtet den Cursor der Notationsvorschau an den Noten aus', async ({ page }) => {
   await page.goto('/projektierung/modul-builder/');
   await page.getByRole('tab', { name: 'Quizfragen' }).click();
@@ -108,32 +240,23 @@ test('richtet den Cursor der Notationsvorschau an den Noten aus', async ({ page 
   for (let slot = 0; slot < 4; slot += 1) {
     await page.keyboard.press('Space');
   }
-  const alignment = await preview.evaluate((el) => {
-    const notes = [...el.querySelectorAll<SVGElement>('.notation-note')];
-    return notes.map((note) => {
-      const nRect = note.getBoundingClientRect();
-      return {
-        cx: nRect.left + nRect.width / 2,
-        cy: nRect.top + nRect.height / 2,
-      };
-    });
-  });
-  expect(alignment).toHaveLength(4);
+  await expect(preview.locator('.notation-note')).toHaveCount(4);
   for (let slot = 0; slot < 3; slot += 1) {
     await page.keyboard.press('ArrowLeft');
   }
   for (let slot = 0; slot < 4; slot += 1) {
-    const cursorCenter = await preview
-      .locator('.notation-builder-cursor-head')
-      .evaluate((cursor) => {
-        const cRect = cursor.getBoundingClientRect();
-        return {
-          cx: cRect.left + cRect.width / 2,
-          cy: cRect.top + cRect.height / 2,
-        };
-      });
-    expect(Math.abs(cursorCenter.cx - alignment[slot].cx)).toBeLessThan(1);
-    expect(Math.abs(cursorCenter.cy - alignment[slot].cy)).toBeLessThan(1);
+    await expect(preview).toHaveAttribute('data-active-slot', String(slot));
+    await expect.poll(() => preview.evaluate((el, index) => {
+      const note = el.querySelectorAll('.notation-note')[index];
+      const cursor = el.querySelector('.notation-builder-cursor-head');
+      if (!note || !cursor) throw new Error('Note oder Cursor fehlt in der Notationsvorschau.');
+      const nRect = note.getBoundingClientRect();
+      const cRect = cursor.getBoundingClientRect();
+      return Math.max(
+        Math.abs(cRect.left + cRect.width / 2 - (nRect.left + nRect.width / 2)),
+        Math.abs(cRect.top + cRect.height / 2 - (nRect.top + nRect.height / 2)),
+      );
+    }, slot)).toBeLessThan(1);
     if (slot < 3) {
       await page.keyboard.press('ArrowRight');
     }

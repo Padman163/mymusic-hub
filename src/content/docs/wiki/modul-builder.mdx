@@ -1,0 +1,122 @@
+---
+title: Modul-Builder bedienen
+description: Lernmodule und Aufgaben erstellen und verwalten.
+---
+
+Mit dem [Modul-Builder](/projektierung/modul-builder/) erstellst du Lernmodule und Aufgaben für den Lernpfad. Die Oberfläche hat vier Reiter: **Übersicht**, **Modul erstellen**, **Quizfragen** und **Einstellungen**.
+
+## Ein Modul erstellen
+
+1. Öffne **Projektierung → Modul-Builder** und wähle **Modul erstellen**.
+2. Klappe **Allgemeine Informationen** auf und gib einen Modultitel ein. Ergänze bei Bedarf eine Kurzbeschreibung, Bereich, Level, D-Stufe und Themen-Tags.
+3. Wähle **+ Block hinzufügen**. Der neue Block ist zunächst leer und zeigt nur die **Blockrolle**. Wähle eines der Badges **Theorieteil**, **Aufgabenbeschreibung**, **Praxisaufgabe** oder **Aufgabe**; erst dann öffnet sich die passende Eingabevorlage.
+4. Klappe einen Block auf, um ihn zu bearbeiten und rechts die passende Vorschau auf gleicher Höhe zu sehen. Beide Bereiche öffnen und schließen sich gemeinsam; du kannst den Zustand auch rechts umschalten. Bei Lernpfad-Aufgaben wählst du einen Aufgabentyp und hinterlegst die Lösung; einfache und stärkere Hinweise sind optional. Die Vorschau aktualisiert sich während der Eingabe.
+5. Wähle **Modul speichern**. Das Modul und seine Lernpfad-Aufgaben werden gemeinsam gespeichert. Achte auf die Rückmeldung unter dem Formular.
+
+Ein Modultitel wäre etwa „Schall, Frequenz & Tonsystem“, ein Blocktitel „Frequenz & Tonhöhe“. Die Kurzbeschreibung fasst zusammen, worum es im Modul geht.
+
+Das Feld **Inhalt** für Theorieblöcke und Aufgabenbeschreibungen zeigt standardmäßig zwölf Textzeilen und lässt sich am unteren Rand weiter vergrößern.
+
+Du kannst die **Blockrolle** auch bei vorhandenen Blöcken ändern. Titel und Text werden übernommen; Position und Gruppierung bleiben erhalten. Aufgabentyp, Antworten, Hinweise, Schwierigkeit und Tags bleiben beim Hin- und Zurückwechseln während der laufenden Bearbeitung erhalten, auch bei noch unvollständigen Eingaben. Beim Speichern wird nur die aktive Rolle gespeichert; nach einem Neuladen stehen die anderen Vorlagenentwürfe nicht mehr zur Verfügung. Eine gespeicherte Aufgabe wird erst mit **Modul-Änderungen speichern** in einen anderen Block umgewandelt. Wähle für jeden neuen Block eine Rolle oder entferne ihn vor dem Speichern mit **×**.
+
+Die Eingabefelder für **Basis-XP** sind vorerst im gesamten Modul-Builder ausgeblendet. Aufgaben verwenden immer **10 Basis-XP**, auch bereits vorhandene. Die Basiswerte von Theorie- und Praxisblöcken bleiben unverändert.
+
+Blocküberschrift und Vorschautitel stehen rechts und links auf gleicher Höhe und verwenden dieselbe Schriftgröße. Darüber bleiben die Blockbuttons rechts und die XP-Anzeige immer links frei. Aufgeklappt steht vor dem XP-Wert zusätzlich **berechnet:**. Auf schmalen Bildschirmen steht die Vorschau unter dem Editor.
+
+Die XP-Farbe zeigt die Blockrolle: **Theorieteile weiß/neutral**, **Aufgaben und Aufgabenbeschreibungen blau**, **Praxisaufgaben grün**. Gruppen mit unterschiedlichen Rollen sind **gelb**; Aufgaben und Aufgabenbeschreibungen gelten dabei gemeinsam als blau. Die Farbe hängt nicht von der XP-Anzahl ab. **+ Block hinzufügen** hat denselben Abstand zur Blockliste wie **Auswahl gruppieren**.
+
+Theorie- und Praxistexte sowie Aufgabenstellungen unterstützen Markdown, mathematische Formeln und Visuals. Zum Beispiel kannst du ein Notenbild direkt in die Aufgabenstellung setzen:
+
+```mdx
+Welche Note ist dargestellt?
+
+<Notation clef="treble" notes={[{ step: 2, duration: "quarter" }]} />
+```
+
+Unterstützt werden dieselben sicheren Darstellungen wie in Theorieblöcken, darunter `<Notation />`, `<NotationKeyboard />`, `<DrumPattern />` und statische Inline-SVGs. Die Vorschau im Modul-Builder sowie der Lernpfad und das Quiz zeigen sie an; Hinweise und Antwortfelder bleiben Klartext.
+
+Schreibe Formeln im Text mit `$...$`, etwa `$f = 440\text{ Hz}$`, oder als eigenen Formelblock mit `$$...$$`.
+
+Themen-Tags beeinflussen die berechneten XP. Tags mit Faktor **1,0** werden nicht angezeigt. Bereits gespeicherte neutrale oder nicht mehr auswählbare Tags bleiben im Hintergrund erhalten. Auch ältere, separat gespeicherte Visualisierungen bleiben erhalten, bis du **Bisherige Visualisierung entfernen** wählst.
+
+### Schwierigkeit einer Aufgabe wählen
+
+Wähle bei einer Lernpfad-Aufgabe oder Quizfrage eines der Badges unter **Schwierigkeit**:
+
+| Schwierigkeit | XP-Faktor |
+| :--- | :--- |
+| Einfach | × 1 |
+| Mittel | × 1,5 |
+| Schwer | × 2 |
+
+Neue Aufgaben und bestehende Aufgaben ohne Schwierigkeitsangabe starten mit **Einfach**. Im Lernpfad kannst du einzelne Aufgaben auf **Mittel** oder **Schwer** stellen; sie bleiben dabei im Lernpfad. Die Lernspur bestimmt den Einsatzort, nicht die Schwierigkeit.
+
+Die Aufgaben-XP berechnen sich aus **10 × Schwierigkeitsfaktor × höchstem Tag-Faktor**, auf ganze XP gerundet. Beispiel: **Mittel** mit **Notensystem (1,5)** ergibt **23 XP**. Ohne Themen-Tag gilt Tag-Faktor 1. Bereits verdiente XP und erledigte Aufgaben werden durch die Umstellung nicht zurückgesetzt.
+
+### Eine Aufgabenbeschreibung erstellen
+
+Wähle **+ Block hinzufügen** und anschließend die Blockrolle **Aufgabenbeschreibung**. Trage einen Titel und die Erklärung ein; auch ein `DrumPattern` kann darin stehen. Gruppiere die Beschreibung mit den zugehörigen Lernpfad-Aufgaben und stelle sie vor die Fragen.
+
+Bei einem vorhandenen Block wählst du unter **Blockrolle** direkt das gewünschte Badge, genau wie bei den Block-Tags. Die aktive Rolle ist hervorgehoben; nach der ersten Rollenwahl ist immer genau eine ausgewählt. Text und Darstellungen bleiben beim Wechsel erhalten. Speichere anschließend das Modul.
+
+Die Aufgabenbeschreibung hat keinen eigenen „Abschnitt gelesen“-Button und keine eigenen XP. **Block-Tags** sind deshalb zusätzlich ausgeblendet; oben links steht **0 XP**. Beim Zurückwechseln zum Theorieteil erscheinen die bisherigen Tags wieder; Basis-XP bleiben ausgeblendet. Enthält die Gruppe nur eine Einleitung und Fragen, wird sie durch das Erledigen der Fragen abgeschlossen. Normale Theorieblöcke behalten ihren eigenen Abschluss und ihre XP.
+
+## Blöcke ordnen und gruppieren
+
+Beim `DrumPattern` zeigt die Fußzeile standardmäßig Taktart, Auflösung und Schrittzahl. Mit `showFooterInfo={false}` bleibt die Leiste sichtbar, aber leer. Mit `showFooter={false}` blendest du sie vollständig aus.
+
+Mit `highlightTrack` markierst du eine Spur und mit `highlightTracks` mehrere. Die Namen müssen mit `name` in `patternData` übereinstimmen. Zum Beispiel: `<DrumPattern interactive={false} highlightTracks={["Muster A", "Muster C"]} />`. Bei Audio-Patterns ist dies die anfängliche Wiedergabe-Auswahl; interaktive Patterns erlauben deren Änderung per Spurkopf oder Auswahlkästchen. Mit `interactive={false}` bleiben Raster und Auswahl unveränderlich, Vorhören und Wiedergabe bleiben möglich. Die [Audio-Anleitung](/wiki/drum-pattern/) erklärt Play/Stop, Leertaste, Tempo und Spurauswahl.
+
+Verschiebe einzelne Blöcke mit den Pfeilen nach oben oder unten. Um mehrere freie Theorieblöcke, Lernpfad- oder Praxisaufgaben zu einem Abschnitt zusammenzufassen, markiere sie und wähle **Auswahl gruppieren**. Du kannst die Gruppe benennen und als Ganzes verschieben.
+
+Klappe eine Gruppe auf, um rechts auf gleicher Höhe die Gruppenübersicht zu öffnen. Die Vorschauen der enthaltenen Blöcke und Aufgaben stehen jeweils neben ihrem eigenen Editor und lassen sich ebenfalls synchron auf- und zuklappen. So bleibt erkennbar, welche Vorschau zu welcher Ebene gehört. Auf schmalen Bildschirmen erscheinen die Bereiche untereinander.
+
+Mit **−** löst du einen Eintrag oder eine ganze Gruppe, ohne die Inhalte zu löschen. Ungruppierte Einträge entfernst du mit **×**. Hat eine Gruppe nach dem Herauslösen nur noch einen Eintrag, wird auch dieser automatisch ungruppiert. Speichere das Modul, damit deine Änderungen erhalten bleiben.
+
+Die XP-Anzeige oben links zeigt die erreichbaren Punkte für Blöcke und Gruppen im auf- und zugeklappten Zustand. Änderungen an Schwierigkeit oder Themen-Tags aktualisieren die berechneten Punkte direkt.
+
+## Quizfragen erstellen
+
+Du kannst das Abschluss-Quiz später ergänzen: Solange dem Modul keine Fragen der Lernspur **Mittel (Quiz)** zugeordnet sind, erscheint in der Lektion kein Quizschritt. Theorieblöcke und Lernpfad-Aufgaben bleiben davon unabhängig.
+
+1. Öffne den Reiter **Quizfragen** und wähle optional ein oder mehrere zugehörige Module. Ohne Auswahl bleibt die Frage im Fragenpool.
+2. Wähle **Mittel (Quiz)** oder **Schwer (Fastlane)** und gib die Aufgabenstellung ein. Du kannst darin auch Markdown, KaTeX und unterstützte Visuals wie `<Notation />` verwenden.
+3. Wähle den Aufgabentyp: Einfachauswahl, Mehrfachauswahl, Zahleneingabe oder interaktive Notationsaufgabe. Ergänze die passenden Antworten oder erwarteten Noten.
+4. Wähle die **Schwierigkeit** und ergänze bei Bedarf eine Erklärung und Tags. Bei Notationsaufgaben kannst du die Eingabe in der Vorschau ausprobieren; Hilfe dazu findest du unter [NotationBuilder bedienen](/wiki/notation-builder/).
+5. Wähle **Aufgabe speichern** und beachte die Rückmeldung.
+
+Lernpfad-Aufgaben erstellst du dagegen direkt in der Blockliste des jeweiligen Moduls.
+
+Bei Zahleneingaben kannst du als erwartete Antwort beispielsweise `880` oder `880 Hz` hinterlegen. Bei Notationsaufgaben gibst du die Taktart etwa als `4/4`, erwartete Tonhöhen kommagetrennt als `C4, E4, G4` und Notenwerte als `quarter, half` ein.
+
+Die **Erklärung bei falscher Antwort** ist eine kurze Begründung für Lernende nach der Auswertung. Die Hinweisfelder der Lernpfad-Aufgaben sind Lerninhalte, keine Bedienhinweise: Der einfache Hinweis erscheint nach dem zweiten Fehlversuch, der stärkere lässt sich vor dem letzten Versuch aufklappen.
+
+## Module und Fragen verwalten
+
+Aktiviere in den allgemeinen Modul-Informationen **Blocklager – nur im Modul-Builder anzeigen**, wenn du Inhalte für später aufbewahren möchtest. Das Modul und seine exklusiv zugeordneten Fragen erscheinen dann nicht im Lernpfad oder Quizangebot. Du kannst die Blöcke und Fragen weiterhin im Builder bearbeiten. Wenn du das Häkchen entfernst und speicherst, ist das Modul wieder Teil des Lernangebots.
+
+Im Reiter **Übersicht** kannst du Module nach Bereich filtern, nach Reihenfolge oder Gesamt-XP sortieren und zwischen Listen- und Kartenansicht wechseln. Die Aufgaben eines Moduls lassen sich aufklappen. Quizfragen ohne Modul stehen im separaten Fragenpool.
+
+Über das Stiftsymbol bearbeitest du ein Modul oder eine Quizfrage. Die Pfeile zum Verschieben von Modulen stehen bei **Reihenfolge: 1 → N** und ohne Bereichsfilter zur Verfügung. Beim Löschen eines Moduls werden seine Lernpfad-Aufgaben gelöscht; Quizfragen bleiben erhalten und verlieren nur die Zuordnung zu diesem Modul. Der Löschdialog verlangt eine Bestätigung.
+
+## Modularchiv anschauen
+
+Öffne **Projektierung → Modularchiv** oder direkt die [Modulübersicht](/module-archives/). Dort stehen alle Module, auch das Blocklager. Klicke auf eine Lektionsseite, um Texte, Notation und DrumPattern anzuschauen. Hinweise und Lösungen kannst du aufklappen. Das Anschauen vergibt keine XP und verändert deinen Lernfortschritt nicht.
+
+Im Projekt findest du dieselbe Übersicht in `module-archives/README.md`. Pro Lektionsseite liegt dort eine lesbare MDX-Datei, bei „Puls, Tempo und Rhythmus“ also eine Theorie- und eine Aufgabenseite.
+
+Beim **lokalen Speichern im Builder** werden Übersicht und Kopien automatisch aktualisiert. Auch neue Module werden ergänzt. Falls das Archiv währenddessen bereits geöffnet ist, lade die Seite neu.
+
+In VS Code zeigt **Quellcodeverwaltung** die geänderten Dateien im Worktree. Öffne eine Datei dort, um alte und neue Inhalte zu vergleichen. Committe den Ausgangsstand, damit du spätere Änderungen zuverlässig vergleichen kannst. Das Verwerfen einer MDX-Änderung setzt **nicht** die bereits gespeicherten Builder-Inhalte zurück.
+
+Alte Archivdateien werden nicht automatisch gelöscht. Ein im Builder gelöschtes Modul bleibt mit seinem letzten Archivstand in der Übersicht.
+
+**Online-Grenze:** Änderungen auf der veröffentlichten Website können keine Dateien auf deinem Computer ändern. Das veröffentlichte Archiv zeigt den zuletzt gebauten Git-Stand – einschließlich der archivierten Blocklager-Seiten und Lösungen.
+
+Zum erneuten Einlesen des laufenden lokalen Netlify-Dev-Servers nutze im Terminal `npm run archive:modules`. Beim reinen Astro-Dev-Server lautet der Aufruf `npm run archive:modules -- --url http://localhost:4321/api/modules`. Meldet der Builder, dass die Moduldaten gespeichert wurden, die Kopien aber nicht aktualisiert werden konnten, behebe die angezeigte Ursache und starte diesen Export erneut.
+
+## Bestehensgrenzen ändern
+
+Unter **Einstellungen** legst du die Grenzen für Abschluss-Quiz und Fastlane für alle Module fest. Nach einer tatsächlichen Änderung und Bestätigung wird der Lernfortschritt einschließlich XP beim nächsten Laden im jeweiligen Browser zurückgesetzt. Unverändertes Speichern löst keinen Reset aus.
+
+Den gespeicherten Lerninhalt findest du im [interaktiven Lernpfad](/audio/theory/lernpfad/). Wenn Speichern oder Laden fehlschlägt, beachte die angezeigte Fehlermeldung und versuche es erneut.

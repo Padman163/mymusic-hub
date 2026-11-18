@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import rawSeedDb from "../../data/modules.json";
 import { createModulesTestDatabase } from "../fixtures/modules";
 import {
   clearLearningProgress,
@@ -8,7 +7,6 @@ import {
   loadLearningProgress,
   saveLearningProgress,
 } from "../../src/lib/learning-progress";
-import type { ModulesDatabase } from "../../src/lib/module-schema";
 import {
   validateModuleInput,
   validateQuestionInput,
@@ -22,9 +20,13 @@ import {
   renderTheoryMarkdown,
 } from "../../src/lib/module-player-ui";
 import {
-  calculateQuestionXp,
+  calculateModuleQuestionXp,
   calculateTheoryBlockXp,
 } from "../../src/lib/xp-tags";
+import {
+  getTheoryDrumPatternError,
+  parseTheoryDrumPattern,
+} from "../../src/lib/module-theory-notation";
 
 const seedDb = createModulesTestDatabase();
 
@@ -104,11 +106,19 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     const db = structuredClone(seedDb);
     const mod = db.modules[0];
     mod.contentOrder = [{ kind: "exercise", id: "q-101-ex-1" }];
+    const exercise = db.questions.find(({ id }) => id === "q-101-ex-1");
+    if (!exercise) throw new Error("Übung fehlt");
+    exercise.title = "Kammerton";
+    exercise.simpleHint = "Vergleiche die Tonhöhen.";
+    exercise.strongHint = "Überlege, wie sich die Frequenz bei einer Oktave ändert.";
     const root = document.createElement("section");
     root.dataset.moduleId = mod.id;
     document.body.append(root);
     attachModuleStepper(root, { initialDb: db, autoFetch: false });
 
+    expect(root.querySelector(".learning-lesson-heading")?.textContent).toBe("Aufgabe: Kammerton");
+    expect(root.querySelector("[data-question-card] .learning-card-header strong")?.textContent)
+      .toBe("Aufgabenstellung");
     const input = root.querySelector<HTMLInputElement>(".learning-numeric-input");
     const check = root.querySelector<HTMLButtonElement>('[data-action="check-exercise"]');
     const next = root.querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]');
@@ -118,10 +128,28 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     input.value = "440";
     check.click();
     expect(root.textContent).toContain("2 Versuche übrig");
+    expect(root.textContent).not.toContain(exercise.simpleHint);
+    expect(root.textContent).not.toContain(exercise.strongHint);
+    expect(root.textContent).not.toContain(exercise.explanation);
+    expect(root.textContent).not.toContain("Richtige Antwort:");
     expect(next.disabled).toBe(true);
     check.click();
     expect(root.textContent).toContain("1 Versuch übrig");
+    expect(root.textContent).toContain(exercise.simpleHint);
+    const strongerHint = root.querySelector<HTMLDetailsElement>(".learning-feedback details");
+    expect(strongerHint?.open).toBe(false);
+    expect(strongerHint?.querySelector("summary")?.textContent)
+      .toBe("Stärkeren Hinweis anzeigen");
+    expect(strongerHint?.querySelector("p")?.textContent).toBe(exercise.strongHint);
+    expect(root.textContent).not.toContain(exercise.explanation);
+    expect(root.textContent).not.toContain("Richtige Antwort:");
+    input.value = "";
+    check.click();
+    expect(root.textContent).toContain("Bitte gib zuerst eine Antwort ein.");
+    expect(root.textContent).toContain("1 Versuch übrig");
+    expect(root.contains(strongerHint ?? null)).toBe(true);
     expect(loadLearningProgress(db.modules).totalXp).toBe(0);
+    input.value = "440";
     check.click();
     expect(root.textContent).toContain("Richtige Antwort: 880");
     expect(root.textContent).toContain("Frequenzverhältnis 2:1");
@@ -141,6 +169,112 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     expect(root.textContent).toContain("Lösung: 880");
     repeatCheck.click();
     expect(loadLearningProgress(db.modules).totalXp).toBe(10);
+  });
+
+  it.each([
+    { answer: "880", attempts: 1 },
+    { answer: "440", attempts: 3 },
+  ])(
+    "sperrt den Rücksprung bis zum Aufgabenabschluss ($attempts Versuch(e))",
+    ({ answer, attempts }) => {
+      const db = structuredClone(seedDb);
+      const mod = db.modules[0];
+      mod.theoryBlocks = [mod.theoryBlocks[0]];
+      db.questions = db.questions.filter(
+        (question) => question.id === "q-101-ex-1",
+      );
+      mod.contentOrder = [
+        { kind: "theory", id: mod.theoryBlocks[0].id },
+        { kind: "exercise", id: "q-101-ex-1" },
+      ];
+      const root = document.createElement("section");
+      root.dataset.moduleId = mod.id;
+      document.body.append(root);
+      attachModuleStepper(root, { initialDb: db, autoFetch: false });
+
+      const markRead = root.querySelector<HTMLButtonElement>(
+        '[data-action="complete-theory-block"]',
+      );
+      if (!markRead) throw new Error("Theorieabschnitt fehlt");
+      markRead.click();
+      const next = root.querySelector<HTMLButtonElement>(
+        '[data-action="next-lesson-section"]',
+      );
+      if (!next || next.disabled) throw new Error("Aufgabenabschnitt fehlt");
+      next.click();
+
+      const previous = root.querySelector<HTMLButtonElement>(
+        '[data-action="previous-lesson-section"]',
+      );
+      const getPreviousStep = () =>
+        root.querySelector<HTMLButtonElement>(
+          '.learning-lesson-step[data-step-index="0"]',
+        );
+      const input = root.querySelector<HTMLInputElement>(
+        ".learning-numeric-input",
+      );
+      const check = root.querySelector<HTMLButtonElement>(
+        '[data-action="check-exercise"]',
+      );
+      if (!previous || !getPreviousStep() || !input || !check) {
+        throw new Error("Aufgabennavigation fehlt");
+      }
+      expect(previous.disabled).toBe(true);
+      expect(getPreviousStep()?.disabled).toBe(true);
+
+      for (let attempt = 0; attempt < attempts; attempt += 1) {
+        input.value = answer;
+        check.click();
+        if (attempt < attempts - 1) {
+          expect(previous.disabled).toBe(true);
+          expect(getPreviousStep()?.disabled).toBe(true);
+        }
+      }
+
+      expect(previous.disabled).toBe(false);
+      const previousStep = getPreviousStep();
+      if (!previousStep) throw new Error("Schritt-Navigation fehlt");
+      expect(previousStep.disabled).toBe(false);
+      previousStep.click();
+      expect(root.querySelector('[data-step="theory"]')).not.toBeNull();
+    },
+  );
+
+  it("sperrt den Rücksprung bis eine Praxisaufgabe als erledigt markiert ist", () => {
+    const db = structuredClone(seedDb);
+    const mod = db.modules[0];
+    mod.theoryBlocks = [mod.theoryBlocks[0]];
+    mod.practiceBlocks = [
+      { id: "practice-1", title: "Praxis", markdownContent: "Übung." },
+    ];
+    db.questions = [];
+    mod.contentOrder = [
+      { kind: "theory", id: mod.theoryBlocks[0].id },
+      { kind: "practice", id: "practice-1" },
+    ];
+    const root = document.createElement("section");
+    root.dataset.moduleId = mod.id;
+    document.body.append(root);
+    attachModuleStepper(root, { initialDb: db, autoFetch: false });
+
+    root
+      .querySelector<HTMLButtonElement>('[data-action="complete-theory-block"]')
+      ?.click();
+    root
+      .querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]')
+      ?.click();
+    const previous = root.querySelector<HTMLButtonElement>(
+      '[data-action="previous-lesson-section"]',
+    );
+    const completePractice = root.querySelector<HTMLButtonElement>(
+      '[data-action="complete-practice"]',
+    );
+    if (!previous || !completePractice) {
+      throw new Error("Praxisaufgabe fehlt");
+    }
+    expect(previous.disabled).toBe(true);
+    completePractice.click();
+    expect(previous.disabled).toBe(false);
   });
 
   it("merkt sich richtig gelöste Aufgaben bis zum Lernfortschritts-Reset", () => {
@@ -342,6 +476,246 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     expect(container.textContent).toContain("Danach");
   });
 
+  it("parst statische DrumPattern-Props und weist ungültige Props oder Code zurück", () => {
+    const markdown =
+      '<DrumPattern steps={4} continuous={true} patternData={[{ name: "Kick", note: "C1", color: "#ef4444", activeSteps: [0, 2], eventPositions: [1.5], cellLabels: ["K", "", "K", ""] }]} />';
+    const parsed = parseTheoryDrumPattern(markdown, 0);
+    expect(parsed.props).toMatchObject({
+      steps: 4,
+      continuous: true,
+      patternData: [{
+        name: "Kick",
+        activeSteps: [0, 2],
+        eventPositions: [1.5],
+        cellLabels: ["K", "", "K", ""],
+      }],
+    });
+    expect(markdown.slice(parsed.end)).toBe("");
+    expect(getTheoryDrumPatternError('<DrumPattern steps={0} />')).toContain(
+      "steps muss eine ganze Zahl",
+    );
+    expect(
+      getTheoryDrumPatternError("<DrumPattern interactive={window.alert(1)} />"),
+    ).toContain("Nur feste Werte");
+    expect(
+      getTheoryDrumPatternError('<DrumPattern highlightTrack="Missing" />'),
+    ).toContain("highlightTrack");
+    expect(
+      getTheoryDrumPatternError(
+        '<DrumPattern highlightTrack="Snare - Center" />',
+      ),
+    ).toBeNull();
+    expect(
+      getTheoryDrumPatternError(
+        '<DrumPattern highlightTracks={["Missing"]} />',
+      ),
+    ).toContain("highlightTracks");
+    const staticArithmetic = parseTheoryDrumPattern(
+      '<DrumPattern steps={16} patternData={[{ name: "Triolen", note: "12×", color: "#facc15", activeSteps: [], eventPositions: [0, 4 / 3, 8 / 3, 4] }]} />',
+      0,
+    );
+    expect(staticArithmetic.props.patternData?.[0].eventPositions).toEqual([
+      0,
+      4 / 3,
+      8 / 3,
+      4,
+    ]);
+    expect(getTheoryDrumPatternError("`<DrumPattern steps={0} />`")).toBeNull();
+    expect(
+      getTheoryDrumPatternError("<!-- <DrumPattern steps={0} /> -->"),
+    ).toBeNull();
+  });
+
+  it("rendert DrumPattern-Props samt Event-Markern und bindet die Interaktion", () => {
+    const root = document.createElement("section");
+    root.innerHTML =
+      '<div hidden data-visual-template="DrumPattern"><div class="studio-one-pattern astro-test"></div></div>';
+    root.append(
+      renderTheoryMarkdown(
+        '<DrumPattern steps={4} continuous={true} showVelocity={true} patternData={[{ name: "Kick", note: "C1", color: "#ef4444", activeSteps: [0, 2], cellLabels: ["K", "", "K", ""], eventPositions: [1.5], eventLabels: ["+"] }]} />',
+        root,
+      ),
+    );
+    const pattern = root.querySelector<HTMLElement>(
+      '.studio-one-pattern[data-continuous="true"]',
+    );
+    if (!pattern) throw new Error("DrumPattern fehlt");
+    const cells = pattern.querySelectorAll<HTMLElement>(".step-cell");
+    expect(pattern.dataset.continuous).toBe("true");
+    expect(pattern.classList.contains("astro-test")).toBe(true);
+    expect(cells[0].querySelector(".step-cell-label")?.textContent).toBe("K");
+    expect(pattern.querySelector(".event-marker")?.textContent).toBe("+");
+    expect(
+      (pattern.querySelector(".event-marker") as HTMLElement).style.getPropertyValue(
+        "--event-step",
+      ),
+    ).toBe("1.5");
+    expect(pattern.querySelector(".velocity-row")).not.toBeNull();
+    expect(pattern.querySelector(".pattern-footer .footer-info")).not.toBeNull();
+    cells[0].click();
+    expect(cells[0].classList.contains("active")).toBe(false);
+  });
+
+  it("zeigt ein statisches DrumPattern ohne technische Fußzeile", () => {
+    const root = document.createElement("section");
+    root.innerHTML =
+      '<div hidden data-visual-template="DrumPattern"><div class="studio-one-pattern"></div></div>';
+    const preview = renderTheoryMarkdown(
+      '<DrumPattern interactive={false} showFooter={false} highlightTracks={["Kick - Hit", "Snare - Center"]} />',
+      root,
+    );
+    expect(preview.querySelector(".step-cell")).not.toBeNull();
+    expect(preview.querySelector(".pattern-footer")).toBeNull();
+
+    const rows = preview.querySelectorAll<HTMLDivElement>(
+      ".track-row:not(.velocity-row)",
+    );
+    const markedRows = Array.from(rows).filter((row) =>
+      row.classList.contains("highlighted"),
+    );
+    expect(
+      markedRows.map((row) => row.querySelector(".track-name")?.textContent),
+    ).toEqual(["Kick - Hit", "Snare - Center"]);
+    expect(markedRows.every((row) => row.getAttribute("role") === null)).toBe(
+      true,
+    );
+    expect(markedRows.every((row) => row.getAttribute("tabindex") === null)).toBe(
+      true,
+    );
+    const unmarkedRow = Array.from(rows).find(
+      (row) => !row.classList.contains("highlighted"),
+    );
+    if (!unmarkedRow) throw new Error("Unmarkierte DrumPattern-Spur fehlt");
+    unmarkedRow.click();
+    expect(
+      Array.from(rows)
+        .filter((row) => row.classList.contains("highlighted"))
+        .map((row) => row.querySelector(".track-name")?.textContent),
+    ).toEqual(["Kick - Hit", "Snare - Center"]);
+
+    const legacyRoot = document.createElement("section");
+    legacyRoot.innerHTML =
+      '<div hidden data-visual-template="DrumPattern"><div class="studio-one-pattern"></div></div>';
+    const legacyPreview = renderTheoryMarkdown(
+      '<DrumPattern interactive={false} showFooter={false} highlightTrack="Snare - Center" />',
+      legacyRoot,
+    );
+    expect(
+      Array.from(
+        legacyPreview.querySelectorAll<HTMLDivElement>(
+          ".track-row:not(.velocity-row)",
+        ),
+      )
+        .filter((row) => row.classList.contains("highlighted"))
+        .map((row) => row.querySelector(".track-name")?.textContent),
+    ).toEqual(["Snare - Center"]);
+  });
+
+  it("behält die DrumPattern-Fußzeile ohne Informationen als optischen Abschluss", () => {
+    const root = document.createElement("section");
+    root.innerHTML =
+      '<div hidden data-visual-template="DrumPattern"><div class="studio-one-pattern"></div></div>';
+    const preview = renderTheoryMarkdown(
+      '<DrumPattern showFooterInfo={false} />',
+      root,
+    );
+    const footer = preview.querySelector(".pattern-footer");
+    expect(footer?.textContent).toBe("");
+    expect(footer?.getAttribute("aria-hidden")).toBe("true");
+  });
+
+  it("rendert Markdown, verschachteltes Inline-KaTeX und beide Display-Formate", () => {
+    const container = document.createElement("div");
+    container.append(renderTheoryMarkdown([
+      "## Frequenz",
+      "Ein erster Absatz.",
+      String.raw`* **Kammerton $A_4$:** 440 $\text{Hz}$`,
+      String.raw`* Schreibweisen: $a'$, $\sharp$ und $\flat$`,
+      "",
+      "$$f = 440$$",
+      "",
+      "$$",
+      "f_2 = 2 f_1",
+      "$$",
+      "",
+      "Ein zweiter Absatz.",
+    ].join("\n")));
+    expect(container.querySelector("h2")?.textContent).toBe("Frequenz");
+    expect(container.querySelectorAll("ul > li")).toHaveLength(2);
+    expect(container.querySelector("strong .katex")).not.toBeNull();
+    expect(container.querySelectorAll("li .katex")).toHaveLength(5);
+    expect(container.querySelectorAll(".katex-display")).toHaveLength(2);
+    expect(container.textContent).not.toContain("$");
+    expect(container.lastElementChild?.textContent).toBe("Ein zweiter Absatz.");
+  });
+
+  it("rendert die Fermate als zugängliches SVG statt als unbekannten KaTeX-Befehl", () => {
+    const container = document.createElement("div");
+    container.append(renderTheoryMarkdown("Fermate ($\\fermata$)"));
+    const fermata = container.querySelector<SVGSVGElement>(
+      ".learning-fermata-symbol",
+    );
+
+    expect(fermata?.getAttribute("role")).toBe("img");
+    expect(fermata?.getAttribute("aria-label")).toBe("Fermate");
+    expect(fermata?.querySelector("path")).not.toBeNull();
+    expect(fermata?.querySelector("circle")).not.toBeNull();
+    expect(container.querySelector(".katex-error")).toBeNull();
+    expect(container.textContent).not.toContain("\\fermata");
+  });
+
+  it("rendert statische Inline-SVG-Figuren und entfernt aktive oder nicht erlaubte SVG-Inhalte", () => {
+    const container = document.createElement("div");
+    container.append(renderTheoryMarkdown([
+      '<figure onclick="alert(1)">',
+      '  <svg viewBox="0 0 720 250" role="img" aria-labelledby="wave-title wave-description" onload="alert(1)" style="background:url(javascript:alert(1))">',
+      '    <title id="wave-title">Schwingungen</title>',
+      '    <desc id="wave-description">Zwei Wellen im Vergleich.</desc>',
+      '    <line x1="190" y1="48" x2="650" y2="48" stroke="#64748b" stroke-dasharray="4 5" />',
+      '    <text x="12" y="53" fill="currentColor" font-size="16" text-anchor="middle">Langsam</text>',
+      '    <path d="M190 48 Q305 8 420 48 T650 48" fill="none" stroke="#38bdf8" stroke-width="4" />',
+      '    <path d="M0 0" fill="url(javascript:alert(1))" />',
+      '    <script>alert(1)</script>',
+      '    <foreignObject><iframe src="https://example.com" onload="alert(1)"></iframe></foreignObject>',
+      "  </svg>",
+      "  <figcaption>Statische SVG-Figur.</figcaption>",
+      "</figure>",
+    ].join("\n")));
+
+    const figure = container.querySelector("figure");
+    const svg = figure?.querySelector("svg");
+    expect(figure?.querySelector("figcaption")?.textContent).toBe("Statische SVG-Figur.");
+    expect(svg?.getAttribute("viewBox")).toBe("0 0 720 250");
+    expect(svg?.getAttribute("aria-labelledby")).toBe(
+      "user-content-wave-title user-content-wave-description",
+    );
+    expect(svg?.querySelector("line")?.getAttribute("stroke-dasharray")).toBe("4 5");
+    expect(svg?.querySelector("text")?.getAttribute("font-size")).toBe("16");
+    expect(svg?.querySelector("path")?.getAttribute("stroke-width")).toBe("4");
+    expect(svg?.querySelectorAll("path")[1]?.hasAttribute("fill")).toBe(false);
+    expect(figure?.hasAttribute("onclick")).toBe(false);
+    expect(svg?.hasAttribute("onload")).toBe(false);
+    expect(svg?.hasAttribute("style")).toBe(false);
+    expect(svg?.querySelector("script, foreignObject, iframe")).toBeNull();
+  });
+
+  it("bettet die passende Keyboard-Vorlage ein und lässt Codebeispiele unverändert", () => {
+    const root = document.createElement("div");
+    root.innerHTML = '<template data-visual-template="NotationKeyboard" data-show-brace="false" data-right-bar-style="single"><div class="keyboard-notation"></div></template>';
+    root.append(renderTheoryMarkdown([
+      "~~~md",
+      "<NotationKeyboard />",
+      "~~~",
+      "",
+      "<NotationKeyboard showBrace={false} rightBarStyle='single' />",
+      "",
+      "<NotationKeyboard showBrace={window.alert(1)} />",
+    ].join("\n"), root));
+    expect(root.querySelector("pre code")?.textContent).toContain("<NotationKeyboard />");
+    expect(root.querySelectorAll(":scope > .keyboard-notation")).toHaveLength(1);
+    expect(root.querySelector(".learning-notation-error")?.textContent).toContain("Nur feste Werte");
+  });
+
   it("zeigt eine alte Visualisierung nicht doppelt, wenn dieselbe Notation bereits im Text steht", () => {
     const root = document.createElement("section");
     root.dataset.moduleId = "theory-101";
@@ -354,6 +728,28 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     attachModuleStepper(root, { initialDb: db, autoFetch: false });
     expect(root.querySelector(".learning-theory-block")?.querySelectorAll("svg.notation-staff")).toHaveLength(1);
     expect(root.textContent).not.toContain("<Notation");
+  });
+
+  it("rendert Visuals in Lernpfad-Aufgabenstellungen", () => {
+    const root = document.createElement("section");
+    root.dataset.moduleId = "theory-101";
+    document.body.append(root);
+    const db = structuredClone(seedDb);
+    const mod = db.modules[0];
+    const question = db.questions.find(({ id }) => id === "q-101-ex-1");
+    if (!question) throw new Error("Testaufgabe fehlt");
+    question.prompt =
+      'Welche Note ist dargestellt?\n\n<Notation clef="treble" notes={[{ step: 2, duration: "quarter" }]} />';
+    mod.contentOrder = [{ kind: "exercise", id: question.id }];
+
+    attachModuleStepper(root, { initialDb: db, autoFetch: false });
+
+    const prompt = root.querySelector(".learning-quiz-question");
+    expect(prompt?.querySelector("svg.notation-staff")).not.toBeNull();
+    expect(prompt?.textContent).not.toContain("<Notation");
+    expect(root.querySelector(".learning-lesson-heading")?.textContent).toBe(
+      "Aufgabe: Welche Note ist dargestellt?",
+    );
   });
 
   it("rendert gruppierte Theorieblöcke als benannten Lernabschnitt", () => {
@@ -369,7 +765,7 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     attachModuleStepper(root, { initialDb: db, autoFetch: false });
 
     const group = root.querySelector(".learning-theory-group");
-    expect(group?.querySelector("h4")?.textContent).toBe("Grundlagen");
+    expect(group?.querySelector(".learning-lesson-heading")?.textContent).toBe("101: Grundlagen");
     expect(group?.querySelectorAll(".learning-theory-block")).toHaveLength(2);
     const groupXp = db.modules[0].theoryBlocks
       .slice(0, 2)
@@ -381,7 +777,7 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     expect(group?.querySelector(".learning-theory-heading .learning-xp-badge")?.textContent)
       .toBe(`${groupXp} XP`);
     expect(group?.querySelector(".learning-theory-heading")?.firstElementChild?.tagName)
-      .toBe("H4");
+      .toBe("H3");
   });
 
   it("zeigt gruppierte Übungen gemeinsam mit Theorie und wartet auf beide Abschlüsse", () => {
@@ -393,6 +789,7 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     const block = mod.theoryBlocks[0];
     const question = db.questions.find((item) => item.id === "q-101-ex-1");
     if (!question) throw new Error("Gruppenübung fehlt");
+    question.title = "Kammerton";
     mod.contentOrder = [
       {
         kind: "theory",
@@ -411,9 +808,12 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     attachModuleStepper(root, { initialDb: db, autoFetch: false });
 
     const group = root.querySelector(".learning-content-group");
-    expect(group?.querySelector("h4")?.textContent).toBe("Grundlagen");
+    expect(group?.querySelector(".learning-lesson-heading")?.textContent).toBe("101: Grundlagen");
     expect(group?.querySelector(".learning-theory-block")).not.toBeNull();
-    expect(group?.querySelector('[data-question-card="q-101-ex-1"]')).not.toBeNull();
+    const exerciseCard = group?.querySelector('[data-question-card="q-101-ex-1"]');
+    expect(exerciseCard?.querySelector(".learning-card-header strong")?.textContent)
+      .toBe("Aufgabe: Kammerton");
+    expect(exerciseCard?.textContent).toContain(question.prompt);
     const next = root.querySelector<HTMLButtonElement>(
       '[data-action="next-lesson-section"]',
     );
@@ -435,21 +835,75 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     expect(next?.disabled).toBe(false);
   });
 
+  it("schließt eine Aufgabengruppe ohne separaten Einleitungsabschluss ab", () => {
+    const db = structuredClone(seedDb);
+    const mod = db.modules[0];
+    const question = db.questions.find((item) => item.id === "q-101-ex-1");
+    if (!question) throw new Error("Gruppenaufgabe fehlt");
+    const theory = { ...mod.theoryBlocks[0] };
+    const introduction = {
+      ...mod.theoryBlocks[1],
+      role: "exercise_intro" as const,
+      title: "Muster vergleichen",
+      markdownContent: "Einleitung zu den Fragen.",
+    };
+    delete theory.groupId;
+    delete theory.groupTitle;
+    mod.theoryBlocks = [theory, introduction];
+    db.questions = db.questions.filter(
+      (item) =>
+        !item.moduleIds.includes(mod.id) ||
+        item.targetLane !== "leicht" ||
+        item.id === question.id,
+    );
+    const group = { groupId: "intro-group", groupTitle: "Muster" };
+    mod.contentOrder = [
+      { kind: "theory", id: theory.id },
+      { kind: "theory", id: introduction.id, ...group },
+      { kind: "exercise", id: question.id, ...group },
+    ];
+    const root = document.createElement("section");
+    root.dataset.moduleId = mod.id;
+    document.body.append(root);
+    attachModuleStepper(root, { initialDb: db, autoFetch: false });
+    const read = root.querySelector<HTMLButtonElement>('[data-action="complete-theory-block"]');
+    expect(read).not.toBeNull();
+    read?.click();
+    root.querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]')?.click();
+    expect(root.textContent).toContain("Einleitung zu den Fragen.");
+    expect(root.querySelector('[data-action="complete-theory-block"]')).toBeNull();
+    const next = root.querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]');
+    expect(next?.disabled).toBe(true);
+    const input = root.querySelector<HTMLInputElement>(".learning-numeric-input");
+    if (!input) throw new Error("Aufgabenfeld fehlt");
+    input.value = "880";
+    root.querySelector<HTMLButtonElement>('[data-action="check-exercise"]')?.click();
+    expect(next?.disabled).toBe(false);
+    expect(loadLearningProgress(db.modules).modules[mod.id].completedTheoryBlockIds)
+      .toEqual([theory.id]);
+  });
+
   it("zeigt XP für einzelne Theorieblöcke rechts neben dem Titel", () => {
     const root = document.createElement("section");
     root.dataset.moduleId = "theory-101";
     document.body.append(root);
     const db = structuredClone(seedDb);
-    const block = db.modules[0].theoryBlocks[0];
+    const mod = db.modules[0];
+    const [block, other] = mod.theoryBlocks;
     delete block.groupId;
     delete block.groupTitle;
+    block.title = "Theorie 1 101.1: Schall, Frequenz & Klangfarbe";
+    mod.level = 200;
+    mod.contentOrder = [{ kind: "theory", id: block.id }, { kind: "theory", id: other.id }];
+    block.order = 99;
 
     attachModuleStepper(root, { initialDb: db, autoFetch: false });
 
     const heading = root.querySelector(".learning-theory-block .learning-theory-heading");
     expect(heading?.querySelector(".learning-xp-badge")?.textContent)
       .toBe(`${calculateTheoryBlockXp(block, db.modules[0].theoryBaseXp)} XP`);
-    expect(heading?.firstElementChild?.tagName).toBe("H4");
+    expect(heading?.firstElementChild?.textContent).toBe("201: Schall, Frequenz & Klangfarbe");
+    expect(root.querySelector(".learning-lesson-step")?.textContent).toBe("201: Schall, Frequenz & Klangfarbe");
   });
 
   it("vergütet beim Abschluss einer teilweise erledigten Gruppe nur offene Blöcke", () => {
@@ -496,16 +950,54 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     expect(root.textContent).toContain("Benötigt: 93 %");
   });
 
-  it("enthält ein gültiges Modulschema und valide Lernmodul-Fixtures", () => {
-    const productionDb = rawSeedDb as unknown as ModulesDatabase;
-    expect(Array.isArray(productionDb.modules)).toBe(true);
-    expect(Array.isArray(productionDb.questions)).toBe(true);
-    expect(productionDb.quizSettings).toMatchObject({
-      quizEasyMinScore: expect.any(Number),
-      fastlaneMinScore: expect.any(Number),
-      revision: expect.any(Number),
-    });
+  it.each([
+    ["Mit welcher Frequenz (in Hz) schwingt der Ton?", ["880"], "Hz"],
+    ["Mit welcher Frequenz schwingt der Ton?", ["880 Hz"], "Hz"],
+    ["Wie viele Schläge dauert der Ton?", ["880"], null],
+    ["Mit welcher Frequenz schwingt der Ton?", ["880 Hz", "0,88 kHz"], null],
+  ] as const)(
+    "zeigt eine eindeutige feste Einheit für %s (Antworten: %j)",
+    (prompt, correctAnswers, unit) => {
+      const db = structuredClone(seedDb);
+      const mod = db.modules[0];
+      const question = db.questions.find(({ id }) => id === "q-101-ex-1");
+      if (!question) throw new Error("Zahlenfrage fehlt");
+      question.prompt = prompt;
+      question.correctAnswers = [...correctAnswers];
+      const root = document.createElement("section");
+      document.body.append(root);
+      const render = () =>
+        attachModuleQuizRunner(root, {
+          module: mod,
+          db,
+          mode: "leicht",
+          exerciseId: question.id,
+        });
+      render();
 
+      const input = root.querySelector<HTMLInputElement>(".learning-numeric-input");
+      const check = root.querySelector<HTMLButtonElement>('[data-action="check-exercise"]');
+      if (!input || !check) throw new Error("Zahleneingabe fehlt");
+      expect(input.value).toBe("");
+      expect(root.querySelector(".learning-numeric-unit")?.textContent ?? null)
+        .toBe(unit);
+      if (unit) {
+        expect(input.nextElementSibling?.textContent).toBe(unit);
+        expect(evaluateQuestionAnswer(question, { kind: "numeric", value: "880 kHz" }).correct)
+          .toBe(false);
+      }
+
+      input.value = "880";
+      check.click();
+      expect(root.querySelector(".learning-feedback")?.getAttribute("data-outcome"))
+        .toBe("correct");
+      render();
+      expect(root.querySelector<HTMLInputElement>(".learning-numeric-input")?.value)
+        .toBe(unit ? "880" : correctAnswers[0]);
+    },
+  );
+
+  it("enthält valide Lernmodul-Fixtures", () => {
     expect(seedDb.modules.length).toBeGreaterThanOrEqual(2);
     for (const mod of seedDb.modules) {
       expect(validateModuleInput(mod)).toEqual({ valid: true, errors: [] });
@@ -587,7 +1079,8 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     ex1Btn.click();
     const feedback = ex1Card?.querySelector<HTMLElement>(".learning-feedback");
     expect(feedback?.dataset.outcome).toBe("wrong");
-    expect(feedback?.textContent).toContain("Frequenzverhältnis 2:1");
+    expect(feedback?.textContent).toContain("2 Versuche übrig");
+    expect(feedback?.textContent).not.toContain("Frequenzverhältnis 2:1");
     expect(ex1Xp?.classList.contains("has-xp")).toBe(false);
     expect(stepperEl.querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]')?.disabled).toBe(true);
 
@@ -615,11 +1108,14 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     document.body.append(stepperEl);
     attachModuleStepper(stepperEl, { initialDb: db, autoFetch: false });
     expect(stepperEl.querySelector(".learning-lesson-counter")?.textContent).toBe("Abschnitt 2 / 5");
-    expect(stepperEl.querySelector(".learning-theory-group h4")?.textContent).toBe("Grundlagen");
+    expect(stepperEl.querySelector(".learning-theory-group .learning-lesson-heading")?.textContent).toBe("102: Grundlagen");
+    expect(stepperEl.querySelector('[data-step-index="1"]')?.textContent).toBe("102: Grundlagen");
     expect(stepperEl.querySelectorAll(".learning-theory-group .learning-theory-block")).toHaveLength(2);
     expect(stepperEl.querySelector(".katex")).not.toBeNull();
     expect(stepperEl.querySelector("svg.notation-staff")).not.toBeNull();
-    stepperEl.querySelector<HTMLButtonElement>('[data-action="complete-theory-block"]')?.click();
+    const readButton = stepperEl.querySelector<HTMLButtonElement>('[data-action="complete-theory-block"]');
+    expect(readButton?.textContent).toBe("Abschnitt gelesen");
+    readButton?.click();
     const groupXp = mod.theoryBlocks.slice(0, 2).reduce(
       (sum, block) => sum + calculateTheoryBlockXp(block, mod.theoryBaseXp), 0,
     );
@@ -693,6 +1189,43 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     root.querySelector<HTMLButtonElement>('[data-action="complete-theory-block"]')?.click();
     root.querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]')?.click();
     expect(root.querySelector('[data-question-card="q-101-ex-1"]')).not.toBeNull();
+  });
+
+  it("zeigt ohne zugeordnete Quizfragen keinen Quizschritt und erhält die Theorie", () => {
+    const db = structuredClone(seedDb);
+    const mod = db.modules[0];
+    db.questions = db.questions.filter(
+      (q) => !q.moduleIds.includes(mod.id) || q.targetLane !== "mittel",
+    );
+    const root = document.createElement("section");
+    root.dataset.moduleId = mod.id;
+    document.body.append(root);
+
+    attachModuleStepper(root, { initialDb: db, autoFetch: false });
+
+    expect(root.querySelector(".learning-theory-block")).not.toBeNull();
+    expect(root.querySelector('[data-step="quiz"]')).toBeNull();
+    const steps = [...root.querySelectorAll(".learning-lesson-step")];
+    expect(steps.length).toBeGreaterThan(0);
+    expect(steps.some((step) => step.textContent?.endsWith(": Quiz"))).toBe(false);
+  });
+
+  it("zeigt für ein Modul ohne Inhalte keinen leeren Quizschritt", () => {
+    const db = structuredClone(seedDb);
+    const mod = db.modules[0];
+    mod.theoryBlocks = [];
+    mod.practiceBlocks = [];
+    mod.contentOrder = [];
+    db.questions = db.questions.filter((q) => !q.moduleIds.includes(mod.id));
+    const root = document.createElement("section");
+    root.dataset.moduleId = mod.id;
+    document.body.append(root);
+
+    attachModuleStepper(root, { initialDb: db, autoFetch: false });
+
+    expect(root.textContent).toContain("noch keine Lerninhalte vorhanden");
+    expect(root.querySelector(".learning-lesson-sequence")).toBeNull();
+    expect(root.querySelector('[data-step="quiz"]')).toBeNull();
   });
 
   it("überspringt leere Theorie und Übungen und lässt den Praxisteil vor dem Quiz abschließen", () => {
@@ -853,7 +1386,7 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
         .filter((question) => question.moduleIds.includes(db.modules[0].id))
         .reduce(
           (total, question) =>
-            total + calculateQuestionXp(question.baseXp, question.tags),
+            total + calculateModuleQuestionXp(question),
           0,
         );
     expect(xpValue).toBe(String(expectedXp));
@@ -928,13 +1461,33 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
         ?.disabled,
     ).toBe(true);
 
-    // Geschützter Reset setzt XP und Modul-2-Sperre zurück
-    dashboardEl
-      .querySelector<HTMLButtonElement>('[data-action="request-reset"]')
-      ?.click();
-    dashboardEl
-      .querySelector<HTMLButtonElement>('[data-action="confirm-reset"]')
-      ?.click();
+    const reset = mod1After?.querySelector<HTMLButtonElement>(
+      '.learning-start-quiz + [data-action="request-reset"]',
+    );
+    const confirmation = mod1After?.querySelector<HTMLElement>(
+      ".learning-reset-confirm",
+    );
+    const cancel = confirmation?.querySelector<HTMLButtonElement>(
+      '[data-action="cancel-reset"]',
+    );
+    const confirm = confirmation?.querySelector<HTMLButtonElement>(
+      '[data-action="confirm-reset"]',
+    );
+    if (!reset || !confirmation || !cancel || !confirm) {
+      throw new Error("Reset neben der Quizaktion fehlt");
+    }
+
+    expect(confirmation.hidden).toBe(true);
+    reset.click();
+    expect(confirmation.hidden).toBe(false);
+    expect(loadLearningProgress(db.modules).totalXp).toBe(expectedXp);
+    cancel.click();
+    expect(confirmation.hidden).toBe(true);
+    expect(loadLearningProgress(db.modules).totalXp).toBe(expectedXp);
+
+    reset.click();
+    confirm.click();
+    expect(loadLearningProgress(db.modules).totalXp).toBe(0);
     expect(
       dashboardEl.querySelector<HTMLElement>("[data-dashboard-xp]")?.dataset
         .dashboardXp,

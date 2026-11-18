@@ -1,0 +1,98 @@
+---
+title: Drum-Pattern anhören
+description: Einzelne Schläge anhören und Drum-Patterns bei einstellbarem Tempo abspielen.
+---
+
+Ein Drum-Pattern kann hinterlegte Sounddateien abspielen. Ohne zugeordnete
+Sounddateien bleibt es ein visuelles Raster.
+
+## Einzelne Schläge anhören
+
+- Klicke oder tippe auf eine farbige, aktive Zelle, um ihren Schlag zu hören.
+  Der Anschlagwert bestimmt die Lautstärke; `0` ist stumm.
+- Klicke auf den Instrumentennamen, um den Sound in voller Lautstärke vorzuhören.
+- Mit **Tab** erreichst du abspielbare Zellen und Instrumentennamen.
+  **Enter** spielt den ausgewählten Sound ab.
+- Ein kurzes Aufleuchten bestätigt die Wiedergabe. Schnelle Schläge dürfen sich
+  überlagern.
+
+Bei editierbaren Patterns schaltet ein Zellklick weiterhin den Schlag ein oder aus.
+Ein zuvor aktiver Schlag wird dabei auch abgespielt. In reinen Hörbeispielen
+verändert ein Klick das Raster nicht. Leere Zellen und Spuren ohne Sound bleiben stumm.
+Wenn die Anschlagzeile sichtbar ist, wählt ein Spurklick deren Werte aus.
+
+## Pattern durchlaufen lassen
+
+1. Stelle, falls angezeigt, am Pattern das gewünschte **Tempo (Viertel-BPM)** ein.
+   Ohne Tempo-Feld gilt das vom Autor vorgegebene Tempo; Standard ist `120`.
+2. Wähle bei Bedarf die gewünschten Spuren aus; ohne Markierung werden alle
+   Spuren mit Sound abgespielt.
+3. Tippe auf das **Play-Dreieck** links im Header. Das Pattern startet bei Step 1,
+   wiederholt sich nach dem letzten Step und läuft ohne Gedrückthalten weiter.
+   Das Symbol wechselt zum **Stop-Quadrat**. Die weiße Umrandung zeigt die
+   Position, auch bei Pausen.
+4. Tippe auf das **Stop-Quadrat**: Der Lauf und noch klingende Sounds dieser
+   Wiedergabe stoppen sofort. Beim nächsten Play beginnt das Pattern wieder bei Step 1.
+
+Der kompakte Symbol-Button ist so hoch wie eine Rasterzelle. Button, Tempo-Feld,
+Bedienhinweis, Hilfe-Link und Footer können je nach Beispiel unabhängig
+ausgeblendet sein. Ohne Button kannst du die Wiedergabe mit der Leertaste bedienen.
+
+### Spuren auswählen
+
+Hervorgehobene Spuren sind die voreingestellte Wiedergabe-Auswahl. Ist das
+Pattern interaktiv, kannst du diese Auswahl ändern:
+
+- **Klick auf einen Spurkopf:** Nur diese Spur auswählen.
+- **Shift+Klick auf einen Spurkopf:** Spur zur Auswahl hinzufügen oder daraus entfernen.
+- **Auswahlkästchen am Spurkopf:** Spuren einzeln an- und abwählen, auch per Touch
+  oder mit **Tab** und **Leertaste**, ohne einen Vorschauton auszulösen.
+- **Keine Spur markiert:** Alle Spuren mit Sound werden abgespielt.
+
+Ist ausschließlich eine Spur ohne Sound markiert, bleibt der Lauf stumm.
+Zum Hören aller verfügbaren Spuren entfernst du die Markierungen.
+
+Die Markierung und die Auswahlkästchen gehören zur Wiedergabe. Ein unterstrichener
+Spurname zeigt dagegen nur, welche Spur gerade in der Anschlagzeile angezeigt wird.
+Die Wiedergabe-Auswahl wird bei jedem Start übernommen; Änderungen während eines
+Laufs gelten beim nächsten Start. Einzelne Sounds kannst du unabhängig davon
+weiterhin vorhören.
+
+### Alternative mit Tastatur
+
+Verlasse das BPM-Feld mit **Tab** und fokussiere das Pattern oder eine seiner
+Zellen. Halte die **Leertaste** gedrückt, um dieselbe Spurauswahl ab Step 1
+abzuspielen. Loslassen stoppt sofort; erneutes Drücken startet wieder vorne.
+Dabei werden keine Zellen verändert.
+
+Außerhalb des Patterns sowie in Eingabefeldern und Links startet die Leertaste
+keinen Halte-Lauf. Fokuswechsel aus dem Raster stoppt die Halte-Wiedergabe,
+nicht aber einen per Play gestarteten Lauf. Tab-/Fensterwechsel oder Verlassen
+der Seite stoppen beide Varianten. Eine Tempoänderung beendet den aktuellen
+Lauf und gilt beim nächsten Start.
+
+**Zählweise:** BPM bezieht sich hier immer auf Viertelnoten. Bei `120 BPM` dauert
+eine Viertelnote `0,5 s`, ein Achtel-Step `0,25 s` und ein Sechzehntel-Step
+`0,125 s`. Acht Achtel-Steps ergeben einen 4/4-Takt von `2 s`. Die Zahl der
+Steps bestimmt die gesamte Loop-Länge; die Taktart beschreibt die Takteinteilung.
+Auch im 6/8-Takt bleibt die Tempoeinheit eine Viertelnote, nicht die punktierte
+Viertelnote. Leere Steps bleiben zeitlich erhalten.
+
+## Wenn kein Ton kommt
+
+Die erste Wiedergabe benötigt eine Nutzeraktion und gegebenenfalls noch Ladezeit.
+Erlaube Audio im Browser und prüfe die Geräte-Lautstärke. Bei fehlenden oder
+blockierten Sounds erscheint beim Abspielversuch ein Hinweis; du kannst es danach
+erneut versuchen. Das Raster bleibt auch ohne Audio nutzbar.
+
+Prüfe außerdem, ob die gewünschten Spuren ausgewählt und ihre Anschlagwerte
+größer als `0` sind. Ein per Tempoänderung gestoppter Lauf muss neu gestartet
+werden. Nicht jedes rein visuelle Raster lässt sich abspielen: Ungeeignete
+Auflösungsangaben oder ein ungültiges Tempo werden als Fehler angezeigt.
+
+Die [Feature-Beispiele](/audio/referenzen-werkzeuge/visualisierungen-erklaert/#drum-pattern-mit-soundfiles)
+zeigen ein eingebundenes Kick-Hörbeispiel und wie Autoren Sounds hinterlegen.
+Das Beispiel nutzt die vorhandene Datei `Kick.wav`; URLs müssen deren
+Groß-/Kleinschreibung exakt übernehmen. Die Nutzungsrechte der vorhandenen
+Samples sind noch nicht dokumentiert und müssen vor einer Veröffentlichung
+geklärt werden.
