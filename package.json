@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "sync:netlify-blobs": "node --experimental-strip-types scripts/sync-netlify-blobs.ts",
     "preview": "astro preview",
     "validate": "biome check . && astro check && tsc --noEmit",
     "fix": "biome check --write .",

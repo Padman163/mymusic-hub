@@ -70,8 +70,12 @@ Beim Wechsel auf `feat/netlify-blobs` **die lokale `.env` und das Netlify Dashbo
 
 * **Workspace:** Nur für den alten Backendstand bei Bedarf `GITHUB_BRANCH=feat/netlify-blobs` setzen. Auf dem Blob-Stand die alten `GITHUB_*`-Variablen für die Datenspeicherung entfernen oder auskommentieren; Netlify Blobs braucht sie nicht. `.env` niemals committen.
 * **Dashboard:** Unter **Site configuration → Build & deploy → Continuous deployment → Branches and deploy contexts** den Branch freigeben bzw. bewusst als Production Branch setzen. Die abgelösten Variablen unter **Environment variables** separat bereinigen. Die Details zum Datenumzug und zu gemeinsam genutzten Cloud-Daten stehen in der [Blob-Referenz](features/README_FEAT_NETLIFYBLOB.md).
-
 ```bash
+# Erstellung von .env im Projekt
+npx netlify-cli env:list --plain > .env
+
+
+
 # Projektverknüpfung prüfen
 npx netlify-cli status
 

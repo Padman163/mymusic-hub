@@ -1,6 +1,7 @@
 import { getStore, type Store } from '@netlify/blobs';
 import { isQuizSettings, normalizeLegacyDatabase, type ModulesDatabase } from '../../../src/lib/module-schema';
 import { createEmptyModulesDatabase } from '../../../src/lib/module-store';
+import { readLocalBlobSnapshot, writeLocalBlobSnapshot } from './local-blob-snapshot';
 
 type Data = {
 	contributions: unknown[];
@@ -38,6 +39,11 @@ const emptyData: { [K in Key]: () => Data[K] } = {
 };
 
 export class BlobStoreConflictError extends Error {}
+export class LocalBlobSnapshotError extends Error {
+	constructor(readonly originalError: unknown) {
+		super('Die lokalen Daten wurden gespeichert, aber der versionierte Blob-Snapshot konnte nicht aktualisiert werden.');
+	}
+}
 
 export function isBlobStoreUnavailable(error: unknown): boolean {
 	return error instanceof Error && error.name === 'MissingBlobsEnvironmentError';
@@ -45,10 +51,20 @@ export function isBlobStoreUnavailable(error: unknown): boolean {
 
 async function initializeKey<K extends Key>(store: Store, key: K): Promise<void> {
 	// Another request may have initialized (and already updated) this key.
-	await store.setJSON(key, emptyData[key](), { onlyIfNew: true });
+	const snapshotValue = process.env.NETLIFY_DEV === 'true'
+		? await readLocalBlobSnapshot(key)
+		: undefined;
+	const initialValue = snapshotValue === undefined
+		? emptyData[key]()
+		: parseBlobJSONValue(key, snapshotValue);
+	await store.setJSON(key, initialValue, { onlyIfNew: true });
 }
 
 const jsonOptions = { type: 'json', consistency: 'strong' } as const;
+
+function parseBlobJSONValue<K extends Key>(key: K, value: unknown): Data[K] {
+	return parse[key](value);
+}
 
 export async function readBlobJSON<K extends Key>(key: K): Promise<Data[K]> {
 	const store = getStore('mymusic-hub-data');
@@ -57,7 +73,7 @@ export async function readBlobJSON<K extends Key>(key: K): Promise<Data[K]> {
 		await initializeKey(store, key);
 		value = await store.get(key, jsonOptions);
 	}
-	return parse[key](value);
+	return parseBlobJSONValue(key, value);
 }
 
 export async function updateBlobJSON<K extends Key>(
@@ -73,9 +89,18 @@ export async function updateBlobJSON<K extends Key>(
 		}
 		if (entry === null) continue;
 
-		const next = change(parse[key](entry.data));
+		const next = change(parseBlobJSONValue(key, entry.data));
 		const { modified } = await store.setJSON(key, next, { onlyIfMatch: entry.etag });
-		if (modified) return next;
+		if (modified) {
+			if (process.env.NETLIFY_DEV === 'true') {
+				try {
+					await writeLocalBlobSnapshot(key, next);
+				} catch (error) {
+					throw new LocalBlobSnapshotError(error);
+				}
+			}
+			return next;
+		}
 	}
 	throw new BlobStoreConflictError();
 }
