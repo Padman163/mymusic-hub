@@ -1,5 +1,6 @@
 import type { Config } from '@netlify/functions';
-import { DEFAULT_QUIZ_SETTINGS, isQuizSettings, type LearningModule } from '../../src/lib/module-schema';
+import { DEFAULT_QUIZ_SETTINGS, isQuizSettings, type LearningModule, type ModulesDatabase } from '../../src/lib/module-schema';
+import { ModuleArchiveSyncError, syncModuleArchivesAfterSave } from '../../src/lib/module-archive';
 import {
 	deleteModule,
 	deleteQuestion,
@@ -20,6 +21,12 @@ const maxRequestBytes = 500_000;
 class ModuleValidationError extends Error {}
 class ModuleNotFoundError extends Error {}
 class ModuleConflictError extends Error {}
+
+async function updateModules(change: (db: ModulesDatabase) => ModulesDatabase): Promise<ModulesDatabase> {
+	const next = await updateBlobJSON('modules', change);
+	if (process.env.NETLIFY_DEV === 'true') await syncModuleArchivesAfterSave(next);
+	return next;
+}
 
 export const config: Config = {
 	path: ['/api/modules', '/.netlify/functions/modules'],
@@ -88,7 +95,7 @@ async function handleWriteRequest(
 			return jsonResponse(400, { error: 'Ungültige Quiz-Einstellungen.' });
 		}
 		const settings = body.settings;
-		const nextDb = await updateBlobJSON('modules', (db) => {
+		const nextDb = await updateModules((db) => {
 			if ((db.quizSettings ?? DEFAULT_QUIZ_SETTINGS).revision !== settings.revision) {
 				throw new ModuleConflictError('Die Einstellungen wurden zwischenzeitlich geändert. Bitte lade sie neu.');
 			}
@@ -109,7 +116,7 @@ async function handleWriteRequest(
 		const id = body.id.trim();
 		const neighborId = body.neighborId.trim();
 		const direction = body.direction;
-		const nextDb = await updateBlobJSON('modules', (db) => {
+		const nextDb = await updateModules((db) => {
 			const reordered = moveModule(db, id, neighborId, direction);
 			if (!reordered) throw new ModuleConflictError('Die Modulreihenfolge wurde geändert. Bitte lade die Übersicht neu.');
 			return reordered;
@@ -166,8 +173,7 @@ async function handleWriteRequest(
 			return jsonResponse(400, { error: preflight.errors.join(' ') });
 		}
 
-		const nextDb = await updateBlobJSON(
-			'modules',
+		const nextDb = await updateModules(
 			(db) => {
 				const validation = validateQuestionInput(questionPayload, db.modules);
 				if (!validation.valid) {
@@ -192,8 +198,7 @@ async function handleWriteRequest(
 		return jsonResponse(400, { error: validation.errors.join(' ') });
 	}
 
-	const nextDb = await updateBlobJSON(
-		'modules',
+	const nextDb = await updateModules(
 		(db) => upsertModuleWithExercises(db, rawModule as UpsertModuleInput, body.exercises),
 	);
 
@@ -254,8 +259,7 @@ export default async (request: Request): Promise<Response> => {
 				return jsonResponse(400, { error: 'Ungültige Lösch-Anfrage: ID fehlt.' });
 			}
 
-			await updateBlobJSON(
-				'modules',
+			await updateModules(
 				(db) => {
 					if (target.entity === 'question') {
 						if (!db.questions.some((q) => q.id === target.id)) {
@@ -280,6 +284,10 @@ export default async (request: Request): Promise<Response> => {
 
 		return await handleWriteRequest(request, parsedBody ?? {});
 	} catch (error) {
+		if (error instanceof ModuleArchiveSyncError) {
+			console.error('Die lokalen MDX-Kopien konnten nicht aktualisiert werden.', error);
+			return jsonResponse(500, { error: error.message });
+		}
 		if (isBlobStoreUnavailable(error)) {
 			return jsonResponse(503, { error: 'Der Modul-Builder ist noch nicht konfiguriert.' });
 		}

@@ -2,10 +2,7 @@
 import "../../styles/contribution-tags.css";
 import "../../styles/module-player.css";
 import "../../styles/notation.css";
-import DrumPattern from "../DrumPattern.astro";
-import FretboardClickable from "../FretboardClickable.astro";
-import NotationKeyboard from "../notation/NotationKeyboard.astro";
-import ScalePattern from "../ScalePattern.astro";
+import ModuleVisualTemplates from "./ModuleVisualTemplates.astro";
 
 interface Props {
   id?: string;
@@ -31,22 +28,7 @@ const {
   data-mode={mode}
   data-lesson-base-url={lessonBaseUrl}
 >
-  {([true, false] as const).flatMap((showBrace) =>
-    (["final", "single"] as const).map((rightBarStyle) => (
-      <template data-visual-template="NotationKeyboard" data-show-brace={String(showBrace)} data-right-bar-style={rightBarStyle}>
-        <NotationKeyboard showBrace={showBrace} rightBarStyle={rightBarStyle} />
-      </template>
-    )),
-  )}
-  <template data-visual-template="ScalePattern">
-    <ScalePattern />
-  </template>
-  <template data-visual-template="FretboardClickable">
-    <FretboardClickable readOnly showNoteNames />
-  </template>
-  <div hidden inert aria-hidden="true" data-visual-template="DrumPattern">
-    <DrumPattern interactive={false} patternData={[]} />
-  </div>
+  <ModuleVisualTemplates />
 
   <div data-stepper-content>
     <p class="learning-muted">Lektion wird geladen …</p>

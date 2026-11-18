@@ -1,0 +1,59 @@
+---
+import "../../styles/module-player.css";
+import "../../styles/notation.css";
+import type { ArchiveVisual } from "../../lib/module-archive";
+import ModuleVisualTemplates from "./ModuleVisualTemplates.astro";
+
+interface Props {
+  source: string;
+  visuals: ArchiveVisual[];
+}
+const { source, visuals } = Astro.props;
+---
+
+<section class="learning-theory-markdown" data-module-archive-lesson data-source={source} data-visuals={JSON.stringify(visuals)}>
+  <ModuleVisualTemplates />
+  <div data-archive-content>
+    <p>Archivseite wird dargestellt …</p>
+    <noscript><pre>{source}</pre></noscript>
+  </div>
+</section>
+
+<script>
+  import { renderTheoryMarkdown, renderTheoryVisualElement } from "../../lib/module-player-ui";
+  import { isVisualComponent } from "../../lib/module-schema";
+
+  function renderArchives() {
+    for (const root of document.querySelectorAll<HTMLElement>("[data-module-archive-lesson]")) {
+      if (root.dataset.rendered === "true") continue;
+      const host = root.querySelector<HTMLElement>("[data-archive-content]");
+      if (!host) throw new Error("Archiv-Inhaltsbereich fehlt.");
+      const source = (root.dataset.source ?? "")
+        .replace(/^(?:import [^\r\n]+;\r?\n\s*)+/, "")
+        .replace(/^# [^\r\n]+\r?\n/, "");
+      host.replaceChildren(renderTheoryMarkdown(source, root));
+      const visuals: unknown = JSON.parse(root.dataset.visuals ?? "[]");
+      if (!Array.isArray(visuals)) throw new Error("Ungültige Archiv-Visualisierungen.");
+      for (const visual of visuals) {
+        if (
+          typeof visual !== "object" || visual === null ||
+          typeof visual.marker !== "string" ||
+          !isVisualComponent(visual.visualComponent) ||
+          (visual.visualPropsJson !== undefined && typeof visual.visualPropsJson !== "string")
+        ) throw new Error("Ungültige Archiv-Visualisierung.");
+        const marker = [...host.querySelectorAll<HTMLElement>("[id]")].find(
+          (element) => element.id === `user-content-${visual.marker}` || element.id === visual.marker,
+        );
+        if (!marker) throw new Error("Platzhalter der Archiv-Visualisierung fehlt.");
+        const rendered = renderTheoryVisualElement({
+          id: visual.marker, order: 0, title: "", markdownContent: "",
+          visualComponent: visual.visualComponent, visualPropsJson: visual.visualPropsJson,
+        }, root);
+        if (rendered) marker.replaceWith(rendered);
+      }
+      root.dataset.rendered = "true";
+    }
+  }
+  renderArchives();
+  document.addEventListener("astro:page-load", renderArchives);
+</script>

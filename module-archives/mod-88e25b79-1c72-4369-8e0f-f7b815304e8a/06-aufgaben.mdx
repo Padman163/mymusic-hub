@@ -1,0 +1,132 @@
+import DrumPattern from "../../src/components/DrumPattern.astro";
+
+import Notation from "../../src/components/notation/Notation.astro";
+
+import NotationKeyboard from "../../src/components/notation/NotationKeyboard.astro";
+
+
+
+# 106: Harmonie
+
+## Dur-Tonleiter, Tetrachorde & Tonarten (bis 3 Vorzeichen)
+
+Eine **Dur-Tonleiter** besteht aus 7 Stammtönen plus Oktave mit einer festen Abfolge von **Ganzton- ($G$)** und **Halbtonschritten ($H$)** :
+
+$$G - G - H \quad \xrightarrow{+G} \quad G - G - H$$
+
+* **Tetrachord-Prinzip:** Jede Dur-Tonleiter besteht aus zwei symmetrischen Vier-Ton-Gruppen (**Tetrachorden**) mit der Struktur $G - G - H$, die durch einen Ganztonschritt verbunden sind.
+* **Halbtonstufen & Leitton:** Die Halbtonschritte liegen immer zwischen der **3. und 4. Stufe** sowie zwischen der **7. und 8. Stufe** . Die 7. Stufe wirkt als **Leitton** mit starkem Spannungsdrang nach oben in den Grundton .
+* **Generalvorzeichen:** Stehen direkt nach dem Notenschlüssel und gelten für das gesamte Stück (auf allen Oktavlagen), während **Versetzungszeichen** direkt vor einer Note nur bis zum nächsten Taktstrich wirken .
+* **D1-Dur-Tonarten (bis 3 Vorzeichen):**
+  * **Ohne Vorzeichen:** C-Dur ($C\text{–}D\text{–}E\text{–}F\text{–}G\text{–}A\text{–}H\text{–}C$)
+  * **Kreuz-Tonarten ($\sharp$):** G-Dur ($1\sharp$: $F\sharp$), D-Dur ($2\sharp$: $F\sharp, C\sharp$), A-Dur ($3\sharp$: $F\sharp, C\sharp, G\sharp$) 
+  * **B-Tonarten ($\flat$):** F-Dur ($1\flat$: $B/B\flat$), B-Dur ($2\flat$: $B, E\flat$), Es-Dur ($3\flat$: $B, E\flat, A\flat$) 
+
+<Notation
+  clef="treble"
+  timeSignature={{ numerator: 4, denominator: 4 }}
+  layout={2}
+  measureWidth="equal"
+  measures={[
+    {
+      notes: [
+        { duration: "quarter", step: -2 },
+        { duration: "quarter", step: -1 },
+        { duration: "quarter", step: 0 },
+        { duration: "quarter", step: 1 }
+      ]
+    },
+    {
+      rightBarStyle: "final",
+      notes: [
+        { duration: "quarter", step: 2 },
+        { duration: "quarter", step: 3 },
+        { duration: "quarter", step: 4 },
+        { duration: "quarter", step: 5 }
+      ]
+    }
+  ]}
+/>
+
+## Intervall-Grobbestimmung & Dur-/Moll-Dreiklänge
+
+Der Abstand zwischen zwei Tönen heißt **Intervall** . Für die Grobbestimmung zählt man die Stammton-Stufen inklusive Start- und Zielton ab:
+
+* **1. Stufe:** Prime ($C\text{–}C$, $0\text{ HT}$)
+* **2. Stufe:** Sekunde ($C\text{–}D$)
+* **3. Stufe:** Terz ($C\text{–}E$)
+* **4. Stufe:** Quarte ($C\text{–}F$)
+* **5. Stufe:** Quinte ($C\text{–}G$, reine Quinte = $7\text{ HT}$)
+* **6. Stufe:** Sexte ($C\text{–}A$)
+* **7. Stufe:** Septime ($C\text{–}H$)
+* **8. Stufe:** Oktave ($C\text{–}c$, $12\text{ HT}$)
+
+**Aufbau von Dreiklängen in Grundstellung:**
+Schichtet man zwei Terzen übereinander (Stufen $1 - 3 - 5$), entsteht ein **Dreiklang** . Über das Tongeschlecht (Dur oder Moll) entscheidet die untere Terz :
+
+* **Dur-Dreiklang (hell, stabil):** Grundton + **große Terz ($4\text{ HT}$)** + **kleine Terz ($3\text{ HT}$)** = reine Quinte ($7\text{ HT}$) .
+  * *Beispiel C-Dur:* $C - E - G$ | *Leadsheet-Symbol:* **$C$** 
+* **Moll-Dreiklang (weich, melancholisch):** Grundton + **kleine Terz ($3\text{ HT}$)** + **große Terz ($4\text{ HT}$)** = reine Quinte ($7\text{ HT}$) .
+  * *Beispiel a-Moll:* $A - C - E$ | *Leadsheet-Symbol:* **$Am$** (Großbuchstabe + kleines $m$) 
+
+<Notation
+  clef="treble"
+  measureWidth="equal"
+  measures={[
+    {
+      notes: [
+        { duration: "quarter", step: -2 },
+        { duration: "quarter", step: 0 },
+        { duration: "quarter", step: 2 },
+        { duration: "quarter", step: -2 }
+      ]
+    },
+    {
+      rightBarStyle: "final",
+      notes: [
+        { duration: "quarter", step: 3 },
+        { duration: "quarter", step: 5 },
+        { duration: "quarter", step: 7 },
+        { duration: "quarter", step: 3 }
+      ]
+    }
+  ]}
+/>
+
+## Aufgabe: Notiere den C-Dur-Dreiklang aufwärts (C4 – E4 – G4) als drei Viertelnoten im Violinschlüssel.
+
+Notiere den C-Dur-Dreiklang aufwärts (C4 – E4 – G4) als drei Viertelnoten im Violinschlüssel.
+
+<details>
+
+<summary>Lösung und Erklärung</summary>
+
+**Richtige Antwort:** 
+
+```json
+
+{
+  "clef": "treble",
+  "timeSignature": {
+    "numerator": 4,
+    "denominator": 4
+  },
+  "maxNotes": 3,
+  "lockDuration": "quarter",
+  "compact": false,
+  "showDurationPicker": false,
+  "showHints": true,
+  "expectedPitches": [
+    "C4",
+    "E4",
+    "G4"
+  ],
+  "expectedDurations": []
+}
+
+```
+
+Der C-Dur-Dreiklang besteht aus dem Grundton C4 (1. Hilfslinie unten), der großen Terz E4 (1. Linie) und der reinen Quinte G4 (2. Linie).
+
+</details>
+

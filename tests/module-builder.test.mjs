@@ -1,7 +1,8 @@
 // @vitest-environment node
 import { getStore } from "@netlify/blobs";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import modulesHandler from "../netlify/functions/modules.ts";
+import * as moduleArchive from "../src/lib/module-archive.ts";
 import { mockBlobStore } from "./fixtures/blob-store.ts";
 import {
   DEFAULT_FASTLANE_MIN_SCORE,
@@ -743,9 +744,50 @@ describe("Modules Serverless API (/api/modules)", () => {
   let store;
   const storedDb = () => store.value("modules");
   beforeEach(() => {
+    vi.stubEnv("NETLIFY_DEV", "false");
     store = mockBlobStore();
     store.put("modules", { modules: [], questions: [] });
     vi.mocked(getStore).mockReset().mockReturnValue(store);
+  });
+  afterEach(() => vi.unstubAllEnvs());
+
+  it.each(["true", "false"])("aktualisiert MDX-Kopien nur lokal (NETLIFY_DEV=%s)", async (local) => {
+    const synchronize = vi.spyOn(moduleArchive, "syncModuleArchivesAfterSave").mockResolvedValue();
+    vi.stubEnv("NETLIFY_DEV", local);
+    try {
+      const response = await modulesHandler(new Request("http://localhost/api/modules", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entity: "module", id: "m", title: "Test" }),
+      }));
+      expect(response.status).toBe(201);
+      if (local === "true") expect(synchronize).toHaveBeenCalledWith(storedDb());
+      else expect(synchronize).not.toHaveBeenCalled();
+    } finally {
+      synchronize.mockRestore();
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it("meldet ausdrücklich, wenn nur die Kopien nach dem Speichern fehlgeschlagen sind", async () => {
+    const message = "Die Moduldaten wurden gespeichert, aber die MDX-Kopien konnten nicht aktualisiert werden.";
+    const synchronize = vi.spyOn(moduleArchive, "syncModuleArchivesAfterSave")
+      .mockRejectedValue(new moduleArchive.ModuleArchiveSyncError(message));
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.stubEnv("NETLIFY_DEV", "true");
+    try {
+      const response = await modulesHandler(new Request("http://localhost/api/modules", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entity: "module", id: "m", title: "Test" }),
+      }));
+      expect(response.status).toBe(500);
+      expect(await response.json()).toEqual({ error: message });
+      expect(storedDb().modules[0].id).toBe("m");
+      expect(log).toHaveBeenCalled();
+    } finally {
+      synchronize.mockRestore();
+      log.mockRestore();
+      vi.unstubAllEnvs();
+    }
   });
 
   it("speichert Modul und Lernpfad-Aufgaben gemeinsam oder lehnt den ganzen Schreibvorgang ab", async () => {

@@ -8,6 +8,7 @@ import { defineConfig } from "astro/config";
 // @ts-ignore - rehype-katex liefert keine eigenen TS-Deklarationsdateien mit
 import rehypeKatex from "rehype-katex";
 import remarkMath from "remark-math";
+import { ModuleArchiveSyncError, syncModuleArchivesAfterSave } from "./src/lib/module-archive.ts";
 
 const MAX_LOCAL_REQUEST_BYTES = 500_000;
 const LOCAL_MODULES_PATHS = new Set([
@@ -158,6 +159,7 @@ function localModulesApiPlugin() {
               `${JSON.stringify(nextDb, null, 2)}\n`,
               "utf8",
             );
+            await syncModuleArchivesAfterSave(nextDb);
           };
 
           if (method === "GET") {
@@ -377,7 +379,9 @@ function localModulesApiPlugin() {
         } catch (error) {
           console.error("Fehler im lokalen Modul-API-Endpunkt:", error);
           sendLocalJson(res, 500, {
-            error: "Die Moduldaten konnten lokal nicht verarbeitet werden.",
+            error: error instanceof ModuleArchiveSyncError
+              ? error.message
+              : "Die Moduldaten konnten lokal nicht verarbeitet werden.",
           });
         }
       });
@@ -436,6 +440,7 @@ export default defineConfig({
           items: [
             { label: "Beiträge", slug: "projektierung/beitraege" },
             { label: "Modul-Builder", slug: "projektierung/modul-builder" },
+            { label: "Modularchiv", link: "/module-archives/" },
           ],
         },
         {

@@ -53,6 +53,22 @@ Im Reiter **Übersicht** kannst du Module nach Bereich filtern, nach Reihenfolge
 
 Über das Stiftsymbol bearbeitest du ein Modul oder eine Quizfrage. Die Pfeile zum Verschieben von Modulen stehen bei **Reihenfolge: 1 → N** und ohne Bereichsfilter zur Verfügung. Beim Löschen eines Moduls werden seine Lernpfad-Aufgaben gelöscht; Quizfragen bleiben erhalten und verlieren nur die Zuordnung zu diesem Modul. Der Löschdialog verlangt eine Bestätigung.
 
+## Modularchiv anschauen
+
+Öffne **Projektierung → Modularchiv** oder direkt die [Modulübersicht](/module-archives/). Dort stehen alle Module, auch das Blocklager. Klicke auf eine Lektionsseite, um Texte, Notation und DrumPattern anzuschauen. Hinweise und Lösungen kannst du aufklappen. Das Anschauen vergibt keine XP und verändert deinen Lernfortschritt nicht.
+
+Im Projekt findest du dieselbe Übersicht in `module-archives/README.md`. Pro Lektionsseite liegt dort eine lesbare MDX-Datei, bei „Puls, Tempo und Rhythmus“ also eine Theorie- und eine Aufgabenseite.
+
+Beim **lokalen Speichern im Builder** werden Übersicht und Kopien automatisch aktualisiert. Auch neue Module werden ergänzt. Falls das Archiv währenddessen bereits geöffnet ist, lade die Seite neu.
+
+In VS Code zeigt **Quellcodeverwaltung** die geänderten Dateien im Worktree. Öffne eine Datei dort, um alte und neue Inhalte zu vergleichen. Committe den Ausgangsstand, damit du spätere Änderungen zuverlässig vergleichen kannst. Das Verwerfen einer MDX-Änderung setzt **nicht** die bereits gespeicherten Builder-Inhalte zurück.
+
+Alte Archivdateien werden nicht automatisch gelöscht. Ein im Builder gelöschtes Modul bleibt mit seinem letzten Archivstand in der Übersicht.
+
+**Online-Grenze:** Änderungen auf der veröffentlichten Website können keine Dateien auf deinem Computer ändern. Das veröffentlichte Archiv zeigt den zuletzt gebauten Git-Stand – einschließlich der archivierten Blocklager-Seiten und Lösungen.
+
+Zum erneuten Einlesen des laufenden lokalen Netlify-Dev-Servers nutze im Terminal `npm run archive:modules`. Beim reinen Astro-Dev-Server lautet der Aufruf `npm run archive:modules -- --url http://localhost:4321/api/modules`. Meldet der Builder, dass die Moduldaten gespeichert wurden, die Kopien aber nicht aktualisiert werden konnten, behebe die angezeigte Ursache und starte diesen Export erneut.
+
 ## Bestehensgrenzen ändern
 
 Unter **Einstellungen** legst du die Grenzen für Abschluss-Quiz und Fastlane für alle Module fest. Nach einer tatsächlichen Änderung und Bestätigung wird der Lernfortschritt einschließlich XP beim nächsten Laden im jeweiligen Browser zurückgesetzt. Unverändertes Speichern löst keinen Reset aus.

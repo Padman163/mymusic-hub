@@ -1,0 +1,24 @@
+---
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import archive from "../../../module-archives/index.json";
+---
+
+<StarlightPage frontmatter={{ title: "Modularchiv", description: "Alle gespeicherten Module und ihre Lektionsseiten.", tableOfContents: false, editUrl: false }}>
+  <p>Lesbare Kopien aller Module, einschließlich des Blocklagers. Die Seiten zeigen den gespeicherten Inhalt ohne Lernfortschritt oder XP-Vergabe.</p>
+  <p>Lokale Änderungen im Builder aktualisieren diese Übersicht und die MDX-Dateien automatisch. <a href="/wiki/modul-builder/#modularchiv-anschauen">Hilfe zum Modularchiv</a></p>
+  {archive.modules.length === 0 && <p>Noch keine Module archiviert.</p>}
+  {archive.modules.map((module) => (
+    <section>
+      <h2>{module.title}</h2>
+      {!module.present ? <p><strong>Nicht mehr im Builder vorhanden – letzter Archivstand.</strong></p>
+        : module.archived && <p><strong>Blocklager</strong></p>}
+      <p>{module.description}</p>
+      <ul>
+        {module.lessons.map((lesson) => (
+          <li><a href={`/module-archives/${encodeURIComponent(module.directory)}/${lesson.slug}/`}>{lesson.title}</a></li>
+        ))}
+      </ul>
+      {module.lessons.length === 0 && <p>Dieses Modul hat noch keine Lektionsseiten.</p>}
+    </section>
+  ))}
+</StarlightPage>
