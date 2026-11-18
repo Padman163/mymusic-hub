@@ -31,6 +31,29 @@ describe("Admin-Wiki", () => {
       .toBe("https://github.com/Padman163/mymusic-hub/blob/main/.github/copilot-instructions.md");
   });
 
+  it("beschriftet verschachtelte Markdown-Checkboxen mit dem eigenen Aufgabentext", async () => {
+    const document = adminWikiDocuments.find((item) => item.sourcePath === "README.md");
+    if (!document) throw new Error("README.md fehlt im Admin-Wiki.");
+    const { code } = await renderAdminWikiDocument({
+      ...document,
+      source: "# Aufgaben\n\n- [ ] **Plan** bauen\n  - [x] Unterpunkt\n- [x] Datei [speichern](README.md)\n",
+    });
+    const window = new Window();
+    try {
+      const rendered = new window.DOMParser().parseFromString(code, "text/html");
+      const checkboxes = [...rendered.querySelectorAll('input[type="checkbox"]')];
+      expect(checkboxes.map((checkbox) => checkbox.getAttribute("aria-label"))).toEqual([
+        "Plan bauen",
+        "Unterpunkt",
+        "Datei speichern",
+      ]);
+      expect(checkboxes.map((checkbox) => checkbox.hasAttribute("checked"))).toEqual([false, true, true]);
+      expect(checkboxes.every((checkbox) => checkbox.hasAttribute("disabled"))).toBe(true);
+    } finally {
+      await window.happyDOM.close();
+    }
+  });
+
   it("rendert Markdown und funktionierende Anker ohne doppelte Hauptüberschrift", async () => {
     const document = adminWikiDocuments.find((item) => item.sourcePath === "README.md");
     if (!document) throw new Error("README.md fehlt im Admin-Wiki.");

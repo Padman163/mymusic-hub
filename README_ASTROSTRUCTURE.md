@@ -46,6 +46,8 @@ Die Sidebar gliedert sich in dieser Reihenfolge in **Admin** (Projektierung und 
 
 Das **Admin-Wiki** unter `/admin-wiki/` zeigt die Root-READMEs (`README*.md`) und alle Feature-READMEs (`features/README*.md`) direkt als statische Starlight-Seiten. `src/lib/admin-wiki.ts` lädt die Originaldateien beim Build; `src/pages/admin-wiki/` stellt Übersicht und Dokumentseiten bereit. Neue passende READMEs werden beim nächsten Build automatisch aufgenommen. Relative Links zwischen diesen Dokumenten führen zu den Wiki-Seiten, Inhalts- und Asset-Links zur jeweiligen Website-Route; sonstige Repository-Links verweisen auf GitHub (`main`). Das Admin-Wiki ist wie die übrige Website öffentlich und nicht zugriffsgeschützt.
 
+Der Admin-Wiki-Renderer ergänzt zugängliche Namen für Markdown-Checkboxen aus dem jeweiligen Aufgabentext, ohne den schreibgeschützten Zustand zu ändern. Verschachtelte Aufgaben erhalten eigene Namen. Codeblöcke nutzen das kontrastreiche Shiki-Theme `github-dark-high-contrast`, damit auch Kommentare lesbar bleiben.
+
 Die aktuelle `src/content.config.ts` nutzt Starlights `docsLoader()` und `docsSchema()` mit einem Zod-Erweiterungsschema sowie `i18nLoader()` und `i18nSchema()` für Übersetzungen. Auszug:
 
 ```typescript

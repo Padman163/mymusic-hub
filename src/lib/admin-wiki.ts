@@ -1,5 +1,41 @@
 import { createMarkdownProcessor } from "@astrojs/markdown-remark";
+import type { Root as HtmlRoot, RootContent as HtmlContent } from "hast";
 import type { Root, RootContent } from "mdast";
+
+function labelTaskLists() {
+  return (tree: HtmlRoot) => {
+    function taskText(node: HtmlRoot | HtmlContent): string {
+      if (node.type === "text") return node.value;
+      if (node.type === "element" && ["ul", "ol"].includes(node.tagName)) return "";
+      if ("children" in node) return node.children.map(taskText).join(" ");
+      return "";
+    }
+
+    function walk(node: HtmlRoot | HtmlContent, label?: string) {
+      if (node.type === "element") {
+        if (node.tagName === "li") {
+          const classes = node.properties.className;
+          label = Array.isArray(classes) && classes.includes("task-list-item")
+            ? taskText(node).replace(/\s+/g, " ").trim()
+            : undefined;
+        }
+        if (
+          node.tagName === "input" &&
+          node.properties.type === "checkbox" &&
+          !node.properties.ariaLabel &&
+          !node.properties.ariaLabelledBy &&
+          label
+        ) {
+          node.properties.ariaLabel = label;
+        }
+      }
+      if ("children" in node) {
+        node.children.forEach((child) => walk(child, label));
+      }
+    }
+    walk(tree);
+  };
+}
 
 const sources = import.meta.glob<string>(
   ["../../README*.md", "../../features/README*.md"],
@@ -62,6 +98,8 @@ export async function renderAdminWikiDocument(
 
   const processor = await createMarkdownProcessor({
     remarkPlugins: [rewriteLinks],
+    rehypePlugins: [labelTaskLists],
+    shikiConfig: { theme: "github-dark-high-contrast" },
   });
   return processor.render(document.source.replace(/^#\s+.+\r?\n/m, ""));
 }
