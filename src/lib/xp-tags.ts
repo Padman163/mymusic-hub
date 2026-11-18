@@ -1,3 +1,5 @@
+import type { TheoryBlock } from "./module-schema.ts";
+
 export interface TagDefinition {
   description: string;
   multiplier: number;
@@ -94,8 +96,13 @@ export function calculateQuestionXp(
 }
 
 export function calculateTheoryBlockXp(
-  block: { baseXp?: number; tags?: readonly string[] },
+  block: {
+    baseXp?: number;
+    tags?: readonly string[];
+    role?: TheoryBlock["role"];
+  },
   defaultBaseXp: number,
 ): number {
+  if (block.role === "exercise_intro") return 0;
   return calculateQuestionXp(block.baseXp ?? defaultBaseXp, block.tags ?? []);
 }

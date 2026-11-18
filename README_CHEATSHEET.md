@@ -40,8 +40,9 @@ npm run test:visual          # E2E mit --update-snapshots; derzeit keine Snapsho
 
 ### 1.4 Prüfungen im Alltag und am Branch-Ende
 ```bash
-npm run test:unit            # Stufe 1 nach jeder Anpassung, wenn kein passenderer Unit-Test vorliegt
-npm run test:component       # Stufe 2 zusätzlich bei größeren Komponentenänderungen; bevorzugt gezielt
+# Copilot fragt nach jeweils zehn Nutzer-Prompts; Tests nur nach Zustimmung oder ausdrücklichem Auftrag:
+npm run test:unit            # Stufe 1: Notationslogik; andere Unit-Tests passend zur Änderung wählen
+npm run test:component       # Stufe 2: Komponenten; bevorzugt gezielt
 npm run preflight            # Nur manuell durch den Nutzer am Branch-Ende (u. a. Stufen 0, 3 und 4):
                              # Ergebnisbericht zu Validierung, Vitest, Build, E2E, Lighthouse und Git-Diff
 npm run audit                # Separates Dependency-Audit; nicht Teil des Preflights

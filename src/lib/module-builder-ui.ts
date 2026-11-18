@@ -423,6 +423,7 @@ export function createTheoryBlockEditor(
   addType.setAttribute("aria-label", "Art des neuen Modulblocks");
   for (const [value, label] of [
     ["theory", "Theorieteil"],
+    ["exercise_intro", "Aufgabeneinleitung"],
     ["leicht", "Aufgabe (leicht, Lernpfad)"],
     ["practice", "Praxisaufgabe"],
   ]) {
@@ -651,11 +652,15 @@ export function createTheoryBlockEditor(
       const label = row.querySelector<HTMLElement>(".theory-block-order-label");
       if (label) {
         if (row.classList.contains("theory-block-row")) {
-          theoryNumber += 1;
           const title = row.querySelector<HTMLInputElement>(
             ".theory-block-title",
           );
-          label.textContent = `Theorie ${theoryNumber} · ${title?.value.trim() || "Neuer Block"}`;
+          if (row.dataset.blockRole === "exercise_intro") {
+            label.textContent = `Aufgabeneinleitung · ${title?.value.trim() || "Neuer Block"}`;
+          } else {
+            theoryNumber += 1;
+            label.textContent = `Theorie ${theoryNumber} · ${title?.value.trim() || "Neuer Block"}`;
+          }
         } else if (row.classList.contains("module-exercise-row")) {
           label.textContent = formatExerciseTitle(
             row.querySelector<HTMLInputElement>(".module-exercise-title")
@@ -769,7 +774,13 @@ export function createTheoryBlockEditor(
         : getDefaultBaseXp();
       const baseXp = input.value.trim() ? Number(input.value) : defaultXp;
       const xp = calculateTheoryBlockXp(
-        { baseXp, tags: picker.selectedTags() },
+        {
+          baseXp,
+          tags: picker.selectedTags(),
+          ...(row.dataset.blockRole === "exercise_intro"
+            ? { role: "exercise_intro" }
+            : {}),
+        },
         defaultXp,
       );
       xpByRow.set(row, xp);
@@ -794,6 +805,9 @@ export function createTheoryBlockEditor(
     const row = document.createElement("div");
     row.className =
       kind === "theory" ? "theory-block-row" : "module-practice-row";
+    if (kind === "theory" && initial.role === "exercise_intro") {
+      row.dataset.blockRole = "exercise_intro";
+    }
     if (
       kind === "theory" &&
       initial.visualComponent &&
@@ -947,6 +961,43 @@ export function createTheoryBlockEditor(
       picker.element,
       calculatedXp,
     );
+    if (kind === "theory") {
+      const roleLabel = document.createElement("label");
+      roleLabel.className = "field";
+      const roleCaption = document.createElement("span");
+      roleCaption.textContent = "Blockrolle";
+      const roleSelect = document.createElement("select");
+      roleSelect.className = "theory-block-role";
+      for (const [value, label] of [
+        ["theory", "Theorieteil"],
+        ["exercise_intro", "Aufgabeneinleitung (ohne Abschluss und XP)"],
+      ]) {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = label;
+        roleSelect.append(option);
+      }
+      roleSelect.value = initial.role ?? "theory";
+      const roleHint = document.createElement("small");
+      roleHint.className = "field-hint";
+      roleHint.textContent =
+        "Eine Aufgabeneinleitung erklärt die folgenden Fragen. Gruppiere sie mit den zugehörigen Aufgaben; sie benötigt keinen eigenen Abschluss und gibt keine XP.";
+      const updateRole = () => {
+        const introduction = roleSelect.value === "exercise_intro";
+        row.dataset.blockRole = roleSelect.value;
+        xpLabel.hidden = introduction;
+        picker.element.hidden = introduction;
+        calculatedXp.hidden = introduction;
+        const badge = summary.querySelector<HTMLElement>(".learning-xp-badge");
+        if (badge) badge.hidden = introduction;
+        syncRowOrder();
+        refreshCalculatedXp();
+      };
+      roleSelect.addEventListener("change", updateRole);
+      roleLabel.append(roleCaption, roleSelect, roleHint);
+      content.prepend(roleLabel);
+      updateRole();
+    }
     if (legacyVisuals.has(row)) {
       const legacyHint = document.createElement("small");
       legacyHint.className = "field-hint";
@@ -1029,6 +1080,8 @@ export function createTheoryBlockEditor(
       return;
     }
     if (addType.value === "practice") addPracticeBlock();
+    else if (addType.value === "exercise_intro")
+      addBlock({ role: "exercise_intro" });
     else addBlock();
     const lastSummary =
       rows.lastElementChild?.querySelector<HTMLElement>("summary");
@@ -1116,6 +1169,9 @@ export function createTheoryBlockEditor(
         order: index + 1,
         title,
         markdownContent: markdownInput.value,
+        ...(row.dataset.blockRole === "exercise_intro"
+          ? { role: "exercise_intro" as const }
+          : {}),
         ...(row.dataset.groupId
           ? {
               groupId: row.dataset.groupId,

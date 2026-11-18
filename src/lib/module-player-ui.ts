@@ -153,12 +153,15 @@ function computeModuleStats(
   quizReady: boolean;
   overallPercent: number;
 } {
-  const totalTheory = mod.theoryBlocks.length;
+  const theoryBlocks = mod.theoryBlocks.filter(
+    (block) => block.role !== "exercise_intro",
+  );
+  const totalTheory = theoryBlocks.length;
   const theoryDone = modProgress?.steps.theory === "completed";
   const completedIds = new Set(modProgress?.completedTheoryBlockIds ?? []);
   const completedTheory = theoryDone
     ? totalTheory
-    : mod.theoryBlocks.filter((block) => completedIds.has(block.id)).length;
+    : theoryBlocks.filter((block) => completedIds.has(block.id)).length;
 
   const exerciseQuestions = modQuestions.filter(
     (q) => q.targetLane === "leicht",
@@ -2463,7 +2466,15 @@ function buildLessonSections(
           : { kind: "exercise", question: current.item.question },
     );
   }
-  sections.push({ kind: "quiz" });
+  if (
+    questions.some(
+      (question) =>
+        isQuestionInModule(question, mod.id) &&
+        question.targetLane === "mittel",
+    )
+  ) {
+    sections.push({ kind: "quiz" });
+  }
   return sections;
 }
 
@@ -2480,8 +2491,10 @@ function isLessonSectionComplete(
     case "theory":
       return (
         progress.steps.theory === "completed" ||
-        section.blocks.every((block) =>
-          progress.completedTheoryBlockIds.includes(block.id),
+        section.blocks.every(
+          (block) =>
+            block.role === "exercise_intro" ||
+            progress.completedTheoryBlockIds.includes(block.id),
         )
       );
     case "exercise":
@@ -2489,7 +2502,8 @@ function isLessonSectionComplete(
     case "group": {
       const blocks = section.items
         .filter((item) => item.kind === "theory")
-        .map((item) => item.block);
+        .map((item) => item.block)
+        .filter((block) => block.role !== "exercise_intro");
       const questions = section.items
         .filter((item) => item.kind === "exercise")
         .map((item) => item.question);
@@ -2676,6 +2690,13 @@ export function attachModuleStepper(
     initialProgress: ModuleProgress,
   ): void {
     const sections = buildLessonSections(mod, currentDb.questions);
+    if (sections.length === 0) {
+      const empty = document.createElement("p");
+      empty.className = "learning-muted";
+      empty.textContent = "Für dieses Modul sind noch keine Lerninhalte vorhanden.";
+      host.append(empty);
+      return;
+    }
     const sectionTitles = sections.map(
       (section, position) =>
         `${mod.level + position + 1}: ${getLessonSectionTitle(section)}`,
@@ -2687,6 +2708,7 @@ export function attachModuleStepper(
     if (
       typeof window !== "undefined" &&
       window.location.hash === "#quiz-step" &&
+      sections.some((section) => section.kind === "quiz") &&
       initialProgress.steps.mittel !== "locked"
     ) {
       index = sections.length - 1;
@@ -2817,6 +2839,9 @@ export function attachModuleStepper(
         const blocks = contentItems.flatMap((item) =>
           item.kind === "theory" ? [item.block] : [],
         );
+        const completableBlocks = blocks.filter(
+          (block) => block.role !== "exercise_intro",
+        );
         const questions = contentItems.flatMap((item) =>
           item.kind === "exercise" ? [item.question] : [],
         );
@@ -2873,10 +2898,12 @@ export function attachModuleStepper(
             } else {
               const headingRow = document.createElement("div");
               headingRow.className = "learning-theory-heading";
-              headingRow.append(
-                heading,
-                createXpBadge(calculateTheoryBlockXp(block, mod.theoryBaseXp)),
-              );
+              headingRow.append(heading);
+              if (block.role !== "exercise_intro") {
+                headingRow.append(
+                  createXpBadge(calculateTheoryBlockXp(block, mod.theoryBaseXp)),
+                );
+              }
               blockEl.append(headingRow);
             }
             const markdown = document.createElement("div");
@@ -2942,7 +2969,7 @@ export function attachModuleStepper(
         wrap.append(blocksHost);
         card.append(wrap);
 
-        if (blocks.length > 0) {
+        if (completableBlocks.length > 0) {
           completeButton = document.createElement("button");
           completeButton.type = "button";
           completeButton.className = "learning-btn learning-btn-primary";
@@ -2953,7 +2980,7 @@ export function attachModuleStepper(
               undefined,
               currentDb.quizSettings,
             );
-            for (const block of blocks) {
+            for (const block of completableBlocks) {
               latest = completeTheoryBlock(
                 latest,
                 mod,

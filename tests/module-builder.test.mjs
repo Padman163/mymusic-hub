@@ -267,6 +267,28 @@ describe("module-store Validierung & Store-Operationen", () => {
     expect(validateModuleInput({ id: "mod", title: "Modul", theoryBlocks: [blocks[0], blocks[0]] }).valid).toBe(false);
   });
 
+  it("erhält Aufgabeneinleitungen ohne eigene Theorie-XP und validiert ihre Rolle", () => {
+    const introduction = {
+      id: "intro", order: 2, title: "Einleitung", markdownContent: "Vergleiche die Muster.",
+      role: "exercise_intro", baseXp: 100, tags: ["Notensystem"],
+    };
+    const db = upsertModule(createEmptyModulesDatabase(), {
+      id: "mod", title: "Modul", theoryBaseXp: 30,
+      theoryBlocks: [
+        { id: "theory", order: 1, title: "Theorie", markdownContent: "" },
+        introduction,
+      ],
+    });
+    expect(db.modules[0].theoryBlocks[1]).toEqual(introduction);
+    expect(getModuleSummary(db, "mod")).toMatchObject({
+      theoryBlockCount: 1, theoryXp: 30,
+    });
+    expect(validateModuleInput({
+      id: "mod", title: "Modul",
+      theoryBlocks: [{ ...introduction, role: "unknown" }],
+    }).valid).toBe(false);
+  });
+
   it("validiert statische DrumPattern-Visualisierungen in Theorieblöcken", () => {
     const valid = validateModuleInput({
       id: "drums",

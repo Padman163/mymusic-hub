@@ -24,7 +24,7 @@ Für die Speicherumstellung mit `git switch feat/netlify-blobs` auf den vorhande
 
 ## 3. Automatisch testen
 
-Nach jeder Anpassung passende Unit-Tests (Stufe 1) ausführen. Bei größeren Änderungen an Komponenten oder ihrer Interaktion, etwa an `DrumPattern`, kommen gezielte Komponententests (Stufe 2) hinzu. Kein Preflight für Zwischenschritte, Zwischen-Commits oder Zwischen-Pushes. Details und Befehle: [Testing](README_TESTING.md).
+Keine Tests automatisch nach einzelnen Änderungen ausführen. Copilot fragt nach jeweils zehn Nutzer-Prompts im laufenden Chat, ob passende Unit- und Komponententests (Stufen 1 und 2) ausgeführt werden sollen. Erst nach Zustimmung oder ausdrücklichem Testauftrag testen. Kein Preflight für Zwischenschritte, Zwischen-Commits oder Zwischen-Pushes. Details und Befehle: [Testing](README_TESTING.md).
 
 ## 4. Cleanup und Abschlussprüfung
 

@@ -211,6 +211,29 @@ describe("Lernfortschritts- & XP-Engine (learning-progress)", () => {
     expect(recordExerciseAnswer(state, mod, q1, true, db.questions).totalXp).toBe(70);
   });
 
+  it("verlangt für Aufgabeneinleitungen keinen Abschluss und vergibt dafür keine XP", () => {
+    const db = buildTestDatabase();
+    const mod = db.modules[0];
+    mod.theoryBlocks.push({
+      id: "intro", order: 2, title: "Einleitung", markdownContent: "",
+      role: "exercise_intro", baseXp: 100, tags: ["Notensystem"],
+    });
+    const initial = createInitialProgress(db.modules);
+    expect(completeTheoryBlock(initial, mod, "intro", db.questions)).toBe(initial);
+    const state = completeTheoryBlock(initial, mod, "tb-1", db.questions);
+    expect(state.modules[mod.id].steps.theory).toBe("completed");
+    expect(state.modules[mod.id].completedTheoryBlockIds).toEqual(["tb-1"]);
+    expect(state.totalXp).toBe(45);
+
+    const fastlane = submitQuizAttempt(initial, db, mod.id, "schwer", 1);
+    expect(fastlane.modules[mod.id].completedTheoryBlockIds).toEqual(["tb-1"]);
+    const withoutIntroduction = structuredClone(db);
+    withoutIntroduction.modules[0].theoryBlocks.pop();
+    expect(fastlane.totalXp).toBe(
+      submitQuizAttempt(initial, withoutIntroduction, mod.id, "schwer", 1).totalXp,
+    );
+  });
+
   it("schaltet ohne Übungen nach der Theorie direkt den Praxisteil frei", () => {
     const db = buildTestDatabase();
     const mod = {

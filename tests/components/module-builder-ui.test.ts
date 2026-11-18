@@ -606,6 +606,41 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     expect(controller.theoryBlockEditor.items()?.[0].title).toBe("Neuer Titel");
   });
 
+  it("erstellt Aufgabeneinleitungen und erhält Inhalte beim Wechsel der Blockrolle", () => {
+    const editor = createTheoryBlockEditor();
+    document.body.append(editor.element);
+    const addType = editor.element.querySelector<HTMLSelectElement>(".theory-block-add-type");
+    if (!addType) throw new Error("Blocktyp-Auswahl fehlt");
+    addType.value = "exercise_intro";
+    editor.element.querySelector<HTMLButtonElement>(".theory-block-add")?.click();
+    const title = editor.element.querySelector<HTMLInputElement>(".theory-block-title");
+    const markdown = editor.element.querySelector<HTMLTextAreaElement>(".theory-block-markdown");
+    const role = editor.element.querySelector<HTMLSelectElement>(".theory-block-role");
+    const badge = editor.element.querySelector<HTMLElement>("summary .learning-xp-badge");
+    if (!title || !markdown || !role || !badge) throw new Error("Einleitung fehlt");
+    title.value = "Muster vergleichen";
+    markdown.value = "<DrumPattern />";
+    expect(editor.items()?.[0]).toMatchObject({
+      role: "exercise_intro", title: "Muster vergleichen", markdownContent: "<DrumPattern />",
+    });
+    expect(badge.hidden).toBe(true);
+
+    role.value = "theory";
+    role.dispatchEvent(new Event("change"));
+    expect(editor.items()?.[0].role).toBeUndefined();
+    expect(badge.hidden).toBe(false);
+    expect(editor.items()?.[0].markdownContent).toBe("<DrumPattern />");
+
+    role.value = "exercise_intro";
+    role.dispatchEvent(new Event("change"));
+    const saved = editor.items();
+    if (!saved) throw new Error("Einleitung ist ungültig");
+    editor.setItems(saved);
+    expect(editor.element.querySelector<HTMLSelectElement>(".theory-block-role")?.value)
+      .toBe("exercise_intro");
+    expect(editor.items()?.[0].markdownContent).toBe("<DrumPattern />");
+  });
+
   it("öffnet einen zugeklappten Block mit ungültigem Titel beim Speichern", () => {
     const editor = createTheoryBlockEditor([
       { id: "tb-1", order: 1, title: "", markdownContent: "" },

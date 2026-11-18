@@ -69,7 +69,7 @@ npx @biomejs/biome check --write .
   npm run test:watch
   ```
 * **Wann nutzen:**
-  * **Nach jeder Anpassung:** Einen kurzen, zur Änderung passenden Unit-Test ausführen. Wenn kein passenderer Unit-Test vorliegt, `npm run test:unit` als Kurzcheck verwenden.
+  * **Nach Zustimmung oder ausdrücklichem Testauftrag:** Copilot fragt nach jeweils zehn Nutzer-Prompts, ob Stufen 1 und 2 ausgeführt werden sollen. Keine automatischen Tests nach einzelnen Änderungen. Wenn kein passenderer Unit-Test vorliegt, `npm run test:unit` als Kurzcheck verwenden.
   * **Bei Performance-Optimierungen:** Wenn Rechenoperationen refaktoriert werden und sichergestellt werden muss, dass etwa Notenabstände, Pausenpositionen und XP-Ergebnisse korrekt bleiben. Die Tests messen dabei nicht automatisch die Laufzeit.
   * **Beim Debuggen:** Wenn ein Notationsfehler gemeldet wird; den Fall zunächst als fehlschlagenden Unit-Test isolieren (`red`), dann den Bug beheben (`green`).
 
@@ -85,7 +85,7 @@ npx @biomejs/biome check --write .
   npm run test:component
   ```
 
-* **Wann nutzen:** Zusätzlich zu Stufe 1 bei größeren Komponenten- oder Interaktionsänderungen, zum Beispiel an `DrumPattern`.
+* **Wann nutzen:** Gemeinsam mit Stufe 1 nach Zustimmung zur Rückfrage nach jeweils zehn Nutzer-Prompts oder auf ausdrücklichen Testauftrag. Auch größere Komponentenänderungen lösen keine automatischen Tests aus. Passende Tests anhand der folgenden Fälle wählen:
   * **Beim Bau interaktiver UI-Elemente:** Passende Tests für Widgets, Formulare, interaktive Musik-Tools oder Editoren auswählen.
   * **Bei Accessibility- & Event-Anpassungen:** Geänderte Tastaturaktionen, Fokus-Steuerung oder ARIA-Attribute gezielt mit passenden Assertions absichern. Bestehende Tests prüfen unter anderem `Enter` im Checklisten-Editor sowie Pfeiltasten, Notenwertauswahl, Leertaste und Löschen im Notations-Builder; sie sind kein vollständiger Accessibility-Audit.
   * **Vor strukturellen UI-Refactorings:** Für schnelles Feedback zu Event-Handlern und Zustandsänderungen. Bei Änderungen am Astro-Markup zusätzlich echte Seiten im Browser prüfen, da manuell erzeugte Test-DOMs von den Komponenten abweichen können.
@@ -237,9 +237,11 @@ Externe Links, fachliche Aktualität, dynamische Asset-Pfade und Git-Hygiene wer
 
 ## 4. Das verbindliche „Doing“ im Entwicklungsprozess
 
-### 4.1 Während der Entwicklung: Stufe 1, bei größeren Änderungen zusätzlich Stufe 2
+### 4.1 Während der Entwicklung: Rückfrage nach jeweils zehn Prompts
 
-Nach jeder Anpassung, auch einer kleinen, führt Copilot einen kurzen Unit-Test der Stufe 1 aus. Bei größeren Änderungen an Komponenten oder ihrer Interaktion, etwa an `DrumPattern`, führt Copilot zusätzlich passende Tests der Stufe 2 aus. Bei Doku-Änderungen kommt der Dokumentationstest hinzu (`npx vitest run tests/documentation.test.ts`).
+Copilot startet nach einzelnen Änderungen keine Tests automatisch, auch nicht bei größeren Komponenten- oder Doku-Änderungen. Nach jeweils zehn Nutzer-Prompts im laufenden Chat fragt Copilot über das Rückfragewerkzeug, ob Stufen 1 und 2 ausgeführt werden sollen. Toolaufrufe und Systemmeldungen zählen nicht mit. Tests laufen erst nach Zustimmung oder einem ausdrücklichen Testauftrag; bei Ablehnung wird ohne Tests weitergearbeitet. Nach der Entscheidung beginnt der nächste Zehnerblock.
+
+Nach Freigabe passende Unit- und Komponententests auswählen. Bei Doku-Änderungen auch den Dokumentationstest berücksichtigen (`npx vitest run tests/documentation.test.ts`). Die folgenden Befehle sind Beispiele, keine automatisch auszuführenden Schritte:
 
 ```bash
 npm run test:unit       # Stufe 1: Notationslogik, wenn kein passenderer Unit-Test vorliegt

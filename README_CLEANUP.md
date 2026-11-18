@@ -73,7 +73,7 @@ Eine Tabelle mit Pfad, Fundstellen und Empfehlung **Behalten**, **Prüfen** oder
 ## 5. Tests und Abschluss
 
 1. [README_TESTING.md](README_TESTING.md), `vitest.config.ts`, Testdateien und `package.json` mit dem tatsächlichen Stand vergleichen. Testauswahl und Skripte prüfen; keine Umbenennung nur um der Einheitlichkeit willen.
-2. Nach jeder Anpassung Stufe 1 ausführen, bei größeren Komponentenänderungen zusätzlich passende Tests der Stufe 2. Erst am Branch-Abschluss startet der Nutzer den Preflight (einschließlich Stufen 0, 3 und 4) und das separate Audit manuell:
+2. Keine Tests automatisch nach einzelnen Änderungen starten. Copilot fragt nach jeweils zehn Nutzer-Prompts, ob Stufen 1 und 2 ausgeführt werden sollen; Tests laufen nur nach Zustimmung oder ausdrücklichem Testauftrag. Erst am Branch-Abschluss startet der Nutzer den Preflight (einschließlich Stufen 0, 3 und 4) und das separate Audit manuell:
 
    ```bash
    npm run preflight

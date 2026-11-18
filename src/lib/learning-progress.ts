@@ -332,7 +332,9 @@ export function completeTheoryStep(
     existing.steps.theory === "locked" ||
     (existing.steps.theory !== "completed" &&
       module.theoryBlocks.some(
-        (block) => !existing.completedTheoryBlockIds?.includes(block.id),
+        (block) =>
+          block.role !== "exercise_intro" &&
+          !existing.completedTheoryBlockIds?.includes(block.id),
       ))
   ) {
     return state;
@@ -387,6 +389,7 @@ export function completeTheoryBlock(
   if (
     !existing ||
     !block ||
+    block.role === "exercise_intro" ||
     existing.status === "locked" ||
     existing.steps.theory !== "unlocked" ||
     existing.completedTheoryBlockIds?.includes(blockId)
@@ -402,8 +405,10 @@ export function completeTheoryBlock(
     block.tags ?? [],
   );
   next.updatedAt = nowIso();
-  return module.theoryBlocks.every((item) =>
-    next.modules[module.id].completedTheoryBlockIds.includes(item.id),
+  return module.theoryBlocks.every(
+    (item) =>
+      item.role === "exercise_intro" ||
+      next.modules[module.id].completedTheoryBlockIds.includes(item.id),
   )
     ? completeTheoryStep(next, module, moduleQuestions)
     : next;
@@ -592,7 +597,8 @@ export function submitQuizAttempt(
     if (target.steps.theory !== "completed") {
       const completedBlocks = new Set(target.completedTheoryBlockIds);
       for (const block of mod.theoryBlocks) {
-        if (completedBlocks.has(block.id)) continue;
+        if (block.role === "exercise_intro" || completedBlocks.has(block.id))
+          continue;
         completedBlocks.add(block.id);
         target.completedTheoryBlockIds.push(block.id);
         creditXp(

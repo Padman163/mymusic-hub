@@ -165,6 +165,13 @@ function validateTheoryBlocks(blocks: unknown, errors: string[]): void {
     if (!isNonEmptyString(block.title)) {
       errors.push(`${prefix}.title darf nicht leer sein.`);
     }
+    if (
+      block.role !== undefined &&
+      block.role !== "theory" &&
+      block.role !== "exercise_intro"
+    ) {
+      errors.push(`${prefix}.role muss theory oder exercise_intro sein.`);
+    }
     if (typeof block.markdownContent !== "string") {
       errors.push(`${prefix}.markdownContent muss ein String sein.`);
     } else {
@@ -603,6 +610,7 @@ function cloneTheoryBlock(block: TheoryBlock): TheoryBlock {
     order: block.order,
     title: removeCitationMarkers(block.title).trim(),
     markdownContent: removeCitationMarkers(block.markdownContent),
+    ...(block.role !== undefined ? { role: block.role } : {}),
     ...(block.groupId !== undefined ? { groupId: block.groupId.trim() } : {}),
     ...(block.groupTitle !== undefined
       ? { groupTitle: removeCitationMarkers(block.groupTitle).trim() }
@@ -974,7 +982,9 @@ export function getModuleSummary(
     return null;
   }
 
-  const theoryBlockCount = mod.theoryBlocks.length;
+  const theoryBlockCount = mod.theoryBlocks.filter(
+    (block) => block.role !== "exercise_intro",
+  ).length;
   const theoryXp = mod.theoryBlocks.reduce(
     (total, block) => total + calculateTheoryBlockXp(block, mod.theoryBaseXp),
     0,

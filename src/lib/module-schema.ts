@@ -364,6 +364,7 @@ export interface TheoryBlock {
   order: number;
   title: string;
   markdownContent: string;
+  role?: "theory" | "exercise_intro";
   groupId?: string;
   groupTitle?: string;
   baseXp?: number;

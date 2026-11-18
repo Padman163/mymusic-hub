@@ -757,6 +757,54 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     expect(next?.disabled).toBe(false);
   });
 
+  it("schließt eine Aufgabengruppe ohne separaten Einleitungsabschluss ab", () => {
+    const db = structuredClone(seedDb);
+    const mod = db.modules[0];
+    const question = db.questions.find((item) => item.id === "q-101-ex-1");
+    if (!question) throw new Error("Gruppenaufgabe fehlt");
+    const theory = { ...mod.theoryBlocks[0] };
+    const introduction = {
+      ...mod.theoryBlocks[1],
+      role: "exercise_intro" as const,
+      title: "Muster vergleichen",
+      markdownContent: "Einleitung zu den Fragen.",
+    };
+    delete theory.groupId;
+    delete theory.groupTitle;
+    mod.theoryBlocks = [theory, introduction];
+    db.questions = db.questions.filter(
+      (item) =>
+        !item.moduleIds.includes(mod.id) ||
+        item.targetLane !== "leicht" ||
+        item.id === question.id,
+    );
+    const group = { groupId: "intro-group", groupTitle: "Muster" };
+    mod.contentOrder = [
+      { kind: "theory", id: theory.id },
+      { kind: "theory", id: introduction.id, ...group },
+      { kind: "exercise", id: question.id, ...group },
+    ];
+    const root = document.createElement("section");
+    root.dataset.moduleId = mod.id;
+    document.body.append(root);
+    attachModuleStepper(root, { initialDb: db, autoFetch: false });
+    const read = root.querySelector<HTMLButtonElement>('[data-action="complete-theory-block"]');
+    expect(read).not.toBeNull();
+    read?.click();
+    root.querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]')?.click();
+    expect(root.textContent).toContain("Einleitung zu den Fragen.");
+    expect(root.querySelector('[data-action="complete-theory-block"]')).toBeNull();
+    const next = root.querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]');
+    expect(next?.disabled).toBe(true);
+    const input = root.querySelector<HTMLInputElement>(".learning-numeric-input");
+    if (!input) throw new Error("Aufgabenfeld fehlt");
+    input.value = "880";
+    root.querySelector<HTMLButtonElement>('[data-action="check-exercise"]')?.click();
+    expect(next?.disabled).toBe(false);
+    expect(loadLearningProgress(db.modules).modules[mod.id].completedTheoryBlockIds)
+      .toEqual([theory.id]);
+  });
+
   it("zeigt XP für einzelne Theorieblöcke rechts neben dem Titel", () => {
     const root = document.createElement("section");
     root.dataset.moduleId = "theory-101";
@@ -1063,6 +1111,43 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     root.querySelector<HTMLButtonElement>('[data-action="complete-theory-block"]')?.click();
     root.querySelector<HTMLButtonElement>('[data-action="next-lesson-section"]')?.click();
     expect(root.querySelector('[data-question-card="q-101-ex-1"]')).not.toBeNull();
+  });
+
+  it("zeigt ohne zugeordnete Quizfragen keinen Quizschritt und erhält die Theorie", () => {
+    const db = structuredClone(seedDb);
+    const mod = db.modules[0];
+    db.questions = db.questions.filter(
+      (q) => !q.moduleIds.includes(mod.id) || q.targetLane !== "mittel",
+    );
+    const root = document.createElement("section");
+    root.dataset.moduleId = mod.id;
+    document.body.append(root);
+
+    attachModuleStepper(root, { initialDb: db, autoFetch: false });
+
+    expect(root.querySelector(".learning-theory-block")).not.toBeNull();
+    expect(root.querySelector('[data-step="quiz"]')).toBeNull();
+    const steps = [...root.querySelectorAll(".learning-lesson-step")];
+    expect(steps.length).toBeGreaterThan(0);
+    expect(steps.some((step) => step.textContent?.endsWith(": Quiz"))).toBe(false);
+  });
+
+  it("zeigt für ein Modul ohne Inhalte keinen leeren Quizschritt", () => {
+    const db = structuredClone(seedDb);
+    const mod = db.modules[0];
+    mod.theoryBlocks = [];
+    mod.practiceBlocks = [];
+    mod.contentOrder = [];
+    db.questions = db.questions.filter((q) => !q.moduleIds.includes(mod.id));
+    const root = document.createElement("section");
+    root.dataset.moduleId = mod.id;
+    document.body.append(root);
+
+    attachModuleStepper(root, { initialDb: db, autoFetch: false });
+
+    expect(root.textContent).toContain("noch keine Lerninhalte vorhanden");
+    expect(root.querySelector(".learning-lesson-sequence")).toBeNull();
+    expect(root.querySelector('[data-step="quiz"]')).toBeNull();
   });
 
   it("überspringt leere Theorie und Übungen und lässt den Praxisteil vor dem Quiz abschließen", () => {

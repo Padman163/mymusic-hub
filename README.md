@@ -36,7 +36,7 @@ Die Oberfläche läuft unter `http://localhost:4321`. Erst-Setup und Start mit N
 
 ## Qualitätssicherung (Pre-Flight)
 
-Nach jeder Anpassung: gezielte Unit-Tests (Stufe 1), bei größeren Komponentenänderungen zusätzlich passende Komponententests (Stufe 2). Stufen 0, 3 und 4 laufen erst am Branch-Ende im manuell vom Nutzer gestarteten `npm run preflight`. Details und Befehle stehen im [Testing-Leitfaden](README_TESTING.md).
+Während der Entwicklung keine automatischen Tests nach einzelnen Änderungen. Copilot fragt nach jeweils zehn Nutzer-Prompts, ob Stufen 1 und 2 ausgeführt werden sollen, und wartet auf Zustimmung. Stufen 0, 3 und 4 laufen erst am Branch-Ende im manuell vom Nutzer gestarteten `npm run preflight`. Details und Befehle stehen im [Testing-Leitfaden](README_TESTING.md).
 
 ---
 
