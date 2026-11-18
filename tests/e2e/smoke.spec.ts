@@ -18,6 +18,29 @@ for (const path of pages) {
   });
 }
 
+test('gliedert die Navigation in Admin, Bediener und Sonstiges', async ({ page }) => {
+  await page.goto('/');
+
+  const sections = page.locator('.sidebar-content > .top-level > li > details');
+  await expect(sections.locator(':scope > summary')).toHaveText([
+    'Admin',
+    'Bediener',
+    'Sonstiges',
+  ]);
+  await expect(sections.nth(0).locator(':scope > ul > li > details > summary')).toHaveText([
+    'Projektierung',
+  ]);
+  const dashboard = sections.nth(1).getByRole('link', { name: 'Dashboard', includeHidden: true });
+  await expect(dashboard).toHaveAttribute('href', '/audio/theory/lernpfad/');
+  await expect(sections.nth(2).locator(':scope > ul > li > details > summary')).toHaveText([
+    'Wiki',
+    'Lehrgänge (Level 100-500)',
+    'Songwriting',
+    'Referenz & Werkzeuge',
+  ]);
+  await expect(sections.nth(2).locator('a[href="/audio/theory/lernpfad/"]')).toHaveCount(0);
+});
+
 test('filtert Beiträge standardmäßig nach offenen Status', async ({ page }) => {
   await page.route('**/api/contributions', (route) =>
     route.fulfill({

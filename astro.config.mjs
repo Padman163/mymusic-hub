@@ -428,33 +428,43 @@ export default defineConfig({
       },
       sidebar: [
         {
-          label: "Wiki",
-          items: [
-            { label: "Beiträge verwalten", slug: "wiki/beitraege" },
-            { label: "Modul-Builder bedienen", slug: "wiki/modul-builder" },
-            { label: "NotationBuilder bedienen", slug: "wiki/notation-builder" },
-            { label: "Drum-Pattern anhören", slug: "wiki/drum-pattern" },
-          ],
-        },
-        {
-          label: "Projektierung",
-          items: [
-            { label: "Beiträge", slug: "projektierung/beitraege" },
-            { label: "Modul-Builder", slug: "projektierung/modul-builder" },
-            { label: "Modularchiv", link: "/module-archives/" },
-          ],
-        },
-        {
-          label: "Audio & Musik",
+          label: "Admin",
           items: [
             {
-              label: "Musiktheorie",
-              collapsed: false,
+              label: "Projektierung",
               items: [
-                {
-                  label: "Interaktiver Lernpfad & Dashboard",
-                  slug: "audio/theory/lernpfad",
-                },
+                { label: "Beiträge", slug: "projektierung/beitraege" },
+                { label: "Modul-Builder", slug: "projektierung/modul-builder" },
+                { label: "Modularchiv", link: "/module-archives/" },
+              ],
+            },
+          ],
+        },
+        {
+          label: "Bediener",
+          items: [
+            {
+              label: "Dashboard",
+              slug: "audio/theory/lernpfad",
+            },
+          ],
+        },
+        {
+          label: "Sonstiges",
+          items: [
+            {
+              label: "Wiki",
+              items: [
+                { label: "Beiträge verwalten", slug: "wiki/beitraege" },
+                { label: "Modul-Builder bedienen", slug: "wiki/modul-builder" },
+                { label: "NotationBuilder bedienen", slug: "wiki/notation-builder" },
+                { label: "Drum-Pattern anhören", slug: "wiki/drum-pattern" },
+              ],
+            },
+            {
+              label: "Lehrgänge (Level 100-500)",
+              collapsed: true,
+              items: [
                 {
                   label: "Level 100: Elementarlehre",
                   collapsed: false,
