@@ -438,6 +438,7 @@ export default defineConfig({
                 { label: "Modularchiv", link: "/module-archives/" },
               ],
             },
+            { label: "Admin-Wiki", link: "/admin-wiki/" },
           ],
         },
         {

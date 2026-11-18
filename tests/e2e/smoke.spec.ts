@@ -30,6 +30,8 @@ test('gliedert die Navigation in Admin, Bediener und Sonstiges', async ({ page }
   await expect(sections.nth(0).locator(':scope > ul > li > details > summary')).toHaveText([
     'Projektierung',
   ]);
+  await expect(sections.nth(0).getByRole('link', { name: 'Admin-Wiki', exact: true, includeHidden: true }))
+    .toHaveAttribute('href', '/admin-wiki/');
   const dashboard = sections.nth(1).getByRole('link', { name: 'Dashboard', includeHidden: true });
   await expect(dashboard).toHaveAttribute('href', '/audio/theory/lernpfad/');
   await expect(sections.nth(2).locator(':scope > ul > li > details > summary')).toHaveText([
@@ -39,6 +41,15 @@ test('gliedert die Navigation in Admin, Bediener und Sonstiges', async ({ page }
     'Referenz & Werkzeuge',
   ]);
   await expect(sections.nth(2).locator('a[href="/audio/theory/lernpfad/"]')).toHaveCount(0);
+});
+
+test('zeigt Entwickler-READMEs im Admin-Wiki und verknüpft sie untereinander', async ({ page }) => {
+  await page.goto('/admin-wiki/');
+  await expect(page.getByRole('heading', { level: 1, name: 'Admin-Wiki' })).toBeVisible();
+  await page.locator('main a[href="/admin-wiki/readme-astrostructure/"]').click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Astro-Architektur nach dem Lego-Prinzip' })).toBeVisible();
+  await page.locator('main').getByRole('link', { name: 'Workspace-Setup', exact: true }).first().click();
+  await expect(page).toHaveURL('/admin-wiki/readme-workspace-setup/');
 });
 
 test('filtert Beiträge standardmäßig nach offenen Status', async ({ page }) => {

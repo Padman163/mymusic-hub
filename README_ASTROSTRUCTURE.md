@@ -42,7 +42,9 @@ Dies ist **nicht** die aktuelle Konfiguration dieses Repositories. Hier steht in
 
 Starlight liefert Dokumentationslayout, Navigation und Suche. `astro.config.mjs` konfiguriert die Sidebar; die Inhalte liegen in `src/content/docs/`.
 
-Die Sidebar gliedert sich in dieser Reihenfolge in **Admin** (Projektierung), **Bediener** (Dashboard mit Lernpfad) und **Sonstiges** (Wiki, bisherige Lehrgänge Level 100-500 inklusive Gitarrenlehre, Songwriting, Referenz & Werkzeuge). Bestehende Seiten-URLs bleiben erhalten. Die Bereiche strukturieren die Navigation; sie sind keine rollenbasierte Zugriffskontrolle.
+Die Sidebar gliedert sich in dieser Reihenfolge in **Admin** (Projektierung und Admin-Wiki), **Bediener** (Dashboard mit Lernpfad) und **Sonstiges** (Wiki, bisherige Lehrgänge Level 100-500 inklusive Gitarrenlehre, Songwriting, Referenz & Werkzeuge). Bestehende Seiten-URLs bleiben erhalten. Die Bereiche strukturieren die Navigation; sie sind keine rollenbasierte Zugriffskontrolle.
+
+Das **Admin-Wiki** unter `/admin-wiki/` zeigt die Root-READMEs (`README*.md`) und alle Feature-READMEs (`features/README*.md`) direkt als statische Starlight-Seiten. `src/lib/admin-wiki.ts` lädt die Originaldateien beim Build; `src/pages/admin-wiki/` stellt Übersicht und Dokumentseiten bereit. Neue passende READMEs werden beim nächsten Build automatisch aufgenommen. Relative Links zwischen diesen Dokumenten führen zu den Wiki-Seiten, Inhalts- und Asset-Links zur jeweiligen Website-Route; sonstige Repository-Links verweisen auf GitHub (`main`). Das Admin-Wiki ist wie die übrige Website öffentlich und nicht zugriffsgeschützt.
 
 Die aktuelle `src/content.config.ts` nutzt Starlights `docsLoader()` und `docsSchema()` mit einem Zod-Erweiterungsschema sowie `i18nLoader()` und `i18nSchema()` für Übersetzungen. Auszug:
 
