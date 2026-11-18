@@ -1,6 +1,6 @@
 # Features & Architektur des Gitarrenlernpfads
 
-Dieses Dokument gibt einen Überblick über die wichtigsten Komponenten und Subsysteme des Musik-Hubs. Details zum [Modul-Builder und Lernpfad](README_FEAT_MODULEBUILDER.md), zur [Notation](README_FEAT_NOTATION.md), zu [Netlify Blobs](README_FEAT_NETLIFYBLOB.md) und zu [Tests](../README_TESTING.md) stehen in den jeweiligen Leitfäden.
+Dieses Dokument gibt einen Überblick über die wichtigsten Komponenten und Subsysteme des Musik-Hubs. Details zum [Beitragssystem](README_FEAT_CONTRIBUTIONS.md), zum [Modul-Builder und Lernpfad](README_FEAT_MODULEBUILDER.md), zur [Notation](README_FEAT_NOTATION.md), zu [Netlify Blobs](README_FEAT_NETLIFYBLOB.md) und zu [Tests](../README_TESTING.md) stehen in den jeweiligen Leitfäden.
 
 Für Übergaben gibt es separate Handoffs zur [Notation](README_FEAT_NOTATION_HANDOFF.md) und zum [NotationBuilder](README_FEAT_NOTATIONBUILDER_HANDOFF.md). Sie ergänzen die Fachreferenzen, ersetzen sie aber nicht.
 
@@ -72,12 +72,13 @@ Die Plattform verbindet musiktheoretische Didaktik mit interaktiven Web-Technolo
   * Aktiviert die Audiowiedergabe nur, wenn zusätzlich eine SoundFont über `soundFontUrl` angegeben wird.
 
 ### 2.7 Das Serverless Beitragssystem & IssueTracker
-* **Dateien:** `netlify/functions/contributions.ts`, `netlify/functions/lib/contribution-store.ts`, `src/lib/checklist-editor.ts`, `src/content/docs/projektierung/beitraege.mdx`.
+* **Dateien:** `src/components/ContributionList.astro`, `src/components/IssueTrackerForm.astro`, `netlify/functions/contributions.ts`, `netlify/functions/lib/contribution-store.ts`, `src/lib/checklist-editor.ts`, `src/content/docs/projektierung/beitraege.mdx`.
 * **Funktionsweise:**
   * **Architektur:** Serverless-Endpunkt mit dem JSON-Key `contributions` in [Netlify Blobs](README_FEAT_NETLIFYBLOB.md).
   * **Kategorisierung:** Typen (`Feature`, `Bug`, `Decision`), Bereiche (`Theorie`, `Praxis`, `Komponente`), Prioritäten (`Niedrig`, `Mittel`, `Hoch`) und Status (`New`, `Active`, `Resolved`).
   * **Checklisten:** Bis zu 100 interaktive Checklistenpunkte pro Beitrag mit je maximal 200 Zeichen.
   * **Konfliktresistenz:** Bedingte Blob-Schreibzugriffe und Prüfung des erwarteten Beitragsstands schützen gleichzeitig bearbeitete Beiträge.
+  * **Detailreferenz:** Die [Beitrags-Feature-Referenz](README_FEAT_CONTRIBUTIONS.md) dokumentiert Erstellen, Anzeigen, Filtern, Sortieren, Checklisten, Bearbeiten, Löschen, API, Persistenz und Abnahme.
 
 ### 2.8 Admin Modul- & Aufgaben-Builder (Autorenwerkbank)
 * **Dateien:** `src/lib/xp-tags.ts`, `src/lib/module-schema.ts`, `src/lib/module-store.ts`, `src/lib/module-builder-ui.ts`, `src/components/project/ModuleBuilderForm.astro`, `src/components/project/ExerciseBuilderForm.astro`, `src/components/project/ModuleCatalogList.astro`, `src/content/docs/projektierung/modul-builder.mdx`, `netlify/functions/modules.ts`, `astro.config.mjs`, `data/modules.json`.
