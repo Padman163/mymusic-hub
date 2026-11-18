@@ -413,50 +413,73 @@ export function createTheoryBlockEditor(
   const expandedGroups = new Set<string>();
   let previewRenderer: Promise<typeof import("./module-player-ui.ts")> | undefined;
 
-  function createPreviewPanel(): HTMLElement {
-    const panel = document.createElement("aside");
+  function createPreviewPanel(ariaLabel: string): HTMLDetailsElement {
+    const panel = document.createElement("details");
     panel.className = "module-content-preview";
-    panel.hidden = true;
-    panel.setAttribute("aria-label", "Inhaltsvorschau");
-    const label = document.createElement("span");
-    label.className = "module-content-preview-label";
-    label.textContent = "Vorschau";
+    panel.setAttribute("aria-label", ariaLabel);
+    const summary = document.createElement("summary");
+    summary.className = "module-content-preview-summary";
+    summary.textContent = "Vorschau";
     const body = document.createElement("div");
     body.className = "module-content-preview-body";
-    panel.append(label, body);
+    panel.append(summary, body);
     return panel;
   }
 
-  function getDirectPreview(container: HTMLDivElement): HTMLElement | undefined {
+  function getDirectPreview(
+    container: HTMLDivElement,
+  ): HTMLDetailsElement | undefined {
     return Array.from(container.children).find(
-      (child): child is HTMLElement =>
+      (child): child is HTMLDetailsElement =>
         child.classList.contains("module-content-preview"),
     );
   }
 
-  function updatePreview(
-    panel: HTMLElement,
-    previewRows: readonly HTMLDivElement[],
-    groupTitle?: string,
+  function getPreviewLabel(row: HTMLDivElement): string {
+    const title =
+      row.querySelector<HTMLInputElement>(
+        ".theory-block-title, .module-exercise-title",
+      )?.value.trim() ?? "";
+    const prompt =
+      row.querySelector<HTMLTextAreaElement>(".module-exercise-prompt")
+        ?.value.trim() ?? "";
+    if (row.classList.contains("module-exercise-row")) {
+      return formatExerciseTitle(title, prompt);
+    }
+    if (row.classList.contains("module-practice-row")) {
+      return `Praxisaufgabe · ${title || "Neuer Block"}`;
+    }
+    return row.dataset.blockRole === "exercise_intro"
+      ? `Aufgabeneinleitung · ${title || "Neuer Block"}`
+      : `Theorie · ${title || "Neuer Block"}`;
+  }
+
+  function updatePreviewSummary(
+    panel: HTMLDetailsElement,
+    title: string,
   ): void {
+    const summary = panel.querySelector<HTMLElement>("summary");
+    if (!summary) throw new Error("Der Vorschaubereich hat keine Überschrift.");
+    summary.textContent = title;
+  }
+
+  function updatePreview(panel: HTMLDetailsElement, row: HTMLDivElement): void {
     const body = panel.querySelector<HTMLElement>(
       ".module-content-preview-body",
     );
     if (!body) throw new Error("Der Inhaltsbereich der Vorschau fehlt.");
-    const grouped = groupTitle !== undefined;
+    const title =
+      row.querySelector<HTMLInputElement>(
+        ".theory-block-title, .module-exercise-title",
+      )?.value.trim() ?? "";
+    const prompt =
+      row.querySelector<HTMLTextAreaElement>(".module-exercise-prompt")
+        ?.value.trim() ?? "";
+    const isExercise = row.classList.contains("module-exercise-row");
+    updatePreviewSummary(panel, `Vorschau · ${getPreviewLabel(row)}`);
     const revision = String(Number(panel.dataset.previewRevision ?? "0") + 1);
     panel.dataset.previewRevision = revision;
     body.replaceChildren();
-    const lesson = document.createElement(grouped ? "section" : "div");
-    lesson.className = grouped
-      ? "learning-theory-group"
-      : "learning-theory-blocks";
-    if (grouped) {
-      const heading = document.createElement("h3");
-      heading.className = "learning-theory-block-title";
-      heading.textContent = groupTitle?.trim() || "Neuer Abschnitt";
-      lesson.append(heading);
-    }
 
     if (!previewRenderer) {
       previewRenderer = import("./module-player-ui.ts");
@@ -469,153 +492,127 @@ export function createTheoryBlockEditor(
         ) {
           return;
         }
-        for (const row of previewRows) {
-          const title =
-            row.querySelector<HTMLInputElement>(
-              ".theory-block-title, .module-exercise-title",
-            )?.value.trim() ?? "";
-          const article = document.createElement("article");
-          const isExercise = row.classList.contains("module-exercise-row");
-          article.className = isExercise
-            ? "learning-quiz-card"
-            : "learning-theory-block";
-          const heading = document.createElement(grouped ? "h4" : "h3");
-          heading.className = "learning-theory-block-title";
+        const article = document.createElement("article");
+        article.className = isExercise
+          ? "learning-quiz-card"
+          : "learning-theory-block";
 
-          if (isExercise) {
-            const prompt =
-              row.querySelector<HTMLTextAreaElement>(
-                ".module-exercise-prompt",
-              )?.value.trim() ?? "";
-            const cardHeader = document.createElement("div");
-            cardHeader.className = "learning-card-header";
-            const questionTitle = document.createElement("strong");
-            questionTitle.textContent = formatExerciseTitle(title, prompt);
-            cardHeader.append(questionTitle);
-            const type = row.querySelector<HTMLSelectElement>(
-              ".question-type-editor select",
-            );
-            if (type?.selectedOptions[0]?.textContent) {
-              const badge = document.createElement("span");
-              badge.className = "module-badge";
-              badge.textContent = type.selectedOptions[0].textContent;
-              cardHeader.append(badge);
-            }
-            article.append(cardHeader);
-            if (prompt) {
-              const promptElement = document.createElement("p");
-              promptElement.className = "learning-quiz-question";
-              promptElement.textContent = prompt;
-              article.append(promptElement);
-            }
-            const options = Array.from(
-              row.querySelectorAll<HTMLInputElement>(
-                ".exercise-choice-text",
-              ),
-            )
-              .map((input) => input.value.trim())
-              .filter(Boolean);
-            if (options.length > 0) {
-              const list = document.createElement("div");
-              list.className = "learning-quiz-options";
-              for (const option of options) {
-                const item = document.createElement("div");
-                item.className = "learning-quiz-option";
-                const text = document.createElement("span");
-                text.textContent = option;
-                item.append(text);
-                list.append(item);
-              }
-              article.append(list);
-            }
-            const notationPreview = row.querySelector<HTMLElement>(
-              ".notation-live-preview-box",
-            );
-            if (type?.value === "interactive_notation" && notationPreview) {
-              article.append(notationPreview.cloneNode(true));
-            }
-          } else {
-            const markdown =
-              row.querySelector<HTMLTextAreaElement>(
-                ".theory-block-markdown",
-              )?.value ?? "";
-            heading.textContent = title || "Neuer Block";
-            article.append(heading);
-            if (markdown.trim()) {
-              const content = document.createElement("div");
-              content.className = "learning-theory-markdown";
-              content.append(renderTheoryMarkdown(markdown, fieldset));
-              article.append(content);
-            }
-            if (row.classList.contains("theory-block-row")) {
-              const visual = renderTheoryVisualElement(
-                {
-                  id: row.dataset.blockId ?? "preview",
-                  order: 0,
-                  title,
-                  markdownContent: markdown,
-                  ...legacyVisuals.get(row),
-                },
-                fieldset,
-              );
-              if (visual) article.append(visual);
-            }
+        if (isExercise) {
+          const cardHeader = document.createElement("div");
+          cardHeader.className = "learning-card-header";
+          const questionTitle = document.createElement("strong");
+          questionTitle.textContent = formatExerciseTitle(title, prompt);
+          cardHeader.append(questionTitle);
+          const type = row.querySelector<HTMLSelectElement>(
+            ".question-type-editor select",
+          );
+          if (type?.selectedOptions[0]?.textContent) {
+            const badge = document.createElement("span");
+            badge.className = "module-badge";
+            badge.textContent = type.selectedOptions[0].textContent;
+            cardHeader.append(badge);
           }
-          lesson.append(article);
+          article.append(cardHeader);
+          if (prompt) {
+            const promptElement = document.createElement("p");
+            promptElement.className = "learning-quiz-question";
+            promptElement.textContent = prompt;
+            article.append(promptElement);
+          }
+          const options = Array.from(
+            row.querySelectorAll<HTMLInputElement>(".exercise-choice-text"),
+          )
+            .map((input) => input.value.trim())
+            .filter(Boolean);
+          if (options.length > 0) {
+            const list = document.createElement("div");
+            list.className = "learning-quiz-options";
+            for (const option of options) {
+              const item = document.createElement("div");
+              item.className = "learning-quiz-option";
+              const text = document.createElement("span");
+              text.textContent = option;
+              item.append(text);
+              list.append(item);
+            }
+            article.append(list);
+          }
+          const notationPreview = row.querySelector<HTMLElement>(
+            ".notation-live-preview-box",
+          );
+          if (type?.value === "interactive_notation" && notationPreview) {
+            article.append(notationPreview.cloneNode(true));
+          }
+        } else {
+          const markdown =
+            row.querySelector<HTMLTextAreaElement>(
+              ".theory-block-markdown",
+            )?.value ?? "";
+          const heading = document.createElement("h3");
+          heading.className = "learning-theory-block-title";
+          heading.textContent = title || "Neuer Block";
+          article.append(heading);
+          if (markdown.trim()) {
+            const content = document.createElement("div");
+            content.className = "learning-theory-markdown";
+            content.append(renderTheoryMarkdown(markdown, fieldset));
+            article.append(content);
+          }
+          if (row.classList.contains("theory-block-row")) {
+            const visual = renderTheoryVisualElement(
+              {
+                id: row.dataset.blockId ?? "preview",
+                order: 0,
+                title,
+                markdownContent: markdown,
+                ...legacyVisuals.get(row),
+              },
+              fieldset,
+            );
+            if (visual) article.append(visual);
+          }
         }
-        body.replaceChildren(lesson);
+        body.replaceChildren(article);
       },
     ).catch((error: unknown) => {
-        if (
-          !panel.isConnected ||
-          panel.dataset.previewRevision !== revision
-        ) {
-          return;
-        }
-        const message = error instanceof Error ? error.message : String(error);
-        const warning = document.createElement("p");
-        warning.className = "learning-notation-error";
-        warning.textContent = `Vorschau nicht verfügbar: ${message}`;
-        body.replaceChildren(warning);
-      });
+      if (
+        !panel.isConnected ||
+        panel.dataset.previewRevision !== revision
+      ) {
+        return;
+      }
+      const message = error instanceof Error ? error.message : String(error);
+      const warning = document.createElement("p");
+      warning.className = "learning-notation-error";
+      warning.textContent = `Vorschau nicht verfügbar: ${message}`;
+      body.replaceChildren(warning);
+    });
+  }
+
+  function updateGroupPreview(
+    panel: HTMLDetailsElement,
+    members: readonly HTMLDivElement[],
+    groupTitle: string,
+  ): void {
+    const body = panel.querySelector<HTMLElement>(
+      ".module-content-preview-body",
+    );
+    if (!body) throw new Error("Der Gruppen-Vorschaubereich fehlt.");
+    const title = groupTitle.trim() || "Neuer Abschnitt";
+    updatePreviewSummary(panel, `Abschnitt · ${title}`);
+    const heading = document.createElement("h3");
+    heading.className = "learning-theory-block-title";
+    heading.textContent = title;
+    const description = document.createElement("p");
+    description.textContent = `${members.length} ${members.length === 1 ? "Eintrag" : "Einträge"}; Einzelvorschauen stehen auf Höhe der jeweiligen Blöcke.`;
+    body.replaceChildren(heading, description);
   }
 
   function refreshPreviewForRow(row: HTMLDivElement): void {
-    const group = row.closest<HTMLDivElement>(".theory-block-group");
-    if (group) {
-      const groupDetails = group.querySelector<HTMLDetailsElement>(
-        ".theory-group-details",
-      );
-      if (groupDetails?.open) {
-        const preview = Array.from(group.children).find(
-          (child): child is HTMLElement =>
-            child.classList.contains("module-content-preview"),
-        );
-        if (preview) {
-          updatePreview(
-            preview,
-            Array.from(group.children).filter(
-              (child): child is HTMLDivElement =>
-                child instanceof HTMLDivElement &&
-                child.matches(
-                  ".theory-block-row, .module-exercise-row, .module-practice-row",
-                ),
-            ),
-            group.querySelector<HTMLInputElement>(".theory-group-title")
-              ?.value.trim() ?? "",
-          );
-        }
-      }
-      return;
-    }
-    const details = row.querySelector<HTMLDetailsElement>(
-      ".theory-block-details",
-    );
-    const preview = Array.from(row.children).find(
-      (child): child is HTMLElement =>
-        child.classList.contains("module-content-preview"),
-    );
-    if (details?.open && preview) updatePreview(preview, [row]);
+    const preview = getDirectPreview(row);
+    if (!preview) return;
+    updatePreviewSummary(preview, `Vorschau · ${getPreviewLabel(row)}`);
+    if (preview.open) updatePreview(preview, row);
   }
 
   const groupButton = document.createElement("button");
@@ -695,15 +692,8 @@ export function createTheoryBlockEditor(
       if (!groupId) {
         delete row.dataset.groupPosition;
         delete row.dataset.groupCollapsed;
-        const details = row.querySelector<HTMLDetailsElement>(
-          ".theory-block-details",
-        );
-        const preview = getDirectPreview(row);
-        const previewOpen = Boolean(details?.open);
-        row.dataset.previewOpen = String(previewOpen);
-        if (preview) preview.hidden = !previewOpen;
         rows.append(row);
-        if (previewOpen && preview) updatePreview(preview, [row]);
+        refreshPreviewForRow(row);
         index += 1;
         continue;
       }
@@ -713,9 +703,6 @@ export function createTheoryBlockEditor(
         const member = rowElements[index];
         if (member) {
           members.push(member);
-          member.dataset.previewOpen = "false";
-          const memberPreview = getDirectPreview(member);
-          if (memberPreview) memberPreview.hidden = true;
         }
         index += 1;
       }
@@ -725,13 +712,8 @@ export function createTheoryBlockEditor(
       const group = document.createElement("div");
       group.className = "theory-block-group";
       group.dataset.groupId = groupId;
-      group.dataset.previewOpen = String(expanded);
-      const groupPreview = createPreviewPanel();
-      groupPreview.style.setProperty(
-        "--module-preview-row-span",
-        String(members.length + 1),
-      );
-      groupPreview.hidden = !expanded;
+      const groupPreview = createPreviewPanel("Abschnittsvorschau");
+      groupPreview.open = expanded;
 
       const header = document.createElement("div");
       header.className = "theory-group-editor-heading";
@@ -761,9 +743,7 @@ export function createTheoryBlockEditor(
           member.dataset.groupTitle = titleInput.value;
         }
         groupTitleText.textContent = `Abschnitt · ${titleInput.value}`;
-        if (groupDetails.open) {
-          updatePreview(groupPreview, members, titleInput.value.trim());
-        }
+        updateGroupPreview(groupPreview, members, titleInput.value);
       });
       label.append(caption, titleInput);
       groupDetails.append(label);
@@ -771,17 +751,15 @@ export function createTheoryBlockEditor(
         const isExpanded = groupDetails.open;
         if (isExpanded) expandedGroups.add(groupId);
         else expandedGroups.delete(groupId);
+        groupPreview.open = isExpanded;
         for (const member of members) {
           if (isExpanded) delete member.dataset.groupCollapsed;
           else member.dataset.groupCollapsed = "true";
-          member.dataset.previewOpen = "false";
-          const memberPreview = getDirectPreview(member);
-          if (memberPreview) memberPreview.hidden = true;
         }
-        group.dataset.previewOpen = String(isExpanded);
-        groupPreview.hidden = !isExpanded;
-        if (isExpanded) {
-          updatePreview(groupPreview, members, titleInput.value.trim());
+      });
+      groupPreview.addEventListener("toggle", () => {
+        if (groupDetails.open !== groupPreview.open) {
+          groupDetails.open = groupPreview.open;
         }
       });
 
@@ -829,12 +807,11 @@ export function createTheoryBlockEditor(
         if (!expanded) member.dataset.groupCollapsed = "true";
         else delete member.dataset.groupCollapsed;
       }
-      group.append(header, ...members, groupPreview);
+      group.append(header, groupPreview, ...members);
       refreshGroupXp(group);
       rows.append(group);
-      if (expanded) {
-        updatePreview(groupPreview, members, titleInput.value.trim());
-      }
+      for (const member of members) refreshPreviewForRow(member);
+      updateGroupPreview(groupPreview, members, titleInput.value);
     }
     for (const groupId of expandedGroups) {
       if (!seenGroups.has(groupId)) expandedGroups.delete(groupId);
@@ -1069,12 +1046,14 @@ export function createTheoryBlockEditor(
     const details = document.createElement("details");
     details.className = "theory-block-details";
     const summary = document.createElement("summary");
-    const preview = createPreviewPanel();
+    const preview = createPreviewPanel("Blockvorschau");
+    preview.open = details.open;
     details.addEventListener("toggle", () => {
-      const previewOpen = details.open && !row.dataset.groupId;
-      row.dataset.previewOpen = String(previewOpen);
-      preview.hidden = !previewOpen;
-      if (previewOpen) updatePreview(preview, [row]);
+      preview.open = details.open;
+      if (details.open) updatePreview(preview, row);
+    });
+    preview.addEventListener("toggle", () => {
+      if (details.open !== preview.open) details.open = preview.open;
     });
 
     const orderLabel = document.createElement("span");
@@ -1260,18 +1239,15 @@ export function createTheoryBlockEditor(
         legacyVisuals.delete(row);
         legacyHint.remove();
         removeVisual.remove();
+        refreshPreviewForRow(row);
       });
       content.append(legacyHint, removeVisual);
     }
     details.append(summary, content);
     row.append(details, controls, preview);
-    if (details.open && !row.dataset.groupId) {
-      row.dataset.previewOpen = "true";
-      preview.hidden = false;
-      updatePreview(preview, [row]);
-    }
     rows.append(row);
     renderGroupHeaders();
+    refreshPreviewForRow(row);
     syncRowOrder();
     refreshCalculatedXp();
   }
@@ -1569,12 +1545,14 @@ export function createTheoryBlockEditor(
         previous?.querySelector("details")?.open ??
         draftExerciseIds.has(question.id);
       const summary = document.createElement("summary");
-      const preview = createPreviewPanel();
+      const preview = createPreviewPanel("Blockvorschau");
+      preview.open = details.open;
       details.addEventListener("toggle", () => {
-        const previewOpen = details.open && !row.dataset.groupId;
-        row.dataset.previewOpen = String(previewOpen);
-        preview.hidden = !previewOpen;
-        if (previewOpen) updatePreview(preview, [row]);
+        preview.open = details.open;
+        if (details.open) updatePreview(preview, row);
+      });
+      preview.addEventListener("toggle", () => {
+        if (details.open !== preview.open) details.open = preview.open;
       });
       const label = document.createElement("span");
       label.className = "theory-block-order-label";
@@ -1584,6 +1562,7 @@ export function createTheoryBlockEditor(
       editor.className = "module-exercise-editor";
       editor.addEventListener("input", () => refreshPreviewForRow(row));
       editor.addEventListener("change", () => refreshPreviewForRow(row));
+      editor.addEventListener("click", () => refreshPreviewForRow(row));
       const title = document.createElement("input");
       title.type = "text";
       title.className = "module-exercise-title";
@@ -1750,12 +1729,8 @@ export function createTheoryBlockEditor(
         controls.append(button);
       }
       row.append(details, controls, preview);
-      if (details.open && !row.dataset.groupId) {
-        row.dataset.previewOpen = "true";
-        preview.hidden = false;
-        updatePreview(preview, [row]);
-      }
       rows.append(row);
+      refreshPreviewForRow(row);
     }
 
     const available = new Map(

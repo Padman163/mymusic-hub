@@ -314,6 +314,10 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
 
     details.open = true;
     details.dispatchEvent(new Event("toggle"));
+    const preview = row.querySelector<HTMLDetailsElement>(
+      ".module-content-preview",
+    );
+    expect(preview?.open).toBe(true);
     await vi.waitFor(() =>
       expect(
         row.querySelector(".module-content-preview-body")?.textContent,
@@ -327,9 +331,14 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
         row.querySelector(".module-content-preview-body strong")?.textContent,
       ).toBe("Nachher"),
     );
+
+    if (!preview) throw new Error("Blockvorschau fehlt");
+    preview.open = false;
+    preview.dispatchEvent(new Event("toggle"));
+    await vi.waitFor(() => expect(details.open).toBe(false));
   });
 
-  it("zeigt beim Aufklappen einer Gruppe die Vorschau aller Gruppeneinträge", async () => {
+  it("spiegelt Gruppe und Blockebene in den zeilenweise zugeordneten Vorschauen", async () => {
     const editor = createTheoryBlockEditor([
       {
         id: "a",
@@ -356,16 +365,60 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     const details = group?.querySelector<HTMLDetailsElement>(
       ".theory-group-details",
     );
-    if (!group || !details) throw new Error("Gruppe fehlt");
+    const groupPreview = group?.querySelector<HTMLDetailsElement>(
+      ":scope > .module-content-preview",
+    );
+    if (!group || !details || !groupPreview)
+      throw new Error("Gruppe oder Gruppenvorschau fehlt");
 
     details.open = true;
     details.dispatchEvent(new Event("toggle"));
+    expect(groupPreview.open).toBe(true);
     await vi.waitFor(() => {
-      const preview = group.querySelector(".module-content-preview-body");
+      const preview = groupPreview.querySelector(
+        ".module-content-preview-body",
+      );
       expect(preview?.textContent).toContain("Grundlagen");
-      expect(preview?.textContent).toContain("Erster Inhalt");
-      expect(preview?.textContent).toContain("Zweiter Inhalt");
+      expect(preview?.textContent).toContain("2 Einträge");
     });
+    const blockPreviewTitles = Array.from(
+      group.querySelectorAll<HTMLDetailsElement>(
+        ".theory-block-row > .module-content-preview",
+      ),
+    ).map((preview) => preview.querySelector("summary")?.textContent);
+    expect(blockPreviewTitles).toEqual([
+      "Vorschau · Theorie · Eins",
+      "Vorschau · Theorie · Zwei",
+    ]);
+
+    const firstRow = group.querySelector<HTMLDivElement>(
+      '.theory-block-row[data-block-id="a"]',
+    );
+    const firstDetails = firstRow?.querySelector<HTMLDetailsElement>(
+      ".theory-block-details",
+    );
+    const firstPreview = firstRow?.querySelector<HTMLDetailsElement>(
+      ".module-content-preview",
+    );
+    if (!firstRow || !firstDetails || !firstPreview)
+      throw new Error("Blockvorschau fehlt");
+
+    firstDetails.open = true;
+    firstDetails.dispatchEvent(new Event("toggle"));
+    expect(firstPreview.open).toBe(true);
+    await vi.waitFor(() =>
+      expect(
+        firstPreview.querySelector(".module-content-preview-body")?.textContent,
+      ).toContain("Erster Inhalt"),
+    );
+
+    firstPreview.open = false;
+    firstPreview.dispatchEvent(new Event("toggle"));
+    await vi.waitFor(() => expect(firstDetails.open).toBe(false));
+
+    groupPreview.open = false;
+    groupPreview.dispatchEvent(new Event("toggle"));
+    await vi.waitFor(() => expect(details.open).toBe(false));
   });
 
   it("löst einen einzelnen Theorieblock aus einer Dreiergruppe und erhält Gruppe und Eingaben", () => {
