@@ -105,7 +105,7 @@ Dort gibt es vier übersichtliche Reiter:
     Erklärung danach.
     ```
 
-    Neben `<Notation />` und `<NotationKeyboard />` unterstützt der Theorie-Renderer auch `<DrumPattern />` mit den Props `steps`, `timeSignature`, `resolution`, `interactive`, `showVelocity`, `showTrackNote`, `useTrackColors`, `continuous`, `keepEmptyTracks`, `stepSize`, `stepLabels` und `patternData`. Die Props müssen statische Werte, Arrays oder Objekte sein; ausführbare JavaScript-Ausdrücke und Imports werden nicht unterstützt. Beispiel:
+    Neben `<Notation />` und `<NotationKeyboard />` unterstützt der Theorie-Renderer auch `<DrumPattern />` mit den Props `steps`, `timeSignature`, `resolution`, `interactive`, `showVelocity`, `showTrackNote`, `useTrackColors`, `continuous`, `keepEmptyTracks`, `stepSize`, `stepLabels` und `patternData`. Die Props müssen statische Werte, Arrays oder Objekte sein; ausführbare JavaScript-Ausdrücke und Imports werden nicht unterstützt. Statische Zahlenoperationen wie `4 / 3` sind zulässig. Im Lektions-Player wird `$\fermata$` als Fermaten-Symbol dargestellt. Beispiel:
 
     ```mdx
     <DrumPattern

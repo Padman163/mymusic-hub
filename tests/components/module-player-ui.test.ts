@@ -435,6 +435,21 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     expect(container.lastElementChild?.textContent).toBe("Ein zweiter Absatz.");
   });
 
+  it("rendert die Fermate als zugängliches SVG statt als unbekannten KaTeX-Befehl", () => {
+    const container = document.createElement("div");
+    container.append(renderTheoryMarkdown("Fermate ($\\fermata$)"));
+    const fermata = container.querySelector<SVGSVGElement>(
+      ".learning-fermata-symbol",
+    );
+
+    expect(fermata?.getAttribute("role")).toBe("img");
+    expect(fermata?.getAttribute("aria-label")).toBe("Fermate");
+    expect(fermata?.querySelector("path")).not.toBeNull();
+    expect(fermata?.querySelector("circle")).not.toBeNull();
+    expect(container.querySelector(".katex-error")).toBeNull();
+    expect(container.textContent).not.toContain("\\fermata");
+  });
+
   it("rendert statische Inline-SVG-Figuren und entfernt aktive oder nicht erlaubte SVG-Inhalte", () => {
     const container = document.createElement("div");
     container.append(renderTheoryMarkdown([

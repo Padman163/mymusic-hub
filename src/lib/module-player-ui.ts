@@ -447,6 +447,9 @@ export function evaluateQuestionAnswer(
 const safeSvgPaint =
   /^(?:#[\da-f]{3,8}|[a-z]+|currentColor|none|transparent)$/i;
 
+const FERMATA_SVG_MARKUP =
+  '<svg class="learning-fermata-symbol" viewBox="0 0 24 18" role="img" aria-label="Fermate"><path d="M3 9 C5 1 19 1 21 9" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="13" r="2" fill="currentColor"/></svg>';
+
 const theoryMarkdown = unified()
   .use(remarkParse)
   .use(remarkMath)
@@ -477,6 +480,7 @@ const theoryMarkdown = unified()
       code: [["className", /^language-/, "math-inline", "math-display"]],
       figure: ["ariaDescribedBy", "ariaLabel", "ariaLabelledBy"],
       svg: [
+        "className",
         "viewBox",
         "role",
         "ariaLabel",
@@ -560,8 +564,26 @@ const theoryMarkdown = unified()
   .use(rehypeKatex)
   .use(rehypeStringify);
 
+function replaceFermataMath(node: unknown): void {
+  if (!isRecord(node) || !Array.isArray(node.children)) return;
+  for (let index = 0; index < node.children.length; index += 1) {
+    const child = node.children[index];
+    if (!isRecord(child)) continue;
+    if (
+      child.type === "inlineMath" &&
+      typeof child.value === "string" &&
+      child.value.trim() === "\\fermata"
+    ) {
+      node.children[index] = { type: "html", value: FERMATA_SVG_MARKUP };
+    } else {
+      replaceFermataMath(child);
+    }
+  }
+}
+
 function renderMarkdownText(markdown: string): DocumentFragment {
   const tree = theoryMarkdown.parse(markdown);
+  replaceFermataMath(tree);
   for (const node of tree.children) {
     if (node.type !== "paragraph" || node.children.length !== 1) continue;
     const [math] = node.children;

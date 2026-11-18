@@ -546,6 +546,14 @@
   line-height: 1.7;
 }
 
+.learning-theory-markdown .learning-fermata-symbol {
+  display: inline-block;
+  width: 1.15em;
+  height: 0.9em;
+  overflow: visible;
+  vertical-align: -0.1em;
+}
+
 .learning-theory-markdown :is(p, ul, ol) {
   margin-block: 0 0.75em;
 }
