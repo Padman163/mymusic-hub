@@ -49,6 +49,9 @@ Pattern interaktiv, kannst du diese Auswahl ändern:
   oder mit **Tab** und **Leertaste**, ohne einen Vorschauton auszulösen.
 - **Keine Spur markiert:** Alle Spuren mit Sound werden abgespielt.
 
+Ist ausschließlich eine Spur ohne Sound markiert, bleibt der Lauf stumm.
+Zum Hören aller verfügbaren Spuren entfernst du die Markierungen.
+
 Die Markierung und die Auswahlkästchen gehören zur Wiedergabe. Ein unterstrichener
 Spurname zeigt dagegen nur, welche Spur gerade in der Anschlagzeile angezeigt wird.
 Die Wiedergabe-Auswahl wird bei jedem Start übernommen; Änderungen während eines
@@ -82,6 +85,14 @@ Erlaube Audio im Browser und prüfe die Geräte-Lautstärke. Bei fehlenden oder
 blockierten Sounds erscheint beim Abspielversuch ein Hinweis; du kannst es danach
 erneut versuchen. Das Raster bleibt auch ohne Audio nutzbar.
 
+Prüfe außerdem, ob die gewünschten Spuren ausgewählt und ihre Anschlagwerte
+größer als `0` sind. Ein per Tempoänderung gestoppter Lauf muss neu gestartet
+werden. Nicht jedes rein visuelle Raster lässt sich abspielen: Ungeeignete
+Auflösungsangaben oder ein ungültiges Tempo werden als Fehler angezeigt.
+
 Die [Feature-Beispiele](/audio/referenzen-werkzeuge/visualisierungen-erklaert/#drum-pattern-mit-soundfiles)
-zeigen, wie Autoren Sounds hinterlegen. Die aktuelle Beispieldatei muss dafür
-bereitgestellt sein; das Projekt liefert keine Drum-Samples mit.
+zeigen ein eingebundenes Kick-Hörbeispiel und wie Autoren Sounds hinterlegen.
+Das Beispiel nutzt die vorhandene Datei `Kick.wav`; URLs müssen deren
+Groß-/Kleinschreibung exakt übernehmen. Die Nutzungsrechte der vorhandenen
+Samples sind noch nicht dokumentiert und müssen vor einer Veröffentlichung
+geklärt werden.

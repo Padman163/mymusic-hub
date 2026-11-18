@@ -105,6 +105,8 @@ Der Auszug zeigt nicht alle Projektfelder; verbindlich ist `src/content.config.t
 
 `remark-math` und `rehype-katex` verarbeiten mathematische Ausdrücke in den Dokumentationsinhalten. Notations- und Musikstyles liegen unter anderem in `src/styles/notation.css` und `src/styles/music.css`.
 
+`DrumPattern.astro` verwendet unabhängig davon die native Web Audio API für Soundfiles. Die gemeinsame Audio-Engine, der Scheduler und der DOM-Controller liegen unter `src/lib/drum-audio.ts`, `src/lib/drum-playback.ts` und `src/lib/drum-pattern.ts`; statische MDX- und dynamische Moduldarstellungen teilen diese Bausteine. Details: [Audioplayer-Referenz](features/README_FEAT_AUDIOPLAYER.md).
+
 ### 3.3 Backend und Persistenz
 
 `netlify/functions/contributions.ts` und `netlify/functions/modules.ts` stellen die APIs für Beiträge und Lernmodule bereit. `netlify/functions/lib/blob-store.ts` kapselt die JSON-Persistenz über Netlify Blobs. `public/_redirects` leitet `/api/*` auf Netlify Functions weiter.

@@ -1,6 +1,6 @@
 # Features & Architektur des Gitarrenlernpfads
 
-Dieses Dokument gibt einen Überblick über die wichtigsten Komponenten und Subsysteme des Musik-Hubs. Details zum [Beitragssystem](README_FEAT_CONTRIBUTIONS.md), zum [Modul-Builder und Lernpfad](README_FEAT_MODULEBUILDER.md), zur [Notation und zum NotationBuilder](README_FEAT_NOTATION.md), zu den [Anforderungen für den Neuaufbau des Level-100-Quiz](README_FEAT_LEVEL100QUIZ.md), zu [Netlify Blobs](README_FEAT_NETLIFYBLOB.md) und zu [Tests](../README_TESTING.md) stehen in den jeweiligen Leitfäden.
+Dieses Dokument gibt einen Überblick über die wichtigsten Komponenten und Subsysteme des Musik-Hubs. Details zum [Audioplayer für Drum-Patterns](README_FEAT_AUDIOPLAYER.md), zum [Beitragssystem](README_FEAT_CONTRIBUTIONS.md), zum [Modul-Builder und Lernpfad](README_FEAT_MODULEBUILDER.md), zur [Notation und zum NotationBuilder](README_FEAT_NOTATION.md), zu den [Anforderungen für den Neuaufbau des Level-100-Quiz](README_FEAT_LEVEL100QUIZ.md), zu [Netlify Blobs](README_FEAT_NETLIFYBLOB.md) und zu [Tests](../README_TESTING.md) stehen in den jeweiligen Leitfäden.
 
 ---
 
@@ -51,143 +51,16 @@ Die Plattform verbindet musiktheoretische Didaktik mit interaktiven Web-Technolo
 
 #### DrumPattern mit Soundfiles
 
-`src/lib/drum-audio.ts` kapselt die native Web Audio API ohne Audio-Bibliothek.
-Der gemeinsame `DrumAudioEngine` lädt und decodiert URLs einmal pro Seitenlauf;
-parallele Ladevorgänge teilen sich denselben Cache. Nach Preloading und
-Audiofreigabe startet jeder Schlag direkt mit einem eigenen BufferSource- und
-GainNode; Schläge überlagern sich polyphon. Geräte-/Browserlatenz sowie die
-Ladezeit beim ersten, noch nicht vorbereiteten Schlag bleiben technisch bedingt.
+Der native Web-Audio-Player ergänzt Vorhören mit Velocity, Play/Stop und
+Leertasten-Loops bei einstellbaren Viertel-BPM. Die Wiedergabe berücksichtigt
+die Spurauswahl und lässt sich unabhängig von den übrigen Bedienelementen
+konfigurieren. Ohne Sound-URLs bleibt das Raster rein visuell.
 
-`patternData[].soundUrl?: string` hinterlegt einen Sound. `enableAudio?: boolean`
-ist automatisch aktiv, sobald eine Spur eine Sound-URL hat; `false` deaktiviert
-Preloading und Audio-Bedienung. Ohne Sound-URLs bleibt das bisherige Verhalten
-unverändert. WAV, MP3 und OGG werden je nach Browser unterstützt.
-Dateien gehören nach `public/sounds/drums/`; dort dokumentiert die
-[Asset-Anleitung](../public/sounds/drums/README.md) Benennung und Lizenzangaben.
-Es werden keine Samples mitgeliefert.
-
-Nach dem Ablegen von `kick.wav` ist dieses MDX-Beispiel direkt verwendbar:
-
-```mdx
-import DrumPattern from '../../../../components/DrumPattern.astro';
-
-<DrumPattern
-  bpm={120}
-  interactive={false}
-  patternData={[
-    {
-      name: "Kick", note: "C1", color: "#ef4444",
-      activeSteps: [0, 4], velocities: [127, 0, 0, 0, 64],
-      soundUrl: "/sounds/drums/kick.wav",
-    },
-  ]}
-/>
-```
-
-Der Importpfad gilt für die Feature-Seite unter
-`src/content/docs/audio/referenzen-werkzeuge/`; bei anderer Seitentiefe anpassen.
-
-Aktive Zellen spielen ihren Step-Anschlag (`0–127` linear auf `0–1`) ab;
-ohne expliziten Wert gilt volle Lautstärke. Spur-Header spielen immer in voller
-Lautstärke. Enter und Tab sind unterstützt; erfolgreich gestartete
-Schläge leuchten etwa 150 ms auf. Bei `interactive={true}` bleibt das bisherige
-Umschalten der Steps erhalten: Ein zuvor aktiver Step erklingt vor dem Ausschalten.
-Änderungen in der Anschlagzeile wirken auch auf Audio.
-
-**Haltewiedergabe:** `bpm?: number` setzt das anfängliche Tempo (Standard `120`,
-endliche Zahl größer `0`). Ein beschriftetes BPM-Feld erlaubt lokale Änderungen;
-diese werden nicht gespeichert und gelten beim nächsten Start. Hält der Nutzer
-die Leertaste im fokussierten Pattern oder einer seiner Zellen, laufen die
-ausgewählten Spuren gemeinsam in einer Schleife ab Step 1. Tastenwiederholungen starten keinen
-zweiten Lauf und ändern keine Steps. Eingabefelder und Links bleiben ausgenommen.
-Loslassen, Fokusverlust aus dem Raster, Fenster-/Tabwechsel, Navigation oder
-Entfernen des Patterns stoppen den Lauf einschließlich klingender und
-vorgeplanter Sounds. Erneutes Drücken startet wieder bei Step 1.
-
-**Play/Stop im Header:** Ein nativer Symbol-Button links im Header startet
-dieselbe Wiedergabe ohne Gedrückthalten. Seine Höhe entspricht `stepSize`,
-seine Breite dem 1,125-Fachen davon. Das gefüllte Play-Dreieck wechselt
-unmittelbar zum Stop-Quadrat, auch während der Audiofreigabe. Es gibt keinen
-sichtbaren Button-Text; `aria-label`, `aria-pressed` und Tooltip beschreiben
-den aktuellen Zustand. Stoppen bricht klingende,
-vorgeplante und noch ladende Sounds dieser Wiedergabe ab; der nächste Start
-beginnt bei Step 1. Fokuswechsel innerhalb der Seite und Loslassen der Leertaste
-beenden einen Button-Lauf nicht. Fenster-/Tabwechsel, Navigation, Entfernen
-des Patterns, Tempoänderungen und Audiofehler stoppen weiterhin.
-`showPlaybackButton={false}` blendet nur den Button aus; die Leertaste bleibt
-nutzbar. `showFooter={false}` blendet unabhängig davon den gesamten Footer aus.
-`showFooterInfo={false}` blendet nur dessen Metadaten aus. Der Header-Platzhalter
-mit Button ist für assistive Technik sichtbar, ein leerer Footer bleibt `aria-hidden`.
-
-**Optionale Audio-Bedienhinweise:** Diese booleschen Props sind standardmäßig
-`true` und werden auch vom dynamischen Modul-Player unterstützt:
-
-| Prop | Wirkung bei `false` |
-| --- | --- |
-| `showPlaybackButton` | Blendet den Play/Stop-Button im Header aus; die Haltewiedergabe bleibt verfügbar. |
-| `showTempo` | Blendet das BPM-Eingabefeld aus; `bpm` bestimmt unverändert das Wiedergabetempo. |
-| `showPlaybackHint` | Blendet den allgemeinen Bedienhinweis oberhalb des Rasters aus. |
-| `showAudioHelp` | Blendet den Wiki-Hilfelink unterhalb des Patterns aus. |
-
-Sind Tempo und Bedienhinweis ausgeblendet, entfällt auch deren leere
-Bedienleiste. Fehlermeldungen bleiben unabhängig davon sichtbar.
-`showFooterInfo={false}` blendet separat die Metadaten zu Taktart, Auflösung
-und Step-Anzahl aus, lässt aber den Symbol-Button bestehen.
-
-**Spurauswahl für beide Startarten:** `highlightTrack` und `highlightTracks`
-geben die anfängliche Wiedergabe-Auswahl vor. Keine Markierung bedeutet alle
-Spuren mit Sound; eine oder mehrere Markierungen begrenzen den Lauf auf genau
-diese Spuren. Markierte Spuren ohne Sound bleiben stumm und lösen keinen
-Fallback auf andere Spuren aus.
-Bei `interactive={true}` ersetzt ein Klick auf den Spurkopf die Auswahl;
-Shift+Klick fügt Spuren hinzu oder wählt sie ab. Native Auswahlkästchen bieten
-dieselbe additive Auswahl für Touch und Tastatur ohne Vorschauton.
-Bei `interactive={false}` bleiben die Hervorhebungen unveränderlich.
-Die Auswahl wird pro Start übernommen; Änderungen im laufenden Pattern gelten
-beim nächsten Start. Die separate `.selected`-Spur der Anschlagzeile ist kein
-Wiedergabefilter und wird bei Audio-Patterns nur durch einen unterstrichenen
-Spurnamen angezeigt. Hintergrund-Markierung und Kästchen zeigen die
-Wiedergabe-Auswahl; Patterns ohne Sounds bleiben unverändert.
-
-`src/lib/drum-playback.ts` kapselt Tempo-Bedienung, Tastatursteuerung und den
-Scheduler. Er plant alle 25 ms bis zu 100 ms auf der Web-Audio-Uhr voraus,
-statt den hörbaren Start an ungenaue DOM-Timer zu binden.
-`DrumAudioEngine.playSound` unterstützt dazu eine absolute Audio-Startzeit
-(`when`) und ein `AbortSignal` je Wiedergabe. Abbruch verhindert auch verspätete
-Starts nach noch laufendem Laden oder einer Audiofreigabe. Andere Wiedergaben
-bleiben davon unberührt.
-
-BPM zählt ausdrücklich Viertelnoten, auch bei 6/8. Für eine Auflösung `n/d`
-gilt `Step-Dauer = 60 / bpm × 4 × n / d` Sekunden; ein Loop umfasst genau
-`steps` Step-Dauern. Bei 4/4 und `1/8` ergeben acht Steps einen Takt; abweichende
-Step-Zahlen werden nicht auf einen Takt gestaucht oder gestreckt. Die Taktart
-bestimmt die Takteinteilung, nicht die hier festgelegte BPM-Einheit.
-Für Audio-Läufe sind positive Brüche als Auflösung erforderlich; rein visuelle
-Beschreibungen wie `1/16 + Achteltriole` bleiben darstellbar, starten aber keinen
-Loop und zeigen stattdessen einen Hinweis. Nach längeren Hauptthread-Blockaden
-werden verpasste Steps übersprungen statt als hörbarer Schlagstau nachgeholt.
-
-`src/lib/drum-pattern.ts` verbindet Audio mit dem DOM-Controller
-`initializeDrumPatterns` und dem dynamischen Modul-Player; Props und Validierung
-liegen in `src/lib/module-schema.ts`. SSR greift nicht auf Browser-Audio zu.
-Audiofreigabe erfolgt innerhalb einer Nutzeraktion. Fehlende Dateien,
-Decodierfehler und blockiertes Audio werden in der Konsole gemeldet; fehlgeschlagene
-Abspielversuche zeigen zusätzlich einen Statushinweis im Pattern, ohne die
-Rasterbedienung zu blockieren. Ein erneuter Versuch ist möglich.
-
-Bedienung: [Wiki: Drum-Pattern anhören](../src/content/docs/wiki/drum-pattern.mdx).
-`tests/drum-audio.test.ts` prüft Cache, paralleles Laden, synchronen Cache-Start,
-Polyphonie, Velocity, Fehler, SSR und DOM-/Tastaturinteraktionen mit Audio-Mocks
-sowie BPM-/Auflösungs-Timing, Loops, sofortiges Stoppen und Neustarts. Abbruch
-während des Ladens oder der Audiofreigabe und unabhängige Wiedergaben sind
-ebenfalls abgedeckt. Weitere DOM-Tests sichern Header-/Button-Zustände,
-die unabhängige Sichtbarkeit von Footer und Button sowie Haltewiedergabe ohne Button,
-fortlaufende Button-Wiedergabe, Highlight-Filter, Shift- und Touch-Mehrfachauswahl,
-leere Auswahl sowie die Trennung von Anschlagspur und Wiedergabe-Auswahl ab.
-Darstellungsoptionen werden einzeln und gemeinsam geprüft, insbesondere die
-BPM-basierte Wiedergabe und sichtbare Fehler bei vollständig ausgeblendeten
-Tempo-/Hilfselementen sowie der barrierefrei benannte Symbolwechsel.
-Echte Audiogeräte-Latenz und Browser-Audiofreigaben werden damit nicht gemessen.
+Architektur, Props, Timing, Abbruch, Fehlerfälle und Tests stehen zentral in der
+[Audioplayer-Referenz](README_FEAT_AUDIOPLAYER.md). Die
+[Wiki-Anleitung](../src/content/docs/wiki/drum-pattern.mdx) erklärt die Bedienung;
+die [Asset-Referenz](../public/sounds/drums/README.md) nennt die vorhandenen
+Dateien und noch fehlenden Lizenzangaben.
 
 ### 2.4 Die Songwriting-Gesamtpartitur (`ScorePattern.astro`)
 * **Datei:** `src/components/ScorePattern.astro`
