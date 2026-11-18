@@ -70,6 +70,8 @@ export function createDrumPatternElement(
     interactive = DEFAULT_DRUM_PATTERN_PROPS.interactive,
     showVelocity = DEFAULT_DRUM_PATTERN_PROPS.showVelocity,
     showTrackNote = DEFAULT_DRUM_PATTERN_PROPS.showTrackNote,
+    showFooter = DEFAULT_DRUM_PATTERN_PROPS.showFooter,
+    showFooterInfo = DEFAULT_DRUM_PATTERN_PROPS.showFooterInfo,
     useTrackColors = DEFAULT_DRUM_PATTERN_PROPS.useTrackColors,
     continuous = DEFAULT_DRUM_PATTERN_PROPS.continuous,
     keepEmptyTracks = DEFAULT_DRUM_PATTERN_PROPS.keepEmptyTracks,
@@ -330,37 +332,43 @@ export function createDrumPatternElement(
   }
   pattern.append(grid);
 
-  const footer = createScopedElement(
-    document,
-    "div",
-    scopeClasses,
-    "pattern-footer",
-  );
-  footer.style.setProperty("--steps", String(steps));
-  footer.setAttribute(
-    "aria-label",
-    `Taktart ${timeSignature}, Auflösung ${resolution}, ${steps} Steps`,
-  );
-  const footerInfo = createScopedElement(
-    document,
-    "div",
-    scopeClasses,
-    "footer-info",
-  );
-  for (const [label, value] of [
-    ["Taktart:", timeSignature],
-    ["Auflösung:", resolution],
-    ["Steps:", String(steps)],
-  ]) {
-    const item = createScopedElement(document, "span", scopeClasses);
-    item.append(document.createTextNode(`${label} `));
-    const strong = createScopedElement(document, "strong", scopeClasses);
-    strong.textContent = value;
-    item.append(strong);
-    footerInfo.append(item);
+  if (showFooter) {
+    const footer = createScopedElement(
+      document,
+      "div",
+      scopeClasses,
+      "pattern-footer",
+    );
+    footer.style.setProperty("--steps", String(steps));
+    if (showFooterInfo) {
+      footer.setAttribute(
+        "aria-label",
+        `Taktart ${timeSignature}, Auflösung ${resolution}, ${steps} Steps`,
+      );
+      const footerInfo = createScopedElement(
+        document,
+        "div",
+        scopeClasses,
+        "footer-info",
+      );
+      for (const [label, value] of [
+        ["Taktart:", timeSignature],
+        ["Auflösung:", resolution],
+        ["Steps:", String(steps)],
+      ]) {
+        const item = createScopedElement(document, "span", scopeClasses);
+        item.append(document.createTextNode(`${label} `));
+        const strong = createScopedElement(document, "strong", scopeClasses);
+        strong.textContent = value;
+        item.append(strong);
+        footerInfo.append(item);
+      }
+      footer.append(footerInfo);
+    } else {
+      footer.setAttribute("aria-hidden", "true");
+    }
+    pattern.append(footer);
   }
-  footer.append(footerInfo);
-  pattern.append(footer);
 
   initializeDrumPatterns(pattern);
   return pattern;

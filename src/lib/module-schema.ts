@@ -56,6 +56,8 @@ export interface DrumPatternProps {
   interactive?: boolean;
   showVelocity?: boolean;
   showTrackNote?: boolean;
+  showFooter?: boolean;
+  showFooterInfo?: boolean;
   useTrackColors?: boolean;
   continuous?: boolean;
   keepEmptyTracks?: boolean;
@@ -109,6 +111,8 @@ export const DEFAULT_DRUM_PATTERN_PROPS: Required<
   interactive: true,
   showVelocity: false,
   showTrackNote: true,
+  showFooter: true,
+  showFooterInfo: true,
   useTrackColors: false,
   continuous: false,
   keepEmptyTracks: false,
@@ -144,6 +148,8 @@ export function getDrumPatternPropsErrors(value: unknown): string[] {
     "interactive",
     "showVelocity",
     "showTrackNote",
+    "showFooter",
+    "showFooterInfo",
     "useTrackColors",
     "continuous",
     "keepEmptyTracks",
@@ -185,6 +191,8 @@ export function getDrumPatternPropsErrors(value: unknown): string[] {
     "interactive",
     "showVelocity",
     "showTrackNote",
+    "showFooter",
+    "showFooterInfo",
     "useTrackColors",
     "continuous",
     "keepEmptyTracks",

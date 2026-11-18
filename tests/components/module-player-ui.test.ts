@@ -538,8 +538,34 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
       ),
     ).toBe("1.5");
     expect(pattern.querySelector(".velocity-row")).not.toBeNull();
+    expect(pattern.querySelector(".pattern-footer .footer-info")).not.toBeNull();
     cells[0].click();
     expect(cells[0].classList.contains("active")).toBe(false);
+  });
+
+  it("zeigt ein statisches DrumPattern ohne technische Fußzeile", () => {
+    const root = document.createElement("section");
+    root.innerHTML =
+      '<div hidden data-visual-template="DrumPattern"><div class="studio-one-pattern"></div></div>';
+    const preview = renderTheoryMarkdown(
+      '<DrumPattern interactive={false} showFooter={false} />',
+      root,
+    );
+    expect(preview.querySelector(".step-cell")).not.toBeNull();
+    expect(preview.querySelector(".pattern-footer")).toBeNull();
+  });
+
+  it("behält die DrumPattern-Fußzeile ohne Informationen als optischen Abschluss", () => {
+    const root = document.createElement("section");
+    root.innerHTML =
+      '<div hidden data-visual-template="DrumPattern"><div class="studio-one-pattern"></div></div>';
+    const preview = renderTheoryMarkdown(
+      '<DrumPattern showFooterInfo={false} />',
+      root,
+    );
+    const footer = preview.querySelector(".pattern-footer");
+    expect(footer?.textContent).toBe("");
+    expect(footer?.getAttribute("aria-hidden")).toBe("true");
   });
 
   it("rendert Markdown, verschachteltes Inline-KaTeX und beide Display-Formate", () => {

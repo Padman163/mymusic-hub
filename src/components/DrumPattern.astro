@@ -15,6 +15,8 @@ const {
   interactive = DEFAULT_DRUM_PATTERN_PROPS.interactive,
   showVelocity = DEFAULT_DRUM_PATTERN_PROPS.showVelocity,
   showTrackNote = DEFAULT_DRUM_PATTERN_PROPS.showTrackNote,
+  showFooter = DEFAULT_DRUM_PATTERN_PROPS.showFooter,
+  showFooterInfo = DEFAULT_DRUM_PATTERN_PROPS.showFooterInfo,
   useTrackColors = DEFAULT_DRUM_PATTERN_PROPS.useTrackColors,
   continuous = DEFAULT_DRUM_PATTERN_PROPS.continuous,
   keepEmptyTracks = DEFAULT_DRUM_PATTERN_PROPS.keepEmptyTracks,
@@ -162,17 +164,22 @@ const stepLabels = Array.from(
       </div>
     )}
   </div>
-  <div
-    class="pattern-footer"
-    style={`--steps: ${steps};`}
-    aria-label={`Taktart ${timeSignature}, Auflösung ${resolution}, ${steps} Steps`}
-  >
-    <div class="footer-info">
-      <span>Taktart: <strong>{timeSignature}</strong></span>
-      <span>Auflösung: <strong>{resolution}</strong></span>
-      <span>Steps: <strong>{steps}</strong></span>
+  {showFooter && (
+    <div
+      class="pattern-footer"
+      style={`--steps: ${steps};`}
+      aria-hidden={showFooterInfo ? undefined : "true"}
+      aria-label={showFooterInfo ? `Taktart ${timeSignature}, Auflösung ${resolution}, ${steps} Steps` : undefined}
+    >
+      {showFooterInfo && (
+        <div class="footer-info">
+          <span>Taktart: <strong>{timeSignature}</strong></span>
+          <span>Auflösung: <strong>{resolution}</strong></span>
+          <span>Steps: <strong>{steps}</strong></span>
+        </div>
+      )}
     </div>
-  </div>
+  )}
 </div>
 
 <style>
