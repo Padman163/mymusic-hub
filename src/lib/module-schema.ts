@@ -53,6 +53,7 @@ export interface DrumPatternProps {
   steps?: number;
   timeSignature?: string;
   resolution?: string;
+  highlightTrack?: string;
   interactive?: boolean;
   showVelocity?: boolean;
   showTrackNote?: boolean;
@@ -108,6 +109,7 @@ export const DEFAULT_DRUM_PATTERN_PROPS: Required<
   steps: 8,
   timeSignature: "4/4",
   resolution: "1/8",
+  highlightTrack: "",
   interactive: true,
   showVelocity: false,
   showTrackNote: true,
@@ -145,6 +147,7 @@ export function getDrumPatternPropsErrors(value: unknown): string[] {
     "steps",
     "timeSignature",
     "resolution",
+    "highlightTrack",
     "interactive",
     "showVelocity",
     "showTrackNote",
@@ -184,6 +187,28 @@ export function getDrumPatternPropsErrors(value: unknown): string[] {
       (typeof value[name] !== "string" || value[name].trim().length === 0)
     ) {
       errors.push(`${name} muss ein nicht-leerer Text sein.`);
+    }
+  }
+
+  if (
+    value.highlightTrack !== undefined &&
+    typeof value.highlightTrack !== "string"
+  ) {
+    errors.push("highlightTrack muss ein Spur-Name sein.");
+  } else if (
+    typeof value.highlightTrack === "string" &&
+    value.highlightTrack.trim().length > 0
+  ) {
+    const highlightTrack = value.highlightTrack.trim();
+    const tracks =
+      value.patternData === undefined
+        ? DEFAULT_DRUM_PATTERN_DATA
+        : value.patternData;
+    if (
+      Array.isArray(tracks) &&
+      !tracks.some((track) => isRecord(track) && track.name === highlightTrack)
+    ) {
+      errors.push("highlightTrack muss einem Namen in patternData entsprechen.");
     }
   }
 

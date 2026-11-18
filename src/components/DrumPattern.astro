@@ -12,6 +12,7 @@ const {
   steps = DEFAULT_DRUM_PATTERN_PROPS.steps,
   timeSignature = DEFAULT_DRUM_PATTERN_PROPS.timeSignature,
   resolution = DEFAULT_DRUM_PATTERN_PROPS.resolution,
+  highlightTrack = DEFAULT_DRUM_PATTERN_PROPS.highlightTrack,
   interactive = DEFAULT_DRUM_PATTERN_PROPS.interactive,
   showVelocity = DEFAULT_DRUM_PATTERN_PROPS.showVelocity,
   showTrackNote = DEFAULT_DRUM_PATTERN_PROPS.showTrackNote,
@@ -60,6 +61,12 @@ const visiblePatternData = patternData
   }));
 
 const initialTrack = visiblePatternData[0];
+const highlightedTrack = highlightTrack.trim();
+const selectedTrackIndex = highlightedTrack
+  ? visiblePatternData.findIndex((track) => track.name === highlightedTrack)
+  : interactive || showVelocity
+    ? 0
+    : -1;
 const stepLabels = Array.from(
   { length: steps },
   (_, index) =>
@@ -86,7 +93,7 @@ const stepLabels = Array.from(
   <div class="pattern-grid">
     {visiblePatternData.map((track, trackIndex) => (
       <div
-        class={`track-row ${(interactive || showVelocity) && trackIndex === 0 ? 'selected' : ''}`}
+        class={`track-row ${trackIndex === selectedTrackIndex ? 'selected' : ''}`}
         data-color={track.color}
         data-velocities={JSON.stringify(track.velocities)}
         aria-label={`Instrument ${track.name}, Note ${track.note}`}
@@ -338,9 +345,19 @@ const stepLabels = Array.from(
     cursor: pointer;
   }
 
+  .track-row:not(.velocity-row):focus-visible {
+    outline: 2px solid #d4d4d8;
+    outline-offset: 2px;
+  }
+
   .track-row.selected .track-info,
   .track-row.selected .step-row {
-    background-color: #1c1c20;
+    background-color: #27272a;
+  }
+
+  .track-row.selected {
+    outline: 1px solid #52525b;
+    outline-offset: -1px;
   }
   
   .track-info {

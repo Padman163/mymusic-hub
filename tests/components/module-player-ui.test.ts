@@ -497,6 +497,9 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     expect(
       getTheoryDrumPatternError("<DrumPattern interactive={window.alert(1)} />"),
     ).toContain("Nur feste Werte");
+    expect(
+      getTheoryDrumPatternError('<DrumPattern highlightTrack="Missing" />'),
+    ).toContain("highlightTrack");
     const staticArithmetic = parseTheoryDrumPattern(
       '<DrumPattern steps={16} patternData={[{ name: "Triolen", note: "12×", color: "#facc15", activeSteps: [], eventPositions: [0, 4 / 3, 8 / 3, 4] }]} />',
       0,
@@ -548,11 +551,24 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     root.innerHTML =
       '<div hidden data-visual-template="DrumPattern"><div class="studio-one-pattern"></div></div>';
     const preview = renderTheoryMarkdown(
-      '<DrumPattern interactive={false} showFooter={false} />',
+      '<DrumPattern interactive={false} showFooter={false} highlightTrack="Snare - Center" />',
       root,
     );
     expect(preview.querySelector(".step-cell")).not.toBeNull();
     expect(preview.querySelector(".pattern-footer")).toBeNull();
+
+    const rows = preview.querySelectorAll<HTMLDivElement>(
+      ".track-row:not(.velocity-row)",
+    );
+    const markedRow = Array.from(rows).find(
+      (row) => row.querySelector(".track-name")?.textContent === "Snare - Center",
+    );
+    if (!markedRow || !rows[0]) throw new Error("Markierte DrumPattern-Spur fehlt");
+    expect(markedRow.classList.contains("selected")).toBe(true);
+    expect(markedRow.getAttribute("role")).toBeNull();
+    expect(markedRow.getAttribute("tabindex")).toBeNull();
+    rows[0].click();
+    expect(markedRow.classList.contains("selected")).toBe(true);
   });
 
   it("behält die DrumPattern-Fußzeile ohne Informationen als optischen Abschluss", () => {

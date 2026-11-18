@@ -67,6 +67,7 @@ export function createDrumPatternElement(
     steps = DEFAULT_DRUM_PATTERN_PROPS.steps,
     timeSignature = DEFAULT_DRUM_PATTERN_PROPS.timeSignature,
     resolution = DEFAULT_DRUM_PATTERN_PROPS.resolution,
+    highlightTrack = DEFAULT_DRUM_PATTERN_PROPS.highlightTrack,
     interactive = DEFAULT_DRUM_PATTERN_PROPS.interactive,
     showVelocity = DEFAULT_DRUM_PATTERN_PROPS.showVelocity,
     showTrackNote = DEFAULT_DRUM_PATTERN_PROPS.showTrackNote,
@@ -151,12 +152,18 @@ export function createDrumPatternElement(
     scopeClasses,
     "pattern-grid",
   );
+  const highlightedTrack = highlightTrack.trim();
+  const selectedTrackIndex = highlightedTrack
+    ? visibleTracks.findIndex((track) => track.name === highlightedTrack)
+    : interactive || showVelocity
+      ? 0
+      : -1;
   for (const [trackIndex, track] of visibleTracks.entries()) {
     const row = createScopedElement(
       document,
       "div",
       scopeClasses,
-      `track-row ${(interactive || showVelocity) && trackIndex === 0 ? "selected" : ""}`,
+      `track-row ${trackIndex === selectedTrackIndex ? "selected" : ""}`,
     );
     row.dataset.color = track.color;
     row.dataset.velocities = JSON.stringify(track.velocities);
@@ -166,7 +173,10 @@ export function createDrumPatternElement(
     );
     if (showVelocity) {
       row.setAttribute("role", "button");
-      row.setAttribute("aria-pressed", String(trackIndex === 0));
+      row.setAttribute(
+        "aria-pressed",
+        String(row.classList.contains("selected")),
+      );
       row.tabIndex = 0;
     }
 
