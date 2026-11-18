@@ -52,6 +52,28 @@ function literalValue(node: Expression): unknown {
     const value = literalValue(node.argument);
     if (typeof value === "number")
       return node.operator === "-" ? -value : value;
+  } else if (
+    node.type === "BinaryExpression" &&
+    (node.operator === "+" ||
+      node.operator === "-" ||
+      node.operator === "*" ||
+      node.operator === "/")
+  ) {
+    if (node.left.type !== "PrivateIdentifier") {
+      const left = literalValue(node.left);
+      const right = literalValue(node.right);
+      if (typeof left === "number" && typeof right === "number") {
+        const result =
+          node.operator === "+"
+            ? left + right
+            : node.operator === "-"
+              ? left - right
+              : node.operator === "*"
+                ? left * right
+                : left / right;
+        if (Number.isFinite(result)) return result;
+      }
+    }
   }
   throw new Error("Nur feste Werte, Arrays und Objekte sind erlaubt.");
 }

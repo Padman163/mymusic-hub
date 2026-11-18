@@ -648,6 +648,16 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
     expect(details?.open).toBe(true);
   });
 
+  it("akzeptiert sichere statische Divisionen in DrumPattern-Props", () => {
+    const markdownContent =
+      '<DrumPattern steps={4} patternData={[{ name: "Triolen", note: "12×", color: "#facc15", activeSteps: [], eventPositions: [0, 4 / 3] }]} />';
+    const editor = createTheoryBlockEditor([
+      { id: "tb-1", order: 1, title: "Rhythmus", markdownContent },
+    ]);
+
+    expect(editor.items()?.[0].markdownContent).toBe(markdownContent);
+  });
+
   it("berechnet Block-XP aus eigenem Tag und Basiswert und speichert sie", () => {
     const form = mountModuleForm();
     const controller = attachModuleBuilderForm(form);

@@ -168,7 +168,7 @@ describe("module-store Validierung & Store-Operationen", () => {
         order: 1,
         title: "Pattern",
         markdownContent:
-          '<DrumPattern steps={4} continuous={true} patternData={[{ name: "Kick", note: "C1", color: "#ef4444", activeSteps: [0], eventPositions: [1.5] }]} />',
+          '<DrumPattern steps={4} continuous={true} patternData={[{ name: "Kick", note: "C1", color: "#ef4444", activeSteps: [0], eventPositions: [0, 4 / 3] }]} />',
       }],
     });
     expect(valid.valid).toBe(true);

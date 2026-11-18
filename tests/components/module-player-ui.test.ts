@@ -365,6 +365,16 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     expect(
       getTheoryDrumPatternError("<DrumPattern interactive={window.alert(1)} />"),
     ).toContain("Nur feste Werte");
+    const staticArithmetic = parseTheoryDrumPattern(
+      '<DrumPattern steps={16} patternData={[{ name: "Triolen", note: "12×", color: "#facc15", activeSteps: [], eventPositions: [0, 4 / 3, 8 / 3, 4] }]} />',
+      0,
+    );
+    expect(staticArithmetic.props.patternData?.[0].eventPositions).toEqual([
+      0,
+      4 / 3,
+      8 / 3,
+      4,
+    ]);
     expect(getTheoryDrumPatternError("`<DrumPattern steps={0} />`")).toBeNull();
     expect(
       getTheoryDrumPatternError("<!-- <DrumPattern steps={0} /> -->"),
