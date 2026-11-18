@@ -19,6 +19,7 @@ import {
   createEmptyModulesDatabase,
   updateQuizSettings,
 } from "../src/lib/module-store.ts";
+import { getAvailableTags } from "../src/lib/xp-tags.ts";
 
 describe("Übergreifende Quiz-Einstellungen", () => {
   afterEach(() => clearLearningProgress());
@@ -448,15 +449,7 @@ describe("Lernfortschritts- & XP-Engine (learning-progress)", () => {
         production: 0,
         band: 0,
       },
-      xpByTag: {
-        Allgemein: 0,
-        Notensystem: 0,
-        Violinschlüssel: 0,
-        Bassschlüssel: 0,
-        Tabulatur: 0,
-        Gitarre: 0,
-        Rhythmus: 0,
-      },
+      xpByTag: Object.fromEntries(getAvailableTags().map((tag) => [tag, 0])),
     });
 
     state = submitQuizAttempt(state, db, "mod-theory-1", "schwer", 1.0); // 123 XP

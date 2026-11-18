@@ -28,7 +28,7 @@ Für die Speicherumstellung mit `git switch feat/netlify-blobs` auf den vorhande
 npm run preflight
 ```
 
-Das Gate umfasst Validierung, Audit, Vitest, Build, Playwright und Lighthouse CI. Lighthouse lädt Berichte standardmäßig temporär öffentlich hoch; eine rein lokale Ablage ist über Umgebungsvariablen möglich. Fehler beheben und erneut ausführen. Details und Voraussetzungen: [Testing](README_TESTING.md).
+Das Gate wertet Validierung, Vitest, Build, Playwright und Lighthouse CI einzeln aus und zeigt bestandene, fehlgeschlagene sowie übersprungene Schritte samt nächsten Korrekturen. `npm audit` läuft separat mit `npm run audit`. Lighthouse lädt Berichte standardmäßig temporär öffentlich hoch; eine rein lokale Ablage ist über Umgebungsvariablen möglich. Fehler beheben und erneut ausführen. Details und Voraussetzungen: [Testing](README_TESTING.md).
 
 ## 4. Cleanup und Abschlussprüfung
 

@@ -23,8 +23,8 @@
     "test:visual": "playwright test --update-snapshots",
     "test:all": "npm run test && npm run build && npm run test:e2e",
     "audit": "npm audit --audit-level=high",
-    "audit:lhci": "CHROME_PATH=$(node -p \"require('@playwright/test').chromium.executablePath()\") lhci autorun",
-    "preflight": "npm run validate && npm run audit && npm run test:all && npm run audit:lhci && git diff --check"
+    "audit:lhci": "node scripts/run-lhci.mjs autorun",
+    "preflight": "node scripts/preflight.mjs"
   },
   "dependencies": {
     "@astrojs/markdown-remark": "^7.3.6",

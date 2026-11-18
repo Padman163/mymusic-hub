@@ -41,7 +41,8 @@ npm run test:visual          # E2E mit --update-snapshots; derzeit keine Snapsho
 ### 1.4 Das zentrale Pre-Flight Quality Gate
 ```bash
 npm run preflight            # Kombinierte Kette vor jedem Push / Pull Request:
-                             # validate -> audit -> test:all (Vitest, Build, E2E) -> audit:lhci -> Git-Diff
+                             # Ergebnisbericht zu Validierung, Vitest, Build, E2E, Lighthouse und Git-Diff
+npm run audit                # Separates Dependency-Audit; nicht Teil des Preflights
 ```
 
 Lighthouse lädt Berichte standardmäßig temporär öffentlich hoch. Lokale Ablage und Testgrenzen stehen im [Testing-Leitfaden](README_TESTING.md).

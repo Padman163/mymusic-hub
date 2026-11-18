@@ -183,7 +183,7 @@ Externe Links, fachliche Aktualität, dynamische Asset-Pfade und Git-Hygiene wer
   Leere Git-Ausgaben sind kein Beweis für Geheimnisfreiheit; beispielsweise können `.env.example`-Vorlagen harmlose Treffer liefern und andere Geheimnisnamen unentdeckt bleiben. `git grep` liefert bei fehlenden Treffern Exit-Code 1. Befunde einzeln bewerten; Paketkorrekturen nur nach Prüfung des Diffs und mit erneuten Tests anwenden. `npm audit fix` kann Abhängigkeiten ändern, `--force` zusätzlich inkompatible Versionswechsel erlauben und ist kein routinemäßiger Prüfschritt.
 * **Wann nutzen:**
   * **Nach Paketoperationen:** Direkt nach jeder Installation (`npm install <paket>`) oder Aktualisierung von Abhängigkeiten (`npm update`).
-  * **Vor jedem Production-Release:** Als unverzichtbarer Bestandteil des `preflight`-Laufs vor Build und Deployment.
+  * **Vor einem Production-Release:** Separat mit `npm run audit`; das Dependency-Audit ist bewusst nicht Teil des `preflight`-Laufs.
   * **Bei Backend- & Serverless-Änderungen:** Sobald neue Netlify Functions, Umgebungsvariablen oder externe Schnittstellen eingerichtet werden.
 
 ---
@@ -268,8 +268,9 @@ Vor jedem Push auf GitHub muss das einzeilige Pre-Flight Quality Gate fehlerfrei
 npm run preflight
 ```
 
-_Befehlskette im Detail:_ `npm run validate && npm run audit && npm run test:all && npm run audit:lhci && git diff --check`. `validate` führt Biome, Astro-Check und TypeScript aus; `test:all` führt Vitest, Build und Playwright aus. Danach misst `audit:lhci` den Build mit Lighthouse CI und lädt den Bericht standardmäßig in den konfigurierten temporären öffentlichen Speicher hoch; lokale Ablage lässt sich wie in Abschnitt 3.2 über Umgebungsvariablen wählen. `test:visual` führt die E2E-Suite mit Snapshot-Aktualisierung aus (derzeit ohne Snapshot-Assertions), `test:e2e:ui` startet den interaktiven Playwright-Modus; beide sind keine zusätzlichen Preflight-Gates.
-Die Kette bricht beim ersten fehlgeschlagenen Befehl ab. Warnungen und Audit-Befunde unterhalb der konfigurierten Fehlerschwelle stoppen sie nicht automatisch.
+`preflight` führt Validierung, Vitest, Build, Playwright, Lighthouse CI und `git diff --check` einzeln aus und gibt für jeden Schritt einen Ergebnisbericht mit Hinweisen zur Fehlerbehebung aus. Ein fehlgeschlagener unabhängiger Schritt verhindert nicht die Auswertung der übrigen Schritte. Playwright und Lighthouse CI werden übersprungen, wenn der Build fehlschlägt. Der Prozess endet mit Exit-Code 1, sobald mindestens ein ausgeführter Schritt fehlschlägt. `npm audit` ist separat mit `npm run audit` aufzurufen.
+
+Lighthouse CI misst den Build und lädt Berichte standardmäßig in den konfigurierten temporären öffentlichen Speicher hoch; lokale Ablage lässt sich wie in Abschnitt 3.2 über Umgebungsvariablen wählen. `test:visual` führt die E2E-Suite mit Snapshot-Aktualisierung aus (derzeit ohne Snapshot-Assertions), `test:e2e:ui` startet den interaktiven Playwright-Modus; beide sind keine zusätzlichen Preflight-Gates.
 
 ---
 
