@@ -197,7 +197,7 @@ Die Code-Markierungen in diesen Beispielen dienen nur der Dokumentation: Im Buil
 
 ### 4. Reiter „Einstellungen“ (`src/components/project/QuizSettingsForm.astro`)
 
-Hier werden die Bestehensgrenzen für Abschluss-Quiz und Fastlane für alle Module getrennt eingestellt. Eine tatsächliche Änderung nach Bestätigung setzt den gesamten Lernfortschritt einschließlich XP und Bestwerten beim nächsten Laden im jeweiligen Browser zurück; Quizze müssen erneut absolviert werden. Unverändertes Speichern löst keinen Reset aus.
+Hier werden die Bestehensgrenzen für Abschluss-Quiz und Fastlane für alle Module getrennt eingestellt. Der gemeinsame Online-Katalog enthält zusätzlich die Shop-Konfiguration; eine Oberfläche zum Bearbeiten des Shop-Katalogs gibt es im Builder derzeit nicht. Eine tatsächliche Änderung der Quiz-Grenzen nach Bestätigung setzt den gesamten Lernfortschritt einschließlich XP und Bestwerten beim nächsten Laden in jedem betroffenen Browser zurück; bei aktiver Anmeldung wird der neue Stand mit dem Konto synchronisiert und auf weiteren Geräten übernommen. Quizze müssen erneut absolviert werden. Unverändertes Speichern löst keinen Reset aus.
 
 ### Gemeinsame Logik, Styling & UI-Tests
 - **`src/lib/module-builder-ui.ts` & `src/styles/module-builder.css`:** Enthalten die gemeinsame Steuerungslogik für alle drei Werkzeuge sowie das passende Erscheinungsbild (inklusive dunklem Design-Modus), während die `.astro`-Dateien schlank bleiben. Beim Laden und Speichern prüft der Browser sicher auf JSON-Antworten (um HTML-Fehlerseiten sauber abzufangen) und nutzt automatisch `/api/modules` bzw. `/.netlify/functions/modules`.
@@ -240,7 +240,7 @@ Ein neuer Katalog enthält keine Module oder Fragen, aber die Standard-Lernkonfi
 ### 3. Die Modul-Roadmap (`src/components/learning/ModuleRoadmap.astro`)
 - **Wozu sie dient:** Zeigt alle Module in der richtigen Reihenfolge als übersichtliche Karten.
 - **Fortschritt:** Die Karte zeigt Gesamtfortschritt sowie Balken für Theorie, Aufgaben und Quiz. Status-Badges und der Fastlane-Link sind derzeit ausgeblendet.
-- **Aktionen:** **„Lektion öffnen“** führt zur Modulansicht; gesperrte Module zeigen dort einen Sperrhinweis. **„Quiz starten“** wird erst bei Quizbereitschaft aktiviert. Der geschützte Reset setzt den gesamten lokalen Lernfortschritt zurück.
+- **Aktionen:** **„Lektion öffnen“** führt zur Modulansicht; gesperrte Module zeigen dort einen Sperrhinweis. **„Quiz starten“** wird erst bei Quizbereitschaft aktiviert. Der geschützte Reset setzt den gesamten Lernfortschritt zurück; bei aktiver Anmeldung wird der neue Stand mit dem Konto synchronisiert.
 
 ### 4. Der Lektions-Parcours & Aufgaben-Runner (`ModuleStepper.astro` & `ModuleQuizRunner.astro`)
 - **Geführter Schritt-für-Schritt-Aufbau (`/audio/theory/modul/?id=...`):**

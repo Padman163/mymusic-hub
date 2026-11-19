@@ -84,14 +84,13 @@ Token-Regeln und Deploy-Verhalten stehen in der
 
 Keine Tests automatisch nach einzelnen Änderungen ausführen. Copilot fragt nach jeweils zehn Nutzer-Prompts im laufenden Chat, ob passende Unit- und Komponententests (Stufen 1 und 2) ausgeführt werden sollen. Erst nach Zustimmung oder ausdrücklichem Testauftrag testen. Kein Preflight für Zwischenschritte, Zwischen-Commits oder Zwischen-Pushes. Details und Befehle: [Testing](README_TESTING.md).
 
-Für Code-Hygiene und Typenprüfung zuerst Biome die sicheren automatischen Korrekturen anwenden lassen und anschließend denselben Stand validieren:
+Bei Bedarf kann Biome sichere Formatierungs- und Lint-Korrekturen direkt anwenden:
 
 ```bash
 npm run fix
-npm run validate
 ```
 
-`npm run validate` führt Biome-Prüfung, `astro check` und `tsc --noEmit` aus. Es ist ein reiner Prüfungsbefehl und ersetzt weder die gezielten Tests noch den manuellen Branch-Abschluss mit `npm run preflight`.
+Die anschließende Validierung mit Biome, Astro und TypeScript läuft als Stufe 0 ausschließlich im manuell vom Nutzer gestarteten `npm run preflight`; `npm run validate` nicht separat starten. Der Preflight ersetzt weder die gezielten Tests während der Entwicklung noch das separate manuelle `npm run audit`.
 
 ## 4. Cleanup und Abschlussprüfung
 

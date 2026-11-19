@@ -42,7 +42,7 @@ Dies ist **nicht** die aktuelle Konfiguration dieses Repositories. Hier steht in
 
 Starlight liefert Dokumentationslayout, Navigation und Suche. `astro.config.mjs` konfiguriert die Sidebar; die Inhalte liegen in `src/content/docs/`.
 
-Die Sidebar gliedert sich in dieser Reihenfolge in **Admin** (Projektierung und Admin-Wiki), **Bediener** (Dashboard mit Lernpfad) und **Sonstiges** (Wiki, bisherige Lehrgänge Level 100-500 inklusive Gitarrenlehre, Songwriting, Referenz & Werkzeuge). Bestehende Seiten-URLs bleiben erhalten. Die Bereiche strukturieren die Navigation; sie sind keine rollenbasierte Zugriffskontrolle.
+Die Sidebar gliedert sich in dieser Reihenfolge in **Admin** (Konten & Einladungen, Beiträge, Modul-Builder, Modularchiv und Admin-Wiki), **Bediener** (Dashboard, Lernpfad und zugehörige Bereiche) und **Sonstiges** (Wiki, bisherige Lehrgänge Level 100-500 inklusive Gitarrenlehre, Songwriting, Referenz & Werkzeuge). Beiträge und Modul-Builder liegen direkt unter Admin, nicht in einem „Projektierung“-Unterreiter. Bestehende Seiten-URLs bleiben erhalten. Die Bereiche strukturieren die Navigation; sie sind keine rollenbasierte Zugriffskontrolle. Auch `/admin/konten/` ist als Seite erreichbar; die Identity-Status- und Einladungsaktionen werden serverseitig durch die Admin-Rolle geschützt.
 
 Das **Admin-Wiki** unter `/admin-wiki/` zeigt die Root-READMEs (`README*.md`) und alle Feature-READMEs (`features/README*.md`) direkt als statische Starlight-Seiten. `src/lib/admin-wiki.ts` lädt die Originaldateien beim Build; `src/pages/admin-wiki/` stellt Übersicht und Dokumentseiten bereit. Neue passende READMEs werden beim nächsten Build automatisch aufgenommen. Relative Links zwischen diesen Dokumenten führen zu den Wiki-Seiten, Inhalts- und Asset-Links zur jeweiligen Website-Route; sonstige Repository-Links verweisen auf GitHub (`main`). Das Admin-Wiki ist wie die übrige Website öffentlich und nicht zugriffsgeschützt.
 
@@ -111,9 +111,9 @@ Der Auszug zeigt nicht alle Projektfelder; verbindlich ist `src/content.config.t
 
 ### 3.3 Backend und Persistenz
 
-`netlify/functions/contributions.ts` und `netlify/functions/modules.ts` stellen die APIs für Beiträge und Lernmodule bereit. `netlify/functions/lib/blob-store.ts` kapselt die JSON-Persistenz über Netlify Blobs. `public/_redirects` leitet `/api/*` auf Netlify Functions weiter.
+`netlify/functions/contributions.ts` und `netlify/functions/modules.ts` stellen die APIs für Beiträge und Lernmodule bereit. `netlify/functions/learning-progress.ts` speichert persönliche Lernstände; `netlify/functions/admin-identity.ts` liefert Identity-Status und Einladungsfunktionen für berechtigte Admins. `netlify/functions/lib/blob-store.ts` kapselt die gemeinsamen JSON-Daten über Netlify Blobs; persönliche Lernstände liegen separat im User-Store. `public/_redirects` leitet `/api/*` auf Netlify Functions weiter.
 
-Die Netlify Functions benötigen keine Datenbankdateien aus dem Repository. Nur im reinen Astro-Entwicklungsserver liest und schreibt ein Vite-Plugin die lokal erzeugte `data/modules.json`. Details zur Persistenz: [Netlify Blobs](features/README_FEAT_NETLIFYBLOB.md); Fullstack-Start: [Workspace-Setup](README_WORKSPACE_SETUP.md).
+Die Netlify Functions verwenden in Cloud-Kontexten den Blob-Store; nur Netlify Dev initialisiert fehlende gemeinsame Keys aus `data/blob-snapshot/` und aktualisiert diese Snapshots bei lokalen Schreibvorgängen. Ein Build importiert sie nicht automatisch in die Cloud. Der reine Astro-Entwicklungsserver nutzt für Module stattdessen ein Vite-Plugin mit der lokal erzeugten `data/modules.json`. Kontenfunktionen benötigen Netlify Identity und Netlify Dev; Details stehen in der [Authentifizierungs-Referenz](features/README_FEAT_AUTHENTICATION.md), zur Persistenz in der [Blob-Referenz](features/README_FEAT_NETLIFYBLOB.md).
 
 ## 4. Projektstruktur
 
@@ -127,6 +127,7 @@ public/
 └── scores/                     # MusicXML-Partituren
 src/
 ├── components/                 # Fachkomponenten wie Fretboard und Pattern
+│   ├── admin/                  # Admin-Oberflächen, z. B. Konten & Einladungen
 │   ├── learning/               # Lernpfad und Modul-Player
 │   ├── notation/               # Notationskomponenten
 │   ├── project/                # Modul- und Aufgaben-Builder
@@ -138,7 +139,7 @@ src/
 ├── content.config.ts           # Starlight-Collections und Schemaerweiterung
 ├── img/                        # Projektbilder
 ├── lib/                        # Fachlogik, Renderer, Controller und Stores
-├── pages/                      # Eigene Routen, darunter 404.astro
+├── pages/                      # Eigene Routen, darunter Admin und Modularchiv
 └── styles/                     # Gemeinsame Stylesheets
 tests/
 ├── *.test.mjs                  # Vitest-Tests, u. a. Notationslogik
@@ -146,8 +147,11 @@ tests/
 ├── components/                 # DOM- und Interaktionstests
 ├── integration/                # Integrationstests
 └── e2e/                        # Playwright-Browsertests
-netlify/functions/              # Serverless Functions und Blob-Adapter unter lib/
-data/                           # Nur lokal erzeugte Moduldatei (Astro-Dev)
+netlify/functions/              # API-Functions für Beiträge, Module, Lernstand und Identity
+data/
+├── blob-snapshot/              # Versionierte Ausgangsdaten für lokalen Netlify-Dev-Store
+├── blob-archive/               # Lokale Sicherungen bei Blob-Transfers
+└── modules.json                # Nur lokal erzeugter Modul-Fallback (Astro-Dev)
 features/                       # Feature-Übersicht, Fachreferenzen und Handoffs
 astro.config.mjs                # Astro-, Starlight- und Dev-Server-Konfiguration
 biome.json                      # Linter und Formatter

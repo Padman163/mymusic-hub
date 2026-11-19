@@ -14,6 +14,10 @@ npm run build                # Erzeugt einen produktionsreifen Static-Build im O
 npm run preview              # Startet einen lokalen Webserver zur Vorschau des dist/-Builds
 ```
 
+Anmeldung, Kontenverwaltung und persönliche Lernstandsynchronisierung benötigen
+Netlify Identity und die Functions. Dafür `npx netlify-cli dev` verwenden;
+`npm run dev` startet nur den Astro-Server. Details: [Authentifizierungs-Referenz](features/README_FEAT_AUTHENTICATION.md) und [Wiki-Anleitung zum Lernkonto](src/content/docs/wiki/lernstand-konto.mdx).
+
 Bei Beiträgen und Modulen verwendet `npx netlify-cli dev` einen dauerhaften lokalen Blob-Store unter `.netlify\blobs-serve\`; er überschreibt sich beim Branch-Wechsel nicht aus den versionierten Snapshots. Für den aktuellen Cloud-Stand:
 
 ```bash

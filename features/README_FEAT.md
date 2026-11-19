@@ -96,18 +96,29 @@ Dateien und noch fehlenden Lizenzangaben.
 * **Funktionsweise:**
   * **Single Source of Truth für XP & Tags:** Zentrale Konfiguration (`TAG_DEFINITIONS`, `BASE_XP_DEFAULTS`, `calculateQuestionXp`) mit Tag-Multiplikatoren (z. B. `Notensystem` 1,5x, `Gitarre` 1,2x, `Allgemein` 1,0x).
   * **Vier Autoren-Tabs (`Übersicht`, `Modul erstellen`, `Quizfragen`, `Einstellungen`):** Katalog-Verwaltung (`ModuleCatalogList`), Modul- und Block-Editor (`ModuleBuilderForm`), wiederverwendbare Quizfragen für `mittel` und `schwer` (`ExerciseBuilderForm` mit Notationsvorschau) sowie globale Bestehensgrenzen (`QuizSettingsForm`). Lernpfad-Aufgaben (`leicht`) und Praxisaufgaben entstehen in der Modul-Blockliste. Datenmodell, Löschverhalten und Bedienung stehen in der [Modul-Referenz](README_FEAT_MODULEBUILDER.md).
-  * **Persistenz & Dev-Fallback:** `/api/modules` speichert Katalog, Quiz-Einstellungen und Shop-Konfiguration im Key `modules` in [Netlify Blobs](README_FEAT_NETLIFYBLOB.md). Persönliche Lernstände, XP, Käufe und Ausrüstung liegen nach Anmeldung pro Konto im separaten Store `mymusic-hub-user-data`. Nur `npm run dev` verwendet über das Vite-Plugin direkt `data/modules.json`.
+  * **Persistenz & Dev-Fallback:** `/api/modules` speichert Katalog, Quiz-Einstellungen und Shop-Konfiguration im Key `modules` in [Netlify Blobs](README_FEAT_NETLIFYBLOB.md). Die Builder-Oberfläche kann derzeit die Quiz-Grenzen, aber nicht den Shop-Katalog bearbeiten. Persönliche Lernstände, XP, Käufe und Ausrüstung liegen nach Anmeldung pro Konto im separaten Store `mymusic-hub-user-data`. Nur `npm run dev` verwendet über das Vite-Plugin direkt `data/modules.json`.
 
 ### 2.9 Interaktiver Lernpfad, XP-Engine & Modul-Player
 * **Dateien:** `src/lib/learning-progress.ts`, `src/lib/module-player-ui.ts`, `src/styles/module-player.css`, `src/components/learning/ProgressDashboard.astro`, `src/components/learning/ModuleRoadmap.astro`, `src/components/learning/ModuleStepper.astro`, `src/components/learning/ModuleQuizRunner.astro`, `src/content/docs/audio/theory/lernpfad.mdx`, `src/content/docs/audio/theory/modul.mdx`.
 * **Funktionsweise:**
   * **Lernstand & XP-Engine:** Konto-gebundene Cloud-Persistenz nach Anmeldung mit lokalem Cache und einmaliger Migration vorhandener Gaststände, automatischem Curriculum-Sync, Duplikat-XP-Schutz (`solvedQuestionIds`), Level-Berechnung (500 XP pro Level) sowie Aufschlüsselung nach `scope` und `tags`. Das Dashboard wird daraus berechnet.
-  * **Geführter Lektions-Stepper & Fastlane:** Theorie, Lernpfad-Aufgaben und Praxisblöcke folgen der gespeicherten Inhaltsreihenfolge, danach folgt das Quiz (`mittel`). Die globalen Bestehensgrenzen verwenden standardmäßig 80 % für das Quiz und 85 % für Fastlane (`schwer`); gespeicherte Einstellungen können abweichen. Änderungen der Grenzen setzen den lokalen Lernfortschritt zurück. Fastlane vergütet noch offene Inhalte und entsperrt das Folgemodul; die Links sind derzeit ausgeblendet. Details stehen in der [Modul-Referenz](README_FEAT_MODULEBUILDER.md).
+  * **Geführter Lektions-Stepper & Fastlane:** Theorie, Lernpfad-Aufgaben und Praxisblöcke folgen der gespeicherten Inhaltsreihenfolge, danach folgt das Quiz (`mittel`). Die globalen Bestehensgrenzen verwenden standardmäßig 80 % für das Quiz und 85 % für Fastlane (`schwer`); gespeicherte Einstellungen können abweichen. Änderungen der Grenzen setzen beim nächsten Laden den gespeicherten Lernfortschritt einschließlich XP zurück; bei aktiver Anmeldung wird der neue Stand mit dem Konto synchronisiert. Fastlane vergütet noch offene Inhalte und entsperrt das Folgemodul; die Links sind derzeit ausgeblendet. Details stehen in der [Modul-Referenz](README_FEAT_MODULEBUILDER.md).
   * **Aufgaben-Auswertung:** Live-Synchronisation zwischen Dashboard, Roadmap und Stepper via CustomEvent `learning-progress:updated`; unterstützt u. a. Zahlen/Einheiten-Abgleich (`880` / `880 Hz`) sowie die `NotationBuilder.astro`-Tonhöhenprüfung (`expectedPitches` exakt und oktavunabhängig).
   * **Humpa-Shop und Inventar:** Unter **Bediener** bietet der **Humpa-Shop** Sound-Items aus dem gemeinsamen Online-Katalog; das Inventar zeigt konto-gebundene Freischaltungen. Click kostet 10 und Kick 30 verfügbare XP; jeder Sound kann nur einmal gekauft werden. Insgesamt verdiente XP und Level bleiben unverändert. Die Bedienung steht in der [Wiki-Anleitung](../src/content/docs/wiki/inventar.mdx).
   * **Studio-Ausrüstung:** Unter **Bediener → Studio** können gekaufte Sounds per Klick oder Drag-and-drop in ein Metronom ausgerüstet werden. Der ausgerüstete Sound wird beim Prüfen von Lernpfad- und Quizaufgaben abgespielt.
 
 Die vollständige Architektur des Lern-, Währungs- und Ausrüstungsmodells steht in der [XP-System-Referenz](README_FEAT_XP-SYSTEM.md).
+
+### 2.10 Authentifizierung und Lernkonten
+
+Netlify Identity stellt Anmeldung und Einladungen bereit. Lernfortschritt, XP,
+Quiz-Bestwerte, Käufe, Inventar und Studio-Ausrüstung werden pro Konto in einem
+separaten Blob-Store gespeichert und nach Anmeldung geräteübergreifend
+synchronisiert. Der Admin-Bereich kann Identity-Status anzeigen und Einladungen
+versenden; die Registrierungsoptionen selbst bleiben in der Netlify-Konfiguration.
+Architektur und API-Verhalten stehen in der
+[Authentifizierungs-Referenz](README_FEAT_AUTHENTICATION.md), die Bedienung in
+der [Wiki-Anleitung zum Lernkonto](../src/content/docs/wiki/lernstand-konto.mdx).
 
 ---
 

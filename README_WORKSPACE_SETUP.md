@@ -41,7 +41,7 @@ npm run dev
 ```
 * **URL:** Öffne `http://localhost:4321` im Browser.
 * **Was geprüft wird:** Lädt das Astro-Frontend? Werden Styles, die Starlight-Sidebar und statische Komponenten gerendert?
-* **Warum dieser Schritt nötig ist:** Netlify Functions bleiben inaktiv. Die lokale Modul-API startet ohne Katalogdatei leer und erzeugt `data/modules.json` beim ersten Speichern. Die Datei bleibt lokal und wird nicht eingecheckt.
+* **Warum dieser Schritt nötig ist:** Netlify Functions bleiben inaktiv. Die lokale Modul-API startet ohne Katalogdatei leer und erzeugt `data/modules.json` beim ersten Speichern. Die Datei bleibt lokal und wird nicht eingecheckt. Anmeldung, Kontenverwaltung und Cloud-Lernstand lassen sich hier nicht testen; dafür Netlify Dev und die Netlify-Identity-Konfiguration verwenden.
 
 ### Schritt 4: Prüfablauf beachten
 Nach Änderungen im Workspace gelten die kurzen Prüfungen aus dem [Testing-Leitfaden](README_TESTING.md). Die statische Projektprüfung mit Biome, Astro und TypeScript (Stufe 0) läuft erst im manuell vom Nutzer gestarteten Preflight am Branch-Ende, nicht beim Workspace-Setup.
@@ -71,6 +71,8 @@ Beiträge und Module verwenden Netlify Blobs; die ehemalige GitHub-basierte Date
 
 * **Workspace:** Nach `npx netlify-cli login` und `npx netlify-cli link` bezieht die CLI die benötigten Informationen aus der Anmeldung und der Site-Verknüpfung. Eine lokale `.env` ist für die Blob-Speicherung nicht erforderlich.
 * **Dashboard:** Unter **Site configuration → Build & deploy → Continuous deployment → Branches and deploy contexts** den gewünschten Branch freigeben bzw. bewusst als Production Branch setzen. Builds synchronisieren den siteweiten Store nicht.
+
+Für Kontenfunktionen zusätzlich Netlify Identity in den Site-Einstellungen aktivieren und dort den Registrierungsmodus konfigurieren. Die App zeigt den Modus im Admin-Bereich nur an; die Einstellung selbst wird weiterhin in Netlify verwaltet. Der erste Admin benötigt einmalig die Identity-Rolle `admin`. Preview-Deploys verwenden denselben Identity-Nutzerbestand, Einladungslinks führen aber zur konfigurierten Site-URL; der aktuelle Einladungs-Callback muss auf dieser Ziel-Site deployed sein. Details: [Authentifizierungs-Referenz](features/README_FEAT_AUTHENTICATION.md).
 
 Die Details zum Datenumzug und zu gemeinsam genutzten Cloud-Daten stehen in der [Blob-Referenz](features/README_FEAT_NETLIFYBLOB.md).
 
