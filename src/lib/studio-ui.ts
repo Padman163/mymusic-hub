@@ -1,18 +1,20 @@
+import { renderInventoryItemIcon } from "./inventory-item-icon.ts";
 import {
   equipInventoryItem,
   getEquippedInventoryItem,
+  type InventoryUnlock,
   loadLearningProgress,
   saveLearningProgress,
   unequipInventoryItem,
-  type InventoryUnlock,
 } from "./learning-progress.ts";
-import { renderInventoryItemIcon } from "./inventory-item-icon.ts";
 
 export interface StudioController {
   refresh(): void;
 }
 
-function dispatchProgressUpdate(state: ReturnType<typeof loadLearningProgress>): void {
+function dispatchProgressUpdate(
+  state: ReturnType<typeof loadLearningProgress>,
+): void {
   saveLearningProgress(state);
   document.dispatchEvent(
     new CustomEvent("learning-progress:updated", {
@@ -26,7 +28,10 @@ function previewSound(item: InventoryUnlock): void {
   if (!item.assetUrl) return;
   const audio = new Audio(item.assetUrl);
   void audio.play().catch((error) => {
-    console.warn(`[Studio] ${item.title} konnte nicht abgespielt werden.`, error);
+    console.warn(
+      `[Studio] ${item.title} konnte nicht abgespielt werden.`,
+      error,
+    );
   });
 }
 
@@ -40,9 +45,7 @@ export function attachStudio(root: HTMLElement): StudioController {
     const state = loadLearningProgress();
     const equipped = getEquippedInventoryItem(state);
     const sounds = state.inventory.filter(
-      (item) =>
-        item.assetUrl !== undefined &&
-        item.id !== equipped?.id,
+      (item) => item.assetUrl !== undefined && item.id !== equipped?.id,
     );
     root.replaceChildren();
 
@@ -88,7 +91,10 @@ export function attachStudio(root: HTMLElement): StudioController {
     if (equipped) {
       slot.draggable = true;
       slot.addEventListener("dragstart", (event) => {
-        event.dataTransfer?.setData("application/x-studio-equipped", equipped.id);
+        event.dataTransfer?.setData(
+          "application/x-studio-equipped",
+          equipped.id,
+        );
       });
     }
     slot.addEventListener("dragover", (event) => {
@@ -120,8 +126,9 @@ export function attachStudio(root: HTMLElement): StudioController {
     list.addEventListener("drop", (event) => {
       event.preventDefault();
       list.classList.remove("is-drop-target");
-      const equippedId =
-        event.dataTransfer?.getData("application/x-studio-equipped");
+      const equippedId = event.dataTransfer?.getData(
+        "application/x-studio-equipped",
+      );
       if (!equippedId) return;
       dispatchProgressUpdate(unequipInventoryItem(loadLearningProgress()));
     });
@@ -135,10 +142,7 @@ export function attachStudio(root: HTMLElement): StudioController {
       button.draggable = true;
       renderInventoryItemIcon(button, item.id);
       button.setAttribute("aria-label", `${item.title} ausrüsten`);
-      button.setAttribute(
-        "aria-pressed",
-        String(equipped?.id === item.id),
-      );
+      button.setAttribute("aria-pressed", String(equipped?.id === item.id));
       button.addEventListener("click", () => {
         const current = loadLearningProgress();
         const next = equipInventoryItem(current, item.id);
@@ -159,7 +163,10 @@ export function attachStudio(root: HTMLElement): StudioController {
 
   const onProgressUpdated = () => {
     if (!root.isConnected) {
-      document.removeEventListener("learning-progress:updated", onProgressUpdated);
+      document.removeEventListener(
+        "learning-progress:updated",
+        onProgressUpdated,
+      );
       return;
     }
     refresh();

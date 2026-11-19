@@ -1,12 +1,13 @@
 import { createMarkdownProcessor } from "@astrojs/markdown-remark";
-import type { Root as HtmlRoot, RootContent as HtmlContent } from "hast";
+import type { RootContent as HtmlContent, Root as HtmlRoot } from "hast";
 import type { Root, RootContent } from "mdast";
 
 function labelTaskLists() {
   return (tree: HtmlRoot) => {
     function taskText(node: HtmlRoot | HtmlContent): string {
       if (node.type === "text") return node.value;
-      if (node.type === "element" && ["ul", "ol"].includes(node.tagName)) return "";
+      if (node.type === "element" && ["ul", "ol"].includes(node.tagName))
+        return "";
       if ("children" in node) return node.children.map(taskText).join(" ");
       return "";
     }
@@ -15,9 +16,10 @@ function labelTaskLists() {
       if (node.type === "element") {
         if (node.tagName === "li") {
           const classes = node.properties.className;
-          label = Array.isArray(classes) && classes.includes("task-list-item")
-            ? taskText(node).replace(/\s+/g, " ").trim()
-            : undefined;
+          label =
+            Array.isArray(classes) && classes.includes("task-list-item")
+              ? taskText(node).replace(/\s+/g, " ").trim()
+              : undefined;
         }
         if (
           node.tagName === "input" &&

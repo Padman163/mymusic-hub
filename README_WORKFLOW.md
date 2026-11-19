@@ -60,6 +60,15 @@ Das entfernt ausschließlich lokale Daten. Vorher lokale, nicht gespeicherte Tes
 
 Keine Tests automatisch nach einzelnen Änderungen ausführen. Copilot fragt nach jeweils zehn Nutzer-Prompts im laufenden Chat, ob passende Unit- und Komponententests (Stufen 1 und 2) ausgeführt werden sollen. Erst nach Zustimmung oder ausdrücklichem Testauftrag testen. Kein Preflight für Zwischenschritte, Zwischen-Commits oder Zwischen-Pushes. Details und Befehle: [Testing](README_TESTING.md).
 
+Für Code-Hygiene und Typenprüfung zuerst Biome die sicheren automatischen Korrekturen anwenden lassen und anschließend denselben Stand validieren:
+
+```bash
+npm run fix
+npm run validate
+```
+
+`npm run validate` führt Biome-Prüfung, `astro check` und `tsc --noEmit` aus. Es ist ein reiner Prüfungsbefehl und ersetzt weder die gezielten Tests noch den manuellen Branch-Abschluss mit `npm run preflight`.
+
 ## 4. Cleanup und Abschlussprüfung
 
 Die fünf Schritte der [Cleanup-Anleitung](README_CLEANUP.md) durchgehen. Löschungen und Migrationen erst nach Prüfung und Freigabe durchführen. Stufen 0, 3 und 4 laufen erst am fertigen Branch im manuell vom Nutzer gestarteten `npm run preflight`. Er umfasst auch die vollständigen Unit- und Komponententests sowie Lighthouse; `npm run audit` führt der Nutzer separat aus. Copilot startet diese Abschlussprüfung nicht. Anschließend den endgültigen Stand committen.

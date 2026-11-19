@@ -42,6 +42,7 @@ export class BlobStoreConflictError extends Error {}
 export class LocalBlobSnapshotError extends Error {
 	constructor(readonly originalError: unknown) {
 		super('Die lokalen Daten wurden gespeichert, aber der versionierte Blob-Snapshot konnte nicht aktualisiert werden.');
+		this.name = 'LocalBlobSnapshotError';
 	}
 }
 

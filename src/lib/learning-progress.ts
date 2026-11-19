@@ -52,8 +52,7 @@ export interface InventoryUnlock {
   assetUrl?: string;
 }
 
-export interface InventoryShopItem
-  extends Omit<InventoryUnlock, "unlockedAt"> {
+export interface InventoryShopItem extends Omit<InventoryUnlock, "unlockedAt"> {
   priceXp: number;
 }
 
@@ -68,7 +67,8 @@ export const INVENTORY_SHOP_ITEMS: readonly InventoryShopItem[] = [
   {
     id: "sound-kick",
     title: "Kick",
-    description: "Ein kräftiger Bassdrum-Sound für Rhythmus- und Produktionsübungen.",
+    description:
+      "Ein kräftiger Bassdrum-Sound für Rhythmus- und Produktionsübungen.",
     assetUrl: "/sounds/drums/Kick.wav",
     priceXp: 30,
   },
@@ -363,7 +363,10 @@ export function collectInventoryUnlock(
 }
 
 export function getAvailableXp(state: LearningProgressState): number {
-  return Math.max(0, Math.round(state.totalXp) - Math.round(state.spentXp ?? 0));
+  return Math.max(
+    0,
+    Math.round(state.totalXp) - Math.round(state.spentXp ?? 0),
+  );
 }
 
 export function purchaseInventoryItem(
@@ -969,7 +972,9 @@ function sanitizeStoredProgress(
     }
   }
   const inventoryIdsWithAssets = new Set(
-    inventory.filter((entry) => entry.assetUrl !== undefined).map((entry) => entry.id),
+    inventory
+      .filter((entry) => entry.assetUrl !== undefined)
+      .map((entry) => entry.id),
   );
   const equippedInventoryItemIds = Array.isArray(raw.equippedInventoryItemIds)
     ? raw.equippedInventoryItemIds
@@ -1075,7 +1080,8 @@ export function loadLearningProgress(
         }
         const inventoryChanged =
           isRecord(parsed) &&
-          JSON.stringify(parsed.inventory) !== JSON.stringify(restored.inventory);
+          JSON.stringify(parsed.inventory) !==
+            JSON.stringify(restored.inventory);
         if (!restored.quizSettings) {
           restored.quizSettings = { ...quizSettings };
           saveLearningProgress(restored, storageKey);

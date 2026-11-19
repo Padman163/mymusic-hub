@@ -1,13 +1,13 @@
+import { renderInventoryItemIcon } from "./inventory-item-icon.ts";
 import {
   getAvailableXp,
   INVENTORY_SHOP_ITEMS,
   type InventoryShopItem,
+  type InventoryUnlock,
   loadLearningProgress,
   purchaseInventoryItem,
   saveLearningProgress,
-  type InventoryUnlock,
 } from "./learning-progress.ts";
-import { renderInventoryItemIcon } from "./inventory-item-icon.ts";
 
 export interface InventoryController {
   refresh(): void;
@@ -20,7 +20,10 @@ function playInventorySound(
 ): void {
   const audio = new Audio(assetUrl);
   void audio.play().catch(() => {
-    trigger.setAttribute("aria-label", `${title} konnte nicht abgespielt werden`);
+    trigger.setAttribute(
+      "aria-label",
+      `${title} konnte nicht abgespielt werden`,
+    );
   });
 }
 

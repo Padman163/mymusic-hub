@@ -130,8 +130,6 @@ npx tsc --noEmit
   # vor dem Testen einen aktuellen Produktionsbuild erzeugen:
   npm run build
   npm run test:e2e
-  # dieselbe Suite mit Snapshot-Aktualisierung (derzeit ohne Snapshot-Assertions):
-  npm run test:visual
   # alternativ interaktives UI-Debugging, ebenfalls mit aktuellem Build:
   npm run test:e2e:ui
   ```
@@ -141,9 +139,7 @@ npx tsc --noEmit
     * Vor jedem Release und Produktiv-Deployment.
     * Vor dem Mergen eines Pull Requests in den Hauptzweig (`main`).
     * Beim Branch-Abschluss nach Versions-Upgrades von Astro, Starlight, Routing- oder Styling-Anpassungen, um die abgedeckten Seiten, Klickpfade und Layoutregeln zu prüfen. Nicht abgedeckte Bereiche zusätzlich gezielt testen.
-  * **`npm run test:visual` (derzeit kein separater visueller Test):**
-    * Führt aktuell dieselben Prüfungen wie `test:e2e` aus; `--update-snapshots` hat ohne Snapshot-Assertions keine zusätzliche Wirkung.
-    * Falls künftig Screenshot-/Snapshot-Tests hinzukommen, Referenzen nur bei beabsichtigten Änderungen und nach Sichtprüfung aktualisieren. Der Befehl ersetzt keine manuelle Prüfung globaler Styling-, AlphaTab- oder KaTeX-Änderungen.
+  * Falls künftig Screenshot-/Snapshot-Tests hinzukommen, Referenzen nur bei beabsichtigten Änderungen und nach Sichtprüfung aktualisieren. Visuelle Browsertests ersetzen keine manuelle Prüfung globaler Styling-, AlphaTab- oder KaTeX-Änderungen.
 
 ### Dokumentationscheck
 
@@ -256,7 +252,7 @@ Stufen 0, 3 und 4 laufen ausschließlich in `npm run preflight`, den der Nutzer 
 
 `preflight` führt Validierung, Vitest, Build, Playwright, Lighthouse CI und `git diff --check` einzeln aus und gibt für jeden Schritt einen Ergebnisbericht mit Hinweisen zur Fehlerbehebung aus. Ein fehlgeschlagener unabhängiger Schritt verhindert nicht die Auswertung der übrigen Schritte. Playwright und Lighthouse CI werden übersprungen, wenn der Build fehlschlägt. Der Prozess endet mit Exit-Code 1, sobald mindestens ein ausgeführter Schritt fehlschlägt. `npm audit` ist separat mit `npm run audit` aufzurufen.
 
-Lighthouse CI misst den Build und lädt Berichte standardmäßig in den konfigurierten temporären öffentlichen Speicher hoch; lokale Ablage lässt sich wie in Abschnitt 3.2 über Umgebungsvariablen wählen. `test:visual` führt die E2E-Suite mit Snapshot-Aktualisierung aus (derzeit ohne Snapshot-Assertions), `test:e2e:ui` startet den interaktiven Playwright-Modus; beide sind keine zusätzlichen Preflight-Gates.
+Lighthouse CI misst den Build und lädt Berichte standardmäßig in den konfigurierten temporären öffentlichen Speicher hoch; lokale Ablage lässt sich wie in Abschnitt 3.2 über Umgebungsvariablen wählen. `test:e2e:ui` startet den interaktiven Playwright-Modus und ist kein zusätzliches Preflight-Gate.
 
 ---
 
@@ -266,8 +262,7 @@ Vor einem Release auf `main` wird diese Checkliste vollständig abgearbeitet:
 
 ### Phase 1: Automatisierte Code-Hygiene & Build
 
-- [ ] Linter meldet 0 Fehler (`npm run lint`).
-- [ ] Astro-Check validiert alle Templates fehlerfrei (`npm run check`).
+- [ ] Biome, Astro und TypeScript validieren fehlerfrei (`npm run validate`).
 - [ ] TypeScript meldet 0 Typfehler im Strict-Modus (`npx tsc --noEmit`).
 - [ ] Sicherheits-Audit ist sauber (`npm run audit`).
 - [ ] Alle Unit-, Komponenten- und Integrationstests sind grün (`npm test`).

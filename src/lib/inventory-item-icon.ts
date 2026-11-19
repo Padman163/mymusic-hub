@@ -15,7 +15,10 @@ export function renderInventoryItemIcon(
   svg.setAttribute("aria-hidden", "true");
   svg.classList.add("learning-bass-drum-icon");
 
-  const shell = document.createElementNS("http://www.w3.org/2000/svg", "ellipse");
+  const shell = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "ellipse",
+  );
   shell.setAttribute("cx", "24");
   shell.setAttribute("cy", "22");
   shell.setAttribute("rx", "16");
@@ -30,9 +33,15 @@ export function renderInventoryItemIcon(
   head.setAttribute("r", "3");
   head.setAttribute("fill", "currentColor");
 
-  const leftLeg = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  const leftLeg = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "path",
+  );
   leftLeg.setAttribute("d", "M14 34 L9 43");
-  const rightLeg = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  const rightLeg = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "path",
+  );
   rightLeg.setAttribute("d", "M34 34 L39 43");
   for (const leg of [leftLeg, rightLeg]) {
     leg.setAttribute("fill", "none");

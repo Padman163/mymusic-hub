@@ -17,8 +17,8 @@ import {
   completeTheoryStep,
   createInitialProgress,
   getDashboardOverview,
-  getEquippedInventoryItem,
   getEffectiveQuizSettings,
+  getEquippedInventoryItem,
   type LearningProgressState,
   loadLearningProgress,
   type ModuleProgress,
@@ -348,7 +348,10 @@ function playEquippedTaskSound(state: LearningProgressState): void {
   if (!equipped?.assetUrl) return;
   const audio = new Audio(equipped.assetUrl);
   void audio.play().catch((error) => {
-    console.warn(`[Lernpfad] ${equipped.title} konnte nicht abgespielt werden.`, error);
+    console.warn(
+      `[Lernpfad] ${equipped.title} konnte nicht abgespielt werden.`,
+      error,
+    );
   });
 }
 
