@@ -15,7 +15,32 @@ describe("Inventar-Shop", () => {
     vi.unstubAllGlobals();
   });
 
-  it("trennt den Shop vom Inventar und kauft den Click nach ausreichender Gutschrift", () => {
+  it("lädt den Online-Katalog und kauft den Click nach ausreichender Gutschrift", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        learningConfig: {
+          shopItems: [
+            {
+              id: "sound-click",
+              title: "Click",
+              description: "Test-Click",
+              assetUrl: "/sounds/drums/Click.wav",
+              priceXp: 10,
+            },
+            {
+              id: "sound-kick",
+              title: "Kick",
+              description: "Test-Kick",
+              assetUrl: "/sounds/drums/Kick.wav",
+              priceXp: 30,
+            },
+          ],
+        },
+      }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
     const play = vi.fn().mockResolvedValue(undefined);
     const AudioMock = vi.fn(function AudioMock(src: string) {
       return { src, play };
@@ -32,6 +57,9 @@ describe("Inventar-Shop", () => {
     attachShop(shop);
     attachInventory(inventory);
 
+    await vi.waitFor(() =>
+      expect(shop.querySelectorAll(".learning-shop-item")).toHaveLength(2),
+    );
     const preview = shop.querySelector<HTMLButtonElement>(
       ".learning-shop-preview",
     );

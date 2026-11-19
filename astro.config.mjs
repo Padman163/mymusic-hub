@@ -131,7 +131,8 @@ function localModulesApiPlugin() {
                 !isLocalRecord(parsed) ||
                 !Array.isArray(parsed.modules) ||
                 !Array.isArray(parsed.questions) ||
-                (parsed.quizSettings !== undefined && !schema.isQuizSettings(parsed.quizSettings))
+                (parsed.quizSettings !== undefined && !schema.isQuizSettings(parsed.quizSettings)) ||
+                (parsed.learningConfig !== undefined && !schema.isLearningConfiguration(parsed.learningConfig))
               ) {
                 throw new Error("Ungültiges Format in data/modules.json.");
               }
@@ -139,13 +140,14 @@ function localModulesApiPlugin() {
                 modules: parsed.modules,
                 questions: parsed.questions,
                 ...(parsed.quizSettings !== undefined ? { quizSettings: parsed.quizSettings } : {}),
+                ...(parsed.learningConfig !== undefined ? { learningConfig: parsed.learningConfig } : {}),
               }));
             } catch (err) {
               if (
                 isLocalRecord(err) &&
                 err.code === "ENOENT"
               ) {
-                return store.createEmptyModulesDatabase();
+                return schema.normalizeLegacyDatabase(store.createEmptyModulesDatabase());
               }
               throw err;
             }
@@ -468,6 +470,7 @@ export default defineConfig({
             {
               label: "Wiki",
               items: [
+                { label: "Lernkonto & Synchronisierung", slug: "wiki/lernstand-konto" },
                 { label: "Beiträge verwalten", slug: "wiki/beitraege" },
                 { label: "Modul-Builder bedienen", slug: "wiki/modul-builder" },
                 { label: "NotationBuilder bedienen", slug: "wiki/notation-builder" },

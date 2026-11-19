@@ -1,7 +1,7 @@
 import { renderInventoryItemIcon } from "./inventory-item-icon.ts";
+import { fetchLearningConfiguration } from "./learning-config.ts";
 import {
   getAvailableXp,
-  INVENTORY_SHOP_ITEMS,
   type InventoryShopItem,
   type InventoryUnlock,
   loadLearningProgress,
@@ -183,6 +183,9 @@ export function attachShop(root: HTMLElement): InventoryController {
     throw new Error("Shop wurde bereits initialisiert.");
   }
   root.dataset.shopAttached = "true";
+  let shopItems: readonly InventoryShopItem[] = [];
+  let shopLoadError: string | null = null;
+  let shopLoaded = false;
 
   const refresh = () => {
     const state = loadLearningProgress();
@@ -202,17 +205,32 @@ export function attachShop(root: HTMLElement): InventoryController {
     balance.textContent = `${availableXp} XP verfügbar`;
     header.append(title, balance);
 
+    if (!shopLoaded) {
+      const message = document.createElement("p");
+      message.className = "learning-muted";
+      message.setAttribute("role", "status");
+      message.textContent =
+        shopLoadError ?? "Shop-Angebote werden online geladen …";
+      card.append(header, message);
+      root.append(card);
+      return;
+    }
+
     const list = document.createElement("ul");
     list.className = "learning-shop-list";
     list.append(
-      ...INVENTORY_SHOP_ITEMS.map((item) =>
+      ...shopItems.map((item) =>
         createShopItem(
           item,
           availableXp,
           inventory.some((entry) => entry.id === item.id),
           () => {
             const current = loadLearningProgress();
-            const purchased = purchaseInventoryItem(current, item.id);
+            const purchased = purchaseInventoryItem(
+              current,
+              item.id,
+              shopItems,
+            );
             if (purchased === current) {
               refresh();
               return;
@@ -245,5 +263,18 @@ export function attachShop(root: HTMLElement): InventoryController {
 
   document.addEventListener("learning-progress:updated", onProgressUpdated);
   refresh();
+  void fetchLearningConfiguration()
+    .then((configuration) => {
+      shopItems = configuration.shopItems;
+      shopLoaded = true;
+      refresh();
+    })
+    .catch((error: unknown) => {
+      shopLoadError =
+        error instanceof Error
+          ? error.message
+          : "Shop-Angebote konnten nicht geladen werden.";
+      refresh();
+    });
   return { refresh };
 }

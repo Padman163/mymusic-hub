@@ -4,8 +4,15 @@ import {
   QUESTION_BASE_XP,
   type TagDefinition,
 } from "./xp-tags.ts";
+import {
+  DEFAULT_LEARNING_CONFIGURATION,
+  isLearningConfiguration,
+  type LearningConfiguration,
+} from "./learning-config.ts";
 
 export { BASE_XP_DEFAULTS, getAvailableTags, type TagDefinition };
+export { isLearningConfiguration };
+export type { LearningConfiguration };
 
 export const MODULE_SCOPES = [
   "theory",
@@ -556,6 +563,7 @@ export interface ModulesDatabase {
   modules: LearningModule[];
   questions: ModuleQuestion[];
   quizSettings?: QuizSettings;
+  learningConfig?: LearningConfiguration;
 }
 
 /** Das Blocklager bleibt im Builder verfügbar, gehört aber nicht zum Lernangebot. */
@@ -587,6 +595,7 @@ const LEGACY_LANES: Record<string, TargetLane> = {
 export function normalizeLegacyDatabase(db: ModulesDatabase): ModulesDatabase {
   return {
     ...db,
+    learningConfig: db.learningConfig ?? DEFAULT_LEARNING_CONFIGURATION,
     modules: db.modules.map((mod) => {
       const { hasPractice: _legacy, ...rest } = mod as LearningModule & {
         hasPractice?: boolean;

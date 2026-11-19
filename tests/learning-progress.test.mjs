@@ -16,6 +16,7 @@ import {
   loadLearningProgress,
   recordExerciseAnswer,
   saveLearningProgress,
+  setLearningProgressAccountId,
   submitQuizAttempt,
   syncProgressWithCurriculum,
 } from "../src/lib/learning-progress.ts";
@@ -26,9 +27,59 @@ import {
   updateQuizSettings,
 } from "../src/lib/module-store.ts";
 import { getAvailableTags } from "../src/lib/xp-tags.ts";
+import {
+  DEFAULT_LEARNING_CONFIGURATION,
+  isLearningConfiguration,
+} from "../src/lib/learning-config.ts";
 
 describe("Übergreifende Quiz-Einstellungen", () => {
-  afterEach(() => clearLearningProgress());
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    setLearningProgressAccountId(null);
+    clearLearningProgress(`${LEARNING_PROGRESS_STORAGE_KEY}:konto-a`);
+    clearLearningProgress(`${LEARNING_PROGRESS_STORAGE_KEY}:konto-b`);
+    clearLearningProgress();
+  });
+
+  it("trennt lokale Lernstand-Caches nach Konto", () => {
+    const accountAKey = `${LEARNING_PROGRESS_STORAGE_KEY}:konto-a`;
+    setLearningProgressAccountId("konto-a");
+    const accountA = createInitialProgress([]);
+    accountA.totalXp = 25;
+    saveLearningProgress(accountA);
+
+    setLearningProgressAccountId("konto-b");
+    expect(loadLearningProgress().totalXp).toBe(0);
+
+    setLearningProgressAccountId("konto-a");
+    expect(loadLearningProgress().totalXp).toBe(25);
+    expect(window.localStorage.getItem(accountAKey)).not.toBeNull();
+  });
+
+  it("prüft den gemeinsam gespeicherten Shop-Katalog", () => {
+    expect(isLearningConfiguration(DEFAULT_LEARNING_CONFIGURATION)).toBe(true);
+    expect(
+      isLearningConfiguration({
+        shopItems: [
+          ...DEFAULT_LEARNING_CONFIGURATION.shopItems,
+          { ...DEFAULT_LEARNING_CONFIGURATION.shopItems[0] },
+        ],
+      }),
+    ).toBe(false);
+    expect(
+      isLearningConfiguration({
+        shopItems: [
+          {
+            id: "external",
+            title: "External",
+            description: "",
+            assetUrl: "//example.invalid/sound.wav",
+            priceXp: 1,
+          },
+        ],
+      }),
+    ).toBe(false);
+  });
 
   it("setzt Lernfortschritt nur bei einer neueren Änderung zurück und ignoriert ältere Anfangsdaten", () => {
     const db = buildTestDatabase();
@@ -265,6 +316,31 @@ describe("Lernfortschritts- & XP-Engine (learning-progress)", () => {
       { id: "sound-kick", assetUrl: "/sounds/drums/Kick.wav" },
     ]);
     expect(purchased.spentXp).toBe(30);
+    expect(getAvailableXp(purchased)).toBe(0);
+  });
+
+  it("verwendet den online gelieferten Katalog beim Kauf", () => {
+    const initial = { ...createInitialProgress([]), totalXp: 7 };
+    const catalog = [
+      {
+        id: "sound-online",
+        title: "Online-Sound",
+        description: "Aus dem gemeinsamen Shop-Katalog.",
+        assetUrl: "/sounds/drums/Click.wav",
+        priceXp: 7,
+      },
+    ];
+
+    const purchased = purchaseInventoryItem(
+      initial,
+      "sound-online",
+      catalog,
+    );
+
+    expect(purchased.inventory).toMatchObject([
+      { id: "sound-online", title: "Online-Sound" },
+    ]);
+    expect(purchased.spentXp).toBe(7);
     expect(getAvailableXp(purchased)).toBe(0);
   });
 

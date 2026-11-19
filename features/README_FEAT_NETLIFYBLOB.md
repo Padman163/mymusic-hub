@@ -1,10 +1,10 @@
 # Netlify Blobs: Persistenz für Beiträge und Lernmodule
 
-Netlify Blobs (`@netlify/blobs`) ersetzt die GitHub REST API als Datenspeicher. Schreibzugriffe erzeugen keine Git-Commits und lösen damit keine Builds aus. Der JSON-Store `mymusic-hub-data` ist vom geplanten Store `mymusic-hub-media` für Audio und Bilder getrennt; Medien werden noch nicht gespeichert.
+Netlify Blobs (`@netlify/blobs`) speichert Beiträge, Module und gemeinsame Lernkonfiguration. Schreibzugriffe erzeugen keine Git-Commits und lösen damit keine Builds aus. Der JSON-Store `mymusic-hub-data` ist vom geplanten Store `mymusic-hub-media` für Audio und Bilder getrennt; Medien werden noch nicht gespeichert. Persönliche Lernstände liegen getrennt im Store `mymusic-hub-user-data`, jeweils unter einem Schlüssel für ein verifiziertes Netlify-Identity-Konto.
 
 ## Setup und Branch-Wechsel
 
-Die Abhängigkeit wurde mit `npm install @netlify/blobs` hinzugefügt. In einem frischen Workspace genügt die normale Installation über das Lockfile.
+Die Abhängigkeiten `@netlify/blobs` und `@netlify/identity` stehen im Manifest. In einem frischen Workspace genügt die normale Installation über das Lockfile.
 
 1. Stelle sicher, dass der Deploy-Branch den Netlify-Blobs-Code und die
 Transfer-Skripte enthält.
@@ -12,6 +12,25 @@ Transfer-Skripte enthält.
 3. Unter **Environment variables** die alten `GITHUB_*`-Variablen für die Datenspeicherung nach dem Wechsel entfernen, sofern sie nicht von anderen Verbrauchern benötigt werden. Für noch aktive alte Deploys oder einen geplanten Rollback erst deren Abhängigkeiten klären. Netlify stellt den Blob-Kontext für die Functions bereit.
 
 **Wichtig:** [`getStore`](https://docs.netlify.com/build/data-and-storage/netlify-blobs/#getstore) ist **siteweit**. Production, Branch Deploys und Previews derselben Site verwenden dieselben Daten und können sie ändern. Für isolierte Online-Abnahmen eine separate Netlify-Site verwenden; Branch-Freigabe und Deploy-Kontext allein isolieren den Store nicht. `getDeployStore` wäre dagegen deployspezifisch und wird hier bewusst nicht verwendet.
+
+## Lernkonten und persönliche Daten
+
+Für konto-gebundene Lernstände wird Netlify Identity verwendet. Identity muss im
+Netlify-Dashboard für die Site aktiviert und die Registrierung auf **Invite
+only** gestellt werden. Konten werden über Einladungen angelegt; Login,
+Einladung und Passwort-Wiederherstellung laufen über die Lernkonto-Oberfläche.
+
+`/api/learning-progress` prüft die Netlify-Identity-Sitzung serverseitig. Der
+Schlüssel wird ausschließlich aus der bestätigten Konto-ID gebildet; Requests
+können daher keine Lernstände anderer Konten lesen oder überschreiben. Diese
+Function darf im gehosteten Kontext nur den Lernstand des angemeldeten Kontos
+ändern. Die bestehenden Schreibsperren für gemeinsame Beiträge und Module
+bleiben bestehen.
+
+Persönliche Kontodaten liegen nicht in `data/blob-snapshot` oder den
+versionskontrollierten Blob-Archiven. Der Blob-Transfer sichert nur den
+gemeinsamen Store `mymusic-hub-data`; für `mymusic-hub-user-data` ist ein
+separates Backup-/Exportverfahren erforderlich.
 
 ## Empfohlener Datenfluss
 
@@ -32,6 +51,11 @@ Cloud-Backup unter data/blob-archive/<Zeitstempel>/
        ↓
 Netlify Cloud: mymusic-hub-data
 ```
+
+Der `modules`-Key enthält neben Modulen und Quiz-Einstellungen auch
+`learningConfig.shopItems`. Dashboard, XP, Käufe, Inventar und Studio-Ausrüstung
+werden dagegen pro Nutzerkonto im separaten Store `mymusic-hub-user-data`
+gespeichert und nicht durch `blobs:pull` oder `blobs:push` überschrieben.
 
 `npx netlify-cli dev` initialisiert fehlende lokale Keys aus den versionierten
 Snapshots. Vorhandene lokale Keys bleiben bestehen. Schreibvorgänge über die
@@ -76,11 +100,13 @@ ein Token im Repository werden dafür nicht benötigt.
 
 ## Deploy Preview und Branch Deploy
 
-Production, Deploy Previews und Branch Deploys lesen dieselbe siteweite
-Cloud-Datenbank. Ihre laufenden Functions dürfen diese Daten jedoch nicht direkt
-überschreiben. Schreibende Requests erhalten in gehosteten Kontexten
+Production, Deploy Previews und Branch Deploys lesen dieselben siteweiten
+gemeinsamen Daten. Die Functions für Beiträge und Module dürfen diese Daten in
+gehosteten Kontexten nicht direkt überschreiben; schreibende Requests erhalten
 `405 Method Not Allowed`. So kann nur der kontrollierte lokale Snapshot-Transfer
-Cloud-Daten ändern.
+gemeinsame Inhalte und Shop-Konfiguration ändern. Die getrennte
+`/api/learning-progress`-Function ist die Ausnahme: Sie akzeptiert authentifizierte
+Änderungen ausschließlich für das jeweilige Nutzerkonto.
 Netlify-Builds schreiben keine Blob-Daten. `netlify.toml` führt ausschließlich
 den Astro-Build aus; Cloud-Änderungen erfolgen nur über `npm run blobs:push`.
 
@@ -101,12 +127,14 @@ abschließen.
 | [`blob-store.ts`](../netlify/functions/lib/blob-store.ts) | Kapselt Store-Namen, typisierte JSON-Keys, Initialisierung und konfliktgeschützte Schreibzugriffe. |
 | [`contribution-store.ts`](../netlify/functions/lib/contribution-store.ts) | Fachliche Änderungen am Key `contributions` und Abgleich mit dem erwarteten Beitragsstand. |
 | [`contributions.ts`](../netlify/functions/contributions.ts) | HTTP-API und Validierung für Beiträge. |
-| [`modules.ts`](../netlify/functions/modules.ts) | HTTP-API für den Key `modules` (Module, Aufgaben und Quiz-Einstellungen); Fachregeln bleiben in [`module-store.ts`](../src/lib/module-store.ts). |
+| [`modules.ts`](../netlify/functions/modules.ts) | HTTP-API für den Key `modules` (Module, Aufgaben, Quiz-Einstellungen und Shop-Katalog); Fachregeln bleiben in [`module-store.ts`](../src/lib/module-store.ts). |
+| [`learning-progress.ts`](../netlify/functions/learning-progress.ts) | Authentifizierte API für pro Konto gespeicherte Lernstände im Store `mymusic-hub-user-data`. |
+| [`learning-progress-sync.ts`](../src/lib/learning-progress-sync.ts) | Synchronisiert den Browser-Cache nach Anmeldung mit dem persönlichen Cloud-Lernstand. |
 | [`local-blob-snapshot.ts`](../netlify/functions/lib/local-blob-snapshot.ts) | Spiegelt lokale Netlify-Dev-Schreibvorgänge in versionierte Snapshot-Dateien. |
 | [`netlify-blob-transfer.ts`](../scripts/netlify-blob-transfer.ts) | Lädt Cloud-Daten, erstellt Archive, bestätigt Uploads und setzt den lokalen Blob-Store zurück. |
 | [`astro.config.mjs`](../astro.config.mjs) | Nur beim reinen Astro-Start liest und schreibt `localModulesApiPlugin()` direkt in `data/modules.json`. Unter Netlify CLI ist dieses Plugin deaktiviert. |
 
-Die Functions lesen mit starker Konsistenz. Fehlt `contributions`, wird `[]` gespeichert. Fehlt `modules`, startet der Katalog mit `{ modules: [], questions: [] }`. Bis Quiz-Einstellungen gespeichert werden, gelten die Schema-Standardwerte. `onlyIfNew` verhindert, dass ein paralleler Erstzugriff vorhandene Daten überschreibt. Spätere Änderungen nutzen ETags (`onlyIfMatch`) mit bis zu drei Versuchen, um parallele Änderungen nicht zu verlieren.
+Die Functions lesen mit starker Konsistenz. Fehlt `contributions`, wird `[]` gespeichert. Fehlt `modules`, startet der Katalog mit einem leeren Modulbestand und der Standard-Lernkonfiguration. Bis Quiz-Einstellungen gespeichert werden, gelten die Schema-Standardwerte. `onlyIfNew` verhindert, dass ein paralleler Erstzugriff vorhandene Daten überschreibt. Spätere Änderungen nutzen ETags (`onlyIfMatch`) mit bis zu drei Versuchen, um parallele Änderungen nicht zu verlieren.
 
 Cloud-Daten vor einem Upload oder größeren Umbau mit `npm run blobs:backup`
 sichern. Ein neuer Store übernimmt keine Daten aus anderen Stores oder Git. Ein

@@ -2,6 +2,7 @@ import { addIcon } from "./contribution-types.ts";
 import {
   DEFAULT_QUIZ_SETTINGS,
   formatExerciseTitle,
+  isLearningConfiguration,
   isDStage,
   isModuleScope,
   isQuestionInModule,
@@ -121,7 +122,9 @@ function parseModulesResponse(data: unknown): ModulesDatabase {
     !isRecord(data) ||
     !Array.isArray(data.modules) ||
     !Array.isArray(data.questions) ||
-    (data.quizSettings !== undefined && !isQuizSettings(data.quizSettings))
+    (data.quizSettings !== undefined && !isQuizSettings(data.quizSettings)) ||
+    (data.learningConfig !== undefined &&
+      !isLearningConfiguration(data.learningConfig))
   ) {
     throw new Error("Die Moduldaten haben ein ungültiges Format.");
   }
@@ -130,6 +133,9 @@ function parseModulesResponse(data: unknown): ModulesDatabase {
     questions: data.questions as ModuleQuestion[],
     ...(data.quizSettings !== undefined
       ? { quizSettings: data.quizSettings }
+      : {}),
+    ...(data.learningConfig !== undefined
+      ? { learningConfig: data.learningConfig }
       : {}),
   });
 }

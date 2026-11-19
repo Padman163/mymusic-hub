@@ -1,5 +1,10 @@
 import { getStore, type Store } from '@netlify/blobs';
-import { isQuizSettings, normalizeLegacyDatabase, type ModulesDatabase } from '../../../src/lib/module-schema';
+import {
+	isLearningConfiguration,
+	isQuizSettings,
+	normalizeLegacyDatabase,
+	type ModulesDatabase,
+} from '../../../src/lib/module-schema';
 import { createEmptyModulesDatabase } from '../../../src/lib/module-store';
 import { readLocalBlobSnapshot, writeLocalBlobSnapshot } from './local-blob-snapshot';
 
@@ -27,9 +32,19 @@ const parse: { [K in Key]: (value: unknown) => Data[K] } = {
 		}
 		const { modules, questions } = value;
 		const quizSettings = 'quizSettings' in value ? value.quizSettings : undefined;
-		if (quizSettings === undefined) return normalizeLegacyDatabase({ modules, questions });
-		if (!isQuizSettings(quizSettings)) throw new Error('Die Moduldaten haben ein ungültiges Format.');
-		return normalizeLegacyDatabase({ modules, questions, quizSettings });
+		const learningConfig = 'learningConfig' in value ? value.learningConfig : undefined;
+		if (quizSettings !== undefined && !isQuizSettings(quizSettings)) {
+			throw new Error('Die Moduldaten haben ein ungültiges Format.');
+		}
+		if (learningConfig !== undefined && !isLearningConfiguration(learningConfig)) {
+			throw new Error('Die Moduldaten haben ein ungültiges Format.');
+		}
+		return normalizeLegacyDatabase({
+			modules,
+			questions,
+			...(quizSettings !== undefined ? { quizSettings } : {}),
+			...(learningConfig !== undefined ? { learningConfig } : {}),
+		});
 	},
 };
 

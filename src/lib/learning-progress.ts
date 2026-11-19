@@ -15,9 +15,24 @@ import {
   calculateModuleQuestionXp,
   calculateTheoryBlockXp,
 } from "./xp-tags.ts";
+import {
+  DEFAULT_LEARNING_CONFIGURATION,
+  type LearningShopItem,
+} from "./learning-config.ts";
 
 export const LEARNING_PROGRESS_STORAGE_KEY = "mymusic_learning_progress_v2";
 export const XP_PER_LEVEL = 500;
+let learningProgressAccountId: string | null = null;
+
+export function setLearningProgressAccountId(accountId: string | null): void {
+  learningProgressAccountId = accountId?.trim() || null;
+}
+
+function getDefaultStorageKey(): string {
+  return learningProgressAccountId
+    ? `${LEARNING_PROGRESS_STORAGE_KEY}:${learningProgressAccountId}`
+    : LEARNING_PROGRESS_STORAGE_KEY;
+}
 
 export const LANE_STEPS = ["theory", "leicht", "practice", "mittel"] as const;
 export type LaneStep = (typeof LANE_STEPS)[number];
@@ -52,27 +67,9 @@ export interface InventoryUnlock {
   assetUrl?: string;
 }
 
-export interface InventoryShopItem extends Omit<InventoryUnlock, "unlockedAt"> {
-  priceXp: number;
-}
-
-export const INVENTORY_SHOP_ITEMS: readonly InventoryShopItem[] = [
-  {
-    id: "sound-click",
-    title: "Click",
-    description: "Ein präziser Klick-Sound für Rhythmus- und Tempoübungen.",
-    assetUrl: "/sounds/drums/Click.wav",
-    priceXp: 10,
-  },
-  {
-    id: "sound-kick",
-    title: "Kick",
-    description:
-      "Ein kräftiger Bassdrum-Sound für Rhythmus- und Produktionsübungen.",
-    assetUrl: "/sounds/drums/Kick.wav",
-    priceXp: 30,
-  },
-];
+export type InventoryShopItem = LearningShopItem;
+export const INVENTORY_SHOP_ITEMS: readonly InventoryShopItem[] =
+  DEFAULT_LEARNING_CONFIGURATION.shopItems;
 
 export interface LearningProgressState {
   totalXp: number;
@@ -372,8 +369,9 @@ export function getAvailableXp(state: LearningProgressState): number {
 export function purchaseInventoryItem(
   state: LearningProgressState,
   itemId: string,
+  shopItems: readonly InventoryShopItem[] = INVENTORY_SHOP_ITEMS,
 ): LearningProgressState {
-  const item = INVENTORY_SHOP_ITEMS.find((entry) => entry.id === itemId);
+  const item = shopItems.find((entry) => entry.id === itemId);
   if (
     !item ||
     state.inventory.some((entry) => entry.id === item.id) ||
@@ -841,7 +839,7 @@ export function getDashboardOverview(
   };
 }
 
-function sanitizeStoredProgress(
+export function sanitizeStoredProgress(
   raw: unknown,
   modules: readonly LearningModule[],
 ): LearningProgressState | null {
@@ -1060,10 +1058,16 @@ function removeStorageRaw(storageKey: string): void {
   }
 }
 
+export function hasStoredLearningProgress(
+  storageKey: string = getDefaultStorageKey(),
+): boolean {
+  return readStorageRaw(storageKey) !== null;
+}
+
 /** Lädt den gespeicherten Lernfortschritt SSR-sicher und gleicht ihn mit dem Curriculum ab. */
 export function loadLearningProgress(
   modules: readonly LearningModule[] = [],
-  storageKey: string = LEARNING_PROGRESS_STORAGE_KEY,
+  storageKey: string = getDefaultStorageKey(),
   quizSettings: QuizSettings = DEFAULT_QUIZ_SETTINGS,
 ): LearningProgressState {
   const raw = readStorageRaw(storageKey);
@@ -1102,15 +1106,23 @@ export function loadLearningProgress(
 /** Speichert den Lernfortschritt in `localStorage` bzw. im SSR-In-Memory-Fallback. */
 export function saveLearningProgress(
   state: LearningProgressState,
-  storageKey: string = LEARNING_PROGRESS_STORAGE_KEY,
+  storageKey: string = getDefaultStorageKey(),
+  notifySync = true,
 ): LearningProgressState {
   writeStorageRaw(storageKey, JSON.stringify(state));
+  if (notifySync && typeof document !== "undefined") {
+    document.dispatchEvent(
+      new CustomEvent("learning-progress:saved", {
+        detail: { state, storageKey },
+      }),
+    );
+  }
   return state;
 }
 
 /** Löscht den gespeicherten Lernfortschritt vollständig. */
 export function clearLearningProgress(
-  storageKey: string = LEARNING_PROGRESS_STORAGE_KEY,
+  storageKey: string = getDefaultStorageKey(),
 ): void {
   removeStorageRaw(storageKey);
 }

@@ -5,6 +5,7 @@ import path from "node:path";
 import { stdin as input, stdout as output } from "node:process";
 import { createInterface } from "node:readline/promises";
 import {
+  isLearningConfiguration,
   isQuizSettings,
   normalizeLegacyDatabase,
   type ModulesDatabase,
@@ -50,6 +51,13 @@ function parseModules(value: unknown): ModulesDatabase {
     !isQuizSettings(value.quizSettings)
   ) {
     throw new Error("Die Quiz-Einstellungen im Modul-Stand sind ungültig.");
+  }
+  if (
+    "learningConfig" in value &&
+    value.learningConfig !== undefined &&
+    !isLearningConfiguration(value.learningConfig)
+  ) {
+    throw new Error("Die Lernkonfiguration im Modul-Stand ist ungültig.");
   }
 
   const database = normalizeLegacyDatabase(value as ModulesDatabase);

@@ -1,13 +1,19 @@
 # XP-System
 
 Diese Referenz beschreibt die zentrale XP-Engine, den Lernpfad, den Humpa-Shop,
-das Inventar und das Studio. Der Lernfortschritt wird ausschließlich lokal im
-Browser gespeichert; für diese Funktionen ist kein Benutzerkonto erforderlich.
+das Inventar und das Studio. Angemeldete Lernende speichern ihren persönlichen
+Fortschritt online in Netlify Blobs. Das Dashboard wird aus diesem Lernstand
+berechnet und nicht als separates Dokument gespeichert.
 
 ## Verantwortung und Dateien
 
 - `src/lib/learning-progress.ts`: Fortschritt, XP-Gutschriften, Level,
   Käufe und Ausrüstung
+- `src/lib/learning-progress-sync.ts`: Konto-gebundene Synchronisierung und
+  lokale Cache-/Erstmigrationslogik
+- `netlify/functions/learning-progress.ts`: Authentifizierte, pro Konto
+  isolierte Cloud-Persistenz
+- `src/lib/learning-config.ts`: gemeinsame Online-Konfiguration des Shop-Katalogs
 - `src/lib/xp-tags.ts`: XP-Basiswerte, Tags und Berechnung
 - `src/lib/module-player-ui.ts`: XP-Änderungen im Lernpfad und Aufgaben-Sound
 - `src/lib/inventory-ui.ts`: Humpa-Shop und Inventar
@@ -40,9 +46,18 @@ als Kaufwährung verwendet werden können.
 
 ## Persistenz
 
-Der Fortschritt wird unter `mymusic_learning_progress_v2` im `localStorage`
-gespeichert. Die Sanitierung ergänzt fehlende Felder alter Speicherstände und
-gleicht den Zustand mit neu hinzugekommenen Modulen ab.
+Der persönliche Lernstand wird im Netlify-Blob-Store `mymusic-hub-user-data`
+unter einem Schlüssel pro verifiziertem Netlify-Identity-Konto gespeichert.
+Eine lokale, konto-getrennte Cache-Kopie hält die Oberfläche reaktionsschnell;
+beim ersten Anmelden wird ein vorhandener Gaststand in das Konto übernommen,
+falls dort noch kein Cloud-Lernstand existiert. Wenn bereits ein Cloud-Stand
+vorhanden ist, ist dieser maßgeblich. Änderungen werden per ETag gegen
+gleichzeitige Änderungen auf anderen Geräten geschützt.
+
+Ohne Anmeldung bleibt ein Lernstand vorübergehend browserlokal und wird nicht
+mit der Cloud synchronisiert. Die Account-Oberfläche zeigt den Synchronstatus.
+Die Sanitierung ergänzt fehlende Felder alter Speicherstände und gleicht den
+Zustand mit neu hinzugekommenen Modulen ab.
 
 Gespeichert werden unter anderem:
 
@@ -54,8 +69,9 @@ Gespeichert werden unter anderem:
 - aktuell ausgerüstete Item-ID
 - Quiz-Bestwerte und Einstellungen
 
-Beim geschützten Reset wird der vollständige lokale Lernfortschritt einschließlich
-XP, Käufen, Inventar und Ausrüstung zurückgesetzt.
+Beim geschützten Reset wird der vollständige Lernfortschritt einschließlich XP,
+Käufen, Inventar und Ausrüstung zurückgesetzt und bei aktiver Anmeldung mit dem
+Online-Konto synchronisiert.
 
 ## Humpa-Shop
 
@@ -73,7 +89,10 @@ Starlight-Tabs wie der Modul-Builder. Der Reiter **Sounds** enthält aktuell:
 Click nutzt das Kreis-Symbol, Kick wird in Shop, Inventar und Studio als
 Bassdrum-Symbol dargestellt.
 
-Der Katalog der Shop-Items wird in `INVENTORY_SHOP_ITEMS` zentral definiert.
+Der Shop-Katalog liegt unter `learningConfig.shopItems` gemeinsam mit den
+Moduldaten im Blob-Key `modules`. Die versionierte Quelle dafür ist
+`data/blob-snapshot/modules.json`; Änderungen werden wie andere globale
+Blob-Daten kontrolliert mit `npm run blobs:push` hochgeladen.
 
 ## Inventar
 
@@ -95,8 +114,8 @@ Ein gekaufter Sound kann:
 - im Slot zur Vorschau abgespielt werden
 
 Es kann ein Sound aktiv sein. Das Metronom dient als Sound-Slot. Die gewählte
-Item-ID wird lokal gespeichert. Beim Prüfen von Lernpfad- und Quizaufgaben wird
-der aktuell ausgerüstete Sound abgespielt.
+Item-ID wird im persönlichen Online-Lernstand gespeichert. Beim Prüfen von
+Lernpfad- und Quizaufgaben wird der aktuell ausgerüstete Sound abgespielt.
 Ein ausgerüsteter Sound wird nicht mehr unter **Verfügbare Sounds** aufgeführt.
 Nach dem Ablegen erscheint er dort wieder.
 
