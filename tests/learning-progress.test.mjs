@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   clearLearningProgress,
+  collectInventoryUnlock,
   completePracticeBlock,
   completeTheoryBlock,
   completeTheoryStep,
@@ -195,6 +196,21 @@ describe("Lernfortschritts- & XP-Engine (learning-progress)", () => {
   afterEach(() => {
     clearLearningProgress();
     vi.unstubAllGlobals();
+  });
+
+  it("startet mit einem leeren Inventar und sammelt Freischaltungen einmalig", () => {
+    const initial = createInitialProgress([]);
+    const unlock = {
+      id: "first-module",
+      title: "Erstes Modul",
+      description: "Das erste Lernmodul wurde abgeschlossen.",
+      unlockedAt: "2026-01-01T10:00:00.000Z",
+    };
+
+    expect(initial.inventory).toEqual([]);
+    const collected = collectInventoryUnlock(initial, unlock);
+    expect(collected.inventory).toEqual([unlock]);
+    expect(collectInventoryUnlock(collected, unlock)).toBe(collected);
   });
 
   it("vergütet eine schwere Lernpfad-Aufgabe mit festen Basis-XP und Tag-Faktor genau einmal", () => {

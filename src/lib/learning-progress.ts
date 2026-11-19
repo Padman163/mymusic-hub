@@ -44,11 +44,19 @@ export interface ModuleProgress {
   bestFastlaneScore?: number;
 }
 
+export interface InventoryUnlock {
+  id: string;
+  title: string;
+  description: string;
+  unlockedAt: string;
+}
+
 export interface LearningProgressState {
   totalXp: number;
   xpByScope: Record<ModuleScope, number>;
   xpByTag: Record<string, number>;
   modules: Record<string, ModuleProgress>;
+  inventory: InventoryUnlock[];
   updatedAt: string;
   quizSettings?: QuizSettings;
 }
@@ -181,6 +189,7 @@ function cloneState(state: LearningProgressState): LearningProgressState {
     xpByScope,
     xpByTag,
     modules,
+    inventory: (state.inventory ?? []).map((unlock) => ({ ...unlock })),
     updatedAt: state.updatedAt,
     ...(state.quizSettings ? { quizSettings: { ...state.quizSettings } } : {}),
   };
@@ -285,9 +294,34 @@ export function createInitialProgress(
     xpByScope: createEmptyScopeXp(),
     xpByTag: createEmptyTagXp(),
     modules: moduleEntries,
+    inventory: [],
     updatedAt: nowIso(),
     quizSettings: { ...quizSettings },
   };
+}
+
+/** Fügt eine Freischaltung einmalig zum Inventar hinzu. */
+export function collectInventoryUnlock(
+  state: LearningProgressState,
+  unlock: InventoryUnlock,
+): LearningProgressState {
+  const id = unlock.id.trim();
+  const title = unlock.title.trim();
+  const description = unlock.description.trim();
+  const unlockedAt = unlock.unlockedAt.trim();
+  if (
+    id.length === 0 ||
+    title.length === 0 ||
+    Number.isNaN(Date.parse(unlockedAt)) ||
+    state.inventory.some((entry) => entry.id === id)
+  ) {
+    return state;
+  }
+
+  const next = cloneState(state);
+  next.inventory.push({ id, title, description, unlockedAt });
+  next.updatedAt = nowIso();
+  return next;
 }
 
 /**
@@ -787,6 +821,38 @@ function sanitizeStoredProgress(
     };
   }
 
+  const inventory: InventoryUnlock[] = [];
+  const inventoryIds = new Set<string>();
+  if (Array.isArray(raw.inventory)) {
+    for (const entry of raw.inventory) {
+      if (
+        !isRecord(entry) ||
+        typeof entry.id !== "string" ||
+        typeof entry.title !== "string" ||
+        typeof entry.description !== "string" ||
+        typeof entry.unlockedAt !== "string"
+      ) {
+        continue;
+      }
+
+      const id = entry.id.trim();
+      const title = entry.title.trim();
+      const description = entry.description.trim();
+      const unlockedAt = entry.unlockedAt.trim();
+      if (
+        id.length === 0 ||
+        title.length === 0 ||
+        Number.isNaN(Date.parse(unlockedAt)) ||
+        inventoryIds.has(id)
+      ) {
+        continue;
+      }
+
+      inventoryIds.add(id);
+      inventory.push({ id, title, description, unlockedAt });
+    }
+  }
+
   const baseState: LearningProgressState = {
     totalXp:
       typeof raw.totalXp === "number" &&
@@ -797,6 +863,7 @@ function sanitizeStoredProgress(
     xpByScope,
     xpByTag,
     modules: sanitizedModules,
+    inventory,
     updatedAt: typeof raw.updatedAt === "string" ? raw.updatedAt : nowIso(),
     ...(isQuizSettings(raw.quizSettings)
       ? { quizSettings: raw.quizSettings }

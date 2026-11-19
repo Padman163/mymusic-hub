@@ -19,6 +19,7 @@ import {
   evaluateQuestionAnswer,
   renderTheoryMarkdown,
 } from "../../src/lib/module-player-ui";
+import { attachInventory } from "../../src/lib/inventory-ui";
 import {
   calculateModuleQuestionXp,
   calculateTheoryBlockXp,
@@ -39,6 +40,19 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     clearLearningProgress();
     document.body.replaceChildren();
     vi.unstubAllGlobals();
+  });
+
+  it("zeigt ein leeres Inventar mit dem Freischaltungszähler", () => {
+    const root = document.createElement("section");
+    document.body.append(root);
+
+    attachInventory(root);
+
+    expect(
+      root.querySelector<HTMLElement>("[data-inventory-count]")?.dataset
+        .inventoryCount,
+    ).toBe("0");
+    expect(root.textContent).toContain("Dein Inventar ist noch leer");
   });
 
   it("ersetzt eingebettete Module durch einen leeren Live-Katalog", async () => {

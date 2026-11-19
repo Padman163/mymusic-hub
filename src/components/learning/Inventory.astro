@@ -1,0 +1,29 @@
+---
+import "../../styles/contribution-tags.css";
+import "../../styles/module-player.css";
+---
+
+<section
+  class="learning-inventory not-content"
+  aria-label="Inventar für gesammelte Freischaltungen"
+  data-learning-inventory
+>
+  <p class="learning-muted">Inventar wird geladen …</p>
+</section>
+
+<script>
+  import { attachInventory } from "../../lib/inventory-ui";
+
+  function initInventories() {
+    document
+      .querySelectorAll<HTMLElement>("[data-learning-inventory]")
+      .forEach((root) => {
+        if (root.dataset.inventoryAttached !== "true") {
+          attachInventory(root);
+        }
+      });
+  }
+
+  initInventories();
+  document.addEventListener("astro:page-load", initInventories);
+</script>

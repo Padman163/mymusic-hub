@@ -104,6 +104,7 @@ Dateien und noch fehlenden Lizenzangaben.
   * **Client-State & XP-Engine:** SSR-sichere `localStorage`-Persistenz (`mymusic_learning_progress_v1`) mit automatischem Curriculum-Sync, Duplikat-XP-Schutz (`solvedQuestionIds`), Level-Berechnung (500 XP pro Level) sowie Aufschlüsselung nach `scope` und `tags`.
   * **Geführter Lektions-Stepper & Fastlane:** Theorie, Lernpfad-Aufgaben und Praxisblöcke folgen der gespeicherten Inhaltsreihenfolge, danach folgt das Quiz (`mittel`). Die globalen Bestehensgrenzen verwenden standardmäßig 80 % für das Quiz und 85 % für Fastlane (`schwer`); gespeicherte Einstellungen können abweichen. Änderungen der Grenzen setzen den lokalen Lernfortschritt zurück. Fastlane vergütet noch offene Inhalte und entsperrt das Folgemodul; die Links sind derzeit ausgeblendet. Details stehen in der [Modul-Referenz](README_FEAT_MODULEBUILDER.md).
   * **Aufgaben-Auswertung:** Live-Synchronisation zwischen Dashboard, Roadmap und Stepper via CustomEvent `learning-progress:updated`; unterstützt u. a. Zahlen/Einheiten-Abgleich (`880` / `880 Hz`) sowie die `NotationBuilder.astro`-Tonhöhenprüfung (`expectedPitches` exakt und oktavunabhängig).
+  * **Leeres Inventar für Freischaltungen:** Unter **Bediener → Inventar** zeigt `Inventory.astro` gesammelte Freischaltungen aus dem lokalen Lernfortschritt. Der Zustand startet leer und kann neue Freischaltungen über `collectInventoryUnlock` duplikatfrei aufnehmen. Die Bedienung steht in der [Wiki-Anleitung](../src/content/docs/wiki/inventar.mdx).
 
 ---
 

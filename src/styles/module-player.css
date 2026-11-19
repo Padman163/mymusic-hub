@@ -1,4 +1,5 @@
 .learning-dashboard,
+.learning-inventory,
 .learning-roadmap,
 .learning-stepper,
 .learning-quiz-runner {
@@ -30,6 +31,75 @@
   font-size: 1.2rem;
   font-weight: 700;
   color: var(--sl-color-text);
+}
+
+.learning-inventory-card {
+  min-height: 18rem;
+}
+
+.learning-inventory-empty {
+  display: grid;
+  justify-items: center;
+  gap: 0.45rem;
+  margin: auto;
+  padding: 2rem 1rem;
+  max-width: 32rem;
+  text-align: center;
+}
+
+.learning-inventory-empty-symbol {
+  font-size: 2.5rem;
+  color: var(--sl-color-gray-3);
+}
+
+.learning-inventory-empty h3,
+.learning-inventory-empty p,
+.learning-inventory-item-title,
+.learning-inventory-item-description {
+  margin: 0;
+}
+
+.learning-inventory-empty h3 {
+  font-size: 1.15rem;
+}
+
+.learning-inventory-empty p,
+.learning-inventory-item-description,
+.learning-inventory-date {
+  color: var(--sl-color-gray-2);
+}
+
+.learning-inventory-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.learning-inventory-item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.75rem;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 0.45rem;
+  padding: 0.9rem;
+  background: var(--sl-color-bg-nav);
+}
+
+.learning-inventory-marker {
+  color: var(--sl-color-accent);
+}
+
+.learning-inventory-item-title {
+  font-size: 1rem;
+}
+
+.learning-inventory-date {
+  display: block;
+  margin-top: 0.45rem;
+  font-size: 0.78rem;
 }
 
 .learning-dashboard-metrics {

@@ -448,6 +448,10 @@ export default defineConfig({
               label: "Dashboard",
               slug: "audio/theory/lernpfad",
             },
+            {
+              label: "Inventar",
+              slug: "audio/theory/inventar",
+            },
           ],
         },
         {
@@ -460,6 +464,7 @@ export default defineConfig({
                 { label: "Modul-Builder bedienen", slug: "wiki/modul-builder" },
                 { label: "NotationBuilder bedienen", slug: "wiki/notation-builder" },
                 { label: "Drum-Pattern anhören", slug: "wiki/drum-pattern" },
+                { label: "Inventar benutzen", slug: "wiki/inventar" },
               ],
             },
             {
