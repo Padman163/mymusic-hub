@@ -647,7 +647,12 @@
     "description": "",
     "area": "Komponente",
     "priority": "Mittel",
-    "checklist": [],
+    "checklist": [
+      {
+        "text": "Test 19.11.: Nur npm install, netlify neu login, .env aus netlify gezogen ( aktuell zieht es noch audioplayer und nicht den aktueleln inventar )",
+        "checked": false
+      }
+    ],
     "status": "New",
     "createdAt": "2026-11-18T23:35:45.142Z"
   }

@@ -64,7 +64,7 @@ export const MODULES_API_ENDPOINT = "/api/modules";
 export const MODULES_FUNCTION_FALLBACK_ENDPOINT = "/.netlify/functions/modules";
 export const MODULE_DETAIL_PATH = "/projektierung/modul-builder/modul/";
 export const MODULES_HTML_RESPONSE_ERROR =
-  "Die Modul-API ist unter dieser Adresse nicht erreichbar (HTML-Antwort statt JSON). Bitte Dev-Server prüfen.";
+  "Die Modul-API ist unter dieser Adresse nicht erreichbar (HTML-Antwort statt JSON). Für die lokale Entwicklung http://localhost:8888 mit dem Netlify-Dev-Server öffnen, nicht den Astro-Port 4321.";
 
 const SCOPE_LABELS: Record<ModuleScope, string> = {
   theory: "Theorie",

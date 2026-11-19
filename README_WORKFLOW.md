@@ -21,6 +21,8 @@ npx netlify-cli status
 
 3. Danach einen laufenden `npx netlify-cli dev`-Prozess stoppen und mit der aktualisierten Umgebung neu starten.
 
+Bei Modul-Builder, Beiträgen und anderen Netlify-Functions ausschließlich `http://localhost:8888` öffnen. Port `4321` ist der von der Netlify CLI intern gestartete reine Astro-Server; dort fehlen die Backend-Routen und Browserfehler mit HTML-Antworten sind dann erwartbar. Eine `404 text/html` von `/api/modules` oder `/api/contributions` bedeutet daher zuerst: richtige URL und richtigen Server prüfen.
+
 Die `.env` darf nicht committet werden. `NETLIFY_AUTH_TOKEN` bleibt ausschließlich als geheime Netlify-Build-Variable im Dashboard; gelangt der Wert trotz Sicherheitsmaskierung in die lokale Datei, vor dem Commit und vor der Weitergabe wieder aus `.env` entfernen.
 
 ## 2. Feature entwickeln
