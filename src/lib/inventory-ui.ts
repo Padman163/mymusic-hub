@@ -1,10 +1,27 @@
 import {
+  getAvailableXp,
+  INVENTORY_SHOP_ITEMS,
+  type InventoryShopItem,
   loadLearningProgress,
+  purchaseInventoryItem,
+  saveLearningProgress,
   type InventoryUnlock,
 } from "./learning-progress.ts";
+import { renderInventoryItemIcon } from "./inventory-item-icon.ts";
 
 export interface InventoryController {
   refresh(): void;
+}
+
+function playInventorySound(
+  trigger: HTMLButtonElement,
+  title: string,
+  assetUrl: string,
+): void {
+  const audio = new Audio(assetUrl);
+  void audio.play().catch(() => {
+    trigger.setAttribute("aria-label", `${title} konnte nicht abgespielt werden`);
+  });
 }
 
 function createUnlockCard(unlock: InventoryUnlock): HTMLElement {
@@ -12,17 +29,16 @@ function createUnlockCard(unlock: InventoryUnlock): HTMLElement {
   item.className = "learning-inventory-item";
   item.dataset.inventoryUnlock = unlock.id;
 
-  const displayTitle =
-    unlock.id === "sound-click" ? "Click" : unlock.title;
+  const displayTitle = unlock.title;
   const detailsId = `inventory-details-${unlock.id}`;
   const marker = document.createElement("button");
   marker.type = "button";
   marker.className = "learning-inventory-marker";
   marker.dataset.rarity = "common";
-  marker.setAttribute("aria-label", `Details zu ${displayTitle}`);
+  marker.setAttribute("aria-label", `${displayTitle} anhören`);
   marker.setAttribute("aria-controls", detailsId);
   marker.setAttribute("aria-expanded", "false");
-  marker.textContent = unlock.assetUrl ? "●" : "◆";
+  renderInventoryItemIcon(marker, unlock.id);
 
   const details = document.createElement("div");
   details.id = detailsId;
@@ -38,6 +54,10 @@ function createUnlockCard(unlock: InventoryUnlock): HTMLElement {
   details.append(title, description);
 
   marker.addEventListener("click", () => {
+    if (unlock.assetUrl) {
+      playInventorySound(marker, displayTitle, unlock.assetUrl);
+      return;
+    }
     const isOpen = details.dataset.open === "true";
     details.dataset.open = String(!isOpen);
     details.setAttribute("aria-hidden", String(isOpen));
@@ -48,6 +68,45 @@ function createUnlockCard(unlock: InventoryUnlock): HTMLElement {
   return item;
 }
 
+function createShopItem(
+  item: InventoryShopItem,
+  availableXp: number,
+  owned: boolean,
+  onPurchase: () => void,
+): HTMLElement {
+  const container = document.createElement("li");
+  container.className = "learning-shop-item";
+
+  const action = document.createElement("button");
+  action.type = "button";
+  action.className = "learning-inventory-marker learning-shop-preview";
+  action.dataset.rarity = "common";
+  renderInventoryItemIcon(action, item.id);
+  action.setAttribute("aria-label", `${item.title} anhören`);
+  action.title = `${item.title} anhören`;
+  action.addEventListener("click", () => {
+    if (!item.assetUrl) return;
+    playInventorySound(action, item.title, item.assetUrl);
+  });
+
+  const price = document.createElement("button");
+  price.type = "button";
+  price.className = "learning-shop-price";
+  price.textContent = owned ? "Gekauft" : `${item.priceXp} XP`;
+  const purchaseLabel = owned
+    ? `${item.title} ist bereits im Inventar`
+    : availableXp >= item.priceXp
+      ? `${item.title} für ${item.priceXp} XP kaufen`
+      : `${item.title} kostet ${item.priceXp} XP. Noch ${item.priceXp - availableXp} XP fehlen.`;
+  price.setAttribute("aria-label", purchaseLabel);
+  price.title = purchaseLabel;
+  price.disabled = owned || availableXp < item.priceXp;
+  price.addEventListener("click", onPurchase);
+
+  container.append(action, price);
+  return container;
+}
+
 export function attachInventory(root: HTMLElement): InventoryController {
   if (root.dataset.inventoryAttached === "true") {
     throw new Error("Inventar wurde bereits initialisiert.");
@@ -55,7 +114,9 @@ export function attachInventory(root: HTMLElement): InventoryController {
   root.dataset.inventoryAttached = "true";
 
   const refresh = () => {
-    const { inventory } = loadLearningProgress();
+    const state = loadLearningProgress();
+    const { inventory } = state;
+    const availableXp = getAvailableXp(state);
     root.replaceChildren();
 
     const card = document.createElement("div");
@@ -68,8 +129,8 @@ export function attachInventory(root: HTMLElement): InventoryController {
     title.textContent = "Dein Inventar";
     const count = document.createElement("span");
     count.className = "contribution-tag learning-xp-badge";
-    count.dataset.inventoryCount = String(inventory.length);
-    count.textContent = `${inventory.length} Freischaltungen`;
+    count.dataset.availableXp = String(availableXp);
+    count.textContent = `${availableXp} XP verfügbar`;
     header.append(title, count);
 
     card.append(header);
@@ -85,7 +146,7 @@ export function attachInventory(root: HTMLElement): InventoryController {
       heading.textContent = "Dein Inventar ist noch leer";
       const text = document.createElement("p");
       text.textContent =
-        "Freischaltungen aus deinem Lernfortschritt werden hier gesammelt.";
+        "Kaufe Freischaltungen im Shop, damit sie hier erscheinen.";
       emptyState.append(symbol, heading, text);
       card.append(emptyState);
     } else {
@@ -95,6 +156,76 @@ export function attachInventory(root: HTMLElement): InventoryController {
       card.append(list);
     }
 
+    root.append(card);
+  };
+
+  const onProgressUpdated = () => {
+    if (!root.isConnected) {
+      document.removeEventListener(
+        "learning-progress:updated",
+        onProgressUpdated,
+      );
+      return;
+    }
+    refresh();
+  };
+
+  document.addEventListener("learning-progress:updated", onProgressUpdated);
+  refresh();
+  return { refresh };
+}
+
+export function attachShop(root: HTMLElement): InventoryController {
+  if (root.dataset.shopAttached === "true") {
+    throw new Error("Shop wurde bereits initialisiert.");
+  }
+  root.dataset.shopAttached = "true";
+
+  const refresh = () => {
+    const state = loadLearningProgress();
+    const { inventory } = state;
+    const availableXp = getAvailableXp(state);
+    root.replaceChildren();
+
+    const card = document.createElement("div");
+    card.className = "learning-card learning-shop-card";
+    const header = document.createElement("div");
+    header.className = "learning-card-header";
+    const title = document.createElement("h2");
+    title.className = "learning-card-title";
+    title.textContent = "Sounds";
+    const balance = document.createElement("span");
+    balance.className = "contribution-tag learning-xp-badge";
+    balance.textContent = `${availableXp} XP verfügbar`;
+    header.append(title, balance);
+
+    const list = document.createElement("ul");
+    list.className = "learning-shop-list";
+    list.append(
+      ...INVENTORY_SHOP_ITEMS.map((item) =>
+        createShopItem(
+          item,
+          availableXp,
+          inventory.some((entry) => entry.id === item.id),
+          () => {
+            const current = loadLearningProgress();
+            const purchased = purchaseInventoryItem(current, item.id);
+            if (purchased === current) {
+              refresh();
+              return;
+            }
+            saveLearningProgress(purchased);
+            document.dispatchEvent(
+              new CustomEvent("learning-progress:updated", {
+                bubbles: true,
+                detail: { state: purchased },
+              }),
+            );
+          },
+        ),
+      ),
+    );
+    card.append(header, list);
     root.append(card);
   };
 

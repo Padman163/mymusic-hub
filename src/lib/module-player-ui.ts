@@ -17,6 +17,7 @@ import {
   completeTheoryStep,
   createInitialProgress,
   getDashboardOverview,
+  getEquippedInventoryItem,
   getEffectiveQuizSettings,
   type LearningProgressState,
   loadLearningProgress,
@@ -340,6 +341,15 @@ function commitProgressChange(
 
 function normalizeText(value: string): string {
   return value.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function playEquippedTaskSound(state: LearningProgressState): void {
+  const equipped = getEquippedInventoryItem(state);
+  if (!equipped?.assetUrl) return;
+  const audio = new Audio(equipped.assetUrl);
+  void audio.play().catch((error) => {
+    console.warn(`[Lernpfad] ${equipped.title} konnte nicht abgespielt werden.`, error);
+  });
 }
 
 function parseNumericAndUnit(raw: string): {
@@ -2047,6 +2057,7 @@ export function attachModuleQuizRunner(
             undefined,
             db.quizSettings,
           );
+          playEquippedTaskSound(latest);
           const alreadySolved =
             latest.modules[mod.id]?.solvedQuestionIds.includes(question.id) ??
             false;
@@ -2216,6 +2227,9 @@ export function attachModuleQuizRunner(
       currentQuestionChecked = true;
       const userAnswer = readUserAnswerFromQuestionUi(question, inputsEl);
       const result = evaluateQuestionAnswer(question, userAnswer);
+      playEquippedTaskSound(
+        loadLearningProgress(db.modules, undefined, db.quizSettings),
+      );
       if (result.correct) {
         correctCount += 1;
       }

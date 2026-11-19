@@ -52,17 +52,32 @@ export interface InventoryUnlock {
   assetUrl?: string;
 }
 
-const INVENTORY_UNLOCKS_BY_THEORY_BLOCK: Record<string, Omit<InventoryUnlock, "unlockedAt">> = {
-  "mod-puls-tempo-rhythmus:tb-puls-tempo-rhythmus": {
+export interface InventoryShopItem
+  extends Omit<InventoryUnlock, "unlockedAt"> {
+  priceXp: number;
+}
+
+export const INVENTORY_SHOP_ITEMS: readonly InventoryShopItem[] = [
+  {
     id: "sound-click",
     title: "Click",
     description: "Ein präziser Klick-Sound für Rhythmus- und Tempoübungen.",
     assetUrl: "/sounds/drums/Click.wav",
+    priceXp: 10,
   },
-};
+  {
+    id: "sound-kick",
+    title: "Kick",
+    description: "Ein kräftiger Bassdrum-Sound für Rhythmus- und Produktionsübungen.",
+    assetUrl: "/sounds/drums/Kick.wav",
+    priceXp: 30,
+  },
+];
 
 export interface LearningProgressState {
   totalXp: number;
+  spentXp: number;
+  equippedInventoryItemIds: string[];
   xpByScope: Record<ModuleScope, number>;
   xpByTag: Record<string, number>;
   modules: Record<string, ModuleProgress>;
@@ -196,6 +211,11 @@ function cloneState(state: LearningProgressState): LearningProgressState {
       typeof state.totalXp === "number" && Number.isFinite(state.totalXp)
         ? state.totalXp
         : 0,
+    spentXp:
+      typeof state.spentXp === "number" && Number.isFinite(state.spentXp)
+        ? state.spentXp
+        : 0,
+    equippedInventoryItemIds: [...(state.equippedInventoryItemIds ?? [])],
     xpByScope,
     xpByTag,
     modules,
@@ -264,18 +284,6 @@ function unlockNextStepAfterExercise(
   }
 }
 
-function collectTheoryBlockInventoryUnlock(
-  state: LearningProgressState,
-  module: LearningModule,
-  blockId: string,
-): void {
-  const unlock = INVENTORY_UNLOCKS_BY_THEORY_BLOCK[`${module.id}:${blockId}`];
-  if (!unlock || state.inventory.some((entry) => entry.id === unlock.id)) {
-    return;
-  }
-  state.inventory.push({ ...unlock, unlockedAt: nowIso() });
-}
-
 function unlockSuccessorModule(
   state: LearningProgressState,
   sortedModules: readonly LearningModule[],
@@ -313,6 +321,8 @@ export function createInitialProgress(
 
   return {
     totalXp: 0,
+    spentXp: 0,
+    equippedInventoryItemIds: [],
     xpByScope: createEmptyScopeXp(),
     xpByTag: createEmptyTagXp(),
     modules: moduleEntries,
@@ -352,6 +362,74 @@ export function collectInventoryUnlock(
   return next;
 }
 
+export function getAvailableXp(state: LearningProgressState): number {
+  return Math.max(0, Math.round(state.totalXp) - Math.round(state.spentXp ?? 0));
+}
+
+export function purchaseInventoryItem(
+  state: LearningProgressState,
+  itemId: string,
+): LearningProgressState {
+  const item = INVENTORY_SHOP_ITEMS.find((entry) => entry.id === itemId);
+  if (
+    !item ||
+    state.inventory.some((entry) => entry.id === item.id) ||
+    getAvailableXp(state) < item.priceXp
+  ) {
+    return state;
+  }
+
+  const next = cloneState(state);
+  next.spentXp += item.priceXp;
+  next.inventory.push({
+    id: item.id,
+    title: item.title,
+    description: item.description,
+    unlockedAt: nowIso(),
+    ...(item.assetUrl !== undefined ? { assetUrl: item.assetUrl } : {}),
+  });
+  next.updatedAt = nowIso();
+  return next;
+}
+
+export function equipInventoryItem(
+  state: LearningProgressState,
+  itemId: string,
+): LearningProgressState {
+  const item = state.inventory.find((entry) => entry.id === itemId);
+  if (!item?.assetUrl) {
+    return state;
+  }
+  if (state.equippedInventoryItemIds?.[0] === itemId) {
+    return state;
+  }
+  const next = cloneState(state);
+  next.equippedInventoryItemIds = [itemId];
+  next.updatedAt = nowIso();
+  return next;
+}
+
+export function unequipInventoryItem(
+  state: LearningProgressState,
+): LearningProgressState {
+  if ((state.equippedInventoryItemIds ?? []).length === 0) {
+    return state;
+  }
+  const next = cloneState(state);
+  next.equippedInventoryItemIds = [];
+  next.updatedAt = nowIso();
+  return next;
+}
+
+export function getEquippedInventoryItem(
+  state: LearningProgressState,
+): InventoryUnlock | undefined {
+  const equippedId = state.equippedInventoryItemIds?.[0];
+  return equippedId
+    ? state.inventory.find((entry) => entry.id === equippedId)
+    : undefined;
+}
+
 /**
  * Synchronisiert bestehenden Lernfortschritt mit neu hinzugekommenen Modulen,
  * ohne bereits erzielte Fortschritte, XP oder Scores zu überschreiben.
@@ -375,15 +453,6 @@ export function syncProgressWithCurriculum(
       next.modules[mod.id] = createModuleProgress(mod.id, shouldUnlock);
     } else if (shouldUnlock && existing.status === "locked") {
       unlockModuleEntry(existing);
-    }
-
-    const completedTheoryBlockIds = new Set(
-      next.modules[mod.id]?.completedTheoryBlockIds ?? [],
-    );
-    for (const block of mod.theoryBlocks) {
-      if (completedTheoryBlockIds.has(block.id)) {
-        collectTheoryBlockInventoryUnlock(next, mod, block.id);
-      }
     }
   }
 
@@ -478,7 +547,6 @@ export function completeTheoryBlock(
     module.scope,
     block.tags ?? [],
   );
-  collectTheoryBlockInventoryUnlock(next, module, blockId);
   next.updatedAt = nowIso();
   return module.theoryBlocks.every(
     (item) =>
@@ -900,6 +968,17 @@ function sanitizeStoredProgress(
       });
     }
   }
+  const inventoryIdsWithAssets = new Set(
+    inventory.filter((entry) => entry.assetUrl !== undefined).map((entry) => entry.id),
+  );
+  const equippedInventoryItemIds = Array.isArray(raw.equippedInventoryItemIds)
+    ? raw.equippedInventoryItemIds
+        .filter(
+          (id): id is string =>
+            typeof id === "string" && inventoryIdsWithAssets.has(id),
+        )
+        .slice(0, 1)
+    : [];
 
   const baseState: LearningProgressState = {
     totalXp:
@@ -908,6 +987,18 @@ function sanitizeStoredProgress(
       raw.totalXp >= 0
         ? raw.totalXp
         : 0,
+    spentXp:
+      typeof raw.spentXp === "number" &&
+      Number.isFinite(raw.spentXp) &&
+      raw.spentXp >= 0
+        ? Math.min(
+            Math.round(raw.spentXp),
+            typeof raw.totalXp === "number" && Number.isFinite(raw.totalXp)
+              ? Math.max(0, Math.round(raw.totalXp))
+              : 0,
+          )
+        : 0,
+    equippedInventoryItemIds,
     xpByScope,
     xpByTag,
     modules: sanitizedModules,

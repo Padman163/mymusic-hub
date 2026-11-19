@@ -36,6 +36,12 @@ test('gliedert die Navigation in Admin, Bediener und Sonstiges', async ({ page }
     .toHaveAttribute('href', '/admin-wiki/');
   const dashboard = sections.nth(1).getByRole('link', { name: 'Dashboard', includeHidden: true });
   await expect(dashboard).toHaveAttribute('href', '/audio/theory/lernpfad/');
+  const shop = sections.nth(1).getByRole('link', { name: 'Humpa-Shop', includeHidden: true });
+  await expect(shop).toHaveAttribute('href', '/audio/theory/shop/');
+  const inventory = sections.nth(1).getByRole('link', { name: 'Inventar', includeHidden: true });
+  await expect(inventory).toHaveAttribute('href', '/audio/theory/inventar/');
+  const studio = sections.nth(1).getByRole('link', { name: 'Studio', includeHidden: true });
+  await expect(studio).toHaveAttribute('href', '/audio/theory/studio/');
   await expect(sections.nth(2).locator(':scope > ul > li > details > summary')).toHaveText([
     'Wiki',
     'Lehrgänge (Level 100-500)',

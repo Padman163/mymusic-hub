@@ -3,7 +3,9 @@
 Dieses Dokument ist die Feature-Referenz für den **Admin Modul- & Aufgaben-Builder** und den **Interaktiven Lernpfad für Lernende**. Die Etappen 1 bis 3B beschreiben die umgesetzten Bausteine; Testbefehle und aktuelle Ergebnisse stehen im [Testing-Leitfaden](../README_TESTING.md).
 
 Die nutzerorientierte [Anleitung für den Modul-Builder](../src/content/docs/wiki/modul-builder.mdx) steht im Wiki.
-Das persönliche [Inventar](../src/content/docs/wiki/inventar.mdx) sammelt spätere Gamification-Freischaltungen im lokal gespeicherten Lernfortschritt. Beim ersten Aufruf ist es leer.
+Das persönliche [Inventar](../src/content/docs/wiki/inventar.mdx) zeigt im lokal gespeicherten Lernfortschritt gekaufte Gamification-Freischaltungen. Beim ersten Aufruf ist es leer; der Shop bietet Click für 10 und Kick für 30 verfügbare XP an. Ausgaben reduzieren nur das verfügbare XP-Guthaben, nicht die insgesamt verdienten XP oder das Level.
+Im Studio können gekaufte Sounds ausgerüstet werden; der aktive Sound wird bei Aufgabenprüfungen wiedergegeben.
+Die Gesamtarchitektur von XP, Shop, Inventar und Studio steht in der [XP-System-Referenz](README_FEAT_XP-SYSTEM.md).
 
 ---
 

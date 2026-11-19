@@ -1,6 +1,6 @@
 # Features & Architektur des Gitarrenlernpfads
 
-Dieses Dokument gibt einen Überblick über die wichtigsten Komponenten und Subsysteme des Musik-Hubs. Details zum [Audioplayer für Drum-Patterns](README_FEAT_AUDIOPLAYER.md), zum [Beitragssystem](README_FEAT_CONTRIBUTIONS.md), zum [Modul-Builder und Lernpfad](README_FEAT_MODULEBUILDER.md), zur [Notation und zum NotationBuilder](README_FEAT_NOTATION.md), zu den [Anforderungen für den Neuaufbau des Level-100-Quiz](README_FEAT_LEVEL100QUIZ.md), zu [Netlify Blobs](README_FEAT_NETLIFYBLOB.md) und zu [Tests](../README_TESTING.md) stehen in den jeweiligen Leitfäden.
+Dieses Dokument gibt einen Überblick über die wichtigsten Komponenten und Subsysteme des Musik-Hubs. Details zum [Audioplayer für Drum-Patterns](README_FEAT_AUDIOPLAYER.md), zum [Beitragssystem](README_FEAT_CONTRIBUTIONS.md), zum [Modul-Builder und Lernpfad](README_FEAT_MODULEBUILDER.md), zum [XP-System](README_FEAT_XP-SYSTEM.md), zur [Notation und zum NotationBuilder](README_FEAT_NOTATION.md), zu den [Anforderungen für den Neuaufbau des Level-100-Quiz](README_FEAT_LEVEL100QUIZ.md), zu [Netlify Blobs](README_FEAT_NETLIFYBLOB.md) und zu [Tests](../README_TESTING.md) stehen in den jeweiligen Leitfäden.
 
 ---
 
@@ -104,7 +104,10 @@ Dateien und noch fehlenden Lizenzangaben.
   * **Client-State & XP-Engine:** SSR-sichere `localStorage`-Persistenz (`mymusic_learning_progress_v1`) mit automatischem Curriculum-Sync, Duplikat-XP-Schutz (`solvedQuestionIds`), Level-Berechnung (500 XP pro Level) sowie Aufschlüsselung nach `scope` und `tags`.
   * **Geführter Lektions-Stepper & Fastlane:** Theorie, Lernpfad-Aufgaben und Praxisblöcke folgen der gespeicherten Inhaltsreihenfolge, danach folgt das Quiz (`mittel`). Die globalen Bestehensgrenzen verwenden standardmäßig 80 % für das Quiz und 85 % für Fastlane (`schwer`); gespeicherte Einstellungen können abweichen. Änderungen der Grenzen setzen den lokalen Lernfortschritt zurück. Fastlane vergütet noch offene Inhalte und entsperrt das Folgemodul; die Links sind derzeit ausgeblendet. Details stehen in der [Modul-Referenz](README_FEAT_MODULEBUILDER.md).
   * **Aufgaben-Auswertung:** Live-Synchronisation zwischen Dashboard, Roadmap und Stepper via CustomEvent `learning-progress:updated`; unterstützt u. a. Zahlen/Einheiten-Abgleich (`880` / `880 Hz`) sowie die `NotationBuilder.astro`-Tonhöhenprüfung (`expectedPitches` exakt und oktavunabhängig).
-  * **Leeres Inventar für Freischaltungen:** Unter **Bediener → Inventar** zeigt `Inventory.astro` gesammelte Freischaltungen aus dem lokalen Lernfortschritt. Der Zustand startet leer und kann neue Freischaltungen über `collectInventoryUnlock` duplikatfrei aufnehmen. Die Bedienung steht in der [Wiki-Anleitung](../src/content/docs/wiki/inventar.mdx).
+  * **Humpa-Shop und Inventar:** Unter **Bediener** bietet der **Humpa-Shop** Sound-Items in einem Reiter im Stil des Modul-Builders; das Inventar zeigt gekaufte Freischaltungen. Click kostet 10 und Kick 30 verfügbare XP; jeder Sound kann nur einmal gekauft werden. Insgesamt verdiente XP und Level bleiben unverändert. Die Bedienung steht in der [Wiki-Anleitung](../src/content/docs/wiki/inventar.mdx).
+  * **Studio-Ausrüstung:** Unter **Bediener → Studio** können gekaufte Sounds per Klick oder Drag-and-drop in ein Metronom ausgerüstet werden. Der ausgerüstete Sound wird beim Prüfen von Lernpfad- und Quizaufgaben abgespielt.
+
+Die vollständige Architektur des Lern-, Währungs- und Ausrüstungsmodells steht in der [XP-System-Referenz](README_FEAT_XP-SYSTEM.md).
 
 ---
 

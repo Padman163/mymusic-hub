@@ -42,20 +42,25 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     vi.unstubAllGlobals();
   });
 
-  it("zeigt ein leeres Inventar mit dem Freischaltungszähler", () => {
+  it("zeigt ein leeres Inventar mit dem verfügbaren XP-Guthaben", () => {
     const root = document.createElement("section");
     document.body.append(root);
 
     attachInventory(root);
 
     expect(
-      root.querySelector<HTMLElement>("[data-inventory-count]")?.dataset
-        .inventoryCount,
+      root.querySelector<HTMLElement>("[data-available-xp]")?.dataset
+        .availableXp,
     ).toBe("0");
     expect(root.textContent).toContain("Dein Inventar ist noch leer");
   });
 
-  it("zeigt Click als quadratisches Symbol mit aufklappbarer Beschreibung", () => {
+  it("spielt Click als quadratisches Symbol im Inventar ab", () => {
+    const play = vi.fn().mockResolvedValue(undefined);
+    const AudioMock = vi.fn(function AudioMock(src: string) {
+      return { src, play };
+    });
+    vi.stubGlobal("Audio", AudioMock);
     const progress = createInitialProgress([]);
     progress.inventory.push({
       id: "sound-click",
@@ -83,9 +88,11 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     expect(details?.getAttribute("aria-hidden")).toBe("true");
     expect(details?.textContent).toContain("Click");
     marker?.click();
-    expect(details?.dataset.open).toBe("true");
-    expect(details?.getAttribute("aria-hidden")).toBe("false");
-    expect(marker?.getAttribute("aria-expanded")).toBe("true");
+    expect(AudioMock).toHaveBeenCalledWith("/sounds/drums/Click.wav");
+    expect(play).toHaveBeenCalledOnce();
+    expect(details?.dataset.open).toBe("false");
+    expect(details?.getAttribute("aria-hidden")).toBe("true");
+    expect(marker?.getAttribute("aria-expanded")).toBe("false");
   });
 
   it("ersetzt eingebettete Module durch einen leeren Live-Katalog", async () => {

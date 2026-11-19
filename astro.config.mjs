@@ -449,8 +449,16 @@ export default defineConfig({
               slug: "audio/theory/lernpfad",
             },
             {
+              label: "Humpa-Shop",
+              slug: "audio/theory/shop",
+            },
+            {
               label: "Inventar",
               slug: "audio/theory/inventar",
+            },
+            {
+              label: "Studio",
+              slug: "audio/theory/studio",
             },
           ],
         },
@@ -464,7 +472,7 @@ export default defineConfig({
                 { label: "Modul-Builder bedienen", slug: "wiki/modul-builder" },
                 { label: "NotationBuilder bedienen", slug: "wiki/notation-builder" },
                 { label: "Drum-Pattern anhören", slug: "wiki/drum-pattern" },
-                { label: "Inventar benutzen", slug: "wiki/inventar" },
+                { label: "Inventar und Shop benutzen", slug: "wiki/inventar" },
               ],
             },
             {
