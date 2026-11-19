@@ -20,6 +20,15 @@ Netlify-Dashboard für die Site aktiviert und die Registrierung auf **Invite
 only** gestellt werden. Konten werden über Einladungen angelegt; Login,
 Einladung und Passwort-Wiederherstellung laufen über die Lernkonto-Oberfläche.
 
+Admins mit der Netlify-Identity-Rolle `admin` können Einladungen unter
+**Admin → Konten & Einladungen** versenden und dort den aktuellen
+Registrierungsstatus prüfen. Das Backend prüft die Rolle serverseitig und nutzt
+den nur in Netlify Functions verfügbaren Identity-Operator-Token für den
+Einladungsversand. Die Identity-API bietet hier keine Schreiboperation für den
+Registrierungsmodus; Änderungen an **Invite only** bleiben daher in der
+Netlify-Site-Konfiguration. Der Admin-Bereich zeigt den Zustand an und
+behauptet nicht, eine Änderung vorgenommen zu haben.
+
 `/api/learning-progress` prüft die Netlify-Identity-Sitzung serverseitig. Der
 Schlüssel wird ausschließlich aus der bestätigten Konto-ID gebildet; Requests
 können daher keine Lernstände anderer Konten lesen oder überschreiben. Diese

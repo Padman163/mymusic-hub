@@ -5,10 +5,17 @@ description: So meldest du dich an und nutzt deinen Lernstand auf mehreren Gerä
 
 ## Konto verwenden
 
-Der Zugang ist nur mit einer Einladung möglich. Öffne eine Lernseite und gib
-oben deine E-Mail-Adresse und dein Passwort ein. Bei der ersten Einladung
-öffnet der Link aus der E-Mail ein Formular, in dem du dein Passwort festlegst.
-Ein öffentliches Registrierungsformular gibt es nicht.
+Die Hub-Oberfläche bietet kein öffentliches Registrierungsformular. Öffne eine
+Lernseite und melde dich mit deiner E-Mail-Adresse und deinem Passwort an. Bei
+der ersten Einladung öffnet der Link aus der E-Mail ein Formular, in dem du
+dein Passwort festlegst. Der aktuelle Registrierungsmodus wird im Admin-Bereich
+angezeigt.
+
+Admins mit der Netlify-Identity-Rolle `admin` können unter **Admin → Konten &
+Einladungen** Einladungen verschicken und den aktuellen Registrierungsmodus
+prüfen. Die Änderung des Modus selbst bleibt in der Netlify-Site-Konfiguration;
+die Identity-API stellt dafür keine Änderungsfunktion bereit. Die Rolle des
+ersten Admins muss einmalig in Netlify vergeben werden.
 
 Mit der Anmeldung werden Lernfortschritt, XP, Quiz-Bestwerte, Shop-Käufe,
 Inventar und Studio-Ausrüstung mit deinem Konto verknüpft. So kannst du auf

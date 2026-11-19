@@ -1,0 +1,22 @@
+---
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import AdminIdentityPanel from "../../components/admin/AdminIdentityPanel.astro";
+import LearningAccount from "../../components/learning/LearningAccount.astro";
+---
+
+<StarlightPage
+  frontmatter={{
+    title: "Konten & Einladungen",
+    description: "Registrierungsstatus anzeigen und Konten einladen.",
+    tableOfContents: false,
+    editUrl: false,
+  }}
+>
+  <LearningAccount show={true} />
+  <p>
+    Für den Zugriff ist die Netlify-Identity-Rolle <code>admin</code>
+    erforderlich. Die erste Admin-Rolle muss einmalig in Netlify zugewiesen
+    werden.
+  </p>
+  <AdminIdentityPanel />
+</StarlightPage>

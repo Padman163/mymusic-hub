@@ -432,14 +432,10 @@ export default defineConfig({
         {
           label: "Admin",
           items: [
-            {
-              label: "Projektierung",
-              items: [
-                { label: "Beiträge", slug: "projektierung/beitraege" },
-                { label: "Modul-Builder", slug: "projektierung/modul-builder" },
-                { label: "Modularchiv", link: "/module-archives/" },
-              ],
-            },
+            { label: "Konten & Einladungen", link: "/admin/konten/" },
+            { label: "Beiträge", slug: "projektierung/beitraege" },
+            { label: "Modul-Builder", slug: "projektierung/modul-builder" },
+            { label: "Modularchiv", link: "/module-archives/" },
             { label: "Admin-Wiki", link: "/admin-wiki/" },
           ],
         },
