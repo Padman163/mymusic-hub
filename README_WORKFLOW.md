@@ -25,7 +25,11 @@ Die lokale `.env` ist damit nicht die Datenquelle der Netlify Blobs; sie enthäl
 
 Bei Modul-Builder, Beiträgen und anderen Netlify-Functions ausschließlich `http://localhost:8888` öffnen. Port `4321` ist der von der Netlify CLI intern gestartete reine Astro-Server; dort fehlen die Backend-Routen und Browserfehler mit HTML-Antworten sind dann erwartbar. Eine `404 text/html` von `/api/modules` oder `/api/contributions` bedeutet daher zuerst: richtige URL und richtigen Server prüfen.
 
-Die `.env` darf nicht committet werden. `NETLIFY_AUTH_TOKEN` bleibt ausschließlich als geheime Netlify-Build-Variable im Dashboard; gelangt der Wert trotz Sicherheitsmaskierung in die lokale Datei, vor dem Commit und vor der Weitergabe wieder aus `.env` entfernen. `GITHUB_BRANCH`, `GITHUB_DATA_PATH`, `GITHUB_REPOSITORY` und `GITHUB_TOKEN` werden für die Netlify-Blob-Datenspeicherung nicht benötigt und können aus der aktuellen lokalen `.env` entfernt werden.
+Die `.env` darf nicht committet werden. Die Blob-Transferbefehle verwenden die
+Anmeldung aus `npx netlify-cli login` und benötigen `NETLIFY_AUTH_TOKEN` nicht
+in `.env`. `GITHUB_BRANCH`, `GITHUB_DATA_PATH`, `GITHUB_REPOSITORY` und
+`GITHUB_TOKEN` werden für die Netlify-Blob-Datenspeicherung nicht benötigt und
+können aus der aktuellen lokalen `.env` entfernt werden.
 
 ## 2. Feature entwickeln
 
@@ -44,17 +48,38 @@ Beiträge und Lernmodule verwenden bereits Netlify Blobs (`mymusic-hub-data`). `
 - `npx netlify-cli dev` liest und schreibt einen eigenen dauerhaften Store unter `.netlify/`, derzeit `.netlify\blobs-serve\`.
 - Ein leerer lokaler Store wird aus `data\blob-snapshot\contributions.json` und `data\blob-snapshot\modules.json` initialisiert.
 - Schon vorhandene lokale Blob-Keys haben Vorrang. Ein Git-Branch- oder `.env`-Wechsel lädt deshalb keine neueren Snapshot-Daten in diesen Store.
-- Lokale Schreibvorgänge über die Functions aktualisieren zusätzlich die versionierten Snapshots. Diese Änderungen müssen committet und gepusht werden, damit ein späterer Netlify-Deploy sie in den siteweiten Cloud-Store importiert.
-- Branch Deploys, Deploy Previews und Production derselben Netlify-Site teilen den Cloud-Store und können ihn gegenseitig überschreiben.
+- Lokale Schreibvorgänge über die Functions aktualisieren zusätzlich die versionierten Snapshots, ändern aber noch nicht die Cloud.
+- `npm run blobs:push` erstellt vorher ein Cloud-Backup und lädt danach beide lokalen Snapshots in den siteweiten Store.
+- Branch Deploys und Deploy Previews teilen den Cloud-Store mit Production, überschreiben ihn aber nicht mehr aus ihrem Build.
+- Kein Build importiert Snapshot-Daten; Cloud-Änderungen erfolgen ausschließlich über den bestätigten Transferbefehl.
 
-Wenn der lokale Stand nach einem Branch-Wechsel hinter dem versionierten Snapshot zurückbleibt, Netlify Dev zuerst stoppen und nur den ignorierten lokalen Store zurücksetzen:
+Wenn der lokale Stand nach einem Branch-Wechsel hinter dem versionierten Snapshot zurückbleibt, Netlify Dev zuerst stoppen und den benannten Reset-Befehl verwenden:
 
-```powershell
-Remove-Item -Recurse -Force .netlify\blobs-serve
+```bash
+npm run blobs:reset
 npx netlify-cli dev
 ```
 
-Das entfernt ausschließlich lokale Daten. Vorher lokale, nicht gespeicherte Teständerungen sichern. Cloud-Keys dürfen für diesen Ablauf nicht gelöscht werden. Vor Deploys den aktuellen Snapshot- und Cloud-Datenstand gemäß [Blob-Referenz](features/README_FEAT_NETLIFYBLOB.md) sichern und abgleichen; isolierte Online-Abnahmen benötigen eine separate Netlify-Site.
+Das entfernt ausschließlich `.netlify/blobs-serve`. Vorher nicht als Snapshot
+gesicherte lokale Änderungen erhalten. Für eine frische lokale Kopie des
+aktuellen Online-Stands:
+
+```bash
+npm run blobs:pull
+npm run blobs:reset
+npx netlify-cli dev
+```
+
+Nach lokalen Änderungen die Snapshot-Diff prüfen und ausdrücklich hochladen:
+
+```bash
+git diff -- data/blob-snapshot
+npm run blobs:push
+```
+
+Der Push erstellt vor dem überschreibenden Zugriff ein Archiv beider Cloud-Blobs.
+Token-Regeln und Deploy-Verhalten stehen in der
+[Blob-Referenz](features/README_FEAT_NETLIFYBLOB.md).
 
 ## 3. Automatisch testen
 

@@ -14,15 +14,26 @@ npm run build                # Erzeugt einen produktionsreifen Static-Build im O
 npm run preview              # Startet einen lokalen Webserver zur Vorschau des dist/-Builds
 ```
 
-Bei Beiträgen und Modulen bestimmt `GITHUB_BRANCH` keinen Datenstand. `npx netlify-cli dev` verwendet einen dauerhaften lokalen Blob-Store unter `.netlify\blobs-serve\`; er überschreibt sich beim Branch-Wechsel nicht aus den versionierten Snapshots. Wenn der lokale Stand trotz aktuellem `data\blob-snapshot\` veraltet ist:
+Bei Beiträgen und Modulen bestimmt `GITHUB_BRANCH` keinen Datenstand. `npx netlify-cli dev` verwendet einen dauerhaften lokalen Blob-Store unter `.netlify\blobs-serve\`; er überschreibt sich beim Branch-Wechsel nicht aus den versionierten Snapshots. Für den aktuellen Cloud-Stand:
 
-```powershell
-# Netlify Dev zuerst vollständig stoppen, dann:
-Remove-Item -Recurse -Force .netlify\blobs-serve
+```bash
+npm run blobs:pull
+npm run blobs:reset
 npx netlify-cli dev
 ```
 
-Nur den lokalen Blob-Ordner löschen; er liegt in `.gitignore` und ist von den Netlify-Cloud-Daten getrennt. Beim Neustart werden vorhandene Keys aus `data\blob-snapshot\contributions.json` und `data\blob-snapshot\modules.json` initialisiert. Der Export `npx netlify-cli env:list --plain > .env` bleibt der Standardbefehl; unter Windows PowerShell 5.1 kann die Datei dabei jedoch UTF-16LE statt UTF-8 erhalten. Nur in diesem Fall die Datei als UTF-8 neu speichern; siehe [Workspace-Setup](README_WORKSPACE_SETUP.md) und die [Blob-Referenz](features/README_FEAT_NETLIFYBLOB.md#architektur-und-datenfluss).
+Vor `blobs:reset` Netlify Dev stoppen und lokale Änderungen sichern. Beim
+Neustart werden die Keys aus den Snapshots initialisiert. Nach lokalen
+Bearbeitungen lauten die Upload-Befehle:
+
+```bash
+git diff -- data/blob-snapshot
+npm run blobs:push
+```
+
+Der Push erzeugt vorher ein Cloud-Backup. `.netlify/blobs-serve` ist
+Datenspeicher, kein Cleanup-Ordner. Details und Token-Regeln stehen in der
+[Blob-Referenz](features/README_FEAT_NETLIFYBLOB.md).
 
 ### 1.2 Häufige Git-Kommandos
 

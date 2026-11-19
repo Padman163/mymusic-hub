@@ -771,12 +771,18 @@ describe("module-store Validierung & Store-Operationen", () => {
 });
 
 vi.mock("@netlify/blobs", () => ({ getStore: vi.fn() }));
+const writeLocalBlobSnapshot = vi.hoisted(() => vi.fn());
+vi.mock("../netlify/functions/lib/local-blob-snapshot.ts", () => ({
+  readLocalBlobSnapshot: vi.fn().mockResolvedValue(undefined),
+  writeLocalBlobSnapshot,
+}));
 
 describe("Modules Serverless API (/api/modules)", () => {
   let store;
   const storedDb = () => store.value("modules");
   beforeEach(() => {
     vi.stubEnv("NETLIFY_DEV", "false");
+    writeLocalBlobSnapshot.mockReset().mockResolvedValue(undefined);
     store = mockBlobStore();
     store.put("modules", { modules: [], questions: [] });
     vi.mocked(getStore).mockReset().mockReturnValue(store);
@@ -798,6 +804,22 @@ describe("Modules Serverless API (/api/modules)", () => {
       synchronize.mockRestore();
       vi.unstubAllEnvs();
     }
+  });
+
+  it("lässt gehostete Deploys die Module nur lesen", async () => {
+    vi.stubEnv("CONTEXT", "deploy-preview");
+    vi.stubEnv("NETLIFY_DEV", "false");
+
+    const read = await modulesHandler(new Request("http://localhost/api/modules"));
+    expect(read.status).toBe(200);
+
+    const write = await modulesHandler(new Request("http://localhost/api/modules", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ entity: "module", id: "preview", title: "Nicht schreiben" }),
+    }));
+    expect(write.status).toBe(405);
+    expect(storedDb().modules).toEqual([]);
   });
 
   it("meldet ausdrücklich, wenn nur die Kopien nach dem Speichern fehlgeschlagen sind", async () => {

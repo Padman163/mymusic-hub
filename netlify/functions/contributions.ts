@@ -12,7 +12,7 @@ import {
 	type Contribution,
 	type ContributionFields,
 } from './lib/contribution-store';
-import { isBlobStoreUnavailable, LocalBlobSnapshotError } from './lib/blob-store';
+import { isBlobStoreUnavailable, isReadOnlyCloudContext, LocalBlobSnapshotError } from './lib/blob-store';
 
 const allowedTypes = ['Bug', 'Feature', 'Decision'] as const;
 const maxRequestBytes = 500_000;
@@ -79,6 +79,12 @@ export default async (request: Request): Promise<Response> => {
 			console.error('Die Beiträge konnten nicht aus Netlify Blobs geladen werden.', error);
 			return jsonResponse(502, { error: 'Die Beiträge konnten derzeit nicht geladen werden.' });
 		}
+	}
+
+	if (isReadOnlyCloudContext()) {
+		return jsonResponse(405, {
+			error: 'Dieser Deploy zeigt den aktuellen Cloud-Stand. Änderungen sind in dieser Vorschau nicht erlaubt.',
+		});
 	}
 
 	const bodyText = await request.text();

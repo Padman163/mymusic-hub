@@ -17,6 +17,7 @@ import {
 import {
 	BlobStoreConflictError,
 	isBlobStoreUnavailable,
+	isReadOnlyCloudContext,
 	LocalBlobSnapshotError,
 	readBlobJSON,
 	updateBlobJSON,
@@ -235,6 +236,12 @@ export default async (request: Request): Promise<Response> => {
 				error: 'Die Moduldaten konnten derzeit nicht geladen werden.',
 			});
 		}
+	}
+
+	if (isReadOnlyCloudContext()) {
+		return jsonResponse(405, {
+			error: 'Dieser Deploy zeigt den aktuellen Cloud-Stand. Änderungen sind in dieser Vorschau nicht erlaubt.',
+		});
 	}
 
 	const bodyText = await request.text();

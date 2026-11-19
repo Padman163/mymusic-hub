@@ -50,6 +50,16 @@ export function isBlobStoreUnavailable(error: unknown): boolean {
 	return error instanceof Error && error.name === 'MissingBlobsEnvironmentError';
 }
 
+export function isReadOnlyCloudContext(): boolean {
+	const context = process.env.CONTEXT;
+	return (
+		process.env.NETLIFY_DEV !== 'true' &&
+		(context === 'production' ||
+			context === 'deploy-preview' ||
+			context === 'branch-deploy')
+	);
+}
+
 async function initializeKey<K extends Key>(store: Store, key: K): Promise<void> {
 	// Another request may have initialized (and already updated) this key.
 	const snapshotValue = process.env.NETLIFY_DEV === 'true'

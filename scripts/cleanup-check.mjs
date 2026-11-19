@@ -143,6 +143,11 @@ for (const localPath of localPaths) {
       ? "lokal vorhanden, ignoriert"
       : "lokal vorhanden, NICHT ignoriert";
   console.log(`  ${localPath}: ${state}`);
+  if (localPath === ".netlify/" && exists) {
+    console.log(
+      "    BEHALTEN: persistenter lokaler Netlify-Blob-Speicher; niemals pauschal als Cache löschen.",
+    );
+  }
   if (exists && !ignored) {
     addReviewItem(`${localPath} ist lokal vorhanden und nicht ignoriert.`);
   }

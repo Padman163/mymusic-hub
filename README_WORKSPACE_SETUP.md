@@ -70,7 +70,7 @@ npx netlify-cli link
 Beiträge und Module verwenden Netlify Blobs; die ehemalige GitHub-basierte Datenspeicherung ist auf diesem Stand nicht mehr aktiv.
 
 * **Workspace:** Die lokale `.env` kann mit `npx netlify-cli env:list --plain > .env` erzeugt werden. Die Datei liefert Umgebungswerte, ist aber nicht die Datenquelle der Netlify Blobs. `GITHUB_BRANCH`, `GITHUB_DATA_PATH`, `GITHUB_REPOSITORY` und `GITHUB_TOKEN` wählen bei Netlify Blobs weder Branch noch Datenstand. `.env` niemals committen oder mit geheimen Build-Token teilen.
-* **Dashboard:** Unter **Site configuration → Build & deploy → Continuous deployment → Branches and deploy contexts** den gewünschten Branch freigeben bzw. bewusst als Production Branch setzen. `NETLIFY_AUTH_TOKEN` muss für Production, Deploy Previews und Branch Deploys als geheimes Build-Secret gesetzt sein, damit der Build den Snapshot synchronisieren kann. Es gehört nicht in die lokale `.env` oder ins Repository.
+* **Dashboard:** Unter **Site configuration → Build & deploy → Continuous deployment → Branches and deploy contexts** den gewünschten Branch freigeben bzw. bewusst als Production Branch setzen. Builds synchronisieren den siteweiten Store nicht.
 * **Kodierung unter Windows:** In Bash, Codespaces und PowerShell 7 ist der Export mit `npx netlify-cli env:list --plain > .env` in der Regel in Ordnung. Windows PowerShell 5.1 kann mit `>` jedoch UTF-16LE statt UTF-8 schreiben. Der Fehler liegt dann nicht am Netlify-Befehl, sondern an der Kodierung der umgeleiteten Datei. Falls die Datei als UTF-16LE vorliegt, kann sie nach dem Export explizit als UTF-8 ohne BOM neu geschrieben werden:
 
 ```powershell
@@ -97,21 +97,46 @@ npx netlify-cli status
 npx netlify-cli dev
 ```
 * **URL:** Öffne `http://localhost:8888`.
-* **Lokaler Blob-Speicher:** Die CLI startet Astro, die Functions und einen lokalen Blob-Server. Dessen Daten bleiben unter `.netlify/` erhalten, in der aktuellen CLI unter `.netlify\blobs-serve\`. Dieser lokale Store wird nicht mit Netlify in der Cloud synchronisiert.
+* **Lokaler Blob-Speicher:** Die CLI startet Astro, die Functions und einen lokalen Blob-Server. Dessen Daten bleiben unter `.netlify/blobs-serve/`. Dieser Store wird nur mit den expliziten Transferbefehlen mit der Cloud abgeglichen.
 * **Initialisierung:** Nur wenn ein lokaler Key fehlt, wird er aus `data\blob-snapshot\contributions.json` beziehungsweise `data\blob-snapshot\modules.json` angelegt. Bereits vorhandene lokale Keys bleiben beim Neustart und Branch-Wechsel bestehen.
 * **Prüfen:** `/api/modules` und `/api/contributions` auf Port 8888 aufrufen. Änderungen laufen über Blobs, nicht über den Astro-Datei-Fallback.
 
-Zeigt Netlify Dev nach einem Branch-Wechsel weiterhin einen alten Datenstand, obwohl der versionierte Snapshot aktuell ist:
+Für den aktuellen Cloud-Stand in einem frischen Workspace oder Codespace:
 
-```powershell
-# Netlify Dev zuerst vollständig stoppen und lokale Teständerungen sichern.
-Remove-Item -Recurse -Force .netlify\blobs-serve
-
-# Lokalen Store aus den Snapshots neu initialisieren.
+```bash
+npm ci
+npx netlify-cli login
+npx netlify-cli link
+npm run blobs:pull
+npm run blobs:reset
 npx netlify-cli dev
 ```
 
-Nur den ignorierten lokalen Blob-Ordner zurücksetzen. Dabei niemals Cloud-Keys löschen; die Deploy-Preview und der siteweite Cloud-Store sind davon getrennt.
+`blobs:reset` fragt vor der Löschung nach einer Bestätigung. `--yes` ist nur
+für bewusst automatisierte Abläufe vorgesehen.
+
+Die Transferbefehle verwenden die Netlify-CLI-Anmeldung aus `npx netlify-cli
+login` und die Verknüpfung aus `npx netlify-cli link`. Ein Token gehört nicht
+in `.env` oder ins Repository.
+
+Zeigt Netlify Dev nach einem Branch-Wechsel weiterhin einen alten Datenstand:
+
+```bash
+# Netlify Dev zuerst vollständig stoppen und lokale Änderungen sichern.
+npm run blobs:reset
+npx netlify-cli dev
+```
+
+Nach lokalen Bearbeitungen die Snapshot-Diff prüfen und ausdrücklich hochladen:
+
+```bash
+git diff -- data/blob-snapshot
+npm run blobs:push
+```
+
+Vor dem Upload wird automatisch ein datiertes Archiv beider Cloud-Blobs unter
+`data/blob-archive/` angelegt. `.netlify/blobs-serve` ist ein persistenter
+Datenspeicher und kein allgemeiner Cleanup-Kandidat.
 
 ### Schritt 6: E2E-Testbrowser & Lighthouse CI einrichten (Optional)
 
