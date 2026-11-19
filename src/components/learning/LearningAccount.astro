@@ -1,97 +1,109 @@
----
-interface Props {
-  show?: boolean;
-}
-
-const { show = true } = Astro.props;
----
-<aside
-  class="learning-account"
-  data-learning-account
-  aria-label="Lernkonto"
-  hidden={!show}
->
-  <div class="learning-account-heading">
-    <strong>Lernkonto</strong>
-    <p data-account-status role="status">
-      Melde dich mit einem eingeladenen Konto an, damit dein Lernstand online
-      gespeichert wird.
-    </p>
-    <a href="/wiki/lernstand-konto/">Anleitung zum Lernkonto</a>
-  </div>
-  <form data-login-form class="learning-account-form">
-    <label>
-      E-Mail-Adresse
-      <input data-login-email type="email" autocomplete="username" required />
-    </label>
-    <label>
-      Passwort
-      <input
-        data-login-password
-        type="password"
-        autocomplete="current-password"
-        required
-      />
-    </label>
-    <div class="learning-account-actions">
-      <button data-login-submit type="submit">Anmelden</button>
-      <button data-show-recovery type="button" class="learning-account-link">
-        Passwort vergessen?
-      </button>
+<details class="learning-account" data-learning-account>
+  <summary data-account-toggle>
+    <span data-account-label>Login / Registrierung</span>
+  </summary>
+  <section class="learning-account-panel" aria-label="Lernkonto">
+    <p data-account-status role="status" aria-live="polite" hidden></p>
+    <div data-auth-forms>
+      <div class="learning-account-switch" aria-label="Konto-Zugang">
+        <button data-show-login type="button" aria-pressed="true">Login</button>
+        <button data-show-signup type="button" aria-pressed="false">
+          Registrierung
+        </button>
+      </div>
+      <form data-login-form class="learning-account-form">
+        <label>
+          E-Mail
+          <input data-login-email type="email" autocomplete="username" required />
+        </label>
+        <label>
+          Passwort
+          <input
+            data-login-password
+            type="password"
+            autocomplete="current-password"
+            required
+          />
+        </label>
+        <button data-login-submit type="submit">Anmelden</button>
+        <button data-show-recovery type="button" class="learning-account-link">
+          Passwort vergessen?
+        </button>
+      </form>
+      <form data-signup-form class="learning-account-form" hidden>
+        <label>
+          Name
+          <input data-signup-name type="text" autocomplete="name" required />
+        </label>
+        <label>
+          E-Mail
+          <input data-signup-email type="email" autocomplete="email" required />
+        </label>
+        <label>
+          Passwort
+          <input
+            data-signup-password
+            type="password"
+            autocomplete="new-password"
+            minlength="8"
+            required
+          />
+        </label>
+        <button data-signup-submit type="submit">Registrieren</button>
+      </form>
+      <form data-invite-form class="learning-account-form" hidden>
+        <label>
+          Neues Passwort
+          <input
+            data-invite-password
+            type="password"
+            autocomplete="new-password"
+            minlength="8"
+            required
+          />
+        </label>
+        <button data-invite-submit type="submit">Einladung annehmen</button>
+      </form>
+      <form data-recovery-request-form class="learning-account-form" hidden>
+        <label>
+          E-Mail
+          <input data-recovery-email type="email" autocomplete="email" required />
+        </label>
+        <button data-recovery-submit type="submit">
+          Wiederherstellungslink anfordern
+        </button>
+        <button data-cancel-recovery type="button" class="learning-account-link">
+          Zurück zum Login
+        </button>
+      </form>
+      <form data-recovery-complete-form class="learning-account-form" hidden>
+        <label>
+          Neues Passwort
+          <input
+            data-recovery-password
+            type="password"
+            autocomplete="new-password"
+            minlength="8"
+            required
+          />
+        </label>
+        <button data-recovery-complete-submit type="submit">
+          Passwort speichern
+        </button>
+      </form>
     </div>
-  </form>
-  <form data-invite-form class="learning-account-form" hidden>
-    <label>
-      Neues Passwort
-      <input
-        data-invite-password
-        type="password"
-        autocomplete="new-password"
-        minlength="8"
-        required
-      />
-    </label>
-    <button data-invite-submit type="submit">Einladung annehmen</button>
-  </form>
-  <form data-recovery-request-form class="learning-account-form" hidden>
-    <label>
-      E-Mail-Adresse
-      <input data-recovery-email type="email" autocomplete="email" required />
-    </label>
-    <button data-recovery-submit type="submit">
-      Wiederherstellungslink anfordern
-    </button>
-  </form>
-  <form data-recovery-complete-form class="learning-account-form" hidden>
-    <label>
-      Neues Passwort
-      <input
-        data-recovery-password
-        type="password"
-        autocomplete="new-password"
-        minlength="8"
-        required
-      />
-    </label>
-    <button data-recovery-complete-submit type="submit">
-      Passwort speichern
-    </button>
-  </form>
-  <div data-signed-in hidden>
-    <p>Angemeldet als <strong data-user-email></strong></p>
-    <div class="learning-account-actions">
-      <button data-logout type="button">Abmelden</button>
-      <button data-sync-retry type="button" hidden>Erneut synchronisieren</button>
+    <div data-signed-in hidden>
+      <button data-logout type="button">Ausloggen</button>
     </div>
-  </div>
-</aside>
+  </section>
+</details>
 
 <script>
   import { attachLearningAccount } from "../../lib/learning-account-ui";
 
   function initLearningAccounts() {
     document
-      .querySelectorAll<HTMLElement>("[data-learning-account]")
+      .querySelectorAll<HTMLDetailsElement>("[data-learning-account]")
       .forEach((root) => attachLearningAccount(root));
   }
 
@@ -100,37 +112,68 @@ const { show = true } = Astro.props;
 </script>
 
 <style>
-  .learning-account[hidden],
-  .learning-account [hidden] {
-    display: none !important;
+  .learning-account {
+    position: relative;
+    color: var(--sl-color-text);
   }
 
-  .learning-account {
+  .learning-account summary {
+    padding: 0.45rem 0.7rem;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.5rem;
+    background: var(--sl-color-bg);
+    color: var(--sl-color-text);
+    cursor: pointer;
+    list-style: none;
+    white-space: nowrap;
+  }
+
+  .learning-account summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .learning-account[open] summary,
+  .learning-account summary:hover {
+    border-color: var(--sl-color-accent);
+  }
+
+  .learning-account-panel {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 0.5rem);
+    right: 0;
     display: grid;
     gap: 0.75rem;
-    margin: 0 0 1.25rem;
+    width: min(22rem, calc(100vw - 2rem));
+    max-height: calc(100vh - var(--sl-nav-height) - 1rem);
+    overflow-y: auto;
     padding: 1rem;
     border: 1px solid var(--sl-color-gray-5);
     border-radius: 0.75rem;
     background: var(--sl-color-bg-nav);
-    color: var(--sl-color-text);
+    box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 18%);
   }
 
-  .learning-account-heading p,
-  .learning-account p {
-    margin: 0.25rem 0 0;
+  .learning-account [hidden] {
+    display: none !important;
   }
 
-  .learning-account-form {
+  .learning-account-panel p {
+    margin: 0;
+  }
+
+  .learning-account-form,
+  .learning-account-switch,
+  [data-signed-in] {
     display: flex;
     flex-wrap: wrap;
     align-items: end;
-    gap: 0.75rem;
+    gap: 0.6rem;
   }
 
   .learning-account-form label {
     display: grid;
-    flex: 1 1 14rem;
+    flex: 1 1 100%;
     gap: 0.25rem;
   }
 
@@ -157,10 +200,18 @@ const { show = true } = Astro.props;
     opacity: 0.65;
   }
 
-  .learning-account-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
+  .learning-account-switch {
+    border-bottom: 1px solid var(--sl-color-gray-5);
+  }
+
+  .learning-account-switch button {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .learning-account-switch button[aria-pressed="true"] {
+    border-bottom: 2px solid var(--sl-color-accent);
   }
 
   .learning-account-link {

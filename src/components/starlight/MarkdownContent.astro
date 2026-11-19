@@ -1,14 +1,11 @@
 ---
 import "@astrojs/starlight/style/markdown.css";
-import LearningAccount from "../learning/LearningAccount.astro";
 
 const isWideContent =
   Astro.locals.starlightRoute.entry.data.template === "wide-content" ||
   Astro.locals.starlightRoute.entry.data.template === "extra-wide-content";
 const isExtraWideContent =
   Astro.locals.starlightRoute.entry.data.template === "extra-wide-content";
-const isLearningContent =
-  Astro.locals.starlightRoute.entry.id.startsWith("audio/");
 ---
 
 <div
@@ -16,6 +13,5 @@ const isLearningContent =
   data-wide-content={isWideContent ? "" : undefined}
   data-extra-wide-content={isExtraWideContent ? "" : undefined}
 >
-  <LearningAccount show={isLearningContent} />
   <slot />
 </div>

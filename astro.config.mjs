@@ -426,6 +426,7 @@ export default defineConfig({
         "katex/dist/katex.min.css",
       ],
       components: {
+        Header: "./src/components/starlight/Header.astro",
         MarkdownContent: "./src/components/starlight/MarkdownContent.astro",
       },
       sidebar: [

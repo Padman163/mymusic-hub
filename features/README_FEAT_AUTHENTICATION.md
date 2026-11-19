@@ -5,12 +5,13 @@ ihren persönlichen Lernstand zwischen Geräten synchronisieren. Gemeinsame
 Module und Konfigurationen bleiben davon getrennt und werden in
 [Netlify Blobs](README_FEAT_NETLIFYBLOB.md) gespeichert.
 
-## Anmeldung und Einladungen
+## Anmeldung, Registrierung und Einladungen
 
-Die zentrale Lernkonto-Oberfläche ist
-[`LearningAccount.astro`](../src/components/learning/LearningAccount.astro).
-Sie unterstützt Anmeldung, Abmeldung, Einladungsannahme und
-Passwort-Wiederherstellung. Auf der Admin-Seite
+Die Kontooberfläche sitzt rechts im globalen Starlight-Header. Sie unterstützt
+Anmeldung per E-Mail und Passwort, Registrierung mit Name, E-Mail und Passwort,
+Abmeldung, Einladungsannahme und Passwort-Wiederherstellung. Selbstregistrierung
+ist nur möglich, wenn sie in Netlify Identity für die Site aktiviert ist. Auf
+der Admin-Seite
 [`Konten & Einladungen`](../src/pages/admin/konten.astro) können Nutzer mit
 der Netlify-Identity-Rolle `admin` Einladungen verschicken und den aktuellen
 Registrierungsstatus lesen.
