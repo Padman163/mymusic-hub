@@ -1,0 +1,21 @@
+{
+  "modules": [
+    {
+      "id": "m",
+      "order": 1,
+      "title": "Test",
+      "description": "",
+      "scope": "theory",
+      "level": 100,
+      "tags": [],
+      "theoryBaseXp": 30,
+      "quizEasyMinScore": 0.8,
+      "fastlaneMinScore": 0.85,
+      "theoryBlocks": [],
+      "practiceBlocks": [],
+      "createdAt": "2026-11-19T20:10:53.432Z",
+      "updatedAt": "2026-11-19T20:10:53.432Z"
+    }
+  ],
+  "questions": []
+}
