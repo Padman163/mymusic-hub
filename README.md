@@ -22,7 +22,7 @@ Die Oberfläche läuft unter `http://localhost:4321`. Erst-Setup und Start mit N
 | [README_CHEATSHEET.md](README_CHEATSHEET.md) | Tägliche Befehle und Entwicklungsworkflows |
 | [README_ASTROSTRUCTURE.md](README_ASTROSTRUCTURE.md) | Architektur und Projektstruktur |
 | [README_TESTING.md](README_TESTING.md) | Teststrategie und Release-Audit |
-| [README_WORKSPACE_SETUP.md](README_WORKSPACE_SETUP.md) | Einrichtung, Netlify und Umgebungsvariablen |
+| [README_WORKSPACE_SETUP.md](README_WORKSPACE_SETUP.md) | Einrichtung und Netlify |
 | [README_FEAT.md](features/README_FEAT.md) | Übersicht über Funktionen und Fachmodule |
 | [README_FEAT_AUDIOPLAYER.md](features/README_FEAT_AUDIOPLAYER.md) | Drum-Soundfiles, Spurauswahl und tempoabhängige Wiedergabe |
 | [Wiki: Beiträge verwalten](src/content/docs/wiki/beitraege.mdx) | Bedienungsanleitung für Nutzer |

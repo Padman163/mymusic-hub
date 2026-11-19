@@ -6,7 +6,7 @@
 
 Im neuen Workspace das Repository einrichten und den benötigten Branch auschecken: [Workspace-Setup](README_WORKSPACE_SETUP.md). Alltagsbefehle stehen im [Cheatsheet](README_CHEATSHEET.md).
 
-Vor einem Workspace-Wechsel Änderungen prüfen, committen und den aktuellen Branch pushen. Lokale `.env`-Dateien und nicht eingecheckte Daten separat und sicher übertragen.
+Vor einem Workspace-Wechsel Änderungen prüfen, committen und den aktuellen Branch pushen. Nicht eingecheckte Daten separat und sicher übertragen.
 
 Nach Paket- oder Netlify-Änderungen den Workspace erneut synchronisieren:
 
@@ -15,21 +15,20 @@ Nach Paket- oder Netlify-Änderungen den Workspace erneut synchronisieren:
 
 ```bash
 npx netlify-cli login
-npx netlify-cli env:list --plain > .env
 npx netlify-cli status
 ```
 
-Die lokale `.env` ist damit nicht die Datenquelle der Netlify Blobs; sie enthält nur exportierte Umgebungswerte. `GITHUB_BRANCH` beeinflusst daher weiterhin nicht, welche lokalen Blob-Daten geladen werden. Unter Windows PowerShell 5.1 kann `>` die Datei als UTF-16LE schreiben. Bash, Codespaces und PowerShell 7 verwenden üblicherweise UTF-8. Falls nach dem Export unerwartete Zeichen auftreten, die Datei bewusst als UTF-8 neu speichern; Details stehen im [Workspace-Setup](README_WORKSPACE_SETUP.md).
+Die Netlify CLI bezieht die benötigten Informationen aus der Anmeldung und der
+Site-Verknüpfung. Ein Export der Netlify-Umgebungsvariablen in eine lokale
+`.env` ist für dieses Projekt nicht erforderlich.
 
 3. Danach einen laufenden `npx netlify-cli dev`-Prozess vollständig stoppen und mit der aktualisierten Umgebung neu starten.
 
 Bei Modul-Builder, Beiträgen und anderen Netlify-Functions ausschließlich `http://localhost:8888` öffnen. Port `4321` ist der von der Netlify CLI intern gestartete reine Astro-Server; dort fehlen die Backend-Routen und Browserfehler mit HTML-Antworten sind dann erwartbar. Eine `404 text/html` von `/api/modules` oder `/api/contributions` bedeutet daher zuerst: richtige URL und richtigen Server prüfen.
 
-Die `.env` darf nicht committet werden. Die Blob-Transferbefehle verwenden die
-Anmeldung aus `npx netlify-cli login` und benötigen `NETLIFY_AUTH_TOKEN` nicht
-in `.env`. `GITHUB_BRANCH`, `GITHUB_DATA_PATH`, `GITHUB_REPOSITORY` und
-`GITHUB_TOKEN` werden für die Netlify-Blob-Datenspeicherung nicht benötigt und
-können aus der aktuellen lokalen `.env` entfernt werden.
+Die Blob-Transferbefehle verwenden die Anmeldung aus `npx netlify-cli login`
+und benötigen weder `NETLIFY_AUTH_TOKEN` noch die früheren `GITHUB_*`-Werte in
+einer lokalen `.env`.
 
 ## 2. Feature entwickeln
 
@@ -43,11 +42,11 @@ git switch -c feat/<featurename>
 
 Auf diesem Branch entwickeln und Änderungen regelmäßig committen und pushen. Soll ein neues Feature auf einem noch nicht in `main` übernommenen Feature aufbauen, bewusst von dessen Archiv-Branch abzweigen statt von `main`.
 
-Beiträge und Lernmodule verwenden bereits Netlify Blobs (`mymusic-hub-data`). `GITHUB_BRANCH` ist dafür wirkungslos. Lokal und online verwenden jedoch unterschiedliche Speicherstände:
+Beiträge und Lernmodule verwenden bereits Netlify Blobs (`mymusic-hub-data`). Lokal und online verwenden jedoch unterschiedliche Speicherstände:
 
 - `npx netlify-cli dev` liest und schreibt einen eigenen dauerhaften Store unter `.netlify/`, derzeit `.netlify\blobs-serve\`.
 - Ein leerer lokaler Store wird aus `data\blob-snapshot\contributions.json` und `data\blob-snapshot\modules.json` initialisiert.
-- Schon vorhandene lokale Blob-Keys haben Vorrang. Ein Git-Branch- oder `.env`-Wechsel lädt deshalb keine neueren Snapshot-Daten in diesen Store.
+- Schon vorhandene lokale Blob-Keys haben Vorrang. Ein Git-Branch-Wechsel lädt deshalb keine neueren Snapshot-Daten in diesen Store.
 - Lokale Schreibvorgänge über die Functions aktualisieren zusätzlich die versionierten Snapshots, ändern aber noch nicht die Cloud.
 - `npm run blobs:push` erstellt vorher ein Cloud-Backup und lädt danach beide lokalen Snapshots in den siteweiten Store.
 - Branch Deploys und Deploy Previews teilen den Cloud-Store mit Production, überschreiben ihn aber nicht mehr aus ihrem Build.

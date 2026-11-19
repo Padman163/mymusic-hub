@@ -7,8 +7,7 @@ Netlify Blobs (`@netlify/blobs`) ersetzt die GitHub REST API als Datenspeicher. 
 Die Abhängigkeit wurde mit `npm install @netlify/blobs` hinzugefügt. In einem frischen Workspace genügt die normale Installation über das Lockfile.
 
 1. Stelle sicher, dass der Deploy-Branch den Netlify-Blobs-Code und die
-Transfer-Skripte enthält. `GITHUB_BRANCH` wählt **keinen** Blob-Store und ist
-für diesen Ablauf nicht erforderlich.
+Transfer-Skripte enthält.
 2. Im Netlify Dashboard unter **Site configuration → Build & deploy → Continuous deployment → Branches and deploy contexts** den Branch für Branch Deploys/Deploy Previews freigeben oder bewusst als Production Branch setzen.
 3. Unter **Environment variables** die alten `GITHUB_*`-Variablen für die Datenspeicherung nach dem Wechsel entfernen, sofern sie nicht von anderen Verbrauchern benötigt werden. Für noch aktive alte Deploys oder einen geplanten Rollback erst deren Abhängigkeiten klären. Netlify stellt den Blob-Kontext für die Functions bereit.
 
@@ -72,8 +71,8 @@ npm run blobs:backup
 ```
 
 Die Transferbefehle verwenden die normale Netlify-CLI-Anmeldung. Führe einmal
-`npx netlify-cli login` und `npx netlify-cli link` aus; ein Token gehört nicht
-in `.env` oder ins Repository.
+`npx netlify-cli login` und `npx netlify-cli link` aus. Eine lokale `.env` und
+ein Token im Repository werden dafür nicht benötigt.
 
 ## Deploy Preview und Branch Deploy
 
@@ -87,8 +86,8 @@ den Astro-Build aus; Cloud-Änderungen erfolgen nur über `npm run blobs:push`.
 
 Vor dem Öffnen einer Preview wird der aktuelle lokale Stand mit `blobs:push`
 hochgeladen. Dadurch ist er in Production und jeder Vorschau sofort sichtbar.
-Die Befehle nutzen die normale Netlify-CLI-Anmeldung und benötigen keinen Token
-im Repository oder in `.env`.
+Die Befehle nutzen die normale Netlify-CLI-Anmeldung und benötigen keine lokale
+`.env` und keinen Token im Repository.
 
 **Überschreibungswirkung:** Kein Deploy importiert Daten. Dadurch kann ein alter
 Branch den Cloud-Stand nicht durch seinen Build zurücksetzen. Vor einem

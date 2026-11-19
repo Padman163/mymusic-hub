@@ -57,7 +57,7 @@ Verwende ```npm run fix``` im Alltag, um alles Automatische (Formatierung + sich
 
 Typfehler, die Astro oder TypeScript im Preflight meldet, müssen manuell behoben werden.
 
-### Schritt 5: Netlify CLI verknüpfen, Umgebungsvariablen für das Backend einrichten & Fullstack starten
+### Schritt 5: Netlify CLI verknüpfen & Fullstack starten
 
 ```bash
 # Einmalige Authentifizierung im Browser
@@ -69,27 +69,12 @@ npx netlify-cli link
 
 Beiträge und Module verwenden Netlify Blobs; die ehemalige GitHub-basierte Datenspeicherung ist auf diesem Stand nicht mehr aktiv.
 
-* **Workspace:** Die lokale `.env` kann mit `npx netlify-cli env:list --plain > .env` erzeugt werden. Die Datei liefert Umgebungswerte, ist aber nicht die Datenquelle der Netlify Blobs. `GITHUB_BRANCH`, `GITHUB_DATA_PATH`, `GITHUB_REPOSITORY` und `GITHUB_TOKEN` wählen bei Netlify Blobs weder Branch noch Datenstand. `.env` niemals committen oder mit geheimen Build-Token teilen.
+* **Workspace:** Nach `npx netlify-cli login` und `npx netlify-cli link` bezieht die CLI die benötigten Informationen aus der Anmeldung und der Site-Verknüpfung. Eine lokale `.env` ist für die Blob-Speicherung nicht erforderlich.
 * **Dashboard:** Unter **Site configuration → Build & deploy → Continuous deployment → Branches and deploy contexts** den gewünschten Branch freigeben bzw. bewusst als Production Branch setzen. Builds synchronisieren den siteweiten Store nicht.
-* **Kodierung unter Windows:** In Bash, Codespaces und PowerShell 7 ist der Export mit `npx netlify-cli env:list --plain > .env` in der Regel in Ordnung. Windows PowerShell 5.1 kann mit `>` jedoch UTF-16LE statt UTF-8 schreiben. Der Fehler liegt dann nicht am Netlify-Befehl, sondern an der Kodierung der umgeleiteten Datei. Falls die Datei als UTF-16LE vorliegt, kann sie nach dem Export explizit als UTF-8 ohne BOM neu geschrieben werden:
-
-```powershell
-$envText = npx netlify-cli env:list --plain
-[IO.File]::WriteAllText(
-  (Join-Path (Get-Location) '.env'),
-  ($envText -join [Environment]::NewLine) + [Environment]::NewLine,
-  (New-Object System.Text.UTF8Encoding($false))
-)
-```
-
-Anschließend prüfen, dass keine geheimen oder abgelösten Werte versehentlich in `.env` übernommen wurden.
 
 Die Details zum Datenumzug und zu gemeinsam genutzten Cloud-Daten stehen in der [Blob-Referenz](features/README_FEAT_NETLIFYBLOB.md).
 
 ```bash
-# Umgebungsvariablen exportieren
-npx netlify-cli env:list --plain > .env
-
 # Projektverknüpfung prüfen
 npx netlify-cli status
 
@@ -116,8 +101,8 @@ npx netlify-cli dev
 für bewusst automatisierte Abläufe vorgesehen.
 
 Die Transferbefehle verwenden die Netlify-CLI-Anmeldung aus `npx netlify-cli
-login` und die Verknüpfung aus `npx netlify-cli link`. Ein Token gehört nicht
-in `.env` oder ins Repository.
+login` und die Verknüpfung aus `npx netlify-cli link`. Eine lokale `.env` und
+ein Token im Repository werden dafür nicht benötigt.
 
 Zeigt Netlify Dev nach einem Branch-Wechsel weiterhin einen alten Datenstand:
 

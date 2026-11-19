@@ -14,7 +14,7 @@ npm run build                # Erzeugt einen produktionsreifen Static-Build im O
 npm run preview              # Startet einen lokalen Webserver zur Vorschau des dist/-Builds
 ```
 
-Bei Beiträgen und Modulen bestimmt `GITHUB_BRANCH` keinen Datenstand. `npx netlify-cli dev` verwendet einen dauerhaften lokalen Blob-Store unter `.netlify\blobs-serve\`; er überschreibt sich beim Branch-Wechsel nicht aus den versionierten Snapshots. Für den aktuellen Cloud-Stand:
+Bei Beiträgen und Modulen verwendet `npx netlify-cli dev` einen dauerhaften lokalen Blob-Store unter `.netlify\blobs-serve\`; er überschreibt sich beim Branch-Wechsel nicht aus den versionierten Snapshots. Für den aktuellen Cloud-Stand:
 
 ```bash
 npm run blobs:pull
