@@ -58,6 +58,7 @@ Verwende ```npm run fix``` im Alltag, um alles Automatische (Formatierung + sich
 Typfehler, die Astro oder TypeScript im Preflight meldet, müssen manuell behoben werden.
 
 ### Schritt 5: Netlify CLI verknüpfen, Umgebungsvariablen für das Backend einrichten & Fullstack starten
+
 ```bash
 # Einmalige Authentifizierung im Browser
 npx netlify-cli login
@@ -66,15 +67,28 @@ npx netlify-cli login
 npx netlify-cli link
 ```
 
-Beim Wechsel auf `feat/netlify-blobs` **die lokale `.env` und das Netlify Dashboard separat anpassen**:
+Beiträge und Module verwenden Netlify Blobs; die ehemalige GitHub-basierte Datenspeicherung ist auf diesem Stand nicht mehr aktiv.
 
-* **Workspace:** Nur für den alten Backendstand bei Bedarf `GITHUB_BRANCH=feat/netlify-blobs` setzen. Auf dem Blob-Stand die alten `GITHUB_*`-Variablen für die Datenspeicherung entfernen oder auskommentieren; Netlify Blobs braucht sie nicht. `.env` niemals committen.
-* **Dashboard:** Unter **Site configuration → Build & deploy → Continuous deployment → Branches and deploy contexts** den Branch freigeben bzw. bewusst als Production Branch setzen. Die abgelösten Variablen unter **Environment variables** separat bereinigen. Die Details zum Datenumzug und zu gemeinsam genutzten Cloud-Daten stehen in der [Blob-Referenz](features/README_FEAT_NETLIFYBLOB.md).
+* **Workspace:** Die lokale `.env` kann mit `npx netlify-cli env:list --plain > .env` erzeugt werden. Die Datei liefert Umgebungswerte, ist aber nicht die Datenquelle der Netlify Blobs. `GITHUB_BRANCH`, `GITHUB_DATA_PATH`, `GITHUB_REPOSITORY` und `GITHUB_TOKEN` wählen bei Netlify Blobs weder Branch noch Datenstand. `.env` niemals committen oder mit geheimen Build-Token teilen.
+* **Dashboard:** Unter **Site configuration → Build & deploy → Continuous deployment → Branches and deploy contexts** den gewünschten Branch freigeben bzw. bewusst als Production Branch setzen. `NETLIFY_AUTH_TOKEN` muss für Production, Deploy Previews und Branch Deploys als geheimes Build-Secret gesetzt sein, damit der Build den Snapshot synchronisieren kann. Es gehört nicht in die lokale `.env` oder ins Repository.
+* **Kodierung unter Windows:** In Bash, Codespaces und PowerShell 7 ist der Export mit `npx netlify-cli env:list --plain > .env` in der Regel in Ordnung. Windows PowerShell 5.1 kann mit `>` jedoch UTF-16LE statt UTF-8 schreiben. Der Fehler liegt dann nicht am Netlify-Befehl, sondern an der Kodierung der umgeleiteten Datei. Falls die Datei als UTF-16LE vorliegt, kann sie nach dem Export explizit als UTF-8 ohne BOM neu geschrieben werden:
+
+```powershell
+$envText = npx netlify-cli env:list --plain
+[IO.File]::WriteAllText(
+  (Join-Path (Get-Location) '.env'),
+  ($envText -join [Environment]::NewLine) + [Environment]::NewLine,
+  (New-Object System.Text.UTF8Encoding($false))
+)
+```
+
+Anschließend prüfen, dass keine geheimen oder abgelösten Werte versehentlich in `.env` übernommen wurden.
+
+Die Details zum Datenumzug und zu gemeinsam genutzten Cloud-Daten stehen in der [Blob-Referenz](features/README_FEAT_NETLIFYBLOB.md).
+
 ```bash
-# Erstellung von .env im Projekt
+# Umgebungsvariablen exportieren
 npx netlify-cli env:list --plain > .env
-
-
 
 # Projektverknüpfung prüfen
 npx netlify-cli status
@@ -83,8 +97,21 @@ npx netlify-cli status
 npx netlify-cli dev
 ```
 * **URL:** Öffne `http://localhost:8888`.
-* **Lokaler Blob-Speicher:** Die CLI startet Astro, die Functions und einen lokalen Blob-Server. Dessen Daten bleiben unter `.netlify/` erhalten; konkrete Verzeichnisse und Reset-Hinweise stehen in der [Blob-Referenz](features/README_FEAT_NETLIFYBLOB.md#architektur-und-datenfluss).
-* **Prüfen:** `/api/modules` und `/api/contributions` auf Port 8888 aufrufen. Ein neuer lokaler Store startet mit leerem Modulkatalog und leerer Beitragsliste. Änderungen laufen über Blobs, nicht über den Astro-Datei-Fallback.
+* **Lokaler Blob-Speicher:** Die CLI startet Astro, die Functions und einen lokalen Blob-Server. Dessen Daten bleiben unter `.netlify/` erhalten, in der aktuellen CLI unter `.netlify\blobs-serve\`. Dieser lokale Store wird nicht mit Netlify in der Cloud synchronisiert.
+* **Initialisierung:** Nur wenn ein lokaler Key fehlt, wird er aus `data\blob-snapshot\contributions.json` beziehungsweise `data\blob-snapshot\modules.json` angelegt. Bereits vorhandene lokale Keys bleiben beim Neustart und Branch-Wechsel bestehen.
+* **Prüfen:** `/api/modules` und `/api/contributions` auf Port 8888 aufrufen. Änderungen laufen über Blobs, nicht über den Astro-Datei-Fallback.
+
+Zeigt Netlify Dev nach einem Branch-Wechsel weiterhin einen alten Datenstand, obwohl der versionierte Snapshot aktuell ist:
+
+```powershell
+# Netlify Dev zuerst vollständig stoppen und lokale Teständerungen sichern.
+Remove-Item -Recurse -Force .netlify\blobs-serve
+
+# Lokalen Store aus den Snapshots neu initialisieren.
+npx netlify-cli dev
+```
+
+Nur den ignorierten lokalen Blob-Ordner zurücksetzen. Dabei niemals Cloud-Keys löschen; die Deploy-Preview und der siteweite Cloud-Store sind davon getrennt.
 
 ### Schritt 6: E2E-Testbrowser & Lighthouse CI einrichten (Optional)
 

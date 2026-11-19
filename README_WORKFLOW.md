@@ -11,7 +11,7 @@ Vor einem Workspace-Wechsel Änderungen prüfen, committen und den aktuellen Bra
 Nach Paket- oder Netlify-Änderungen den Workspace erneut synchronisieren:
 
 1. Sind in `package.json` neue Pakete ergänzt oder wurden Abhängigkeiten geändert, anschließend erneut `npm install` ausführen und `package-lock.json` mit committen.
-2. Nach neuen Netlify-Einstellungen, Site-Verknüpfungen oder Änderungen an Umgebungsvariablen erneut bei Netlify anmelden, die lokale Konfiguration ziehen und prüfen:
+2. Nach neuen Netlify-Einstellungen oder Änderungen an der Site-Verknüpfung erneut bei Netlify anmelden und die Verknüpfung prüfen:
 
 ```bash
 npx netlify-cli login
@@ -19,11 +19,13 @@ npx netlify-cli env:list --plain > .env
 npx netlify-cli status
 ```
 
-3. Danach einen laufenden `npx netlify-cli dev`-Prozess stoppen und mit der aktualisierten Umgebung neu starten.
+Die lokale `.env` ist damit nicht die Datenquelle der Netlify Blobs; sie enthält nur exportierte Umgebungswerte. `GITHUB_BRANCH` beeinflusst daher weiterhin nicht, welche lokalen Blob-Daten geladen werden. Unter Windows PowerShell 5.1 kann `>` die Datei als UTF-16LE schreiben. Bash, Codespaces und PowerShell 7 verwenden üblicherweise UTF-8. Falls nach dem Export unerwartete Zeichen auftreten, die Datei bewusst als UTF-8 neu speichern; Details stehen im [Workspace-Setup](README_WORKSPACE_SETUP.md).
+
+3. Danach einen laufenden `npx netlify-cli dev`-Prozess vollständig stoppen und mit der aktualisierten Umgebung neu starten.
 
 Bei Modul-Builder, Beiträgen und anderen Netlify-Functions ausschließlich `http://localhost:8888` öffnen. Port `4321` ist der von der Netlify CLI intern gestartete reine Astro-Server; dort fehlen die Backend-Routen und Browserfehler mit HTML-Antworten sind dann erwartbar. Eine `404 text/html` von `/api/modules` oder `/api/contributions` bedeutet daher zuerst: richtige URL und richtigen Server prüfen.
 
-Die `.env` darf nicht committet werden. `NETLIFY_AUTH_TOKEN` bleibt ausschließlich als geheime Netlify-Build-Variable im Dashboard; gelangt der Wert trotz Sicherheitsmaskierung in die lokale Datei, vor dem Commit und vor der Weitergabe wieder aus `.env` entfernen.
+Die `.env` darf nicht committet werden. `NETLIFY_AUTH_TOKEN` bleibt ausschließlich als geheime Netlify-Build-Variable im Dashboard; gelangt der Wert trotz Sicherheitsmaskierung in die lokale Datei, vor dem Commit und vor der Weitergabe wieder aus `.env` entfernen. `GITHUB_BRANCH`, `GITHUB_DATA_PATH`, `GITHUB_REPOSITORY` und `GITHUB_TOKEN` werden für die Netlify-Blob-Datenspeicherung nicht benötigt und können aus der aktuellen lokalen `.env` entfernt werden.
 
 ## 2. Feature entwickeln
 
@@ -37,7 +39,22 @@ git switch -c feat/<featurename>
 
 Auf diesem Branch entwickeln und Änderungen regelmäßig committen und pushen. Soll ein neues Feature auf einem noch nicht in `main` übernommenen Feature aufbauen, bewusst von dessen Archiv-Branch abzweigen statt von `main`.
 
-Beiträge und Lernmodule verwenden bereits Netlify Blobs (`mymusic-hub-data`). `GITHUB_BRANCH` ist dafür nicht erforderlich; lokale Änderungen an Netlify-Dev-Schreibvorgängen werden über `data/blob-snapshot/` gespiegelt und durch einen späteren Deploy in den siteweiten Store importiert. Vor Deploys den aktuellen Snapshot- und Online-Datenstand gemäß [Blob-Referenz](features/README_FEAT_NETLIFYBLOB.md) sichern und abgleichen. Branch Deploys, Deploy Previews und Production teilen denselben Store; isolierte Online-Abnahmen benötigen eine separate Netlify-Site.
+Beiträge und Lernmodule verwenden bereits Netlify Blobs (`mymusic-hub-data`). `GITHUB_BRANCH` ist dafür wirkungslos. Lokal und online verwenden jedoch unterschiedliche Speicherstände:
+
+- `npx netlify-cli dev` liest und schreibt einen eigenen dauerhaften Store unter `.netlify/`, derzeit `.netlify\blobs-serve\`.
+- Ein leerer lokaler Store wird aus `data\blob-snapshot\contributions.json` und `data\blob-snapshot\modules.json` initialisiert.
+- Schon vorhandene lokale Blob-Keys haben Vorrang. Ein Git-Branch- oder `.env`-Wechsel lädt deshalb keine neueren Snapshot-Daten in diesen Store.
+- Lokale Schreibvorgänge über die Functions aktualisieren zusätzlich die versionierten Snapshots. Diese Änderungen müssen committet und gepusht werden, damit ein späterer Netlify-Deploy sie in den siteweiten Cloud-Store importiert.
+- Branch Deploys, Deploy Previews und Production derselben Netlify-Site teilen den Cloud-Store und können ihn gegenseitig überschreiben.
+
+Wenn der lokale Stand nach einem Branch-Wechsel hinter dem versionierten Snapshot zurückbleibt, Netlify Dev zuerst stoppen und nur den ignorierten lokalen Store zurücksetzen:
+
+```powershell
+Remove-Item -Recurse -Force .netlify\blobs-serve
+npx netlify-cli dev
+```
+
+Das entfernt ausschließlich lokale Daten. Vorher lokale, nicht gespeicherte Teständerungen sichern. Cloud-Keys dürfen für diesen Ablauf nicht gelöscht werden. Vor Deploys den aktuellen Snapshot- und Cloud-Datenstand gemäß [Blob-Referenz](features/README_FEAT_NETLIFYBLOB.md) sichern und abgleichen; isolierte Online-Abnahmen benötigen eine separate Netlify-Site.
 
 ## 3. Automatisch testen
 
