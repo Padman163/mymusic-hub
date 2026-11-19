@@ -8,6 +8,21 @@ Im neuen Workspace das Repository einrichten und den benötigten Branch auscheck
 
 Vor einem Workspace-Wechsel Änderungen prüfen, committen und den aktuellen Branch pushen. Lokale `.env`-Dateien und nicht eingecheckte Daten separat und sicher übertragen.
 
+Nach Paket- oder Netlify-Änderungen den Workspace erneut synchronisieren:
+
+1. Sind in `package.json` neue Pakete ergänzt oder wurden Abhängigkeiten geändert, anschließend erneut `npm install` ausführen und `package-lock.json` mit committen.
+2. Nach neuen Netlify-Einstellungen, Site-Verknüpfungen oder Änderungen an Umgebungsvariablen erneut bei Netlify anmelden, die lokale Konfiguration ziehen und prüfen:
+
+```bash
+npx netlify-cli login
+npx netlify-cli env:list --plain > .env
+npx netlify-cli status
+```
+
+3. Danach einen laufenden `npx netlify-cli dev`-Prozess stoppen und mit der aktualisierten Umgebung neu starten.
+
+Die `.env` darf nicht committet werden. `NETLIFY_AUTH_TOKEN` bleibt ausschließlich als geheime Netlify-Build-Variable im Dashboard; gelangt der Wert trotz Sicherheitsmaskierung in die lokale Datei, vor dem Commit und vor der Weitergabe wieder aus `.env` entfernen.
+
 ## 2. Feature entwickeln
 
 Vom aktuellen `main` einen neuen Feature-Branch erstellen:
@@ -20,7 +35,7 @@ git switch -c feat/<featurename>
 
 Auf diesem Branch entwickeln und Änderungen regelmäßig committen und pushen. Soll ein neues Feature auf einem noch nicht in `main` übernommenen Feature aufbauen, bewusst von dessen Archiv-Branch abzweigen statt von `main`.
 
-Für die Speicherumstellung mit `git switch feat/netlify-blobs` auf den vorhandenen Feature-Branch wechseln. Die lokale `.env` beim Wechsel anpassen (den `GITHUB_BRANCH` nur für den Altstand setzen, danach die alten Speicher-Variablen entfernen) und den Branch separat im Netlify Dashboard freigeben. Vor dem ersten Blob-Zugriff den Datenstand gemäß [Blob-Referenz](features/README_FEAT_NETLIFYBLOB.md) sichern und abgleichen.
+Beiträge und Lernmodule verwenden bereits Netlify Blobs (`mymusic-hub-data`). `GITHUB_BRANCH` ist dafür nicht erforderlich; lokale Änderungen an Netlify-Dev-Schreibvorgängen werden über `data/blob-snapshot/` gespiegelt und durch einen späteren Deploy in den siteweiten Store importiert. Vor Deploys den aktuellen Snapshot- und Online-Datenstand gemäß [Blob-Referenz](features/README_FEAT_NETLIFYBLOB.md) sichern und abgleichen. Branch Deploys, Deploy Previews und Production teilen denselben Store; isolierte Online-Abnahmen benötigen eine separate Netlify-Site.
 
 ## 3. Automatisch testen
 
@@ -57,6 +72,6 @@ git push origin --delete feat/<featurename>
 
 Den Archiv-Branch auf GitHub prüfen. Ein bereits gepushter `feat/`-Branch bleibt dort bestehen; eine spätere Löschung ist eine separate Entscheidung.
 
-Die Speicherumstellung nach erfolgreicher Abnahme unter `archive/feat/netlify-blobs` archivieren. Das sichert den Code, nicht den Datenbestand in Netlify Blobs. Vor einer späteren Deploy-Umstellung Branch-Freigabe im Dashboard und Datenbackup getrennt prüfen.
+Vor dem Archivieren eines Features prüfen, ob neue Snapshots unter `data/blob-snapshot/` entstehen und vollständig im Branch enthalten sind. Vor einem späteren Deploy Branch-Freigabe, Netlify-Umgebungsvariablen und Cloud-Datenbackup getrennt prüfen. Das Archivieren des Codes sichert keine Daten in Netlify Blobs.
 
 Archivieren übernimmt **keine** Änderungen nach `main`. Eine Übernahme per Pull Request und ein Deployment werden später separat entschieden. Danach mit Schritt 2 das nächste Feature beginnen.
