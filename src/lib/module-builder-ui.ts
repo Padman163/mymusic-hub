@@ -2,8 +2,8 @@ import { addIcon } from "./contribution-types.ts";
 import {
   DEFAULT_QUIZ_SETTINGS,
   formatExerciseTitle,
-  isLearningConfiguration,
   isDStage,
+  isLearningConfiguration,
   isModuleScope,
   isQuestionInModule,
   isQuestionType,

@@ -1,4 +1,8 @@
 import {
+  DEFAULT_LEARNING_CONFIGURATION,
+  type LearningShopItem,
+} from "./learning-config.ts";
+import {
   BASE_XP_DEFAULTS,
   DEFAULT_QUIZ_SETTINGS,
   getAvailableTags,
@@ -15,10 +19,6 @@ import {
   calculateModuleQuestionXp,
   calculateTheoryBlockXp,
 } from "./xp-tags.ts";
-import {
-  DEFAULT_LEARNING_CONFIGURATION,
-  type LearningShopItem,
-} from "./learning-config.ts";
 
 export const LEARNING_PROGRESS_STORAGE_KEY = "mymusic_learning_progress_v2";
 export const XP_PER_LEVEL = 500;

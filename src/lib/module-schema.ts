@@ -1,18 +1,22 @@
 import {
+  DEFAULT_LEARNING_CONFIGURATION,
+  isLearningConfiguration,
+  type LearningConfiguration,
+} from "./learning-config.ts";
+import {
   BASE_XP_DEFAULTS,
   getAvailableTags,
   QUESTION_BASE_XP,
   type TagDefinition,
 } from "./xp-tags.ts";
-import {
-  DEFAULT_LEARNING_CONFIGURATION,
-  isLearningConfiguration,
-  type LearningConfiguration,
-} from "./learning-config.ts";
 
-export { BASE_XP_DEFAULTS, getAvailableTags, type TagDefinition };
-export { isLearningConfiguration };
 export type { LearningConfiguration };
+export {
+  BASE_XP_DEFAULTS,
+  getAvailableTags,
+  isLearningConfiguration,
+  type TagDefinition,
+};
 
 export const MODULE_SCOPES = [
   "theory",

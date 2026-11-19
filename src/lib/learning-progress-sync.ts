@@ -3,11 +3,11 @@ import {
   createInitialProgress,
   hasStoredLearningProgress,
   LEARNING_PROGRESS_STORAGE_KEY,
+  type LearningProgressState,
   loadLearningProgress,
   sanitizeStoredProgress,
   saveLearningProgress,
   setLearningProgressAccountId,
-  type LearningProgressState,
 } from "./learning-progress.ts";
 
 interface ProgressApiResponse {
@@ -47,7 +47,9 @@ function dispatchSyncStatus(status: SyncStatus, message: string): void {
 
 function localStorageValue(key: string): string | null {
   try {
-    return typeof window === "undefined" ? null : window.localStorage.getItem(key);
+    return typeof window === "undefined"
+      ? null
+      : window.localStorage.getItem(key);
   } catch {
     return null;
   }
@@ -99,7 +101,9 @@ function backupAccountProgress(
       JSON.stringify(progress),
     );
   } catch {
-    console.error("Der nicht synchronisierte Lernstand konnte nicht lokal gesichert werden.");
+    console.error(
+      "Der nicht synchronisierte Lernstand konnte nicht lokal gesichert werden.",
+    );
   }
 }
 
@@ -213,7 +217,10 @@ async function flushQueue(): Promise<void> {
         dispatchSyncStatus("ready", "Lernstand ist online gespeichert.");
       } catch (error) {
         if (activeAccountId !== accountId) return;
-        if (error instanceof Error && error.name === "LearningProgressConflictError") {
+        if (
+          error instanceof Error &&
+          error.name === "LearningProgressConflictError"
+        ) {
           try {
             const latest = await requestProgress("GET", accountId);
             if (activeAccountId !== accountId) return;
@@ -225,17 +232,25 @@ async function flushQueue(): Promise<void> {
               applyRemoteProgress(latest.progress);
             }
           } catch (refreshError) {
-            console.error("Der aktuelle Cloud-Lernstand konnte nach einem Konflikt nicht geladen werden.", refreshError);
+            console.error(
+              "Der aktuelle Cloud-Lernstand konnte nach einem Konflikt nicht geladen werden.",
+              refreshError,
+            );
           }
           dispatchSyncStatus(
             "error",
             "Ein anderes Gerät hat den Lernstand geändert. Der Cloud-Stand wurde neu geladen; bitte wiederhole die letzte Aktion.",
           );
         } else {
-          console.error("Der Lernstand konnte nicht in Netlify Blobs gespeichert werden.", error);
+          console.error(
+            "Der Lernstand konnte nicht in Netlify Blobs gespeichert werden.",
+            error,
+          );
           dispatchSyncStatus(
             "error",
-            error instanceof Error ? error.message : "Der Lernstand konnte nicht synchronisiert werden.",
+            error instanceof Error
+              ? error.message
+              : "Der Lernstand konnte nicht synchronisiert werden.",
           );
         }
         return;
@@ -255,7 +270,10 @@ async function connect(accountId: string): Promise<void> {
   activeAccountId = accountId;
   setLearningProgressAccountId(accountId);
   syncStatus = "loading";
-  dispatchSyncStatus("loading", "Dein Lernstand wird mit der Cloud abgeglichen …");
+  dispatchSyncStatus(
+    "loading",
+    "Dein Lernstand wird mit der Cloud abgeglichen …",
+  );
 
   const localKey = `${LEARNING_PROGRESS_STORAGE_KEY}:${accountId}`;
   const metadata = readSyncMetadata(accountId);
@@ -278,7 +296,10 @@ async function connect(accountId: string): Promise<void> {
   currentVersion = remote.version;
 
   if (remote.progress) {
-    if ((metadata.dirty || pendingState) && (hasAccountProgress || pendingState)) {
+    if (
+      (metadata.dirty || pendingState) &&
+      (hasAccountProgress || pendingState)
+    ) {
       if (metadata.version === remote.version) {
         const saved = await requestProgress(
           "PUT",
@@ -326,7 +347,9 @@ async function connect(accountId: string): Promise<void> {
   if (queuedState) void flushQueue();
 }
 
-export async function connectLearningProgress(accountId: string): Promise<void> {
+export async function connectLearningProgress(
+  accountId: string,
+): Promise<void> {
   while (connectTask) {
     await connectTask;
     if (activeAccountId === accountId && syncStatus === "ready") return;
@@ -335,10 +358,15 @@ export async function connectLearningProgress(accountId: string): Promise<void> 
   const task = connect(accountId).catch((error: unknown) => {
     if (activeAccountId !== accountId) return;
     syncStatus = "error";
-    console.error("Der Lernstand konnte nicht mit der Cloud synchronisiert werden.", error);
+    console.error(
+      "Der Lernstand konnte nicht mit der Cloud synchronisiert werden.",
+      error,
+    );
     dispatchSyncStatus(
       "error",
-      error instanceof Error ? error.message : "Der Lernstand konnte nicht synchronisiert werden.",
+      error instanceof Error
+        ? error.message
+        : "Der Lernstand konnte nicht synchronisiert werden.",
     );
   });
   connectTask = task;
@@ -357,7 +385,10 @@ export function disconnectLearningProgress(): void {
   queuedState = null;
   syncStatus = "signed-out";
   setLearningProgressAccountId(null);
-  dispatchSyncStatus("signed-out", "Nicht angemeldet. Änderungen werden nicht online synchronisiert.");
+  dispatchSyncStatus(
+    "signed-out",
+    "Nicht angemeldet. Änderungen werden nicht online synchronisiert.",
+  );
 }
 
 export async function retryLearningProgressSync(): Promise<void> {
@@ -369,7 +400,8 @@ export function attachLearningProgressSync(): void {
   syncListenerAttached = true;
   document.addEventListener("learning-progress:saved", (event) => {
     if (!activeAccountId) return;
-    const detail = (event as CustomEvent<{ state?: LearningProgressState }>).detail;
+    const detail = (event as CustomEvent<{ state?: LearningProgressState }>)
+      .detail;
     const state = detail?.state ?? loadLearningProgress();
     if (syncStatus === "loading") {
       pendingState = state;

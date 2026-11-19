@@ -6,8 +6,8 @@ import {
   logout,
   onAuthChange,
   requestPasswordRecovery,
-  updateUser,
   type User,
+  updateUser,
 } from "@netlify/identity";
 import {
   attachLearningProgressSync,
@@ -37,7 +37,10 @@ export function attachLearningAccount(root: HTMLElement): void {
 
   const status = requireElement<HTMLElement>(root, "[data-account-status]");
   const loginForm = requireElement<HTMLFormElement>(root, "[data-login-form]");
-  const inviteForm = requireElement<HTMLFormElement>(root, "[data-invite-form]");
+  const inviteForm = requireElement<HTMLFormElement>(
+    root,
+    "[data-invite-form]",
+  );
   const recoveryRequestForm = requireElement<HTMLFormElement>(
     root,
     "[data-recovery-request-form]",
@@ -48,11 +51,11 @@ export function attachLearningAccount(root: HTMLElement): void {
   );
   const signedIn = requireElement<HTMLElement>(root, "[data-signed-in]");
   const userEmail = requireElement<HTMLElement>(root, "[data-user-email]");
-  const logoutButton = requireElement<HTMLButtonElement>(
+  const logoutButton = requireElement<HTMLButtonElement>(root, "[data-logout]");
+  const retryButton = requireElement<HTMLButtonElement>(
     root,
-    "[data-logout]",
+    "[data-sync-retry]",
   );
-  const retryButton = requireElement<HTMLButtonElement>(root, "[data-sync-retry]");
 
   let inviteToken: string | null = null;
   let currentUserId: string | null = null;
@@ -171,7 +174,10 @@ export function attachLearningAccount(root: HTMLElement): void {
         "Falls ein Konto zu dieser Adresse besteht, wird ein Wiederherstellungslink gesendet.";
       status.dataset.state = "info";
     } catch (error) {
-      showError(error, "Der Wiederherstellungslink konnte nicht angefordert werden.");
+      showError(
+        error,
+        "Der Wiederherstellungslink konnte nicht angefordert werden.",
+      );
     } finally {
       submit.disabled = false;
     }
@@ -235,7 +241,8 @@ export function attachLearningAccount(root: HTMLElement): void {
         inviteToken = callback.token;
         loginForm.hidden = true;
         inviteForm.hidden = false;
-        status.textContent = "Lege ein Passwort für dein eingeladenes Konto fest.";
+        status.textContent =
+          "Lege ein Passwort für dein eingeladenes Konto fest.";
         status.dataset.state = "info";
       } else if (callback?.type === "recovery") {
         root.hidden = false;

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BlobStoreConflictError, readBlobJSON, updateBlobJSON } from '../netlify/functions/lib/blob-store';
+import { DEFAULT_LEARNING_CONFIGURATION } from '../src/lib/learning-config';
 import { mockBlobStore } from './fixtures/blob-store';
 import { createModulesTestDatabase } from './fixtures/modules';
 
@@ -34,12 +35,17 @@ describe('Blob-Store und Initialisierung', () => {
 		expect(store.setJSON).toHaveBeenCalledExactlyOnceWith('contributions', [], { onlyIfNew: true });
 	});
 
-	it('initialisiert Module leer und behält gespeicherte Quiz-Einstellungen', async () => {
-		expect(await readBlobJSON('modules')).toEqual({ modules: [], questions: [] });
+	it('initialisiert Module mit Shop-Konfiguration und behält Quiz-Einstellungen', async () => {
+		const defaultDatabase = {
+			modules: [],
+			questions: [],
+			learningConfig: DEFAULT_LEARNING_CONFIGURATION,
+		};
+		expect(await readBlobJSON('modules')).toEqual(defaultDatabase);
 
 		const quizSettings = { quizEasyMinScore: 0.9, fastlaneMinScore: 0.95, revision: 1 };
 		await updateBlobJSON('modules', (db) => ({ ...db, quizSettings }));
-		expect(await readBlobJSON('modules')).toEqual({ modules: [], questions: [], quizSettings });
+		expect(await readBlobJSON('modules')).toEqual({ ...defaultDatabase, quizSettings });
 	});
 
 	it('normalisiert bestehende Aufgaben beim Lesen und sichert die Werte erst beim Schreiben', async () => {

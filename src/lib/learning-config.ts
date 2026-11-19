@@ -76,7 +76,9 @@ export async function fetchLearningConfiguration(): Promise<LearningConfiguratio
   try {
     payload = await response.json();
   } catch {
-    throw new Error("Die Lernkonfiguration lieferte keine gültige JSON-Antwort.");
+    throw new Error(
+      "Die Lernkonfiguration lieferte keine gültige JSON-Antwort.",
+    );
   }
   if (!response.ok) {
     const message =
