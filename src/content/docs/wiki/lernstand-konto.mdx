@@ -1,0 +1,49 @@
+---
+title: Lernkonto und Synchronisierung
+description: So meldest du dich an und nutzt deinen Lernstand auf mehreren Geräten.
+---
+
+## Konto verwenden
+
+Die Hub-Oberfläche bietet kein öffentliches Registrierungsformular. Öffne eine
+Lernseite und melde dich mit deiner E-Mail-Adresse und deinem Passwort an. Bei
+der ersten Einladung öffnet der Link aus der E-Mail ein Formular, in dem du
+dein Passwort festlegst. Der aktuelle Registrierungsmodus wird im Admin-Bereich
+angezeigt.
+
+Admins mit der Netlify-Identity-Rolle `admin` können unter **Admin → Konten &
+Einladungen** Einladungen verschicken und den aktuellen Registrierungsmodus
+prüfen. Die Änderung des Modus selbst bleibt in der Netlify-Site-Konfiguration;
+die Identity-API stellt dafür keine Änderungsfunktion bereit. Die Rolle des
+ersten Admins muss einmalig in Netlify vergeben werden.
+
+Einladungslinks führen zur in Netlify eingestellten Site-URL, normalerweise zur
+Production-Domain. Ein Preview verwendet zwar denselben Identity-Nutzerbestand,
+aber der Link wechselt nicht automatisch zur Preview. Der Code zur Annahme der
+Einladung muss daher auf der Ziel-Site deployed sein.
+
+Mit der Anmeldung werden Lernfortschritt, XP, Quiz-Bestwerte, Shop-Käufe,
+Inventar und Studio-Ausrüstung mit deinem Konto verknüpft. So kannst du auf
+einem anderen Gerät denselben Stand nach der Anmeldung weiterverwenden.
+
+## Synchronstatus
+
+Die Meldung im Lernkonto zeigt, ob der Stand geladen oder online gespeichert
+wurde. Bei einem Fehler kannst du **Erneut synchronisieren** wählen. Wenn der
+Stand gleichzeitig auf einem anderen Gerät geändert wurde, wird die Cloud-
+Version erneut geladen; wiederhole danach deine letzte Aktion.
+
+Ein vorhandener Gaststand im Browser wird bei der ersten Anmeldung übernommen,
+wenn das Konto noch keinen Online-Lernstand hat. Hat das Konto bereits einen
+Online-Lernstand, bleibt dieser maßgeblich; der alte Gaststand wird als lokale
+Sicherung abgelegt.
+
+Ohne Anmeldung bleibt ein Lernstand nur im jeweiligen Browser. Stelle vor dem
+Abmelden sicher, dass die Meldung **Lernstand ist online gespeichert** angezeigt
+wird.
+
+## Passwort und Abmelden
+
+Über **Passwort vergessen?** kannst du einen Wiederherstellungslink anfordern.
+Die Abmeldung beendet die Konto-Sitzung auf diesem Gerät. Dein Online-Lernstand
+bleibt im Konto erhalten.

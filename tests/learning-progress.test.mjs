@@ -1,6 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   clearLearningProgress,
+  collectInventoryUnlock,
+  getAvailableXp,
+  getEquippedInventoryItem,
+  equipInventoryItem,
+  unequipInventoryItem,
+  purchaseInventoryItem,
   completePracticeBlock,
   completeTheoryBlock,
   completeTheoryStep,
@@ -10,6 +16,7 @@ import {
   loadLearningProgress,
   recordExerciseAnswer,
   saveLearningProgress,
+  setLearningProgressAccountId,
   submitQuizAttempt,
   syncProgressWithCurriculum,
 } from "../src/lib/learning-progress.ts";
@@ -20,9 +27,59 @@ import {
   updateQuizSettings,
 } from "../src/lib/module-store.ts";
 import { getAvailableTags } from "../src/lib/xp-tags.ts";
+import {
+  DEFAULT_LEARNING_CONFIGURATION,
+  isLearningConfiguration,
+} from "../src/lib/learning-config.ts";
 
 describe("Übergreifende Quiz-Einstellungen", () => {
-  afterEach(() => clearLearningProgress());
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    setLearningProgressAccountId(null);
+    clearLearningProgress(`${LEARNING_PROGRESS_STORAGE_KEY}:konto-a`);
+    clearLearningProgress(`${LEARNING_PROGRESS_STORAGE_KEY}:konto-b`);
+    clearLearningProgress();
+  });
+
+  it("trennt lokale Lernstand-Caches nach Konto", () => {
+    const accountAKey = `${LEARNING_PROGRESS_STORAGE_KEY}:konto-a`;
+    setLearningProgressAccountId("konto-a");
+    const accountA = createInitialProgress([]);
+    accountA.totalXp = 25;
+    saveLearningProgress(accountA);
+
+    setLearningProgressAccountId("konto-b");
+    expect(loadLearningProgress().totalXp).toBe(0);
+
+    setLearningProgressAccountId("konto-a");
+    expect(loadLearningProgress().totalXp).toBe(25);
+    expect(window.localStorage.getItem(accountAKey)).not.toBeNull();
+  });
+
+  it("prüft den gemeinsam gespeicherten Shop-Katalog", () => {
+    expect(isLearningConfiguration(DEFAULT_LEARNING_CONFIGURATION)).toBe(true);
+    expect(
+      isLearningConfiguration({
+        shopItems: [
+          ...DEFAULT_LEARNING_CONFIGURATION.shopItems,
+          { ...DEFAULT_LEARNING_CONFIGURATION.shopItems[0] },
+        ],
+      }),
+    ).toBe(false);
+    expect(
+      isLearningConfiguration({
+        shopItems: [
+          {
+            id: "external",
+            title: "External",
+            description: "",
+            assetUrl: "//example.invalid/sound.wav",
+            priceXp: 1,
+          },
+        ],
+      }),
+    ).toBe(false);
+  });
 
   it("setzt Lernfortschritt nur bei einer neueren Änderung zurück und ignoriert ältere Anfangsdaten", () => {
     const db = buildTestDatabase();
@@ -195,6 +252,116 @@ describe("Lernfortschritts- & XP-Engine (learning-progress)", () => {
   afterEach(() => {
     clearLearningProgress();
     vi.unstubAllGlobals();
+  });
+
+  it("startet mit einem leeren Inventar und sammelt Freischaltungen einmalig", () => {
+    const initial = createInitialProgress([]);
+    const unlock = {
+      id: "first-module",
+      title: "Erstes Modul",
+      description: "Das erste Lernmodul wurde abgeschlossen.",
+      unlockedAt: "2026-01-01T10:00:00.000Z",
+    };
+
+    expect(initial.inventory).toEqual([]);
+    const collected = collectInventoryUnlock(initial, unlock);
+    expect(collected.inventory).toEqual([unlock]);
+    expect(collectInventoryUnlock(collected, unlock)).toBe(collected);
+  });
+
+  it("schaltet Click.wav nicht mehr automatisch mit einem Theorieblock frei", () => {
+    const db = buildTestDatabase();
+    const mod = db.modules[0];
+    mod.id = "mod-puls-tempo-rhythmus";
+    mod.theoryBlocks[0].id = "tb-puls-tempo-rhythmus";
+    const initial = createInitialProgress(db.modules);
+
+    const completed = completeTheoryBlock(
+      initial,
+      mod,
+      "tb-puls-tempo-rhythmus",
+    );
+    expect(completed.inventory).toEqual([]);
+    expect(completeTheoryBlock(completed, mod, "tb-puls-tempo-rhythmus")).toBe(
+      completed,
+    );
+  });
+
+  it("verkauft den Click erst ab 10 verfügbaren XP und belastet sie einmalig", () => {
+    const initial = createInitialProgress([]);
+    const tooExpensive = structuredClone(initial);
+    tooExpensive.totalXp = 9;
+    expect(purchaseInventoryItem(tooExpensive, "sound-click")).toBe(tooExpensive);
+    expect(getAvailableXp(tooExpensive)).toBe(9);
+
+    const funded = { ...tooExpensive, totalXp: 10 };
+    const purchased = purchaseInventoryItem(funded, "sound-click");
+    expect(purchased.inventory).toMatchObject([
+      { id: "sound-click", assetUrl: "/sounds/drums/Click.wav" },
+    ]);
+    expect(purchased.totalXp).toBe(10);
+    expect(purchased.spentXp).toBe(10);
+    expect(getAvailableXp(purchased)).toBe(0);
+    expect(purchaseInventoryItem(purchased, "sound-click")).toBe(purchased);
+  });
+
+  it("verkauft den Kick erst ab 30 verfügbaren XP", () => {
+    const initial = createInitialProgress([]);
+    const tooExpensive = { ...initial, totalXp: 29 };
+    expect(purchaseInventoryItem(tooExpensive, "sound-kick")).toBe(tooExpensive);
+
+    const funded = { ...tooExpensive, totalXp: 30 };
+    const purchased = purchaseInventoryItem(funded, "sound-kick");
+    expect(purchased.inventory).toMatchObject([
+      { id: "sound-kick", assetUrl: "/sounds/drums/Kick.wav" },
+    ]);
+    expect(purchased.spentXp).toBe(30);
+    expect(getAvailableXp(purchased)).toBe(0);
+  });
+
+  it("verwendet den online gelieferten Katalog beim Kauf", () => {
+    const initial = { ...createInitialProgress([]), totalXp: 7 };
+    const catalog = [
+      {
+        id: "sound-online",
+        title: "Online-Sound",
+        description: "Aus dem gemeinsamen Shop-Katalog.",
+        assetUrl: "/sounds/drums/Click.wav",
+        priceXp: 7,
+      },
+    ];
+
+    const purchased = purchaseInventoryItem(
+      initial,
+      "sound-online",
+      catalog,
+    );
+
+    expect(purchased.inventory).toMatchObject([
+      { id: "sound-online", title: "Online-Sound" },
+    ]);
+    expect(purchased.spentXp).toBe(7);
+    expect(getAvailableXp(purchased)).toBe(0);
+  });
+
+  it("rüstet nur gekaufte Sounds einmalig aus und kann sie wieder ablegen", () => {
+    const initial = createInitialProgress([]);
+    initial.totalXp = 10;
+    expect(equipInventoryItem(initial, "sound-click")).toBe(initial);
+
+    const purchased = purchaseInventoryItem(initial, "sound-click");
+    const equipped = equipInventoryItem(purchased, "sound-click");
+    expect(equipped.equippedInventoryItemIds).toEqual(["sound-click"]);
+    expect(getEquippedInventoryItem(equipped)?.id).toBe("sound-click");
+    expect(equipInventoryItem(equipped, "sound-click")).toBe(equipped);
+    saveLearningProgress(equipped);
+    expect(
+      getEquippedInventoryItem(loadLearningProgress())?.id,
+    ).toBe("sound-click");
+
+    const unequipped = unequipInventoryItem(equipped);
+    expect(unequipped.equippedInventoryItemIds).toEqual([]);
+    expect(getEquippedInventoryItem(unequipped)).toBeUndefined();
   });
 
   it("vergütet eine schwere Lernpfad-Aufgabe mit festen Basis-XP und Tag-Faktor genau einmal", () => {

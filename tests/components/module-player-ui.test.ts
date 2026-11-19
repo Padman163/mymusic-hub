@@ -19,6 +19,7 @@ import {
   evaluateQuestionAnswer,
   renderTheoryMarkdown,
 } from "../../src/lib/module-player-ui";
+import { attachInventory } from "../../src/lib/inventory-ui";
 import {
   calculateModuleQuestionXp,
   calculateTheoryBlockXp,
@@ -39,6 +40,59 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     clearLearningProgress();
     document.body.replaceChildren();
     vi.unstubAllGlobals();
+  });
+
+  it("zeigt ein leeres Inventar mit dem verfügbaren XP-Guthaben", () => {
+    const root = document.createElement("section");
+    document.body.append(root);
+
+    attachInventory(root);
+
+    expect(
+      root.querySelector<HTMLElement>("[data-available-xp]")?.dataset
+        .availableXp,
+    ).toBe("0");
+    expect(root.textContent).toContain("Dein Inventar ist noch leer");
+  });
+
+  it("spielt Click als quadratisches Symbol im Inventar ab", () => {
+    const play = vi.fn().mockResolvedValue(undefined);
+    const AudioMock = vi.fn(function AudioMock(src: string) {
+      return { src, play };
+    });
+    vi.stubGlobal("Audio", AudioMock);
+    const progress = createInitialProgress([]);
+    progress.inventory.push({
+      id: "sound-click",
+      title: "Click.wav",
+      description: "Ein Klick-Sound.",
+      unlockedAt: "2026-11-19T00:00:00.000Z",
+      assetUrl: "/sounds/drums/Click.wav",
+    });
+    saveLearningProgress(progress);
+    const root = document.createElement("section");
+    document.body.append(root);
+
+    attachInventory(root);
+
+    expect(root.querySelector("audio")).toBeNull();
+    const marker = root.querySelector<HTMLButtonElement>(
+      '[data-inventory-unlock="sound-click"] .learning-inventory-marker',
+    );
+    const details = root.querySelector<HTMLElement>(
+      '[data-inventory-unlock="sound-click"] .learning-inventory-item-details',
+    );
+    expect(marker?.dataset.rarity).toBe("common");
+    expect(marker?.textContent).toBe("●");
+    expect(details?.dataset.open).toBe("false");
+    expect(details?.getAttribute("aria-hidden")).toBe("true");
+    expect(details?.textContent).toContain("Click");
+    marker?.click();
+    expect(AudioMock).toHaveBeenCalledWith("/sounds/drums/Click.wav");
+    expect(play).toHaveBeenCalledOnce();
+    expect(details?.dataset.open).toBe("false");
+    expect(details?.getAttribute("aria-hidden")).toBe("true");
+    expect(marker?.getAttribute("aria-expanded")).toBe("false");
   });
 
   it("ersetzt eingebettete Module durch einen leeren Live-Katalog", async () => {

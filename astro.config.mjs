@@ -131,7 +131,8 @@ function localModulesApiPlugin() {
                 !isLocalRecord(parsed) ||
                 !Array.isArray(parsed.modules) ||
                 !Array.isArray(parsed.questions) ||
-                (parsed.quizSettings !== undefined && !schema.isQuizSettings(parsed.quizSettings))
+                (parsed.quizSettings !== undefined && !schema.isQuizSettings(parsed.quizSettings)) ||
+                (parsed.learningConfig !== undefined && !schema.isLearningConfiguration(parsed.learningConfig))
               ) {
                 throw new Error("Ungültiges Format in data/modules.json.");
               }
@@ -139,13 +140,14 @@ function localModulesApiPlugin() {
                 modules: parsed.modules,
                 questions: parsed.questions,
                 ...(parsed.quizSettings !== undefined ? { quizSettings: parsed.quizSettings } : {}),
+                ...(parsed.learningConfig !== undefined ? { learningConfig: parsed.learningConfig } : {}),
               }));
             } catch (err) {
               if (
                 isLocalRecord(err) &&
                 err.code === "ENOENT"
               ) {
-                return store.createEmptyModulesDatabase();
+                return schema.normalizeLegacyDatabase(store.createEmptyModulesDatabase());
               }
               throw err;
             }
@@ -430,14 +432,10 @@ export default defineConfig({
         {
           label: "Admin",
           items: [
-            {
-              label: "Projektierung",
-              items: [
-                { label: "Beiträge", slug: "projektierung/beitraege" },
-                { label: "Modul-Builder", slug: "projektierung/modul-builder" },
-                { label: "Modularchiv", link: "/module-archives/" },
-              ],
-            },
+            { label: "Konten & Einladungen", link: "/admin/konten/" },
+            { label: "Beiträge", slug: "projektierung/beitraege" },
+            { label: "Modul-Builder", slug: "projektierung/modul-builder" },
+            { label: "Modularchiv", link: "/module-archives/" },
             { label: "Admin-Wiki", link: "/admin-wiki/" },
           ],
         },
@@ -448,6 +446,18 @@ export default defineConfig({
               label: "Dashboard",
               slug: "audio/theory/lernpfad",
             },
+            {
+              label: "Humpa-Shop",
+              slug: "audio/theory/shop",
+            },
+            {
+              label: "Inventar",
+              slug: "audio/theory/inventar",
+            },
+            {
+              label: "Studio",
+              slug: "audio/theory/studio",
+            },
           ],
         },
         {
@@ -456,10 +466,12 @@ export default defineConfig({
             {
               label: "Wiki",
               items: [
+                { label: "Lernkonto & Synchronisierung", slug: "wiki/lernstand-konto" },
                 { label: "Beiträge verwalten", slug: "wiki/beitraege" },
                 { label: "Modul-Builder bedienen", slug: "wiki/modul-builder" },
                 { label: "NotationBuilder bedienen", slug: "wiki/notation-builder" },
                 { label: "Drum-Pattern anhören", slug: "wiki/drum-pattern" },
+                { label: "Inventar und Shop benutzen", slug: "wiki/inventar" },
               ],
             },
             {

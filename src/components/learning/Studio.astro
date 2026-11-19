@@ -1,0 +1,29 @@
+---
+import "../../styles/contribution-tags.css";
+import "../../styles/module-player.css";
+---
+
+<section
+  class="learning-studio not-content"
+  aria-label="Studio und ausgerüstete Sounds"
+  data-learning-studio
+>
+  <p class="learning-muted">Studio wird geladen …</p>
+</section>
+
+<script>
+  import { attachStudio } from "../../lib/studio-ui";
+
+  function initStudios() {
+    document
+      .querySelectorAll<HTMLElement>("[data-learning-studio]")
+      .forEach((root) => {
+        if (root.dataset.studioAttached !== "true") {
+          attachStudio(root);
+        }
+      });
+  }
+
+  initStudios();
+  document.addEventListener("astro:page-load", initStudios);
+</script>

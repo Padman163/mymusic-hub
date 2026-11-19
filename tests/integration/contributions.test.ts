@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import handler from '../../netlify/functions/contributions';
 import { defaultContributionPriority } from '../../src/lib/contribution-priority';
 import { defaultContributionStatus } from '../../src/lib/contribution-status';
@@ -10,10 +10,12 @@ vi.mock('@netlify/blobs', () => ({ getStore: getStoreMock }));
 describe('Contributions-API', () => {
   let store: ReturnType<typeof mockBlobStore>;
   beforeEach(() => {
+    vi.stubEnv("NETLIFY_DEV", "false");
     store = mockBlobStore();
     store.put('contributions', []);
     getStoreMock.mockReset().mockReturnValue(store);
   });
+  afterEach(() => vi.unstubAllEnvs());
 
   it('weist nicht unterstützte HTTP-Methoden zurück', async () => {
     const response = await handler(new Request('http://localhost/api/contributions', { method: 'PUT' }));
@@ -42,6 +44,24 @@ describe('Contributions-API', () => {
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({ error: 'Die Anfrage enthält kein gültiges JSON.' });
     expect(getStoreMock).not.toHaveBeenCalled();
+  });
+
+  it('lässt gehostete Deploys nur lesen', async () => {
+    vi.stubEnv('CONTEXT', 'deploy-preview');
+    vi.stubEnv('NETLIFY_DEV', 'false');
+
+    const read = await handler(new Request('http://localhost/api/contributions'));
+    expect(read.status).toBe(200);
+
+    const write = await handler(new Request('http://localhost/api/contributions', {
+      method: 'POST',
+      body: JSON.stringify({ type: 'Bug', title: 'Preview', area: 'Theorie' }),
+    }));
+    expect(write.status).toBe(405);
+    expect(await write.json()).toEqual({
+      error: 'Dieser Deploy zeigt den aktuellen Cloud-Stand. Änderungen sind in dieser Vorschau nicht erlaubt.',
+    });
+    expect(store.value('contributions')).toEqual([]);
   });
 
   it('lehnt Beiträge ohne gültigen Bereich vor dem Speichern ab', async () => {

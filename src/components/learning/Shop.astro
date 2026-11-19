@@ -1,0 +1,29 @@
+---
+import "../../styles/contribution-tags.css";
+import "../../styles/module-player.css";
+---
+
+<section
+  class="learning-inventory not-content"
+  aria-label="Sounds im Humpa-Shop"
+  data-learning-shop
+>
+  <p class="learning-muted">Sounds werden geladen …</p>
+</section>
+
+<script>
+  import { attachShop } from "../../lib/inventory-ui";
+
+  function initShops() {
+    document
+      .querySelectorAll<HTMLElement>("[data-learning-shop]")
+      .forEach((root) => {
+        if (root.dataset.shopAttached !== "true") {
+          attachShop(root);
+        }
+      });
+  }
+
+  initShops();
+  document.addEventListener("astro:page-load", initShops);
+</script>

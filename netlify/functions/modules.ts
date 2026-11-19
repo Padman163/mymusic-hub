@@ -14,7 +14,14 @@ import {
 	validateModuleInput,
 	validateQuestionInput,
 } from '../../src/lib/module-store';
-import { BlobStoreConflictError, isBlobStoreUnavailable, readBlobJSON, updateBlobJSON } from './lib/blob-store';
+import {
+	BlobStoreConflictError,
+	isBlobStoreUnavailable,
+	isReadOnlyCloudContext,
+	LocalBlobSnapshotError,
+	readBlobJSON,
+	updateBlobJSON,
+} from './lib/blob-store';
 
 const maxRequestBytes = 500_000;
 
@@ -231,6 +238,12 @@ export default async (request: Request): Promise<Response> => {
 		}
 	}
 
+	if (isReadOnlyCloudContext()) {
+		return jsonResponse(405, {
+			error: 'Dieser Deploy zeigt den aktuellen Cloud-Stand. Änderungen sind in dieser Vorschau nicht erlaubt.',
+		});
+	}
+
 	const bodyText = await request.text();
 	if (new TextEncoder().encode(bodyText).byteLength > maxRequestBytes) {
 		return jsonResponse(413, { error: 'Die Anfrage ist zu groß.' });
@@ -284,6 +297,10 @@ export default async (request: Request): Promise<Response> => {
 
 		return await handleWriteRequest(request, parsedBody ?? {});
 	} catch (error) {
+		if (error instanceof LocalBlobSnapshotError) {
+			console.error('Die Moduldaten wurden gespeichert, aber der lokale Blob-Snapshot konnte nicht aktualisiert werden.', error.originalError);
+			return jsonResponse(500, { error: error.message });
+		}
 		if (error instanceof ModuleArchiveSyncError) {
 			console.error('Die lokalen MDX-Kopien konnten nicht aktualisiert werden.', error);
 			return jsonResponse(500, { error: error.message });

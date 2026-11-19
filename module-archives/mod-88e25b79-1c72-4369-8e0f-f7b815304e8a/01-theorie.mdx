@@ -1,0 +1,40 @@
+import DrumPattern from "../../src/components/DrumPattern.astro";
+
+import Notation from "../../src/components/notation/Notation.astro";
+
+import NotationKeyboard from "../../src/components/notation/NotationKeyboard.astro";
+
+
+
+# 101: Akustik
+
+## Schall, Frequenz & Klangfarbe
+
+Jeder musikalische Ton entsteht durch eine regelmäßige mechanische Schwingung (z. B. einer Saite, einer Luftsäule oder einer Membran), die sich als Schallwelle über die Luft ausbreitet.
+
+* **Tonhöhe (Frequenz):** Bestimmt durch die Schwingungsgeschwindigkeit, gemessen in **Hertz ($\text{Hz}$)** (Schwingungen pro Sekunde). Je höher die Frequenz, desto höher der wahrgenommene Ton.
+* **Kammerton ($a'$ / $A_4$):** Der internationale Stimmstandard liegt bei **$440\text{ Hz}$**. Alle Instrumente eines Ensembles orientieren sich an dieser Referenzfrequenz.
+* **Lautstärke (Amplitude):** Bestimmt durch die Auslenkung der Schwingung – je größer die Amplitude, desto lauter der Ton.
+* **Klangfarbe (Timbre):** Jedes Instrument erzeugt neben dem Grundton ein individuelles Gemisch aus **Obertönen**. Dadurch klingen Klavier, Gitarre oder Trompete bei exakt derselben Frequenz ($440\text{ Hz}$) völlig unterschiedlich.
+
+<figure>
+  <svg viewBox="0 0 720 250" role="img" aria-labelledby="wave-title wave-description" style="max-width: 100%; height: auto;">
+    <title id="wave-title">Langsame und schnelle Schwingungen im Vergleich</title>
+    <desc id="wave-description">Drei gleich hohe Wellen über denselben Zeitraum. Die langsame Welle schwingt einmal, die mittlere zweimal und die schnelle viermal. Je mehr Schwingungen, desto höher der Ton.</desc>
+    <line x1="190" y1="48" x2="650" y2="48" stroke="#64748b" stroke-dasharray="4 5" />
+    <line x1="190" y1="118" x2="650" y2="118" stroke="#64748b" stroke-dasharray="4 5" />
+    <line x1="190" y1="188" x2="650" y2="188" stroke="#64748b" stroke-dasharray="4 5" />
+    <text x="12" y="53" fill="currentColor" font-size="16">Langsam · tiefer Ton</text>
+    <text x="12" y="123" fill="currentColor" font-size="16">Mittel</text>
+    <text x="12" y="193" fill="currentColor" font-size="16">Schnell · hoher Ton</text>
+    <path d="M190 48 Q305 8 420 48 T650 48" fill="none" stroke="#38bdf8" stroke-width="4" />
+    <path d="M190 118 Q247.5 78 305 118 T420 118 T535 118 T650 118" fill="none" stroke="#a78bfa" stroke-width="4" />
+    <path d="M190 188 Q218.75 148 247.5 188 T305 188 T362.5 188 T420 188 T477.5 188 T535 188 T592.5 188 T650 188" fill="none" stroke="#f472b6" stroke-width="4" />
+    <line x1="190" y1="226" x2="650" y2="226" stroke="currentColor" stroke-width="1.5" />
+    <path d="M650 226 l-9 -5 v10 z" fill="currentColor" />
+    <text x="408" y="247" fill="currentColor" font-size="14" text-anchor="middle">gleicher Zeitraum</text>
+  </svg>
+<br />
+  <figcaption>Schematische Darstellung: Bei gleicher Wellenhöhe schwingt der höhere Ton öfter im selben Zeitraum.</figcaption>
+</figure>
+

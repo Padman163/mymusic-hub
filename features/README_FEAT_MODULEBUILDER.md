@@ -3,6 +3,9 @@
 Dieses Dokument ist die Feature-Referenz für den **Admin Modul- & Aufgaben-Builder** und den **Interaktiven Lernpfad für Lernende**. Die Etappen 1 bis 3B beschreiben die umgesetzten Bausteine; Testbefehle und aktuelle Ergebnisse stehen im [Testing-Leitfaden](../README_TESTING.md).
 
 Die nutzerorientierte [Anleitung für den Modul-Builder](../src/content/docs/wiki/modul-builder.mdx) steht im Wiki.
+Das persönliche [Inventar](../src/content/docs/wiki/inventar.mdx) zeigt im konto-gebundenen Online-Lernstand gekaufte Gamification-Freischaltungen. Beim ersten Aufruf ist es leer; der Shop-Katalog wird aus der gemeinsamen Lernkonfiguration geladen und bietet Click für 10 und Kick für 30 verfügbare XP an. Ausgaben reduzieren nur das verfügbare XP-Guthaben, nicht die insgesamt verdienten XP oder das Level.
+Im Studio können gekaufte Sounds ausgerüstet werden; der aktive Sound wird bei Aufgabenprüfungen wiedergegeben.
+Die Gesamtarchitektur von XP, Shop, Inventar und Studio steht in der [XP-System-Referenz](README_FEAT_XP-SYSTEM.md).
 
 ---
 
@@ -85,7 +88,7 @@ Warum machen wir das getrennt? Weil so jeder Baustein einzeln geprüft und getes
 
 ## Etappe 2: Die sichtbare Autorenwerkbank im Browser
 
-Auf das Fundament aus Etappe 1 haben wir jetzt die bedienbare Oberfläche gebaut. Sie ist im bekannten Design des IssueTrackers gehalten, damit alles in Mein Musik-Hub einheitlich aussieht und funktioniert. Zu finden ist sie in der linken Seitenleiste unter **Projektierung → Modul-Builder** (`src/content/docs/projektierung/modul-builder.mdx`).
+Auf das Fundament aus Etappe 1 haben wir jetzt die bedienbare Oberfläche gebaut. Sie ist im bekannten Design des IssueTrackers gehalten, damit alles in Mein Musik-Hub einheitlich aussieht und funktioniert. Zu finden ist sie in der linken Seitenleiste unter **Admin → Modul-Builder** (`src/content/docs/projektierung/modul-builder.mdx`).
 
 Dort gibt es vier übersichtliche Reiter:
 
@@ -194,11 +197,11 @@ Die Code-Markierungen in diesen Beispielen dienen nur der Dokumentation: Im Buil
 
 ### 4. Reiter „Einstellungen“ (`src/components/project/QuizSettingsForm.astro`)
 
-Hier werden die Bestehensgrenzen für Abschluss-Quiz und Fastlane für alle Module getrennt eingestellt. Eine tatsächliche Änderung nach Bestätigung setzt den gesamten Lernfortschritt einschließlich XP und Bestwerten beim nächsten Laden im jeweiligen Browser zurück; Quizze müssen erneut absolviert werden. Unverändertes Speichern löst keinen Reset aus.
+Hier werden die Bestehensgrenzen für Abschluss-Quiz und Fastlane für alle Module getrennt eingestellt. Der gemeinsame Online-Katalog enthält zusätzlich die Shop-Konfiguration; eine Oberfläche zum Bearbeiten des Shop-Katalogs gibt es im Builder derzeit nicht. Eine tatsächliche Änderung der Quiz-Grenzen nach Bestätigung setzt den gesamten Lernfortschritt einschließlich XP und Bestwerten beim nächsten Laden in jedem betroffenen Browser zurück; bei aktiver Anmeldung wird der neue Stand mit dem Konto synchronisiert und auf weiteren Geräten übernommen. Quizze müssen erneut absolviert werden. Unverändertes Speichern löst keinen Reset aus.
 
 ### Gemeinsame Logik, Styling & UI-Tests
 - **`src/lib/module-builder-ui.ts` & `src/styles/module-builder.css`:** Enthalten die gemeinsame Steuerungslogik für alle drei Werkzeuge sowie das passende Erscheinungsbild (inklusive dunklem Design-Modus), während die `.astro`-Dateien schlank bleiben. Beim Laden und Speichern prüft der Browser sicher auf JSON-Antworten (um HTML-Fehlerseiten sauber abzufangen) und nutzt automatisch `/api/modules` bzw. `/.netlify/functions/modules`.
-- **`astro.config.mjs`:** Bindet den **Modul-Builder** unter *Projektierung → Modul-Builder* sowie den **Interaktiven Lernpfad & Dashboard** ganz oben unter *Audio & Musik → Musiktheorie* in die Seitenleiste ein und stellt zusätzlich einen lokalen Entwicklungs-Endpunkt für `npm run dev` bereit, sodass Änderungen lokal direkt in `data/modules.json` gespeichert werden.
+- **`astro.config.mjs`:** Bindet den **Modul-Builder** direkt unter *Admin* sowie den **Interaktiven Lernpfad & Dashboard** ganz oben unter *Audio & Musik → Musiktheorie* in die Seitenleiste ein und stellt zusätzlich einen lokalen Entwicklungs-Endpunkt für `npm run dev` bereit, sodass Änderungen lokal direkt in `data/modules.json` gespeichert werden.
 - **`netlify/functions/modules.ts`:** Reagiert sowohl auf `/api/modules` als auch auf `/.netlify/functions/modules`.
 - **`tests/components/module-builder-ui.test.ts`:** Oberflächentests prüfen unter anderem Theorie-Blöcke, Block- und Gruppenvorschau, NotationBuilder-Vorschau, Live-XP-Berechnung, Katalogfilter und die Behandlung von HTML-Fehlerantworten.
 
@@ -208,7 +211,7 @@ Hier werden die Bestehensgrenzen für Abschluss-Quiz und Fastlane für alle Modu
 
 Damit Lernende sehen können, wie weit sie sind und welche Module noch gesperrt oder schon geschafft sind, braucht es ein verlässliches „Gedächtnis“ im Hintergrund – noch bevor bunte Knöpfe gezeichnet werden.
 
-- **Speicherung im eigenen Browser (`localStorage`):** Der Lernstand wird lokal im Browser des Lernenden gespeichert (unter `mymusic_learning_progress_v1`). Es ist also kein Benutzerkonto oder Login nötig – und für den Seitenbau auf dem Server gibt es einen sicheren Ersatzspeicher, damit beim Erzeugen der Website nichts abstürzt.
+- **Konto-gebundene Speicherung:** Nach Anmeldung wird der Lernstand online pro Netlify-Identity-Konto gespeichert; eine lokale, konto-getrennte Cache-Kopie hält die Oberfläche reaktionsschnell. Ein alter Gaststand wird bei der ersten Anmeldung übernommen, wenn im Konto noch kein Cloud-Stand existiert.
 - **Schrittweise Freischaltung:**
   - Modul 1 startet automatisch **freigeschaltet** mit dem ersten Abschnitt. Alle Folgemodule starten zunächst **gesperrt**.
   - Innerhalb eines Moduls folgen Theorieblöcke, Lernpfad-Aufgaben, Praxisblöcke und Gruppen der gespeicherten Reihenfolge aus dem Editor. Nicht in der Reihenfolge enthaltene Inhalte werden ergänzt. Danach folgt das Quiz, sofern dem Modul Fragen der Lernspur `mittel` zugeordnet sind. Ohne solche Fragen erscheint im Lektions-Parcours kein Quizschritt. Erst nach dem Abschluss öffnet sich automatisch das nächste Modul.
@@ -226,18 +229,18 @@ Damit Lernende sehen können, wie weit sie sind und welche Module noch gesperrt 
 Jetzt verbinden sich die Bausteine aus Etappe 1 bis 3A zu einem kompletten, direkt im Browser spielbaren Kurs unter **Audio & Musik → Musiktheorie → Interaktiver Lernpfad & Dashboard** (`/audio/theory/lernpfad/`).
 
 ### 1. Initialer Modulkatalog
-Ein neuer Katalog enthält keine Module oder Fragen. Bis eigene Quiz-Einstellungen gespeichert werden, gelten die Schema-Standardwerte: 80 % für das Quiz und 85 % für Fastlane. Bestehende Blob-Kataloge bleiben unverändert.
+Ein neuer Katalog enthält keine Module oder Fragen, aber die Standard-Lernkonfiguration mit Shop-Katalog. Bis eigene Quiz-Einstellungen gespeichert werden, gelten die Schema-Standardwerte: 80 % für das Quiz und 85 % für Fastlane. Bestehende Blob-Kataloge bleiben unverändert.
 
 ### 2. Das XP-Dashboard (`src/components/learning/ProgressDashboard.astro`)
 - **Wozu es dient:** Zeigt dem Lernenden auf einen Blick das aktuelle **Level**, die **gesammelten Gesamt-XP**, den Fortschrittsbalken bis zum nächsten Level, die Anzahl **abgeschlossener Module** sowie kompakte Badges für XP nach Lernbereich (`Theorie`, `Instrument` …) und Themen (`Notensystem`, `Gitarre` …).
 - **Live-Aktualisierung:** Sobald eine Aufgabe gelöst, Theorie abgeschlossen oder ein Quiz bestanden wird, aktualisiert sich das Dashboard sofort ohne Neuladen der Seite.
 - **Modulkatalog:** Dashboard, Roadmap, Modulansicht und Aufgaben-Runner laden den aktuellen Katalog zur Laufzeit über `/api/modules`. Es wird keine Katalogdatei in den Build eingebettet. Ein leerer Katalog ist gültig; ein Ladefehler wird separat angezeigt. Notationsaufgaben werden aus der API-Konfiguration mit dem gemeinsamen Notations-Builder gerendert.
-- **Geschützter Reset:** Neben „Quiz starten“ bzw. „Quiz wiederholen“ steht „Lernfortschritt zurücksetzen“. Erst nach Bestätigung werden der gesamte in diesem Browser gespeicherte Lernfortschritt und alle XP zurückgesetzt; der Modulkatalog bleibt unverändert.
+- **Geschützter Reset:** Neben „Quiz starten“ bzw. „Quiz wiederholen“ steht „Lernfortschritt zurücksetzen“. Erst nach Bestätigung werden der gesamte Lernfortschritt und alle XP zurückgesetzt; bei aktiver Anmeldung wird der neue Stand mit dem Konto synchronisiert. Der Modulkatalog bleibt unverändert.
 
 ### 3. Die Modul-Roadmap (`src/components/learning/ModuleRoadmap.astro`)
 - **Wozu sie dient:** Zeigt alle Module in der richtigen Reihenfolge als übersichtliche Karten.
 - **Fortschritt:** Die Karte zeigt Gesamtfortschritt sowie Balken für Theorie, Aufgaben und Quiz. Status-Badges und der Fastlane-Link sind derzeit ausgeblendet.
-- **Aktionen:** **„Lektion öffnen“** führt zur Modulansicht; gesperrte Module zeigen dort einen Sperrhinweis. **„Quiz starten“** wird erst bei Quizbereitschaft aktiviert. Der geschützte Reset setzt den gesamten lokalen Lernfortschritt zurück.
+- **Aktionen:** **„Lektion öffnen“** führt zur Modulansicht; gesperrte Module zeigen dort einen Sperrhinweis. **„Quiz starten“** wird erst bei Quizbereitschaft aktiviert. Der geschützte Reset setzt den gesamten Lernfortschritt zurück; bei aktiver Anmeldung wird der neue Stand mit dem Konto synchronisiert.
 
 ### 4. Der Lektions-Parcours & Aufgaben-Runner (`ModuleStepper.astro` & `ModuleQuizRunner.astro`)
 - **Geführter Schritt-für-Schritt-Aufbau (`/audio/theory/modul/?id=...`):**

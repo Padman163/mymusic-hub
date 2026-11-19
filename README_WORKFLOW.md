@@ -6,7 +6,29 @@
 
 Im neuen Workspace das Repository einrichten und den benötigten Branch auschecken: [Workspace-Setup](README_WORKSPACE_SETUP.md). Alltagsbefehle stehen im [Cheatsheet](README_CHEATSHEET.md).
 
-Vor einem Workspace-Wechsel Änderungen prüfen, committen und den aktuellen Branch pushen. Lokale `.env`-Dateien und nicht eingecheckte Daten separat und sicher übertragen.
+Vor einem Workspace-Wechsel Änderungen prüfen, committen und den aktuellen Branch pushen. Nicht eingecheckte Daten separat und sicher übertragen.
+
+Nach Paket- oder Netlify-Änderungen den Workspace erneut synchronisieren:
+
+1. Sind in `package.json` neue Pakete ergänzt oder wurden Abhängigkeiten geändert, anschließend erneut `npm install` ausführen und `package-lock.json` mit committen.
+2. Nach neuen Netlify-Einstellungen oder Änderungen an der Site-Verknüpfung erneut bei Netlify anmelden und die Verknüpfung prüfen:
+
+```bash
+npx netlify-cli login
+npx netlify-cli status
+```
+
+Die Netlify CLI bezieht die benötigten Informationen aus der Anmeldung und der
+Site-Verknüpfung. Ein Export der Netlify-Umgebungsvariablen in eine lokale
+`.env` ist für dieses Projekt nicht erforderlich.
+
+3. Danach einen laufenden `npx netlify-cli dev`-Prozess vollständig stoppen und mit der aktualisierten Umgebung neu starten.
+
+Bei Modul-Builder, Beiträgen und anderen Netlify-Functions ausschließlich `http://localhost:8888` öffnen. Port `4321` ist der von der Netlify CLI intern gestartete reine Astro-Server; dort fehlen die Backend-Routen und Browserfehler mit HTML-Antworten sind dann erwartbar. Eine `404 text/html` von `/api/modules` oder `/api/contributions` bedeutet daher zuerst: richtige URL und richtigen Server prüfen.
+
+Die Blob-Transferbefehle verwenden die Anmeldung aus `npx netlify-cli login`
+und benötigen weder `NETLIFY_AUTH_TOKEN` noch die früheren `GITHUB_*`-Werte in
+einer lokalen `.env`.
 
 ## 2. Feature entwickeln
 
@@ -20,11 +42,55 @@ git switch -c feat/<featurename>
 
 Auf diesem Branch entwickeln und Änderungen regelmäßig committen und pushen. Soll ein neues Feature auf einem noch nicht in `main` übernommenen Feature aufbauen, bewusst von dessen Archiv-Branch abzweigen statt von `main`.
 
-Für die Speicherumstellung mit `git switch feat/netlify-blobs` auf den vorhandenen Feature-Branch wechseln. Die lokale `.env` beim Wechsel anpassen (den `GITHUB_BRANCH` nur für den Altstand setzen, danach die alten Speicher-Variablen entfernen) und den Branch separat im Netlify Dashboard freigeben. Vor dem ersten Blob-Zugriff den Datenstand gemäß [Blob-Referenz](features/README_FEAT_NETLIFYBLOB.md) sichern und abgleichen.
+Beiträge und Lernmodule verwenden bereits Netlify Blobs (`mymusic-hub-data`). Lokal und online verwenden jedoch unterschiedliche Speicherstände:
+
+- `npx netlify-cli dev` liest und schreibt einen eigenen dauerhaften Store unter `.netlify/`, derzeit `.netlify\blobs-serve\`.
+- Ein leerer lokaler Store wird aus `data\blob-snapshot\contributions.json` und `data\blob-snapshot\modules.json` initialisiert.
+- Schon vorhandene lokale Blob-Keys haben Vorrang. Ein Git-Branch-Wechsel lädt deshalb keine neueren Snapshot-Daten in diesen Store.
+- Lokale Schreibvorgänge über die Functions aktualisieren zusätzlich die versionierten Snapshots, ändern aber noch nicht die Cloud.
+- `npm run blobs:push` erstellt vorher ein Cloud-Backup und lädt danach beide lokalen Snapshots in den siteweiten Store.
+- Branch Deploys und Deploy Previews teilen den Cloud-Store mit Production, überschreiben ihn aber nicht mehr aus ihrem Build.
+- Kein Build importiert Snapshot-Daten; Cloud-Änderungen erfolgen ausschließlich über den bestätigten Transferbefehl.
+
+Wenn der lokale Stand nach einem Branch-Wechsel hinter dem versionierten Snapshot zurückbleibt, Netlify Dev zuerst stoppen und den benannten Reset-Befehl verwenden:
+
+```bash
+npm run blobs:reset
+npx netlify-cli dev
+```
+
+Das entfernt ausschließlich `.netlify/blobs-serve`. Vorher nicht als Snapshot
+gesicherte lokale Änderungen erhalten. Für eine frische lokale Kopie des
+aktuellen Online-Stands:
+
+```bash
+npm run blobs:pull
+npm run blobs:reset
+npx netlify-cli dev
+```
+
+Nach lokalen Änderungen die Snapshot-Diff prüfen und ausdrücklich hochladen:
+
+```bash
+git diff -- data/blob-snapshot
+npm run blobs:push
+```
+
+Der Push erstellt vor dem überschreibenden Zugriff ein Archiv beider Cloud-Blobs.
+Token-Regeln und Deploy-Verhalten stehen in der
+[Blob-Referenz](features/README_FEAT_NETLIFYBLOB.md).
 
 ## 3. Automatisch testen
 
 Keine Tests automatisch nach einzelnen Änderungen ausführen. Copilot fragt nach jeweils zehn Nutzer-Prompts im laufenden Chat, ob passende Unit- und Komponententests (Stufen 1 und 2) ausgeführt werden sollen. Erst nach Zustimmung oder ausdrücklichem Testauftrag testen. Kein Preflight für Zwischenschritte, Zwischen-Commits oder Zwischen-Pushes. Details und Befehle: [Testing](README_TESTING.md).
+
+Bei Bedarf kann Biome sichere Formatierungs- und Lint-Korrekturen direkt anwenden:
+
+```bash
+npm run fix
+```
+
+Die anschließende Validierung mit Biome, Astro und TypeScript läuft als Stufe 0 ausschließlich im manuell vom Nutzer gestarteten `npm run preflight`; `npm run validate` nicht separat starten. Der Preflight ersetzt weder die gezielten Tests während der Entwicklung noch das separate manuelle `npm run audit`.
 
 ## 4. Cleanup und Abschlussprüfung
 
@@ -57,6 +123,6 @@ git push origin --delete feat/<featurename>
 
 Den Archiv-Branch auf GitHub prüfen. Ein bereits gepushter `feat/`-Branch bleibt dort bestehen; eine spätere Löschung ist eine separate Entscheidung.
 
-Die Speicherumstellung nach erfolgreicher Abnahme unter `archive/feat/netlify-blobs` archivieren. Das sichert den Code, nicht den Datenbestand in Netlify Blobs. Vor einer späteren Deploy-Umstellung Branch-Freigabe im Dashboard und Datenbackup getrennt prüfen.
+Vor dem Archivieren eines Features prüfen, ob neue Snapshots unter `data/blob-snapshot/` entstehen und vollständig im Branch enthalten sind. Vor einem späteren Deploy Branch-Freigabe, Netlify-Umgebungsvariablen und Cloud-Datenbackup getrennt prüfen. Das Archivieren des Codes sichert keine Daten in Netlify Blobs.
 
 Archivieren übernimmt **keine** Änderungen nach `main`. Eine Übernahme per Pull Request und ein Deployment werden später separat entschieden. Danach mit Schritt 2 das nächste Feature beginnen.

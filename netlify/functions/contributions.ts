@@ -12,7 +12,7 @@ import {
 	type Contribution,
 	type ContributionFields,
 } from './lib/contribution-store';
-import { isBlobStoreUnavailable } from './lib/blob-store';
+import { isBlobStoreUnavailable, isReadOnlyCloudContext, LocalBlobSnapshotError } from './lib/blob-store';
 
 const allowedTypes = ['Bug', 'Feature', 'Decision'] as const;
 const maxRequestBytes = 500_000;
@@ -81,6 +81,12 @@ export default async (request: Request): Promise<Response> => {
 		}
 	}
 
+	if (isReadOnlyCloudContext()) {
+		return jsonResponse(405, {
+			error: 'Dieser Deploy zeigt den aktuellen Cloud-Stand. Änderungen sind in dieser Vorschau nicht erlaubt.',
+		});
+	}
+
 	const bodyText = await request.text();
 	if (new TextEncoder().encode(bodyText).byteLength > maxRequestBytes) {
 		return jsonResponse(413, { error: 'Der Beitrag ist zu groß.' });
@@ -112,6 +118,10 @@ export default async (request: Request): Promise<Response> => {
 			if (isBlobStoreUnavailable(error)) {
 				return jsonResponse(503, { error: 'Der IssueTracker ist noch nicht konfiguriert.' });
 			}
+			if (error instanceof LocalBlobSnapshotError) {
+				console.error('Der Beitrag wurde gespeichert, aber der lokale Blob-Snapshot konnte nicht aktualisiert werden.', error.originalError);
+				return jsonResponse(500, { error: error.message });
+			}
 			if (error instanceof ContributionNotFoundError) {
 				return jsonResponse(404, { error: 'Der Beitrag wurde bereits gelöscht. Bitte lade die Seite neu.' });
 			}
@@ -136,6 +146,10 @@ export default async (request: Request): Promise<Response> => {
 	} catch (error) {
 		if (isBlobStoreUnavailable(error)) {
 			return jsonResponse(503, { error: 'Der IssueTracker ist noch nicht konfiguriert.' });
+		}
+		if (error instanceof LocalBlobSnapshotError) {
+			console.error('Der Beitrag wurde gespeichert, aber der lokale Blob-Snapshot konnte nicht aktualisiert werden.', error.originalError);
+			return jsonResponse(500, { error: error.message });
 		}
 		console.error('Der Beitrag konnte nicht in Netlify Blobs gespeichert werden.', error);
 		return jsonResponse(502, { error: 'Der Beitrag konnte derzeit nicht gespeichert werden.' });

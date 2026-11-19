@@ -1,0 +1,34 @@
+import DrumPattern from "../../src/components/DrumPattern.astro";
+
+import Notation from "../../src/components/notation/Notation.astro";
+
+import NotationKeyboard from "../../src/components/notation/NotationKeyboard.astro";
+
+
+
+# 102: Drei Muster vergleichen
+
+## Drei Muster vergleichen
+
+Für diese drei Muster bleibt der Puls gleich schnell. Jedes blaue Feld steht für einen Klang.
+
+- **Muster A:** ein Klang auf jedem Schlag.
+- **Muster B:** Klänge auf **1 und 3**.
+- **Muster C:** Klänge auf **2 und 4**.
+
+<DrumPattern
+  steps={4}
+  timeSignature={"4/4"}
+  resolution={"1/4"}
+  stepLabels={["1","2","3","4"]}
+  interactive={false}
+  showFooter={true}
+  showFooterInfo={false}
+  showVelocity={false}
+  showTrackNote={false}
+  useTrackColors={true}
+  patternData={[{"name":"Muster A","note":"C1","color":"#3b82f6","activeSteps":[0,1,2,3]},{"name":"Muster B","note":"C1","color":"#3b82f6","activeSteps":[0,2]},{"name":"Muster C","note":"C1","color":"#3b82f6","activeSteps":[1,3]}]}
+/>
+
+Vergleiche die Muster und beantworte die drei Theoriefragen.
+

@@ -1,0 +1,211 @@
+import DrumPattern from "../../src/components/DrumPattern.astro";
+
+import Notation from "../../src/components/notation/Notation.astro";
+
+import NotationKeyboard from "../../src/components/notation/NotationKeyboard.astro";
+
+
+
+# 104: Rhythmus & Notation
+
+## Noten- & Pausenwerte, Hals- & Balkenregeln
+
+Notenwerte legen fest, wie lange ein Ton im Verhältnis zu einem regelmäßigen Grundpuls klingt. Zu jedem Notenwert gehört eine **Pause gleicher Dauer**, während der der innere Puls weiterläuft:
+
+* **Ganze Note / Ganze Pause:** $4$ Viertelschläge (die Ganze Pause hängt unter der 4. Notenlinie und gilt auch als Taktpause für einen ganzen Takt).
+* **Halbe Note / Halbe Pause:** $2$ Viertelschläge (die Halbe Pause liegt auf der 3. Notenlinie).
+* **Viertelnote / Viertelpause:** $1$ Grundschlag im $4/4$-Takt.
+* **Achtelnote / Achtelpause:** $\frac{1}{2}$ Viertelschlag (2 Achtel = 1 Viertel; Zählweise: `1 & 2 & 3 & 4 &`).
+* **Sechzehntelnote / Sechzehntelpause:** $\frac{1}{4}$ Viertelschlag (4 Sechzehntel = 1 Viertel; Zählweise: `1-e-&-a`).
+
+**Wichtige Notationsregeln für Hälse & Balken:**
+* **Halsrichtung:** Notenköpfe **unterhalb** der 3. (mittleren) Notenlinie erhalten einen Hals nach **oben** (rechts am Kopf). Notenköpfe **auf oder oberhalb** der 3. Linie erhalten einen Hals nach **unten** (links am Kopf).
+* **Balkung:** Mehrere Achtel- oder Sechzehntelnoten innerhalb einer Zählzeit werden statt einzelner Fähnchen mit einem gemeinsamen **Balken** verbunden, damit der Taktpuls auf einen Blick lesbar bleibt.
+
+<Notation
+  clef="treble"
+  timeSignature={{ numerator: 4, denominator: 4 }}
+  layout={[3, 1]}
+  measureWidth="equal"
+  measures={[
+    { notes: [{ duration: "whole", step: 2 }] },
+    { notes: [{ duration: "half", step: 2 }, { duration: "half", step: 2 }] },
+    { notes: [{ duration: "quarter", step: 2 }, { duration: "quarter", step: 2 }, { duration: "quarter", step: 2 }, { duration: "quarter", step: 2 }] },
+    {
+      rightBarStyle: "final",
+      notes: [
+        { duration: "eighth", step: 2, beamGroup: "b1" },
+        { duration: "eighth", step: 2, beamGroup: "b1" },
+        { duration: "eighth", step: 2, beamGroup: "b1" },
+        { duration: "eighth", step: 2, beamGroup: "b1" },
+        { duration: "eighth", step: 2, beamGroup: "b2" },
+        { duration: "eighth", step: 2, beamGroup: "b2" },
+        { duration: "eighth", step: 2, beamGroup: "b2" },
+        { duration: "eighth", step: 2, beamGroup: "b2" }
+      ]
+    }
+  ]}
+/>
+
+## Punktierung, Haltebogen & Achteltriole
+
+Um ungerade Längen, taktübergreifende Töne oder Dreier-Unterteilungen darzustellen, nutzt die Elementarlehre drei zentrale Werkzeuge:
+
+* **Punktierung:** Ein Punkt rechts hinter einer Note oder Pause verlängert deren Dauer exakt um **die Hälfte ihres eigenen Werts** ($\text{Wert} \times 1{,}5$):
+  * Punktierte Halbe = $2 + 1 = 3$ Viertelschläge
+  * Punktierte Viertel = $1 + \frac{1}{2} = 1\frac{1}{2}$ Viertelschläge (3 Achtel)
+  * Punktierte Achtel = $\frac{1}{2} + \frac{1}{4} = \frac{3}{4}$ Viertelschlag (3 Sechzehntel)
+* **Haltebogen (Überbindung):** Verbindet zwei Noten **derselben Tonhöhe**. Der Ton wird nur einmal angeschlagen und über die Summe beider Notenwerte ausgehalten (auch über Taktstriche hinweg).
+* **Achteltriole:** Teilt die Zeit von normalerweise **zwei** Achtelnoten (1 Viertelschlag) in **drei gleich lange Töne** (Zählweise: `1-&-a, 2-&-a`).
+
+<DrumPattern
+  steps={16}
+  timeSignature="4/4"
+  resolution="1/16 + Achteltriole"
+  interactive={false}
+  useTrackColors={true}
+  stepLabels={[
+    "1",
+    "e",
+    "&",
+    "a",
+    "2",
+    "e",
+    "&",
+    "a",
+    "3",
+    "e",
+    "&",
+    "a",
+    "4",
+    "e",
+    "&",
+    "a",
+  ]}
+  patternData={[
+    {
+      name: "Grundpuls",
+      note: "4×",
+      color: "#38bdf8",
+      activeSteps: [0, 4, 8, 12],
+      cellLabels: ["1", "", "", "", "2", "", "", "", "3", "", "", "", "4"],
+    },
+    {
+      name: "Achtel",
+      note: "8×",
+      color: "#38bdf8",
+      activeSteps: [0, 2, 4, 6, 8, 10, 12, 14],
+      cellLabels: [
+        "1",
+        "",
+        "&",
+        "",
+        "2",
+        "",
+        "&",
+        "",
+        "3",
+        "",
+        "&",
+        "",
+        "4",
+        "",
+        "&",
+      ],
+    },
+    {
+      name: "Sechzehntel",
+      note: "16×",
+      color: "#38bdf8",
+      activeSteps: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+      cellLabels: [
+        "1",
+        "e",
+        "&",
+        "a",
+        "2",
+        "e",
+        "&",
+        "a",
+        "3",
+        "e",
+        "&",
+        "a",
+        "4",
+        "e",
+        "&",
+        "a",
+      ],
+    },
+    {
+      name: "Achteltriole",
+      note: "12×",
+      color: "#facc15",
+      activeSteps: [],
+      eventPositions: [
+        0,
+        4 / 3,
+        8 / 3,
+        4,
+        16 / 3,
+        20 / 3,
+        8,
+        28 / 3,
+        32 / 3,
+        12,
+        40 / 3,
+        44 / 3,
+      ],
+      eventLabels: ["1", "&", "a", "2", "&", "a", "3", "&", "a", "4", "&", "a"],
+    },
+  ]}
+/>
+
+## Taktarten, Metrum & Auftakt
+
+Die **Taktangabe** besteht aus zwei Zahlen am Anfang eines Stücks: Die **obere Zahl** gibt an, wie viele Schläge in einen Takt passen; die **untere Zahl** nennt den Notenwert eines Schlags ($4$ = Viertel, $8$ = Achtel, $2$ = Halbe).
+
+* **$2/4$-Takt:** Zwei Viertelschläge pro Takt (Betonung: **1** – 2; Marsch-Charakter).
+* **$3/4$-Takt:** Drei Viertelschläge pro Takt (Betonung: **1** – 2 – 3; Walzer-Charakter).
+* **$4/4$-Takt:** Vier Viertelschläge pro Takt (Hauptbetonung auf **1**, Nebenbetonung auf **3**).
+* **Alla Breve ($2/2$-Takt / $\mathbb{C}$):** Zwei Halbe pro Takt – wird in zwei großen Pulsen statt vier Vierteln empfunden.
+* **Einfacher $6/8$-Takt:** Sechs Achtel pro Takt, meist in **zwei Dreiergruppen** empfunden (`1-2-3, 4-5-6` mit Betonung auf **1** und **4**).
+* **Auftakt:** Ein unvollständiger Takt vor dem ersten vollen Takt. Die fehlenden Zählzeiten des Auftakts werden am Ende des Stücks im Schlusstakt abgezogen, sodass Auftakt und Schlusstakt zusammen einen vollständigen Takt ergeben.
+
+<Notation
+  clef="treble"
+  timeSignature={{ numerator: 4, denominator: 4 }}
+  layout={3}
+  measureWidth="equal"
+  measures={[
+    {
+      notes: [
+        { duration: "quarter", step: 2 },
+        { duration: "quarter", step: 2 },
+        { duration: "quarter", step: 2 },
+        { duration: "quarter", step: 2 }
+      ]
+    },
+    {
+      timeSignature: { numerator: 3, denominator: 4 },
+      notes: [
+        { duration: "quarter", step: 2 },
+        { duration: "quarter", step: 2 },
+        { duration: "quarter", step: 2 }
+      ]
+    },
+    {
+      timeSignature: { numerator: 6, denominator: 8 },
+      rightBarStyle: "final",
+      notes: [
+        { duration: "eighth", step: 2, beamGroup: "a" },
+        { duration: "eighth", step: 2, beamGroup: "a" },
+        { duration: "eighth", step: 2, beamGroup: "a" },
+        { duration: "eighth", step: 2, beamGroup: "b" },
+        { duration: "eighth", step: 2, beamGroup: "b" },
+        { duration: "eighth", step: 2, beamGroup: "b" }
+      ]
+    }
+  ]}
+/>
+

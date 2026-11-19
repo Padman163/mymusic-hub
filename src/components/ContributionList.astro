@@ -970,6 +970,12 @@ import "../styles/contribution-checklist.css";
 	async function loadContributions() {
 		try {
 			const response = await fetch('/api/contributions', { cache: 'no-store' });
+			const contentType = response.headers.get('content-type') ?? '';
+			if (!response.ok && (!contentType.includes('application/json') || response.status === 404)) {
+				throw new Error(
+					'Die Beitrags-API ist unter dieser Adresse nicht erreichbar. Für die lokale Entwicklung http://localhost:8888 mit dem Netlify-Dev-Server öffnen, nicht den Astro-Port 4321.',
+				);
+			}
 			if (!response.ok) throw new Error('Die Beiträge konnten derzeit nicht geladen werden.');
 			const data: unknown = await response.json();
 			if (
@@ -986,7 +992,10 @@ import "../styles/contribution-checklist.css";
 			updateCount();
 		} catch (error) {
 			console.error('Fehler beim Laden der Beiträge:', error);
-			status!.textContent = 'Die Beiträge konnten nicht geladen werden. Bitte versuche es später erneut.';
+			status!.textContent =
+				error instanceof Error
+					? error.message
+					: 'Die Beiträge konnten nicht geladen werden. Bitte versuche es später erneut.';
 		}
 	}
 

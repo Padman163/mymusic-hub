@@ -1,4 +1,8 @@
 import {
+  DEFAULT_LEARNING_CONFIGURATION,
+  type LearningShopItem,
+} from "./learning-config.ts";
+import {
   BASE_XP_DEFAULTS,
   DEFAULT_QUIZ_SETTINGS,
   getAvailableTags,
@@ -18,6 +22,17 @@ import {
 
 export const LEARNING_PROGRESS_STORAGE_KEY = "mymusic_learning_progress_v2";
 export const XP_PER_LEVEL = 500;
+let learningProgressAccountId: string | null = null;
+
+export function setLearningProgressAccountId(accountId: string | null): void {
+  learningProgressAccountId = accountId?.trim() || null;
+}
+
+function getDefaultStorageKey(): string {
+  return learningProgressAccountId
+    ? `${LEARNING_PROGRESS_STORAGE_KEY}:${learningProgressAccountId}`
+    : LEARNING_PROGRESS_STORAGE_KEY;
+}
 
 export const LANE_STEPS = ["theory", "leicht", "practice", "mittel"] as const;
 export type LaneStep = (typeof LANE_STEPS)[number];
@@ -44,11 +59,26 @@ export interface ModuleProgress {
   bestFastlaneScore?: number;
 }
 
+export interface InventoryUnlock {
+  id: string;
+  title: string;
+  description: string;
+  unlockedAt: string;
+  assetUrl?: string;
+}
+
+export type InventoryShopItem = LearningShopItem;
+export const INVENTORY_SHOP_ITEMS: readonly InventoryShopItem[] =
+  DEFAULT_LEARNING_CONFIGURATION.shopItems;
+
 export interface LearningProgressState {
   totalXp: number;
+  spentXp: number;
+  equippedInventoryItemIds: string[];
   xpByScope: Record<ModuleScope, number>;
   xpByTag: Record<string, number>;
   modules: Record<string, ModuleProgress>;
+  inventory: InventoryUnlock[];
   updatedAt: string;
   quizSettings?: QuizSettings;
 }
@@ -178,9 +208,15 @@ function cloneState(state: LearningProgressState): LearningProgressState {
       typeof state.totalXp === "number" && Number.isFinite(state.totalXp)
         ? state.totalXp
         : 0,
+    spentXp:
+      typeof state.spentXp === "number" && Number.isFinite(state.spentXp)
+        ? state.spentXp
+        : 0,
+    equippedInventoryItemIds: [...(state.equippedInventoryItemIds ?? [])],
     xpByScope,
     xpByTag,
     modules,
+    inventory: (state.inventory ?? []).map((unlock) => ({ ...unlock })),
     updatedAt: state.updatedAt,
     ...(state.quizSettings ? { quizSettings: { ...state.quizSettings } } : {}),
   };
@@ -282,12 +318,117 @@ export function createInitialProgress(
 
   return {
     totalXp: 0,
+    spentXp: 0,
+    equippedInventoryItemIds: [],
     xpByScope: createEmptyScopeXp(),
     xpByTag: createEmptyTagXp(),
     modules: moduleEntries,
+    inventory: [],
     updatedAt: nowIso(),
     quizSettings: { ...quizSettings },
   };
+}
+
+/** Fügt eine Freischaltung einmalig zum Inventar hinzu. */
+export function collectInventoryUnlock(
+  state: LearningProgressState,
+  unlock: InventoryUnlock,
+): LearningProgressState {
+  const id = unlock.id.trim();
+  const title = unlock.title.trim();
+  const description = unlock.description.trim();
+  const unlockedAt = unlock.unlockedAt.trim();
+  if (
+    id.length === 0 ||
+    title.length === 0 ||
+    Number.isNaN(Date.parse(unlockedAt)) ||
+    state.inventory.some((entry) => entry.id === id)
+  ) {
+    return state;
+  }
+
+  const next = cloneState(state);
+  next.inventory.push({
+    id,
+    title,
+    description,
+    unlockedAt,
+    ...(unlock.assetUrl !== undefined ? { assetUrl: unlock.assetUrl } : {}),
+  });
+  next.updatedAt = nowIso();
+  return next;
+}
+
+export function getAvailableXp(state: LearningProgressState): number {
+  return Math.max(
+    0,
+    Math.round(state.totalXp) - Math.round(state.spentXp ?? 0),
+  );
+}
+
+export function purchaseInventoryItem(
+  state: LearningProgressState,
+  itemId: string,
+  shopItems: readonly InventoryShopItem[] = INVENTORY_SHOP_ITEMS,
+): LearningProgressState {
+  const item = shopItems.find((entry) => entry.id === itemId);
+  if (
+    !item ||
+    state.inventory.some((entry) => entry.id === item.id) ||
+    getAvailableXp(state) < item.priceXp
+  ) {
+    return state;
+  }
+
+  const next = cloneState(state);
+  next.spentXp += item.priceXp;
+  next.inventory.push({
+    id: item.id,
+    title: item.title,
+    description: item.description,
+    unlockedAt: nowIso(),
+    ...(item.assetUrl !== undefined ? { assetUrl: item.assetUrl } : {}),
+  });
+  next.updatedAt = nowIso();
+  return next;
+}
+
+export function equipInventoryItem(
+  state: LearningProgressState,
+  itemId: string,
+): LearningProgressState {
+  const item = state.inventory.find((entry) => entry.id === itemId);
+  if (!item?.assetUrl) {
+    return state;
+  }
+  if (state.equippedInventoryItemIds?.[0] === itemId) {
+    return state;
+  }
+  const next = cloneState(state);
+  next.equippedInventoryItemIds = [itemId];
+  next.updatedAt = nowIso();
+  return next;
+}
+
+export function unequipInventoryItem(
+  state: LearningProgressState,
+): LearningProgressState {
+  if ((state.equippedInventoryItemIds ?? []).length === 0) {
+    return state;
+  }
+  const next = cloneState(state);
+  next.equippedInventoryItemIds = [];
+  next.updatedAt = nowIso();
+  return next;
+}
+
+export function getEquippedInventoryItem(
+  state: LearningProgressState,
+): InventoryUnlock | undefined {
+  const equippedId = state.equippedInventoryItemIds?.[0];
+  return equippedId
+    ? state.inventory.find((entry) => entry.id === equippedId)
+    : undefined;
 }
 
 /**
@@ -698,7 +839,7 @@ export function getDashboardOverview(
   };
 }
 
-function sanitizeStoredProgress(
+export function sanitizeStoredProgress(
   raw: unknown,
   modules: readonly LearningModule[],
 ): LearningProgressState | null {
@@ -787,6 +928,61 @@ function sanitizeStoredProgress(
     };
   }
 
+  const inventory: InventoryUnlock[] = [];
+  const inventoryIds = new Set<string>();
+  if (Array.isArray(raw.inventory)) {
+    for (const entry of raw.inventory) {
+      if (
+        !isRecord(entry) ||
+        typeof entry.id !== "string" ||
+        typeof entry.title !== "string" ||
+        typeof entry.description !== "string" ||
+        typeof entry.unlockedAt !== "string"
+      ) {
+        continue;
+      }
+
+      const id = entry.id.trim();
+      const title = entry.title.trim();
+      const description = entry.description.trim();
+      const unlockedAt = entry.unlockedAt.trim();
+      if (
+        id.length === 0 ||
+        title.length === 0 ||
+        Number.isNaN(Date.parse(unlockedAt)) ||
+        inventoryIds.has(id)
+      ) {
+        continue;
+      }
+
+      const assetUrl =
+        typeof entry.assetUrl === "string" && entry.assetUrl.startsWith("/")
+          ? entry.assetUrl
+          : undefined;
+      inventoryIds.add(id);
+      inventory.push({
+        id,
+        title,
+        description,
+        unlockedAt,
+        ...(assetUrl !== undefined ? { assetUrl } : {}),
+      });
+    }
+  }
+  const inventoryIdsWithAssets = new Set(
+    inventory
+      .filter((entry) => entry.assetUrl !== undefined)
+      .map((entry) => entry.id),
+  );
+  const equippedInventoryItemIds = Array.isArray(raw.equippedInventoryItemIds)
+    ? raw.equippedInventoryItemIds
+        .filter(
+          (id): id is string =>
+            typeof id === "string" && inventoryIdsWithAssets.has(id),
+        )
+        .slice(0, 1)
+    : [];
+
   const baseState: LearningProgressState = {
     totalXp:
       typeof raw.totalXp === "number" &&
@@ -794,9 +990,22 @@ function sanitizeStoredProgress(
       raw.totalXp >= 0
         ? raw.totalXp
         : 0,
+    spentXp:
+      typeof raw.spentXp === "number" &&
+      Number.isFinite(raw.spentXp) &&
+      raw.spentXp >= 0
+        ? Math.min(
+            Math.round(raw.spentXp),
+            typeof raw.totalXp === "number" && Number.isFinite(raw.totalXp)
+              ? Math.max(0, Math.round(raw.totalXp))
+              : 0,
+          )
+        : 0,
+    equippedInventoryItemIds,
     xpByScope,
     xpByTag,
     modules: sanitizedModules,
+    inventory,
     updatedAt: typeof raw.updatedAt === "string" ? raw.updatedAt : nowIso(),
     ...(isQuizSettings(raw.quizSettings)
       ? { quizSettings: raw.quizSettings }
@@ -849,10 +1058,16 @@ function removeStorageRaw(storageKey: string): void {
   }
 }
 
+export function hasStoredLearningProgress(
+  storageKey: string = getDefaultStorageKey(),
+): boolean {
+  return readStorageRaw(storageKey) !== null;
+}
+
 /** Lädt den gespeicherten Lernfortschritt SSR-sicher und gleicht ihn mit dem Curriculum ab. */
 export function loadLearningProgress(
   modules: readonly LearningModule[] = [],
-  storageKey: string = LEARNING_PROGRESS_STORAGE_KEY,
+  storageKey: string = getDefaultStorageKey(),
   quizSettings: QuizSettings = DEFAULT_QUIZ_SETTINGS,
 ): LearningProgressState {
   const raw = readStorageRaw(storageKey);
@@ -867,8 +1082,14 @@ export function loadLearningProgress(
           saveLearningProgress(reset, storageKey);
           return reset;
         }
+        const inventoryChanged =
+          isRecord(parsed) &&
+          JSON.stringify(parsed.inventory) !==
+            JSON.stringify(restored.inventory);
         if (!restored.quizSettings) {
           restored.quizSettings = { ...quizSettings };
+          saveLearningProgress(restored, storageKey);
+        } else if (inventoryChanged) {
           saveLearningProgress(restored, storageKey);
         }
         return restored;
@@ -885,15 +1106,23 @@ export function loadLearningProgress(
 /** Speichert den Lernfortschritt in `localStorage` bzw. im SSR-In-Memory-Fallback. */
 export function saveLearningProgress(
   state: LearningProgressState,
-  storageKey: string = LEARNING_PROGRESS_STORAGE_KEY,
+  storageKey: string = getDefaultStorageKey(),
+  notifySync = true,
 ): LearningProgressState {
   writeStorageRaw(storageKey, JSON.stringify(state));
+  if (notifySync && typeof document !== "undefined") {
+    document.dispatchEvent(
+      new CustomEvent("learning-progress:saved", {
+        detail: { state, storageKey },
+      }),
+    );
+  }
   return state;
 }
 
 /** Löscht den gespeicherten Lernfortschritt vollständig. */
 export function clearLearningProgress(
-  storageKey: string = LEARNING_PROGRESS_STORAGE_KEY,
+  storageKey: string = getDefaultStorageKey(),
 ): void {
   removeStorageRaw(storageKey);
 }

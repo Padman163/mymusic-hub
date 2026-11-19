@@ -4,11 +4,9 @@ Dieses Dokument bündelt Befehle für den Entwicklungsalltag und die Problembehe
 
 ---
 
-## 1. Schnelles Alltags-Cheatsheet (Terminal & Skripte)
+## 1. Entwicklung starten
 
-Die folgenden Befehle sind als schnelle Referenz gedacht.
-
-### 1.1 Lokale Entwicklungsserver
+### 1.1 Lokale Server
 ```bash
 npm run dev                  # Startet Astro isoliert (Frontend/Doku) auf http://localhost:4321
 npx netlify-cli dev          # Astro + Functions + lokale Blobs auf http://localhost:8888
@@ -16,44 +14,55 @@ npm run build                # Erzeugt einen produktionsreifen Static-Build im O
 npm run preview              # Startet einen lokalen Webserver zur Vorschau des dist/-Builds
 ```
 
-`git switch feat/netlify-blobs`: `.env` und Dashboard gemäß [Workspace-Setup](README_WORKSPACE_SETUP.md) separat anpassen. Den [Blob-Reset](features/README_FEAT_NETLIFYBLOB.md#architektur-und-datenfluss) nur für lokale Testdaten verwenden.
+Anmeldung, Kontenverwaltung und persönliche Lernstandsynchronisierung benötigen
+Netlify Identity und die Functions. Dafür `npx netlify-cli dev` verwenden;
+`npm run dev` startet nur den Astro-Server. Details: [Authentifizierungs-Referenz](features/README_FEAT_AUTHENTICATION.md) und [Wiki-Anleitung zum Lernkonto](src/content/docs/wiki/lernstand-konto.mdx).
 
-### 1.2 Statische Code-Hygiene & Typenprüfung
+Bei Beiträgen und Modulen verwendet `npx netlify-cli dev` einen dauerhaften lokalen Blob-Store unter `.netlify\blobs-serve\`; er überschreibt sich beim Branch-Wechsel nicht aus den versionierten Snapshots. Für den aktuellen Cloud-Stand:
+
 ```bash
-npm run lint                 # Führt den Biome-Linter aus (Syntax, Stil, ungenutzte Imports)
-npm run format               # Schreibt Formatierungsanpassungen direkt in die Dateien
-npm run check                # Prüft Astro-Templates, Frontmatter-Typen und Props (astro check)
-npx tsc --noEmit             # Führt strikte TypeScript-Typprüfung im gesamten Projekt aus
+npm run blobs:pull
+npm run blobs:reset
+npx netlify-cli dev
 ```
 
-### 1.3 Testpyramide & Verifikation
+Vor `blobs:reset` Netlify Dev stoppen und lokale Änderungen sichern. Beim
+Neustart werden die Keys aus den Snapshots initialisiert. Nach lokalen
+Bearbeitungen lauten die Upload-Befehle:
+
 ```bash
-npm test                     # Führt alle Vitest-Tests einschließlich Dokumentationscheck aus
-npm run test:watch           # Startet Tests im interaktiven Watch-Modus während des Programmierens
-npm run test:unit            # Führt ausschließlich tests/music-notation.test.mjs aus
-npm run test:component       # Führt isolierte DOM-/Komponententests mit happy-dom aus
-npm run test:integration     # Führt die Beitragstests unter tests/integration/ aus
-npm run build && npm run test:e2e # Prüft den aktuellen Build mit Playwright
-npm run test:e2e:ui          # Öffnet das grafische Playwright Test-Dashboard
-npm run test:visual          # E2E mit --update-snapshots; derzeit keine Snapshot-Assertions
+git diff -- data/blob-snapshot
+npm run blobs:push
 ```
 
-### 1.4 Prüfungen im Alltag und am Branch-Ende
+Der Push erzeugt vorher ein Cloud-Backup. `.netlify/blobs-serve` ist
+Datenspeicher, kein Cleanup-Ordner. Details und Token-Regeln stehen in der
+[Blob-Referenz](features/README_FEAT_NETLIFYBLOB.md).
+
+### 1.2 Häufige Git-Kommandos
+
 ```bash
-# Copilot fragt nach jeweils zehn Nutzer-Prompts; Tests nur nach Zustimmung oder ausdrücklichem Auftrag:
-npm run test:unit            # Stufe 1: Notationslogik; andere Unit-Tests passend zur Änderung wählen
-npm run test:component       # Stufe 2: Komponenten; bevorzugt gezielt
-npm run preflight            # Nur manuell durch den Nutzer am Branch-Ende (u. a. Stufen 0, 3 und 4):
-                             # Ergebnisbericht zu Validierung, Vitest, Build, E2E, Lighthouse und Git-Diff
-npm run audit                # Separates Dependency-Audit; nicht Teil des Preflights
-npm run cleanup:check        # Nicht-destruktiver Bericht zu den fünf Cleanup-Schritten
+git switch main              # Zurück zum Hauptbranch wechseln
+git switch <branch-name>   # Zu einem vorhandenen Feature-Branch wechseln
+git switch -c feat/<name>    # Neuen isolierten Feature-Branch erstellen und dorthin wechseln
+git fetch origin             # Remote-Änderungen abfragen ohne lokalen Code zu verändern
+git status                   # Zeigt modifizierte, gelöschte und ungetrackte Dateien an
+git add .                    # Alle Änderungen für den nächsten Commit stagen
+git commit -m "feat: text"   # Commit mit konventioneller Nachricht erstellen
+git push -u origin <branch>  # Neuen lokalen Branch erstmals auf GitHub veröffentlichen
+git push                     # Nachfolgende Commits auf den Tracking-Branch übertragen
+git pull origin main         # Lokalen Stand mit dem Remote-Hauptbranch synchronisieren
+git merge main               # Neueste Änderungen aus main in den aktuellen Feature-Branch holen
+git reset HEAD~1             # Letzten Commit zurücknehmen (Dateiänderungen bleiben im Editor)
 ```
 
-Lighthouse lädt Berichte standardmäßig temporär öffentlich hoch. Lokale Ablage und Testgrenzen stehen im [Testing-Leitfaden](README_TESTING.md).
+---
 
-Für eine vollständige Repository-Bereinigung siehe [Cleanup-Anleitung](README_CLEANUP.md).
+## 2. Inhalte und Features
 
-### MDX-Frontmatter: Seitenleisten
+Für den Ablauf von Branch-Erstellung bis zur Archivierung siehe [Workflow](README_WORKFLOW.md). Bei der Implementierung: Typen definieren, Logik in `src/lib/` schreiben, Tests ergänzen, UI-Komponenten kapseln und Inhalte in `src/content/docs/` anbinden. Architekturdetails stehen in [README_ASTROSTRUCTURE.md](README_ASTROSTRUCTURE.md).
+
+### 2.1 MDX-Frontmatter und Seitenleisten
 
 Die Einstellungen stehen zwischen den `---` am Anfang einer MDX-Seite:
 
@@ -72,83 +81,63 @@ tableOfContents: false
 
 Beispiel mit linker Navigation, aber ohne Inhaltsverzeichnis: [Lernpfad und Dashboard](src/content/docs/audio/theory/lernpfad.mdx).
 
-### 1.5 Häufigste Git-Kommandos
-```bash
-git switch main              # Zurück zum Hauptbranch wechseln
-git switch <branch-name>   # Zu einem vorhandenen Feature-Branch wechseln
-git switch -c feat/<name>    # Neuen isolierten Feature-Branch erstellen und dorthin wechseln
-git fetch origin             # Remote-Änderungen abfragen ohne lokalen Code zu verändern
-git status                   # Zeigt modifizierte, gelöschte und ungetrackte Dateien an
-git add .                    # Alle Änderungen für den nächsten Commit stagen
-git commit -m "feat: text"   # Commit mit konventioneller Nachricht erstellen
-git push -u origin <branch>  # Neuen lokalen Branch erstmals auf GitHub veröffentlichen
-git push                     # Nachfolgende Commits auf den Tracking-Branch übertragen
-git pull origin main         # Lokalen Stand mit dem Remote-Hauptbranch synchronisieren
-git merge main               # Neueste Änderungen aus main in den aktuellen Feature-Branch holen
-git reset HEAD~1             # Letzten Commit zurücknehmen (Dateiänderungen bleiben im Editor)
-```
-
 ---
 
-## 2. Feature entwickeln
+## 3. Branches umbenennen
 
-Für den Ablauf von Branch-Erstellung über Tests und Cleanup bis zur Archivierung siehe [Workflow](README_WORKFLOW.md). Bei der Implementierung: Typen definieren, Logik in `src/lib/` schreiben, Tests ergänzen, UI-Komponenten kapseln und Inhalte in `src/content/docs/` anbinden. Architekturdetails stehen in [README_ASTROSTRUCTURE.md](README_ASTROSTRUCTURE.md).
+### 3.1 Lokaler Branch
 
----
-
-### Branch umbenennen (lokaler Branch)
-
-# 0. Prüfen, wo der Branch liegt
+#### 3.1.1 Prüfen, wo der Branch liegt
 ```bash
 git branch -a
 ```
 
 Die Liste unterscheidet lokale und Remote-Branches; ein Remote-Branch unter `remotes/` ist nicht automatisch lokal vorhanden.
 
-# 1. Branch lokal auschecken
+#### 3.1.2 Branch lokal auschecken
 ```bash
 git checkout <branch-name>
 ```
 
-# 2. Zurück auf main wechseln (falls gewünscht)
+#### 3.1.3 Zurück auf `main` wechseln (falls gewünscht)
 ```bash
 git checkout main
 ```
 
-# 3. Nun lokal umbenennen
+#### 3.1.4 Branch lokal umbenennen
 ```bash
 git branch -m <branch-name> archive/<branch-name>
 ```
 
-# 4. Den neuen Branch pushen
+#### 3.1.5 Neuen Branch pushen
 ```bash
 git push origin -u archive/<branch-name>
 ```
 
-# 5. Optional: Nach Prüfung des neuen Branches den alten Remote-Branch löschen
+#### 3.1.6 Alten Remote-Branch löschen (optional)
 ```bash
 git push origin --delete <branch-name>
 ```
 
 
-### Branch umbenennen (nur auf GitHub)
+### 3.2 Branch nur auf GitHub umbenennen
 
-# 1. Den Remote-Branch unter neuem Namen pushen
+#### 3.2.1 Remote-Branch unter neuem Namen pushen
 ```bash
 git push origin origin/<branch-name>:refs/heads/archive/<branch-name>
 ```
 
-# 2. Optional: Nach Prüfung des neuen Branches den alten Remote-Branch löschen
+#### 3.2.2 Alten Remote-Branch löschen (optional)
 ```bash
 git push origin --delete <branch-name>
 ```
 
 
-## 3. Notfall-Workflows & Problembehebung
+## 4. Problembehebung
 
 Vor überschreibenden oder löschenden Befehlen den Arbeitsstand sichern und die Auswirkungen prüfen. `git reset --hard` und `git clean -fd` löschen lokale Änderungen beziehungsweise ungetrackte Dateien.
 
-### Windows/Git-Lock-Datei blockiert
+### 4.1 Windows/Git-Lock-Datei blockiert
 Wenn ein Prozess unerwartet abgebrochen wurde und Git blockiert ist:
 ```powershell
 Remove-Item .git\index.lock -Force -ErrorAction SilentlyContinue
@@ -159,7 +148,7 @@ Remove-Item .git\index.lock -Force -ErrorAction SilentlyContinue
 rm -f .git/index.lock
 ```
 
-### Lokalen Stand komplett verwerfen und mit GitHub synchronisieren
+### 4.2 Lokalen Stand verwerfen und mit GitHub synchronisieren
 Falls sich dein lokaler Branch in einem inkonsistenten Zustand befindet:
 ```bash
 git fetch origin
@@ -167,7 +156,7 @@ git reset --hard origin/<branch-name>
 git clean -fd
 ```
 
-### Letzten Commit korrigieren (noch nicht gepusht)
+### 4.3 Letzten nicht gepushten Commit korrigieren
 ```bash
 # Nur die Commit-Nachricht korrigieren:
 git commit --amend -m "feat: korrigierte nachricht"
@@ -178,29 +167,29 @@ git commit --amend --no-edit
 ```
 
 
-## Worktree mit neuen Infos füllen
+### 4.4 Worktree mit anderem Branchstand füllen
 
 Die folgenden Restore- und Reset-Befehle können lokale Änderungen überschreiben oder löschen; vorher sichern.
 
-### Älteren Branch aktivieren
+#### 4.4.1 Älteren Branch aktivieren
 ```bash
 git switch <aelteren-branch>
 git fetch origin
 ```
 
-### Arbeitsbaum gezielt mit dem Stand des Zielbranches auffüllen
+#### 4.4.2 Arbeitsbaum mit Zielbranch auffüllen
 ```bash
 git restore --source=origin/<aktuellsten-branch> --worktree -- .
 ```
 
-### Rückgängig
-Den älteren Branch als Ziel im [Notfall-Workflow](#lokalen-stand-komplett-verwerfen-und-mit-github-synchronisieren) verwenden. Dabei gehen lokale Änderungen und ungetrackte Dateien verloren.
+#### 4.4.3 Rückgängig machen
+Den älteren Branch als Ziel im Abschnitt [Lokalen Stand verwerfen und mit GitHub synchronisieren](#42-lokalen-stand-verwerfen-und-mit-github-synchronisieren) verwenden. Dabei gehen lokale Änderungen und ungetrackte Dateien verloren.
 
-### Bei Konflikt Commit zurück in Worktree holen
+#### 4.4.4 Commit bei Konflikt in den Worktree holen
 ```bash
 git reset --mixed HEAD~1
 ```
-### Erst pullen, dann den worktree im stash wieder holen
+#### 4.4.5 Stash vor `pull --rebase` wiederherstellen
 ```bash
 git stash push -u
 git pull --rebase

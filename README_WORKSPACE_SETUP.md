@@ -41,7 +41,7 @@ npm run dev
 ```
 * **URL:** Öffne `http://localhost:4321` im Browser.
 * **Was geprüft wird:** Lädt das Astro-Frontend? Werden Styles, die Starlight-Sidebar und statische Komponenten gerendert?
-* **Warum dieser Schritt nötig ist:** Netlify Functions bleiben inaktiv. Die lokale Modul-API startet ohne Katalogdatei leer und erzeugt `data/modules.json` beim ersten Speichern. Die Datei bleibt lokal und wird nicht eingecheckt.
+* **Warum dieser Schritt nötig ist:** Netlify Functions bleiben inaktiv. Die lokale Modul-API startet ohne Katalogdatei leer und erzeugt `data/modules.json` beim ersten Speichern. Die Datei bleibt lokal und wird nicht eingecheckt. Anmeldung, Kontenverwaltung und Cloud-Lernstand lassen sich hier nicht testen; dafür Netlify Dev und die Netlify-Identity-Konfiguration verwenden.
 
 ### Schritt 4: Prüfablauf beachten
 Nach Änderungen im Workspace gelten die kurzen Prüfungen aus dem [Testing-Leitfaden](README_TESTING.md). Die statische Projektprüfung mit Biome, Astro und TypeScript (Stufe 0) läuft erst im manuell vom Nutzer gestarteten Preflight am Branch-Ende, nicht beim Workspace-Setup.
@@ -57,7 +57,8 @@ Verwende ```npm run fix``` im Alltag, um alles Automatische (Formatierung + sich
 
 Typfehler, die Astro oder TypeScript im Preflight meldet, müssen manuell behoben werden.
 
-### Schritt 5: Netlify CLI verknüpfen, Umgebungsvariablen für das Backend einrichten & Fullstack starten
+### Schritt 5: Netlify CLI verknüpfen & Fullstack starten
+
 ```bash
 # Einmalige Authentifizierung im Browser
 npx netlify-cli login
@@ -66,10 +67,14 @@ npx netlify-cli login
 npx netlify-cli link
 ```
 
-Beim Wechsel auf `feat/netlify-blobs` **die lokale `.env` und das Netlify Dashboard separat anpassen**:
+Beiträge und Module verwenden Netlify Blobs; die ehemalige GitHub-basierte Datenspeicherung ist auf diesem Stand nicht mehr aktiv.
 
-* **Workspace:** Nur für den alten Backendstand bei Bedarf `GITHUB_BRANCH=feat/netlify-blobs` setzen. Auf dem Blob-Stand die alten `GITHUB_*`-Variablen für die Datenspeicherung entfernen oder auskommentieren; Netlify Blobs braucht sie nicht. `.env` niemals committen.
-* **Dashboard:** Unter **Site configuration → Build & deploy → Continuous deployment → Branches and deploy contexts** den Branch freigeben bzw. bewusst als Production Branch setzen. Die abgelösten Variablen unter **Environment variables** separat bereinigen. Die Details zum Datenumzug und zu gemeinsam genutzten Cloud-Daten stehen in der [Blob-Referenz](features/README_FEAT_NETLIFYBLOB.md).
+* **Workspace:** Nach `npx netlify-cli login` und `npx netlify-cli link` bezieht die CLI die benötigten Informationen aus der Anmeldung und der Site-Verknüpfung. Eine lokale `.env` ist für die Blob-Speicherung nicht erforderlich.
+* **Dashboard:** Unter **Site configuration → Build & deploy → Continuous deployment → Branches and deploy contexts** den gewünschten Branch freigeben bzw. bewusst als Production Branch setzen. Builds synchronisieren den siteweiten Store nicht.
+
+Für Kontenfunktionen zusätzlich Netlify Identity in den Site-Einstellungen aktivieren und dort den Registrierungsmodus konfigurieren. Die App zeigt den Modus im Admin-Bereich nur an; die Einstellung selbst wird weiterhin in Netlify verwaltet. Der erste Admin benötigt einmalig die Identity-Rolle `admin`. Preview-Deploys verwenden denselben Identity-Nutzerbestand, Einladungslinks führen aber zur konfigurierten Site-URL; der aktuelle Einladungs-Callback muss auf dieser Ziel-Site deployed sein. Details: [Authentifizierungs-Referenz](features/README_FEAT_AUTHENTICATION.md).
+
+Die Details zum Datenumzug und zu gemeinsam genutzten Cloud-Daten stehen in der [Blob-Referenz](features/README_FEAT_NETLIFYBLOB.md).
 
 ```bash
 # Projektverknüpfung prüfen
@@ -79,8 +84,46 @@ npx netlify-cli status
 npx netlify-cli dev
 ```
 * **URL:** Öffne `http://localhost:8888`.
-* **Lokaler Blob-Speicher:** Die CLI startet Astro, die Functions und einen lokalen Blob-Server. Dessen Daten bleiben unter `.netlify/` erhalten; konkrete Verzeichnisse und Reset-Hinweise stehen in der [Blob-Referenz](features/README_FEAT_NETLIFYBLOB.md#architektur-und-datenfluss).
-* **Prüfen:** `/api/modules` und `/api/contributions` auf Port 8888 aufrufen. Ein neuer lokaler Store startet mit leerem Modulkatalog und leerer Beitragsliste. Änderungen laufen über Blobs, nicht über den Astro-Datei-Fallback.
+* **Lokaler Blob-Speicher:** Die CLI startet Astro, die Functions und einen lokalen Blob-Server. Dessen Daten bleiben unter `.netlify/blobs-serve/`. Dieser Store wird nur mit den expliziten Transferbefehlen mit der Cloud abgeglichen.
+* **Initialisierung:** Nur wenn ein lokaler Key fehlt, wird er aus `data\blob-snapshot\contributions.json` beziehungsweise `data\blob-snapshot\modules.json` angelegt. Bereits vorhandene lokale Keys bleiben beim Neustart und Branch-Wechsel bestehen.
+* **Prüfen:** `/api/modules` und `/api/contributions` auf Port 8888 aufrufen. Änderungen laufen über Blobs, nicht über den Astro-Datei-Fallback.
+
+Für den aktuellen Cloud-Stand in einem frischen Workspace oder Codespace:
+
+```bash
+npm ci
+npx netlify-cli login
+npx netlify-cli link
+npm run blobs:pull
+npm run blobs:reset
+npx netlify-cli dev
+```
+
+`blobs:reset` fragt vor der Löschung nach einer Bestätigung. `--yes` ist nur
+für bewusst automatisierte Abläufe vorgesehen.
+
+Die Transferbefehle verwenden die Netlify-CLI-Anmeldung aus `npx netlify-cli
+login` und die Verknüpfung aus `npx netlify-cli link`. Eine lokale `.env` und
+ein Token im Repository werden dafür nicht benötigt.
+
+Zeigt Netlify Dev nach einem Branch-Wechsel weiterhin einen alten Datenstand:
+
+```bash
+# Netlify Dev zuerst vollständig stoppen und lokale Änderungen sichern.
+npm run blobs:reset
+npx netlify-cli dev
+```
+
+Nach lokalen Bearbeitungen die Snapshot-Diff prüfen und ausdrücklich hochladen:
+
+```bash
+git diff -- data/blob-snapshot
+npm run blobs:push
+```
+
+Vor dem Upload wird automatisch ein datiertes Archiv beider Cloud-Blobs unter
+`data/blob-archive/` angelegt. `.netlify/blobs-serve` ist ein persistenter
+Datenspeicher und kein allgemeiner Cleanup-Kandidat.
 
 ### Schritt 6: E2E-Testbrowser & Lighthouse CI einrichten (Optional)
 

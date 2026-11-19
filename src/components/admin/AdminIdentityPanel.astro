@@ -1,0 +1,220 @@
+<section class="admin-identity" data-admin-identity>
+  <h2>Registrierung und Einladungen</h2>
+  <p data-admin-identity-status role="status" aria-live="polite">
+    Registrierungsoptionen werden geladen …
+  </p>
+  <div data-admin-identity-content hidden>
+    <p data-registration-status></p>
+    <p>
+      Der Registrierungsmodus wird hier angezeigt. Änderungen daran sind
+      weiterhin in der Netlify-Site-Konfiguration vorzunehmen.
+    </p>
+    <form data-admin-invite-form>
+      <label>
+        E-Mail-Adresse
+        <input
+          data-admin-invite-email
+          type="email"
+          autocomplete="email"
+          maxlength="254"
+          required
+        />
+      </label>
+      <button type="submit">Einladung senden</button>
+    </form>
+  </div>
+</section>
+
+<script>
+  import { getUser, onAuthChange } from "@netlify/identity";
+
+  let unsubscribeAdminAuth: (() => void) | null = null;
+
+  function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
+  }
+
+  function requireElement<T extends HTMLElement>(
+    root: HTMLElement,
+    selector: string,
+  ): T {
+    const element = root.querySelector<T>(selector);
+    if (!element) throw new Error(`Admin-Element fehlt: ${selector}`);
+    return element;
+  }
+
+  async function readPayload(response: Response): Promise<Record<string, unknown>> {
+    let payload: unknown;
+    try {
+      payload = await response.json();
+    } catch {
+      throw new Error("Die Admin-API lieferte keine gültige JSON-Antwort.");
+    }
+    if (!isRecord(payload)) {
+      throw new Error("Die Admin-API lieferte ungültige Daten.");
+    }
+    return payload;
+  }
+
+  function initializeAdminIdentity(): void {
+    document.querySelectorAll<HTMLElement>("[data-admin-identity]").forEach((root) => {
+      if (root.dataset.adminIdentityAttached === "true") return;
+      root.dataset.adminIdentityAttached = "true";
+
+      const status = requireElement<HTMLElement>(root, "[data-admin-identity-status]");
+      const content = requireElement<HTMLElement>(root, "[data-admin-identity-content]");
+      const registrationStatus = requireElement<HTMLElement>(
+        root,
+        "[data-registration-status]",
+      );
+      const form = requireElement<HTMLFormElement>(root, "[data-admin-invite-form]");
+      const emailInput = requireElement<HTMLInputElement>(
+        root,
+        "[data-admin-invite-email]",
+      );
+      const submit = form.querySelector<HTMLButtonElement>("button[type='submit']");
+      if (!submit) throw new Error("Admin-Schaltfläche zum Einladen fehlt.");
+
+      const loadSettings = async (): Promise<void> => {
+        content.hidden = true;
+        try {
+          if (!(await getUser())) {
+            status.textContent = "Melde dich mit einem Admin-Konto an, um Einladungen zu verwalten.";
+            return;
+          }
+          const response = await fetch("/api/admin/identity", {
+            cache: "no-store",
+          });
+          const payload = await readPayload(response);
+          if (!response.ok) {
+            throw new Error(
+              typeof payload.error === "string"
+                ? payload.error
+                : "Die Admin-Funktion konnte nicht geladen werden.",
+            );
+          }
+          if (
+            !isRecord(payload.registration) ||
+            typeof payload.registration.signupEnabled !== "boolean" ||
+            typeof payload.registration.emailProviderEnabled !== "boolean"
+          ) {
+            throw new Error("Die Registrierungsoptionen haben ein ungültiges Format.");
+          }
+
+          registrationStatus.textContent = payload.registration.signupEnabled
+            ? "Öffentliche Registrierung ist aktiviert."
+            : "Registrierung ist auf „nur mit Einladung“ beschränkt.";
+          if (!payload.registration.emailProviderEnabled) {
+            registrationStatus.textContent +=
+              " Der E-Mail-Anbieter ist in Netlify Identity deaktiviert.";
+          }
+          content.hidden = false;
+          status.textContent = "Admin-Funktionen sind verfügbar.";
+        } catch (error) {
+          status.textContent =
+            error instanceof Error
+              ? error.message
+              : "Die Registrierungsoptionen konnten nicht geladen werden.";
+        }
+      };
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        submit.disabled = true;
+        status.textContent = "Einladung wird versendet …";
+        try {
+          const response = await fetch("/api/admin/identity", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: emailInput.value.trim() }),
+          });
+          const payload = await readPayload(response);
+          if (!response.ok) {
+            throw new Error(
+              typeof payload.error === "string"
+                ? payload.error
+                : "Die Einladung konnte nicht versendet werden.",
+            );
+          }
+          emailInput.value = "";
+          status.textContent =
+            typeof payload.message === "string"
+              ? payload.message
+              : "Die Einladung wurde versendet.";
+        } catch (error) {
+          status.textContent =
+            error instanceof Error
+              ? error.message
+              : "Die Einladung konnte nicht versendet werden.";
+        } finally {
+          submit.disabled = false;
+        }
+      });
+
+      unsubscribeAdminAuth?.();
+      unsubscribeAdminAuth = onAuthChange(() => void loadSettings());
+      document.addEventListener(
+        "astro:before-swap",
+        () => {
+          unsubscribeAdminAuth?.();
+          unsubscribeAdminAuth = null;
+        },
+        { once: true },
+      );
+      void loadSettings();
+    });
+  }
+
+  initializeAdminIdentity();
+  document.addEventListener("astro:page-load", initializeAdminIdentity);
+</script>
+
+<style>
+  .admin-identity {
+    display: grid;
+    gap: 0.75rem;
+    margin-block: 1.5rem;
+    padding: 1rem;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.75rem;
+    background: var(--sl-color-bg-nav);
+    color: var(--sl-color-text);
+  }
+
+  .admin-identity h2,
+  .admin-identity p {
+    margin: 0;
+  }
+
+  .admin-identity label {
+    display: grid;
+    gap: 0.35rem;
+    max-width: 32rem;
+  }
+
+  .admin-identity input,
+  .admin-identity button {
+    padding: 0.55rem 0.75rem;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.375rem;
+    color: var(--sl-color-text);
+    background: var(--sl-color-bg);
+    font: inherit;
+  }
+
+  .admin-identity button {
+    cursor: pointer;
+  }
+
+  .admin-identity button:disabled {
+    cursor: wait;
+    opacity: 0.65;
+  }
+
+  .admin-identity form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 0.75rem;
+  }
+</style>

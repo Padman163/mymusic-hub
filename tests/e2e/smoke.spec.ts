@@ -29,13 +29,26 @@ test('gliedert die Navigation in Admin, Bediener und Sonstiges', async ({ page }
     'Bediener',
     'Sonstiges',
   ]);
-  await expect(sections.nth(0).locator(':scope > ul > li > details > summary')).toHaveText([
-    'Projektierung',
-  ]);
-  await expect(sections.nth(0).getByRole('link', { name: 'Admin-Wiki', exact: true, includeHidden: true }))
+  const admin = sections.nth(0);
+  await expect(admin.locator(':scope > ul > li > details')).toHaveCount(0);
+  await expect(admin.getByRole('link', { name: 'Konten & Einladungen', exact: true, includeHidden: true }))
+    .toHaveAttribute('href', '/admin/konten/');
+  await expect(admin.getByRole('link', { name: 'Beiträge', exact: true, includeHidden: true }))
+    .toHaveAttribute('href', '/projektierung/beitraege/');
+  await expect(admin.getByRole('link', { name: 'Modul-Builder', exact: true, includeHidden: true }))
+    .toHaveAttribute('href', '/projektierung/modul-builder/');
+  await expect(admin.getByRole('link', { name: 'Modularchiv', exact: true, includeHidden: true }))
+    .toHaveAttribute('href', '/module-archives/');
+  await expect(admin.getByRole('link', { name: 'Admin-Wiki', exact: true, includeHidden: true }))
     .toHaveAttribute('href', '/admin-wiki/');
   const dashboard = sections.nth(1).getByRole('link', { name: 'Dashboard', includeHidden: true });
   await expect(dashboard).toHaveAttribute('href', '/audio/theory/lernpfad/');
+  const shop = sections.nth(1).getByRole('link', { name: 'Humpa-Shop', includeHidden: true });
+  await expect(shop).toHaveAttribute('href', '/audio/theory/shop/');
+  const inventory = sections.nth(1).getByRole('link', { name: 'Inventar', includeHidden: true });
+  await expect(inventory).toHaveAttribute('href', '/audio/theory/inventar/');
+  const studio = sections.nth(1).getByRole('link', { name: 'Studio', includeHidden: true });
+  await expect(studio).toHaveAttribute('href', '/audio/theory/studio/');
   await expect(sections.nth(2).locator(':scope > ul > li > details > summary')).toHaveText([
     'Wiki',
     'Lehrgänge (Level 100-500)',
@@ -90,7 +103,7 @@ test('verbindet Beiträge mit der Wiki-Anleitung', async ({ page }) => {
   await page.getByRole('link', { name: 'Anleitung: Beiträge verwalten' }).click();
   await expect(page).toHaveURL('/wiki/beitraege/');
   await expect(page.getByRole('heading', { level: 1, name: 'Beiträge verwalten' })).toBeVisible();
-  await page.getByRole('link', { name: 'Projektierung → Beiträge' }).click();
+  await page.getByRole('link', { name: 'Admin → Beiträge' }).click();
   await expect(page).toHaveURL('/projektierung/beitraege/');
 });
 
