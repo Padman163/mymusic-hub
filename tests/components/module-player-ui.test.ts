@@ -55,6 +55,39 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
     expect(root.textContent).toContain("Dein Inventar ist noch leer");
   });
 
+  it("zeigt Click als quadratisches Symbol mit aufklappbarer Beschreibung", () => {
+    const progress = createInitialProgress([]);
+    progress.inventory.push({
+      id: "sound-click",
+      title: "Click.wav",
+      description: "Ein Klick-Sound.",
+      unlockedAt: "2026-11-19T00:00:00.000Z",
+      assetUrl: "/sounds/drums/Click.wav",
+    });
+    saveLearningProgress(progress);
+    const root = document.createElement("section");
+    document.body.append(root);
+
+    attachInventory(root);
+
+    expect(root.querySelector("audio")).toBeNull();
+    const marker = root.querySelector<HTMLButtonElement>(
+      '[data-inventory-unlock="sound-click"] .learning-inventory-marker',
+    );
+    const details = root.querySelector<HTMLElement>(
+      '[data-inventory-unlock="sound-click"] .learning-inventory-item-details',
+    );
+    expect(marker?.dataset.rarity).toBe("common");
+    expect(marker?.textContent).toBe("●");
+    expect(details?.dataset.open).toBe("false");
+    expect(details?.getAttribute("aria-hidden")).toBe("true");
+    expect(details?.textContent).toContain("Click");
+    marker?.click();
+    expect(details?.dataset.open).toBe("true");
+    expect(details?.getAttribute("aria-hidden")).toBe("false");
+    expect(marker?.getAttribute("aria-expanded")).toBe("true");
+  });
+
   it("ersetzt eingebettete Module durch einen leeren Live-Katalog", async () => {
     vi.stubGlobal(
       "fetch",

@@ -12,25 +12,37 @@ function createUnlockCard(unlock: InventoryUnlock): HTMLElement {
   item.className = "learning-inventory-item";
   item.dataset.inventoryUnlock = unlock.id;
 
-  const marker = document.createElement("span");
+  const displayTitle =
+    unlock.id === "sound-click" ? "Click" : unlock.title;
+  const detailsId = `inventory-details-${unlock.id}`;
+  const marker = document.createElement("button");
+  marker.type = "button";
   marker.className = "learning-inventory-marker";
-  marker.setAttribute("aria-hidden", "true");
-  marker.textContent = "◆";
+  marker.dataset.rarity = "common";
+  marker.setAttribute("aria-label", `Details zu ${displayTitle}`);
+  marker.setAttribute("aria-controls", detailsId);
+  marker.setAttribute("aria-expanded", "false");
+  marker.textContent = unlock.assetUrl ? "●" : "◆";
 
   const details = document.createElement("div");
+  details.id = detailsId;
+  details.className = "learning-inventory-item-details";
+  details.dataset.open = "false";
+  details.setAttribute("aria-hidden", "true");
   const title = document.createElement("h3");
   title.className = "learning-inventory-item-title";
-  title.textContent = unlock.title;
+  title.textContent = displayTitle;
   const description = document.createElement("p");
   description.className = "learning-inventory-item-description";
   description.textContent = unlock.description;
-  const unlockedAt = document.createElement("time");
-  unlockedAt.className = "learning-inventory-date";
-  unlockedAt.dateTime = unlock.unlockedAt;
-  unlockedAt.textContent = `Freigeschaltet am ${new Intl.DateTimeFormat("de-DE", {
-    dateStyle: "long",
-  }).format(new Date(unlock.unlockedAt))}`;
-  details.append(title, description, unlockedAt);
+  details.append(title, description);
+
+  marker.addEventListener("click", () => {
+    const isOpen = details.dataset.open === "true";
+    details.dataset.open = String(!isOpen);
+    details.setAttribute("aria-hidden", String(isOpen));
+    marker.setAttribute("aria-expanded", String(!isOpen));
+  });
 
   item.append(marker, details);
   return item;

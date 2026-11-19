@@ -213,6 +213,36 @@ describe("Lernfortschritts- & XP-Engine (learning-progress)", () => {
     expect(collectInventoryUnlock(collected, unlock)).toBe(collected);
   });
 
+  it("schaltet Click.wav nach Theorieblock 1 des ersten Moduls genau einmal frei", () => {
+    const db = buildTestDatabase();
+    const mod = db.modules[0];
+    mod.id = "mod-puls-tempo-rhythmus";
+    mod.theoryBlocks[0].id = "tb-puls-tempo-rhythmus";
+    const initial = createInitialProgress(db.modules);
+
+    const completed = completeTheoryBlock(
+      initial,
+      mod,
+      "tb-puls-tempo-rhythmus",
+    );
+    expect(completed.inventory).toHaveLength(1);
+    expect(completed.inventory[0]).toMatchObject({
+      id: "sound-click",
+      title: "Click",
+      assetUrl: "/sounds/drums/Click.wav",
+    });
+    expect(completeTheoryBlock(completed, mod, "tb-puls-tempo-rhythmus")).toBe(
+      completed,
+    );
+
+    const legacyState = structuredClone(completed);
+    legacyState.inventory = [];
+    saveLearningProgress(legacyState);
+    expect(loadLearningProgress(db.modules).inventory).toMatchObject([
+      { id: "sound-click", assetUrl: "/sounds/drums/Click.wav" },
+    ]);
+  });
+
   it("vergütet eine schwere Lernpfad-Aufgabe mit festen Basis-XP und Tag-Faktor genau einmal", () => {
     const db = buildTestDatabase();
     const mod = db.modules[0];

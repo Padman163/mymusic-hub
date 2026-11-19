@@ -49,7 +49,17 @@ export interface InventoryUnlock {
   title: string;
   description: string;
   unlockedAt: string;
+  assetUrl?: string;
 }
+
+const INVENTORY_UNLOCKS_BY_THEORY_BLOCK: Record<string, Omit<InventoryUnlock, "unlockedAt">> = {
+  "mod-puls-tempo-rhythmus:tb-puls-tempo-rhythmus": {
+    id: "sound-click",
+    title: "Click",
+    description: "Ein präziser Klick-Sound für Rhythmus- und Tempoübungen.",
+    assetUrl: "/sounds/drums/Click.wav",
+  },
+};
 
 export interface LearningProgressState {
   totalXp: number;
@@ -254,6 +264,18 @@ function unlockNextStepAfterExercise(
   }
 }
 
+function collectTheoryBlockInventoryUnlock(
+  state: LearningProgressState,
+  module: LearningModule,
+  blockId: string,
+): void {
+  const unlock = INVENTORY_UNLOCKS_BY_THEORY_BLOCK[`${module.id}:${blockId}`];
+  if (!unlock || state.inventory.some((entry) => entry.id === unlock.id)) {
+    return;
+  }
+  state.inventory.push({ ...unlock, unlockedAt: nowIso() });
+}
+
 function unlockSuccessorModule(
   state: LearningProgressState,
   sortedModules: readonly LearningModule[],
@@ -319,7 +341,13 @@ export function collectInventoryUnlock(
   }
 
   const next = cloneState(state);
-  next.inventory.push({ id, title, description, unlockedAt });
+  next.inventory.push({
+    id,
+    title,
+    description,
+    unlockedAt,
+    ...(unlock.assetUrl !== undefined ? { assetUrl: unlock.assetUrl } : {}),
+  });
   next.updatedAt = nowIso();
   return next;
 }
@@ -347,6 +375,15 @@ export function syncProgressWithCurriculum(
       next.modules[mod.id] = createModuleProgress(mod.id, shouldUnlock);
     } else if (shouldUnlock && existing.status === "locked") {
       unlockModuleEntry(existing);
+    }
+
+    const completedTheoryBlockIds = new Set(
+      next.modules[mod.id]?.completedTheoryBlockIds ?? [],
+    );
+    for (const block of mod.theoryBlocks) {
+      if (completedTheoryBlockIds.has(block.id)) {
+        collectTheoryBlockInventoryUnlock(next, mod, block.id);
+      }
     }
   }
 
@@ -441,6 +478,7 @@ export function completeTheoryBlock(
     module.scope,
     block.tags ?? [],
   );
+  collectTheoryBlockInventoryUnlock(next, module, blockId);
   next.updatedAt = nowIso();
   return module.theoryBlocks.every(
     (item) =>
@@ -848,8 +886,18 @@ function sanitizeStoredProgress(
         continue;
       }
 
+      const assetUrl =
+        typeof entry.assetUrl === "string" && entry.assetUrl.startsWith("/")
+          ? entry.assetUrl
+          : undefined;
       inventoryIds.add(id);
-      inventory.push({ id, title, description, unlockedAt });
+      inventory.push({
+        id,
+        title,
+        description,
+        unlockedAt,
+        ...(assetUrl !== undefined ? { assetUrl } : {}),
+      });
     }
   }
 
@@ -934,8 +982,13 @@ export function loadLearningProgress(
           saveLearningProgress(reset, storageKey);
           return reset;
         }
+        const inventoryChanged =
+          isRecord(parsed) &&
+          JSON.stringify(parsed.inventory) !== JSON.stringify(restored.inventory);
         if (!restored.quizSettings) {
           restored.quizSettings = { ...quizSettings };
+          saveLearningProgress(restored, storageKey);
+        } else if (inventoryChanged) {
           saveLearningProgress(restored, storageKey);
         }
         return restored;
