@@ -74,6 +74,20 @@ Beiträge und Module verwenden Netlify Blobs; die ehemalige GitHub-basierte Date
 
 Für Kontenfunktionen zusätzlich Netlify Identity in den Site-Einstellungen aktivieren und dort den Registrierungsmodus konfigurieren. Die App zeigt den Modus im Admin-Bereich nur an; die Einstellung selbst wird weiterhin in Netlify verwaltet. Der erste Admin benötigt einmalig die Identity-Rolle `admin`. Preview-Deploys verwenden denselben Identity-Nutzerbestand, Einladungslinks führen aber zur konfigurierten Site-URL; der aktuelle Einladungs-Callback muss auf dieser Ziel-Site deployed sein. Details: [Authentifizierungs-Referenz](features/README_FEAT_AUTHENTICATION.md).
 
+Damit der lokale Login Identity erreichen kann, erstelle eine nicht versionierte
+`.env.local` mit der HTTPS-Adresse der verknüpften Netlify-Site:
+
+```dotenv
+LOCAL_NETLIFY_IDENTITY_ORIGIN=https://deine-site.netlify.app
+```
+
+Die Adresse muss mit der Site aus `npx netlify-cli status` übereinstimmen und
+darf keinen Pfad enthalten. Netlify Dev nach Änderungen an der Datei neu starten.
+Nur bei Netlify Dev werden Identity-Anfragen an diese Site weitergeleitet:
+Zugangsdaten und Kontenänderungen betreffen somit echte Online-Konten. Die Datei
+enthält keinen Token; `NETLIFY_AUTH_TOKEN` gehört weder hier noch in eine andere
+`.env`-Datei.
+
 Die Details zum Datenumzug und zu gemeinsam genutzten Cloud-Daten stehen in der [Blob-Referenz](features/README_FEAT_NETLIFYBLOB.md).
 
 ```bash

@@ -37,6 +37,18 @@ Identity-API stellt in dieser Integration keine Änderungsoperation für den
 Modus bereit; **Invite only** wird weiterhin in der Netlify-Site-Konfiguration
 verwaltet.
 
+## Lokale Entwicklung
+
+Netlify Dev leitet Identity-Anfragen über den Astro-Dev-Proxy an die in
+`LOCAL_NETLIFY_IDENTITY_ORIGIN` konfigurierte HTTPS-Site weiter. Die Variable
+steht ausschließlich in der lokalen, nicht versionierten `.env.local`; sie darf
+nur die Adresse der verknüpften Site enthalten. Ohne diese Einstellung ist
+der Identity-Endpunkt lokal nicht verfügbar. Der Proxy wird weder im reinen
+Astro-Dev-Modus noch im Deploy verwendet und entfernt lokale Cookies und den
+Referer vor der Weiterleitung. Lokal eingegebene Zugangsdaten und Änderungen
+an Konten betreffen die konfigurierte Online-Identity. Einrichtung und Neustart
+stehen im [Workspace-Setup](../README_WORKSPACE_SETUP.md).
+
 ## Rollen- und API-Schutz
 
 `/api/admin/identity` prüft die Sitzung mit `getUser()` serverseitig. Nur
