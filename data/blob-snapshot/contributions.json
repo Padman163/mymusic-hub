@@ -655,5 +655,25 @@
     ],
     "status": "New",
     "createdAt": "2026-11-18T23:35:45.142Z"
+  },
+  {
+    "id": "6e1e6d33-070a-4dd4-88ad-6f17c1a7e77a",
+    "type": "Feature",
+    "title": "Inventar",
+    "description": "",
+    "area": "Komponente",
+    "priority": "Hoch",
+    "checklist": [
+      {
+        "text": "Items im Inventar müssen über einen Shop freigeschaltet werden. auch der Click für 10Xp.",
+        "checked": false
+      },
+      {
+        "text": "XP- Übersicht muss dann noch angepasst werden dafür",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-19T12:03:29.215Z"
   }
 ]
