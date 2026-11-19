@@ -19,6 +19,8 @@ Für konto-gebundene Lernstände wird Netlify Identity verwendet. Identity muss 
 Netlify-Dashboard für die Site aktiviert und die Registrierung auf **Invite
 only** gestellt werden. Konten werden über Einladungen angelegt; Login,
 Einladung und Passwort-Wiederherstellung laufen über die Lernkonto-Oberfläche.
+Details zu Rollen, Einladungen und Kontosynchronisierung stehen in der
+[Authentifizierungs-Referenz](README_FEAT_AUTHENTICATION.md).
 
 Admins mit der Netlify-Identity-Rolle `admin` können Einladungen unter
 **Admin → Konten & Einladungen** versenden und dort den aktuellen
