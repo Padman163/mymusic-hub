@@ -666,11 +666,11 @@
     "checklist": [
       {
         "text": "Items im Inventar müssen über einen Shop freigeschaltet werden. auch der Click für 10Xp.",
-        "checked": false
+        "checked": true
       },
       {
         "text": "XP- Übersicht muss dann noch angepasst werden dafür",
-        "checked": false
+        "checked": true
       }
     ],
     "status": "New",
