@@ -14,7 +14,7 @@
     </details>
 
     <h2>Backups</h2>
-    <p data-readonly hidden>Nur Ansicht. Die Verwaltung ist auf der veröffentlichten Produktionsseite verfügbar.</p>
+    <p data-readonly hidden>Nur Ansicht. Die Verwaltung ist in Deploy Previews und auf der veröffentlichten Produktionsseite verfügbar.</p>
     <p data-uninitialized hidden>Öffne zuerst Beiträge und den Modul-Builder, um beide Datenbestände zu initialisieren.</p>
     <form data-create hidden>
       <label>Notiz (optional) <input name="note" type="text" maxlength="160" /></label>
@@ -28,8 +28,10 @@
       <p data-restore-target></p>
       <div data-diff></div>
       <p>
-        Beide Datenbestände werden vollständig ersetzt. Der aktuelle Stand wird
-        vorher automatisch als Sicherheitsbackup gespeichert.
+        <strong>Der Restore ersetzt den gemeinsamen Online-Stand vollständig.
+        Auch aus einem Deploy Preview betrifft das die Produktionsseite derselben
+        Netlify-Site.</strong> Der aktuelle Stand wird vorher automatisch als
+        Sicherheitsbackup gespeichert.
       </p>
       <form data-restore>
         <label>

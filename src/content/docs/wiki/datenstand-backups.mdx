@@ -10,8 +10,9 @@ oder klicke auf **Aktualisieren**, um den Online-Stand neu abzurufen.
 
 ## Backup erstellen und herunterladen
 
-1. Öffne die veröffentlichte Produktionsseite. Lokal im Online-Modus und in
-   Deploy Previews ist die Seite nur zur Ansicht verfügbar.
+1. Öffne die veröffentlichte Produktionsseite oder ein Deploy Preview und
+   melde dich dort als Admin an. Lokal im Online-Modus bleibt die Seite
+   schreibgeschützt.
 2. Gib optional eine kurze Notiz ein, z. B. „Vor Überarbeitung der Lehrgänge“.
 3. Klicke auf **Backup jetzt erstellen**. Das Backup erscheint in der Liste.
 4. Verwende **JSON herunterladen**, wenn du zusätzlich eine Kopie außerhalb von
@@ -34,5 +35,7 @@ CLI-Archive erscheinen nicht in der Online-Liste.
    Wiederherstellung, prüfe zuerst beide Datenbestände und das genannte
    Sicherheitsbackup, bevor du den Vorgang erneut startest.
 
-Production und Previews derselben Netlify-Site teilen sich den Online-Stand.
-Teste Wiederherstellungen deshalb nur auf einer separaten Netlify-Site.
+Production und Previews derselben Netlify-Site teilen sich den Online-Stand
+und die Backups. Ein Restore im Preview ändert daher auch die produktiven
+Daten derselben Site. Teste Wiederherstellungen nur auf einer separaten
+Netlify-Site.

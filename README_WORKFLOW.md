@@ -51,7 +51,7 @@ Beiträge und Lernmodule verwenden bereits Netlify Blobs (`mymusic-hub-data`). L
 - `npm run blobs:push` erstellt vorher ein Cloud-Backup und lädt danach beide lokalen Snapshots in den siteweiten Store.
 - Branch Deploys und Deploy Previews teilen den Cloud-Store mit Production, überschreiben ihn aber nicht mehr aus ihrem Build.
 - Der im Repository konfigurierte Build importiert keine Snapshots. Der Online-Store bleibt beim Deploy maßgeblich; ein gegebenenfalls separat konfigurierter Snapshot-Import in Netlify muss dafür deaktiviert sein.
-- Admins können auf dem veröffentlichten Produktions-Deploy Sicherungen anlegen und nach Vorschau wiederherstellen (siehe [Blob-Referenz](features/README_FEAT_NETLIFYBLOB.md#online-backups-im-admin-bereich)).
+- Admins können auf dem veröffentlichten Produktions-Deploy und in Deploy Previews Sicherungen anlegen und den gemeinsamen Online-Stand nach Vorschau wiederherstellen (siehe [Blob-Referenz](features/README_FEAT_NETLIFYBLOB.md#online-backups-im-admin-bereich)).
 
 Wenn der lokale Stand nach einem Branch-Wechsel hinter dem versionierten Snapshot zurückbleibt, Netlify Dev zuerst stoppen und den benannten Reset-Befehl verwenden:
 

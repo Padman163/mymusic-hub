@@ -54,9 +54,11 @@ export default async (request: Request, context: Context): Promise<Response> => 
 	if (before !== null && !isBackupId(before)) return json({ error: 'Ungültiger Seitenzeiger.' }, 400);
 
 	const local = process.env.NETLIFY_DEV === 'true';
-	const production = !local && context.deploy?.context === 'production' && context.deploy.published;
-	if (!isOverview && !production) {
-		return json({ error: 'Die Backup-Verwaltung ist nur auf der veröffentlichten Produktionsseite verfügbar.' }, 403);
+	const deploy = context.deploy;
+	const writable = !local && (deploy?.context === 'deploy-preview' ||
+		(deploy?.context === 'production' && deploy.published));
+	if (!isOverview && !writable) {
+		return json({ error: 'Die Backup-Verwaltung ist nur in Deploy Previews und auf der veröffentlichten Produktionsseite verfügbar.' }, 403);
 	}
 	try {
 		if (local) {
@@ -80,7 +82,7 @@ export default async (request: Request, context: Context): Promise<Response> => 
 		const backups = adminBackups();
 		if (isOverview) {
 			const site = context.site.url ? new URL(context.site.url).host : (context.site.name ?? url.host);
-			return json(await backups.overview(site, production, before));
+			return json(await backups.overview(site, writable, before));
 		}
 		if (request.method === 'GET') {
 			if (!isBackupId(id)) throw new BackupError(400, 'Wähle ein gültiges Backup aus.');

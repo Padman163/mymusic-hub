@@ -77,8 +77,11 @@ aktuellen Online-Stand und die Sicherungen. Die
 [Bedienungsanleitung](../src/content/docs/wiki/datenstand-backups.mdx)
 beschreibt die einzelnen Schritte. Die Übersicht ist für Admins auch in
 Previews und lokal über den bestehenden Online-Proxy verfügbar. Erstellen,
-Download, Restore-Vorschau und Restore sind serverseitig auf den
-veröffentlichten Produktions-Deploy beschränkt.
+Download, Restore-Vorschau und Restore sind für Admins im veröffentlichten
+Produktions-Deploy und in Deploy Previews verfügbar. Lokal und in Branch
+Deploys bleibt die Oberfläche schreibgeschützt. Deploy Previews nutzen
+denselben Backup-Store wie Production; ein Restore ändert den gemeinsamen
+Live-Stand der Site.
 
 Online-Backups liegen als einzelne JSON-Dokumente im siteweiten
 `mymusic-hub-backups`-Store und sind unabhängig von lokalen CLI-Archiven.

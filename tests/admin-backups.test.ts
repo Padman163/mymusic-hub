@@ -81,14 +81,54 @@ describe('Admin-Backups', () => {
 		vi.unstubAllGlobals();
 	});
 
-	it('liest die Admin-Übersicht in Previews, sperrt dort aber Backup-Aktionen', async () => {
-		const context = { ...production, deploy: { ...production.deploy, context: 'deploy-preview' } };
+	it.each([
+		{ context: 'branch-deploy', published: true },
+		{ context: 'production', published: false },
+	])('sperrt Backup-Aktionen bei $context (published: $published)', async (deploy) => {
+		const context = { ...production, deploy: { ...production.deploy, ...deploy } };
 		const result = await request(undefined, context);
 		expect(result.headers.get('Cache-Control')).toBe('no-store');
 		expect(await result.json()).toMatchObject({ site: 'live.example', writable: false, contributions: old });
 		expect((await request({ action: 'create', note: '' }, context)).status).toBe(403);
 		expect(live.setJSON).not.toHaveBeenCalled();
 		expect(archive.setJSON).not.toHaveBeenCalled();
+	});
+
+	it('erstellt und restauriert im unveröffentlichten Deploy Preview für Admins im selben Origin', async () => {
+		const context = {
+			...production,
+			deploy: { ...production.deploy, context: 'deploy-preview', published: false },
+		};
+		const origin = 'https://deploy-preview-42--live.example';
+		const send = (query = '', body?: Record<string, unknown>, requestOrigin = origin) =>
+			handle(new Request(`${origin}/api/admin/backups${query}`, body && {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json', Origin: requestOrigin },
+				body: JSON.stringify(body),
+			}), context);
+		mocks.verifyRequestOrigin.mockImplementation((req: Request) => {
+			if (req.headers.get('Origin') !== new URL(req.url).origin) throw new Error('falscher Origin');
+		});
+		expect(await (await send()).json()).toMatchObject({ site: 'live.example', writable: true });
+
+		const created = await send('', { action: 'create', note: 'Aus dem Preview' });
+		expect(created.status).toBe(201);
+		const { backup } = await created.json();
+		expect(await (await request()).json()).toMatchObject({ backups: [backup] });
+		expect((await send(`?action=download&id=${backup.id}`)).headers.get('Content-Disposition')).toContain('attachment;');
+		live.put('contributions', current);
+		const planned = await send(`?action=preview&id=${backup.id}`);
+		expect(planned.status).toBe(200);
+		const { revision } = await planned.json();
+		const body = { action: 'restore', id: backup.id, revision, confirmation: 'WIEDERHERSTELLEN' };
+		mocks.getUser.mockResolvedValueOnce({ roles: [] });
+		expect((await send('', body)).status).toBe(403);
+		expect((await send('', body, 'https://live.example')).status).toBe(403);
+		expect(live.setJSON).not.toHaveBeenCalled();
+		const restored = await send('', body);
+		expect(restored.status).toBe(200);
+		expect((await restored.json()).safety.kind).toBe('safety');
+		expect(live.value('contributions')).toEqual(old);
 	});
 
 	it('erzwingt Admin-Rolle und Origin; lokal wird nur die Übersicht weitergeleitet', async () => {
