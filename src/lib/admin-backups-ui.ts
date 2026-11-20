@@ -40,29 +40,54 @@ class AdminBackupPanel extends HTMLElement {
 
   connectedCallback() {
     if (this.#lifecycle) return;
-    const { signal } = (this.#lifecycle = new AbortController());
-    this.#element("refresh").addEventListener("click", this.#refresh, { signal });
-    this.#element("more").addEventListener("click", () => {
-      if (this.#overview?.next) void this.#load(this.#overview.next);
-    }, { signal });
-    this.#element("cancel").addEventListener("click", () => this.#closePreview(true), { signal });
-    this.#element<HTMLFormElement>("create").addEventListener("submit", (event) => {
-      event.preventDefault();
-      const form = this.#element<HTMLFormElement>("create");
-      void this.#write({ action: "create", note: new FormData(form).get("note") }, form);
-    }, { signal });
-    this.#element<HTMLFormElement>("restore").addEventListener("submit", (event) => {
-      event.preventDefault();
-      const preview = this.#preview;
-      if (!preview) return;
-      const form = this.#element<HTMLFormElement>("restore");
-      void this.#write({
-        action: "restore",
-        id: preview.backup.id,
-        revision: preview.revision,
-        confirmation: new FormData(form).get("confirmation"),
-      }, form);
-    }, { signal });
+    this.#lifecycle = new AbortController();
+    const { signal } = this.#lifecycle;
+    this.#element("refresh").addEventListener("click", this.#refresh, {
+      signal,
+    });
+    this.#element("more").addEventListener(
+      "click",
+      () => {
+        if (this.#overview?.next) void this.#load(this.#overview.next);
+      },
+      { signal },
+    );
+    this.#element("cancel").addEventListener(
+      "click",
+      () => this.#closePreview(true),
+      { signal },
+    );
+    this.#element<HTMLFormElement>("create").addEventListener(
+      "submit",
+      (event) => {
+        event.preventDefault();
+        const form = this.#element<HTMLFormElement>("create");
+        void this.#write(
+          { action: "create", note: new FormData(form).get("note") },
+          form,
+        );
+      },
+      { signal },
+    );
+    this.#element<HTMLFormElement>("restore").addEventListener(
+      "submit",
+      (event) => {
+        event.preventDefault();
+        const preview = this.#preview;
+        if (!preview) return;
+        const form = this.#element<HTMLFormElement>("restore");
+        void this.#write(
+          {
+            action: "restore",
+            id: preview.backup.id,
+            revision: preview.revision,
+            confirmation: new FormData(form).get("confirmation"),
+          },
+          form,
+        );
+      },
+      { signal },
+    );
     this.#unsubscribe = onAuthChange(() => {
       this.#pending?.abort();
       this.#overview = undefined;
@@ -80,22 +105,33 @@ class AdminBackupPanel extends HTMLElement {
     this.#unsubscribe?.();
   }
 
-  async #request<T>(path: string, signal: AbortSignal, body?: unknown): Promise<T> {
+  async #request<T>(
+    path: string,
+    signal: AbortSignal,
+    body?: unknown,
+  ): Promise<T> {
     const response = await fetch(path, {
       cache: "no-store",
       signal,
-      ...(body === undefined ? {} : {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      }),
+      ...(body === undefined
+        ? {}
+        : {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          }),
     });
     if (!response.headers.get("content-type")?.includes("application/json")) {
-      throw new Error("Die Backup-API ist nicht erreichbar. Lokal ist Netlify Dev erforderlich.");
+      throw new Error(
+        "Die Backup-API ist nicht erreichbar. Lokal ist Netlify Dev erforderlich.",
+      );
     }
     if (!response.ok) {
       const payload: { error?: string } = await response.json();
-      throw new Error(payload.error ?? `Die Anfrage ist fehlgeschlagen (HTTP ${response.status}).`);
+      throw new Error(
+        payload.error ??
+          `Die Anfrage ist fehlgeschlagen (HTTP ${response.status}).`,
+      );
     }
     return response.json();
   }
@@ -106,7 +142,9 @@ class AdminBackupPanel extends HTMLElement {
     this.#pending = pending;
     const status = this.#element("status");
     const setBusy = (busy: boolean) => {
-      for (const control of this.querySelectorAll<HTMLButtonElement | HTMLInputElement>("button, input")) {
+      for (const control of this.querySelectorAll<
+        HTMLButtonElement | HTMLInputElement
+      >("button, input")) {
         control.disabled = busy;
       }
     };
@@ -117,7 +155,10 @@ class AdminBackupPanel extends HTMLElement {
     } catch (error) {
       if (pending.signal.aborted) return;
       this.#closePreview();
-      status.textContent = error instanceof Error ? error.message : "Die Anfrage ist fehlgeschlagen.";
+      status.textContent =
+        error instanceof Error
+          ? error.message
+          : "Die Anfrage ist fehlgeschlagen.";
     } finally {
       if (this.#pending === pending) setBusy(false);
     }
@@ -130,7 +171,10 @@ class AdminBackupPanel extends HTMLElement {
 
   async #load(before: string | null) {
     await this.#run("Online-Daten werden geladen …", async (signal) => {
-      const overview = await this.#request<BackupOverview>(before ? url({ before }) : endpoint, signal);
+      const overview = await this.#request<BackupOverview>(
+        before ? url({ before }) : endpoint,
+        signal,
+      );
       signal.throwIfAborted();
       this.#render(overview, before !== null);
       this.#element("status").textContent = "Online-Übersicht geladen.";
@@ -141,26 +185,35 @@ class AdminBackupPanel extends HTMLElement {
     this.#overview = overview;
     const ready = overview.contributions !== null && overview.modules !== null;
     this.#element("content").hidden = false;
-    this.#element("site").textContent = `${overview.site} · Abgerufen am ${date.format(new Date(overview.checkedAt))}`;
+    this.#element("site").textContent =
+      `${overview.site} · Abgerufen am ${date.format(new Date(overview.checkedAt))}`;
     this.#element("readonly").hidden = overview.writable;
     this.#element("uninitialized").hidden = ready;
     this.#element("create").hidden = !overview.writable || !ready;
 
-    for (const [key, label] of [["contributions", "Beiträge"], ["modules", "Lehrgänge"]] as const) {
+    for (const [key, label] of [
+      ["contributions", "Beiträge"],
+      ["modules", "Lehrgänge"],
+    ] as const) {
       const entries = overview[key];
       this.#element(`${key}-count`).textContent =
         `${label}: ${entries === null ? "noch nicht initialisiert" : entries.length}`;
       this.#element(`${key}-list`).replaceChildren(
-        ...(entries?.length ? entries.map(({ title }) => text("li", title)) : [text("li", "Keine Einträge.")]),
+        ...(entries?.length
+          ? entries.map(({ title }) => text("li", title))
+          : [text("li", "Keine Einträge.")]),
       );
     }
     const list = this.#element("backups");
     if (!append) list.replaceChildren();
-    if (!append && !overview.backups.length) list.append(text("li", "Noch keine Online-Backups vorhanden."));
+    if (!append && !overview.backups.length)
+      list.append(text("li", "Noch keine Online-Backups vorhanden."));
     for (const backup of overview.backups) {
       const entry = text("li", "");
       entry.append(text("strong", date.format(new Date(backup.createdAt))));
-      entry.append(` · ${backup.contributions} Beiträge, ${backup.modules} Lehrgänge`);
+      entry.append(
+        ` · ${backup.contributions} Beiträge, ${backup.modules} Lehrgänge`,
+      );
       if (backup.kind === "safety") entry.append(" · Sicherheitsbackup");
       if (backup.note) entry.append(text("p", backup.note));
       if (overview.writable) {
@@ -170,7 +223,10 @@ class AdminBackupPanel extends HTMLElement {
         if (ready) {
           const button = text("button", "Restore-Vorschau");
           button.type = "button";
-          button.addEventListener("click", () => void this.#openPreview(backup.id, button));
+          button.addEventListener(
+            "click",
+            () => void this.#openPreview(backup.id, button),
+          );
           entry.append(" ", button);
         }
       }
@@ -190,14 +246,21 @@ class AdminBackupPanel extends HTMLElement {
   async #openPreview(id: string, trigger: HTMLButtonElement) {
     this.#closePreview();
     await this.#run("Restore-Vorschau wird geladen …", async (signal) => {
-      const preview = await this.#request<RestorePreview>(url({ action: "preview", id }), signal);
+      const preview = await this.#request<RestorePreview>(
+        url({ action: "preview", id }),
+        signal,
+      );
       signal.throwIfAborted();
       this.#preview = preview;
       this.#previewTrigger = trigger;
-      this.#element("restore-target").textContent = `Backup vom ${date.format(new Date(preview.backup.createdAt))}`;
+      this.#element("restore-target").textContent =
+        `Backup vom ${date.format(new Date(preview.backup.createdAt))}`;
       const container = this.#element("diff");
       container.replaceChildren();
-      for (const [key, label] of [["contributions", "Beiträge"], ["modules", "Lehrgänge"]] as const) {
+      for (const [key, label] of [
+        ["contributions", "Beiträge"],
+        ["modules", "Lehrgänge"],
+      ] as const) {
         container.append(text("h3", label));
         for (const [change, title] of [
           ["added", "Kommen zurück"],
@@ -216,7 +279,12 @@ class AdminBackupPanel extends HTMLElement {
         }
       }
       if (preview.settingsChanged.length) {
-        container.append(text("p", `Ändern sich ebenfalls: ${preview.settingsChanged.join(", ")}.`));
+        container.append(
+          text(
+            "p",
+            `Ändern sich ebenfalls: ${preview.settingsChanged.join(", ")}.`,
+          ),
+        );
       }
       this.#element("preview").hidden = false;
       this.querySelector<HTMLElement>("#restore-heading")?.focus();
@@ -224,26 +292,42 @@ class AdminBackupPanel extends HTMLElement {
     });
   }
 
-  async #write(body: { action: "create" | "restore" } & Record<string, unknown>, form: HTMLFormElement) {
+  async #write(
+    body: { action: "create" | "restore" } & Record<string, unknown>,
+    form: HTMLFormElement,
+  ) {
     const restoring = body.action === "restore";
-    await this.#run(restoring ? "Online-Stand wird wiederhergestellt …" : "Backup wird gespeichert …", async (signal) => {
-      const result = await this.#request<{ safety?: BackupSummary }>(endpoint, signal, body);
-      signal.throwIfAborted();
-      form.reset();
-      this.#closePreview();
-      const message = restoring
-        ? `Online-Stand wiederhergestellt. Sicherheitsbackup: ${result.safety?.id}.`
-        : "Backup gespeichert.";
-      try {
-        const overview = await this.#request<BackupOverview>(endpoint, signal);
+    await this.#run(
+      restoring
+        ? "Online-Stand wird wiederhergestellt …"
+        : "Backup wird gespeichert …",
+      async (signal) => {
+        const result = await this.#request<{ safety?: BackupSummary }>(
+          endpoint,
+          signal,
+          body,
+        );
         signal.throwIfAborted();
-        this.#render(overview);
-        this.#element("status").textContent = message;
-      } catch {
-        signal.throwIfAborted();
-        this.#element("status").textContent = `${message} Die Übersicht konnte nicht aktualisiert werden.`;
-      }
-    });
+        form.reset();
+        this.#closePreview();
+        const message = restoring
+          ? `Online-Stand wiederhergestellt. Sicherheitsbackup: ${result.safety?.id}.`
+          : "Backup gespeichert.";
+        try {
+          const overview = await this.#request<BackupOverview>(
+            endpoint,
+            signal,
+          );
+          signal.throwIfAborted();
+          this.#render(overview);
+          this.#element("status").textContent = message;
+        } catch {
+          signal.throwIfAborted();
+          this.#element("status").textContent =
+            `${message} Die Übersicht konnte nicht aktualisiert werden.`;
+        }
+      },
+    );
   }
 }
 

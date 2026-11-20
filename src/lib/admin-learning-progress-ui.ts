@@ -65,7 +65,8 @@ class AdminLearningProgressPanel extends HTMLElement {
   }
 
   connectedCallback() {
-    const { signal } = (this.#lifecycle = new AbortController());
+    this.#lifecycle = new AbortController();
+    const { signal } = this.#lifecycle;
     this.#el("load").addEventListener("click", () => void this.#list(1), {
       signal,
     });
