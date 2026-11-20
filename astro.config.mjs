@@ -8,6 +8,7 @@ import { defineConfig } from "astro/config";
 // @ts-ignore - rehype-katex liefert keine eigenen TS-Deklarationsdateien mit
 import rehypeKatex from "rehype-katex";
 import remarkMath from "remark-math";
+import { createLocalIdentityProxy } from "./src/lib/local-identity-proxy.mjs";
 import { ModuleArchiveSyncError, syncModuleArchivesAfterSave } from "./src/lib/module-archive.ts";
 
 const MAX_LOCAL_REQUEST_BYTES = 500_000;
@@ -391,40 +392,6 @@ function localModulesApiPlugin() {
   };
 }
 
-const localIdentityOrigin = process.env.LOCAL_NETLIFY_IDENTITY_ORIGIN;
-/** @type {Record<string, import("vite").ProxyOptions> | undefined} */
-let localIdentityProxy;
-if (process.env.NETLIFY_DEV === "true" && localIdentityOrigin) {
-  const identityUrl = new URL(localIdentityOrigin);
-  if (
-    identityUrl.protocol !== "https:" ||
-    identityUrl.username ||
-    identityUrl.password ||
-    identityUrl.pathname !== "/" ||
-    identityUrl.search ||
-    identityUrl.hash
-  ) {
-    throw new Error(
-      "LOCAL_NETLIFY_IDENTITY_ORIGIN muss eine HTTPS-Site-Adresse ohne Pfad oder Zugangsdaten sein.",
-    );
-  }
-  localIdentityProxy = {
-    "^/\\.netlify/identity(?:/|\\?|$)": {
-      target: identityUrl.origin,
-      changeOrigin: true,
-      configure(proxy) {
-        proxy.on("proxyReq", (proxyReq, req) => {
-          proxyReq.removeHeader("cookie");
-          proxyReq.removeHeader("referer");
-          if (req.headers.origin) {
-            proxyReq.setHeader("origin", identityUrl.origin);
-          }
-        });
-      },
-    },
-  };
-}
-
 // https://astro.build/config
 export default defineConfig({
   site: "http://localhost:8888",
@@ -439,7 +406,12 @@ export default defineConfig({
   },
   vite: {
     plugins: process.env.NETLIFY_DEV === "true" ? [] : [localModulesApiPlugin()],
-    server: { proxy: localIdentityProxy },
+    server: {
+      proxy: createLocalIdentityProxy(
+        process.env.NETLIFY_DEV,
+        process.env.LOCAL_NETLIFY_IDENTITY_ORIGIN,
+      ),
+    },
     build: {
       chunkSizeWarningLimit: 1500, // Erhöht das Warnlimit von 500 kB auf 1500 kB
     },

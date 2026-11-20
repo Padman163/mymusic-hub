@@ -1,21 +1,10 @@
 // @vitest-environment node
-import { afterEach, describe, expect, it, vi } from "vitest";
-
-async function loadProxy(netlifyDev, origin) {
-  vi.resetModules();
-  vi.stubEnv("NETLIFY_DEV", netlifyDev);
-  vi.stubEnv("LOCAL_NETLIFY_IDENTITY_ORIGIN", origin);
-  const { default: config } = await import("../astro.config.mjs");
-  return config.vite.server.proxy;
-}
+import { describe, expect, it, vi } from "vitest";
+import { createLocalIdentityProxy } from "../src/lib/local-identity-proxy.mjs";
 
 describe("Identity-Proxy für Netlify Dev", () => {
-  afterEach(() => {
-    vi.unstubAllEnvs();
-  });
-
-  it("leitet nur Identity-Anfragen an die konfigurierte Site weiter", async () => {
-    const proxy = await loadProxy("true", "https://example.netlify.app");
+  it("leitet nur Identity-Anfragen an die konfigurierte Site weiter", () => {
+    const proxy = createLocalIdentityProxy("true", "https://example.netlify.app");
     const [pattern, options] = Object.entries(proxy)[0];
     expect(new RegExp(pattern).test("/.netlify/identity/token")).toBe(true);
     expect(new RegExp(pattern).test("/api/modules")).toBe(false);
@@ -38,17 +27,17 @@ describe("Identity-Proxy für Netlify Dev", () => {
     );
   });
 
-  it("aktiviert die Weiterleitung nicht ohne Netlify Dev oder ohne Ziel", async () => {
-    expect(await loadProxy("false", "https://example.netlify.app")).toBeUndefined();
-    expect(await loadProxy("true", "")).toBeUndefined();
+  it("aktiviert die Weiterleitung nicht ohne Netlify Dev oder ohne Ziel", () => {
+    expect(createLocalIdentityProxy("false", "https://example.netlify.app")).toBeUndefined();
+    expect(createLocalIdentityProxy("true", "")).toBeUndefined();
   });
 
-  it("lehnt unsichere oder mit Zugangsdaten versehene Ziele ab", async () => {
+  it("lehnt unsichere oder mit Zugangsdaten versehene Ziele ab", () => {
     const message = "LOCAL_NETLIFY_IDENTITY_ORIGIN muss eine HTTPS-Site-Adresse";
-    await expect(loadProxy("true", "http://example.netlify.app")).rejects.toThrow(message);
-    await expect(loadProxy("true", "https://user:pass@example.netlify.app"))
-      .rejects.toThrow(message);
-    await expect(loadProxy("true", "https://example.netlify.app/path"))
-      .rejects.toThrow(message);
+    expect(() => createLocalIdentityProxy("true", "http://example.netlify.app")).toThrow(message);
+    expect(() => createLocalIdentityProxy("true", "https://user:pass@example.netlify.app"))
+      .toThrow(message);
+    expect(() => createLocalIdentityProxy("true", "https://example.netlify.app/path"))
+      .toThrow(message);
   });
 });

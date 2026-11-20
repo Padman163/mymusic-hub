@@ -94,6 +94,7 @@ Studio-Ausrüstung sind Teil dieses persönlichen Zustands.
 | Datei | Aufgabe |
 | --- | --- |
 | [`learning-account-ui.ts`](../src/lib/learning-account-ui.ts) | Browser-Login, Einladungsannahme, Passwort-Wiederherstellung und Abmeldung. |
+| [`local-identity-proxy.mjs`](../src/lib/local-identity-proxy.mjs) | Konfiguriert die Identity-Weiterleitung für Netlify Dev. |
 | [`learning-progress-sync.ts`](../src/lib/learning-progress-sync.ts) | Account-getrennter Cache, Migration des Gaststands und Konfliktbehandlung. |
 | [`learning-progress.ts`](../src/lib/learning-progress.ts) | Schema, lokale Speicherung und Bereinigung des Lernstands. |
 | [`learning-progress.ts` Function](../netlify/functions/learning-progress.ts) | Authentifizierter Zugriff auf persönliche Cloud-Lernstände. |
