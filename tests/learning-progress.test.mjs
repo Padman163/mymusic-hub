@@ -15,6 +15,7 @@ import {
   LEARNING_PROGRESS_STORAGE_KEY,
   loadLearningProgress,
   recordExerciseAnswer,
+  restartModuleProgress,
   saveLearningProgress,
   setLearningProgressAccountId,
   submitQuizAttempt,
@@ -463,6 +464,53 @@ describe("Lernfortschritts- & XP-Engine (learning-progress)", () => {
     const restored = loadLearningProgress(db.modules);
     expect(completeTheoryBlock(restored, db.modules[0], "tb-1")).toBe(restored);
     expect(submitQuizAttempt(restored, db, db.modules[0].id, "schwer", 1).totalXp).toBe(45 + 70);
+  });
+
+  it("vergibt nach einem Reset und erneutem Abschluss keine XP für bereits vergütete Inhalte", () => {
+    const db = buildTestDatabase();
+    const mod = db.modules[1];
+    const exercises = db.questions.filter(
+      (question) => question.moduleIds.includes(mod.id) && question.targetLane === "leicht",
+    );
+    const initial = createInitialProgress(db.modules);
+    const unlocked = submitQuizAttempt(initial, db, db.modules[0].id, "schwer", 1);
+    const completeNormalLane = (state) => {
+      state = completeTheoryBlock(state, mod, "tb-2", db.questions);
+      for (const question of exercises) {
+        state = recordExerciseAnswer(state, mod, question, true, db.questions);
+      }
+      state = completePracticeBlock(state, mod, "pb-2");
+      return submitQuizAttempt(state, db, mod.id, "mittel", 1);
+    };
+    const completed = completeNormalLane(unlocked);
+    expect(completed.modules[mod.id].status).toBe("completed");
+    expect(completed.totalXp).toBeGreaterThan(unlocked.totalXp);
+
+    completed.modules[mod.id] = restartModuleProgress(completed.modules[mod.id], mod);
+    saveLearningProgress(completed);
+    const restarted = loadLearningProgress(db.modules);
+    expect(restarted.modules[mod.id].status).toBe("unlocked");
+    expect(restarted.modules[mod.id].completedTheoryBlockIds).toEqual([]);
+    const replay = completeNormalLane(restarted);
+    expect(replay.modules[mod.id].status).toBe("completed");
+    expect(replay.totalXp).toBe(completed.totalXp);
+    expect(replay.xpByScope).toEqual(completed.xpByScope);
+    expect(replay.xpByTag).toEqual(completed.xpByTag);
+  });
+
+  it("vergütet per Fastlane nach einem Reset nur bisher offene Inhalte und behält den XP-Nachweis über weitere Resets", () => {
+    const db = buildTestDatabase();
+    const mod = db.modules[0];
+    const initial = createInitialProgress(db.modules);
+    const partial = completeTheoryBlock(initial, mod, "tb-1", db.questions);
+    const firstCompletion = submitQuizAttempt(partial, db, mod.id, "schwer", 1);
+    expect(firstCompletion.totalXp).toBeGreaterThan(partial.totalXp);
+
+    partial.modules[mod.id] = restartModuleProgress(partial.modules[mod.id], mod);
+    const replay = submitQuizAttempt(partial, db, mod.id, "schwer", 1);
+    expect(replay.totalXp).toBe(firstCompletion.totalXp);
+    replay.modules[mod.id] = restartModuleProgress(replay.modules[mod.id], mod);
+    expect(submitQuizAttempt(replay, db, mod.id, "schwer", 1).totalXp).toBe(firstCompletion.totalXp);
   });
 
   it("initialisiert Modul 1 offen und Folgemodule gesperrt und synchronisiert neue Module ohne Verlust", () => {

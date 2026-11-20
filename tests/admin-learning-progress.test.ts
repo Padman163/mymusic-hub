@@ -100,6 +100,7 @@ describe('Lernstände im Admin-Bereich', () => {
 			},
 		});
 		expect(saved.modules[first.id].bestQuizEasyScore).toBeUndefined();
+		expect(saved.modules[first.id].xpBeforeReset?.questions).toEqual(['question']);
 		expect(personal.setJSON).toHaveBeenCalledWith(key, saved, { onlyIfMatch: version });
 		expect((await request(`?id=${id}`, body)).status).toBe(409);
 		expect(personal.setJSON).toHaveBeenCalledTimes(1);

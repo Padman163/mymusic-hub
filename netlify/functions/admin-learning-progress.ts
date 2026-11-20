@@ -104,8 +104,8 @@ export default async (request: Request, context: Context): Promise<Response> => 
 			if (reset.version !== entry.etag) return json({ error: conflict }, 409);
 			const module = modules.find(({ id: moduleId }) => moduleId === reset.moduleId);
 			const before = module && Object.hasOwn(state.modules, module.id) ? state.modules[module.id] : undefined;
-			if (!before || !hasProgress(before)) return json({ error: 'Für diesen Lehrgang gibt es keinen zurücksetzbaren Fortschritt.' }, 409);
-			const after = { ...raw, modules: { ...raw.modules, [before.moduleId]: restartModuleProgress(before) }, updatedAt: new Date().toISOString() };
+			if (!module || !before || !hasProgress(before)) return json({ error: 'Für diesen Lehrgang gibt es keinen zurücksetzbaren Fortschritt.' }, 409);
+			const after = { ...raw, modules: { ...raw.modules, [before.moduleId]: restartModuleProgress(before, module) }, updatedAt: new Date().toISOString() };
 			const result = await store.setJSON(key, after, { onlyIfMatch: entry.etag });
 			return result.modified ? json({ saved: true }) : json({ error: conflict }, 409);
 		}

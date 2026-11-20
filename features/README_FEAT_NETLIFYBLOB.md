@@ -52,6 +52,10 @@ ersetzt nur den gewählten Lehrgangsstand mit ETag-Prüfung, damit gleichzeitige
 Änderungen nicht überschrieben werden. Die Inhaltsbackups enthalten diese
 persönlichen Daten weiterhin nicht.
 
+Der Reset bewahrt die IDs der bereits vergüteten Inhalte im selben
+persönlichen Lernstand. Ein erneuter Abschluss vergibt für diese Inhalte
+keine zusätzlichen XP.
+
 ## Empfohlener Datenfluss
 
 Netlify Dev verwendet normalerweise einen getrennten lokalen Blob-Store. Nach

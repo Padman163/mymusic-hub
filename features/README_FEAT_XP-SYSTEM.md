@@ -29,7 +29,9 @@ den zentralen Berechnungsregeln gut.
 Mehrere Wiederholungen derselben Aufgabe vergeben keine zusätzlichen XP.
 `solvedQuestionIds`, `completedTheoryBlockIds` und
 `completedPracticeBlockIds` schützen bereits abgeschlossene Inhalte vor
-doppelter Vergütung.
+doppelter Vergütung. Beim Admin-Reset hält `xpBeforeReset` diese IDs je
+Lehrgang dauerhaft fest. Erneute Abschlüsse (auch per Fastlane) ändern den
+Fortschritt, schreiben aber nur für bisher nicht vergütete Inhalte XP gut.
 
 ## Gesamt-XP, Level und verfügbares Guthaben
 
@@ -69,9 +71,8 @@ Gespeichert werden unter anderem:
 - aktuell ausgerüstete Item-ID
 - Quiz-Bestwerte und Einstellungen
 
-Beim geschützten Reset wird der vollständige Lernfortschritt einschließlich XP,
-Käufen, Inventar und Ausrüstung zurückgesetzt und bei aktiver Anmeldung mit dem
-Online-Konto synchronisiert.
+Der Admin-Reset setzt nur den sichtbaren Fortschritt des gewählten Lehrgangs
+zurück. XP, Käufe, Inventar und Ausrüstung bleiben erhalten.
 
 ## Humpa-Shop
 

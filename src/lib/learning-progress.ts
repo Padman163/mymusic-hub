@@ -47,6 +47,10 @@ export type StepProgressState = (typeof STEP_PROGRESS_STATES)[number];
 export type ModuleUnlockStatus = "locked" | "unlocked" | "completed";
 export type ModuleCompletionMode = "normal" | "fastlane";
 
+type ModuleXpHistory = Partial<
+  Record<"theory" | "practice" | "questions", string[]>
+>;
+
 export interface ModuleProgress {
   moduleId: string;
   status: ModuleUnlockStatus;
@@ -57,6 +61,7 @@ export interface ModuleProgress {
   completedPracticeBlockIds: string[];
   bestQuizEasyScore?: number;
   bestFastlaneScore?: number;
+  xpBeforeReset?: ModuleXpHistory;
 }
 
 export interface InventoryUnlock {
@@ -174,6 +179,9 @@ function cloneModuleProgress(progress: ModuleProgress): ModuleProgress {
     solvedQuestionIds: [...progress.solvedQuestionIds],
     completedTheoryBlockIds: [...(progress.completedTheoryBlockIds ?? [])],
     completedPracticeBlockIds: [...(progress.completedPracticeBlockIds ?? [])],
+    ...(progress.xpBeforeReset
+      ? { xpBeforeReset: progress.xpBeforeReset }
+      : {}),
     ...(progress.bestQuizEasyScore !== undefined
       ? { bestQuizEasyScore: progress.bestQuizEasyScore }
       : {}),
@@ -224,11 +232,18 @@ function cloneState(state: LearningProgressState): LearningProgressState {
 
 function creditXp(
   target: LearningProgressState,
+  progress: ModuleProgress,
+  kind: keyof ModuleXpHistory,
+  id: string,
   amount: number,
   scope: ModuleScope,
   tags: readonly string[],
 ): void {
-  if (!Number.isFinite(amount) || amount <= 0) {
+  if (
+    progress.xpBeforeReset?.[kind]?.includes(id) ||
+    !Number.isFinite(amount) ||
+    amount <= 0
+  ) {
     return;
   }
   const rounded = Math.round(amount);
@@ -329,8 +344,36 @@ export function createInitialProgress(
   };
 }
 
-export function restartModuleProgress(progress: ModuleProgress): ModuleProgress {
-  return createModuleProgress(progress.moduleId, progress.status !== "locked");
+export function restartModuleProgress(
+  progress: ModuleProgress,
+  module: LearningModule,
+): ModuleProgress {
+  const previous = progress.xpBeforeReset;
+  const theoryIds =
+    progress.steps.theory === "completed" &&
+    progress.completedTheoryBlockIds.length === 0
+      ? module.theoryBlocks
+          .filter((block) => block.role !== "exercise_intro")
+          .map((block) => block.id)
+      : progress.completedTheoryBlockIds;
+  return {
+    ...createModuleProgress(progress.moduleId, progress.status !== "locked"),
+    xpBeforeReset: {
+      theory: [...new Set([...(previous?.theory ?? []), ...theoryIds])],
+      practice: [
+        ...new Set([
+          ...(previous?.practice ?? []),
+          ...progress.completedPracticeBlockIds,
+        ]),
+      ],
+      questions: [
+        ...new Set([
+          ...(previous?.questions ?? []),
+          ...progress.solvedQuestionIds,
+        ]),
+      ],
+    },
+  };
 }
 
 /** Fügt eine Freischaltung einmalig zum Inventar hinzu. */
@@ -548,6 +591,9 @@ export function completeTheoryBlock(
   next.modules[module.id].completedTheoryBlockIds.push(blockId);
   creditXp(
     next,
+    existing,
+    "theory",
+    blockId,
     calculateTheoryBlockXp(block, module.theoryBaseXp),
     module.scope,
     block.tags ?? [],
@@ -599,7 +645,15 @@ export function recordExerciseAnswer(
     solvedSet.add(question.id);
     target.solvedQuestionIds.push(question.id);
     const questionXp = calculateModuleQuestionXp(question);
-    creditXp(next, questionXp, module.scope, question.tags);
+    creditXp(
+      next,
+      target,
+      "questions",
+      question.id,
+      questionXp,
+      module.scope,
+      question.tags,
+    );
   }
 
   if (question.targetLane === "leicht") {
@@ -649,6 +703,9 @@ export function completePracticeBlock(
   target.completedPracticeBlockIds.push(blockId);
   creditXp(
     next,
+    target,
+    "practice",
+    blockId,
     calculateTheoryBlockXp(block, BASE_XP_DEFAULTS.practice),
     module.scope,
     block.tags ?? [],
@@ -716,6 +773,9 @@ export function submitQuizAttempt(
           target.solvedQuestionIds.push(question.id);
           creditXp(
             next,
+            target,
+            "questions",
+            question.id,
             calculateModuleQuestionXp(question),
             mod.scope,
             question.tags,
@@ -751,6 +811,9 @@ export function submitQuizAttempt(
         target.completedTheoryBlockIds.push(block.id);
         creditXp(
           next,
+          target,
+          "theory",
+          block.id,
           calculateTheoryBlockXp(block, mod.theoryBaseXp),
           mod.scope,
           block.tags ?? [],
@@ -765,6 +828,9 @@ export function submitQuizAttempt(
       target.completedPracticeBlockIds.push(block.id);
       creditXp(
         next,
+        target,
+        "practice",
+        block.id,
         calculateTheoryBlockXp(block, BASE_XP_DEFAULTS.practice),
         mod.scope,
         block.tags ?? [],
@@ -781,6 +847,9 @@ export function submitQuizAttempt(
         target.solvedQuestionIds.push(question.id);
         creditXp(
           next,
+          target,
+          "questions",
+          question.id,
           calculateModuleQuestionXp(question),
           mod.scope,
           question.tags,
@@ -921,6 +990,9 @@ export function sanitizeStoredProgress(
       solvedQuestionIds,
       completedTheoryBlockIds,
       completedPracticeBlockIds,
+      ...(isRecord(entry.xpBeforeReset)
+        ? { xpBeforeReset: sanitizeModuleXpHistory(entry.xpBeforeReset) }
+        : {}),
       ...(typeof entry.bestQuizEasyScore === "number" &&
       Number.isFinite(entry.bestQuizEasyScore)
         ? { bestQuizEasyScore: entry.bestQuizEasyScore }
@@ -1017,6 +1089,25 @@ export function sanitizeStoredProgress(
   };
 
   return syncProgressWithCurriculum(baseState, modules);
+}
+
+function sanitizeModuleXpHistory(
+  raw: Record<string, unknown>,
+): ModuleXpHistory {
+  const history: ModuleXpHistory = {};
+  for (const kind of ["theory", "practice", "questions"] as const) {
+    const ids = raw[kind];
+    if (Array.isArray(ids)) {
+      history[kind] = [
+        ...new Set(
+          ids.filter(
+            (id): id is string => typeof id === "string" && id.length > 0,
+          ),
+        ),
+      ];
+    }
+  }
+  return history;
 }
 
 function isStepState(value: unknown): value is StepProgressState {
