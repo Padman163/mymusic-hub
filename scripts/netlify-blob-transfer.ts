@@ -307,7 +307,7 @@ async function resetLocal(force: boolean): Promise<void> {
 const [action, ...args] = process.argv.slice(2);
 if (!["pull", "backup", "restore", "push", "reset"].includes(action)) {
   throw new Error(
-    "Aufruf: npm run blobs:pull | blobs:backup | blob:restore | blobs:push -- [--yes] | blobs:reset -- [--yes]",
+    "Aufruf: npm run blobs:pull | blobs:backup | blobs:restore | blobs:push -- [--yes] | blobs:reset -- [--yes]",
   );
 }
 
