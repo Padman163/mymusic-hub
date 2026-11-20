@@ -74,16 +74,19 @@ Beiträge und Module verwenden Netlify Blobs; die ehemalige GitHub-basierte Date
 
 Für Kontenfunktionen zusätzlich Netlify Identity in den Site-Einstellungen aktivieren und dort den Registrierungsmodus konfigurieren. Die App zeigt den Modus im Admin-Bereich nur an; die Einstellung selbst wird weiterhin in Netlify verwaltet. Der erste Admin benötigt einmalig die Identity-Rolle `admin`. Preview-Deploys verwenden denselben Identity-Nutzerbestand, Einladungslinks führen aber zur konfigurierten Site-URL; der aktuelle Einladungs-Callback muss auf dieser Ziel-Site deployed sein. Details: [Authentifizierungs-Referenz](features/README_FEAT_AUTHENTICATION.md).
 
-Damit der lokale Login Identity erreichen kann, erstelle eine nicht versionierte
-`.env.local` mit der HTTPS-Adresse der verknüpften Netlify-Site:
+Erstelle und aktualisiere die nicht versionierte `.env.local` mit einem Befehl:
 
-```dotenv
-LOCAL_NETLIFY_IDENTITY_ORIGIN=https://deine-site.netlify.app
+```bash
+npm run env:netlify
 ```
 
-Nach gesicherter Übernahme der bestehenden Daten und Deployment der aktuellen
-Functions kann zusätzlich `LOCAL_NETLIFY_ONLINE_DATA=true` gesetzt werden. Dann
-verwenden lokale Netlify-Dev-Daten-APIs den Online-Store; für Änderungen an
+Der Befehl liest die verknüpfte Netlify-Site und wählt den neuesten erfolgreichen
+Deploy-Preview. Nur wenn ein erfolgreicher Main-Deploy neuer ist, verwendet er
+stattdessen Main. Er setzt automatisch `LOCAL_NETLIFY_IDENTITY_ORIGIN` auf die
+passende HTTPS-Adresse und `LOCAL_NETLIFY_ONLINE_DATA=true`; bestehende andere
+Einträge in `.env.local` bleiben erhalten.
+
+Dann verwenden lokale Netlify-Dev-Daten-APIs den Online-Store; für Änderungen an
 Modulen und Beiträgen ist ein angemeldetes Admin-Konto erforderlich. Vor der
 Aktivierung persönliche und gemeinsame Stände vergleichen und Konflikte
 klären. Bestehende lokale Daten werden nicht automatisch hochgeladen.

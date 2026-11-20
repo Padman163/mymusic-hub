@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "env:netlify": "node scripts/setup-netlify-env.mjs",
     "blobs:pull": "node --experimental-strip-types scripts/netlify-blob-transfer.ts pull",
     "blobs:backup": "node --experimental-strip-types scripts/netlify-blob-transfer.ts backup",
     "blobs:push": "node --experimental-strip-types scripts/netlify-blob-transfer.ts push",
