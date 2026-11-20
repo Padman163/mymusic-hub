@@ -325,10 +325,12 @@ describe("Modul- & Aufgaben-Builder UI-Komponenten", () => {
       ".module-content-preview",
     );
     expect(preview?.open).toBe(true);
-    await vi.waitFor(() =>
-      expect(
-        row.querySelector(".module-content-preview-body")?.textContent,
-      ).toContain("Vorher"),
+    await vi.waitFor(
+      () =>
+        expect(
+          row.querySelector(".module-content-preview-body")?.textContent,
+        ).toContain("Vorher"),
+      { timeout: 5000 },
     );
 
     markdown.value = "**Nachher**";

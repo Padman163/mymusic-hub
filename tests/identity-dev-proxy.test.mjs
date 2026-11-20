@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 async function loadProxy(netlifyDev, origin) {
@@ -43,10 +44,11 @@ describe("Identity-Proxy für Netlify Dev", () => {
   });
 
   it("lehnt unsichere oder mit Zugangsdaten versehene Ziele ab", async () => {
-    await expect(loadProxy("true", "http://example.netlify.app")).rejects.toThrow();
+    const message = "LOCAL_NETLIFY_IDENTITY_ORIGIN muss eine HTTPS-Site-Adresse";
+    await expect(loadProxy("true", "http://example.netlify.app")).rejects.toThrow(message);
     await expect(loadProxy("true", "https://user:pass@example.netlify.app"))
-      .rejects.toThrow();
+      .rejects.toThrow(message);
     await expect(loadProxy("true", "https://example.netlify.app/path"))
-      .rejects.toThrow();
+      .rejects.toThrow(message);
   });
 });
