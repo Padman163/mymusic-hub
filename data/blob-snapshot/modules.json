@@ -368,6 +368,24 @@
       ],
       "createdAt": "2026-11-18T14:20:07.995Z",
       "updatedAt": "2026-11-18T18:40:05.603Z"
+    },
+    {
+      "id": "mod-dbab4cae-7cee-4ea8-9207-47b7b24bd5f3",
+      "order": 3,
+      "title": "Das MOdul von 15:00",
+      "description": "",
+      "scope": "theory",
+      "level": 100,
+      "archived": false,
+      "tags": [],
+      "theoryBaseXp": 30,
+      "quizEasyMinScore": 0.8,
+      "fastlaneMinScore": 0.85,
+      "theoryBlocks": [],
+      "practiceBlocks": [],
+      "contentOrder": [],
+      "createdAt": "2026-11-20T14:03:25.118Z",
+      "updatedAt": "2026-11-20T14:03:25.118Z"
     }
   ],
   "questions": [
