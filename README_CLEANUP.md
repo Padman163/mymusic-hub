@@ -45,23 +45,10 @@ Arbeitsstand und offene Änderungen prüfen und die Bereinigung möglichst auf e
 ## 2. Dokumentation konsolidieren
 
 1. `README.md` mit den führenden Leitfäden in der [Dokumentationsübersicht](README.md#dokumentation) vergleichen. Einmalige Befehle, Umgebungsvariablen und Checklisten vor dem Kürzen in den passenden Leitfaden übernehmen.
-2. Einstieg, Schnellstart, Verweise, Preflight und Release-Checkliste in `README.md` erhalten. Keine ungeprüften Release-Erfolge behaupten.
+2. Einstieg, Schnellstart, Verweise und Preflight in `README.md` erhalten. Keine ungeprüften Release-Erfolge behaupten.
 3. [Copilot-Instruktionen](.github/copilot-instructions.md) auf Aktualität, Widersprüche und Überschneidungen mit den führenden Leitfäden prüfen.
 4. Handoffs in `features/` auf Abschluss und offene Punkte prüfen. Eine Archivierung nach `archive/handoffs/` nur vorschlagen und nach Freigabe durchführen; Links aktualisieren.
-5. Die fachliche README-Prüfung gegen den aktuellen Branchstand mit dem folgenden Prompt durchführen.
-
-### Prompt für die README-Fachprüfung
-
-Kopiere den Prompt in Copilot, wenn du beim Cleanup alle gepflegten README-Dateien prüfen und nötige Korrekturen umsetzen möchtest:
-
-> Prüfe alle gepflegten README-Dateien im Repository fachlich gegen den aktuellen Branchstand und korrigiere ausschließlich verifizierte Abweichungen.
->
-> 1. Ermittle zuerst Branch, Git-Status und Änderungen des aktuellen Branches. Lies die Architektur-, Feature-, Test- und Workflow-Dokumentation sowie die dazugehörigen Implementierungen, Tests, `package.json`-Skripte und relevanten Netlify-/Astro-Konfigurationen. Nutze den aktuellen Code als Quelle der Wahrheit; ältere README-Texte und Handoffs sind keine Belege für den Ist-Stand.
-> 2. Erfasse alle gepflegten README-Dateien im Repository, einschließlich Root-, `features/`, `module-archives/` und Asset-READMEs. Ignoriere generierte Kopien unter `dist/` sowie Dateien in `node_modules/`. Vergleiche Aussagen zu Architektur, Navigation, Datenfluss und Speicherorten, Funktionen, Voraussetzungen, Befehlen, Testumfang und Links mit den tatsächlichen Quellen.
-> 3. Unterscheide bei Persistenz zwischen gemeinsamem siteweitem Netlify-Blob, konto-gebundenen Lernständen und lokalem Entwicklungs-Cache. Behaupte keine Bearbeitungsoberfläche oder Funktion, die der aktuelle Code nicht anbietet. Prüfe Modularchiv-READMEs gegen `module-archives/index.json`; regeneriere keine Archive, lösche oder ersetze keine bestehenden Archivseiten und ändere keine Live-Daten.
-> 4. Ändere nur fachlich falsche oder veraltete Aussagen und die direkt betroffenen Verweise. Halte die Single Source of Truth ein, vermeide Dopplungen und erfinde keine erfolgreichen Prüfungen. Schreibe keine vollständigen README-Dateien neu und erstelle keine zusätzlichen Audit- oder Planungsdateien.
-> 5. Starte keine Tests, `npm run cleanup:check`, `npm run preflight` oder einzelne Preflight-Stufen automatisch. Tests laufen nur nach ausdrücklichem Testauftrag oder nach der vorgesehenen Rückfrage und Zustimmung; den Preflight startet ausschließlich der Nutzer manuell am Branch-Ende.
-> 6. Prüfe die geänderten Aussagen und Links anhand der Dateien, ohne Prüfresultate zu behaupten, die nicht ausgeführt wurden. Berichte knapp, welche READMEs geändert wurden, welche geprüft und unverändert blieben, welche offenen Punkte eine Entscheidung benötigen und welche Tests nicht gelaufen sind. Gib im Chat nur einen knappen Diff beziehungsweise geänderte Abschnitte aus.
+5. Die fachliche Gesamtprüfung aller READMEs, fehlender Feature-Dokumentation und der Anleitungen/Wikis unter **Sonstiges** gegen den aktuellen Branchstand mit dem [zentralen Dokumentations-Prompt](README_WORKFLOW.md#zentraler-dokumentations-prompt) durchführen.
 
 ## 3. Ungenutzte Dateien und Assets untersuchen
 

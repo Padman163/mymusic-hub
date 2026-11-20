@@ -476,6 +476,7 @@ export default defineConfig({
               label: "Wiki",
               items: [
                 { label: "Lernkonto & Synchronisierung", slug: "wiki/lernstand-konto" },
+                { label: "Lernpfad & Dashboard", slug: "wiki/lernpfad" },
                 { label: "Datenstand & Backups", slug: "wiki/datenstand-backups" },
                 { label: "Beiträge verwalten", slug: "wiki/beitraege" },
                 { label: "Modul-Builder bedienen", slug: "wiki/modul-builder" },

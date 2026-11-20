@@ -31,7 +31,7 @@ Um maximale Stabilität bei minimaler Testlaufzeit zu gewährleisten, gliedert s
 
 - **Werkzeuge:** Biome, `@astrojs/check`, TypeScript (`tsc`).
 - **Zweck:** Prüft Formatierung, Lint-Regeln und Typen sowie beispielsweise unauflösbare Imports und Schemafehler in Inhaltsdaten. Die Prüfungen ersetzen keine Laufzeittests und erkennen weder beliebige Tippfehler noch fachlich falsche Inhalte. Insbesondere Astro- und TypeScript-Prüfungen benötigen mehr als Sekundenbruchteile.
-- **Umfang:** Biome prüft gemäß `biome.json` unterstützte Dateien unter `src/` und berücksichtigt Git-Ignore-Regeln; einzelne Regeln sind für Astro-Dateien deaktiviert. Astro und TypeScript prüfen anhand der Projektkonfiguration. Ein erfolgreicher Lauf garantiert daher nicht, dass jede Datei vollständig geprüft wurde.
+- **Umfang:** Biome prüft gemäß `biome.json` unterstützte Dateien unter `src/` und `scripts/**/*.mjs` unter Berücksichtigung von Git-Ignore-Regeln; einzelne Regeln sind für Astro-Dateien deaktiviert. Astro und TypeScript prüfen anhand der Projektkonfiguration. Ein erfolgreicher Lauf garantiert daher nicht, dass jede Datei vollständig geprüft wurde.
 - **Korrekturen und Prüfung:**
 ```bash
 # Schreibt automatische Biome-Korrekturen in Dateien; ist kein Prüfschritt:
@@ -51,7 +51,7 @@ npm run validate
 - **Werkzeuge:** Vitest.
 - **Konfiguration:** `vitest.config.ts` erfasst `.test`- und `.spec`-Dateien in TypeScript, JavaScript und MJS unter `tests/`, ausgenommen `tests/e2e/`. Standardumgebung ist `happy-dom`; einzelne Dateien können Node wählen.
 - **Admin-Wiki:** `tests/admin-wiki.test.ts` nutzt Node für den serverseitigen Markdown-Renderer samt Shiki und nativen Web-APIs. Nur zur Prüfung des erzeugten HTML wird ein isoliertes Happy-DOM-Fenster angelegt; dessen unvollständige `Response`-Implementierung ersetzt dadurch nicht die Node-API.
-- **Testdateien:** Unter anderem `tests/music-notation.test.mjs`, `tests/module-builder.test.mjs`, `tests/learning-progress.test.mjs`, `tests/admin-wiki.test.ts` und `tests/module-archive.test.ts`.
+- **Testdateien:** Unter anderem `tests/music-notation.test.mjs`, `tests/module-builder.test.mjs`, `tests/learning-progress.test.mjs`, `tests/admin-wiki.test.ts`, `tests/module-archive.test.ts`, `tests/blob-restore.test.mjs`, `tests/identity-dev-proxy.test.mjs` und `tests/setup-netlify-env.test.mjs`.
 - **Gegenstand:** Notationsgeometrie, rhythmische Positionierung, Systemumbrüche, SVG-Ausgabe und Notations-Builder-Zuordnungen sowie Tag-/XP-Berechnungen, Modul-/Aufgaben-Validierung und Store-Operationen. Die Lernfortschrittstests prüfen Zustandsübergänge, Freischaltungen, XP-Vergabe und Speicherung/Wiederherstellung. Eine Testabdeckung für Frequenzformeln oder allgemeine Transponierungslogik wird damit nicht zugesichert.
 - **Abgrenzung:** `tests/module-builder.test.mjs` enthält zusätzlich Serverless-API-Tests (Stufe 3); `tests/learning-progress.test.mjs` prüft neben Logik auch Browser-Persistenz. Die Dateigrenzen entsprechen somit nicht strikt den Stufen der Testpyramide.
 - **Drum-Audio:** `tests/drum-audio.test.ts` kombiniert Engine- und DOM-Tests mit gemocktem `fetch` und `AudioContext`: Cache/Preloading, unmittelbarer Cache-Start, Polyphonie, Velocity, Lade-/Audiofehler, SSR, Klicks und Tastatur sowie unveränderte Patterns ohne Sounds. Fake-Timer prüfen Viertel-BPM, Auflösung, synchrone Spuren, Pausen, Loop-Neustart und Stoppen per Leertaste/Fokus-/Seitenwechsel. Play/Stop-Tests sichern die Header-Position, unabhängig ausblendbare Buttons und Footer, Haltewiedergabe ohne Button, fortlaufende Button-Wiedergabe, barrierefrei benannte Symbole, Neustart und Abbruch während der Audiofreigabe. Auswahltests prüfen Highlight-Filter, Shift-/Touch-Mehrfachauswahl, keine Markierung als „alle“ sowie die unabhängige Anschlagspur. Ausblendbare Tempo-/Hilfselemente werden einzeln und gemeinsam geprüft; BPM-Prop und Fehlermeldungen bleiben dabei wirksam. Audio-Abbrüche verhindern auch nachträgliche Starts während des Ladens oder Entsperrens. Die Tests messen keine reale Audiolatenz und ersetzen keine Browserprüfung der Audiofreigabe.
@@ -73,8 +73,8 @@ npm run validate
 ### Stufe 2: Komponenten- & DOM-Verhalten
 
 - **Werkzeuge:** Vitest mit `happy-dom` gemäß `vitest.config.ts`. Die vorhandenen Tests verwenden keinen Astro-Container.
-- **Testdateien:** `tests/components/checklist-editor.test.ts`, `tests/components/notation-builder.test.ts`, `tests/components/module-builder-ui.test.ts`, `tests/components/module-player-ui.test.ts` und `tests/components/inventory-ui.test.ts`.
-- **Gegenstand:** Prüft DOM-Controller und ihre Interaktionen mit Logik und Zustand ohne echten Browser: Checklisten-Eingabe, Notations-Builder per Maus und Tastatur, Modul-/Aufgabenformulare mit Gruppierung, Sortierung, Live-XP und API-Fehleranzeige, Shop-/Inventar-Interaktionen sowie Lernpfad, Lösungsanzeige, Antwort-Wiederherstellung und Dashboard-/Roadmap-Updates.
+- **Testdateien:** `tests/components/checklist-editor.test.ts`, `tests/components/notation-builder.test.ts`, `tests/components/module-builder-ui.test.ts`, `tests/components/module-player-ui.test.ts`, `tests/components/inventory-ui.test.ts` und `tests/components/learning-account-ui.test.ts`.
+- **Gegenstand:** Prüft DOM-Controller und ihre Interaktionen mit Logik und Zustand ohne echten Browser: Checklisten-Eingabe, Notations-Builder per Maus und Tastatur, Modul-/Aufgabenformulare mit Gruppierung, Sortierung, Live-XP und API-Fehleranzeige, Shop-/Inventar-Interaktionen, Lernkonto-UI sowie Lernpfad, Lösungsanzeige, Antwort-Wiederherstellung und Dashboard-/Roadmap-Updates.
 - **Testaufbau und Grenzen:** Die Tests erzeugen DOM-Strukturen direkt und rufen die TypeScript-Controller auf; sie rendern nicht die tatsächlichen `.astro`-Komponenten. API-Antworten werden bei Bedarf über `fetch`-Mocks simuliert, Geometriewerte für Mausklicks teilweise vorgegeben. Damit werden weder produktive Serverless-Endpunkte noch echtes CSS-Layout, Browser-Rendering oder vollständige Barrierefreiheit geprüft. Dafür sind ergänzende Browser- und Accessibility-Prüfungen erforderlich.
 - **Abgrenzung:** Einzelne Tests verbinden mehrere Controller mit Lernfortschrittslogik und Speicherung oder prüfen Schemas und Testdaten. Die Suite enthält damit auch Integrationsanteile statt ausschließlich isolierter Komponententests.
 - **Befehl:**
@@ -91,11 +91,14 @@ npm run validate
 ### Stufe 3: Integration – HTTP- & Serverless-Verhalten
 
 - **Werkzeuge:** Vitest mit direkt aufgerufenen Function-Handlern und `Request`-/`Response`-Objekten. Ein Mock für `@netlify/blobs` simuliert JSON-Lesezugriffe und bedingte Schreibzugriffe mit ETags.
-- **Testdateien:** `tests/integration/contributions.test.ts`, `tests/module-builder.test.mjs` (`/api/modules`) und `tests/admin-identity.test.ts`.
+- **Testdateien:** `tests/integration/contributions.test.ts`, `tests/module-builder.test.mjs` (`/api/modules`), `tests/admin-identity.test.ts`, `tests/admin-backups.test.ts`, `tests/admin-learning-progress.test.ts` und `tests/online-data-access.test.ts`.
 - **Gegenstand:**
   * **Beiträge:** Prüft HTTP-Methoden, fehlenden Blob-Kontext (503), ungültige Eingaben, Defaults und Mutationen einschließlich Versionskonflikt und Löschung.
   * **Module:** Prüft HTTP-Methoden, fehlenden Blob-Kontext, Lesen und Ändern des Katalogs, einen erneuten Schreibversuch nach simuliertem ETag-Konflikt sowie Modulreihenfolge und Quiz-Grenzen mit Revisionsprüfung.
   * **Identity-Admin:** Prüft die Berechtigungsprüfung, das Auslesen des Identity-Status und den Einladungsaufruf; Netlify Identity und E-Mail-Versand selbst werden gemockt.
+  * **Online-Backups:** `tests/admin-backups.test.ts` prüft Rollen-/Deploy-Kontext-Schutz, Backup-Erstellung, JSON-Download, Restore-Vorschau, Sicherheitsbackup, Restore und Teilfehler-Rollback.
+  * **Admin-Lernstände:** `tests/admin-learning-progress.test.ts` prüft Nutzerliste, Kontodetails, Bestätigungen, ETag-Konflikte sowie Einzel- und Komplett-Reset.
+  * **Online-Zugriff & Proxy:** `tests/online-data-access.test.ts` prüft `admin`-Rollen-/Origin-Prüfung, Header-/Cookie-Filterung im Online-Proxy und lokale Kopiespiegelung.
   * **Blob-Adapter (Unit):** `tests/blob-store.test.ts` prüft die leere Initialisierung fehlender Keys, den Erhalt gespeicherter Daten, ungültige Blob-Daten und konkurrierende Zugriffe.
 - **Grenzen:** Routing, Netlify CLI und Cloud-Deploys laufen nicht im Vitest-Mock. Hinweise zur lokalen und isolierten Online-Umgebung stehen in der [Blob-Referenz](features/README_FEAT_NETLIFYBLOB.md). Dokumentationslinks und Skriptnamen prüft separat `tests/documentation.test.ts`.
 - **Befehle:**
@@ -255,50 +258,9 @@ Lighthouse CI misst den Build und lädt Berichte standardmäßig in den konfigur
 
 ## 5. Release-Audit (Vor dem Release)
 
-Vor einem Release auf `main` wird diese Checkliste vollständig abgearbeitet. Die automatisierten Code-Prüfungen werden nicht einzeln gestartet: Stufe 0 sowie Stufen 3 und 4 laufen ausschließlich im manuell vom Nutzer gestarteten `npm run preflight`. Der Preflight führt außerdem die vollständigen Vitest-Tests und den Build aus. `npm run audit` bleibt ein separater manueller Schritt.
+Zusätzlich zu `npm run preflight`, `npm run audit` sowie den in Abschnitt 3 genannten Performance- und Barrierefreiheitsprüfungen vor einem Release auf `main` manuell prüfen:
 
-### Automatisierte Prüfungen
-
-- [ ] Der manuell gestartete `npm run preflight` ist erfolgreich.
-- [ ] Das separate Sicherheits-Audit ist erfolgreich (`npm run audit`).
-- [ ] Keine verbliebenen `console.log(...)`-Aufrufe im Client-Code.
-
-### Inhalt & Didaktik-Prüfung
-
-- [ ] Volltextsuche nach Platzhaltern (`Lorem`, `TODO`, `Test`, `Mock`, `asdf`) durchgeführt und bereinigt.
-- [ ] Keine toten Klick-Buttons mit Dummy-Verweisen (`href="#"`).
-- [ ] Alle internen und externen Links leiten korrekt weiter.
-- [ ] Zustandsspeicherung (z. B. `localStorage`) bleibt nach Browser-Reload erhalten.
-
-### Mobiles & Cross-Browser-Testing
-
-- [ ] Auf physischem Smartphone getestet: Keine horizontalen Scrollbalken.
-- [ ] Alle klickbaren Elemente haben eine Mindestgröße von $44 \times 44\ \text{px}$.
-- [ ] Getestet in Chromium, Safari (WebKit) und Firefox.
-- [ ] Dark- und Light-Mode auf Kontraste und Lesbarkeit geprüft.
-
-### Performance, SEO & Barrierefreiheit
-
-- [ ] Alle Bilder laufen über Astros `<Image />`-Komponente (WebP/AVIF).
-- [ ] Keine unkomprimierten Multi-Megabyte-Dateien im Ordner `public/`.
-- [ ] Eigenes Favicon-Set (`favicon.svg`, `apple-touch-icon.png`) hinterlegt.
-- [ ] Jede Seite besitzt einen eindeutigen `<title>` und `<meta name="description">`.
-- [ ] Google Lighthouse Audit erzielt mindestens 90+ Punkte in allen Bereichen.
-
-### Rechtliches & Serverless-Infrastruktur
-
-- [ ] Impressum und DSGVO-Datenschutzerklärung sind live erreichbar.
-- [ ] Eigene 404-Fehlerseite (`src/pages/404.astro`) leitet zur Startseite zurück.
-- [ ] SSL/HTTPS ist aktiv; HTTP leitet sauber auf HTTPS um.
-- [ ] Alle Produktions-Umgebungsvariablen sind im Hosting-Dashboard hinterlegt.
-
----
-
-## 6. Definition of Done (DoD)
-
-Ein Release gilt erst dann als **vollständig fertiggestellt und freigegeben**, wenn:
-
-1. Der manuell gestartete Preflight (`npm run preflight`) und das separate Audit (`npm run audit`) erfolgreich sind.
-2. Ein vollständiger manueller Testlauf auf einem mobilen Touch-Endgerät erfolgreich protokolliert wurde.
-3. Impressum, Datenschutzerklärung und 404-Seite funktionstüchtig live geschaltet sind.
-4. Alle E2E-Browsertests bestehen und relevante visuelle Änderungen geprüft sind; vorhandene Snapshots bestehen ohne unbeabsichtigte Abweichung.
+- **Inhalt & Code:** Keine verbliebenen `console.log(...)`-Aufrufe im Client-Code, keine Platzhalter (`Lorem`, `TODO`, `Test`, `Mock`, `asdf`), keine Dummy-Links (`href="#"`), externe Links sowie Reload-Persistenz (`localStorage` / Konto-Synchronisierung).
+- **Geräte & Browser:** Physisches Smartphone (keine horizontalen Scrollbalken) sowie Prüfung in Chromium, Safari (WebKit) und Firefox.
+- **Assets & SEO:** Bilder über Astros `<Image />`-Komponente (WebP/AVIF), keine unkomprimierten Multi-Megabyte-Dateien unter `public/`, Favicon-Set (`favicon.svg`, `apple-touch-icon.png`) sowie eindeutige `<title>` und `<meta name="description">`.
+- **Rechtliches & Hosting:** Impressum und DSGVO-Datenschutzerklärung live erreichbar, eigene 404-Fehlerseite (`src/pages/404.astro`) mit Rücklink zur Startseite, SSL/HTTPS aktiv inklusive HTTP-Weiterleitung sowie Produktions-Umgebungsvariablen im Hosting-Dashboard hinterlegt.

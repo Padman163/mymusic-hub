@@ -50,10 +50,13 @@ an Konten betreffen die konfigurierte Online-Identity. Einrichtung und Neustart
 stehen im [Workspace-Setup](../README_WORKSPACE_SETUP.md).
 
 Nach gesicherter Datenmigration kann Netlify Dev mit
-`LOCAL_NETLIFY_ONLINE_DATA=true` auch die Daten-APIs an dieselbe Site
-weiterleiten. Dabei wird nur das Sitzungscookie `nf_jwt` übertragen; das
-Refresh-Cookie und andere lokale Cookies bleiben lokal. Schreibanfragen prüfen
-den lokalen Origin, und Weiterleitungen zu anderen Zielen werden abgelehnt.
+`LOCAL_NETLIFY_ONLINE_DATA=true` auch die Daten-APIs (`modules`,
+`contributions`, `learning-progress`, `admin-backups`,
+`admin-learning-progress`) an dieselbe Site weiterleiten; `/api/admin/identity`
+läuft nicht über diesen Daten-Proxy. Bei der Weiterleitung wird nur das
+Sitzungscookie `nf_jwt` übertragen; das Refresh-Cookie und andere lokale
+Cookies bleiben lokal. Schreibanfragen prüfen den lokalen Origin, und
+Weiterleitungen zu anderen Zielen werden abgelehnt.
 
 ## Rollen- und API-Schutz
 
@@ -107,21 +110,30 @@ Studio-Ausrüstung sind Teil dieses persönlichen Zustands.
 
 | Datei | Aufgabe |
 | --- | --- |
+| [`Header.astro`](../src/components/starlight/Header.astro) & [`LearningAccount.astro`](../src/components/learning/LearningAccount.astro) | Binden die Kontooberfläche global in den Starlight-Header ein. |
 | [`learning-account-ui.ts`](../src/lib/learning-account-ui.ts) | Browser-Login, Einladungsannahme, Passwort-Wiederherstellung und Abmeldung. |
 | [`local-identity-proxy.mjs`](../src/lib/local-identity-proxy.mjs) | Konfiguriert die Identity-Weiterleitung für Netlify Dev. |
 | [`learning-progress-sync.ts`](../src/lib/learning-progress-sync.ts) | Account-getrennter Cache, Migration des Gaststands und Konfliktbehandlung. |
 | [`learning-progress.ts`](../src/lib/learning-progress.ts) | Schema, lokale Speicherung und Bereinigung des Lernstands. |
 | [`learning-progress.ts` Function](../netlify/functions/learning-progress.ts) | Authentifizierter Zugriff auf persönliche Cloud-Lernstände. |
+| [`learning-progress-store.ts`](../netlify/functions/lib/learning-progress-store.ts) | Kapselt Schlüssel und Optionen des Stores `mymusic-hub-user-data`. |
+| [`admin-write.ts`](../netlify/functions/lib/admin-write.ts) | Prüft serverseitig `admin`-Rolle und Request-Origin für gemeinsame Schreibzugriffe. |
+| [`admin-data-access.ts`](../netlify/functions/lib/admin-data-access.ts) | Begrenzt Admin-Schreibaktionen auf veröffentlichte Production- und Preview-Deploys. |
+| [`online-dev-proxy.ts`](../netlify/functions/lib/online-dev-proxy.ts) | Leitet lokale Daten-APIs bei `LOCAL_NETLIFY_ONLINE_DATA=true` an die Online-Site weiter. |
 | [`admin-identity.ts`](../netlify/functions/admin-identity.ts) | Rollenprüfung, Registrierungsstatus und Admin-Einladungen. |
 | [`admin-learning-progress.ts`](../netlify/functions/admin-learning-progress.ts) | Admin-Nutzerliste, Lernstand je Konto und versionsgeprüfte Resets. |
+| [`admin-learning-progress-ui.ts`](../src/lib/admin-learning-progress-ui.ts) | Browser-Controller für Nutzerliste, Details und Reset-Bestätigung. |
+| [`konten.astro`](../src/pages/admin/konten.astro) & [`datenstand.astro`](../src/pages/admin/datenstand.astro) | Admin-Seiten für Konten/Einladungen und Datenstand/Lernfortschritt. |
 | [`AdminLearningProgressPanel.astro`](../src/components/admin/AdminLearningProgressPanel.astro) | Reiter für Nutzer und persönliche Lernstände. |
 | [`AdminIdentityPanel.astro`](../src/components/admin/AdminIdentityPanel.astro) | Admin-Oberfläche für Registrierungsstatus und Einladungen. |
 | [`lernstand-konto.mdx`](../src/content/docs/wiki/lernstand-konto.mdx) | Bedienungsanleitung für Lernkonten. |
 
 [`admin-identity.test.ts`](../tests/admin-identity.test.ts) prüft
-Rollen und Einladungen. [`identity-dev-proxy.test.mjs`](../tests/identity-dev-proxy.test.mjs)
-und [`online-data-access.test.ts`](../tests/online-data-access.test.ts) prüfen
-lokale Weiterleitung und Rollen-/Origin-Schutz.
+Rollen und Einladungen. [`learning-account-ui.test.ts`](../tests/components/learning-account-ui.test.ts)
+prüft die Browser-Kontooberfläche. [`identity-dev-proxy.test.mjs`](../tests/identity-dev-proxy.test.mjs),
+[`setup-netlify-env.test.mjs`](../tests/setup-netlify-env.test.mjs) und
+[`online-data-access.test.ts`](../tests/online-data-access.test.ts) prüfen
+lokale Weiterleitung, `.env.local`-Setup und Rollen-/Origin-Schutz.
 [`admin-learning-progress.test.ts`](../tests/admin-learning-progress.test.ts)
 deckt Nutzerliste, Kontodetails, Bestätigungen, Konflikte und beide Resets ab;
 [`learning-progress.test.mjs`](../tests/learning-progress.test.mjs) prüft das

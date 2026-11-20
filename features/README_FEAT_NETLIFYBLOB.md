@@ -188,7 +188,10 @@ Snapshot-Uploads kombinieren.
 | [`local-blob-snapshot.ts`](../netlify/functions/lib/local-blob-snapshot.ts) | Spiegelt lokale Netlify-Dev-Schreibvorgänge in versionierte Snapshot-Dateien. |
 | [`online-dev-proxy.ts`](../netlify/functions/lib/online-dev-proxy.ts) | Leitet lokale Daten-APIs bei expliziter Aktivierung an die konfigurierte Online-Site weiter. |
 | [`admin-write.ts`](../netlify/functions/lib/admin-write.ts) | Prüft bei gemeinsamen Schreibvorgängen Admin-Rolle und Origin. |
-| [`admin-backups.ts`](../netlify/functions/admin-backups.ts) | Admin-API für Online-Übersicht, Backup-Verwaltung und Restore. |
+| [`admin-data-access.ts`](../netlify/functions/lib/admin-data-access.ts) | Begrenzt Online-Backup- und Reset-Schreibaktionen auf Production- und Preview-Deploys. |
+| [`admin-backups.ts`](../netlify/functions/admin-backups.ts) & [`admin-backups.ts` Lib](../netlify/functions/lib/admin-backups.ts) | Admin-API und Store-Logik (`mymusic-hub-backups`) für Online-Übersicht, Backups und Restore. |
+| [`AdminBackupPanel.astro`](../src/components/admin/AdminBackupPanel.astro) & [`admin-backups-ui.ts`](../src/lib/admin-backups-ui.ts) | Browser-Oberfläche und UI-Controller für Online-Stand, Backups und Restore-Vorschau. |
+| [`setup-netlify-env.mjs`](../scripts/setup-netlify-env.mjs) | Erstellt bzw. aktualisiert `.env.local` mit der verknüpften Preview-/Main-Origin-URL und Online-Proxy-Aktivierung. |
 | [`netlify-blob-transfer.ts`](../scripts/netlify-blob-transfer.ts) | Lädt und sichert Cloud-Daten, stellt Snapshots wieder her, bestätigt Uploads und setzt den lokalen Blob-Store zurück. |
 | [`astro.config.mjs`](../astro.config.mjs) | Nur beim reinen Astro-Start liest und schreibt `localModulesApiPlugin()` direkt in `data/modules.json`. Unter Netlify CLI ist dieses Plugin deaktiviert. |
 
@@ -209,12 +212,14 @@ Vor dem produktiven Umstieg den Cloud-Datenbestand sichern und die Datenübernah
 
 ## Qualitätssicherung
 
-```bash
-npx vitest run tests/documentation.test.ts
-```
+Zuständige Tests für Blobs, Backup/Restore, Admin-Zugriffe und Dokumentation:
 
-Die Integrationstests laufen erst am Branch-Abschluss im manuell vom Nutzer gestarteten Preflight (siehe [Testing-Leitfaden](../README_TESTING.md)):
+- [`tests/blob-store.test.ts`](../tests/blob-store.test.ts)
+- [`tests/blob-restore.test.mjs`](../tests/blob-restore.test.mjs)
+- [`tests/admin-backups.test.ts`](../tests/admin-backups.test.ts)
+- [`tests/online-data-access.test.ts`](../tests/online-data-access.test.ts)
+- [`tests/setup-netlify-env.test.mjs`](../tests/setup-netlify-env.test.mjs)
+- [`tests/documentation.test.ts`](../tests/documentation.test.ts)
 
-```bash
-npm run preflight
-```
+Die Testauswahl während der Entwicklung sowie die Integrations-, E2E- und
+Preflight-Prüfungen am Branch-Abschluss stehen im [Testing-Leitfaden](../README_TESTING.md).

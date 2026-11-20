@@ -95,9 +95,11 @@ Formularfelder besitzen Beschriftungen; Status- und Fehlermeldungen werden über
 | `PATCH` | Aktualisiert einen Beitrag anhand des erwarteten bisherigen Stands und der neuen Felder. |
 | `DELETE` | Löscht einen Beitrag anhand des erwarteten bisherigen Stands. |
 
+`GET` ist ohne Anmeldung lesbar. Schreibzugriffe (`POST`, `PATCH` und `DELETE`) prüfen über [`admin-write.ts`](../netlify/functions/lib/admin-write.ts) serverseitig eine aktive Netlify-Identity-Sitzung (`401`), die Rolle `admin` (`403`) sowie den Request-Origin (`403`) – auch in Deploy Previews.
+
 Der Request-Body darf höchstens 500.000 Bytes umfassen. Ungültiges JSON, ungültige Feldwerte und nicht unterstützte HTTP-Methoden werden mit passenden HTTP-Fehlern abgewiesen. Fehlende Blob-Konfiguration wird als `503` gemeldet. Bei Änderungen schützt der Abgleich mit dem erwarteten Beitrag vor veralteten Bearbeitungen: Ein zwischenzeitlich geänderter Stand führt zu `409`, ein bereits gelöschter Beitrag zu `404`.
 
-[`contribution-store.ts`](../netlify/functions/lib/contribution-store.ts) enthält die fachlichen Änderungen; [`blob-store.ts`](../netlify/functions/lib/blob-store.ts) liest und schreibt den JSON-Key `contributions` im Store `mymusic-hub-data`. ETag-bedingte Schreibvorgänge erkennen parallele Änderungen und werden begrenzt erneut versucht. Wie dieser Store über Netlify-Deploy-Kontexte geteilt wird und wie die lokale Netlify CLI ihn bereitstellt, erläutert die [Netlify-Blob-Referenz](README_FEAT_NETLIFYBLOB.md).
+[`contribution-store.ts`](../netlify/functions/lib/contribution-store.ts) enthält die fachlichen Änderungen; [`blob-store.ts`](../netlify/functions/lib/blob-store.ts) liest und schreibt den JSON-Key `contributions` im Store `mymusic-hub-data`. ETag-bedingte Schreibvorgänge erkennen parallele Änderungen und werden begrenzt erneut versucht. Bei aktivem `LOCAL_NETLIFY_ONLINE_DATA=true` in Netlify Dev leitet [`online-dev-proxy.ts`](../netlify/functions/lib/online-dev-proxy.ts) Anfragen an die konfigurierte Online-Site weiter und spiegelt den aktualisierten Stand über [`local-blob-snapshot.ts`](../netlify/functions/lib/local-blob-snapshot.ts) nach `data/blob-snapshot/contributions.json`. Wie dieser Store über Netlify-Deploy-Kontexte geteilt wird und wie die lokale Netlify CLI ihn bereitstellt, erläutert die [Netlify-Blob-Referenz](README_FEAT_NETLIFYBLOB.md).
 
 ## Beteiligte Dateien
 
@@ -109,6 +111,9 @@ Der Request-Body darf höchstens 500.000 Bytes umfassen. Ungültiges JSON, ungü
 | [`src/lib/checklist-editor.ts`](../src/lib/checklist-editor.ts) | Gemeinsame Interaktion für Checklistenpunkte. |
 | `src/lib/contribution-*.ts` | Zentrale Werte, Typen und Validierung für Typ, Bereich, Priorität, Status und Checkliste. |
 | [`netlify/functions/contributions.ts`](../netlify/functions/contributions.ts) | API-Routing, Eingabeprüfung und HTTP-Antworten. |
+| [`netlify/functions/lib/admin-write.ts`](../netlify/functions/lib/admin-write.ts) | Serverseitige Prüfung von Admin-Rolle und Request-Origin für Schreibzugriffe. |
+| [`netlify/functions/lib/online-dev-proxy.ts`](../netlify/functions/lib/online-dev-proxy.ts) | Optionale Weiterleitung lokaler Netlify-Dev-Anfragen an die Online-Site. |
+| [`netlify/functions/lib/local-blob-snapshot.ts`](../netlify/functions/lib/local-blob-snapshot.ts) | Spiegelt lokale Schreibvorgänge nach `data/blob-snapshot/contributions.json`. |
 | [`netlify/functions/lib/contribution-store.ts`](../netlify/functions/lib/contribution-store.ts) | Fachliche Speicherung, Änderungen und Konfliktprüfung. |
 | [`netlify/functions/lib/blob-store.ts`](../netlify/functions/lib/blob-store.ts) | Gemeinsamer Blob-Zugriff, Initialisierung und ETag-Schreibschutz. |
 | [`src/styles/contribution-tags.css`](../src/styles/contribution-tags.css), [`src/styles/contribution-checklist.css`](../src/styles/contribution-checklist.css) | Tag-, Auswahl- und Checklistenstyles. |
@@ -117,13 +122,10 @@ Der Request-Body darf höchstens 500.000 Bytes umfassen. Ungültiges JSON, ungü
 
 Relevante automatisierte Tests:
 
-- [`tests/integration/contributions.test.ts`](../tests/integration/contributions.test.ts): HTTP-Methoden, fehlender Blob-Kontext, ungültige Eingaben, Standardwerte, Aktualisierung, Konflikt und Löschen.
+- [`tests/integration/contributions.test.ts`](../tests/integration/contributions.test.ts): HTTP-Methoden, fehlender Blob-Kontext, Admin-Schutz in Deploy Previews, ungültige Eingaben, Standardwerte, Aktualisierung, Konflikt und Löschen.
+- [`tests/online-data-access.test.ts`](../tests/online-data-access.test.ts): `admin`-Rollen-/Origin-Schutz sowie Weiterleitung und Snapshot-Abgleich im Online-Proxy.
 - [`tests/components/checklist-editor.test.ts`](../tests/components/checklist-editor.test.ts): Hinzufügen, Entfernen, Mengenlimit, Häkchen und Zurücksetzen des Checklisten-Editors.
-- [`tests/e2e/smoke.spec.ts`](../tests/e2e/smoke.spec.ts): Statusfilter, Ausblenden von `Resolved` im Standard und Einblenden per Filter.
+- [`tests/e2e/smoke.spec.ts`](../tests/e2e/smoke.spec.ts): Statusfilter, Ausblenden von `Resolved` im Standard und Einblenden per Filter sowie Wiki-Verlinkung.
 - [`tests/blob-store.test.ts`](../tests/blob-store.test.ts): Initialisierung und konfliktgeschützte Blob-Zugriffe.
 
-```bash
-npm run build
-npx vitest run tests/integration/contributions.test.ts tests/components/checklist-editor.test.ts tests/blob-store.test.ts
-npx playwright test tests/e2e/smoke.spec.ts -g "filtert Beiträge standardmäßig nach offenen Status"
-```
+Teststufen, Rückfrageregel und den manuellen Abschluss-Preflight beschreibt der [Testing-Leitfaden](../README_TESTING.md).

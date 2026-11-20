@@ -32,7 +32,7 @@ npm install
 
 ```
 * **Warum dieser Schritt nötig ist:** Ein frisch geklonter Workspace enthält keinen Ordner `node_modules/`. Der Befehl installiert die Abhängigkeiten anhand von `package.json` und `package-lock.json`.
-* **Netlify Blobs:** `@netlify/blobs` wurde mit `npm install @netlify/blobs` ins Projekt aufgenommen und wird beim normalen Setup mitinstalliert.
+* **Netlify Blobs & Identity:** `@netlify/blobs` und `@netlify/identity` sind in `package.json` enthalten und werden beim normalen Setup mitinstalliert.
 
 ### Schritt 3: Basis-Frontend starten & prüfen (Isolierter Modus)
 ```bash
@@ -239,4 +239,4 @@ git pull origin main
 npx netlify-cli dev
 ```
 * Öffne `http://localhost:8888`.
-* Astro und Backend-Functions laufen parallel.
+* Astro und Backend-Functions laufen parallel. Bei aktivem `LOCAL_NETLIFY_ONLINE_DATA=true` in `.env.local` wird der Online-Store der konfigurierten Site genutzt; Schreibzugriffe auf Beiträge und Module erfordern ein angemeldetes Konto mit der Rolle `admin`.

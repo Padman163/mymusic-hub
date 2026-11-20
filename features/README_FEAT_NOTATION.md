@@ -253,6 +253,7 @@ Alle folgenden Props können pro Takt (`measures[...]`) oder im Einzeltakt-Modus
 | `ritAt` | `number` | `undefined` | 0-basierter Notenindex im Takt, über dem kursiv `rit.` (ritardando) gerendert wird. |
 | `aTempoAt` | `number` | `undefined` | 0-basierter Notenindex im Takt, über dem kursiv `a tempo` gerendert wird. Wenn sowohl `ritAt` als auch `aTempoAt` im selben Takt gesetzt sind, müssen mindestens 2 Notenpositionen Abstand dazwischen liegen (`\|aTempoAt - ritAt\| >= 2`). |
 | `hairpin` | `'crescendo' \| 'decrescendo' \| { type, from?, to? }` | `undefined` | Zeichnet unterhalb des Takts eine reine Dynamikgabel (`<` bzw. `>`) zwischen der ersten und letzten Note (oder optional zwischen den Notenindizes `from` und `to`). Vollständig unabhängig von Dynamikstufen (`dynamic` auf den einzelnen Noten). Hat die Start- oder Endnote ein `dynamic`-Zeichen (`p`, `f`, `mf` usw.), hält die Gabel automatisch horizontalen Abstand zum Symbol. |
+| `initialDynamic` | `'piano' \| 'forte'` | `undefined` | Unterdrückt bei einer `hairpin` die doppelte Anfangsmarkierung, wenn der Startwert der Gabel mit dieser erwarteten Ausgangsdynamik übereinstimmt. |
 
 #### Verfügbare Dynamik-Symbole & -Texte pro Note (`dynamic` & `dynamicText`)
 
@@ -273,9 +274,9 @@ Die vertikale Position jeder Note und jedes Vorzeichens wird über den ganzzahli
 - **`step = 4`** ist die **mittlere (3.) Notenlinie** (Umschaltpunkt für die automatische Halsrichtung: `step < 4` → Hals nach oben, `step >= 4` → Hals nach unten).
 - **`step = -2`** und **`step = 10`** erhalten automatisch eine **Hilfslinie (Ledger Line)**.
 
-| `step` | Geometrische Lage im Fünfliniensystem | Ton im Violinschlüssel (`treble`) | Ton im Bassschlüssel (`bass`) | ऑटो-Halsrichtung |
+| `step` | Geometrische Lage im Fünfliniensystem | Ton im Violinschlüssel (`treble`) | Ton im Bassschlüssel (`bass`) | Auto-Halsrichtung |
 | :---: | :--- | :---: | :---: | :---: |
-| **`10`** | 1. Hilfslinie **über** dem System | **A5** ($a''$) | **C4** ($c'$ – Schloss-C) | nach unten (`↓`) |
+| **`10`** | 1. Hilfslinie **über** dem System | **A5** ($a''$) | **C4** ($c'$ – Eingestrichenes C) | nach unten (`↓`) |
 | **`9`** | Raum über der 5. Linie | **G5** ($g''$) | **B3** ($h$) | nach unten (`↓`) |
 | **`8`** | **5. Linie (oberste Linie)** | **F5** ($f''$) | **A3** ($a$) | nach unten (`↓`) |
 | **`7`** | 4. Zwischenraum | **E5** ($e''$) | **G3** ($g$) | nach unten (`↓`) |
