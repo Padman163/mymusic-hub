@@ -39,6 +39,11 @@ Der Push erzeugt vorher ein Cloud-Backup. `.netlify/blobs-serve` ist
 Datenspeicher, kein Cleanup-Ordner. Details und Token-Regeln stehen in der
 [Blob-Referenz](features/README_FEAT_NETLIFYBLOB.md).
 
+Ein Backup mit `npm run blob:restore`, den Pfeiltasten und Enter auswählen und
+nach Bestätigung in beide lokalen Snapshots zurückkopieren. Die Cloud wird erst
+durch einen separaten `npm run blobs:push` überschrieben; vorher lokale und
+Online-Änderungen sichern.
+
 ### 1.2 Häufige Git-Kommandos
 
 ```bash

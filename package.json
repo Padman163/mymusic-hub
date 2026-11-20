@@ -8,6 +8,7 @@
     "env:netlify": "node scripts/setup-netlify-env.mjs",
     "blobs:pull": "node --experimental-strip-types scripts/netlify-blob-transfer.ts pull",
     "blobs:backup": "node --experimental-strip-types scripts/netlify-blob-transfer.ts backup",
+    "blobs:restore": "node --experimental-strip-types scripts/netlify-blob-transfer.ts restore",
     "blobs:push": "node --experimental-strip-types scripts/netlify-blob-transfer.ts push",
     "blobs:reset": "node --experimental-strip-types scripts/netlify-blob-transfer.ts reset",
     "preview": "astro preview",
@@ -51,6 +52,7 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.12",
     "@biomejs/biome": "2.6.6",
+    "@inquirer/select": "4.4.0",
     "@lhci/cli": "^0.16.0",
     "@playwright/test": "^1.65.0",
     "happy-dom": "^21.0.4",

@@ -103,9 +103,28 @@ Für eine separate Sicherung ohne Upload:
 npm run blobs:backup
 ```
 
-Die Transferbefehle verwenden die normale Netlify-CLI-Anmeldung. Führe einmal
-`npx netlify-cli login` und `npx netlify-cli link` aus. Eine lokale `.env` und
-ein Token im Repository werden dafür nicht benötigt.
+Ein Archiv kann interaktiv in die lokalen Snapshots zurückkopiert werden:
+
+```bash
+npm run blob:restore
+```
+
+Wähle ein Backup mit den Pfeiltasten und Enter aus und bestätige das
+Überschreiben beider Snapshot-Dateien. Die neuesten Backups stehen oben.
+Sichere ungespeicherte lokale Änderungen vorher. Beide
+Archivdateien werden vor dem Überschreiben geprüft. Die Cloud und der lokale
+Netlify-Blob-Store bleiben unverändert. Für eine Online-Wiederherstellung erst
+den aktuellen Cloud-Stand und die Snapshots vergleichen und anschließend
+bewusst `npm run blobs:push` ausführen. Dabei werden beide Online-Keys ersetzt;
+zwischenzeitliche Online-Änderungen gehen dabei verloren. Der Push erstellt
+vorher ein weiteres Cloud-Backup. Im getrennten lokalen Modus ist für die
+Übernahme in Netlify Dev nach Sicherung lokaler Änderungen und bei gestopptem
+Server zusätzlich `npm run blobs:reset` nötig.
+
+Für die Cloud-Transferbefehle verwende die normale Netlify-CLI-Anmeldung und
+führe einmal `npx netlify-cli login` und `npx netlify-cli link` aus. Der lokale
+Restore benötigt keine Anmeldung. Eine lokale `.env` und ein Token im
+Repository werden für die Transferbefehle nicht benötigt.
 
 ## Deploy Preview und Branch Deploy
 

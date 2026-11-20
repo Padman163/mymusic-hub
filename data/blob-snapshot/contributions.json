@@ -680,7 +680,7 @@
     "id": "4a45b080-8050-4a90-8031-e9afcd4e5e35",
     "type": "Bug",
     "title": "Test Auth",
-    "description": "Das wurde  in 8888 mit npm netlify-cli dev geschrieben um 01:16Uhr\nUnd das wurde auf Deploy Pre 30 01:17\n\nGestestet:\n- Pull Request für Deploy muss anstehen ( Deploy Preview ( normal ))\n- Angemeldet als Admin\n- 8888 beiträge, module, inventar gehen\n- net dev beiträge, module, inventar  gehen\n\n\nNoh zu testen: \nwie verhält sich der codespace?",
+    "description": "Das wurde  in 8888 mit npm netlify-cli dev geschrieben um 01:16Uhr\nUnd das wurde auf Deploy Pre 30 01:17\n\nGestestet:\n- Pull Request für Deploy muss anstehen ( Deploy Preview ( normal ))\n- Angemeldet als Admin\n- 8888 beiträge, module, inventar gehen\n- net dev beiträge, module, inventar  gehen\n\n\nNoh zu testen: \nwie verhält sich der codespace?\n\n20.11.2026 test",
     "area": "Theorie",
     "priority": "Hoch",
     "checklist": [],
