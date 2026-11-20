@@ -10,16 +10,13 @@
     <div data-progress></div>
     <form data-reset hidden>
       <p data-target></p>
-      <p>
-        Nur der gewählte Lehrgang wird zurückgesetzt. XP, Käufe und andere
-        Lehrgänge bleiben erhalten. Im Deploy Preview betrifft das ebenfalls
-        das Online-Konto derselben Netlify-Site.
-      </p>
+      <p data-effect></p>
+      <p>Im Deploy Preview betrifft der Reset das Online-Konto derselben Netlify-Site.</p>
       <label>
-        Tippe <strong>ZURÜCKSETZEN</strong> zur Bestätigung
+        Tippe <strong data-confirmation-text>ZURÜCKSETZEN</strong> zur Bestätigung
         <input name="confirmation" autocomplete="off" required pattern="ZURÜCKSETZEN" />
       </label>
-      <button type="submit">Lehrgang jetzt zurücksetzen</button>
+      <button type="submit" data-confirm>Lehrgang jetzt zurücksetzen</button>
       <button type="button" data-cancel>Abbrechen</button>
     </form>
   </section>

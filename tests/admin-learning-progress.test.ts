@@ -81,6 +81,32 @@ describe('Lernstände im Admin-Bereich', () => {
 		});
 	});
 
+	it('setzt nur nach eigener Bestätigung den gesamten Lernstand des gewählten Kontos zurück', async () => {
+		state.equippedInventoryItemIds = ['item'];
+		state.modules[first.id].xpBeforeReset = { questions: ['earlier-question'] };
+		version = personal.put(key, state).etag;
+		const otherKey = `learning-progress:${actor.id}`;
+		personal.put(otherKey, state);
+		const body = { scope: 'all', version, confirmation: 'ALLES ZURÜCKSETZEN' };
+
+		expect((await request(`?id=${id}`, { ...body, confirmation: 'ZURÜCKSETZEN' })).status).toBe(400);
+		expect((await request(`?id=${id}`, { ...body, version: 'stale' })).status).toBe(409);
+		mocks.getUser.mockResolvedValueOnce({ roles: [] });
+		expect((await request(`?id=${id}`, body)).status).toBe(403);
+		expect(personal.setJSON).not.toHaveBeenCalled();
+
+		expect((await request(`?id=${id}`, body)).status).toBe(200);
+		const fresh = createInitialProgress(db.modules, db.quizSettings);
+		expect(personal.value(key)).toEqual({ ...fresh, updatedAt: expect.any(String) });
+		expect(personal.value(otherKey)).toEqual(state);
+		expect(personal.setJSON).toHaveBeenCalledWith(
+			key, { ...fresh, updatedAt: expect.any(String) }, { onlyIfMatch: version },
+		);
+		expect(await (await request(`?id=${id}`)).json()).toMatchObject({
+			user: { id, email: target.email }, progress: { totalXp: 0, spentXp: 0, inventory: [] },
+		});
+	});
+
 	it('setzt im Deploy Preview nur den bestätigten Lehrgang zurück', async () => {
 		const body = { version, moduleId: first.id, confirmation: 'ZURÜCKSETZEN' };
 		expect((await request(`?id=${id}`, { ...body, confirmation: '' })).status).toBe(400);

@@ -71,8 +71,11 @@ Gespeichert werden unter anderem:
 - aktuell ausgerüstete Item-ID
 - Quiz-Bestwerte und Einstellungen
 
-Der Admin-Reset setzt nur den sichtbaren Fortschritt des gewählten Lehrgangs
-zurück. XP, Käufe, Inventar und Ausrüstung bleiben erhalten.
+Der Admin-Reset eines einzelnen Lehrgangs setzt nur dessen sichtbaren
+Fortschritt zurück. XP, Käufe, Inventar und Ausrüstung bleiben erhalten.
+Der separate Komplett-Reset ersetzt dagegen den persönlichen Lernstand
+durch den Anfangsstand, einschließlich XP-Nachweisen und Inventar. Das
+Netlify-Identity-Konto bleibt bestehen.
 
 ## Humpa-Shop
 

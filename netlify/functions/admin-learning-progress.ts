@@ -1,6 +1,6 @@
 import { admin, AuthError, getUser, verifyRequestOrigin, type User } from '@netlify/identity';
 import type { Config, Context } from '@netlify/functions';
-import { getAvailableXp, restartModuleProgress, sanitizeStoredProgress } from '../../src/lib/learning-progress';
+import { createInitialProgress, getAvailableXp, restartModuleProgress, sanitizeStoredProgress } from '../../src/lib/learning-progress';
 import { canManageOnlineData } from './lib/admin-data-access';
 import { readBlobJSON } from './lib/blob-store';
 import { progressKey, progressReadOptions, progressStore } from './lib/learning-progress-store';
@@ -66,7 +66,7 @@ export default async (request: Request, context: Context): Promise<Response> => 
 			return json({ users: users.map(account), hasMore: users.length === pageSize, writable });
 		}
 
-		let reset: { moduleId: string; version: string } | undefined;
+		let reset: ({ scope: 'all' } | { scope: 'module'; moduleId: string }) & { version: string } | undefined;
 		if (writing) {
 			if (request.headers.get('content-type')?.split(';')[0].trim() !== 'application/json') {
 				return json({ error: 'Die Anfrage muss JSON enthalten.' }, 415);
@@ -79,9 +79,14 @@ export default async (request: Request, context: Context): Promise<Response> => 
 			} catch {
 				return json({ error: 'Die Anfrage enthält kein gültiges JSON.' }, 400);
 			}
-			if (!isRecord(value) || typeof value.moduleId !== 'string' || typeof value.version !== 'string' ||
-				value.confirmation !== 'ZURÜCKSETZEN') return json({ error: 'Ungültige Anfrage oder fehlende Bestätigung.' }, 400);
-			reset = { moduleId: value.moduleId, version: value.version };
+			if (isRecord(value) && typeof value.version === 'string') {
+				if (value.scope === 'all' && value.moduleId === undefined && value.confirmation === 'ALLES ZURÜCKSETZEN') {
+					reset = { scope: 'all', version: value.version };
+				} else if (value.scope === undefined && typeof value.moduleId === 'string' && value.confirmation === 'ZURÜCKSETZEN') {
+					reset = { scope: 'module', moduleId: value.moduleId, version: value.version };
+				}
+			}
+			if (!reset) return json({ error: 'Ungültige Anfrage oder fehlende Bestätigung.' }, 400);
 		}
 
 		const target = await admin.getUser(id);
@@ -92,7 +97,14 @@ export default async (request: Request, context: Context): Promise<Response> => 
 			return reset ? json({ error: 'Das Konto hat keinen gespeicherten Lernstand.' }, 409)
 				: json({ user: account(target), progress: null, writable });
 		}
-		const { modules } = await readBlobJSON('modules');
+		const { modules, quizSettings } = await readBlobJSON('modules');
+		const conflict = 'Der Lernstand hat sich geändert. Lade das Konto erneut.';
+		if (reset && (!entry.etag || reset.version !== entry.etag)) return json({ error: conflict }, 409);
+		if (reset?.scope === 'all') {
+			const fresh = createInitialProgress(modules, quizSettings);
+			const result = await store.setJSON(key, fresh, { onlyIfMatch: entry.etag });
+			return result.modified ? json({ saved: true }) : json({ error: conflict }, 409);
+		}
 		const raw: unknown = entry.data;
 		const state = sanitizeStoredProgress(raw, modules);
 		if (!state || !isRecord(raw) || !isRecord(raw.modules) || !entry.etag) {
@@ -100,9 +112,8 @@ export default async (request: Request, context: Context): Promise<Response> => 
 			return json({ error: 'Der gespeicherte Lernstand ist ungültig.' }, 502);
 		}
 		if (reset) {
-			const conflict = 'Der Lernstand hat sich geändert. Lade das Konto erneut.';
-			if (reset.version !== entry.etag) return json({ error: conflict }, 409);
-			const module = modules.find(({ id: moduleId }) => moduleId === reset.moduleId);
+			const { moduleId } = reset;
+			const module = modules.find((item) => item.id === moduleId);
 			const before = module && Object.hasOwn(state.modules, module.id) ? state.modules[module.id] : undefined;
 			if (!module || !before || !hasProgress(before)) return json({ error: 'Für diesen Lehrgang gibt es keinen zurücksetzbaren Fortschritt.' }, 409);
 			const after = { ...raw, modules: { ...raw.modules, [before.moduleId]: restartModuleProgress(before, module) }, updatedAt: new Date().toISOString() };

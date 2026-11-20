@@ -52,9 +52,11 @@ ersetzt nur den gewählten Lehrgangsstand mit ETag-Prüfung, damit gleichzeitige
 Änderungen nicht überschrieben werden. Die Inhaltsbackups enthalten diese
 persönlichen Daten weiterhin nicht.
 
-Der Reset bewahrt die IDs der bereits vergüteten Inhalte im selben
+Der Reset eines einzelnen Lehrgangs bewahrt die IDs der bereits vergüteten Inhalte im selben
 persönlichen Lernstand. Ein erneuter Abschluss vergibt für diese Inhalte
-keine zusätzlichen XP.
+keine zusätzlichen XP. Der separat bestätigte Komplett-Reset ersetzt den
+gesamten persönlichen Blob mit ETag-Prüfung durch einen Anfangsstand mit
+den aktuellen Quiz-Einstellungen. Das Identity-Konto bleibt unverändert.
 
 ## Empfohlener Datenfluss
 

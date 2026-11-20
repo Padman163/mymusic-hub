@@ -2,6 +2,7 @@ import { onAuthChange } from "@netlify/identity";
 import type { ModuleProgress } from "./learning-progress";
 
 type Account = { id: string; name?: string; email?: string };
+type Reset = { version: string } & ({ scope: "all" } | { moduleId: string });
 type Course = Pick<ModuleProgress, "status" | "steps" | "completedVia"> & {
   id: string;
   title: string;
@@ -54,7 +55,7 @@ class AdminLearningProgressPanel extends HTMLElement {
   #unsubscribe?: () => void;
   #page = 0;
   #id?: string;
-  #reset?: { moduleId: string; version: string };
+  #reset?: Reset;
   #trigger?: HTMLButtonElement;
 
   #el<T extends HTMLElement = HTMLElement>(key: string) {
@@ -306,50 +307,90 @@ class AdminLearningProgressPanel extends HTMLElement {
       if (course.completedVia === "fastlane")
         row.append(node("p", "Über Fastlane abgeschlossen."));
       if (detail.writable && course.resettable) {
-        const button = node("button", "Lehrgang zurücksetzen");
-        button.type = "button";
-        button.addEventListener("click", () => {
-          this.#closeReset();
-          this.#trigger = button;
-          this.#reset = { moduleId: course.id, version: detail.version };
-          this.#el("target").textContent =
-            `„${course.title}“ für ${accountLabel(detail.user)} zurücksetzen?`;
-          const form = this.#el<HTMLFormElement>("reset");
-          form.hidden = false;
-          form.querySelector("input")?.focus();
-        });
-        row.append(button);
+        row.append(
+          this.#resetButton(
+            "Lehrgang zurücksetzen",
+            { moduleId: course.id, version: detail.version },
+            `„${course.title}“ für ${accountLabel(detail.user)} zurücksetzen?`,
+          ),
+        );
       }
       container.append(row);
     }
     if (!progress.modules.length)
       container.append(node("p", "Keine Lehrgänge vorhanden."));
+    if (detail.writable) {
+      container.append(
+        node("h3", "Komplett-Reset"),
+        this.#resetButton(
+          "Gesamten Lernstand zurücksetzen",
+          { scope: "all", version: detail.version },
+          `Gesamten Lernstand für ${accountLabel(detail.user)} zurücksetzen?`,
+        ),
+      );
+    }
+  }
+
+  #resetButton(label: string, reset: Reset, target: string) {
+    const button = node("button", label);
+    button.type = "button";
+    button.addEventListener("click", () => {
+      this.#closeReset();
+      this.#trigger = button;
+      this.#reset = reset;
+      const all = "scope" in reset;
+      const confirmation = all ? "ALLES ZURÜCKSETZEN" : "ZURÜCKSETZEN";
+      this.#el("target").textContent = target;
+      this.#el("effect").textContent = all
+        ? "Alle Lehrgangsstände, XP, XP-Nachweise, Käufe und Ausrüstung werden gelöscht. Konto und Login bleiben erhalten."
+        : "Nur der gewählte Lehrgang wird zurückgesetzt. XP, Käufe und andere Lehrgänge bleiben erhalten.";
+      this.#el("confirmation-text").textContent = confirmation;
+      this.#el("confirm").textContent = all
+        ? "Gesamten Lernstand jetzt zurücksetzen"
+        : "Lehrgang jetzt zurücksetzen";
+      const form = this.#el<HTMLFormElement>("reset");
+      const input = form.querySelector("input");
+      form.hidden = false;
+      if (input) {
+        input.pattern = confirmation;
+        input.focus();
+      }
+    });
+    return button;
   }
 
   async #submit(
     id: string,
-    reset: { moduleId: string; version: string },
+    reset: Reset,
     confirmation: FormDataEntryValue | null,
   ) {
     this.#closeReset();
     this.#el("progress").replaceChildren();
-    await this.#run("Lehrgang wird zurückgesetzt …", async (signal) => {
-      await this.#request(new URLSearchParams({ id }), signal, {
-        ...reset,
-        confirmation,
-      });
-      signal.throwIfAborted();
-      try {
-        await this.#loadDetail(id, signal);
-        this.#el("status").textContent =
-          "Lehrgang zurückgesetzt. XP und Inventar wurden nicht geändert.";
-      } catch {
+    const all = "scope" in reset;
+    await this.#run(
+      all
+        ? "Gesamter Lernstand wird zurückgesetzt …"
+        : "Lehrgang wird zurückgesetzt …",
+      async (signal) => {
+        await this.#request(new URLSearchParams({ id }), signal, {
+          ...reset,
+          confirmation,
+        });
         signal.throwIfAborted();
-        this.#el("status").textContent =
-          "Lehrgang zurückgesetzt. Die Ansicht konnte nicht aktualisiert werden.";
-      }
-      this.#el("refresh").focus();
-    });
+        try {
+          await this.#loadDetail(id, signal);
+          this.#el("status").textContent = all
+            ? "Gesamter Lernstand zurückgesetzt. Das Konto bleibt erhalten."
+            : "Lehrgang zurückgesetzt. XP und Inventar wurden nicht geändert.";
+        } catch {
+          signal.throwIfAborted();
+          this.#el("status").textContent = all
+            ? "Gesamter Lernstand zurückgesetzt. Die Ansicht konnte nicht aktualisiert werden."
+            : "Lehrgang zurückgesetzt. Die Ansicht konnte nicht aktualisiert werden.";
+        }
+        this.#el("refresh").focus();
+      },
+    );
   }
 }
 
