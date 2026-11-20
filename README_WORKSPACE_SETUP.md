@@ -80,6 +80,9 @@ Erstelle und aktualisiere die nicht versionierte `.env.local` mit einem Befehl:
 npm run env:netlify
 ```
 
+Führe Anmeldung, Site-Verknüpfung und diesen Befehl für jeden Codespace bzw.
+lokalen Klon separat aus. Installiere zuvor die Projektabhängigkeiten.
+
 Der Befehl liest die verknüpfte Netlify-Site und wählt den neuesten erfolgreichen
 Deploy-Preview. Nur wenn ein erfolgreicher Main-Deploy neuer ist, verwendet er
 stattdessen Main. Er setzt automatisch `LOCAL_NETLIFY_IDENTITY_ORIGIN` auf die

@@ -1,7 +1,9 @@
 import { spawnSync } from "node:child_process";
 import { readFile, writeFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import path from "node:path";
 
+const require = createRequire(import.meta.url);
 const envFile = path.resolve(".env.local");
 const managedKeys = [
   "LOCAL_NETLIFY_IDENTITY_ORIGIN",
@@ -9,15 +11,21 @@ const managedKeys = [
 ];
 
 function runNetlify(args) {
-  const result = spawnSync("npx", ["netlify-cli", ...args], {
-    cwd: process.cwd(),
-    encoding: "utf8",
-    shell: process.platform === "win32",
-  });
+  const result = spawnSync(
+    process.execPath,
+    [require.resolve("netlify-cli/bin/run.js"), ...args],
+    {
+      cwd: process.cwd(),
+      encoding: "utf8",
+    },
+  );
 
   if (result.status !== 0) {
     const detail =
-      result.stderr.trim() || result.stdout.trim() || "Unbekannter Fehler";
+      result.error?.message ||
+      result.stderr?.trim() ||
+      result.stdout?.trim() ||
+      "Unbekannter Fehler";
     throw new Error(`Netlify-CLI ist fehlgeschlagen. ${detail}`);
   }
 
