@@ -6,11 +6,19 @@ import { mockBlobStore } from '../fixtures/blob-store';
 
 const getStoreMock = vi.hoisted(() => vi.fn<(name: string) => ReturnType<typeof mockBlobStore>>());
 vi.mock('@netlify/blobs', () => ({ getStore: getStoreMock }));
+const identity = vi.hoisted(() => ({
+  getUser: vi.fn(),
+  verifyRequestOrigin: vi.fn(),
+}));
+vi.mock('@netlify/identity', () => identity);
 
 describe('Contributions-API', () => {
   let store: ReturnType<typeof mockBlobStore>;
   beforeEach(() => {
     vi.stubEnv("NETLIFY_DEV", "false");
+    vi.stubEnv("LOCAL_NETLIFY_ONLINE_DATA", "false");
+    identity.getUser.mockReset().mockResolvedValue({ id: 'admin', roles: ['admin'] });
+    identity.verifyRequestOrigin.mockReset();
     store = mockBlobStore();
     store.put('contributions', []);
     getStoreMock.mockReset().mockReturnValue(store);
@@ -46,22 +54,25 @@ describe('Contributions-API', () => {
     expect(getStoreMock).not.toHaveBeenCalled();
   });
 
-  it('lässt gehostete Deploys nur lesen', async () => {
+  it('erlaubt in Deploy-Vorschauen nur Admins Änderungen', async () => {
     vi.stubEnv('CONTEXT', 'deploy-preview');
     vi.stubEnv('NETLIFY_DEV', 'false');
 
     const read = await handler(new Request('http://localhost/api/contributions'));
     expect(read.status).toBe(200);
 
+    identity.getUser.mockResolvedValueOnce({ id: 'learner', roles: [] });
     const write = await handler(new Request('http://localhost/api/contributions', {
       method: 'POST',
       body: JSON.stringify({ type: 'Bug', title: 'Preview', area: 'Theorie' }),
     }));
-    expect(write.status).toBe(405);
-    expect(await write.json()).toEqual({
-      error: 'Dieser Deploy zeigt den aktuellen Cloud-Stand. Änderungen sind in dieser Vorschau nicht erlaubt.',
-    });
+    expect(write.status).toBe(403);
     expect(store.value('contributions')).toEqual([]);
+    const adminWrite = await handler(new Request('http://localhost/api/contributions', {
+      method: 'POST',
+      body: JSON.stringify({ type: 'Bug', title: 'Preview', area: 'Theorie' }),
+    }));
+    expect(adminWrite.status).toBe(201);
   });
 
   it('lehnt Beiträge ohne gültigen Bereich vor dem Speichern ab', async () => {

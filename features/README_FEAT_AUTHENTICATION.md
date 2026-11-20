@@ -49,6 +49,12 @@ Referer vor der Weiterleitung. Lokal eingegebene Zugangsdaten und Änderungen
 an Konten betreffen die konfigurierte Online-Identity. Einrichtung und Neustart
 stehen im [Workspace-Setup](../README_WORKSPACE_SETUP.md).
 
+Nach gesicherter Datenmigration kann Netlify Dev mit
+`LOCAL_NETLIFY_ONLINE_DATA=true` auch die Daten-APIs an dieselbe Site
+weiterleiten. Dabei wird nur das Sitzungscookie `nf_jwt` übertragen; das
+Refresh-Cookie und andere lokale Cookies bleiben lokal. Schreibanfragen prüfen
+den lokalen Origin, und Weiterleitungen zu anderen Zielen werden abgelehnt.
+
 ## Rollen- und API-Schutz
 
 `/api/admin/identity` prüft die Sitzung mit `getUser()` serverseitig. Nur
@@ -64,6 +70,10 @@ den Browser zurückgegeben noch dort gespeichert.
 Identity-Sitzung. Der Blob-Schlüssel wird aus der verifizierten Benutzer-ID
 gebildet; ein Request kann daher nicht den Lernstand eines anderen Kontos
 adressieren.
+
+Für Änderungen an `/api/modules` und `/api/contributions` müssen die Sitzung
+die Rolle `admin` und der Request einen passenden Origin aufweisen. Das gilt
+auch in Deploy-Vorschauen.
 
 ## Lernstand und lokale Daten
 

@@ -5,6 +5,7 @@ import {
 	sanitizeStoredProgress,
 } from '../../src/lib/learning-progress';
 import { readBlobJSON } from './lib/blob-store';
+import { proxyOnlineDevRequest } from './lib/online-dev-proxy';
 
 const maxRequestBytes = 500_000;
 const jsonOptions = { type: 'json', consistency: 'strong' } as const;
@@ -40,6 +41,9 @@ export default async (request: Request): Promise<Response> => {
 	if (!['GET', 'PUT'].includes(request.method)) {
 		return jsonResponse(405, { error: 'Diese Methode wird nicht unterstützt.' });
 	}
+
+	const proxied = await proxyOnlineDevRequest(request);
+	if (proxied) return proxied;
 
 	const user = await getUser();
 	if (!user) {

@@ -70,7 +70,7 @@ npx netlify-cli link
 Beiträge und Module verwenden Netlify Blobs; die ehemalige GitHub-basierte Datenspeicherung ist auf diesem Stand nicht mehr aktiv.
 
 * **Workspace:** Nach `npx netlify-cli login` und `npx netlify-cli link` bezieht die CLI die benötigten Informationen aus der Anmeldung und der Site-Verknüpfung. Eine lokale `.env` ist für die Blob-Speicherung nicht erforderlich.
-* **Dashboard:** Unter **Site configuration → Build & deploy → Continuous deployment → Branches and deploy contexts** den gewünschten Branch freigeben bzw. bewusst als Production Branch setzen. Builds synchronisieren den siteweiten Store nicht.
+* **Dashboard:** Unter **Site configuration → Build & deploy → Continuous deployment → Branches and deploy contexts** den gewünschten Branch freigeben bzw. bewusst als Production Branch setzen. Branch-Snapshots vor Deploys mit dem gemeinsamen Online-Stand vergleichen.
 
 Für Kontenfunktionen zusätzlich Netlify Identity in den Site-Einstellungen aktivieren und dort den Registrierungsmodus konfigurieren. Die App zeigt den Modus im Admin-Bereich nur an; die Einstellung selbst wird weiterhin in Netlify verwaltet. Der erste Admin benötigt einmalig die Identity-Rolle `admin`. Preview-Deploys verwenden denselben Identity-Nutzerbestand, Einladungslinks führen aber zur konfigurierten Site-URL; der aktuelle Einladungs-Callback muss auf dieser Ziel-Site deployed sein. Details: [Authentifizierungs-Referenz](features/README_FEAT_AUTHENTICATION.md).
 
@@ -80,6 +80,13 @@ Damit der lokale Login Identity erreichen kann, erstelle eine nicht versionierte
 ```dotenv
 LOCAL_NETLIFY_IDENTITY_ORIGIN=https://deine-site.netlify.app
 ```
+
+Nach gesicherter Übernahme der bestehenden Daten und Deployment der aktuellen
+Functions kann zusätzlich `LOCAL_NETLIFY_ONLINE_DATA=true` gesetzt werden. Dann
+verwenden lokale Netlify-Dev-Daten-APIs den Online-Store; für Änderungen an
+Modulen und Beiträgen ist ein angemeldetes Admin-Konto erforderlich. Vor der
+Aktivierung persönliche und gemeinsame Stände vergleichen und Konflikte
+klären. Bestehende lokale Daten werden nicht automatisch hochgeladen.
 
 Die Adresse muss mit der Site aus `npx netlify-cli status` übereinstimmen und
 darf keinen Pfad enthalten. Netlify Dev nach Änderungen an der Datei neu starten.
@@ -98,11 +105,11 @@ npx netlify-cli status
 npx netlify-cli dev
 ```
 * **URL:** Öffne `http://localhost:8888`.
-* **Lokaler Blob-Speicher:** Die CLI startet Astro, die Functions und einen lokalen Blob-Server. Dessen Daten bleiben unter `.netlify/blobs-serve/`. Dieser Store wird nur mit den expliziten Transferbefehlen mit der Cloud abgeglichen.
+* **Lokaler Blob-Speicher:** Ohne Online-Modus bleiben Daten unter `.netlify/blobs-serve/` und werden nur mit expliziten Transferbefehlen abgeglichen. Im Online-Modus wird stattdessen der Online-Store verwendet.
 * **Initialisierung:** Nur wenn ein lokaler Key fehlt, wird er aus `data\blob-snapshot\contributions.json` beziehungsweise `data\blob-snapshot\modules.json` angelegt. Bereits vorhandene lokale Keys bleiben beim Neustart und Branch-Wechsel bestehen.
 * **Prüfen:** `/api/modules` und `/api/contributions` auf Port 8888 aufrufen. Änderungen laufen über Blobs, nicht über den Astro-Datei-Fallback.
 
-Für den aktuellen Cloud-Stand in einem frischen Workspace oder Codespace:
+Für den aktuellen Cloud-Stand im getrennten lokalen Modus:
 
 ```bash
 npm ci
@@ -128,7 +135,8 @@ npm run blobs:reset
 npx netlify-cli dev
 ```
 
-Nach lokalen Bearbeitungen die Snapshot-Diff prüfen und ausdrücklich hochladen:
+Nur im getrennten lokalen Modus nach lokalen Bearbeitungen die Snapshot-Diff
+prüfen und gegebenenfalls ausdrücklich hochladen:
 
 ```bash
 git diff -- data/blob-snapshot
@@ -137,7 +145,9 @@ npm run blobs:push
 
 Vor dem Upload wird automatisch ein datiertes Archiv beider Cloud-Blobs unter
 `data/blob-archive/` angelegt. `.netlify/blobs-serve` ist ein persistenter
-Datenspeicher und kein allgemeiner Cleanup-Kandidat.
+Datenspeicher und kein allgemeiner Cleanup-Kandidat. `blobs:push` überschreibt
+beide Online-Keys ohne Versionsprüfung und ist kein Routine-Schritt im
+Online-Modus.
 
 ### Schritt 6: E2E-Testbrowser & Lighthouse CI einrichten (Optional)
 

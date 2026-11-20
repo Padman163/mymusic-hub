@@ -771,6 +771,11 @@ describe("module-store Validierung & Store-Operationen", () => {
 });
 
 vi.mock("@netlify/blobs", () => ({ getStore: vi.fn() }));
+const identity = vi.hoisted(() => ({
+  getUser: vi.fn(),
+  verifyRequestOrigin: vi.fn(),
+}));
+vi.mock("@netlify/identity", () => identity);
 const writeLocalBlobSnapshot = vi.hoisted(() => vi.fn());
 vi.mock("../netlify/functions/lib/local-blob-snapshot.ts", () => ({
   readLocalBlobSnapshot: vi.fn().mockResolvedValue(undefined),
@@ -782,6 +787,9 @@ describe("Modules Serverless API (/api/modules)", () => {
   const storedDb = () => store.value("modules");
   beforeEach(() => {
     vi.stubEnv("NETLIFY_DEV", "false");
+    vi.stubEnv("LOCAL_NETLIFY_ONLINE_DATA", "false");
+    identity.getUser.mockReset().mockResolvedValue({ id: "admin", roles: ["admin"] });
+    identity.verifyRequestOrigin.mockReset();
     writeLocalBlobSnapshot.mockReset().mockResolvedValue(undefined);
     store = mockBlobStore();
     store.put("modules", { modules: [], questions: [] });
@@ -806,20 +814,27 @@ describe("Modules Serverless API (/api/modules)", () => {
     }
   });
 
-  it("lässt gehostete Deploys die Module nur lesen", async () => {
+  it("erlaubt in Deploy-Vorschauen nur Admins Änderungen", async () => {
     vi.stubEnv("CONTEXT", "deploy-preview");
     vi.stubEnv("NETLIFY_DEV", "false");
 
     const read = await modulesHandler(new Request("http://localhost/api/modules"));
     expect(read.status).toBe(200);
 
+    identity.getUser.mockResolvedValueOnce({ id: "learner", roles: [] });
     const write = await modulesHandler(new Request("http://localhost/api/modules", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ entity: "module", id: "preview", title: "Nicht schreiben" }),
     }));
-    expect(write.status).toBe(405);
+    expect(write.status).toBe(403);
     expect(storedDb().modules).toEqual([]);
+    const adminWrite = await modulesHandler(new Request("http://localhost/api/modules", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ entity: "module", id: "preview", title: "Test" }),
+    }));
+    expect(adminWrite.status).toBe(201);
   });
 
   it("meldet ausdrücklich, wenn nur die Kopien nach dem Speichern fehlgeschlagen sind", async () => {
