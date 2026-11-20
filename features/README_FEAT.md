@@ -116,7 +116,9 @@ bereit. Lernfortschritt, XP, Quiz-Bestwerte, Käufe, Inventar und Studio-Ausrüs
 werden pro Konto in einem separaten Blob-Store gespeichert und nach Anmeldung
 geräteübergreifend synchronisiert. Der Admin-Bereich kann Identity-Status
 anzeigen und Einladungen versenden; die Registrierungsoptionen selbst bleiben
-in der Netlify-Konfiguration.
+in der Netlify-Konfiguration. Unter **Datenstand & Backups** können Admins
+gemeinsame Inhalte sichern und persönliche Lehrgangsstände getrennt einsehen
+oder zurücksetzen.
 Architektur und API-Verhalten stehen in der
 [Authentifizierungs-Referenz](README_FEAT_AUTHENTICATION.md), die Bedienung in
 der [Wiki-Anleitung zum Lernkonto](../src/content/docs/wiki/lernstand-konto.mdx).

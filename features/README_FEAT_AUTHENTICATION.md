@@ -75,6 +75,20 @@ Für Änderungen an `/api/modules` und `/api/contributions` müssen die Sitzung
 die Rolle `admin` und der Request einen passenden Origin aufweisen. Das gilt
 auch in Deploy-Vorschauen.
 
+Die Admin-Seite [`Datenstand & Backups`](../src/pages/admin/datenstand.astro)
+trennt gemeinsame Inhaltsbackups von persönlichen Lernständen. Im Reiter
+**Nutzer & Lernfortschritt** lädt `/api/admin/learning-progress` Nutzer aus
+der serverseitigen Identity-Admin-API seitenweise und gibt Name, E-Mail und ID
+zurück. Lernstandsdaten werden erst für das ausgewählte Konto geladen.
+Lesen erfordert die Rolle `admin`; Resets prüfen zusätzlich den Origin,
+die Bestätigung und die aktuelle Blob-Version. Resets sind im veröffentlichten
+Produktions-Deploy und in Deploy Previews möglich, lokal im Online-Modus ist
+der Reiter nur lesbar. Ein Preview verwendet dieselben Konten und Lernstände
+wie die Produktionsseite derselben Site. Einzel- und Komplett-Reset ändern
+keine Identity-Konten. Details zu [XP und Reset](README_FEAT_XP-SYSTEM.md#persistenz)
+sowie zu [Inhaltsbackups](README_FEAT_NETLIFYBLOB.md#online-backups-im-admin-bereich)
+sind getrennt dokumentiert.
+
 ## Lernstand und lokale Daten
 
 `learning-progress-sync.ts` verbindet den Browser-Cache nach der Anmeldung
@@ -99,9 +113,16 @@ Studio-Ausrüstung sind Teil dieses persönlichen Zustands.
 | [`learning-progress.ts`](../src/lib/learning-progress.ts) | Schema, lokale Speicherung und Bereinigung des Lernstands. |
 | [`learning-progress.ts` Function](../netlify/functions/learning-progress.ts) | Authentifizierter Zugriff auf persönliche Cloud-Lernstände. |
 | [`admin-identity.ts`](../netlify/functions/admin-identity.ts) | Rollenprüfung, Registrierungsstatus und Admin-Einladungen. |
+| [`admin-learning-progress.ts`](../netlify/functions/admin-learning-progress.ts) | Admin-Nutzerliste, Lernstand je Konto und versionsgeprüfte Resets. |
+| [`AdminLearningProgressPanel.astro`](../src/components/admin/AdminLearningProgressPanel.astro) | Reiter für Nutzer und persönliche Lernstände. |
 | [`AdminIdentityPanel.astro`](../src/components/admin/AdminIdentityPanel.astro) | Admin-Oberfläche für Registrierungsstatus und Einladungen. |
 | [`lernstand-konto.mdx`](../src/content/docs/wiki/lernstand-konto.mdx) | Bedienungsanleitung für Lernkonten. |
 
-Verhalten und Berechtigungen werden in
-[`admin-identity.test.ts`](../tests/admin-identity.test.ts) und
-[`learning-progress.test.mjs`](../tests/learning-progress.test.mjs) getestet.
+[`admin-identity.test.ts`](../tests/admin-identity.test.ts) prüft
+Rollen und Einladungen. [`identity-dev-proxy.test.mjs`](../tests/identity-dev-proxy.test.mjs)
+und [`online-data-access.test.ts`](../tests/online-data-access.test.ts) prüfen
+lokale Weiterleitung und Rollen-/Origin-Schutz.
+[`admin-learning-progress.test.ts`](../tests/admin-learning-progress.test.ts)
+deckt Nutzerliste, Kontodetails, Bestätigungen, Konflikte und beide Resets ab;
+[`learning-progress.test.mjs`](../tests/learning-progress.test.mjs) prüft das
+Lernstandsschema und die XP-Vergabe beim Wiederholen.
