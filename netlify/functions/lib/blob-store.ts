@@ -15,6 +15,8 @@ type Data = {
 
 type Key = keyof Data;
 
+export const sharedDataStore = 'mymusic-hub-data';
+
 const parse: { [K in Key]: (value: unknown) => Data[K] } = {
 	contributions(value) {
 		if (!Array.isArray(value)) {
@@ -83,7 +85,7 @@ export function parseBlobJSONValue<K extends Key>(key: K, value: unknown): Data[
 }
 
 export async function readBlobJSON<K extends Key>(key: K): Promise<Data[K]> {
-	const store = getStore('mymusic-hub-data');
+	const store = getStore(sharedDataStore);
 	let value: unknown = await store.get(key, jsonOptions);
 	if (value === null) {
 		await initializeKey(store, key);
@@ -96,7 +98,7 @@ export async function updateBlobJSON<K extends Key>(
 	key: K,
 	change: (value: Data[K]) => Data[K],
 ): Promise<Data[K]> {
-	const store = getStore('mymusic-hub-data');
+	const store = getStore(sharedDataStore);
 	for (let attempt = 0; attempt < 3; attempt += 1) {
 		let entry = await store.getWithMetadata(key, jsonOptions);
 		if (entry === null) {

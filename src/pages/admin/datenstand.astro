@@ -1,0 +1,19 @@
+---
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import AdminBackupPanel from "../../components/admin/AdminBackupPanel.astro";
+---
+
+<StarlightPage
+  frontmatter={{
+    title: "Datenstand & Backups",
+    description: "Online-Daten prüfen, sichern und wiederherstellen.",
+    tableOfContents: false,
+    editUrl: false,
+  }}
+>
+  <p>
+    Hier verwaltest du Beiträge und Lehrgänge. Persönliche Lernstände, Konten und
+    Medien bleiben unverändert. <a href="/wiki/datenstand-backups/">Anleitung</a>
+  </p>
+  <AdminBackupPanel />
+</StarlightPage>

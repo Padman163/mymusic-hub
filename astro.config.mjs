@@ -441,6 +441,7 @@ export default defineConfig({
           label: "Admin",
           items: [
             { label: "Konten & Einladungen", link: "/admin/konten/" },
+            { label: "Datenstand & Backups", link: "/admin/datenstand/" },
             { label: "Beiträge", slug: "projektierung/beitraege" },
             { label: "Modul-Builder", slug: "projektierung/modul-builder" },
             { label: "Modularchiv", link: "/module-archives/" },
@@ -475,6 +476,7 @@ export default defineConfig({
               label: "Wiki",
               items: [
                 { label: "Lernkonto & Synchronisierung", slug: "wiki/lernstand-konto" },
+                { label: "Datenstand & Backups", slug: "wiki/datenstand-backups" },
                 { label: "Beiträge verwalten", slug: "wiki/beitraege" },
                 { label: "Modul-Builder bedienen", slug: "wiki/modul-builder" },
                 { label: "NotationBuilder bedienen", slug: "wiki/notation-builder" },

@@ -57,8 +57,8 @@ Lokale Schreibzugriffe auf gemeinsame Daten aktualisieren nach erfolgreicher
 Online-Speicherung auch die Snapshot-Dateien und bei Modulen die lesbaren
 MDX-Kopien. Schlägt dieser lokale Abgleich fehl, meldet die API ausdrücklich,
 dass die Online-Speicherung bereits erfolgt ist. Änderungen direkt auf der
-Online-Site aktualisieren keine lokalen Dateien; vor einem Deploy den
-branchbezogenen Snapshot und den aktuellen Online-Stand prüfen.
+Online-Site aktualisieren keine lokalen Dateien. Wer danach lokale Kopien
+braucht, kann den neuen Stand mit `npm run blobs:pull` übernehmen.
 
 Der `modules`-Key enthält neben Modulen und Quiz-Einstellungen auch
 `learningConfig.shopItems`. Dashboard, XP, Käufe, Inventar und Studio-Ausrüstung
@@ -69,6 +69,32 @@ Ohne `LOCAL_NETLIFY_ONLINE_DATA=true` initialisiert `npx netlify-cli dev`
 fehlende lokale Keys aus den versionierten Snapshots. Vorhandene lokale Keys
 bleiben bestehen. Schreibvorgänge aktualisieren dann die Snapshot-Dateien,
 aber nicht automatisch die Cloud.
+
+## Online-Backups im Admin-Bereich
+
+[Admin → Datenstand & Backups](../src/pages/admin/datenstand.astro) zeigt den
+aktuellen Online-Stand und die Sicherungen. Die
+[Bedienungsanleitung](../src/content/docs/wiki/datenstand-backups.mdx)
+beschreibt die einzelnen Schritte. Die Übersicht ist für Admins auch in
+Previews und lokal über den bestehenden Online-Proxy verfügbar. Erstellen,
+Download, Restore-Vorschau und Restore sind serverseitig auf den
+veröffentlichten Produktions-Deploy beschränkt.
+
+Online-Backups liegen als einzelne JSON-Dokumente im siteweiten
+`mymusic-hub-backups`-Store und sind unabhängig von lokalen CLI-Archiven.
+Ein JSON-Download enthält die beiden Datenbestände unter `data.contributions`
+und `data.modules`; für den CLI-Notfallweg können sie als separate
+`contributions.json` und `modules.json` in einem lokalen Archiv abgelegt
+werden. Ein Upload in der Admin-Oberfläche ist nicht vorgesehen.
+
+Der Restore verlangt eine aktuelle Vorschau, die Schreibbestätigung
+`WIEDERHERSTELLEN` und ein erfolgreich gespeichertes Sicherheitsbackup.
+Die Live-Keys werden einzeln mit ETag-Prüfung ersetzt; Netlify Blobs bietet
+dafür keine gemeinsame Transaktion. Bei einem Konflikt am zweiten Key
+versucht die Function, den ersten nur dann zurückzusetzen, wenn er seit dem
+Restore-Schreibzugriff unverändert geblieben ist. Ein möglicherweise
+teilweiser Restore wird samt Sicherheitsbackup-ID gemeldet. Die Oberfläche
+ändert keine lokalen Snapshots und keine MDX-Kopien.
 
 ## Blob-Befehle: Push, Pull, Restore, Backup und Reset
 
@@ -122,10 +148,12 @@ allen Deploy-Kontexten nur für angemeldete Admins mit passendem Origin erlaubt.
 Die `/api/learning-progress`-Function akzeptiert authentifizierte Änderungen
 ausschließlich für das jeweilige Nutzerkonto.
 
-**Überschreibungswirkung:** Branchbezogene Snapshots sind versionierte
-Datenquellen und können beim Deploy den gemeinsamen Online-Stand überschreiben.
-Deshalb vor Deploys die betroffenen Daten vergleichen und sichern. Ein
-`blobs:push` überschreibt beide gemeinsamen Keys und schützt nicht vor
+**Überschreibungswirkung:** Der im Repository konfigurierte Build
+(`npm run build`) importiert keine Snapshots. Der Online-Store ist der
+maßgebliche Datenstand. Falls im Netlify-Dashboard ein eigener
+Snapshot-Import als Build-Befehl oder Plugin hinterlegt ist, diesen vor
+der Freigabe deaktivieren. Ein bewusst ausgeführtes `blobs:push`
+überschreibt weiterhin beide gemeinsamen Keys und schützt nicht vor
 gleichzeitigen Änderungen; den Online-Modus nicht mit routinemäßigen
 Snapshot-Uploads kombinieren.
 
@@ -142,6 +170,7 @@ Snapshot-Uploads kombinieren.
 | [`local-blob-snapshot.ts`](../netlify/functions/lib/local-blob-snapshot.ts) | Spiegelt lokale Netlify-Dev-Schreibvorgänge in versionierte Snapshot-Dateien. |
 | [`online-dev-proxy.ts`](../netlify/functions/lib/online-dev-proxy.ts) | Leitet lokale Daten-APIs bei expliziter Aktivierung an die konfigurierte Online-Site weiter. |
 | [`admin-write.ts`](../netlify/functions/lib/admin-write.ts) | Prüft bei gemeinsamen Schreibvorgängen Admin-Rolle und Origin. |
+| [`admin-backups.ts`](../netlify/functions/admin-backups.ts) | Admin-API für Online-Übersicht, Backup-Verwaltung und Restore. |
 | [`netlify-blob-transfer.ts`](../scripts/netlify-blob-transfer.ts) | Lädt und sichert Cloud-Daten, stellt Snapshots wieder her, bestätigt Uploads und setzt den lokalen Blob-Store zurück. |
 | [`astro.config.mjs`](../astro.config.mjs) | Nur beim reinen Astro-Start liest und schreibt `localModulesApiPlugin()` direkt in `data/modules.json`. Unter Netlify CLI ist dieses Plugin deaktiviert. |
 
