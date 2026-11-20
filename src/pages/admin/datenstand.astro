@@ -1,6 +1,8 @@
 ---
 import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import { TabItem, Tabs } from "@astrojs/starlight/components";
 import AdminBackupPanel from "../../components/admin/AdminBackupPanel.astro";
+import AdminLearningProgressPanel from "../../components/admin/AdminLearningProgressPanel.astro";
 ---
 
 <StarlightPage
@@ -12,8 +14,15 @@ import AdminBackupPanel from "../../components/admin/AdminBackupPanel.astro";
   }}
 >
   <p>
-    Hier verwaltest du Beiträge und Lehrgänge. Persönliche Lernstände, Konten und
-    Medien bleiben unverändert. <a href="/wiki/datenstand-backups/">Anleitung</a>
+    Hier verwaltest du Inhaltsbackups und persönliche Lehrgangsstände.
+    <a href="/wiki/datenstand-backups/">Anleitung</a>
   </p>
-  <AdminBackupPanel />
+  <Tabs>
+    <TabItem label="Datenstand & Backups">
+      <AdminBackupPanel />
+    </TabItem>
+    <TabItem label="Nutzer & Lernfortschritt">
+      <AdminLearningProgressPanel />
+    </TabItem>
+  </Tabs>
 </StarlightPage>

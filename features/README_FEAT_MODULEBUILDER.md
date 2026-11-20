@@ -235,7 +235,7 @@ Ein neuer Katalog enthält keine Module oder Fragen, aber die Standard-Lernkonfi
 - **Wozu es dient:** Zeigt dem Lernenden auf einen Blick das aktuelle **Level**, die **gesammelten Gesamt-XP**, den Fortschrittsbalken bis zum nächsten Level, die Anzahl **abgeschlossener Module** sowie kompakte Badges für XP nach Lernbereich (`Theorie`, `Instrument` …) und Themen (`Notensystem`, `Gitarre` …).
 - **Live-Aktualisierung:** Sobald eine Aufgabe gelöst, Theorie abgeschlossen oder ein Quiz bestanden wird, aktualisiert sich das Dashboard sofort ohne Neuladen der Seite.
 - **Modulkatalog:** Dashboard, Roadmap, Modulansicht und Aufgaben-Runner laden den aktuellen Katalog zur Laufzeit über `/api/modules`. Es wird keine Katalogdatei in den Build eingebettet. Ein leerer Katalog ist gültig; ein Ladefehler wird separat angezeigt. Notationsaufgaben werden aus der API-Konfiguration mit dem gemeinsamen Notations-Builder gerendert.
-- **Geschützter Reset:** Neben „Quiz starten“ bzw. „Quiz wiederholen“ steht „Lernfortschritt zurücksetzen“. Erst nach Bestätigung werden der gesamte Lernfortschritt und alle XP zurückgesetzt; bei aktiver Anmeldung wird der neue Stand mit dem Konto synchronisiert. Der Modulkatalog bleibt unverändert.
+- **Geschützter Reset:** Einzelne Lehrgangsstände können nur Admins unter **Datenstand & Backups → Nutzer & Lernfortschritt** zurücksetzen. XP, Käufe und andere Lehrgänge bleiben unverändert. Im Bediener-Dashboard und Lernpfad gibt es keinen Komplett-Reset.
 
 ### 3. Die Modul-Roadmap (`src/components/learning/ModuleRoadmap.astro`)
 - **Wozu sie dient:** Zeigt alle Module in der richtigen Reihenfolge als übersichtliche Karten.

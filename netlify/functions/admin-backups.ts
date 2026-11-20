@@ -1,6 +1,7 @@
 import type { Config, Context } from '@netlify/functions';
 import { getUser, verifyRequestOrigin } from '@netlify/identity';
 import { adminBackups, BackupError, isBackupId } from './lib/admin-backups';
+import { canManageOnlineData } from './lib/admin-data-access';
 import { proxyOnlineDevRequest } from './lib/online-dev-proxy';
 
 export const config: Config = { path: '/api/admin/backups' };
@@ -54,9 +55,7 @@ export default async (request: Request, context: Context): Promise<Response> => 
 	if (before !== null && !isBackupId(before)) return json({ error: 'Ungültiger Seitenzeiger.' }, 400);
 
 	const local = process.env.NETLIFY_DEV === 'true';
-	const deploy = context.deploy;
-	const writable = !local && (deploy?.context === 'deploy-preview' ||
-		(deploy?.context === 'production' && deploy.published));
+	const writable = canManageOnlineData(context);
 	if (!isOverview && !writable) {
 		return json({ error: 'Die Backup-Verwaltung ist nur in Deploy Previews und auf der veröffentlichten Produktionsseite verfügbar.' }, 403);
 	}

@@ -43,6 +43,15 @@ versionskontrollierten Blob-Archiven. Der Blob-Transfer sichert nur den
 gemeinsamen Store `mymusic-hub-data`; für `mymusic-hub-user-data` ist ein
 separates Backup-/Exportverfahren erforderlich.
 
+Der separate Admin-Endpunkt
+[`/api/admin/learning-progress`](../netlify/functions/admin-learning-progress.ts)
+liest die Nutzerliste über die serverseitige Netlify-Identity-Admin-API.
+Admins sehen XP, Inventar und Lehrgangsstände für das gewählte Konto.
+Der bestätigte Reset ist in Production und Deploy Previews möglich und
+ersetzt nur den gewählten Lehrgangsstand mit ETag-Prüfung, damit gleichzeitige
+Änderungen nicht überschrieben werden. Die Inhaltsbackups enthalten diese
+persönlichen Daten weiterhin nicht.
+
 ## Empfohlener Datenfluss
 
 Netlify Dev verwendet normalerweise einen getrennten lokalen Blob-Store. Nach

@@ -1422,9 +1422,7 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
       dashboardEl.querySelector<HTMLElement>(".learning-dashboard-module-bars")
         ?.hidden,
     ).toBe(true);
-    expect(
-      dashboardEl.querySelector<HTMLElement>(".learning-reset-area")?.hidden,
-    ).toBe(true);
+    expect(dashboardEl.querySelector('[data-action="request-reset"]')).toBeNull();
 
     const xpValue = dashboardEl.querySelector<HTMLElement>(
       "[data-dashboard-xp]",
@@ -1515,40 +1513,7 @@ describe("Schüler-UI (Dashboard, Roadmap, Stepper & Quiz/Fastlane-Runner)", () 
         ?.disabled,
     ).toBe(true);
 
-    const reset = mod1After?.querySelector<HTMLButtonElement>(
-      '.learning-start-quiz + [data-action="request-reset"]',
-    );
-    const confirmation = mod1After?.querySelector<HTMLElement>(
-      ".learning-reset-confirm",
-    );
-    const cancel = confirmation?.querySelector<HTMLButtonElement>(
-      '[data-action="cancel-reset"]',
-    );
-    const confirm = confirmation?.querySelector<HTMLButtonElement>(
-      '[data-action="confirm-reset"]',
-    );
-    if (!reset || !confirmation || !cancel || !confirm) {
-      throw new Error("Reset neben der Quizaktion fehlt");
-    }
-
-    expect(confirmation.hidden).toBe(true);
-    reset.click();
-    expect(confirmation.hidden).toBe(false);
+    expect(roadmapEl.querySelector('[data-action="request-reset"]')).toBeNull();
     expect(loadLearningProgress(db.modules).totalXp).toBe(expectedXp);
-    cancel.click();
-    expect(confirmation.hidden).toBe(true);
-    expect(loadLearningProgress(db.modules).totalXp).toBe(expectedXp);
-
-    reset.click();
-    confirm.click();
-    expect(loadLearningProgress(db.modules).totalXp).toBe(0);
-    expect(
-      dashboardEl.querySelector<HTMLElement>("[data-dashboard-xp]")?.dataset
-        .dashboardXp,
-    ).toBe("0");
-    expect(
-      roadmapEl.querySelector<HTMLElement>('[data-module-card="guitar-102"]')
-        ?.dataset.moduleStatus,
-    ).toBe("locked");
   });
 });

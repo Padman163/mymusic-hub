@@ -329,6 +329,10 @@ export function createInitialProgress(
   };
 }
 
+export function restartModuleProgress(progress: ModuleProgress): ModuleProgress {
+  return createModuleProgress(progress.moduleId, progress.status !== "locked");
+}
+
 /** Fügt eine Freischaltung einmalig zum Inventar hinzu. */
 export function collectInventoryUnlock(
   state: LearningProgressState,
