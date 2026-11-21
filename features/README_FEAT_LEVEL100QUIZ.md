@@ -1,6 +1,6 @@
 # Anforderungen für den Neuaufbau des Level-100-Quiz
 
-Dieses Dokument hält Anforderungen fest, die aus der bisherigen NotationBuilder-Integration übernommen werden. Es beschreibt nicht die alte Quiz-Implementierung; konkrete Fragen, Punkteverteilung und Gestaltung sind damit nicht festgelegt.
+Dieses Dokument hält Anforderungen fest, die aus der bisherigen NotationBuilder-Integration übernommen werden. Die bestehende Komponente `src/components/Level100Quiz.astro` ist aktuell noch in `src/content/docs/audio/theory/100-general/105-abschlussquiz.mdx` eingebunden; dieses Dokument beschreibt nicht die alte Quiz-Implementierung und legt keine konkreten Fragen, Punkteverteilungen oder Gestaltung fest.
 
 ## NotationBuilder-Aufgaben
 

@@ -1,0 +1,690 @@
+[
+  {
+    "id": "9844e193-4801-461c-9035-00ca5a9b8bd8",
+    "type": "Feature",
+    "title": "Meta-Daten für Beiträge",
+    "description": "",
+    "area": "Theorie",
+    "status": "Resolved",
+    "createdAt": "2026-11-06T15:39:57.219Z",
+    "checklist": [
+      {
+        "text": "D1/D2/D3 ( unsichtbar )",
+        "checked": true
+      },
+      {
+        "text": "Instrumentbezogen ( unsichtbar )",
+        "checked": true
+      }
+    ],
+    "priority": "Hoch"
+  },
+  {
+    "id": "7c13fc92-5341-48c1-8c31-05d86b155c64",
+    "type": "Feature",
+    "title": "Cheat Sheets",
+    "description": "- Download- Bereich mit Cheat Sheets\n- Interaktive Cheat Sheets\n- Quick Tips\n- Visualisierungen",
+    "area": "Theorie",
+    "status": "New",
+    "createdAt": "2026-11-06T15:41:04.017Z",
+    "checklist": [
+      {
+        "text": "Visualisierungen",
+        "checked": false
+      },
+      {
+        "text": "Quick Tips",
+        "checked": false
+      },
+      {
+        "text": "Interaktive Cheat Sheets",
+        "checked": false
+      },
+      {
+        "text": "Download- Bereich mit Cheat Sheets",
+        "checked": false
+      }
+    ]
+  },
+  {
+    "id": "2de014c0-93f2-4bcd-a221-df3a8c59bc3e",
+    "type": "Decision",
+    "title": "Anordnung der Songwriting- Schritte",
+    "description": "- Schritt 0-5 neu definieren\n- DAW / Pattern / Notation trennen?",
+    "area": "Theorie",
+    "status": "New",
+    "createdAt": "2026-11-06T15:42:46.577Z"
+  },
+  {
+    "id": "2170c2d4-1656-4722-89a8-0eae01b2cf50",
+    "type": "Feature",
+    "title": "Schritt 6: Full Score",
+    "description": "- Einzelne Teile darstellen\n- Gesamtpartitur ( Pattern-Style, Notation, TAB )",
+    "area": "Theorie",
+    "status": "New",
+    "createdAt": "2026-11-06T15:43:33.831Z"
+  },
+  {
+    "id": "efca5807-bde1-453b-a543-83e7bc169145",
+    "type": "Feature",
+    "title": "Interaktives Gitarren-Tuning & Frequenz-Check",
+    "description": "",
+    "area": "Praxis",
+    "status": "New",
+    "createdAt": "2026-11-06T15:48:41.006Z",
+    "checklist": [
+      {
+        "text": "Stimmen der Gitarre per Web-Audio-API",
+        "checked": false
+      },
+      {
+        "text": "Stimmgerät-Referenz: E2 = 82,4Hz, E4 = 329,6 Hz",
+        "checked": false
+      },
+      {
+        "text": "Stimmregel: Immer von unten nach oben stimmen",
+        "checked": false
+      }
+    ]
+  },
+  {
+    "id": "85f9a0ba-9d5f-4756-893d-8d01f38b55e1",
+    "type": "Feature",
+    "title": "Unisono-Prüfung (5. Bund) & Intonations-Check (12. Bund)",
+    "description": "- Relativstimmung über den 5. Bund (Ausnahme G-Saite 4. Bund → B-Saite) mit Hörtraining auf Schwebungen\n- Oktavreinheits-Check am 12. Bund: Vergleich zwischen Natural Harmonic (Flageolett) und gegriffenem Ton im 12. Bund",
+    "area": "Praxis",
+    "status": "New",
+    "createdAt": "2026-11-06T15:49:45.541Z",
+    "checklist": [
+      {
+        "text": "Relativstimmung über den 5. Bund (Ausnahme G-Saite 4. Bund → B-Saite) mit Hörtraining auf Schwebungen",
+        "checked": false
+      },
+      {
+        "text": "Oktavreinheits-Check am 12. Bund: Vergleich zwischen Natural Harmonic (Flageolett) und gegriffenem Ton im 12. Bund",
+        "checked": false
+      }
+    ]
+  },
+  {
+    "id": "c90558c0-5024-4300-ba9c-4ccead06691d",
+    "type": "Feature",
+    "title": "Druck-Release-Test & Greifpunkt-Disziplin",
+    "description": "Übung zur minimalen Haltekraft (Fret Buzz bis Dead Note zu klarem Ton) und korrekten Fingerplatzierung.",
+    "area": "Praxis",
+    "checklist": [
+      {
+        "text": "Positions-Anleitung (1 mm hinter Bundstäbchen) formulieren",
+        "checked": false
+      },
+      {
+        "text": "Erklärung zu ungewolltem Mikro-Bending durch zu viel Druck ergänzen",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-06T16:10:35.823Z"
+  },
+  {
+    "id": "7c675512-0704-43ee-a0ef-e1baf5ed00c7",
+    "type": "Feature",
+    "title": "Plektrum- & Fingerstyle-Mechanik (P-I-M-A)",
+    "description": "Handgelenk-Wechselschlag für das Plektrum und Standardhaltung der Zupfhand für Bass- und Diskantsaiten.",
+    "area": "Praxis",
+    "checklist": [
+      {
+        "text": "Wechselschlag-Übung definieren",
+        "checked": false
+      },
+      {
+        "text": "P-I-M-A-Zuordnung (Daumen bis Ringfinger) visualisieren",
+        "checked": false
+      },
+      {
+        "text": "Hinweis auf Wichtigkeit für spätere Arpeggien einbauen",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-06T16:13:20.422Z"
+  },
+  {
+    "id": "082e6184-fc82-4301-a556-f0e32f550cc6",
+    "type": "Feature",
+    "title": "2-Wege-Dämpfung",
+    "description": "Saiten abdämpfen mit der Picking-Hand (Palm Mute) und der Greifhand (flacher Zeigefinger).",
+    "area": "Praxis",
+    "checklist": [
+      {
+        "text": "Palm Mute an der Bridge illustrieren/beschreiben",
+        "checked": false
+      },
+      {
+        "text": "Greifhand-Dämpftechnik für Nachbarsaiten erklären",
+        "checked": false
+      },
+      {
+        "text": "Info zur Notwendigkeit für spätere High-Gain-Sounds ergänzen",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-06T16:13:49.945Z"
+  },
+  {
+    "id": "ba3eebb1-29b5-4205-b44f-a99e26c87da3",
+    "type": "Feature",
+    "title": "Artikulationen & Dynamik am Metronom",
+    "description": "Steuerung von Artikulation (Legato, Staccato, Tenuto, Akzente) und Dynamik (pp bis ff) bei 65 BPM.",
+    "area": "Praxis",
+    "checklist": [
+      {
+        "text": "4-Takt-Übung mit Crescendo/Decrescendo entwerfen",
+        "checked": false
+      },
+      {
+        "text": "Artikulationszeichen definieren",
+        "checked": false
+      },
+      {
+        "text": "Hinweis ergänzen: Zwingend mit trockenem Clean-Preset ohne Kompressor spielen",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-06T16:14:28.840Z"
+  },
+  {
+    "id": "c408af61-28ee-4d05-a443-17b5421188d9",
+    "type": "Feature",
+    "title": "MIDI-Backing-Track-Baukasten & DAW-Looping",
+    "description": "Erstellung eigener MIDI-Backing-Tracks (Kick, Snare, Hi-Hat, Grundton) oder Nutzung des Web-Players.",
+    "area": "Praxis",
+    "checklist": [
+      {
+        "text": "Bauanleitung für Basis-Groove in Studio One schreiben",
+        "checked": false
+      },
+      {
+        "text": "Exportierbare .mid-Snippets pro Lektion bereitstellen",
+        "checked": false
+      },
+      {
+        "text": "Datenbank-Tracks in den Web-Player einbinden",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-06T16:15:02.139Z"
+  },
+  {
+    "id": "4888e2be-1f23-40dc-b5d0-f1594a1649f7",
+    "type": "Feature",
+    "title": "Rhythmus-Workout",
+    "description": "Metronom-Training für Notenwerte, Punktierungen, Triolen und Offbeat-Synkopen.",
+    "area": "Praxis",
+    "checklist": [
+      {
+        "text": "Übungsreihe für Ganze bis 16tel Noten anlegen",
+        "checked": false
+      },
+      {
+        "text": "Strikte Anschlagsregel (Downstroke auf Zählzeit, Upstroke auf '+') definieren",
+        "checked": false
+      },
+      {
+        "text": "Spezifische Übungen für Achteltriolen und Synkopen einbauen",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-06T16:15:26.904Z"
+  },
+  {
+    "id": "386f5ff7-12d0-46df-af26-00d0238fe761",
+    "type": "Feature",
+    "title": "Taktarten-Trainer & Formteil-Parcours",
+    "description": "Spielpraxis für wechselnde Taktarten (4/4, 3/4, 2/4, 2/2, 6/8) und das Umsetzen von Ablaufzeichen.",
+    "area": "Praxis",
+    "checklist": [
+      {
+        "text": "Übungsstück mit Auftakt und Wiederholungsklammern (1/2) schreiben",
+        "checked": false
+      },
+      {
+        "text": "D.C. al Fine, Ritardando und Fermate ($\\fermata$) in den Parcours integrieren",
+        "checked": false
+      },
+      {
+        "text": "Didaktik-Hinweis zum echten Vom-Blatt-Ablauf ergänzen",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-06T16:15:58.577Z"
+  },
+  {
+    "id": "09c3b1bf-31b0-424b-99fe-b5ce2151dfe2",
+    "type": "Feature",
+    "title": "Interaktive Notations/Tab/Pattern-Komponente",
+    "description": "Eintragen von Noten in 3 Schwierigkeitsstufen (Gitarren-TAB, Violinschlüssel, Bassschlüssel).",
+    "area": "Theorie",
+    "checklist": [
+      {
+        "text": "Komponente für Notation entwickeln",
+        "checked": false
+      },
+      {
+        "text": "Komponente für Tab entwickeln",
+        "checked": false
+      },
+      {
+        "text": "Komponente für Klaviatur entwickeln",
+        "checked": false
+      },
+      {
+        "text": "Komponente für Pattenr anpassen",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-06T16:16:38.793Z",
+    "priority": "Mittel"
+  },
+  {
+    "id": "e482025a-dadc-41ca-994c-1d21f2fe8c2b",
+    "type": "Feature",
+    "title": "Dur-Tonleitern & Dreiklangs-Markierung",
+    "description": "Aufbau von Dur-Tonleitern (G-G-H-G-G-G-H) und Markierung der Stufen I, III und V als Dreiklang.",
+    "area": "Theorie",
+    "checklist": [
+      {
+        "text": "Formel-Trainer für C, G, D, A, F, B, Es umsetzen",
+        "checked": false
+      },
+      {
+        "text": "Interaktive Dreiklangs-Markierung (I, III, V) in die Komponente einbauen",
+        "checked": false
+      },
+      {
+        "text": "Transfer-Aufgabe zum Nachspielen auf dem Griffbrett definieren",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-06T16:16:56.882Z",
+    "priority": "Mittel"
+  },
+  {
+    "id": "559c96d8-658c-4f41-83be-f722f71a9ed6",
+    "type": "Feature",
+    "title": "Tempo-, Dynamik- & Artikulations-Praxis",
+    "description": "Live-Einspielen von Tempo- und Dynamiksprüngen (subito) sowie Einbau von Artikulationszeichen ins Notenbild.",
+    "area": "Praxis",
+    "checklist": [
+      {
+        "text": "Artikulations-Werkzeugkasten in der Notationskomponente freischalten",
+        "checked": false
+      },
+      {
+        "text": "DAW-Automationskurven für Tempo-Tracks als Vorlage bereitstellen",
+        "checked": false
+      },
+      {
+        "text": "Backing-Track mit programmiertem Accelerando/Ritardando anfertigen",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-06T16:17:39.475Z",
+    "priority": "Mittel"
+  },
+  {
+    "id": "ba07ff31-ff44-438d-9e18-b193f2f0a4bf",
+    "type": "Feature",
+    "title": "Beiträge dürfen nicht in main gepostet werden",
+    "description": "Solange Beiträge in einer .json im Programm stehen, müssen sie in eine branch der nicht main ist gespeichert werden, sonst wird jedes mal main gepusht",
+    "area": "Komponente",
+    "priority": "Hoch",
+    "checklist": [
+      {
+        "text": "Komplett anderen Ansatz verfolgen, wie DB",
+        "checked": true
+      }
+    ],
+    "status": "Resolved",
+    "createdAt": "2026-11-12T14:22:10.472Z"
+  },
+  {
+    "id": "8c0f8d22-7cef-4494-a0fc-da71ee2416ad",
+    "type": "Feature",
+    "title": "Quiz erstellen",
+    "description": "",
+    "area": "Theorie",
+    "priority": "Mittel",
+    "checklist": [
+      {
+        "text": "Notation komplett in Quiz einbinden",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-12T14:24:58.752Z"
+  },
+  {
+    "id": "85b11932-b208-4d97-91eb-f6fca160fc28",
+    "type": "Decision",
+    "title": "Was solltest du zu diesem Zeitpunkt beherrschen",
+    "description": "In Verbindung mit Quiz",
+    "area": "Theorie",
+    "priority": "Niedrig",
+    "checklist": [],
+    "status": "New",
+    "createdAt": "2026-11-12T14:25:29.972Z"
+  },
+  {
+    "id": "439450f0-e675-4cf9-ab7c-14030dfc1594",
+    "type": "Bug",
+    "title": "Überarbeitung notation.mdx",
+    "description": "",
+    "area": "Theorie",
+    "priority": "Mittel",
+    "checklist": [],
+    "status": "Resolved",
+    "createdAt": "2026-11-13T00:35:15.710Z"
+  },
+  {
+    "id": "a8b06a98-3ed7-48bb-bb12-f1d6fd84ae19",
+    "type": "Feature",
+    "title": "Module Builder – Autorenwerkbank & Lernpfad",
+    "description": "Autorenwerkbank zum Erstellen und Verwalten von Lernmodulen, Theorie-Blöcken und Aufgaben mit XP-System und interaktivem Lernpfad. Details: /features/README_FEAT_MODULEBUILDER.md\n\nUncool:\nErwartete Tonhöhen (kommagetrennt) --> oktavunabhängiges B. soll einfach B werden dann kann B1-6 einfach angegeben werden\nKommentare:",
+    "area": "Komponente",
+    "priority": "Hoch",
+    "checklist": [
+      {
+        "text": "Builder-Tabs für Module und Katalog öffnen und bedienen",
+        "checked": true
+      },
+      {
+        "text": "Modul mit Metadaten, Tags, XP-Werten und Bestehensgrenzen anlegen und erneut laden",
+        "checked": true
+      },
+      {
+        "text": "Theorie-Blöcke hinzufügen, entfernen, umsortieren und mit KaTeX-Inhalten speichern",
+        "checked": true
+      },
+      {
+        "text": "Theorie-Visualisierungen konfigurieren und im Lernpfad kontrollieren",
+        "checked": true
+      },
+      {
+        "text": "Reine Theorie-Module und Module mit optionalem Praxisschritt korrekt abbilden",
+        "checked": true
+      },
+      {
+        "text": "Ungültige Pflichtfelder und Bestehensgrenzen außerhalb von 0 bis 100 abweisen",
+        "checked": true
+      },
+      {
+        "text": "XP-Basiswerte und Tag-Faktoren im Aufgaben-Builder korrekt berechnen",
+        "checked": true
+      },
+      {
+        "text": "Single-Choice-, Multi-Select- und Zahleneingabe-Aufgaben erstellen und bearbeiten",
+        "checked": true
+      },
+      {
+        "text": "Notationsaufgaben mit Vorschau, Notenschlüssel und erwarteten Antworten konfigurieren",
+        "checked": true
+      },
+      {
+        "text": "Ungültige Aufgaben und Aufgaben ohne existierendes Zielmodul abweisen",
+        "checked": true
+      },
+      {
+        "text": "Katalogansicht wechseln, nach Bereich und Lernspur filtern sowie sortieren",
+        "checked": true
+      },
+      {
+        "text": "Katalog-Zusammenfassung für Blöcke, Aufgaben je Spur und gewichtete XP prüfen",
+        "checked": true
+      },
+      {
+        "text": "Bearbeiten aus dem Katalog lädt den ausgewählten Eintrag im passenden Builder",
+        "checked": true
+      },
+      {
+        "text": "Modullöschung bestätigen und sicherstellen, dass nur zugehörige Aufgaben mitgelöscht werden",
+        "checked": true
+      },
+      {
+        "text": "Dashboard zeigt Level, Gesamt-XP, Fortschritt, Module sowie XP nach Bereich und Tag",
+        "checked": true
+      },
+      {
+        "text": "Lernfortschritt bleibt im Browser erhalten und funktioniert beim SSR ohne localStorage",
+        "checked": true
+      },
+      {
+        "text": "Theorie, Übungen, optionaler Praxisschritt und Quiz in korrekter Reihenfolge freischalten",
+        "checked": true
+      },
+      {
+        "text": "Wiederholte Aufgaben vergeben keine doppelten XP; 500 XP ergeben ein Level",
+        "checked": true
+      },
+      {
+        "text": "Zahleneingaben mit Einheiten und Notationsantworten korrekt auswerten",
+        "checked": true
+      },
+      {
+        "text": "Dashboard und Roadmap nach Lernfortschritt ohne Seitenneuladen aktualisieren",
+        "checked": true
+      },
+      {
+        "text": "Fortschritts-Reset erfordert Bestätigung und setzt den lokalen Lernstand zurück",
+        "checked": true
+      },
+      {
+        "text": "Feature-Tests mit npm test und Projekt-Quality-Gate mit npm run preflight ausführen",
+        "checked": true
+      },
+      {
+        "text": "- Modul-ID --> Soll im Hintergrund automatisch erstellt werden ohne eingabe",
+        "checked": true
+      },
+      {
+        "text": "LaTeX-Mathematik irgendwo erklären",
+        "checked": true
+      },
+      {
+        "text": "Prüfen was die Checkbox für Praxisteil macht",
+        "checked": true
+      },
+      {
+        "text": "XP / Block im Modul immer angeben",
+        "checked": true
+      },
+      {
+        "text": "Builder-Tabs für Aufgaben und öffnen und bedienen",
+        "checked": true
+      },
+      {
+        "text": "Aufgaben benötigen Titel vor Aufgabenstellung",
+        "checked": true
+      },
+      {
+        "text": "Man muss einzelne Items ungroupen können",
+        "checked": true
+      },
+      {
+        "text": "Drumpattern ist noch nicht implementiert",
+        "checked": true
+      },
+      {
+        "text": "Zurück in Aufgabe soll blockiert werden bis Aufgabe beendet ist",
+        "checked": true
+      },
+      {
+        "text": "cites weg!!!",
+        "checked": true
+      },
+      {
+        "text": "esfehlen visuals in 100",
+        "checked": true
+      }
+    ],
+    "status": "Resolved",
+    "createdAt": "2026-11-16T08:09:21.276Z"
+  },
+  {
+    "id": "51a15b9a-2d7e-4c3d-bebc-fc16dd98ebd0",
+    "type": "Feature",
+    "title": "Keyboard Komponente",
+    "description": "Gleich wie notation nur ein visual für Keyboard",
+    "area": "Komponente",
+    "priority": "Hoch",
+    "checklist": [
+      {
+        "text": "In 103: Stammtöne, Ganz- & Halbtonschritte implementieren ( in Theorieblock als Visual )",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-18T00:04:20.164Z"
+  },
+  {
+    "id": "f65ebbcc-7f01-4eb2-ab65-3070506ff303",
+    "type": "Feature",
+    "title": "Dashboard - Skillbaum",
+    "description": "Es sollen Skills / Module mit XP freigeschaltet werden\nInventar mit Click.wav",
+    "area": "Komponente",
+    "priority": "Hoch",
+    "checklist": [],
+    "status": "New",
+    "createdAt": "2026-11-18T11:34:12.457Z"
+  },
+  {
+    "id": "90e59a2c-11f9-4c02-8eee-860a273daa16",
+    "type": "Feature",
+    "title": "Audioplayer für Drum-Patterns",
+    "description": "Native Web-Audio-Wiedergabe für DrumPattern mit Vorhören, Velocity, Viertel-BPM-Loops, Play/Stop, Haltewiedergabe und Spurauswahl. Technischer Slug: audioplayer. Referenz: features/README_FEAT_AUDIOPLAYER.md (im Admin-Wiki: /admin-wiki/features/readme-feat-audioplayer/). Bedienung: /wiki/drum-pattern/. 66 gezielte Tests bestanden. Sample-Lizenzen, aktueller Hörtest und vollständiger Preflight bleiben offen.",
+    "status": "New",
+    "area": "Komponente",
+    "priority": "Mittel",
+    "checklist": [
+      {
+        "text": "Native Web-Audio-Engine mit URL-Cache, parallelem Vorladen und polyphonen Soundquellen bereitstellen",
+        "checked": true
+      },
+      {
+        "text": "Velocity von 0 bis 127 auf Gain abbilden; fehlende Werte spielen mit voller Lautstärke",
+        "checked": true
+      },
+      {
+        "text": "Aktive Zellen und Instrumentennamen per Klick oder Enter vorhören, ohne die bestehende Rasterbearbeitung zu verlieren",
+        "checked": true
+      },
+      {
+        "text": "Leertaste halten startet den Loop; Loslassen stoppt ihn und erneutes Drücken beginnt bei Step 1",
+        "checked": true
+      },
+      {
+        "text": "Zugänglicher Play/Stop-Symbolbutton im Header läuft ohne Halten und startet nach Stop wieder bei Step 1",
+        "checked": true
+      },
+      {
+        "text": "Viertel-BPM, Auflösung und Step-Anzahl für Pausen, synchrone Spuren und Lookahead-Scheduling verwenden",
+        "checked": true
+      },
+      {
+        "text": "Spurauswahl per Highlight, Klick, Shift und Touch-Kästchen übernehmen; ohne Markierung alle Soundspuren abspielen",
+        "checked": true
+      },
+      {
+        "text": "Wiedergabe-Auswahl von der Anschlag-Anzeige trennen und Auswahländerungen beim nächsten Start übernehmen",
+        "checked": true
+      },
+      {
+        "text": "Button, Tempo, Bedienhinweis, Hilfelink und Footer unabhängig ausblenden, ohne Fehlermeldungen zu verbergen",
+        "checked": true
+      },
+      {
+        "text": "Bei Stop, Tempoänderung oder Seiten-/Fensterwechsel abbrechen; verspätete Starts nach Laden oder Freigabe verhindern",
+        "checked": true
+      },
+      {
+        "text": "Statische MDX- und dynamische Moduldarstellungen über gemeinsame Props und Controller anbinden",
+        "checked": true
+      },
+      {
+        "text": "Technische Referenz, Wiki-Anleitung, Oberfläche und vorhandene Sounddateien konsistent dokumentieren",
+        "checked": true
+      },
+      {
+        "text": "Gezielte Drum-Audio-, Dokumentations- und Admin-Wiki-Tests: 66 Tests erfolgreich ausgeführt",
+        "checked": true
+      },
+      {
+        "text": "Quelle, Urheber, Lizenz und gegebenenfalls Namensnennung für Click.wav, HiHat.wav, Kick.wav und Snare.wav vor Veröffentlichung klären",
+        "checked": false
+      },
+      {
+        "text": "Hörtest, Browser-Audiofreigabe und tatsächliche Geräte-Latenz auf den vorgesehenen Geräten prüfen",
+        "checked": false
+      },
+      {
+        "text": "Vollständigen Preflight nach der Dokumentationsänderung manuell ausführen; dieser Lauf ist noch nicht bestätigt",
+        "checked": false
+      }
+    ],
+    "createdAt": "2026-11-18T22:01:48.600Z"
+  },
+  {
+    "id": "e92652eb-9c24-4383-9c9c-926bfe0133f3",
+    "type": "Bug",
+    "title": "Blob test",
+    "description": "",
+    "area": "Komponente",
+    "priority": "Mittel",
+    "checklist": [
+      {
+        "text": "Test 19.11.: Nur npm install, netlify neu login, .env aus netlify gezogen ( aktuell zieht es noch audioplayer und nicht den aktueleln inventar )",
+        "checked": false
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-18T23:35:45.142Z"
+  },
+  {
+    "id": "6e1e6d33-070a-4dd4-88ad-6f17c1a7e77a",
+    "type": "Feature",
+    "title": "Inventar",
+    "description": "",
+    "area": "Komponente",
+    "priority": "Hoch",
+    "checklist": [
+      {
+        "text": "Items im Inventar müssen über einen Shop freigeschaltet werden. auch der Click für 10Xp.",
+        "checked": true
+      },
+      {
+        "text": "XP- Übersicht muss dann noch angepasst werden dafür",
+        "checked": true
+      }
+    ],
+    "status": "New",
+    "createdAt": "2026-11-19T12:03:29.215Z"
+  },
+  {
+    "id": "4a45b080-8050-4a90-8031-e9afcd4e5e35",
+    "type": "Bug",
+    "title": "Test Auth",
+    "description": "Das wurde um 15:02 geschrieben",
+    "area": "Theorie",
+    "priority": "Hoch",
+    "checklist": [],
+    "status": "New",
+    "createdAt": "2026-11-20T00:17:02.389Z"
+  }
+]

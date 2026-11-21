@@ -8,6 +8,7 @@ import { defineConfig } from "astro/config";
 // @ts-ignore - rehype-katex liefert keine eigenen TS-Deklarationsdateien mit
 import rehypeKatex from "rehype-katex";
 import remarkMath from "remark-math";
+import { createLocalIdentityProxy } from "./src/lib/local-identity-proxy.mjs";
 import { ModuleArchiveSyncError, syncModuleArchivesAfterSave } from "./src/lib/module-archive.ts";
 
 const MAX_LOCAL_REQUEST_BYTES = 500_000;
@@ -405,6 +406,12 @@ export default defineConfig({
   },
   vite: {
     plugins: process.env.NETLIFY_DEV === "true" ? [] : [localModulesApiPlugin()],
+    server: {
+      proxy: createLocalIdentityProxy(
+        process.env.NETLIFY_DEV,
+        process.env.LOCAL_NETLIFY_IDENTITY_ORIGIN,
+      ),
+    },
     build: {
       chunkSizeWarningLimit: 1500, // Erhöht das Warnlimit von 500 kB auf 1500 kB
     },
@@ -426,6 +433,7 @@ export default defineConfig({
         "katex/dist/katex.min.css",
       ],
       components: {
+        Header: "./src/components/starlight/Header.astro",
         MarkdownContent: "./src/components/starlight/MarkdownContent.astro",
       },
       sidebar: [
@@ -433,6 +441,7 @@ export default defineConfig({
           label: "Admin",
           items: [
             { label: "Konten & Einladungen", link: "/admin/konten/" },
+            { label: "Datenstand & Backups", link: "/admin/datenstand/" },
             { label: "Beiträge", slug: "projektierung/beitraege" },
             { label: "Modul-Builder", slug: "projektierung/modul-builder" },
             { label: "Modularchiv", link: "/module-archives/" },
@@ -467,6 +476,8 @@ export default defineConfig({
               label: "Wiki",
               items: [
                 { label: "Lernkonto & Synchronisierung", slug: "wiki/lernstand-konto" },
+                { label: "Lernpfad & Dashboard", slug: "wiki/lernpfad" },
+                { label: "Datenstand & Backups", slug: "wiki/datenstand-backups" },
                 { label: "Beiträge verwalten", slug: "wiki/beitraege" },
                 { label: "Modul-Builder bedienen", slug: "wiki/modul-builder" },
                 { label: "NotationBuilder bedienen", slug: "wiki/notation-builder" },

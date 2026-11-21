@@ -1,7 +1,6 @@
 ---
 import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
 import AdminIdentityPanel from "../../components/admin/AdminIdentityPanel.astro";
-import LearningAccount from "../../components/learning/LearningAccount.astro";
 ---
 
 <StarlightPage
@@ -12,11 +11,10 @@ import LearningAccount from "../../components/learning/LearningAccount.astro";
     editUrl: false,
   }}
 >
-  <LearningAccount show={true} />
   <p>
     Für den Zugriff ist die Netlify-Identity-Rolle <code>admin</code>
     erforderlich. Die erste Admin-Rolle muss einmalig in Netlify zugewiesen
-    werden.
+    werden. <a href="/wiki/lernstand-konto/">Anleitung zum Lernkonto &amp; Einladungen</a>
   </p>
   <AdminIdentityPanel />
 </StarlightPage>

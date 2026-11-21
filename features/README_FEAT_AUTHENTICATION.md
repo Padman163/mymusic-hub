@@ -5,12 +5,13 @@ ihren persönlichen Lernstand zwischen Geräten synchronisieren. Gemeinsame
 Module und Konfigurationen bleiben davon getrennt und werden in
 [Netlify Blobs](README_FEAT_NETLIFYBLOB.md) gespeichert.
 
-## Anmeldung und Einladungen
+## Anmeldung, Registrierung und Einladungen
 
-Die zentrale Lernkonto-Oberfläche ist
-[`LearningAccount.astro`](../src/components/learning/LearningAccount.astro).
-Sie unterstützt Anmeldung, Abmeldung, Einladungsannahme und
-Passwort-Wiederherstellung. Auf der Admin-Seite
+Die Kontooberfläche sitzt rechts im globalen Starlight-Header. Sie unterstützt
+Anmeldung per E-Mail und Passwort, Registrierung mit Name, E-Mail und Passwort,
+Abmeldung, Einladungsannahme und Passwort-Wiederherstellung. Selbstregistrierung
+ist nur möglich, wenn sie in Netlify Identity für die Site aktiviert ist. Auf
+der Admin-Seite
 [`Konten & Einladungen`](../src/pages/admin/konten.astro) können Nutzer mit
 der Netlify-Identity-Rolle `admin` Einladungen verschicken und den aktuellen
 Registrierungsstatus lesen.
@@ -36,6 +37,27 @@ Identity-API stellt in dieser Integration keine Änderungsoperation für den
 Modus bereit; **Invite only** wird weiterhin in der Netlify-Site-Konfiguration
 verwaltet.
 
+## Lokale Entwicklung
+
+Netlify Dev leitet Identity-Anfragen über den Astro-Dev-Proxy an die in
+`LOCAL_NETLIFY_IDENTITY_ORIGIN` konfigurierte HTTPS-Site weiter. Die Variable
+steht ausschließlich in der lokalen, nicht versionierten `.env.local`; sie darf
+nur die Adresse der verknüpften Site enthalten. Ohne diese Einstellung ist
+der Identity-Endpunkt lokal nicht verfügbar. Der Proxy wird weder im reinen
+Astro-Dev-Modus noch im Deploy verwendet und entfernt lokale Cookies und den
+Referer vor der Weiterleitung. Lokal eingegebene Zugangsdaten und Änderungen
+an Konten betreffen die konfigurierte Online-Identity. Einrichtung und Neustart
+stehen im [Workspace-Setup](../README_WORKSPACE_SETUP.md).
+
+Nach gesicherter Datenmigration kann Netlify Dev mit
+`LOCAL_NETLIFY_ONLINE_DATA=true` auch die Daten-APIs (`modules`,
+`contributions`, `learning-progress`, `admin-backups`,
+`admin-learning-progress`) an dieselbe Site weiterleiten; `/api/admin/identity`
+läuft nicht über diesen Daten-Proxy. Bei der Weiterleitung wird nur das
+Sitzungscookie `nf_jwt` übertragen; das Refresh-Cookie und andere lokale
+Cookies bleiben lokal. Schreibanfragen prüfen den lokalen Origin, und
+Weiterleitungen zu anderen Zielen werden abgelehnt.
+
 ## Rollen- und API-Schutz
 
 `/api/admin/identity` prüft die Sitzung mit `getUser()` serverseitig. Nur
@@ -51,6 +73,24 @@ den Browser zurückgegeben noch dort gespeichert.
 Identity-Sitzung. Der Blob-Schlüssel wird aus der verifizierten Benutzer-ID
 gebildet; ein Request kann daher nicht den Lernstand eines anderen Kontos
 adressieren.
+
+Für Änderungen an `/api/modules` und `/api/contributions` müssen die Sitzung
+die Rolle `admin` und der Request einen passenden Origin aufweisen. Das gilt
+auch in Deploy-Vorschauen.
+
+Die Admin-Seite [`Datenstand & Backups`](../src/pages/admin/datenstand.astro)
+trennt gemeinsame Inhaltsbackups von persönlichen Lernständen. Im Reiter
+**Nutzer & Lernfortschritt** lädt `/api/admin/learning-progress` Nutzer aus
+der serverseitigen Identity-Admin-API seitenweise und gibt Name, E-Mail und ID
+zurück. Lernstandsdaten werden erst für das ausgewählte Konto geladen.
+Lesen erfordert die Rolle `admin`; Resets prüfen zusätzlich den Origin,
+die Bestätigung und die aktuelle Blob-Version. Resets sind im veröffentlichten
+Produktions-Deploy und in Deploy Previews möglich, lokal im Online-Modus ist
+der Reiter nur lesbar. Ein Preview verwendet dieselben Konten und Lernstände
+wie die Produktionsseite derselben Site. Einzel- und Komplett-Reset ändern
+keine Identity-Konten. Details zu [XP und Reset](README_FEAT_XP-SYSTEM.md#persistenz)
+sowie zu [Inhaltsbackups](README_FEAT_NETLIFYBLOB.md#online-backups-im-admin-bereich)
+sind getrennt dokumentiert.
 
 ## Lernstand und lokale Daten
 
@@ -70,14 +110,31 @@ Studio-Ausrüstung sind Teil dieses persönlichen Zustands.
 
 | Datei | Aufgabe |
 | --- | --- |
+| [`Header.astro`](../src/components/starlight/Header.astro) & [`LearningAccount.astro`](../src/components/learning/LearningAccount.astro) | Binden die Kontooberfläche global in den Starlight-Header ein. |
 | [`learning-account-ui.ts`](../src/lib/learning-account-ui.ts) | Browser-Login, Einladungsannahme, Passwort-Wiederherstellung und Abmeldung. |
+| [`local-identity-proxy.mjs`](../src/lib/local-identity-proxy.mjs) | Konfiguriert die Identity-Weiterleitung für Netlify Dev. |
 | [`learning-progress-sync.ts`](../src/lib/learning-progress-sync.ts) | Account-getrennter Cache, Migration des Gaststands und Konfliktbehandlung. |
 | [`learning-progress.ts`](../src/lib/learning-progress.ts) | Schema, lokale Speicherung und Bereinigung des Lernstands. |
 | [`learning-progress.ts` Function](../netlify/functions/learning-progress.ts) | Authentifizierter Zugriff auf persönliche Cloud-Lernstände. |
+| [`learning-progress-store.ts`](../netlify/functions/lib/learning-progress-store.ts) | Kapselt Schlüssel und Optionen des Stores `mymusic-hub-user-data`. |
+| [`admin-write.ts`](../netlify/functions/lib/admin-write.ts) | Prüft serverseitig `admin`-Rolle und Request-Origin für gemeinsame Schreibzugriffe. |
+| [`admin-data-access.ts`](../netlify/functions/lib/admin-data-access.ts) | Begrenzt Admin-Schreibaktionen auf veröffentlichte Production- und Preview-Deploys. |
+| [`online-dev-proxy.ts`](../netlify/functions/lib/online-dev-proxy.ts) | Leitet lokale Daten-APIs bei `LOCAL_NETLIFY_ONLINE_DATA=true` an die Online-Site weiter. |
 | [`admin-identity.ts`](../netlify/functions/admin-identity.ts) | Rollenprüfung, Registrierungsstatus und Admin-Einladungen. |
+| [`admin-learning-progress.ts`](../netlify/functions/admin-learning-progress.ts) | Admin-Nutzerliste, Lernstand je Konto und versionsgeprüfte Resets. |
+| [`admin-learning-progress-ui.ts`](../src/lib/admin-learning-progress-ui.ts) | Browser-Controller für Nutzerliste, Details und Reset-Bestätigung. |
+| [`konten.astro`](../src/pages/admin/konten.astro) & [`datenstand.astro`](../src/pages/admin/datenstand.astro) | Admin-Seiten für Konten/Einladungen und Datenstand/Lernfortschritt. |
+| [`AdminLearningProgressPanel.astro`](../src/components/admin/AdminLearningProgressPanel.astro) | Reiter für Nutzer und persönliche Lernstände. |
 | [`AdminIdentityPanel.astro`](../src/components/admin/AdminIdentityPanel.astro) | Admin-Oberfläche für Registrierungsstatus und Einladungen. |
 | [`lernstand-konto.mdx`](../src/content/docs/wiki/lernstand-konto.mdx) | Bedienungsanleitung für Lernkonten. |
 
-Verhalten und Berechtigungen werden in
-[`admin-identity.test.ts`](../tests/admin-identity.test.ts) und
-[`learning-progress.test.mjs`](../tests/learning-progress.test.mjs) getestet.
+[`admin-identity.test.ts`](../tests/admin-identity.test.ts) prüft
+Rollen und Einladungen. [`learning-account-ui.test.ts`](../tests/components/learning-account-ui.test.ts)
+prüft die Browser-Kontooberfläche. [`identity-dev-proxy.test.mjs`](../tests/identity-dev-proxy.test.mjs),
+[`setup-netlify-env.test.mjs`](../tests/setup-netlify-env.test.mjs) und
+[`online-data-access.test.ts`](../tests/online-data-access.test.ts) prüfen
+lokale Weiterleitung, `.env.local`-Setup und Rollen-/Origin-Schutz.
+[`admin-learning-progress.test.ts`](../tests/admin-learning-progress.test.ts)
+deckt Nutzerliste, Kontodetails, Bestätigungen, Konflikte und beide Resets ab;
+[`learning-progress.test.mjs`](../tests/learning-progress.test.mjs) prüft das
+Lernstandsschema und die XP-Vergabe beim Wiederholen.

@@ -67,6 +67,15 @@
           "visuals": []
         }
       ]
+    },
+    {
+      "id": "mod-dbab4cae-7cee-4ea8-9207-47b7b24bd5f3",
+      "directory": "mod-dbab4cae-7cee-4ea8-9207-47b7b24bd5f3",
+      "title": "Das MOdul von 15:00",
+      "description": "",
+      "archived": false,
+      "present": true,
+      "lessons": []
     }
   ]
 }

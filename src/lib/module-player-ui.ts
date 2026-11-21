@@ -11,11 +11,9 @@ import {
   initializeDrumPatterns,
 } from "./drum-pattern.ts";
 import {
-  clearLearningProgress,
   completePracticeBlock,
   completeTheoryBlock,
   completeTheoryStep,
-  createInitialProgress,
   getDashboardOverview,
   getEffectiveQuizSettings,
   getEquippedInventoryItem,
@@ -327,13 +325,12 @@ function canRenderInitialCatalog(
 function commitProgressChange(
   nextState: LearningProgressState,
   db: ModulesDatabase,
-  reason?: "reset",
 ): LearningProgressState {
   saveLearningProgress(nextState);
   document.dispatchEvent(
     new CustomEvent("learning-progress:updated", {
       bubbles: true,
-      detail: { state: nextState, db, ...(reason ? { reason } : {}) },
+      detail: { state: nextState, db },
     }),
   );
   return nextState;
@@ -1247,56 +1244,6 @@ function formatExerciseSolution(question: ModuleQuestion): string {
   return parts.join("; ");
 }
 
-function createProgressResetControls(getDatabase: () => ModulesDatabase) {
-  const resetBtn = document.createElement("button");
-  resetBtn.type = "button";
-  resetBtn.className = "learning-btn learning-btn-danger";
-  resetBtn.dataset.action = "request-reset";
-  resetBtn.textContent = "Lernfortschritt zurücksetzen";
-
-  const confirmBox = document.createElement("div");
-  confirmBox.className = "learning-reset-confirm";
-  confirmBox.hidden = true;
-  const confirmLabel = document.createElement("span");
-  confirmLabel.textContent =
-    "Den gesamten Lernfortschritt zurücksetzen? Alle XP gehen verloren.";
-  const confirmYes = document.createElement("button");
-  confirmYes.type = "button";
-  confirmYes.className = "learning-btn learning-btn-danger";
-  confirmYes.dataset.action = "confirm-reset";
-  confirmYes.textContent = "Ja, zurücksetzen";
-  const confirmCancel = document.createElement("button");
-  confirmCancel.type = "button";
-  confirmCancel.className = "learning-btn";
-  confirmCancel.dataset.action = "cancel-reset";
-  confirmCancel.textContent = "Abbrechen";
-  confirmBox.append(confirmLabel, confirmYes, confirmCancel);
-
-  resetBtn.addEventListener("click", () => {
-    confirmBox.hidden = false;
-    resetBtn.hidden = true;
-    confirmCancel.focus();
-  });
-  confirmCancel.addEventListener("click", () => {
-    confirmBox.hidden = true;
-    resetBtn.hidden = false;
-    resetBtn.focus();
-  });
-  confirmYes.addEventListener("click", () => {
-    const db = getDatabase();
-    clearLearningProgress();
-    commitProgressChange(
-      createInitialProgress(db.modules, db.quizSettings),
-      db,
-      "reset",
-    );
-  });
-
-  const controls = document.createDocumentFragment();
-  controls.append(resetBtn, confirmBox);
-  return controls;
-}
-
 export interface ProgressDashboardController {
   refresh(): void;
   setDatabase(db: ModulesDatabase): void;
@@ -1304,7 +1251,7 @@ export interface ProgressDashboardController {
 
 /**
  * Initialisiert das XP- & Lernfortschritts-Dashboard inklusive Level,
- * Scope-/Tag-Aufschlüsselung, Reset-Schutz und Live-Event-Synchronisation.
+ * Scope-/Tag-Aufschlüsselung und Live-Event-Synchronisation.
  */
 export function attachProgressDashboard(
   root: HTMLElement,
@@ -1487,11 +1434,6 @@ export function attachProgressDashboard(
     }
     tagGroup.append(tagHeading, tagRow);
 
-    const resetArea = document.createElement("div");
-    resetArea.className = "learning-reset-area";
-    resetArea.hidden = !showDetails;
-
-    resetArea.append(createProgressResetControls(() => currentDb));
     card.append(
       header,
       metrics,
@@ -1499,7 +1441,6 @@ export function attachProgressDashboard(
       moduleBarsGroup,
       scopeGroup,
       tagGroup,
-      resetArea,
     );
     root.append(card);
   };
@@ -1557,7 +1498,7 @@ export interface ModuleRoadmapController {
 /**
  * Rendert die nach `order` sortierten Modul-Karten inklusive Fortschritts-Kennzahlen
  * (Theorieteile, offene Aufgaben, Quiz) sowie den Aktionen
- * („Lektion öffnen“, „Quiz starten“ und „Lernfortschritt zurücksetzen“).
+ * („Lektion öffnen“ und „Quiz starten“).
  */
 export function attachModuleRoadmap(
   root: HTMLElement,
@@ -1741,8 +1682,6 @@ export function attachModuleRoadmap(
         quizDisabledBtn.textContent = "Quiz starten";
         actions.append(quizDisabledBtn);
       }
-
-      actions.append(createProgressResetControls(() => currentDb));
 
       const fastlaneLink = document.createElement("a");
       fastlaneLink.className =
@@ -2998,19 +2937,14 @@ export function attachModuleStepper(
       );
       return;
     }
-    let reason: string | undefined;
     if (event instanceof CustomEvent && isRecord(event.detail)) {
-      if (typeof event.detail.reason === "string") {
-        reason = event.detail.reason;
-      }
       if (isRecord(event.detail.db) && Array.isArray(event.detail.db.modules)) {
         currentDb = getLearningCatalog(
           event.detail.db as unknown as ModulesDatabase,
         );
       }
     }
-    if (reason === "reset") fullRender();
-    else updateCurrentSection();
+    updateCurrentSection();
   };
   document.addEventListener("learning-progress:updated", onProgressUpdated);
 

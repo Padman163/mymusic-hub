@@ -1,0 +1,79 @@
+<admin-backups>
+  <p data-status role="status" aria-live="polite">Online-Daten werden geladen …</p>
+  <button data-refresh type="button">Aktualisieren</button>
+  <div data-content hidden>
+    <h2>Aktueller Online-Stand</h2>
+    <p data-site></p>
+    <details>
+      <summary data-contributions-count>Beiträge</summary>
+      <ul data-contributions-list></ul>
+    </details>
+    <details>
+      <summary data-modules-count>Lehrgänge</summary>
+      <ul data-modules-list></ul>
+    </details>
+
+    <h2>Backups</h2>
+    <p data-readonly hidden>Nur Ansicht. Die Verwaltung ist in Deploy Previews und auf der veröffentlichten Produktionsseite verfügbar.</p>
+    <p data-uninitialized hidden>Öffne zuerst Beiträge und den Modul-Builder, um beide Datenbestände zu initialisieren.</p>
+    <form data-create hidden>
+      <label>Notiz (optional) <input name="note" type="text" maxlength="160" /></label>
+      <button type="submit">Backup jetzt erstellen</button>
+    </form>
+    <ul data-backups></ul>
+    <button data-more type="button" hidden>Ältere Backups anzeigen</button>
+
+    <section data-preview hidden aria-labelledby="restore-heading">
+      <h2 id="restore-heading" tabindex="-1">Wiederherstellung prüfen</h2>
+      <p data-restore-target></p>
+      <div data-diff></div>
+      <p>
+        <strong>Der Restore ersetzt den gemeinsamen Online-Stand vollständig.
+        Auch aus einem Deploy Preview betrifft das die Produktionsseite derselben
+        Netlify-Site.</strong> Der aktuelle Stand wird vorher automatisch als
+        Sicherheitsbackup gespeichert.
+      </p>
+      <form data-restore>
+        <label>
+          Tippe <strong>WIEDERHERSTELLEN</strong> zur Bestätigung
+          <input name="confirmation" autocomplete="off" required pattern="WIEDERHERSTELLEN" />
+        </label>
+        <button type="submit">Online-Stand wiederherstellen</button>
+        <button data-cancel type="button">Abbrechen</button>
+      </form>
+    </section>
+  </div>
+</admin-backups>
+
+<script>
+  import "../../lib/admin-backups-ui";
+</script>
+
+<style>
+  button,
+  input {
+    font: inherit;
+    color: var(--sl-color-text);
+    background: var(--sl-color-bg);
+    border: 1px solid var(--sl-color-gray-4);
+    border-radius: 0.35rem;
+    padding: 0.35rem 0.65rem;
+  }
+  button:not(:disabled) {
+    cursor: pointer;
+  }
+  button:disabled {
+    opacity: 0.55;
+  }
+  label,
+  input {
+    display: block;
+  }
+  input {
+    max-width: 100%;
+  }
+  [data-preview] {
+    border-inline-start: 0.25rem solid var(--sl-color-orange);
+    padding-inline-start: 1rem;
+  }
+</style>

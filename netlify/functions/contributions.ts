@@ -12,7 +12,10 @@ import {
 	type Contribution,
 	type ContributionFields,
 } from './lib/contribution-store';
-import { isBlobStoreUnavailable, isReadOnlyCloudContext, LocalBlobSnapshotError } from './lib/blob-store';
+import { authorizeAdminWrite } from './lib/admin-write';
+import { isBlobStoreUnavailable, LocalBlobSnapshotError, parseBlobJSONValue } from './lib/blob-store';
+import { writeLocalBlobSnapshot } from './lib/local-blob-snapshot';
+import { proxyOnlineDevRequest } from './lib/online-dev-proxy';
 
 const allowedTypes = ['Bug', 'Feature', 'Decision'] as const;
 const maxRequestBytes = 500_000;
@@ -69,6 +72,12 @@ export default async (request: Request): Promise<Response> => {
 		return jsonResponse(405, { error: 'Diese Methode wird nicht unterstützt.' });
 	}
 
+	const proxied = await proxyOnlineDevRequest(request, async (data) => {
+		if (!isRecord(data)) throw new Error('Ungültige Online-Beitragsdaten.');
+		await writeLocalBlobSnapshot('contributions', parseBlobJSONValue('contributions', data.contributions));
+	});
+	if (proxied) return proxied;
+
 	if (request.method === 'GET') {
 		try {
 			return jsonResponse(200, { contributions: await listContributions() });
@@ -81,11 +90,8 @@ export default async (request: Request): Promise<Response> => {
 		}
 	}
 
-	if (isReadOnlyCloudContext()) {
-		return jsonResponse(405, {
-			error: 'Dieser Deploy zeigt den aktuellen Cloud-Stand. Änderungen sind in dieser Vorschau nicht erlaubt.',
-		});
-	}
+	const authorizationError = await authorizeAdminWrite(request);
+	if (authorizationError) return authorizationError;
 
 	const bodyText = await request.text();
 	if (new TextEncoder().encode(bodyText).byteLength > maxRequestBytes) {

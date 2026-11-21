@@ -13,11 +13,15 @@ berechnet und nicht als separates Dokument gespeichert.
   lokale Cache-/Erstmigrationslogik
 - `netlify/functions/learning-progress.ts`: Authentifizierte, pro Konto
   isolierte Cloud-Persistenz
+- `netlify/functions/admin-learning-progress.ts`: Admin-Einsicht sowie
+  Einzel- und Komplett-Reset persönlicher Lernstände
 - `src/lib/learning-config.ts`: gemeinsame Online-Konfiguration des Shop-Katalogs
 - `src/lib/xp-tags.ts`: XP-Basiswerte, Tags und Berechnung
 - `src/lib/module-player-ui.ts`: XP-Änderungen im Lernpfad und Aufgaben-Sound
 - `src/lib/inventory-ui.ts`: Humpa-Shop und Inventar
+- `src/lib/inventory-item-icon.ts`: Gemeinsame SVG-Icons für Shop-, Inventar- und Studio-Items
 - `src/lib/studio-ui.ts`: Studio, Sound-Auswahl und Ausrüstung
+- `src/components/learning/ProgressDashboard.astro`, `Shop.astro`, `Inventory.astro`, `Studio.astro`: Benutzeroberflächen unter **Bediener**
 - `src/styles/module-player.css`: gemeinsame Darstellung
 
 ## XP verdienen
@@ -29,7 +33,9 @@ den zentralen Berechnungsregeln gut.
 Mehrere Wiederholungen derselben Aufgabe vergeben keine zusätzlichen XP.
 `solvedQuestionIds`, `completedTheoryBlockIds` und
 `completedPracticeBlockIds` schützen bereits abgeschlossene Inhalte vor
-doppelter Vergütung.
+doppelter Vergütung. Beim Admin-Reset hält `xpBeforeReset` diese IDs je
+Lehrgang dauerhaft fest. Erneute Abschlüsse (auch per Fastlane) ändern den
+Fortschritt, schreiben aber nur für bisher nicht vergütete Inhalte XP gut.
 
 ## Gesamt-XP, Level und verfügbares Guthaben
 
@@ -69,9 +75,11 @@ Gespeichert werden unter anderem:
 - aktuell ausgerüstete Item-ID
 - Quiz-Bestwerte und Einstellungen
 
-Beim geschützten Reset wird der vollständige Lernfortschritt einschließlich XP,
-Käufen, Inventar und Ausrüstung zurückgesetzt und bei aktiver Anmeldung mit dem
-Online-Konto synchronisiert.
+Der Admin-Reset eines einzelnen Lehrgangs setzt nur dessen sichtbaren
+Fortschritt zurück. XP, Käufe, Inventar und Ausrüstung bleiben erhalten.
+Der separate Komplett-Reset ersetzt dagegen den persönlichen Lernstand
+durch den Anfangsstand, einschließlich XP-Nachweisen und Inventar. Das
+Netlify-Identity-Konto bleibt bestehen.
 
 ## Humpa-Shop
 
@@ -91,8 +99,9 @@ Bassdrum-Symbol dargestellt.
 
 Der Shop-Katalog liegt unter `learningConfig.shopItems` gemeinsam mit den
 Moduldaten im Blob-Key `modules`. Die versionierte Quelle dafür ist
-`data/blob-snapshot/modules.json`; Änderungen werden wie andere globale
-Blob-Daten kontrolliert mit `npm run blobs:push` hochgeladen.
+`data/blob-snapshot/modules.json`; Änderungen aus dem getrennten lokalen Modus
+werden wie andere globale Blob-Daten kontrolliert mit `npm run blobs:push`
+hochgeladen (siehe [Blob-Referenz](README_FEAT_NETLIFYBLOB.md)).
 
 ## Inventar
 
@@ -135,12 +144,14 @@ Guthabenprüfung, Ausgabenverbuchung und Doppelkäuferschutz zentral.
 
 ## Bedienung und Tests
 
-Die nutzerseitige Anleitung steht in der
+Die nutzerseitigen Anleitungen stehen in der
+[Lernpfad- und Dashboard-Anleitung](../src/content/docs/wiki/lernpfad.mdx) und der
 [Inventar- und Shop-Anleitung](../src/content/docs/wiki/inventar.mdx).
 
 Fachtests liegen in:
 
 - `tests/learning-progress.test.mjs`
+- `tests/admin-learning-progress.test.ts`
 - `tests/components/inventory-ui.test.ts`
 - `tests/components/module-player-ui.test.ts`
 - `tests/e2e/smoke.spec.ts`

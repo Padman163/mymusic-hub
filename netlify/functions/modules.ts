@@ -1,6 +1,9 @@
 import type { Config } from '@netlify/functions';
 import { DEFAULT_QUIZ_SETTINGS, isQuizSettings, type LearningModule, type ModulesDatabase } from '../../src/lib/module-schema';
 import { ModuleArchiveSyncError, syncModuleArchivesAfterSave } from '../../src/lib/module-archive';
+import { authorizeAdminWrite } from './lib/admin-write';
+import { writeLocalBlobSnapshot } from './lib/local-blob-snapshot';
+import { proxyOnlineDevRequest } from './lib/online-dev-proxy';
 import {
 	deleteModule,
 	deleteQuestion,
@@ -17,8 +20,8 @@ import {
 import {
 	BlobStoreConflictError,
 	isBlobStoreUnavailable,
-	isReadOnlyCloudContext,
 	LocalBlobSnapshotError,
+	parseBlobJSONValue,
 	readBlobJSON,
 	updateBlobJSON,
 } from './lib/blob-store';
@@ -224,6 +227,13 @@ export default async (request: Request): Promise<Response> => {
 		return jsonResponse(405, { error: 'Diese Methode wird nicht unterstützt.' });
 	}
 
+	const proxied = await proxyOnlineDevRequest(request, async (data) => {
+		const database = parseBlobJSONValue('modules', data);
+		await writeLocalBlobSnapshot('modules', database);
+		await syncModuleArchivesAfterSave(database);
+	});
+	if (proxied) return proxied;
+
 	if (request.method === 'GET') {
 		try {
 			return jsonResponse(200, await readBlobJSON('modules'));
@@ -238,11 +248,8 @@ export default async (request: Request): Promise<Response> => {
 		}
 	}
 
-	if (isReadOnlyCloudContext()) {
-		return jsonResponse(405, {
-			error: 'Dieser Deploy zeigt den aktuellen Cloud-Stand. Änderungen sind in dieser Vorschau nicht erlaubt.',
-		});
-	}
+	const authorizationError = await authorizeAdminWrite(request);
+	if (authorizationError) return authorizationError;
 
 	const bodyText = await request.text();
 	if (new TextEncoder().encode(bodyText).byteLength > maxRequestBytes) {

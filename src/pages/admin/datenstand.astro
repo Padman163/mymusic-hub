@@ -1,0 +1,28 @@
+---
+import { TabItem, Tabs } from "@astrojs/starlight/components";
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+import AdminBackupPanel from "../../components/admin/AdminBackupPanel.astro";
+import AdminLearningProgressPanel from "../../components/admin/AdminLearningProgressPanel.astro";
+---
+
+<StarlightPage
+  frontmatter={{
+    title: "Datenstand & Backups",
+    description: "Online-Daten prüfen, sichern und wiederherstellen.",
+    tableOfContents: false,
+    editUrl: false,
+  }}
+>
+  <p>
+    Hier verwaltest du Inhaltsbackups und persönliche Lehrgangsstände.
+    <a href="/wiki/datenstand-backups/">Anleitung</a>
+  </p>
+  <Tabs>
+    <TabItem label="Datenstand & Backups">
+      <AdminBackupPanel />
+    </TabItem>
+    <TabItem label="Nutzer & Lernfortschritt">
+      <AdminLearningProgressPanel />
+    </TabItem>
+  </Tabs>
+</StarlightPage>

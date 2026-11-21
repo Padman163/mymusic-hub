@@ -1,13 +1,13 @@
 import { getUser, verifyRequestOrigin } from '@netlify/identity';
-import { getStore, type Store } from '@netlify/blobs';
 import type { Config } from '@netlify/functions';
 import {
 	sanitizeStoredProgress,
 } from '../../src/lib/learning-progress';
 import { readBlobJSON } from './lib/blob-store';
+import { progressKey, progressReadOptions as jsonOptions, progressStore } from './lib/learning-progress-store';
+import { proxyOnlineDevRequest } from './lib/online-dev-proxy';
 
 const maxRequestBytes = 500_000;
-const jsonOptions = { type: 'json', consistency: 'strong' } as const;
 
 export const config: Config = {
 	path: '/api/learning-progress',
@@ -32,14 +32,13 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function progressKey(userId: string): string {
-	return `learning-progress:${userId}`;
-}
-
 export default async (request: Request): Promise<Response> => {
 	if (!['GET', 'PUT'].includes(request.method)) {
 		return jsonResponse(405, { error: 'Diese Methode wird nicht unterstützt.' });
 	}
+
+	const proxied = await proxyOnlineDevRequest(request);
+	if (proxied) return proxied;
 
 	const user = await getUser();
 	if (!user) {
@@ -49,9 +48,9 @@ export default async (request: Request): Promise<Response> => {
 		return jsonResponse(403, { error: 'Das angemeldete Konto stimmt nicht mit der Anfrage überein.' });
 	}
 
-	let store: Store;
+	let store: ReturnType<typeof progressStore>;
 	try {
-		store = getStore('mymusic-hub-user-data');
+		store = progressStore();
 	} catch (error) {
 		console.error('Der persönliche Blob-Store ist nicht verfügbar.', error);
 		return jsonResponse(503, { error: 'Die Online-Speicherung ist derzeit nicht verfügbar.' });

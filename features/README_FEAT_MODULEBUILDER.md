@@ -2,7 +2,7 @@
 
 Dieses Dokument ist die Feature-Referenz für den **Admin Modul- & Aufgaben-Builder** und den **Interaktiven Lernpfad für Lernende**. Die Etappen 1 bis 3B beschreiben die umgesetzten Bausteine; Testbefehle und aktuelle Ergebnisse stehen im [Testing-Leitfaden](../README_TESTING.md).
 
-Die nutzerorientierte [Anleitung für den Modul-Builder](../src/content/docs/wiki/modul-builder.mdx) steht im Wiki.
+Die nutzerorientierte [Anleitung für den Modul-Builder](../src/content/docs/wiki/modul-builder.mdx) und die [Anleitung für Lernpfad & Dashboard](../src/content/docs/wiki/lernpfad.mdx) stehen im Wiki.
 Das persönliche [Inventar](../src/content/docs/wiki/inventar.mdx) zeigt im konto-gebundenen Online-Lernstand gekaufte Gamification-Freischaltungen. Beim ersten Aufruf ist es leer; der Shop-Katalog wird aus der gemeinsamen Lernkonfiguration geladen und bietet Click für 10 und Kick für 30 verfügbare XP an. Ausgaben reduzieren nur das verfügbare XP-Guthaben, nicht die insgesamt verdienten XP oder das Level.
 Im Studio können gekaufte Sounds ausgerüstet werden; der aktive Sound wird bei Aufgabenprüfungen wiedergegeben.
 Die Gesamtarchitektur von XP, Shop, Inventar und Studio steht in der [XP-System-Referenz](README_FEAT_XP-SYSTEM.md).
@@ -69,7 +69,7 @@ Warum machen wir das getrennt? Weil so jeder Baustein einzeln geprüft und getes
   - **Online:** Netlify-Produktionsfunktionen schreiben keine Repository-Dateien. Online-Änderungen erscheinen deshalb erst nach einem ausdrücklichen Export im Worktree; veröffentlichte Archivseiten zeigen den zuletzt gebauten Git-Stand. Auch Blocklager-Inhalte und Lösungen der Kopien sind dann über das Archiv öffentlich lesbar.
   - **Fehler:** Scheitert der Export nach einem Speichervorgang, meldet die API ausdrücklich, dass die Live-Daten bereits gespeichert wurden und die Kopien mit `npm run archive:modules` nachgezogen werden müssen.
 - **Schnittstelle zum Speichern und Laden (`netlify/functions/modules.ts`):**
-  - Module und Aufgaben laden (`GET`), anlegen (`POST`), aktualisieren (`PUT`) und löschen (`DELETE`). Einrichtung, Initialisierung und Konfliktschutz stehen in der [Blob-Referenz](README_FEAT_NETLIFYBLOB.md).
+  - Module und Aufgaben laden (`GET`), anlegen (`POST`), aktualisieren (`PUT`) und löschen (`DELETE`). `GET` ist ohne Anmeldung lesbar; Schreibzugriffe (`POST`, `PUT`, `DELETE`) prüfen über `netlify/functions/lib/admin-write.ts` serverseitig die Netlify-Identity-Rolle `admin` und einen passenden Origin (auch in Deploy Previews). Mit `LOCAL_NETLIFY_ONLINE_DATA=true` leitet `netlify/functions/lib/online-dev-proxy.ts` Anfragen lokal an die Online-Site weiter und spiegelt Snapshot sowie Modularchiv anschließend lokal. Einrichtung, Initialisierung und Konfliktschutz stehen in der [Blob-Referenz](README_FEAT_NETLIFYBLOB.md).
   - **Größenbegrenzung:** Zu große Anfragen (über 500.000 Bytes) werden sofort abgewiesen.
 
 ---
@@ -120,7 +120,7 @@ Dort gibt es vier übersichtliche Reiter:
     Erklärung danach.
     ```
 
-    Neben `<Notation />` und `<NotationKeyboard />` unterstützt der Theorie-Renderer auch `<DrumPattern />` mit den Props `steps`, `timeSignature`, `resolution`, `highlightTrack`, `highlightTracks`, `interactive`, `showVelocity`, `showTrackNote`, `useTrackColors`, `continuous`, `keepEmptyTracks`, `stepSize`, `stepLabels` und `patternData`. `highlightTrack` markiert eine und `highlightTracks` mehrere Spuren anhand ihrer Namen; die Markierung aktiviert selbst keine Interaktion. Für ein nicht-interaktives Pattern muss zusätzlich `interactive={false}` gesetzt werden. Die Props müssen statische Werte, Arrays oder Objekte sein; ausführbare JavaScript-Ausdrücke und Imports werden nicht unterstützt. Statische Zahlenoperationen wie `4 / 3` sind zulässig. Beispiel:
+    Neben `<Notation />` und `<NotationKeyboard />` unterstützt der Theorie-Renderer auch `<DrumPattern />` mit den Props `steps`, `timeSignature`, `resolution`, `highlightTrack`, `highlightTracks`, `interactive`, `showVelocity`, `showTrackNote`, `useTrackColors`, `continuous`, `keepEmptyTracks`, `stepSize`, `stepLabels` und `patternData` sowie den Audio- und Footer-Props aus der [Audioplayer-Referenz](README_FEAT_AUDIOPLAYER.md#props-und-konfiguration). `highlightTrack` markiert eine und `highlightTracks` mehrere Spuren anhand ihrer Namen; die Markierung aktiviert selbst keine Interaktion. Für ein nicht-interaktives Pattern muss zusätzlich `interactive={false}` gesetzt werden. Die Props müssen statische Werte, Arrays oder Objekte sein; ausführbare JavaScript-Ausdrücke und Imports werden nicht unterstützt. Statische Zahlenoperationen wie `4 / 3` sind zulässig. Beispiel:
 
     ```mdx
     <DrumPattern
@@ -201,7 +201,7 @@ Hier werden die Bestehensgrenzen für Abschluss-Quiz und Fastlane für alle Modu
 
 ### Gemeinsame Logik, Styling & UI-Tests
 - **`src/lib/module-builder-ui.ts` & `src/styles/module-builder.css`:** Enthalten die gemeinsame Steuerungslogik für alle drei Werkzeuge sowie das passende Erscheinungsbild (inklusive dunklem Design-Modus), während die `.astro`-Dateien schlank bleiben. Beim Laden und Speichern prüft der Browser sicher auf JSON-Antworten (um HTML-Fehlerseiten sauber abzufangen) und nutzt automatisch `/api/modules` bzw. `/.netlify/functions/modules`.
-- **`astro.config.mjs`:** Bindet den **Modul-Builder** direkt unter *Admin* sowie den **Interaktiven Lernpfad & Dashboard** ganz oben unter *Audio & Musik → Musiktheorie* in die Seitenleiste ein und stellt zusätzlich einen lokalen Entwicklungs-Endpunkt für `npm run dev` bereit, sodass Änderungen lokal direkt in `data/modules.json` gespeichert werden.
+- **`astro.config.mjs`:** Bindet den **Modul-Builder** unter *Admin* sowie **Dashboard**, **Humpa-Shop**, **Inventar** und **Studio** unter *Bediener* in die Seitenleiste ein und stellt zusätzlich einen lokalen Entwicklungs-Endpunkt für `npm run dev` bereit, sodass Änderungen lokal direkt in `data/modules.json` gespeichert werden.
 - **`netlify/functions/modules.ts`:** Reagiert sowohl auf `/api/modules` als auch auf `/.netlify/functions/modules`.
 - **`tests/components/module-builder-ui.test.ts`:** Oberflächentests prüfen unter anderem Theorie-Blöcke, Block- und Gruppenvorschau, NotationBuilder-Vorschau, Live-XP-Berechnung, Katalogfilter und die Behandlung von HTML-Fehlerantworten.
 
@@ -226,7 +226,7 @@ Damit Lernende sehen können, wie weit sie sind und welche Module noch gesperrt 
 
 ## Etappe 3B: Die sichtbare Lern-Oberfläche im Browser
 
-Jetzt verbinden sich die Bausteine aus Etappe 1 bis 3A zu einem kompletten, direkt im Browser spielbaren Kurs unter **Audio & Musik → Musiktheorie → Interaktiver Lernpfad & Dashboard** (`/audio/theory/lernpfad/`).
+Jetzt verbinden sich die Bausteine aus Etappe 1 bis 3A zu einem kompletten, direkt im Browser spielbaren Kurs unter **Bediener → Dashboard** (`/audio/theory/lernpfad/`).
 
 ### 1. Initialer Modulkatalog
 Ein neuer Katalog enthält keine Module oder Fragen, aber die Standard-Lernkonfiguration mit Shop-Katalog. Bis eigene Quiz-Einstellungen gespeichert werden, gelten die Schema-Standardwerte: 80 % für das Quiz und 85 % für Fastlane. Bestehende Blob-Kataloge bleiben unverändert.
@@ -235,12 +235,12 @@ Ein neuer Katalog enthält keine Module oder Fragen, aber die Standard-Lernkonfi
 - **Wozu es dient:** Zeigt dem Lernenden auf einen Blick das aktuelle **Level**, die **gesammelten Gesamt-XP**, den Fortschrittsbalken bis zum nächsten Level, die Anzahl **abgeschlossener Module** sowie kompakte Badges für XP nach Lernbereich (`Theorie`, `Instrument` …) und Themen (`Notensystem`, `Gitarre` …).
 - **Live-Aktualisierung:** Sobald eine Aufgabe gelöst, Theorie abgeschlossen oder ein Quiz bestanden wird, aktualisiert sich das Dashboard sofort ohne Neuladen der Seite.
 - **Modulkatalog:** Dashboard, Roadmap, Modulansicht und Aufgaben-Runner laden den aktuellen Katalog zur Laufzeit über `/api/modules`. Es wird keine Katalogdatei in den Build eingebettet. Ein leerer Katalog ist gültig; ein Ladefehler wird separat angezeigt. Notationsaufgaben werden aus der API-Konfiguration mit dem gemeinsamen Notations-Builder gerendert.
-- **Geschützter Reset:** Neben „Quiz starten“ bzw. „Quiz wiederholen“ steht „Lernfortschritt zurücksetzen“. Erst nach Bestätigung werden der gesamte Lernfortschritt und alle XP zurückgesetzt; bei aktiver Anmeldung wird der neue Stand mit dem Konto synchronisiert. Der Modulkatalog bleibt unverändert.
+- **Geschützter Reset:** Admins können unter **Admin → Datenstand & Backups → Nutzer & Lernfortschritt** einzelne Lehrgänge zurücksetzen (XP, XP-Nachweise, Käufe und andere Lehrgänge bleiben dabei erhalten) oder nach separater Bestätigung den gesamten persönlichen Lernstand zurücksetzen. Im Bediener-Dashboard und Lernpfad gibt es keinen Reset-Button.
 
 ### 3. Die Modul-Roadmap (`src/components/learning/ModuleRoadmap.astro`)
 - **Wozu sie dient:** Zeigt alle Module in der richtigen Reihenfolge als übersichtliche Karten.
 - **Fortschritt:** Die Karte zeigt Gesamtfortschritt sowie Balken für Theorie, Aufgaben und Quiz. Status-Badges und der Fastlane-Link sind derzeit ausgeblendet.
-- **Aktionen:** **„Lektion öffnen“** führt zur Modulansicht; gesperrte Module zeigen dort einen Sperrhinweis. **„Quiz starten“** wird erst bei Quizbereitschaft aktiviert. Der geschützte Reset setzt den gesamten Lernfortschritt zurück; bei aktiver Anmeldung wird der neue Stand mit dem Konto synchronisiert.
+- **Aktionen:** **„Lektion öffnen“** führt zur Modulansicht; gesperrte Module zeigen dort einen Sperrhinweis. **„Quiz starten“** wird erst bei Quizbereitschaft aktiviert.
 
 ### 4. Der Lektions-Parcours & Aufgaben-Runner (`ModuleStepper.astro` & `ModuleQuizRunner.astro`)
 - **Geführter Schritt-für-Schritt-Aufbau (`/audio/theory/modul/?id=...`):**
@@ -255,7 +255,7 @@ Ein neuer Katalog enthält keine Module oder Fragen, aber die Standard-Lernkonfi
 ## Aktueller Stand
 
 - **Umgesetzt (Etappen 1, 2, 3A & 3B):** Autorenwerkbank, Netlify-Blobs-Persistenz mit Astro-Dev-Fallback, Fortschritts-Engine und Lernoberfläche (`/audio/theory/lernpfad/` und `/audio/theory/modul/`).
-- **Tests:** Feature-Tests liegen in `tests/learning-progress.test.mjs`, `tests/module-builder.test.mjs`, `tests/components/module-builder-ui.test.ts` und `tests/components/module-player-ui.test.ts`. Den aktuellen Stand mit `npm test` prüfen.
+- **Tests:** Feature-Tests liegen in `tests/learning-progress.test.mjs`, `tests/module-builder.test.mjs`, `tests/module-archive.test.ts`, `tests/online-data-access.test.ts`, `tests/components/module-builder-ui.test.ts` und `tests/components/module-player-ui.test.ts`. Testregeln und Befehle stehen im [Testing-Leitfaden](../README_TESTING.md).
 
 ---
 
@@ -269,7 +269,7 @@ Im Modul-Builder richtet sich die XP-Badge-Farbe nach der Rolle, unabhängig von
 
 Mit `prerequisiteModuleIds?: string[]` lassen sich Voraussetzungen unabhängig von Themen-Tags speichern, z. B. `["elementarlehre"]` für ein Gitarrenmodul, wenn das Grundlagenmodul diese ID hat. Eine leere Liste entfernt die Voraussetzungen; ein ausgelassenes Feld lässt sie bei Teiländerungen unverändert. Die Freischaltung wertet das Feld noch nicht aus.
 
-Die drei Builder-Formulare unter `src/components/project/` werden in `src/content/docs/projektierung/modul-builder.mdx` eingebunden. `ModuleBuilderForm` akzeptiert zusätzlich `detail?: boolean` für die Modul-Detailseite. Der Lernpfad nutzt `ProgressDashboard`, `ModuleRoadmap`, `ModuleStepper` und `ModuleQuizRunner` unter `src/components/learning/`; die Seiten liegen unter `src/content/docs/audio/theory/`. Die Lernkomponenten akzeptieren:
+Die vier Builder-Komponenten unter `src/components/project/` (`ModuleCatalogList`, `ModuleBuilderForm`, `ExerciseBuilderForm`, `QuizSettingsForm`) werden in `src/content/docs/projektierung/modul-builder.mdx` eingebunden. `ModuleBuilderForm` akzeptiert zusätzlich `detail?: boolean` für die Modul-Detailseite. Der Lernpfad nutzt `ProgressDashboard`, `ModuleRoadmap`, `ModuleStepper` und `ModuleQuizRunner` unter `src/components/learning/`; die Seiten liegen unter `src/content/docs/audio/theory/`. Die Lernkomponenten akzeptieren:
 
 | Komponente | Props |
 |:---|:---|
@@ -278,16 +278,12 @@ Die drei Builder-Formulare unter `src/components/project/` werden in `src/conten
 | `ModuleStepper` | `id?`, `moduleId?`, `mode?: "normal" \| "fastlane"`, `lessonBaseUrl?` |
 | `ModuleQuizRunner` | `id?`, `moduleId?`, `mode?: TargetLane`, `templatesOnly?` |
 
-Die Netlify Function `netlify/functions/modules.ts` stellt die Modul-API bereit. In der Astro-Entwicklung ergänzt ein Vite-Plugin den lokalen Endpunkt, der `data/modules.json` verwendet. XP- und Validierungsregeln liegen in `src/lib/xp-tags.ts`, `src/lib/module-schema.ts` und `src/lib/module-store.ts`; UI-Logik und Styles liegen in `src/lib/module-builder-ui.ts`, `src/lib/module-player-ui.ts`, `src/styles/module-builder.css` und `src/styles/module-player.css`.
+Die Netlify Function `netlify/functions/modules.ts` stellt die Modul-API bereit und sichert Schreibzugriffe serverseitig über `netlify/functions/lib/admin-write.ts` (Rolle `admin` + Origin-Prüfung) sowie lokal optional über `netlify/functions/lib/online-dev-proxy.ts`. In der Astro-Entwicklung ergänzt ein Vite-Plugin den lokalen Endpunkt, der `data/modules.json` verwendet. XP- und Validierungsregeln liegen in `src/lib/xp-tags.ts`, `src/lib/module-schema.ts` und `src/lib/module-store.ts`; UI-Logik und Styles liegen in `src/lib/module-builder-ui.ts`, `src/lib/module-player-ui.ts`, `src/styles/module-builder.css` und `src/styles/module-player.css`.
 
 Beide Modul-Endpunkte verwenden `upsertModuleWithExercises` für einen gemeinsamen Schreibvorgang. Neben `exercises` kann der Request `exerciseRoleChanges: [{ id, kind: "theory" | "practice" }]` enthalten. Ein solcher Wechsel entfernt die bisherige Aufgabe nur, wenn sie zur Lernspur `leicht` und ausschließlich zum bearbeiteten Modul gehört und ein Ersatzblock gleicher ID samt passender `contentOrder` vorliegt. Doppelte IDs, gleichzeitige Aufgaben-Updates derselben ID, fremde Aufgaben und Quizfragen werden abgewiesen; bei Fehlern wird weder das Modul noch eine Aufgabe geschrieben. Bei Aufgabenänderungen oder Rollenwechseln liefern beide Endpunkte die aktuelle `questions`-Liste zurück. Rollenwechsel im Editor selbst senden keine Löschanfrage.
 
 ### Automatisierte Qualitätssicherung
 
-Die fachlichen Regeln und die Builder-/Player-Interaktionen werden in den vier oben genannten Feature-Testdateien geprüft. Gezielt ausführen:
+Die fachlichen Regeln, API-Zugriffe, Archivierungen und Builder-/Player-Interaktionen werden in den sechs oben genannten Feature-Testdateien geprüft (`tests/learning-progress.test.mjs`, `tests/module-builder.test.mjs`, `tests/module-archive.test.ts`, `tests/online-data-access.test.ts`, `tests/components/module-builder-ui.test.ts`, `tests/components/module-player-ui.test.ts`).
 
-```bash
-npx vitest run tests/learning-progress.test.mjs tests/module-builder.test.mjs tests/components/module-builder-ui.test.ts tests/components/module-player-ui.test.ts
-```
-
-Während der Entwicklung gezielt passende Unit- und bei Bedarf Komponententests ausführen. `npm test` führt alle Vitest-Tests aus; die vollständigen Prüfungen sind dem [Branch-Abschluss](../README_TESTING.md) vorbehalten.
+Testauswahl während der Entwicklung (nach Rückfrage/Zustimmung) und der manuelle Abschluss-Preflight am Branch-Ende richten sich nach dem [Testing-Leitfaden](../README_TESTING.md).

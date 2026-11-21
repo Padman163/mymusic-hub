@@ -1,0 +1,56 @@
+<admin-learning-progress>
+  <h2>Nutzerkonten</h2>
+  <p data-status role="status" aria-live="polite"></p>
+  <button type="button" data-load>Nutzerliste laden</button>
+  <ul data-users></ul>
+  <button type="button" data-more hidden>Weitere Konten anzeigen</button>
+  <section data-detail hidden aria-labelledby="admin-progress-account">
+    <h2 id="admin-progress-account" tabindex="-1" data-account></h2>
+    <button type="button" data-refresh>Lernstand aktualisieren</button>
+    <div data-progress></div>
+    <form data-reset hidden>
+      <p data-target></p>
+      <p data-effect></p>
+      <p>Im Deploy Preview betrifft der Reset das Online-Konto derselben Netlify-Site.</p>
+      <label>
+        Tippe <strong data-confirmation-text>ZURÜCKSETZEN</strong> zur Bestätigung
+        <input name="confirmation" autocomplete="off" required pattern="ZURÜCKSETZEN" />
+      </label>
+      <button type="submit" data-confirm>Lehrgang jetzt zurücksetzen</button>
+      <button type="button" data-cancel>Abbrechen</button>
+    </form>
+  </section>
+</admin-learning-progress>
+
+<script>
+  import "../../lib/admin-learning-progress-ui";
+</script>
+
+<style>
+  admin-learning-progress :global(button),
+  input {
+    font: inherit;
+    color: var(--sl-color-text);
+    background: var(--sl-color-bg);
+    border: 1px solid var(--sl-color-gray-4);
+    border-radius: 0.35rem;
+    padding: 0.35rem 0.65rem;
+  }
+  admin-learning-progress :global(button:not(:disabled)) {
+    cursor: pointer;
+  }
+  admin-learning-progress :global(button:disabled) {
+    opacity: 0.55;
+  }
+  label,
+  input {
+    display: block;
+  }
+  input {
+    max-width: 100%;
+  }
+  form {
+    border-inline-start: 0.25rem solid var(--sl-color-orange);
+    padding-inline-start: 1rem;
+  }
+</style>

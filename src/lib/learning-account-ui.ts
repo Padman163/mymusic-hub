@@ -6,6 +6,7 @@ import {
   logout,
   onAuthChange,
   requestPasswordRecovery,
+  signup,
   type User,
   updateUser,
 } from "@netlify/identity";
@@ -13,7 +14,6 @@ import {
   attachLearningProgressSync,
   connectLearningProgress,
   disconnectLearningProgress,
-  retryLearningProgressSync,
 } from "./learning-progress-sync.ts";
 
 let unsubscribeAuth: (() => void) | null = null;
@@ -28,15 +28,28 @@ function requireElement<T extends HTMLElement>(
   return element;
 }
 
-export function attachLearningAccount(root: HTMLElement): void {
+export function attachLearningAccount(root: HTMLDetailsElement): void {
   if (root.dataset.accountAttached === "true") return;
   unsubscribeAuth?.();
   removeSyncStatusListener?.();
   root.dataset.accountAttached = "true";
   attachLearningProgressSync();
 
+  const accountLabel = requireElement<HTMLElement>(
+    root,
+    "[data-account-label]",
+  );
+  const authForms = requireElement<HTMLElement>(root, "[data-auth-forms]");
+  const modeSwitch = requireElement<HTMLElement>(
+    root,
+    ".learning-account-switch",
+  );
   const status = requireElement<HTMLElement>(root, "[data-account-status]");
   const loginForm = requireElement<HTMLFormElement>(root, "[data-login-form]");
+  const signupForm = requireElement<HTMLFormElement>(
+    root,
+    "[data-signup-form]",
+  );
   const inviteForm = requireElement<HTMLFormElement>(
     root,
     "[data-invite-form]",
@@ -50,46 +63,79 @@ export function attachLearningAccount(root: HTMLElement): void {
     "[data-recovery-complete-form]",
   );
   const signedIn = requireElement<HTMLElement>(root, "[data-signed-in]");
-  const userEmail = requireElement<HTMLElement>(root, "[data-user-email]");
   const logoutButton = requireElement<HTMLButtonElement>(root, "[data-logout]");
-  const retryButton = requireElement<HTMLButtonElement>(
-    root,
-    "[data-sync-retry]",
-  );
 
   let inviteToken: string | null = null;
-  let currentUserId: string | null = null;
+
+  const setStatus = (message: string, state = "info") => {
+    status.textContent = message;
+    status.hidden = !message;
+    status.dataset.state = state;
+  };
 
   const showError = (error: unknown, fallback: string) => {
-    status.textContent = error instanceof Error ? error.message : fallback;
-    status.dataset.state = "error";
+    setStatus(error instanceof Error ? error.message : fallback, "error");
+  };
+
+  const showLoginForm = () => {
+    modeSwitch.hidden = false;
+    loginForm.hidden = false;
+    signupForm.hidden = true;
+    inviteForm.hidden = true;
+    recoveryRequestForm.hidden = true;
+    recoveryCompleteForm.hidden = true;
+    requireElement<HTMLButtonElement>(root, "[data-show-login]").setAttribute(
+      "aria-pressed",
+      "true",
+    );
+    requireElement<HTMLButtonElement>(root, "[data-show-signup]").setAttribute(
+      "aria-pressed",
+      "false",
+    );
+  };
+
+  const showSignupForm = () => {
+    modeSwitch.hidden = false;
+    loginForm.hidden = true;
+    signupForm.hidden = false;
+    inviteForm.hidden = true;
+    recoveryRequestForm.hidden = true;
+    recoveryCompleteForm.hidden = true;
+    requireElement<HTMLButtonElement>(root, "[data-show-login]").setAttribute(
+      "aria-pressed",
+      "false",
+    );
+    requireElement<HTMLButtonElement>(root, "[data-show-signup]").setAttribute(
+      "aria-pressed",
+      "true",
+    );
   };
 
   const setUser = async (user: User | null): Promise<void> => {
     if (!user) {
-      currentUserId = null;
       disconnectLearningProgress();
       signedIn.hidden = true;
-      loginForm.hidden = false;
+      authForms.hidden = false;
+      accountLabel.textContent = "Login / Registrierung";
+      showLoginForm();
       return;
     }
 
-    currentUserId = user.id;
+    authForms.hidden = true;
     signedIn.hidden = false;
-    loginForm.hidden = true;
-    inviteForm.hidden = true;
-    recoveryRequestForm.hidden = true;
-    recoveryCompleteForm.hidden = true;
-    userEmail.textContent = user.email ?? "Angemeldet";
+    setStatus("");
+    const name = user.name || user.email || "Konto";
+    accountLabel.textContent = `Angemeldet als ${name}`;
+    root.open = false;
     await connectLearningProgress(user.id);
   };
 
   const onSyncStatus = (event: Event) => {
     const detail = (event as CustomEvent<{ message?: string; status?: string }>)
       .detail;
-    if (detail?.message) status.textContent = detail.message;
-    status.dataset.state = detail?.status ?? "info";
-    retryButton.hidden = detail?.status !== "error" || !currentUserId;
+    if (detail?.message && detail.status === "error") {
+      setStatus(detail.message, "error");
+    }
   };
   document.addEventListener("learning-progress:sync-status", onSyncStatus);
   removeSyncStatusListener = () =>
@@ -97,6 +143,39 @@ export function attachLearningAccount(root: HTMLElement): void {
 
   unsubscribeAuth = onAuthChange((_event, user) => {
     void setUser(user);
+  });
+
+  requireElement<HTMLButtonElement>(root, "[data-show-login]").addEventListener(
+    "click",
+    () => {
+      showLoginForm();
+      setStatus("");
+    },
+  );
+  requireElement<HTMLButtonElement>(
+    root,
+    "[data-show-signup]",
+  ).addEventListener("click", () => {
+    showSignupForm();
+    setStatus("");
+  });
+
+  requireElement<HTMLButtonElement>(
+    root,
+    "[data-show-recovery]",
+  ).addEventListener("click", () => {
+    loginForm.hidden = true;
+    signupForm.hidden = true;
+    modeSwitch.hidden = true;
+    recoveryRequestForm.hidden = false;
+    setStatus("Gib die E-Mail-Adresse deines Kontos ein.");
+  });
+  requireElement<HTMLButtonElement>(
+    root,
+    "[data-cancel-recovery]",
+  ).addEventListener("click", () => {
+    showLoginForm();
+    setStatus("");
   });
 
   loginForm.addEventListener("submit", async (event) => {
@@ -112,6 +191,7 @@ export function attachLearningAccount(root: HTMLElement): void {
     );
     submit.disabled = true;
     status.textContent = "Anmeldung läuft …";
+    status.hidden = false;
     status.dataset.state = "loading";
     try {
       await setUser(await login(email.value.trim(), password.value));
@@ -121,6 +201,41 @@ export function attachLearningAccount(root: HTMLElement): void {
         error,
         "Anmeldung fehlgeschlagen. Prüfe deine Einladung und Zugangsdaten.",
       );
+    } finally {
+      submit.disabled = false;
+    }
+  });
+
+  signupForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const name = requireElement<HTMLInputElement>(root, "[data-signup-name]");
+    const email = requireElement<HTMLInputElement>(root, "[data-signup-email]");
+    const password = requireElement<HTMLInputElement>(
+      root,
+      "[data-signup-password]",
+    );
+    const submit = requireElement<HTMLButtonElement>(
+      root,
+      "[data-signup-submit]",
+    );
+    submit.disabled = true;
+    setStatus("Registrierung läuft …", "loading");
+    try {
+      await signup(email.value.trim(), password.value, {
+        full_name: name.value.trim(),
+      });
+      password.value = "";
+      const user = await getUser();
+      if (user) {
+        await setUser(user);
+      } else {
+        setStatus(
+          "Registrierung erfolgreich. Bitte bestätige deine E-Mail-Adresse, um dich anzumelden.",
+          "ready",
+        );
+      }
+    } catch (error) {
+      showError(error, "Die Registrierung ist fehlgeschlagen.");
     } finally {
       submit.disabled = false;
     }
@@ -141,8 +256,7 @@ export function attachLearningAccount(root: HTMLElement): void {
       "[data-invite-submit]",
     );
     submit.disabled = true;
-    status.textContent = "Einladung wird angenommen …";
-    status.dataset.state = "loading";
+    setStatus("Einladung wird angenommen …", "loading");
     try {
       const user = await acceptInvite(inviteToken, password.value);
       inviteToken = null;
@@ -166,13 +280,12 @@ export function attachLearningAccount(root: HTMLElement): void {
       "[data-recovery-submit]",
     );
     submit.disabled = true;
-    status.textContent = "Wiederherstellungslink wird angefordert …";
-    status.dataset.state = "loading";
+    setStatus("Wiederherstellungslink wird angefordert …", "loading");
     try {
       await requestPasswordRecovery(email.value.trim());
-      status.textContent =
-        "Falls ein Konto zu dieser Adresse besteht, wird ein Wiederherstellungslink gesendet.";
-      status.dataset.state = "info";
+      setStatus(
+        "Falls ein Konto zu dieser Adresse besteht, wird ein Wiederherstellungslink gesendet.",
+      );
     } catch (error) {
       showError(
         error,
@@ -194,14 +307,12 @@ export function attachLearningAccount(root: HTMLElement): void {
       "[data-recovery-complete-submit]",
     );
     submit.disabled = true;
-    status.textContent = "Passwort wird aktualisiert …";
-    status.dataset.state = "loading";
+    setStatus("Passwort wird aktualisiert …", "loading");
     try {
       await updateUser({ password: password.value });
       password.value = "";
-      recoveryCompleteForm.hidden = true;
-      status.textContent = "Das Passwort wurde aktualisiert.";
-      status.dataset.state = "ready";
+      showLoginForm();
+      setStatus("Das Passwort wurde aktualisiert.", "ready");
     } catch (error) {
       showError(error, "Das Passwort konnte nicht aktualisiert werden.");
     } finally {
@@ -221,35 +332,26 @@ export function attachLearningAccount(root: HTMLElement): void {
     }
   });
 
-  retryButton.addEventListener("click", () => {
-    void retryLearningProgressSync();
-  });
-
-  root
-    .querySelector<HTMLButtonElement>("[data-show-recovery]")
-    ?.addEventListener("click", () => {
-      recoveryRequestForm.hidden = false;
-      status.textContent = "Gib die E-Mail-Adresse deines Kontos ein.";
-      status.dataset.state = "info";
-    });
-
   async function initialize(): Promise<void> {
     try {
       const callback = await handleAuthCallback();
       if (callback?.type === "invite" && callback.token) {
-        root.hidden = false;
+        root.open = true;
+        authForms.hidden = false;
+        modeSwitch.hidden = true;
         inviteToken = callback.token;
         loginForm.hidden = true;
+        signupForm.hidden = true;
         inviteForm.hidden = false;
-        status.textContent =
-          "Lege ein Passwort für dein eingeladenes Konto fest.";
-        status.dataset.state = "info";
+        setStatus("Lege ein Passwort für dein eingeladenes Konto fest.");
       } else if (callback?.type === "recovery") {
-        root.hidden = false;
+        root.open = true;
+        authForms.hidden = false;
+        modeSwitch.hidden = true;
         loginForm.hidden = true;
+        signupForm.hidden = true;
         recoveryCompleteForm.hidden = false;
-        status.textContent = "Lege ein neues Passwort fest.";
-        status.dataset.state = "info";
+        setStatus("Lege ein neues Passwort fest.");
       }
 
       const user =
@@ -257,11 +359,6 @@ export function attachLearningAccount(root: HTMLElement): void {
           ? null
           : (callback?.user ?? (await getUser()));
       if (user) await setUser(user);
-      else if (!inviteToken && callback?.type !== "recovery") {
-        status.textContent =
-          "Melde dich mit einem eingeladenen Konto an, damit dein Lernstand online gespeichert wird.";
-        status.dataset.state = "info";
-      }
     } catch (error) {
       showError(
         error,

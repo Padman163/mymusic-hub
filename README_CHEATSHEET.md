@@ -9,7 +9,10 @@ Dieses Dokument bündelt Befehle für den Entwicklungsalltag und die Problembehe
 ### 1.1 Lokale Server
 ```bash
 npm run dev                  # Startet Astro isoliert (Frontend/Doku) auf http://localhost:4321
-npx netlify-cli dev          # Astro + Functions + lokale Blobs auf http://localhost:8888
+npx netlify-cli dev          # Astro + Functions + lokale Blobs (oder Online-Proxy via .env.local) auf http://localhost:8888
+npm run env:netlify          # Erzeugt/aktualisiert .env.local für Netlify Dev im Online-Modus
+npm run archive:modules      # Liest den lokalen Netlify-Dev-Modulkatalog als MDX-Kopien neu ein
+npm run cleanup:check        # Nicht-destruktiver Repository-Cleanup-Bericht
 npm run build                # Erzeugt einen produktionsreifen Static-Build im Ordner dist/
 npm run preview              # Startet einen lokalen Webserver zur Vorschau des dist/-Builds
 ```
@@ -18,26 +21,24 @@ Anmeldung, Kontenverwaltung und persönliche Lernstandsynchronisierung benötige
 Netlify Identity und die Functions. Dafür `npx netlify-cli dev` verwenden;
 `npm run dev` startet nur den Astro-Server. Details: [Authentifizierungs-Referenz](features/README_FEAT_AUTHENTICATION.md) und [Wiki-Anleitung zum Lernkonto](src/content/docs/wiki/lernstand-konto.mdx).
 
-Bei Beiträgen und Modulen verwendet `npx netlify-cli dev` einen dauerhaften lokalen Blob-Store unter `.netlify\blobs-serve\`; er überschreibt sich beim Branch-Wechsel nicht aus den versionierten Snapshots. Für den aktuellen Cloud-Stand:
+Für Beiträge und Module gelten unter `npx netlify-cli dev` zwei Modi:
+- **Getrennter lokaler Modus (`LOCAL_NETLIFY_ONLINE_DATA=false`):** Nutzt den dauerhaften lokalen Blob-Store unter `.netlify\blobs-serve\`; er überschreibt sich beim Branch-Wechsel nicht selbst aus den versionierten Snapshots.
+- **Online-Modus (`LOCAL_NETLIFY_ONLINE_DATA=true`):** Leitet lokale Daten-APIs direkt an die konfigurierte Online-Site weiter.
+
+Transferbefehle im getrennten lokalen Modus (vor `blobs:reset` Netlify Dev stoppen und lokale Änderungen sichern):
 
 ```bash
-npm run blobs:pull
-npm run blobs:reset
-npx netlify-cli dev
+npm run blobs:pull           # Cloud → lokale Snapshots
+npm run blobs:reset          # Lokalen Store .netlify/blobs-serve/ löschen
+npx netlify-cli dev          # Initialisiert fehlende lokale Keys aus Snapshots
 ```
-
-Vor `blobs:reset` Netlify Dev stoppen und lokale Änderungen sichern. Beim
-Neustart werden die Keys aus den Snapshots initialisiert. Nach lokalen
-Bearbeitungen lauten die Upload-Befehle:
 
 ```bash
 git diff -- data/blob-snapshot
-npm run blobs:push
+npm run blobs:push           # Erstellt Cloud-Backup und lädt lokale Snapshots hoch
 ```
 
-Der Push erzeugt vorher ein Cloud-Backup. `.netlify/blobs-serve` ist
-Datenspeicher, kein Cleanup-Ordner. Details und Token-Regeln stehen in der
-[Blob-Referenz](features/README_FEAT_NETLIFYBLOB.md).
+Mit `npm run blobs:restore` wählst du per Pfeiltasten und Enter ein lokales Archiv für die Snapshots; die Cloud bleibt davon unberührt bis zu einem ausdrücklichen `npm run blobs:push`. `.netlify/blobs-serve` ist Datenspeicher, kein Cleanup-Ordner. Alle Details und Token-Regeln stehen in der [Blob-Referenz](features/README_FEAT_NETLIFYBLOB.md#blob-befehle-push-pull-restore-backup-und-reset).
 
 ### 1.2 Häufige Git-Kommandos
 

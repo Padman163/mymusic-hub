@@ -5,7 +5,7 @@ title: Notation.astro
 import Notation from "../../../../../components/notation/Notation.astro";
 import NotationKeyboard from "../../../../../components/notation/NotationKeyboard.astro";
 
-Diese Seite ist der technische Leitfaden zur Komponente `Notation.astro` (`src/components/notation/Notation.astro`). Während [104: Notensystem & Tabulatur](../../../theory/100/104-tabulatur-notensystem/) die Notenschrift aus Sicht der Musiktheorie erklärt, zeigt dieses Dokument die Programmierung und Datenstruktur dahinter: wie jedes Schaubild aus 104 aufgebaut wird, welche Props `Notation` entgegennimmt und wie das Layout im Hintergrund berechnet wird.
+Diese Seite ist der technische Leitfaden zur Komponente `Notation.astro` (`src/components/notation/Notation.astro`). Während [104: Notensystem & Tabulatur](../../../theory/100-general/104-tabulatur-notensystem/) die Notenschrift aus Sicht der Musiktheorie erklärt, zeigt dieses Dokument die Programmierung und Datenstruktur dahinter: wie jedes Schaubild aus 104 aufgebaut wird, welche Props `Notation` entgegennimmt und wie das Layout im Hintergrund berechnet wird.
 
 Nach dem Import der Komponente wird entweder ein einzelner Takt über die Kurzform `notes={[...]}` oder ein mehrtaktiges Stück über `measures={[...]}` übergeben:
 
@@ -201,7 +201,7 @@ Für zweizeilige Klaviersysteme mit geschweifter Klammer (Akkolade) existiert zu
 
 <NotationKeyboard />
 
-Die Visualisierung trägt genau wie `NotationVisual` die Metadaten `data-tags={["Allgemein", "Notensystem"]}`. Mehr zur geplanten Verwendung steht unter [EXP und Tags](../../exp-und-tags/).
+Die Visualisierung trägt genau wie `NotationVisual` die Metadaten `data-tags={["Allgemein", "Notensystem"]}`. Mehr zur Verwendung steht unter [EXP und Tags](../../exp-und-tags/).
 
 ---
 

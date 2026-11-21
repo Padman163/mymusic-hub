@@ -675,5 +675,16 @@
     ],
     "status": "New",
     "createdAt": "2026-11-19T12:03:29.215Z"
+  },
+  {
+    "id": "4a45b080-8050-4a90-8031-e9afcd4e5e35",
+    "type": "Bug",
+    "title": "Test Auth",
+    "description": "Das wurde um 15:02 geschrieben",
+    "area": "Theorie",
+    "priority": "Hoch",
+    "checklist": [],
+    "status": "New",
+    "createdAt": "2026-11-20T00:17:02.389Z"
   }
 ]

@@ -35,101 +35,145 @@ behauptet nicht, eine Änderung vorgenommen zu haben.
 Schlüssel wird ausschließlich aus der bestätigten Konto-ID gebildet; Requests
 können daher keine Lernstände anderer Konten lesen oder überschreiben. Diese
 Function darf im gehosteten Kontext nur den Lernstand des angemeldeten Kontos
-ändern. Die bestehenden Schreibsperren für gemeinsame Beiträge und Module
-bleiben bestehen.
+ändern. Gemeinsame Beiträge, Module und die Shop-Konfiguration dürfen nur
+Konten mit der serverseitig geprüften Rolle `admin` ändern.
 
 Persönliche Kontodaten liegen nicht in `data/blob-snapshot` oder den
 versionskontrollierten Blob-Archiven. Der Blob-Transfer sichert nur den
 gemeinsamen Store `mymusic-hub-data`; für `mymusic-hub-user-data` ist ein
 separates Backup-/Exportverfahren erforderlich.
 
+Der separate Admin-Endpunkt
+[`/api/admin/learning-progress`](../netlify/functions/admin-learning-progress.ts)
+liest die Nutzerliste über die serverseitige Netlify-Identity-Admin-API.
+Admins sehen XP, Inventar und Lehrgangsstände für das gewählte Konto.
+Der bestätigte Reset ist in Production und Deploy Previews möglich und
+ersetzt nur den gewählten Lehrgangsstand mit ETag-Prüfung, damit gleichzeitige
+Änderungen nicht überschrieben werden. Die Inhaltsbackups enthalten diese
+persönlichen Daten weiterhin nicht.
+
+Der Reset eines einzelnen Lehrgangs bewahrt die IDs der bereits vergüteten Inhalte im selben
+persönlichen Lernstand. Ein erneuter Abschluss vergibt für diese Inhalte
+keine zusätzlichen XP. Der separat bestätigte Komplett-Reset ersetzt den
+gesamten persönlichen Blob mit ETag-Prüfung durch einen Anfangsstand mit
+den aktuellen Quiz-Einstellungen. Das Identity-Konto bleibt unverändert.
+
 ## Empfohlener Datenfluss
 
-Die Cloud-Datenbank und der lokale Netlify-Dev-Store sind getrennte Speicher:
+Netlify Dev verwendet normalerweise einen getrennten lokalen Blob-Store. Nach
+gesicherter Datenübernahme und Deployment der aktuellen Functions kann
+`LOCAL_NETLIFY_ONLINE_DATA=true` in der nicht versionierten `.env.local` gesetzt
+werden. Dann leiten die lokalen APIs für Module, Beiträge und persönlichen
+Lernstand Anfragen an die in `LOCAL_NETLIFY_IDENTITY_ORIGIN` konfigurierte
+HTTPS-Site weiter. Die Anmeldung und die Daten müssen zur selben Site gehören.
+Netlify Dev nach der Konfigurationsänderung neu starten.
 
-```text
-Netlify Cloud: mymusic-hub-data
-       ↓ npm run blobs:pull
-data/blob-snapshot/{contributions,modules}.json
-       ↓ npm run blobs:reset
-.netlify/blobs-serve
-       ↓ npx netlify-cli dev
-lokales Erstellen und Bearbeiten
-       ↓ automatische Snapshot-Aktualisierung
-data/blob-snapshot/{contributions,modules}.json
-       ↓ npm run blobs:push
-Cloud-Backup unter data/blob-archive/<Zeitstempel>/
-       ↓
-Netlify Cloud: mymusic-hub-data
-```
+Lokale Schreibzugriffe auf gemeinsame Daten aktualisieren nach erfolgreicher
+Online-Speicherung auch die Snapshot-Dateien und bei Modulen die lesbaren
+MDX-Kopien. Schlägt dieser lokale Abgleich fehl, meldet die API ausdrücklich,
+dass die Online-Speicherung bereits erfolgt ist. Änderungen direkt auf der
+Online-Site aktualisieren keine lokalen Dateien. Wer danach lokale Kopien
+braucht, kann den neuen Stand mit `npm run blobs:pull` übernehmen.
 
 Der `modules`-Key enthält neben Modulen und Quiz-Einstellungen auch
 `learningConfig.shopItems`. Dashboard, XP, Käufe, Inventar und Studio-Ausrüstung
 werden dagegen pro Nutzerkonto im separaten Store `mymusic-hub-user-data`
 gespeichert und nicht durch `blobs:pull` oder `blobs:push` überschrieben.
 
-`npx netlify-cli dev` initialisiert fehlende lokale Keys aus den versionierten
-Snapshots. Vorhandene lokale Keys bleiben bestehen. Schreibvorgänge über die
-Functions aktualisieren die Snapshot-Dateien, aber nicht automatisch die Cloud.
+Ohne `LOCAL_NETLIFY_ONLINE_DATA=true` initialisiert `npx netlify-cli dev`
+fehlende lokale Keys aus den versionierten Snapshots. Vorhandene lokale Keys
+bleiben bestehen. Schreibvorgänge aktualisieren dann die Snapshot-Dateien,
+aber nicht automatisch die Cloud.
 
-Vor der Arbeit am neuesten Online-Stand:
+## Online-Backups im Admin-Bereich
 
-```bash
-npx netlify-cli link
-npm run blobs:pull
-npm run blobs:reset
-npx netlify-cli dev
-```
+[Admin → Datenstand & Backups](../src/pages/admin/datenstand.astro) zeigt den
+aktuellen Online-Stand und die Sicherungen. Die
+[Bedienungsanleitung](../src/content/docs/wiki/datenstand-backups.mdx)
+beschreibt die einzelnen Schritte. Die Übersicht ist für Admins auch in
+Previews und lokal über den bestehenden Online-Proxy verfügbar. Erstellen,
+Download, Restore-Vorschau und Restore sind für Admins im veröffentlichten
+Produktions-Deploy und in Deploy Previews verfügbar. Lokal und in Branch
+Deploys bleibt die Oberfläche schreibgeschützt. Deploy Previews nutzen
+denselben Backup-Store wie Production; ein Restore ändert den gemeinsamen
+Live-Stand der Site.
 
-`blobs:reset` fragt vor dem Entfernen des lokalen Blob-Stands unter
-`.netlify/blobs-serve` nach Bestätigung. Zuerst Netlify Dev stoppen und nicht
-gespeicherte lokale Änderungen sichern. Beim nächsten Start werden die beiden
-Keys aus den Snapshots neu angelegt.
+Online-Backups liegen als einzelne JSON-Dokumente im siteweiten
+`mymusic-hub-backups`-Store und sind unabhängig von lokalen CLI-Archiven.
+Ein JSON-Download enthält die beiden Datenbestände unter `data.contributions`
+und `data.modules`; für den CLI-Notfallweg können sie als separate
+`contributions.json` und `modules.json` in einem lokalen Archiv abgelegt
+werden. Ein Upload in der Admin-Oberfläche ist nicht vorgesehen.
 
-Nach lokalen Änderungen:
+Der Restore verlangt eine aktuelle Vorschau, die Schreibbestätigung
+`WIEDERHERSTELLEN` und ein erfolgreich gespeichertes Sicherheitsbackup.
+Die Live-Keys werden einzeln mit ETag-Prüfung ersetzt; Netlify Blobs bietet
+dafür keine gemeinsame Transaktion. Bei einem Konflikt am zweiten Key
+versucht die Function, den ersten nur dann zurückzusetzen, wenn er seit dem
+Restore-Schreibzugriff unverändert geblieben ist. Ein möglicherweise
+teilweiser Restore wird samt Sicherheitsbackup-ID gemeldet. Die Oberfläche
+ändert keine lokalen Snapshots und keine MDX-Kopien.
 
-```bash
-git diff -- data/blob-snapshot
-npm run blobs:push
-```
+## Blob-Befehle: Push, Pull, Restore, Backup und Reset
 
-`blobs:push` lädt beide Cloud-Blobs, erstellt daraus automatisch ein gemeinsames
-Archiv unter `data/blob-archive/<Zeitstempel>/`, fragt nach Bestätigung und
-schreibt anschließend beide lokalen Snapshots in die Cloud. Ohne die interaktive
-Bestätigung wird nichts hochgeladen. `npm run blobs:push -- --yes` ist nur für
+**Gesichert und wiederhergestellt werden nur die gemeinsamen Beiträge und
+Lektionen (Lernmodule)** aus `mymusic-hub-data`. Dazu gehören die Aufgaben,
+Quiz-Einstellungen und der gemeinsame Shop-Katalog, weil sie in `modules.json`
+gespeichert sind. Konten, Passwörter, persönliche Lernstände, XP, Inventar und
+Mediendateien sind nicht enthalten.
+
+| Befehl | Richtung | Wirkung |
+| --- | --- | --- |
+| `npm run blobs:push` | Lokale Snapshots → Cloud | Fragt nach Bestätigung, sichert den bisherigen Cloud-Stand als datiertes Archiv und überschreibt dann beide Online-Keys vollständig. Kein Merge, kein Schutz vor gleichzeitigen Änderungen. |
+| `npm run blobs:pull` | Cloud → lokale Snapshots | Überschreibt `contributions.json` und `modules.json` in `data/blob-snapshot/` mit dem aktuellen Online-Stand. Erstellt kein Archiv und ändert weder die Cloud noch den laufenden lokalen Store. |
+| `npm run blobs:restore` | Lokales Archiv → lokale Snapshots | Zeigt die neuesten Backups zuerst. Mit Pfeiltasten und Enter auswählen. Prüft beide Dateien und überschreibt die Snapshots erst nach Bestätigung. Der lokale Store und die Cloud bleiben unverändert. |
+| `npm run blobs:backup` | Cloud → lokales Archiv | Speichert beide Dateien in `data/blob-archive/<Zeitstempel>/`. Ändert weder die Cloud noch die Snapshots. Ein neues Archiv ist nur in diesem Workspace verfügbar, bis du es separat überträgst, etwa per Git. |
+| `npm run blobs:reset` | Lokalen Store löschen | Entfernt nach Bestätigung `.netlify/blobs-serve/`. Im getrennten lokalen Modus werden fehlende Keys danach aus den Snapshots angelegt. Archive, Snapshots und Cloud bleiben unverändert. Ungesicherte Daten im lokalen Store gehen verloren. |
+
+Für `backup`, `pull` und `push` ist eine Netlify-CLI-Anmeldung und die
+Verknüpfung mit der richtigen Site nötig (`npx netlify-cli login`,
+`npx netlify-cli link`). `restore` und `reset` arbeiten rein lokal.
+`--yes` überspringt bei `push` und `reset` die Bestätigung und ist nur für
 bewusst automatisierte Abläufe gedacht.
 
-Für eine separate Sicherung ohne Upload:
+### Online-Stand oder Backup lokal ansehen
 
-```bash
-npm run blobs:backup
-```
+1. Netlify Dev stoppen und ungesicherte lokale Änderungen sichern.
+2. In `.env.local` `LOCAL_NETLIFY_ONLINE_DATA=false` setzen. Mit `true` zeigt
+   Netlify Dev weiterhin den Online-Stand.
+3. Für den aktuellen Online-Stand `npm run blobs:pull` ausführen. Für ein
+   älteres Backup stattdessen `npm run blobs:restore` ausführen.
+4. `npm run blobs:reset` ausführen und bestätigen. Danach Netlify Dev mit
+   `npx netlify-cli dev` neu starten. Ein Push ist dafür nicht nötig.
 
-Die Transferbefehle verwenden die normale Netlify-CLI-Anmeldung. Führe einmal
-`npx netlify-cli login` und `npx netlify-cli link` aus. Eine lokale `.env` und
-ein Token im Repository werden dafür nicht benötigt.
+### Backup online wiederherstellen
+
+1. Lokale Änderungen sichern und das gewünschte Archiv mit
+   `npm run blobs:restore` in die Snapshots kopieren.
+2. Mit `npx netlify-cli status` die Ziel-Site prüfen. Die wiederhergestellten
+   Snapshots mit dem aktuellen Online-Stand vergleichen. Dafür kann ein neues
+   `npm run blobs:backup` den Online-Stand separat sichern. **Kein Pull**:
+   Der würde die wiederhergestellten Snapshots wieder überschreiben.
+3. Nur wenn beide Online-Datenbestände ersetzt werden sollen,
+   `npm run blobs:push` ausführen und bestätigen. Seit dem gewählten Backup
+   hinzugekommene Online-Änderungen fehlen danach im aktiven Stand.
 
 ## Deploy Preview und Branch Deploy
 
 Production, Deploy Previews und Branch Deploys lesen dieselben siteweiten
-gemeinsamen Daten. Die Functions für Beiträge und Module dürfen diese Daten in
-gehosteten Kontexten nicht direkt überschreiben; schreibende Requests erhalten
-`405 Method Not Allowed`. So kann nur der kontrollierte lokale Snapshot-Transfer
-gemeinsame Inhalte und Shop-Konfiguration ändern. Die getrennte
-`/api/learning-progress`-Function ist die Ausnahme: Sie akzeptiert authentifizierte
-Änderungen ausschließlich für das jeweilige Nutzerkonto.
-Netlify-Builds schreiben keine Blob-Daten. `netlify.toml` führt ausschließlich
-den Astro-Build aus; Cloud-Änderungen erfolgen nur über `npm run blobs:push`.
+gemeinsamen Daten. Änderungen über die APIs für Beiträge und Module sind in
+allen Deploy-Kontexten nur für angemeldete Admins mit passendem Origin erlaubt.
+Die `/api/learning-progress`-Function akzeptiert authentifizierte Änderungen
+ausschließlich für das jeweilige Nutzerkonto.
 
-Vor dem Öffnen einer Preview wird der aktuelle lokale Stand mit `blobs:push`
-hochgeladen. Dadurch ist er in Production und jeder Vorschau sofort sichtbar.
-Die Befehle nutzen die normale Netlify-CLI-Anmeldung und benötigen keine lokale
-`.env` und keinen Token im Repository.
-
-**Überschreibungswirkung:** Kein Deploy importiert Daten. Dadurch kann ein alter
-Branch den Cloud-Stand nicht durch seinen Build zurücksetzen. Vor einem
-Cloud-Upload den vorgeschlagenen Backup-/Bestätigungsablauf von `blobs:push`
-abschließen.
+**Überschreibungswirkung:** Der im Repository konfigurierte Build
+(`npm run build`) importiert keine Snapshots. Der Online-Store ist der
+maßgebliche Datenstand. Falls im Netlify-Dashboard ein eigener
+Snapshot-Import als Build-Befehl oder Plugin hinterlegt ist, diesen vor
+der Freigabe deaktivieren. Ein bewusst ausgeführtes `blobs:push`
+überschreibt weiterhin beide gemeinsamen Keys und schützt nicht vor
+gleichzeitigen Änderungen; den Online-Modus nicht mit routinemäßigen
+Snapshot-Uploads kombinieren.
 
 ## Architektur und Datenfluss
 
@@ -142,7 +186,13 @@ abschließen.
 | [`learning-progress.ts`](../netlify/functions/learning-progress.ts) | Authentifizierte API für pro Konto gespeicherte Lernstände im Store `mymusic-hub-user-data`. |
 | [`learning-progress-sync.ts`](../src/lib/learning-progress-sync.ts) | Synchronisiert den Browser-Cache nach Anmeldung mit dem persönlichen Cloud-Lernstand. |
 | [`local-blob-snapshot.ts`](../netlify/functions/lib/local-blob-snapshot.ts) | Spiegelt lokale Netlify-Dev-Schreibvorgänge in versionierte Snapshot-Dateien. |
-| [`netlify-blob-transfer.ts`](../scripts/netlify-blob-transfer.ts) | Lädt Cloud-Daten, erstellt Archive, bestätigt Uploads und setzt den lokalen Blob-Store zurück. |
+| [`online-dev-proxy.ts`](../netlify/functions/lib/online-dev-proxy.ts) | Leitet lokale Daten-APIs bei expliziter Aktivierung an die konfigurierte Online-Site weiter. |
+| [`admin-write.ts`](../netlify/functions/lib/admin-write.ts) | Prüft bei gemeinsamen Schreibvorgängen Admin-Rolle und Origin. |
+| [`admin-data-access.ts`](../netlify/functions/lib/admin-data-access.ts) | Begrenzt Online-Backup- und Reset-Schreibaktionen auf Production- und Preview-Deploys. |
+| [`admin-backups.ts`](../netlify/functions/admin-backups.ts) & [`admin-backups.ts` Lib](../netlify/functions/lib/admin-backups.ts) | Admin-API und Store-Logik (`mymusic-hub-backups`) für Online-Übersicht, Backups und Restore. |
+| [`AdminBackupPanel.astro`](../src/components/admin/AdminBackupPanel.astro) & [`admin-backups-ui.ts`](../src/lib/admin-backups-ui.ts) | Browser-Oberfläche und UI-Controller für Online-Stand, Backups und Restore-Vorschau. |
+| [`setup-netlify-env.mjs`](../scripts/setup-netlify-env.mjs) | Erstellt bzw. aktualisiert `.env.local` mit der verknüpften Preview-/Main-Origin-URL und Online-Proxy-Aktivierung. |
+| [`netlify-blob-transfer.ts`](../scripts/netlify-blob-transfer.ts) | Lädt und sichert Cloud-Daten, stellt Snapshots wieder her, bestätigt Uploads und setzt den lokalen Blob-Store zurück. |
 | [`astro.config.mjs`](../astro.config.mjs) | Nur beim reinen Astro-Start liest und schreibt `localModulesApiPlugin()` direkt in `data/modules.json`. Unter Netlify CLI ist dieses Plugin deaktiviert. |
 
 Die Functions lesen mit starker Konsistenz. Fehlt `contributions`, wird `[]` gespeichert. Fehlt `modules`, startet der Katalog mit einem leeren Modulbestand und der Standard-Lernkonfiguration. Bis Quiz-Einstellungen gespeichert werden, gelten die Schema-Standardwerte. `onlyIfNew` verhindert, dass ein paralleler Erstzugriff vorhandene Daten überschreibt. Spätere Änderungen nutzen ETags (`onlyIfMatch`) mit bis zu drei Versuchen, um parallele Änderungen nicht zu verlieren.
@@ -152,8 +202,8 @@ sichern. Ein neuer Store übernimmt keine Daten aus anderen Stores oder Git. Ein
 Rollback des Codes synchronisiert Blob-Schreibvorgänge nicht zurück nach Git.
 
 `npx netlify-cli dev` stellt einen lokalen Blob-Server bereit. Die Daten liegen
-unter `.netlify/blobs-serve/`. Der lokale Store wird nur durch die dokumentierten
-Transferbefehle mit der Cloud abgeglichen. Ein leerer lokaler Store wird aus den
+unter `.netlify/blobs-serve/`. Im getrennten Modus wird der lokale Store nur
+durch die dokumentierten Transferbefehle mit der Cloud abgeglichen. Ein leerer lokaler Store wird aus den
 Snapshot-Dateien wiederhergestellt. **`.netlify/blobs-serve` nicht als
 allgemeinen Build-Cache behandeln oder löschen**, solange lokale Änderungen
 nicht als Snapshot oder Cloud-Backup gesichert sind.
@@ -162,12 +212,14 @@ Vor dem produktiven Umstieg den Cloud-Datenbestand sichern und die Datenübernah
 
 ## Qualitätssicherung
 
-```bash
-npx vitest run tests/documentation.test.ts
-```
+Zuständige Tests für Blobs, Backup/Restore, Admin-Zugriffe und Dokumentation:
 
-Die Integrationstests laufen erst am Branch-Abschluss im manuell vom Nutzer gestarteten Preflight (siehe [Testing-Leitfaden](../README_TESTING.md)):
+- [`tests/blob-store.test.ts`](../tests/blob-store.test.ts)
+- [`tests/blob-restore.test.mjs`](../tests/blob-restore.test.mjs)
+- [`tests/admin-backups.test.ts`](../tests/admin-backups.test.ts)
+- [`tests/online-data-access.test.ts`](../tests/online-data-access.test.ts)
+- [`tests/setup-netlify-env.test.mjs`](../tests/setup-netlify-env.test.mjs)
+- [`tests/documentation.test.ts`](../tests/documentation.test.ts)
 
-```bash
-npm run preflight
-```
+Die Testauswahl während der Entwicklung sowie die Integrations-, E2E- und
+Preflight-Prüfungen am Branch-Abschluss stehen im [Testing-Leitfaden](../README_TESTING.md).

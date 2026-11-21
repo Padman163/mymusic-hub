@@ -1,0 +1,66 @@
+---
+title: Datenstand & Backups
+description: Gemeinsame Beiträge und Lehrgänge prüfen, sichern und wiederherstellen.
+---
+
+Öffne [Admin → Datenstand & Backups](/admin/datenstand/) und melde dich mit einem
+Admin-Konto an. Oben siehst du die Ziel-Site, die Uhrzeit der Abfrage und die
+Anzahl der Beiträge und Lehrgänge. Klappe die Listen auf, um die Titel zu sehen,
+oder klicke auf **Aktualisieren**, um den Online-Stand neu abzurufen.
+
+## Backup erstellen und herunterladen
+
+1. Öffne die veröffentlichte Produktionsseite oder ein Deploy Preview und
+   melde dich dort als Admin an. Lokal im Online-Modus bleibt die Seite
+   schreibgeschützt.
+2. Gib optional eine kurze Notiz ein, z. B. „Vor Überarbeitung der Lehrgänge“.
+3. Klicke auf **Backup jetzt erstellen**. Das Backup erscheint in der Liste.
+4. Verwende **JSON herunterladen**, wenn du zusätzlich eine Kopie außerhalb von
+   Netlify aufbewahren möchtest. Bewahre Downloads geschützt auf.
+
+Gesichert werden die Beiträge und Lehrgänge einschließlich Aufgaben,
+Quiz-Einstellungen und gemeinsamem Shop-Katalog. Konten, persönliche
+Lernstände, XP, Inventar und Medien sind nicht enthalten. Bestehende lokale
+CLI-Archive erscheinen nicht in der Online-Liste.
+
+## Einen früheren Stand wiederherstellen
+
+1. Klicke beim gewünschten Backup auf **Restore-Vorschau**.
+2. Prüfe, welche Beiträge und Lehrgänge zurückkommen, ersetzt werden oder
+   danach fehlen. Es findet kein Zusammenführen statt.
+3. Tippe **WIEDERHERSTELLEN** ein und bestätige. Vor dem Überschreiben wird der
+   bisherige Stand automatisch als **Sicherheitsbackup** gespeichert.
+4. Prüfe danach den aktualisierten Online-Stand. Bei einem Konflikt lade eine
+   neue Vorschau. Meldet die Seite eine möglicherweise teilweise
+   Wiederherstellung, prüfe zuerst beide Datenbestände und das genannte
+   Sicherheitsbackup, bevor du den Vorgang erneut startest.
+
+Production und Previews derselben Netlify-Site teilen sich den Online-Stand
+und die Backups. Ein Restore im Preview ändert daher auch die produktiven
+Daten derselben Site. Teste Wiederherstellungen nur auf einer separaten
+Netlify-Site.
+
+## Nutzer & Lernfortschritt
+
+1. Öffne den zweiten Reiter und klicke auf **Nutzerliste laden**.
+2. Wähle ein Konto. Du siehst Gesamt-XP, verfügbare und ausgegebene XP,
+   das Inventar und den Stand der einzelnen Lehrgänge.
+3. Klappe einen Lehrgang mit gespeichertem Fortschritt auf und wähle
+   **Lehrgang zurücksetzen**. Prüfe Konto und Lehrgang und bestätige mit
+   **ZURÜCKSETZEN**.
+
+Nur der Fortschritt dieses Lehrgangs wird gelöscht. Freigeschaltete
+Lehrgänge bleiben zugänglich, XP, Inventar und andere Lehrgänge unverändert.
+Bereits vergütete Blöcke und Aufgaben bringen beim Wiederholen keine XP mehr,
+auch nicht über Fastlane.
+Auf bereits offenen Bediener-Seiten wird der neue Stand beim nächsten
+Cloud-Abgleich geladen. Der frühere Komplett-Reset ist weder im Dashboard
+noch im Lernpfad verfügbar. Lokal ist der Reiter nur zur Ansicht verfügbar;
+ein Reset im Deploy Preview ändert das Online-Konto derselben Netlify-Site.
+
+Für einen vollständigen Neustart wähle beim Konto **Gesamten Lernstand
+zurücksetzen** und tippe **ALLES ZURÜCKSETZEN** ein. Das löscht alle
+Lehrgangsstände, XP, XP-Nachweise, Käufe und Ausrüstung des ausgewählten
+Nutzers. Das Konto und der Login bleiben erhalten. Anders als beim Reset
+eines einzelnen Lehrgangs kann der Nutzer beim erneuten Lernen wieder XP
+verdienen.

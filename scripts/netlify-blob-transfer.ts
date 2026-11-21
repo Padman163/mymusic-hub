@@ -1,9 +1,17 @@
 import { spawnSync } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  readdir,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { stdin as input, stdout as output } from "node:process";
 import { createInterface } from "node:readline/promises";
+import select from "@inquirer/select";
 import {
   isLearningConfiguration,
   isQuizSettings,
@@ -225,6 +233,57 @@ async function backup(): Promise<void> {
   console.log(`Cloud-Backup gespeichert: ${path.relative(process.cwd(), directory)}`);
 }
 
+async function restore(): Promise<void> {
+  const entries = await readdir(archiveDirectory, { withFileTypes: true });
+  const archives = entries
+    .filter(
+      (entry) =>
+        entry.isDirectory() &&
+        /^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}\.\d{3}Z$/.test(entry.name),
+    )
+    .map((entry) => entry.name)
+    .sort()
+    .reverse();
+  if (archives.length === 0) {
+    throw new Error("Keine datierten Blob-Backups gefunden.");
+  }
+
+  const timestamp = await select({
+    message: "Backup auswählen (Pfeiltasten und Enter):",
+    choices: archives.map((archive) => ({ name: archive, value: archive })),
+    pageSize: 10,
+  });
+  const rl = createInterface({ input, output });
+  try {
+    const directory = path.join(archiveDirectory, timestamp);
+    const contributions = await readFile(
+      path.join(directory, "contributions.json"),
+      "utf8",
+    );
+    const modules = await readFile(path.join(directory, "modules.json"), "utf8");
+    parseBlobData(JSON.parse(contributions), "contributions");
+    parseBlobData(JSON.parse(modules), "modules");
+
+    const answer = await rl.question(
+      "Lokale Snapshots data/blob-snapshot/contributions.json und modules.json überschreiben? Ungesicherte Änderungen gehen verloren. [y/N] ",
+    );
+    if (answer.trim().toLowerCase() !== "y") {
+      throw new Error("Wiederherstellung abgebrochen.");
+    }
+
+    await mkdir(snapshotDirectory, { recursive: true });
+    await writeFile(
+      path.join(snapshotDirectory, "contributions.json"),
+      contributions,
+      "utf8",
+    );
+    await writeFile(path.join(snapshotDirectory, "modules.json"), modules, "utf8");
+    console.log("Lokale Snapshots wiederhergestellt. Die Cloud wurde nicht geändert.");
+  } finally {
+    rl.close();
+  }
+}
+
 async function push(force: boolean): Promise<void> {
   const contributions = parseContributions(await readSnapshot("contributions"));
   const modules = parseModules(await readSnapshot("modules"));
@@ -246,13 +305,14 @@ async function resetLocal(force: boolean): Promise<void> {
 }
 
 const [action, ...args] = process.argv.slice(2);
-if (!["pull", "backup", "push", "reset"].includes(action)) {
+if (!["pull", "backup", "restore", "push", "reset"].includes(action)) {
   throw new Error(
-    "Aufruf: npm run blobs:pull | blobs:backup | blobs:push -- [--yes] | blobs:reset -- [--yes]",
+    "Aufruf: npm run blobs:pull | blobs:backup | blobs:restore | blobs:push -- [--yes] | blobs:reset -- [--yes]",
   );
 }
 
 if (action === "pull") await pull();
 if (action === "backup") await backup();
+if (action === "restore") await restore();
 if (action === "push") await push(args.includes("--yes"));
 if (action === "reset") await resetLocal(args.includes("--yes"));
